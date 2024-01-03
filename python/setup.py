@@ -17,6 +17,10 @@ setuptools.setup(
         'scipy',
         'matplotlib',
         'soundfile',
+        'IPyWidgets',
+        'graphviz',
+        'IPython',
+        'pyyaml',
     ],
     dependency_links=[],
 )
