@@ -32,11 +32,11 @@ int main()
 
   float fs = 48000;
   float f = 1000;
-  adsp_design_biquad_lowpass(taps_buf, f, fs, 0.7, 30);
-  //adsp_design_biquad_highpass(taps_buf, f / fs, 0.7, 30);
-  //adsp_design_biquad_notch(taps_buf, f / fs, 0.7, 30);
-  //adsp_design_biquad_allpass(taps_buf, f / fs, 0.7, 30);
-  //adsp_design_biquad_peaking(taps_buf, f / fs, 0.7, 3, 30);
+  adsp_design_biquad_lowpass(taps_buf, f, fs, 0.7);
+  //adsp_design_biquad_highpass(taps_buf, f, fs, 0.7);
+  //adsp_design_biquad_notch(taps_buf, f, fs, 0.7);
+  //adsp_design_biquad_allpass(taps_buf, f, fs, 0.7);
+  //adsp_design_biquad_peaking(taps_buf, f, fs, 0.7, 3);
   printf("taps : b0 %ld b1 %ld b2 %ld a1 %ld a2 %ld\n", taps_buf[0], taps_buf[1], taps_buf[2], taps_buf[3], taps_buf[4]);
 
   for (unsigned i = 0; i < 5; i++)
