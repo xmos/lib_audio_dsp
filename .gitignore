@@ -1,0 +1,30 @@
+# Editor cruft
+**/.vscode/
+**/*.swp
+
+# Build cruft
+**/build*/
+**/_build*/
+**/_templates*/
+**/autogen/
+**/bin*/
+**/dist*/
+
+# Build & debug cruft
+*.a
+*.vcd
+*.gtkw
+
+# Python cruft
+**/.venv/
+**/.python-version
+**/*.pyc
+**/__pycache__/
+**/*.egg-info/
+**/.pytest_cache
+
+# test cruft
+**/test_*.log
+
+# macOS cruft
+.DS_Store
