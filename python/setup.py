@@ -21,6 +21,7 @@ setuptools.setup(
         'graphviz',
         'IPython',
         'pyyaml',
+        'mako'
     ],
     dependency_links=[],
 )
