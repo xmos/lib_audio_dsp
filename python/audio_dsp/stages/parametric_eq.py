@@ -18,7 +18,7 @@ module:
 includes:
   - stdint.h
   - "dsp.h"
-  - "dspt_module.h"
+  - "adsp_module.h"
 defines:
   FILTERS: 4
 """

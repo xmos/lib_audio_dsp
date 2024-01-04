@@ -9,7 +9,7 @@ module:
       type: float
 includes:
   - stdint.h
-  - "dspt_module.h"
+  - "adsp_module.h"
 """
 
 class AGC(Stage):
