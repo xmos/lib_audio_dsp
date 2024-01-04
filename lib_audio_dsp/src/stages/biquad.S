@@ -3,20 +3,20 @@
 
 /*
 int32_t adsp_biquad(int32_t new_sample,
-                    int32_t * config,
+                    int32_t * coeffs,
                     int32_t * state,
-                    const int32_t q_format)
+                    const int32_t lshift)
 */
 
 
 #define FUNCTION_NAME   adsp_biquad
 
 #define NSTACKVECS      (1)
-#define NSTACKWORDS     (2+8*NSTACKVECS)
-#define STACK_VEC_TMP   (NSTACKWORDS-8)
+#define NSTACKWORDS     (2 + 8 * NSTACKVECS)
+#define STACK_VEC_TMP   (NSTACKWORDS - 8)
 
 #define sample      r0
-#define config      r1
+#define coeffs      r1
 #define state       r2
 #define lshift      r3
 
@@ -30,23 +30,31 @@ int32_t adsp_biquad(int32_t new_sample,
 FUNCTION_NAME:
     dualentsp NSTACKWORDS
     std r4, r5, sp[0]
-    ldc r11, 0
-    vsetc r11
-    ldd r5, r4, state[0]     // x[n - 1] x[n - 2]
-    std r4, sample, state[0] // x[n] x[n - 1]
-    stw r5, state[2]         // x[n - 2]
-    // the state should be ready for the vlmaccr at this point
-    vldc config[0]
-    vlmaccr state[0]
-    ldaw r1, sp[STACK_VEC_TMP]
-    vstr r1[0]
-    ldw r5, r1[0]
-    ldw r4, state[3]        // y[n - 1]
-    stw r5, state[3]
-    stw r4, state[4]
-    shl sample, r5, lshift
+    {   vclrdr                      ;   ldc r11, 0                  }
+    {   vsetc r11                   ;                               }
+
+    // state has x[n - 1] x[n - 2] x[n - 3] y[n - 1] y[n - 2] ....
+    
+    ldd r5, r4, state[0]
+    std r4, sample, state[0]
+    {   stw r5, state[2]            ;                               }
+    
+    // state has x[n] x[n - 1] x[n - 2] y[n - 1] y[n - 2] ....
+    
+    {   vldc coeffs[0]              ;                               }
+    {   vlmaccr state[0]            ;   ldaw r1, sp[STACK_VEC_TMP]  }
+    // vR[0] has y[n]
+    
+    {   vstr r1[0]                  ;                               }
+    {   ldw sample, r1[0]           ;                               }
+    {   ldw r4, state[3]            ;                               }
+    {   stw r4, state[4]            ;   shl sample, sample, lshift  }
+    {   stw sample, state[3]        ;                               }
+
+    // state has x[n] x[n - 1] x[n - 2] y[n] y[n - 1] ....
+
     ldd r4, r5, sp[0]
-    retsp NSTACKWORDS 
+    retsp NSTACKWORDS
 
 .cc_bottom FUNCTION_NAME.function; 
 .set FUNCTION_NAME.nstackwords,NSTACKWORDS;     .global FUNCTION_NAME.nstackwords; 
