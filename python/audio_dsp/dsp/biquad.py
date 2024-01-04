@@ -13,7 +13,7 @@ class biquad():
 
         # coeffs should be in the form [b0 b1 b2 -a1 -a2], and normalized by a0
         assert len(coeffs) == 5, "coeffs should be in the form [b0 b1 b2 -a1 -a2]"
-        self.coeffs = round_and_check(coeffs, self.b_shift)
+        self.coeffs, self.int_coeffs = round_and_check(coeffs, self.b_shift)
 
         # state variables
         self.x1 = 0
@@ -48,29 +48,32 @@ class biquad():
 
     def process_int(self, sample):
 
-        coeff_copy = np.array(self.coeffs)
-        coeff_copy = (coeff_copy * 2**30).astype(np.int32)
-
-        sample_int = (sample * 2**self.Q_sig).astype(np.int32)
+        sample_int = np.round(sample * 2**self.Q_sig).astype(np.int32)
 
         # process a single sample using direct form 1
-        y = ((coeff_copy[0].astype(np.int64)*sample_int) +
-             (coeff_copy[1].astype(np.int64)*self.x1) +
-             (coeff_copy[2].astype(np.int64)*self.x2) +
-             (coeff_copy[3].astype(np.int64)*self.y1) +
-             (coeff_copy[4].astype(np.int64)*self.y2))
+        y = ((self.int_coeffs[0].astype(np.int64)*sample_int) +
+             (self.int_coeffs[1].astype(np.int64)*self.x1) +
+             (self.int_coeffs[2].astype(np.int64)*self.x2) +
+             (self.int_coeffs[3].astype(np.int64)*self.y1) +
+             (self.int_coeffs[4].astype(np.int64)*self.y2))
 
-        # rounding back to int_32
+        # in an ideal world, we do (y << -self.b_shift) here, but the rest of
+        # the VPU must come first 
+
+        # rounding back to int_32 VPU style
         y = y + 2**29
         y = (y >> 30).astype(np.int32)
 
+        # save states
         self.x2 = np.array(self.x1).astype(np.int32)
         self.x1 = np.array(sample_int).astype(np.int32)
         self.y2 = np.array(self.y1).astype(np.int32)
         self.y1 = np.array(y).astype(np.int32)
 
-        y_scaled = (y << -self.b_shift)
-        y_flt = (y_scaled*2**-self.Q_sig).astype(np.double)
+        # compensate for coefficients
+        y = (y << -self.b_shift).astype(np.int32)
+
+        y_flt = (y.astype(np.double)*2**-self.Q_sig).astype(np.double)
 
         return y_flt
 
@@ -146,20 +149,23 @@ def biquad_linkwitz(fs, f0, q0, fp, qp):
     return biquad(coeffs)
 
 
-def round_to_q30(coeffs):
+def round_to_q30(coeffs, b_shift):
     rounded_coeffs = [None] * len(coeffs)
-    Q = 30
+    int_coeffs = [None] * len(coeffs)
+
+    Q = 30 + b_shift
     for n in range(len(coeffs)):
         # scale to Q30 ints
         rounded_coeffs[n] = np.round(coeffs[n] * 2**Q)
         # check for overflow
         assert (rounded_coeffs[n] > -2**31 and rounded_coeffs[n] < (2**31 - 1)), \
-            "Filter coefficient will overflow (%.2f, %d), reduce gain" % (coeffs[n], n)
+            "Filter coefficient will overflow (%.4f, %d), reduce gain" % (coeffs[n], n)
 
+        int_coeffs[n] = rounded_coeffs[n].astype(np.int32)
         # rescale to floats
         rounded_coeffs[n] = rounded_coeffs[n]/2**Q
 
-    return rounded_coeffs
+    return rounded_coeffs, int_coeffs
 
 
 def apply_biquad_gain(coeffs, gain_db):
@@ -195,14 +201,13 @@ def normalise_biquad(coeffs):
 
 def round_and_check(coeffs, b_shift=0):
     # round to int32 precision
-    coeffs = apply_biquad_bshift(coeffs, b_shift)
-    coeffs = round_to_q30(coeffs)
+    coeffs, int_coeffs = round_to_q30(coeffs, b_shift)
 
     # check filter is stable
     poles = np.roots([1, -coeffs[3], -coeffs[4]])
     assert np.all(np.abs(poles) < 1), "Poles lie outside the unit circle, the filter is unstable"
 
-    return coeffs
+    return coeffs, int_coeffs
 
 
 def make_biquad_bypass(fs):
