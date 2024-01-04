@@ -9,6 +9,11 @@ def db(input):
     return out
 
 
+def db_pow(input):
+    out = 10*np.log10(np.abs(input) + FLT_MIN)
+    return out
+
+
 def db2gain(input):
     out = 10**(input/20)
     return out
