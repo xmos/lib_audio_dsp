@@ -18,11 +18,13 @@ void parametric_eq_process(int32_t *input, int32_t *output, void *app_data_state
     // 4 biquads over 4 samples take 290 reference timer cycles
     for(int i=0; i<state->config.num_outputs; i++)
     {
-        output[i] = dsp_filters_biquads (( int32_t ) input[i + state->config.input_start_offset],
+        output[i] = input[i];
+        // We don't want to include lib_dsp
+        /*output[i] = dsp_filters_biquads (( int32_t ) input[i + state->config.input_start_offset],
                                                         state->config.filter_coeffs ,
                                                         state->filter_states[i],
                                                         FILTERS ,
-                                                        28);
+                                                        28);*/
     }
     if(control->config_rw_state == config_write_pending)
     {

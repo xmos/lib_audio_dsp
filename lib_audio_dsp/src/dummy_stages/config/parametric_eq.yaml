@@ -12,8 +12,8 @@ module:
       type: int32_t
 includes:
   - stdint.h
-  - "dsp.h"
   - "adsp_module.h"
 defines:
   FILTERS: 4
+  DSP_NUM_COEFFS_PER_BIQUAD: 5
 
