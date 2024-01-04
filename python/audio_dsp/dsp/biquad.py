@@ -64,8 +64,8 @@ class biquad():
         y = y + 2**29
         y = (y >> 30).astype(np.int32)
 
-        # compensate for coefficients
-        y = (y << -self.b_shift).astype(np.int32)
+        # # compensate for coefficients
+        # y = (y << -self.b_shift).astype(np.int32)
 
         # save states
         self.x2 = np.array(self.x1).astype(np.int32)
@@ -73,8 +73,8 @@ class biquad():
         self.y2 = np.array(self.y1).astype(np.int32)
         self.y1 = np.array(y).astype(np.int32)
 
-        # # compensate for coefficients
-        # y = (y << -self.b_shift).astype(np.int32)
+        # compensate for coefficients
+        y = (y << -self.b_shift).astype(np.int32)
 
         y_flt = (y.astype(np.double)*2**-self.Q_sig).astype(np.double)
 
@@ -82,7 +82,7 @@ class biquad():
 
     def freq_response(self, nfft=512):
         b = [self.coeffs[0], self.coeffs[1], self.coeffs[2]]
-        # b = apply_biquad_bshift(b, -self.b_shift)
+        b = apply_biquad_bshift(b, -self.b_shift)
         a = [1, -self.coeffs[3], -self.coeffs[4]]
         w, h = spsig.freqz(b, a, worN=nfft)
 
@@ -156,7 +156,7 @@ def round_to_q30(coeffs, b_shift):
     rounded_coeffs = [None] * len(coeffs)
     int_coeffs = [None] * len(coeffs)
 
-    Q = 30 + b_shift
+    Q = 30  # + b_shift
     for n in range(len(coeffs)):
         # scale to Q30 ints
         rounded_coeffs[n] = np.round(coeffs[n] * 2**Q)
@@ -204,7 +204,7 @@ def normalise_biquad(coeffs):
 
 def round_and_check(coeffs, b_shift=0):
     # round to int32 precision
-    # coeffs = apply_biquad_bshift(coeffs, b_shift)
+    coeffs = apply_biquad_bshift(coeffs, b_shift)
     coeffs, int_coeffs = round_to_q30(coeffs, b_shift)
 
     # check filter is stable
