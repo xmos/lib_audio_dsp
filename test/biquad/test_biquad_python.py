@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-import audio_dsp.biquad as bq
+import audio_dsp.dsp.biquad as bq
 
 
 @pytest.mark.parametrize("filter_type", ["biquad_peaking",
