@@ -5,12 +5,12 @@ project(biquad_test)
 
 set( AUTOGEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/src.autogen )
 set(LIB_AUDIO_DSP_PATH ${CMAKE_CURRENT_LIST_DIR}/../../lib_audio_dsp)
-set(CONFIG_YAML_PATH ${LIB_AUDIO_DSP_PATH}/src/dummy_stages/config)
+set(CONFIG_YAML_PATH ${LIB_AUDIO_DSP_PATH}/src/stages/config)
 file( GLOB MODULE_CONFIG_YAML_FILES  ${CONFIG_YAML_PATH}/*.yaml )
-file(GLOB TEMPLATE_FILES ${LIB_AUDIO_DSP_PATH}/src/dummy_stages/autogen/templates/*.mako)
+file(GLOB TEMPLATE_FILES ${LIB_AUDIO_DSP_PATH}/src/stages/autogen/templates/*.mako)
 unset(CMD_MAP_GEN_ARGS)
 list(APPEND CMD_MAP_GEN_ARGS --config-dir ${CONFIG_YAML_PATH} --out-dir ${AUTOGEN_DIR})
-set(CMD_MAP_GEN_SCRIPT ${LIB_AUDIO_DSP_PATH}/src/dummy_stages/autogen/parse_config.py)
+set(CMD_MAP_GEN_SCRIPT ${LIB_AUDIO_DSP_PATH}/src/stages/autogen/parse_config.py)
 
 # Get output C file names
 set(OUTPUT_C_FILES ${AUTOGEN_DIR}/generator/gen_cmd_map_offset.c)

@@ -3,16 +3,16 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <xmath/xmath.h>
 
 #define DSP_INPUT_CHANNELS (4)  // For the 2ch USB + 2ch I2S config for now. TODO: Fix this
 #define DSP_OUTPUT_CHANNELS (DSP_INPUT_CHANNELS)
-
-#define DWORD_ALIGNED     __attribute__ ((aligned(8)))
 
 typedef enum
 {
     parametric_eq = 0,
     agc,
+    biquad,
     num_dsp_modules
 }all_dsp_modules_t;
 
