@@ -67,18 +67,12 @@ def run_py(sig_fl):
   sf.write(gen_dir / "sig_py.wav", out_fl, fs, "PCM_24")
   return out_fl, qxx_to_float(out_int)
 
-sig_fl = get_sig()
-out_py_fl, out_py_int = run_py(sig_fl)
-out_c = get_c_wav()
-
-<<<<<<< HEAD
-np.testing.assert_allclose(out_c, out_py_int, verbose=True)
-np.testing.assert_allclose(out_c, out_py_fl,  verbose=True)
-=======
 def test_biquad_c():
   build_dir.mkdir(exist_ok=True, parents=True)
   gen_dir.mkdir(exist_ok=True, parents=True)
-  sig_fl, sig_int = get_sig()
-  run_py(sig_fl)
-  get_c_wav()
->>>>>>> 4e5921b48c17257b68218a4364cf211b76d3d4c2
+  sig_fl = get_sig()
+  out_py_fl, out_py_int = run_py(sig_fl)
+  out_c = get_c_wav()
+
+  np.testing.assert_allclose(out_c, out_py_int, verbose=True)
+  np.testing.assert_allclose(out_c, out_py_fl,  verbose=True)
