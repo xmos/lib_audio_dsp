@@ -2,7 +2,7 @@ import numpy as np
 import scipy.signal as spsig
 import matplotlib.pyplot as plt
 
-import audio_dsp.utils as utils
+from . import utils as utils
 
 
 class biquad():

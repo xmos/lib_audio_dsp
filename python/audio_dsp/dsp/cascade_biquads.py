@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-import audio_dsp.biquad as bq
-import audio_dsp.utils as utils
+from . import biquad as bq
+from . import utils as utils
 
 
 class cascaded_biquads():

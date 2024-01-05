@@ -4,7 +4,7 @@ import soundfile as sf
 from pathlib import Path
 import subprocess
 import os
-import audio_dsp.biquad as bq
+import audio_dsp.dsp.biquad as bq
 
 build_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
@@ -60,6 +60,9 @@ def run_py(sig_fl):
     output[n] = filt.process_int(sig_fl[n])
   sf.write(gen_dir / "sig_py.wav", output, fs, "PCM_24")
 
-sig_fl, sig_int = get_sig()
-run_py(sig_fl)
-get_c_wav()
+def test_biquad_c():
+  build_dir.mkdir(exist_ok=True, parents=True)
+  gen_dir.mkdir(exist_ok=True, parents=True)
+  sig_fl, sig_int = get_sig()
+  run_py(sig_fl)
+  get_c_wav()
