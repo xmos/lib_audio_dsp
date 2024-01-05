@@ -1,5 +1,5 @@
 from ..design.stage import Stage
-import audio_dsp.biquad as bq
+import audio_dsp.dsp.biquad as bq
 import numpy as np
 
 # Copied from Shuchita's branch of usb audio
