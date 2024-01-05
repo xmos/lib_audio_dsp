@@ -6,17 +6,22 @@
 #include "biquad_module.h"
 
 DSP_MODULE_PROCESS_ATTR
-void biquad_process(int32_t *input, int32_t *output, void *app_data_state)
+void biquad_process(int32_t **input, int32_t **output, void *app_data_state)
 {
     xassert(app_data_state != NULL);
     biquad_state_t *state = app_data_state;
+    int32_t *in = (int32_t*)input;
+    int32_t *out = (int32_t*)output;
 
     for(int i=0; i<state->n_outputs; i++)
     {
-        output[i] = adsp_biquad(input[i],
-                    state->config.filter_coeffs,
-                    state->filter_states[i],
-                    state->config.left_shift);
+        for(int j=0; j<state->frame_size; j++)
+        {
+            *out++ = adsp_biquad((*in++),
+                        state->config.filter_coeffs,
+                        state->filter_states[i],
+                        state->config.left_shift);
+        }
     }
 }
 

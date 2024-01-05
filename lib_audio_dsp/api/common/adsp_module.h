@@ -36,7 +36,7 @@ typedef struct
 }module_control_t;
 
 #define DSP_MODULE_PROCESS_ATTR  __attribute__((fptrgroup("dsp_module_process_fptr_grp")))
-typedef void (*dsp_module_process)(int32_t *input, int32_t *output, void *state);
+typedef void (*dsp_module_process)(int32_t **input, int32_t **output, void *state);
 
 #define DSP_MODULE_CONTROL_ATTR  __attribute__((fptrgroup("dsp_module_control_fptr_grp")))
 typedef void (*dsp_module_control)(void *state, module_control_t *control);
