@@ -58,7 +58,7 @@ class biquad():
              (coeff_copy[1].astype(np.int64)*self.x1) +
              (coeff_copy[2].astype(np.int64)*self.x2) +
              (coeff_copy[3].astype(np.int64)*self.y1) +
-             (coeff_copy[4].astype(np.int64)*self.y2))
+             (coeff_copy[4].astype(np.int64)*self.y2)).astype(np.int64)
 
         # rounding back to int_32
         y = y + 2**29
