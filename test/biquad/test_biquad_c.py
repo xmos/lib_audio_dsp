@@ -3,7 +3,8 @@ import numpy as np
 import soundfile as sf
 from pathlib import Path
 import subprocess
-import audio_dsp.biquad as bq
+import os
+import audio_dsp.dsp.biquad as bq
 
 build_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
@@ -70,5 +71,14 @@ sig_fl = get_sig()
 out_py_fl, out_py_int = run_py(sig_fl)
 out_c = get_c_wav()
 
+<<<<<<< HEAD
 np.testing.assert_allclose(out_c, out_py_int, verbose=True)
 np.testing.assert_allclose(out_c, out_py_fl,  verbose=True)
+=======
+def test_biquad_c():
+  build_dir.mkdir(exist_ok=True, parents=True)
+  gen_dir.mkdir(exist_ok=True, parents=True)
+  sig_fl, sig_int = get_sig()
+  run_py(sig_fl)
+  get_c_wav()
+>>>>>>> 4e5921b48c17257b68218a4364cf211b76d3d4c2

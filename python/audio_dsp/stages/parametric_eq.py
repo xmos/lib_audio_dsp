@@ -5,16 +5,10 @@ PEQ_CONFIG = """
 ---
 module:
   parametric_eq:
-    num_inputs:
-      type: int32_t
     filter_coeffs:
       type: int32_t
       size: FILTERS * DSP_NUM_COEFFS_PER_BIQUAD
       attribute: DWORD_ALIGNED
-    num_outputs:
-      type: int32_t
-    input_start_offset:
-      type: int32_t
 includes:
   - stdint.h
   - "dsp.h"
