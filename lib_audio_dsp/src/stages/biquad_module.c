@@ -13,7 +13,7 @@ void biquad_process(int32_t *input, int32_t *output, void *app_data_state, modul
     xassert(control != NULL);
     biquad_config_t *config = control->config;
 
-    for(int i=0; i<MAX_CHANNELS; i++)
+    for(int i=0; i<state->n_outputs; i++)
     {
         output[i] = adsp_biquad(input[i],
                     state->config.filter_coeffs,
@@ -34,7 +34,7 @@ void biquad_process(int32_t *input, int32_t *output, void *app_data_state, modul
 }
 
 DSP_MODULE_INIT_ATTR
-module_instance_t* biquad_init(uint8_t id)
+module_instance_t* biquad_init(uint8_t id, int n_inputs, int n_outputs, int frame_size, void* module_config)
 {
     module_instance_t *module_instance = malloc(sizeof(module_instance_t));
 
@@ -42,13 +42,23 @@ module_instance_t* biquad_init(uint8_t id)
     biquad_config_t *config = malloc(sizeof(biquad_config_t)); // malloc_from_heap
 
     memset(state, 0, sizeof(biquad_state_t));
+    state->n_inputs = n_inputs;
+    state->n_outputs = n_outputs;
+    state->frame_size = frame_size;
 
-    // b2 / a0 b1 / a0 b0 / a0 -a1 / a0 -a2 / a0
-    const int32_t DWORD_ALIGNED filter_coeffs [5] = {
-        1073741824 , 0 , 0 , 0 , 0 ,
-    };
-
-    memcpy(state->config.filter_coeffs, filter_coeffs, sizeof(filter_coeffs));
+    if(module_config != NULL)
+    {
+        biquad_config_t *init_config = module_config;
+        memcpy(&state->config, init_config, sizeof(biquad_config_t));
+    }
+    else
+    {
+        // b2 / a0 b1 / a0 b0 / a0 -a1 / a0 -a2 / a0
+        const int32_t DWORD_ALIGNED filter_coeffs [5] = {
+            1073741824 , 0 , 0 , 0 , 0 ,
+        };
+        memcpy(state->config.filter_coeffs, filter_coeffs, sizeof(filter_coeffs));
+    }
 
     memcpy(config, &state->config, sizeof(biquad_config_t));
 

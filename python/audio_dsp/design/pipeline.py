@@ -19,6 +19,9 @@ class Pipeline:
     def __init__(self, n_in):
         self.graph = Graph()
         self._threads = []
+        self.n_in = n_in
+        self.n_out = self.n_in
+        self.frame_size = 1
 
         self.i = [StageOutput() for _ in range(n_in)]
         for i, input in enumerate(self.i):
@@ -138,7 +141,7 @@ void dspt_xcore_main(chanend_t c_data, chanend_t c_control)
     for i, thread in enumerate(threads):
         dsp_main += f"module_instance_t* modules{i}[] = {{\n"
         for mod_i, mod_name in thread:
-            dsp_main += f"\t{mod_name}_init({mod_i}),\n"
+            dsp_main += f"\t{mod_name}_init({mod_i}, {pipeline.n_in}, {pipeline.n_out}, {pipeline.frame_size}, NULL),\n"
         dsp_main += f"}};\n\n"
         for this_i, (mod_i, mod_name) in enumerate(thread):
             dsp_main += f"all_modules[{mod_i}] = modules{i}[{this_i}];\n"

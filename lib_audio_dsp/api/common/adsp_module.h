@@ -48,8 +48,8 @@ typedef struct
 
 
 #define DSP_MODULE_INIT_ATTR  __attribute__((fptrgroup("dsp_module_init_fptr_grp")))
-//typedef module_instance_t* (*dsp_module_init)(uint8_t id, int n_inputs, int n_outputs, int frame_size, void* module_config);
-typedef module_instance_t* (*dsp_module_init)(uint8_t id);
+typedef module_instance_t* (*dsp_module_init)(uint8_t id, int n_inputs, int n_outputs, int frame_size, void* module_config);
+//typedef module_instance_t* (*dsp_module_init)(uint8_t id);
 
 typedef struct
 {
