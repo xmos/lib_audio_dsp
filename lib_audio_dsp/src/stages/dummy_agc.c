@@ -33,6 +33,7 @@ module_instance_t* agc_init(uint8_t id, int n_inputs, int n_outputs, int frame_s
     module_instance->process_sample = agc_process;
 
     // Control stuff
+    module_instance->module_control = agc_control;
     module_instance->control.config = config;
     module_instance->control.id = id;
     module_instance->control.module_type = agc;
@@ -42,18 +43,25 @@ module_instance_t* agc_init(uint8_t id, int n_inputs, int n_outputs, int frame_s
 }
 
 DSP_MODULE_PROCESS_ATTR
-void agc_process(int32_t *input, int32_t *output, void *app_data_state, module_control_t *control)
+void agc_process(int32_t *input, int32_t *output, void *app_data_state)
 {
     xassert(app_data_state != NULL);
     agc_state_t *state = app_data_state;
-    xassert(control != NULL);
-    agc_config_t *config = control->config;
 
     // 4 biquads over 4 samples take 290 reference timer cycles
     for(int i=0; i<state->n_outputs; i++)
     {
         output[i] = (int32_t)(input[i] * state->config.gain);
     }
+}
+
+DSP_MODULE_CONTROL_ATTR
+void agc_control(void *module_state, module_control_t *control)
+{
+    xassert(module_state != NULL);
+    agc_state_t *state = module_state;
+    xassert(control != NULL);
+    agc_config_t *config = control->config;
 
     if(control->config_rw_state == config_write_pending)
     {

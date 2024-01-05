@@ -6,12 +6,10 @@
 #include "biquad_module.h"
 
 DSP_MODULE_PROCESS_ATTR
-void biquad_process(int32_t *input, int32_t *output, void *app_data_state, module_control_t *control)
+void biquad_process(int32_t *input, int32_t *output, void *app_data_state)
 {
     xassert(app_data_state != NULL);
     biquad_state_t *state = app_data_state;
-    xassert(control != NULL);
-    biquad_config_t *config = control->config;
 
     for(int i=0; i<state->n_outputs; i++)
     {
@@ -19,17 +17,6 @@ void biquad_process(int32_t *input, int32_t *output, void *app_data_state, modul
                     state->config.filter_coeffs,
                     state->filter_states[i],
                     state->config.left_shift);
-    }
-    if(control->config_rw_state == config_write_pending)
-    {
-        // Finish the write by updating the working copy with the new config
-        memcpy(&state->config, config, sizeof(biquad_config_t));
-        control->config_rw_state = config_none_pending;
-    }
-    else if(control->config_rw_state == config_read_pending)
-    {
-        memcpy(config, &state->config, sizeof(biquad_config_t));
-        control->config_rw_state = config_read_updated;
     }
 }
 
@@ -66,10 +53,32 @@ module_instance_t* biquad_init(uint8_t id, int n_inputs, int n_outputs, int fram
     module_instance->process_sample = biquad_process;
 
     // Control stuff
+    module_instance->module_control = biquad_control;
     module_instance->control.config = config;
     module_instance->control.id = id;
     module_instance->control.module_type = biquad;
     module_instance->control.num_control_commands = NUM_CMDS_BIQUAD;
     module_instance->control.config_rw_state = config_none_pending;
     return module_instance;
+}
+
+DSP_MODULE_CONTROL_ATTR
+void biquad_control(void *module_state, module_control_t *control)
+{
+    xassert(module_state != NULL);
+    biquad_state_t *state = module_state;
+    xassert(control != NULL);
+    biquad_config_t *config = control->config;
+
+    if(control->config_rw_state == config_write_pending)
+    {
+        // Finish the write by updating the working copy with the new config
+        memcpy(&state->config, config, sizeof(biquad_config_t));
+        control->config_rw_state = config_none_pending;
+    }
+    else if(control->config_rw_state == config_read_pending)
+    {
+        memcpy(config, &state->config, sizeof(biquad_config_t));
+        control->config_rw_state = config_read_updated;
+    }
 }

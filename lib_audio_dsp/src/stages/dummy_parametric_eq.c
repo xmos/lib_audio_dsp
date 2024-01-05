@@ -8,12 +8,10 @@
 
 
 DSP_MODULE_PROCESS_ATTR
-void parametric_eq_process(int32_t *input, int32_t *output, void *app_data_state, module_control_t *control)
+void parametric_eq_process(int32_t *input, int32_t *output, void *app_data_state)
 {
     xassert(app_data_state != NULL);
     parametric_eq_state_t *state = app_data_state;
-    xassert(control != NULL);
-    parametric_eq_config_t *config = control->config;
 
     // 4 biquads over 4 samples take 290 reference timer cycles
     for(int i=0; i<state->n_outputs; i++)
@@ -25,17 +23,6 @@ void parametric_eq_process(int32_t *input, int32_t *output, void *app_data_state
                                                         state->filter_states[i],
                                                         FILTERS ,
                                                         28);*/
-    }
-    if(control->config_rw_state == config_write_pending)
-    {
-        // Finish the write by updating the working copy with the new config
-        memcpy(&state->config, config, sizeof(parametric_eq_config_t));
-        control->config_rw_state = config_none_pending;
-    }
-    else if(control->config_rw_state == config_read_pending)
-    {
-        memcpy(config, &state->config, sizeof(parametric_eq_config_t));
-        control->config_rw_state = config_read_updated;
     }
 }
 
@@ -65,10 +52,32 @@ module_instance_t* parametric_eq_init(uint8_t id, int n_inputs, int n_outputs, i
     module_instance->process_sample = parametric_eq_process;
 
     // Control stuff
+    module_instance->module_control = parametric_eq_control;
     module_instance->control.config = config;
     module_instance->control.id = id;
     module_instance->control.module_type = parametric_eq;
     module_instance->control.num_control_commands = NUM_CMDS_PARAMETRIC_EQ;
     module_instance->control.config_rw_state = config_none_pending;
     return module_instance;
+}
+
+DSP_MODULE_CONTROL_ATTR
+void parametric_eq_control(void *module_state, module_control_t *control)
+{
+    xassert(module_state != NULL);
+    parametric_eq_state_t *state = module_state;
+    xassert(control != NULL);
+    parametric_eq_config_t *config = control->config;
+
+    if(control->config_rw_state == config_write_pending)
+    {
+        // Finish the write by updating the working copy with the new config
+        memcpy(&state->config, config, sizeof(parametric_eq_config_t));
+        control->config_rw_state = config_none_pending;
+    }
+    else if(control->config_rw_state == config_read_pending)
+    {
+        memcpy(config, &state->config, sizeof(parametric_eq_config_t));
+        control->config_rw_state = config_read_updated;
+    }
 }

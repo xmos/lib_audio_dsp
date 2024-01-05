@@ -1,6 +1,13 @@
 #include <xcore/channel.h>
 #include "adsp_module.h"
 
+static void do_control(module_instance_t** modules, size_t num_modules)
+{
+    for(size_t i=0; i<num_modules; i++)
+    {
+        modules[i]->module_control(modules[i]->state, &modules[i]->control);
+    }
+}
 
 #pragma stackfunction 1000 // TODO
 void dsp_thread(chanend_t c_source, chanend_t c_dest, module_instance_t** modules, size_t num_modules)
@@ -15,7 +22,7 @@ void dsp_thread(chanend_t c_source, chanend_t c_dest, module_instance_t** module
         chan_in_buf_word(c_source, (uint32_t*)input_ptr, DSP_INPUT_CHANNELS);
         for(int i=0; i<num_modules; i++)
         {
-            modules[i]->process_sample(input_ptr, output_ptr, modules[i]->state, &modules[i]->control);
+            modules[i]->process_sample(input_ptr, output_ptr, modules[i]->state);
 
             if(i < num_modules-1) // If we have more iterations
             {
@@ -25,5 +32,8 @@ void dsp_thread(chanend_t c_source, chanend_t c_dest, module_instance_t** module
             }
         }
         chan_out_buf_word(c_dest, (uint32_t*)output_ptr, DSP_OUTPUT_CHANNELS);
+
+        do_control(modules, num_modules);
     }
 }
+
