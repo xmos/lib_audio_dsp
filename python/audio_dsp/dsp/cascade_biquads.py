@@ -18,6 +18,13 @@ class cascaded_biquads():
 
         return y
 
+    def process_int(self, sample):
+        y = sample
+        for biquad in self.biquads:
+            y = biquad.process_int(y)
+
+        return y
+
     def freq_response(self, nfft=512):
         w, h_all = self.biquads[0].freq_response(nfft)
         for biquad in self.biquads[1:]:
@@ -48,8 +55,6 @@ class parametric_eq(cascaded_biquads):
             coeffs_list.append(class_handle(fs, *spec[1:]))
 
         super().__init__(coeffs_list)
-
-
 
 
 def make_butterworth_lowpass(N, fc, fs):
@@ -184,6 +189,5 @@ if __name__ == "__main__":
     figs[1].grid()
 
     plt.show()
-
 
     pass
