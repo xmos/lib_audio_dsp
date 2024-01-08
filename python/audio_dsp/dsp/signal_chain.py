@@ -30,6 +30,14 @@ class adder(mixer):
         super.__init__(self, num_channels, db_gain=0)
 
 
+class subtractor(dspg.dsp_block):
+    # subtract 1st input from the second
+    def process(self, sample_list):
+        y = sample_list[0] - sample_list[1]
+
+        return y
+
+
 class fixed_gain(dspg.dsp_block):
     # multiply every sample by a fixed gain value
     def __init__(self, gain_db):
