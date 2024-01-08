@@ -5,5 +5,6 @@ set(LIB_INCLUDES api
                  api/common)
 set(LIB_DEPENDENT_MODULES "lib_xcore_math(xcommon_cmake)" "lib_logging")
 set(LIB_COMPILER_FLAGS -Os -Wall -Werror -g -mcmodel=large)
+set(LIB_OPTIONAL_HEADERS adsp_generated.h)
 
 XMOS_REGISTER_MODULE()
