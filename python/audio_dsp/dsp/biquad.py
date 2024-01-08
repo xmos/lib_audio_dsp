@@ -3,13 +3,13 @@ import scipy.signal as spsig
 import matplotlib.pyplot as plt
 
 from audio_dsp.dsp import utils as utils
-
+from audio_dsp.dsp import generic as dspg
 
 BOOST_BSHIFT = 2  # limit boosts to 12dB gain
 
 
-class biquad():
-    def __init__(self, coeffs: list, b_shift=0, Q_sig=30):
+class biquad(dspg.dsp_block):
+    def __init__(self, coeffs: list, b_shift=0, Q_sig=dspg.Q_SIG):
 
         self.b_shift = b_shift
         self.Q_sig = Q_sig
