@@ -48,8 +48,8 @@ FUNCTION_NAME:
     {   vstr r1[0]                  ;                               }
     {   ldw sample, r1[0]           ;                               }
     {   ldw r4, state[3]            ;                               }
-    {   stw r4, state[4]            ;   shl sample, sample, lshift  }
     {   stw sample, state[3]        ;                               }
+    {   stw r4, state[4]            ;   shl sample, sample, lshift  }
 
     // state has x[n] x[n - 1] x[n - 2] y[n] y[n - 1] ....
 

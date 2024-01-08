@@ -9,7 +9,7 @@ BOOST_BSHIFT = 2  # limit boosts to 12dB gain
 
 
 class biquad():
-    def __init__(self, coeffs: list, b_shift=0, Q_sig=30):
+    def __init__(self, coeffs: list, b_shift=0, Q_sig=27):
 
         self.b_shift = b_shift
         self.Q_sig = Q_sig
@@ -90,6 +90,12 @@ class biquad():
         w, h = spsig.freqz(b, a, worN=nfft)
 
         return w, h
+    
+    def reset_state(self):
+        self.x1 = 0
+        self.x2 = 0
+        self.y1 = 0
+        self.y2 = 0        
 
 
 def biquad_lowpass(fs, f, q):

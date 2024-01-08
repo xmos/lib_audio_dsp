@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #define Q_factor 30
+#define BOOST_BSHIFT 2
 
 static const float pi =    3.14159265359;
 static const float log_2 = 0.69314718055;
@@ -186,7 +187,6 @@ left_shift_t adsp_design_biquad_peaking
   const float gain_db
 ) {
   // Compute common factors
-  const left_shift_t shl = 3;
 	float A  = sqrtf(powf(10, (gain_db / 20)));
 	float w0 = 2.0 * pi * frequency / fs;
 	float alpha = f32_sin(w0) / (2.0 * filter_Q);
@@ -200,13 +200,13 @@ left_shift_t adsp_design_biquad_peaking
 	float a2 =  1.0 - alpha / A;
 	
 	// Store as fixed-point values
-	coefficients[0] = _float2fixed(  b0 / a0, Q_factor - shl );
-	coefficients[1] = _float2fixed(  b1 / a0, Q_factor - shl );
-	coefficients[2] = _float2fixed(  b2 / a0, Q_factor - shl );
+	coefficients[0] = _float2fixed(  b0 / a0, Q_factor - BOOST_BSHIFT );
+	coefficients[1] = _float2fixed(  b1 / a0, Q_factor - BOOST_BSHIFT );
+	coefficients[2] = _float2fixed(  b2 / a0, Q_factor - BOOST_BSHIFT );
 	coefficients[3] = _float2fixed( -a1 / a0, Q_factor );
 	coefficients[4] = _float2fixed( -a2 / a0, Q_factor );
 
-  return shl;
+  return BOOST_BSHIFT;
 }
 
 left_shift_t adsp_design_biquad_const_q
@@ -218,7 +218,6 @@ left_shift_t adsp_design_biquad_const_q
   const float gain_db
 ) {
   // Compute common factors
-  const left_shift_t shl = 3;
   float V = powf(10, (gain_db / 20));
   // w0 is only needed for calculating K
   float K = tanf(pi * frequency / fs);
@@ -243,13 +242,13 @@ left_shift_t adsp_design_biquad_const_q
   float a2 = 1 - factor_a + K_pow2;
   
 	// Store as fixed-point values
-	coefficients[0] = _float2fixed(  b0 / a0, Q_factor - shl );
-	coefficients[1] = _float2fixed(  b1 / a0, Q_factor - shl );
-	coefficients[2] = _float2fixed(  b2 / a0, Q_factor - shl );
+	coefficients[0] = _float2fixed(  b0 / a0, Q_factor - BOOST_BSHIFT );
+	coefficients[1] = _float2fixed(  b1 / a0, Q_factor - BOOST_BSHIFT );
+	coefficients[2] = _float2fixed(  b2 / a0, Q_factor - BOOST_BSHIFT );
 	coefficients[3] = _float2fixed( -a1 / a0, Q_factor );
 	coefficients[4] = _float2fixed( -a2 / a0, Q_factor );
 
-  return shl;
+  return BOOST_BSHIFT;
 }
 
 left_shift_t adsp_design_biquad_lowshelf
@@ -261,7 +260,6 @@ left_shift_t adsp_design_biquad_lowshelf
   const float gain_db
 ) {
   // Compute common factors
-  const left_shift_t shl = 3;
 	float A  = powf(10, (gain_db / 40));
 	float w0 = 2.0 * pi * frequency / fs;
 	float alpha = f32_sin(w0) / (2.0 * filter_Q);
@@ -279,13 +277,13 @@ left_shift_t adsp_design_biquad_lowshelf
   float a2 = (A + 1) + Am1_cosw0 - alpha_factor;
 	
   // Store as fixed-point values
-	coefficients[0] = _float2fixed(  b0 / a0, Q_factor - shl );
-	coefficients[1] = _float2fixed(  b1 / a0, Q_factor - shl );
-	coefficients[2] = _float2fixed(  b2 / a0, Q_factor - shl );
+	coefficients[0] = _float2fixed(  b0 / a0, Q_factor - BOOST_BSHIFT );
+	coefficients[1] = _float2fixed(  b1 / a0, Q_factor - BOOST_BSHIFT );
+	coefficients[2] = _float2fixed(  b2 / a0, Q_factor - BOOST_BSHIFT );
 	coefficients[3] = _float2fixed( -a1 / a0, Q_factor );
 	coefficients[4] = _float2fixed( -a2 / a0, Q_factor );
 
-  return shl;
+  return BOOST_BSHIFT;
 }
 
 left_shift_t adsp_design_biquad_highshelf
@@ -297,7 +295,6 @@ left_shift_t adsp_design_biquad_highshelf
   const float gain_db
 ) {
   // Compute common factors
-  const left_shift_t shl = 3;
 	float A  = powf(10, (gain_db / 40));
 	float w0 = 2.0 * pi * frequency / fs;
 	float alpha = f32_sin(w0) / (2.0 * filter_Q);
@@ -315,13 +312,13 @@ left_shift_t adsp_design_biquad_highshelf
   float a2 = (A + 1) - Am1_cosw0 - alpha_factor;
 	
   // Store as fixed-point values
-	coefficients[0] = _float2fixed(  b0 / a0, Q_factor - shl );
-	coefficients[1] = _float2fixed(  b1 / a0, Q_factor - shl );
-	coefficients[2] = _float2fixed(  b2 / a0, Q_factor - shl );
+	coefficients[0] = _float2fixed(  b0 / a0, Q_factor - BOOST_BSHIFT );
+	coefficients[1] = _float2fixed(  b1 / a0, Q_factor - BOOST_BSHIFT );
+	coefficients[2] = _float2fixed(  b2 / a0, Q_factor - BOOST_BSHIFT );
 	coefficients[3] = _float2fixed( -a1 / a0, Q_factor );
 	coefficients[4] = _float2fixed( -a2 / a0, Q_factor );
 
-  return shl;
+  return BOOST_BSHIFT;
 }
 
 void adsp_design_biquad_linkwitz(
