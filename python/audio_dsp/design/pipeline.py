@@ -118,15 +118,15 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
 
     n_threads = len(threads)
 
-    chans = ["chan_in", *(f"chan_{i}" for i in range(n_threads))]
+    chans = ["c_source", *(f"chan_{i}" for i in range(n_threads-1)), "c_sink"]
 
     dsp_main = """
 #include "dspt_main.h"
 #pragma stackfunction 1000
-void dspt_xcore_main(chanend_t c_data, chanend_t c_control)
+void dsp_main(chanend_t c_source, chanend_t c_sink, chanend_t c_control)
 {
 """
-    for chan in chans:
+    for chan in chans[1:-1]:
         dsp_main += f"channel_t {chan} = chan_alloc();\n"
 
     total_modules = 0
@@ -149,11 +149,12 @@ void dspt_xcore_main(chanend_t c_data, chanend_t c_control)
 
     dsp_main += f"""
      PAR_JOBS(
-        PJOB(dsp_data_transport_thread, (c_data, {chans[0]}.end_a, {chans[-1]}.end_b)),
         PJOB(dsp_control_thread, (c_control, all_modules, total_num_modules))"""
 
     for i, (chan_a, chan_b) in enumerate(zip(chans[:-1], chans[1:])):
-        dsp_main += f",\n        PJOB(dsp_thread, ({chan_a}.end_b, {chan_b}.end_a, modules{i}, num_modules_thread{i}))"
+        chan_a_str = f"{chan_a}.end_b" if chan_a != "c_source" else chan_a
+        chan_b_str = f"{chan_b}.end_a" if chan_b != "c_sink" else chan_b
+        dsp_main += f",\n        PJOB(dsp_thread, ({chan_a_str}, {chan_b_str}, modules{i}, num_modules_thread{i}))"
 
     dsp_main += "\n    );\n}\n"
 
