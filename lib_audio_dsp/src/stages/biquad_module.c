@@ -10,11 +10,11 @@ void biquad_process(int32_t **input, int32_t **output, void *app_data_state)
 {
     xassert(app_data_state != NULL);
     biquad_state_t *state = app_data_state;
-    int32_t *in = (int32_t*)input;
-    int32_t *out = (int32_t*)output;
 
     for(int i=0; i<state->n_outputs; i++)
     {
+        int32_t *in = input[i];
+        int32_t *out = output[i];
         for(int j=0; j<state->frame_size; j++)
         {
             *out++ = adsp_biquad((*in++),

@@ -122,7 +122,6 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
 
     dsp_main = """
 #include "dspt_main.h"
-#pragma stackfunction 1000
 void dsp_main(chanend_t c_source, chanend_t c_sink, chanend_t c_control)
 {
 """

@@ -12,12 +12,12 @@ void parametric_eq_process(int32_t **input, int32_t **output, void *app_data_sta
 {
     xassert(app_data_state != NULL);
     parametric_eq_state_t *state = app_data_state;
-    int32_t *in = (int32_t*)input;
-    int32_t *out = (int32_t*)output;
 
     // 4 biquads over 4 samples take 290 reference timer cycles
     for(int i=0; i<state->n_outputs; i++)
     {
+        int32_t *in = input[i];
+        int32_t *out = output[i];
         for(int j=0; j<state->frame_size; j++)
         {
             *out++ = *in++;

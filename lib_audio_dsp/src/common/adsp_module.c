@@ -10,16 +10,17 @@ static void do_control(module_instance_t** modules, size_t num_modules)
     }
 }
 
-#pragma stackfunction 1000 // TODO
 void dsp_thread(chanend_t c_source, chanend_t c_dest, module_instance_t** modules, size_t num_modules)
 {
     int32_t input_data[DSP_INPUT_CHANNELS][1] = {{0}};
     int32_t output_data[DSP_OUTPUT_CHANNELS][1] = {{0}};
 
+    int32_t *input_data_ptrs[4] = {input_data[0], input_data[1], input_data[2], input_data[3]};
+    int32_t *output_data_ptrs[4] = {output_data[0], output_data[1], input_data[2], output_data[3]};
     while(1)
     {
-        int32_t **input_ptr = (int32_t**)input_data;
-        int32_t **output_ptr = (int32_t**)output_data;
+        int32_t **input_ptr = input_data_ptrs;
+        int32_t **output_ptr = output_data_ptrs;
 
         for(int i = 0; i < DSP_INPUT_CHANNELS; i++) {
             int x = chanend_in_word(c_source);
