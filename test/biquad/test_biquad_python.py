@@ -13,7 +13,7 @@ import audio_dsp.dsp.biquad as bq
 @pytest.mark.parametrize("fs", [16000, 24000, 44100, 48000, 88200, 96000, 192000])
 def test_high_gain(filter_type, f, q, gain, fs):
     filter_handle = getattr(bq, "make_%s" % filter_type)
-    bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), b_shift=-2)
+    bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), b_shift=2)
 
 
 @pytest.mark.parametrize("filter_type", ["biquad_lowpass",

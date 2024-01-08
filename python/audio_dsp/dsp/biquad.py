@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 from audio_dsp.dsp import utils as utils
 
 
+BOOST_BSHIFT = 2  # limit boosts to 12dB gain
+
+
 class biquad():
     def __init__(self, coeffs: list, b_shift=0, Q_sig=30):
 
@@ -42,7 +45,7 @@ class biquad():
         self.y2 = self.y1
         self.y1 = y
 
-        y = y * 2**-self.b_shift
+        y = y * 2**self.b_shift
 
         return y
 
@@ -57,7 +60,7 @@ class biquad():
              (self.int_coeffs[3].astype(np.int64)*self.y1) +
              (self.int_coeffs[4].astype(np.int64)*self.y2))
 
-        # in an ideal world, we do (y << -self.b_shift) here, but the rest of
+        # in an ideal world, we do (y << self.b_shift) here, but the rest of
         # the VPU must come first 
 
         # rounding back to int_32 VPU style
@@ -65,7 +68,7 @@ class biquad():
         y = (y >> 30).astype(np.int32)
 
         # # compensate for coefficients
-        # y = (y << -self.b_shift).astype(np.int32)
+        # y = (y << self.b_shift).astype(np.int32)
 
         # save states
         self.x2 = np.array(self.x1).astype(np.int32)
@@ -74,7 +77,7 @@ class biquad():
         self.y1 = np.array(y).astype(np.int32)
 
         # compensate for coefficients
-        y = (y << -self.b_shift).astype(np.int32)
+        y = (y << self.b_shift).astype(np.int32)
 
         y_flt = (y.astype(np.double)*2**-self.Q_sig).astype(np.double)
 
@@ -82,7 +85,7 @@ class biquad():
 
     def freq_response(self, nfft=512):
         b = [self.coeffs[0], self.coeffs[1], self.coeffs[2]]
-        b = apply_biquad_bshift(b, -self.b_shift)
+        b = apply_biquad_bshift(b, self.b_shift)
         a = [1, -self.coeffs[3], -self.coeffs[4]]
         w, h = spsig.freqz(b, a, worN=nfft)
 
@@ -123,40 +126,40 @@ def biquad_allpass(fs, f, q):
 
 def biquad_peaking(fs, f, q, boost_db):
     coeffs = make_biquad_peaking(fs, f, q, boost_db)
-    return biquad(coeffs)
+    return biquad(coeffs, b_shift=BOOST_BSHIFT)
 
 
 def biquad_constant_q(fs, f, q, boost_db):
     coeffs = make_biquad_constant_q(fs, f, q, boost_db)
-    return biquad(coeffs)
+    return biquad(coeffs, b_shift=BOOST_BSHIFT)
 
 
 def biquad_lowshelf(fs, f, q, boost_db):
     # q is similar to standard low pass, i.e. > 0.707 will yield peakiness
     # the level change at f will be boost_db/2
     coeffs = make_biquad_lowshelf(fs, f, q, boost_db)
-    return biquad(coeffs)
+    return biquad(coeffs, b_shift=BOOST_BSHIFT)
 
 
 def biquad_highshelf(fs, f, q, boost_db):
     # q is similar to standard high pass, i.e. > 0.707 will yield peakiness
     # the level change at f will be boost_db/2
     coeffs = make_biquad_highshelf(fs, f, q, boost_db)
-    return biquad(coeffs)
+    return biquad(coeffs, b_shift=BOOST_BSHIFT)
 
 
 def biquad_linkwitz(fs, f0, q0, fp, qp):
     # used for changing one low frequency roll off slope for another,
     # e.g. in a loudspeaker
     coeffs = make_biquad_linkwitz(fs, f0, q0, fp, qp)
-    return biquad(coeffs)
+    return biquad(coeffs, b_shift=0)
 
 
 def round_to_q30(coeffs, b_shift):
     rounded_coeffs = [None] * len(coeffs)
     int_coeffs = [None] * len(coeffs)
 
-    Q = 30  # + b_shift
+    Q = 30  # - b_shift
     for n in range(len(coeffs)):
         # scale to Q30 ints
         rounded_coeffs[n] = np.round(coeffs[n] * 2**Q)
@@ -183,7 +186,7 @@ def apply_biquad_gain(coeffs, gain_db):
 
 def apply_biquad_bshift(coeffs, b_shift):
     # apply linear bitshift to the b coefficients
-    gain = 2**b_shift
+    gain = 2**-b_shift
     coeffs[0] = coeffs[0] * gain
     coeffs[1] = coeffs[1] * gain
     coeffs[2] = coeffs[2] * gain
@@ -466,10 +469,10 @@ if __name__ == "__main__":
     fs = 48000
 
     biquad_1 = biquad(make_biquad_notch(fs, 20, 1), 0, Q_sig=30)
-    biquad_2 = biquad(make_biquad_notch(fs, 20, 1), -3, Q_sig=30)
+    biquad_2 = biquad(make_biquad_notch(fs, 20, 1), 3, Q_sig=30)
     biquad_3 = biquad(make_biquad_notch(fs, 20, 1), 0, Q_sig=27)
-    biquad_4 = biquad(make_biquad_notch(fs, 20, 1), -3, Q_sig=27)
-    biquad_5 = biquad(make_biquad_notch(fs, 20, 1), -3, Q_sig=27)
+    biquad_4 = biquad(make_biquad_notch(fs, 20, 1), 3, Q_sig=27)
+    biquad_5 = biquad(make_biquad_notch(fs, 20, 1), 3, Q_sig=27)
 
     t = np.arange(fs*4)/fs
     # signal = spsig.chirp(t, 20, 1, 20000, 'log', phi=-90)
@@ -500,7 +503,7 @@ if __name__ == "__main__":
 
     ax = plt.gca()
     ax.set_xscale('log')
-    plt.legend(["Q30", "Q30, b_shift -3", "Q27", "Q27, b_shift -3", "double"])
+    plt.legend(["Q30", "Q30, b_shift 3", "Q27", "Q27, b_shift 3", "double"])
     plt.show()
 
     pass
