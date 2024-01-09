@@ -27,8 +27,10 @@ class BiquadModule(Stage):
         self.create_outputs(self.n_in)
         self.fs = 48000
         self.filt = bq.biquad_lowpass(self.fs, 1000, 0.7)
-        self["filter_coeffs"] = " ".join([str(i) for i in self.get_fixed_point_coeffs()])
-
+        self.set_control_field_cb("filter_coeffs",
+                                  lambda: " ".join([str(i) for i in self.get_fixed_point_coeffs()]))
+        self.set_control_field_cb("left_shift",
+                                  lambda: str(self.filt.b_shift))
 
     def process(self, in_channels):
         """
@@ -44,3 +46,4 @@ class BiquadModule(Stage):
     def get_fixed_point_coeffs(self):
         a = np.array(self.filt.coeffs)
         return np.array(a*(2**30), dtype=np.int32)
+
