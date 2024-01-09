@@ -12,6 +12,28 @@ class StageOutput(Edge):
         # which input index is this
         self.dest_index = None
 
+class PropertyControlField:
+    """For stages which have internal state they can register callbacks
+    for getting and setting control fields"""
+    def __init__(self, get, set=None):
+        self._getter = get
+        self._setter = set
+
+    @property
+    def value(self):
+        return self._getter()
+
+    @value.setter
+    def value(self, value):
+        if self._setter is None:
+            raise RuntimeError("This control field can't be set directly")
+        self._setter(value)
+
+class ValueControlField:
+    """Simple field which can be updated directly"""
+    def __init__(self, value=None):
+        self.value = value
+
 class Stage(Node):
     def __init__(self, config, graph, inputs):
         super().__init__(self)
@@ -26,7 +48,7 @@ class Stage(Node):
         self.yaml_dict = yaml.load(config, Loader=yaml.Loader)
         # module dict contains 1 entry with the name of the module as its key
         self.name = next(iter(self.yaml_dict["module"].keys()))
-        self._control_fields = {name: None for name in self.yaml_dict["module"][self.name].keys()}
+        self._control_fields = {name: ValueControlField() for name in self.yaml_dict["module"][self.name].keys()}
 
     @property
     def o(self):
@@ -47,18 +69,32 @@ class Stage(Node):
     def __setitem__(self, key, value):
         if key not in self._control_fields:
             raise KeyError(f"{key} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}")
-        self._control_fields[key] = value
+        self._control_fields[key].value = value
 
     def __getitem__(self, key):
         if key not in self._control_fields:
             raise KeyError(f"{key} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}")
-        return self._control_fields[key]
+        return self._control_fields[key].value
+
+    def set_control_field_cb(self, field, getter, setter=None):
+        """
+        Register callbacks for getting and setting control fields, to be called by classes which implement stage
+
+        Args:
+            field: str name of the field
+            getter: a function which returns the current value
+            setter: A function which accepts 1 argument that will be used as the new value
+        """
+        if field not in self._control_fields:
+            raise KeyError(f"{key} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}")
+
+        self._control_fields[field] = PropertyControlField(getter, setter)
 
     def get_config(self):
         ret = {}
         for command_name, cf in self._control_fields.items():
-            if cf is not None:
-                ret[f"{self.name}_{command_name}"] = cf
+            if cf.value is not None:
+                ret[f"{self.name}_{command_name}"] = cf.value
         return ret
 
     def process(self, channels):
