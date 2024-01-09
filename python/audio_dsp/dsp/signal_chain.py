@@ -6,7 +6,8 @@ from audio_dsp.dsp import utils
 
 class mixer(dspg.dsp_block):
     # add 2 signals but attnuate first to maintain headroom
-    def __init__(self, num_channels, gain_db=-6):
+    def __init__(self, num_channels, gain_db=-6, Q_sig=dspg.Q_SIG):
+        super().__init__(Q_sig)
         self.num_channels = num_channels
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
@@ -40,7 +41,8 @@ class subtractor(dspg.dsp_block):
 
 class fixed_gain(dspg.dsp_block):
     # multiply every sample by a fixed gain value
-    def __init__(self, gain_db):
+    def __init__(self, gain_db, Q_sig=dspg.Q_SIG):
+        super().__init__(Q_sig)
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
 
@@ -60,3 +62,18 @@ class volume_control(fixed_gain):
     def set_gain(self, gain_db):
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
+
+
+class switch(dspg.dsp_block):
+    def __init__(self, Q_sig=dspg.Q_SIG):
+        super().__init__(Q_sig)
+        self.switch_position = 0
+        return
+
+    def process(self, sample_list):
+        y = sample_list[self.switch_position]
+        return y
+
+    def move_switch(self, position):
+        self.switch_position = position
+        return

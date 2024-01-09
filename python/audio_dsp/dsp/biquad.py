@@ -10,9 +10,9 @@ BOOST_BSHIFT = 2  # limit boosts to 12dB gain
 
 class biquad(dspg.dsp_block):
     def __init__(self, coeffs: list, b_shift=0, Q_sig=dspg.Q_SIG):
+        super().__init__(Q_sig)
 
         self.b_shift = b_shift
-        self.Q_sig = Q_sig
 
         # coeffs should be in the form [b0 b1 b2 -a1 -a2], and normalized by a0
         assert len(coeffs) == 5, "coeffs should be in the form [b0 b1 b2 -a1 -a2]"
