@@ -49,6 +49,31 @@ class biquad(dspg.dsp_block):
 
         return y
 
+    def process_int(self, sample):
+
+        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+
+        # process a single sample using direct form 1
+        y = utils.int64(((sample_int*self.int_coeffs[0])) +
+                        ((self.x1*self.int_coeffs[1])) +
+                        ((self.x2*self.int_coeffs[2])) +
+                        ((self.y1*(self.int_coeffs[3] >> self.b_shift))) +
+                        ((self.y2*(self.int_coeffs[4] >> self.b_shift))))
+
+        # combine the b_shift with the >> 30
+        y = y + 2**(29 - self.b_shift)
+        y = utils.int32(y >> (30 - self.b_shift))
+
+        # save states
+        self.x2 = utils.int32(self.x1)
+        self.x1 = utils.int32(sample_int)
+        self.y2 = utils.int32(self.y1)
+        self.y1 = utils.int32(y)
+
+        y_flt = (float(y)*2**-self.Q_sig)
+
+        return y_flt
+
     def process_vpu(self, sample):
 
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
