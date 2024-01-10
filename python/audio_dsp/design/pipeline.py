@@ -198,21 +198,31 @@ def generate_dsp_threads(resolved_pipeline, block_size = 1):
         for i in range(len(all_edges)):
             func += f"\tint32_t edge{i}[{block_size}];\n"
         func += "\twhile(1) {\n"
-        func += f"\tint read_count = {len(in_edges)};\n"
+
+        # Each thread must process the pending control requests at least once per loop.
+        # It will be done once before select to ensure it happens, then in the default
+        # case of the select so that control will be processed if no audio is playing.
+        control = ""
+        for i in range(len(thread)):
+            control += f"\t\tmodules[{i}]->module_control(modules[{i}]->state, &modules[{i}]->control);\n"
+
+        func += control
+        func += f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
+                                                          # the same channel being read twice
         func += "\tSELECT_RES(\n"
-        first = True
         for i, _ in enumerate(in_edges.values()):
-            if not first:
-                func += ",\n"
-            first = False
-            func += f"\t\tCASE_THEN(c_source[{i}], case_{i})"
-        func += "\n\t) {\n"
+            func += f"\t\tCASE_THEN(c_source[{i}], case_{i}),\n"
+        func += "\t\tDEFAULT_THEN(do_control)\n"
+        func += "\t) {\n"
 
         for i, edges in enumerate(in_edges.values()):
             func += f"\t\tcase_{i}: {{\n"
             for edge in edges:
                 func += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
             func += f"\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}}\n"
+        func += "\t\tdo_control: {\n"
+        func += control
+        func += "\t\tcontinue; }\n"
         func += "\t}\n"
 
 
