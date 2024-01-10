@@ -55,3 +55,12 @@ def int40(val: int):
     if -2 ** 39 <= val < (2 ** 39 - 1):
         return int(val)
     raise OverflowError
+
+
+def vpu_mult(x1: int, x2: int):
+
+    y = int64(x1*x2)
+    y = y + 2**29
+    y = int32(y >> 30)
+
+    return y

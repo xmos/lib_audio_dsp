@@ -49,26 +49,17 @@ class biquad(dspg.dsp_block):
 
         return y
 
-    def process_int(self, sample):
+    def process_vpu(self, sample):
 
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
 
-        # process a single sample using direct form 1
-        y = utils.int64(((sample_int*self.int_coeffs[0])) +
-                        ((self.x1*self.int_coeffs[1])) +
-                        ((self.x2*self.int_coeffs[2])) +
-                        ((self.y1*self.int_coeffs[3])) +
-                        ((self.y2*self.int_coeffs[4])))
-
-        # in an ideal world, we do (y << self.b_shift) here, but the rest of
-        # the VPU must come first
-
-        # rounding back to int_32 VPU style
-        y = y + 2**29
-        y = utils.int32(y >> 30)
-
-        # # compensate for coefficients
-        # y = utils.int32(y << self.b_shift)
+        # process a single sample using direct form 1. In the VPU the ``>> 30``
+        # comes before accumulation
+        y = utils.int40(utils.vpu_mult(sample_int, self.int_coeffs[0]) +
+                        utils.vpu_mult(self.x1, self.int_coeffs[1]) +
+                        utils.vpu_mult(self.x2, self.int_coeffs[2]) +
+                        utils.vpu_mult(self.y1, self.int_coeffs[3]) +
+                        utils.vpu_mult(self.y2, self.int_coeffs[4]))
 
         # save states
         self.x2 = utils.int32(self.x1)
