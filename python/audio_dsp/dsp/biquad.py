@@ -3,16 +3,16 @@ import scipy.signal as spsig
 import matplotlib.pyplot as plt
 
 from audio_dsp.dsp import utils as utils
-
+from audio_dsp.dsp import generic as dspg
 
 BOOST_BSHIFT = 2  # limit boosts to 12dB gain
 
 
-class biquad():
-    def __init__(self, coeffs: list, b_shift=0, Q_sig=27):
+class biquad(dspg.dsp_block):
+    def __init__(self, coeffs: list, b_shift=0, Q_sig=dspg.Q_SIG):
+        super().__init__(Q_sig)
 
         self.b_shift = b_shift
-        self.Q_sig = Q_sig
 
         # coeffs should be in the form [b0 b1 b2 -a1 -a2], and normalized by a0
         assert len(coeffs) == 5, "coeffs should be in the form [b0 b1 b2 -a1 -a2]"
@@ -49,37 +49,28 @@ class biquad():
 
         return y
 
-    def process_int(self, sample):
+    def process_vpu(self, sample):
 
-        sample_int = np.round(sample * 2**self.Q_sig).astype(np.int32)
+        sample_int = utils.int32(round(sample * 2**self.Q_sig))
 
-        # process a single sample using direct form 1
-        y = ((self.int_coeffs[0].astype(np.int64)*sample_int) +
-             (self.int_coeffs[1].astype(np.int64)*self.x1) +
-             (self.int_coeffs[2].astype(np.int64)*self.x2) +
-             (self.int_coeffs[3].astype(np.int64)*self.y1) +
-             (self.int_coeffs[4].astype(np.int64)*self.y2)).astype(np.int64)
-
-        # in an ideal world, we do (y << self.b_shift) here, but the rest of
-        # the VPU must come first 
-
-        # rounding back to int_32 VPU style
-        y = y + 2**29
-        y = (y >> 30).astype(np.int32)
-
-        # # compensate for coefficients
-        # y = (y << self.b_shift).astype(np.int32)
+        # process a single sample using direct form 1. In the VPU the ``>> 30``
+        # comes before accumulation
+        y = utils.int40(utils.vpu_mult(sample_int, self.int_coeffs[0]) +
+                        utils.vpu_mult(self.x1, self.int_coeffs[1]) +
+                        utils.vpu_mult(self.x2, self.int_coeffs[2]) +
+                        utils.vpu_mult(self.y1, self.int_coeffs[3]) +
+                        utils.vpu_mult(self.y2, self.int_coeffs[4]))
 
         # save states
-        self.x2 = np.array(self.x1).astype(np.int32)
-        self.x1 = np.array(sample_int).astype(np.int32)
-        self.y2 = np.array(self.y1).astype(np.int32)
-        self.y1 = np.array(y).astype(np.int32)
+        self.x2 = utils.int32(self.x1)
+        self.x1 = utils.int32(sample_int)
+        self.y2 = utils.int32(self.y1)
+        self.y1 = utils.int32(y)
 
         # compensate for coefficients
-        y = (y << self.b_shift).astype(np.int32)
+        y = utils.int32(y << self.b_shift)
 
-        y_flt = (y.astype(np.double)*2**-self.Q_sig).astype(np.double)
+        y_flt = (float(y)*2**-self.Q_sig)
 
         return y_flt
 
@@ -168,12 +159,12 @@ def round_to_q30(coeffs, b_shift):
     Q = 30  # - b_shift
     for n in range(len(coeffs)):
         # scale to Q30 ints
-        rounded_coeffs[n] = np.round(coeffs[n] * 2**Q)
+        rounded_coeffs[n] = round(coeffs[n] * 2**Q)
         # check for overflow
         assert (rounded_coeffs[n] > -2**31 and rounded_coeffs[n] < (2**31 - 1)), \
             "Filter coefficient will overflow (%.4f, %d), reduce gain" % (coeffs[n], n)
 
-        int_coeffs[n] = rounded_coeffs[n].astype(np.int32)
+        int_coeffs[n] = utils.int32(rounded_coeffs[n])
         # rescale to floats
         rounded_coeffs[n] = rounded_coeffs[n]/2**Q
 

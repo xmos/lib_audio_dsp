@@ -36,3 +36,31 @@ def leq_smooth(x, fs, T):
 def envelope(x, N=None):
     y = spsig.hilbert(x, N)
     return np.abs(y)
+
+
+def int32(val: int):
+    if -2 ** 31 <= val < (2 ** 31 - 1):
+        return int(val)
+    raise OverflowError
+
+
+def int64(val: int):
+    if -2 ** 63 <= val < (2 ** 63 - 1):
+        return int(val)
+    raise OverflowError
+
+
+def int40(val: int):
+    # special type for VPU
+    if -2 ** 39 <= val < (2 ** 39 - 1):
+        return int(val)
+    raise OverflowError
+
+
+def vpu_mult(x1: int, x2: int):
+
+    y = int64(x1*x2)
+    y = y + 2**29
+    y = int32(y >> 30)
+
+    return y

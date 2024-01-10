@@ -3,10 +3,12 @@ import matplotlib.pyplot as plt
 
 from . import biquad as bq
 from . import utils as utils
+from audio_dsp.dsp import generic as dspg
 
 
-class cascaded_biquads():
-    def __init__(self, coeffs_list):
+class cascaded_biquads(dspg.dsp_block):
+    def __init__(self, coeffs_list, Q_sig=dspg.Q_SIG):
+        super().__init__(Q_sig)
         self.biquads = []
         for coeffs in coeffs_list:
             self.biquads.append(bq.biquad(coeffs))
