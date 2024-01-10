@@ -47,3 +47,35 @@ class BiquadModule(Stage):
         a = np.array(self.filt.coeffs)
         return np.array(a*(2**30), dtype=np.int32)
 
+    def make_lowpass(self, f, q):
+        self.filt =  bq.biquad_lowpass(self.fs, f, q)
+
+    def make_highpass(self, f, q):
+        self.filt =  bq.biquad_highpass(self.fs, f, q)
+
+    def make_bandpass(self, f, bw):
+        self.filt =  bq.biquad_bandpass(self.fs, f, bw)
+
+    def make_bandstop(self, f, bw):
+        self.filt =  bq.biquad_bandstop(self.fs, f, bw)
+
+    def make_notch(self, f, q):
+        self.filt =  bq.biquad_notch(self.fs, f, q)
+
+    def make_allpass(self, f, q):
+        self.filt =  bq.biquad_allpass(self.fs, f, q)
+
+    def make_peaking(self, f, q, boost_db):
+        self.filt =  bq.biquad_peaking(self.fs, f, q, boost_db)
+
+    def make_constant_q(self, f, q, boost_db):
+        self.filt =  bq.biquad_constant_q(self.fs, f, q, boost_db)
+
+    def make_lowshelf(self, f, q, boost_db):
+        self.filt =  bq.biquad_lowshelf(self.fs, f, q, boost_db)
+
+    def make_highshelf(self, f, q, boost_db):
+        self.filt =  bq.biquad_highshelf(self.fs, f, q, boost_db)
+
+    def make_linkwitz(self, f0, q0, fp, qp):
+        self.filt =  bq.biquad_linkwitz(self.fs, f0, q0, fp, qp)
