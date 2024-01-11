@@ -57,8 +57,8 @@ class biquad(dspg.dsp_block):
         y = utils.int64(((sample_int*self.int_coeffs[0])) +
                         ((self.x1*self.int_coeffs[1])) +
                         ((self.x2*self.int_coeffs[2])) +
-                        ((self.y1*(self.int_coeffs[3] >> self.b_shift))) +
-                        ((self.y2*(self.int_coeffs[4] >> self.b_shift))))
+                        (((self.y1*self.int_coeffs[3]) >> self.b_shift)) +
+                        (((self.y2*self.int_coeffs[4]) >> self.b_shift)))
 
         # combine the b_shift with the >> 30
         y = y + 2**(29 - self.b_shift)
@@ -80,11 +80,8 @@ class biquad(dspg.dsp_block):
 
         # process a single sample using direct form 1. In the VPU the ``>> 30``
         # comes before accumulation
-        y = utils.int40(utils.vpu_mult(sample_int, self.int_coeffs[0]) +
-                        utils.vpu_mult(self.x1, self.int_coeffs[1]) +
-                        utils.vpu_mult(self.x2, self.int_coeffs[2]) +
-                        utils.vpu_mult(self.y1, self.int_coeffs[3]) +
-                        utils.vpu_mult(self.y2, self.int_coeffs[4]))
+        y = utils.vlmaccr([sample_int, self.x1, self.x2, self.y1, self.y2],
+                          self.int_coeffs)
 
         # save states
         self.x2 = utils.int32(self.x1)
