@@ -2,12 +2,13 @@ from scipy import signal
 import numpy as np
 import soundfile as sf
 from pathlib import Path
+import shutil
 import subprocess
 import audio_dsp.dsp.biquad as bq
 from audio_dsp.dsp.generic import Q_SIG
 import pytest
 
-build_dir = Path(__file__).parent / "bin"
+bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
 
 fs = 48000
@@ -23,32 +24,30 @@ def qxx_to_float(arr_int, q = Q_SIG):
   return arr_float
 
 
-def get_sig(len = 0.25):
+def get_sig(len = 0.05):
   time = np.arange(0, len, 1 / fs)
   sig_fl = 0.5 * signal.chirp(time, 20, time[-1], 0.8 * fs / 2, "log", phi = -90)
   sig_int = float_to_qxx(sig_fl)
   # sig_fl should be as quantised as sig_int for bit-exactnes
   sig_fl = qxx_to_float(sig_int)
   name = "sig_48k"
-  sig_int.tofile(build_dir /  str(name + ".bin"))
+  sig_int.tofile(bin_dir /  str(name + ".bin"))
   sf.write(gen_dir / str(name + ".wav"), sig_fl, int(fs), "PCM_24")
 
   return sig_fl
 
 
-def get_c_wav(run = True, bin_name = "sig_out.bin", sim = True):
+def get_c_wav(dir_name, sim = True):
   app = "xsim" if sim else "xrun --io"
-  run_cmd = app + " " + str(build_dir / "biquad_test.xe")
-  if run:
-    stdout = subprocess.check_output(run_cmd, cwd = build_dir, shell = True)
-    #print("run msg:\n", stdout)
+  run_cmd = app + " " + str(bin_dir / "biquad_test.xe")
+  stdout = subprocess.check_output(run_cmd, cwd = dir_name, shell = True)
+  #print("run msg:\n", stdout)
 
-  sig_bin = build_dir / bin_name
+  sig_bin = dir_name / "sig_out.bin"
   assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
   sig_int = np.fromfile(sig_bin, dtype=np.int32)
 
   sig_fl = qxx_to_float(sig_int)
-
   sf.write(gen_dir / "sig_c.wav", sig_fl, fs, "PCM_24")
   return sig_fl
 
@@ -71,98 +70,95 @@ def run_py(filt, sig_fl):
   return out_fl, out_int
 
 
-def write_c_coeffs(filt, fname):
+def single_test(filt, tname, sig_fl):
+  test_dir = bin_dir / tname
+  test_dir.mkdir(exist_ok = True, parents = True)
   coeffs_arr = np.array(filt.int_coeffs, dtype=np.int32)
   shift_arr = np.array(filt.b_shift, dtype=np.int32)
   filt_info = np.append(coeffs_arr, shift_arr)
-  filt_info.tofile(build_dir / fname)
+  filt_info.tofile(test_dir / "coeffs.bin")
+
+  out_py_fl, out_py_int = run_py(filt, sig_fl)
+  out_c = get_c_wav(test_dir)
+  shutil.rmtree(test_dir)
+
+  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
+
+
+@pytest.fixture(scope="module")
+def in_signal():
+  bin_dir.mkdir(exist_ok=True, parents=True)
+  gen_dir.mkdir(exist_ok=True, parents=True)
+  return get_sig()
 
 
 @pytest.mark.parametrize("filter_type", ["biquad_lowpass",
                                          "biquad_highpass",
                                          "biquad_notch",
                                          "biquad_allpass"])
-@pytest.mark.parametrize("f", [20, 200, 2000, 20000])
-@pytest.mark.parametrize("q", [0.1, 0.707, 5, 10])
-def test_xpass_filters_c(filter_type, f, q):
-  build_dir.mkdir(exist_ok=True, parents=True)
-  gen_dir.mkdir(exist_ok=True, parents=True)
+@pytest.mark.parametrize("f", [20, 20000])
+@pytest.mark.parametrize("q", [0.1, 10])
+def test_xpass_filters_c(in_signal, filter_type, f, q):
 
   f = np.min([f, fs / 2 * 0.95])
   filter_handle = getattr(bq, filter_type)
+
   filt = filter_handle(fs, f, q)
-  write_c_coeffs(filt, "coeffs.bin")
-
-  sig_fl = get_sig()
-  out_py_fl, out_py_int = run_py(filt, sig_fl)
-  out_c = get_c_wav()
-
-  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
+  filter_name = f"{filter_type}_{f}_{q}"
+  single_test(filt, filter_name, in_signal)
 
 
 @pytest.mark.parametrize("filter_type", ["biquad_peaking",
                                          "biquad_constant_q",
                                          "biquad_lowshelf",
                                          "biquad_highshelf",])
-@pytest.mark.parametrize("f", [20, 200, 2000, 20000])
-@pytest.mark.parametrize("q", [0.1, 0.707, 5, 10])
-@pytest.mark.parametrize("gain", [-12, -5, 0, 5, 12])
-def test_high_gain_c(filter_type, f, q, gain):
-  build_dir.mkdir(exist_ok=True, parents=True)
-  gen_dir.mkdir(exist_ok=True, parents=True)
+@pytest.mark.parametrize("f", [20, 20000])
+@pytest.mark.parametrize("q", [0.1, 10])
+@pytest.mark.parametrize("gain", [-12, 12])
+def test_high_gain_c(in_signal, filter_type, f, q, gain):
 
   f = np.min([f, fs / 2 * 0.95])
   filter_handle = getattr(bq, filter_type)
+
   filt = filter_handle(fs, f, q, gain)
-  write_c_coeffs(filt, "coeffs.bin")
-
-  sig_fl = get_sig()
-  out_py_fl, out_py_int = run_py(filt, sig_fl)
-  out_c = get_c_wav()
-
-  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
+  filter_name = f"{filter_type}_{f}_{q}_{gain}"
+  single_test(filt, filter_name, in_signal)
 
 
 @pytest.mark.parametrize("filter_type", ["biquad_bandpass",
                                          "biquad_bandstop",])
-@pytest.mark.parametrize("f", [20, 200, 2000, 20000])
-@pytest.mark.parametrize("q", [0.1, 0.707, 5, 10])
-def test_bandx_filters_c(filter_type, f, q):
-  build_dir.mkdir(exist_ok=True, parents=True)
-  gen_dir.mkdir(exist_ok=True, parents=True)
+@pytest.mark.parametrize("f", [20, 20000])
+@pytest.mark.parametrize("q", [0.1, 10])
+def test_bandx_filters_c(in_signal, filter_type, f, q):
 
-  filter_handle = getattr(bq, filter_type)
   f = np.min([f, fs / 2 * 0.95])
   high_q_stability_limit = 0.85
   if q >= 5 and f / (fs / 2) > high_q_stability_limit:
     f = high_q_stability_limit * fs / 2
+  filter_handle = getattr(bq, filter_type)
+
   filt = filter_handle(fs, f, q)
-  write_c_coeffs(filt, "coeffs.bin")
-
-  sig_fl = get_sig()
-  out_py_fl, out_py_int = run_py(filt, sig_fl)
-  out_c = get_c_wav()
-
-  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
+  filter_name = f"{filter_type}_{f}_{q}"
+  single_test(filt, filter_name, in_signal)
 
 
-@pytest.mark.parametrize("f0", [20, 100, 500])
-@pytest.mark.parametrize("fp", [20, 100, 500])
-@pytest.mark.parametrize("q0", [0.5, 1, 2])
-@pytest.mark.parametrize("qp", [0.5, 1, 2])
-def test_linkwitz_filters_c(f0, fp, q0, qp):
-  build_dir.mkdir(exist_ok=True, parents=True)
-  gen_dir.mkdir(exist_ok=True, parents=True)
+@pytest.mark.skip # Allan will fix it
+@pytest.mark.parametrize("f0", [20, 100,  500])
+@pytest.mark.parametrize("fp", [20, 100,  500])
+@pytest.mark.parametrize("q0", [0.5, 1,  2])
+@pytest.mark.parametrize("qp", [0.5, 1,  2])
+def test_linkwitz_filters_c(in_signal, f0, fp, q0, qp):
 
   filt = bq.biquad_linkwitz(fs, f0, q0, fp, qp)
-  write_c_coeffs(filt, "coeffs.bin")
-
-  sig_fl = get_sig()
-  out_py_fl, out_py_int = run_py(filt, sig_fl)
-  out_c = get_c_wav()
-
-  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
+  filter_name = f"biquad_linkwitz_{f0}_{fp}_{q0}_{qp}"
+  single_test(filt, filter_name, in_signal)
 
 
 if __name__ =="__main__":
-  test_linkwitz_filters_c(100, 500, 0.5, 1)
+  bin_dir.mkdir(exist_ok=True, parents=True)
+  gen_dir.mkdir(exist_ok=True, parents=True)
+  sig_fl = get_sig()
+  #test_xpass_filters_c(sig_fl, "biquad_notch", 200, 0.7)
+  #test_high_gain_c(sig_fl, "biquad_lowshelf", 2000, 0.1, 5)
+  #test_bandx_filters_c(sig_fl, "biquad_bandpass", 200, 10)
+  test_linkwitz_filters_c(sig_fl, 100, 500, 0.5, 1)

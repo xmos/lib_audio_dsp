@@ -1,3 +1,4 @@
 soundfile
 -e ./python
 pytest
+pytest-xdist
