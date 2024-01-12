@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import scipy.signal as spsig
 import matplotlib.pyplot as plt
@@ -17,6 +19,8 @@ class biquad(dspg.dsp_block):
         # coeffs should be in the form [b0 b1 b2 -a1 -a2], and normalized by a0
         assert len(coeffs) == 5, "coeffs should be in the form [b0 b1 b2 -a1 -a2]"
         self.coeffs, self.int_coeffs = round_and_check(coeffs, self.b_shift)
+
+        self.check_gain()
 
         # state variables
         self.x1 = 0
@@ -57,8 +61,8 @@ class biquad(dspg.dsp_block):
         y = utils.int64(((sample_int*self.int_coeffs[0])) +
                         ((self.x1*self.int_coeffs[1])) +
                         ((self.x2*self.int_coeffs[2])) +
-                        ((self.y1*(self.int_coeffs[3] >> self.b_shift))) +
-                        ((self.y2*(self.int_coeffs[4] >> self.b_shift))))
+                        (((self.y1*self.int_coeffs[3]) >> self.b_shift)) +
+                        (((self.y2*self.int_coeffs[4]) >> self.b_shift)))
 
         # combine the b_shift with the >> 30
         y = y + 2**(29 - self.b_shift)
@@ -80,11 +84,8 @@ class biquad(dspg.dsp_block):
 
         # process a single sample using direct form 1. In the VPU the ``>> 30``
         # comes before accumulation
-        y = utils.int40(utils.vpu_mult(sample_int, self.int_coeffs[0]) +
-                        utils.vpu_mult(self.x1, self.int_coeffs[1]) +
-                        utils.vpu_mult(self.x2, self.int_coeffs[2]) +
-                        utils.vpu_mult(self.y1, self.int_coeffs[3]) +
-                        utils.vpu_mult(self.y2, self.int_coeffs[4]))
+        y = utils.vlmaccr([sample_int, self.x1, self.x2, self.y1, self.y2],
+                          self.int_coeffs)
 
         # save states
         self.x2 = utils.int32(self.x1)
@@ -106,12 +107,23 @@ class biquad(dspg.dsp_block):
         w, h = spsig.freqz(b, a, worN=nfft)
 
         return w, h
-    
+
+    def check_gain(self):
+        _, h = self.freq_response()
+        max_gain = np.max(utils.db(h))
+        if max_gain > dspg.HEADROOM_DB:
+            warnings.warn("biquad gain (%.1f dB) is > headroom" % (max_gain) +
+                          " (%.0f dB), overflow may occur" % dspg.HEADROOM_DB +
+                          " unless signal level has previously been reduced")
+        return
+
     def reset_state(self):
         self.x1 = 0
         self.x2 = 0
         self.y1 = 0
-        self.y2 = 0        
+        self.y2 = 0
+
+        return
 
 
 def biquad_lowpass(fs, f, q):
