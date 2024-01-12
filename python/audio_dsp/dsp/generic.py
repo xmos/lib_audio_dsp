@@ -1,6 +1,9 @@
 import numpy as np
+from audio_dsp.dsp import utils as utils
 
 Q_SIG = 27
+HEADROOM_BITS = 31-Q_SIG
+HEADROOM_DB = utils.db(2**HEADROOM_BITS)
 
 
 class dsp_block():

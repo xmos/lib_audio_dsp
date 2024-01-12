@@ -42,10 +42,14 @@ def test_bandx_filters(filter_type, f, q, fs):
     bq.biquad(filter_handle(fs, f, q), b_shift=0)
 
 
-@pytest.mark.parametrize("f0", [20, 50, 100, 200, 500])
-@pytest.mark.parametrize("fp", [20, 50, 100, 200, 500])
+@pytest.mark.parametrize("f0,", [20, 50, 100, 200, 500])
+@pytest.mark.parametrize("fp_ratio", [0.4, 0.5, 1, 2, 4])
 @pytest.mark.parametrize("q0", [0.5, 0.707, 1, 1.41, 2])
 @pytest.mark.parametrize("qp", [0.5, 0.707, 1, 1.41, 2])
 @pytest.mark.parametrize("fs", [16000, 24000, 44100, 48000, 88200, 96000, 192000])
-def test_linkwitz_filters(f0, fp, q0, qp, fs):
-    bq.biquad(bq.make_biquad_linkwitz(fs, f0, q0, fp, qp), b_shift=0)
+def test_linkwitz_filters(f0, fp_ratio, q0, qp, fs):
+    bq.biquad_linkwitz(fs, f0, q0, f0*fp_ratio, qp)
+
+
+if __name__ == "__main__":
+    test_linkwitz_filters(500, 2, 20, 0.5, 48000)

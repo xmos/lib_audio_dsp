@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import scipy.signal as spsig
 import matplotlib.pyplot as plt
@@ -17,6 +19,8 @@ class biquad(dspg.dsp_block):
         # coeffs should be in the form [b0 b1 b2 -a1 -a2], and normalized by a0
         assert len(coeffs) == 5, "coeffs should be in the form [b0 b1 b2 -a1 -a2]"
         self.coeffs, self.int_coeffs = round_and_check(coeffs, self.b_shift)
+
+        self.check_gain()
 
         # state variables
         self.x1 = 0
@@ -103,12 +107,23 @@ class biquad(dspg.dsp_block):
         w, h = spsig.freqz(b, a, worN=nfft)
 
         return w, h
-    
+
+    def check_gain(self):
+        _, h = self.freq_response()
+        max_gain = np.max(utils.db(h))
+        if max_gain > dspg.HEADROOM_DB:
+            warnings.warn("biquad gain (%.1f dB) is > headroom" % (max_gain) +
+                          " (%.0f dB), overflow may occur" % dspg.HEADROOM_DB +
+                          " unless signal level has previously been reduced")
+        return
+
     def reset_state(self):
         self.x1 = 0
         self.x2 = 0
         self.y1 = 0
-        self.y2 = 0        
+        self.y2 = 0
+
+        return
 
 
 def biquad_lowpass(fs, f, q):
