@@ -36,15 +36,18 @@ pipeline {
             sh 'git -C xcommon_cmake rev-parse HEAD'
             dir("lib_audio_dsp") {
               checkout scm
+              createVenv("requirements.txt")
               // build everything
-              withTools(params.TOOLS_VERSION) {
-                withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
-                  script {
-                    [
-                     "test/biquad"
-                    ].each {
-                      sh "cmake -S ${it} -B ${it}/build"
-                      sh "xmake -C ${it}/build -j"
+              withVenv {
+                withTools(params.TOOLS_VERSION) {
+                  withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
+                    script {
+                      [
+                      "test/biquad"
+                      ].each {
+                        sh "cmake -S ${it} -B ${it}/build"
+                        sh "xmake -C ${it}/build -j"
+                      }
                     }
                   }
                 }
@@ -52,14 +55,6 @@ pipeline {
             }
           }
         } // Build
-
-        stage ('Create Python enviroment') {
-          steps {
-            dir("lib_audio_dsp") {
-              createVenv("requirements.txt")
-            }
-          }
-        } // Create Python enviroment
 
         stage ('Test') {
           steps {
