@@ -64,3 +64,10 @@ def vpu_mult(x1: int, x2: int):
     y = int32(y >> 30)
 
     return y
+
+
+def vlmaccr(vect1, vect2, out=0):
+    for val1, val2 in zip(vect1, vect2):
+        out += vpu_mult(val1, val2)
+
+    return int40(out)

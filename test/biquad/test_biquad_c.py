@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import audio_dsp.dsp.biquad as bq
 from audio_dsp.dsp.generic import Q_SIG
+import audio_dsp.dsp.signal_gen as gen
 import pytest
 
 bin_dir = Path(__file__).parent / "bin"
@@ -24,12 +25,11 @@ def qxx_to_float(arr_int, q = Q_SIG):
   return arr_float
 
 
-def get_sig(len = 0.05):
-  time = np.arange(0, len, 1 / fs)
-  sig_fl = 0.5 * signal.chirp(time, 20, time[-1], 0.8 * fs / 2, "log", phi = -90)
+def get_sig(len=0.05):
+
+  sig_fl = gen.log_chirp(fs, len, 0.5)
   sig_int = float_to_qxx(sig_fl)
-  # sig_fl should be as quantised as sig_int for bit-exactnes
-  sig_fl = qxx_to_float(sig_int)
+
   name = "sig_48k"
   sig_int.tofile(bin_dir /  str(name + ".bin"))
   sf.write(gen_dir / str(name + ".wav"), sig_fl, int(fs), "PCM_24")
@@ -142,15 +142,14 @@ def test_bandx_filters_c(in_signal, filter_type, f, q):
   single_test(filt, filter_name, in_signal)
 
 
-@pytest.mark.skip # Allan will fix it
-@pytest.mark.parametrize("f0", [20, 100,  500])
-@pytest.mark.parametrize("fp", [20, 100,  500])
-@pytest.mark.parametrize("q0", [0.5, 1,  2])
-@pytest.mark.parametrize("qp", [0.5, 1,  2])
-def test_linkwitz_filters_c(in_signal, f0, fp, q0, qp):
+@pytest.mark.parametrize("f0", [20, 100, 500])
+@pytest.mark.parametrize("fp_ratio", [0.4, 4])
+@pytest.mark.parametrize("q0, qp", [(0.5, 2), (2, 0.5), (0.707, 0.707)])
+def test_linkwitz_filters_c(in_signal, f0, fp_ratio, q0, qp):
 
+  fp = f0*fp_ratio
   filt = bq.biquad_linkwitz(fs, f0, q0, fp, qp)
-  filter_name = f"biquad_linkwitz_{f0}_{fp}_{q0}_{qp}"
+  filter_name = f"biquad_linkwitz_{f0}_{fp_ratio}_{q0}_{qp}"
   single_test(filt, filter_name, in_signal)
 
 
