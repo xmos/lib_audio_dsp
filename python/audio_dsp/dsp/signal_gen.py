@@ -22,6 +22,14 @@ def sin(fs, length, freq, amplitude, precision=24):
     return signal
 
 
+def cos(fs, length, freq, amplitude, precision=24):
+    t = np.arange(fs*length)/fs
+    signal = amplitude*np.cos(2*np.pi*freq*t)
+    signal = quantize_signal(signal, precision)
+
+    return signal
+
+
 def log_chirp(fs, length, amplitude, start=20, stop=20000, precision=24):
     t = np.arange(fs*length)/fs
     signal = amplitude*spsig.chirp(t, start, length, stop, 'log', phi=-90)

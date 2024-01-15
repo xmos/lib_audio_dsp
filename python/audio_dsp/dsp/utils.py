@@ -19,6 +19,11 @@ def db2gain(input):
     return out
 
 
+def db_pow2gain(input):
+    out = 10**(input/10)
+    return out
+
+
 def leq_smooth(x, fs, T):
     len_x = x.shape[0]
     win_len = int(fs * T)

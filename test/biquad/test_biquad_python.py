@@ -51,5 +51,12 @@ def test_linkwitz_filters(f0, fp_ratio, q0, qp, fs):
     bq.biquad_linkwitz(fs, f0, q0, f0*fp_ratio, qp)
 
 
+# TODO check biquad actually filters
+# TODO check parameter generation
+# TODO int vs float test
+# TODO PEQ tests
+# TODO higher order filter tests
+
+
 if __name__ == "__main__":
     test_linkwitz_filters(500, 2, 20, 0.5, 48000)
