@@ -26,7 +26,7 @@ class BiquadModule(Stage):
         super().__init__(config=BIQUAD_CONFIG, **kwargs)
         self.create_outputs(self.n_in)
         self.fs = 48000
-        self.filt = bq.biquad_lowpass(self.fs, 1000, 0.7)
+        self.filt = bq.biquad_allpass(self.fs, 1000, 0.7)
         self.set_control_field_cb("filter_coeffs",
                                   lambda: " ".join([str(i) for i in self.get_fixed_point_coeffs()]))
         self.set_control_field_cb("left_shift",
