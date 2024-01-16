@@ -35,10 +35,18 @@ typedef struct
     config_rw_state_t config_rw_state;
 }module_control_t;
 
+#ifdef XCC_VERSION_MAJOR 
 #define DSP_MODULE_PROCESS_ATTR  __attribute__((fptrgroup("dsp_module_process_fptr_grp")))
+#else
+#define DSP_MODULE_PROCESS_ATTR
+#endif
 typedef void (*dsp_module_process)(int32_t **input, int32_t **output, void *state);
 
+#ifdef XCC_VERSION_MAJOR 
 #define DSP_MODULE_CONTROL_ATTR  __attribute__((fptrgroup("dsp_module_control_fptr_grp")))
+#else
+#define DSP_MODULE_CONTROL_ATTR
+#endif
 typedef void (*dsp_module_control)(void *state, module_control_t *control);
 
 typedef struct
@@ -51,7 +59,11 @@ typedef struct
 }module_instance_t;
 
 
+#ifdef XCC_VERSION_MAJOR
 #define DSP_MODULE_INIT_ATTR  __attribute__((fptrgroup("dsp_module_init_fptr_grp")))
+#else
+#define DSP_MODULE_INIT_ATTR
+#endif
 typedef module_instance_t* (*dsp_module_init)(uint8_t id, int n_inputs, int n_outputs, int frame_size, void* module_config);
 //typedef module_instance_t* (*dsp_module_init)(uint8_t id);
 
