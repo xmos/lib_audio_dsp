@@ -97,6 +97,7 @@ class limiter_rms(limiter_base):
     def __init__(self, fs, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, attack_t, release_t, delay, Q_sig)
 
+        # note rms comes as x**2, so use db_pow
         self.threshold = utils.db_pow2gain(threshold_db)
         self.env_detector = envelope_detector_rms(fs, attack_t=attack_t, release_t=release_t)
 
@@ -113,6 +114,10 @@ class hard_limiter_peak(limiter_peak):
 
 
 # TODO add soft limiter
+# TODO add RMS compressors
+# TODO add peak compressors
+# TODO add soft knee compressors
+# TODO add lookup compressors w/ some magic interface
 
 
 if __name__ == "__main__":

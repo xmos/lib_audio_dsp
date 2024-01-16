@@ -497,6 +497,8 @@ def make_biquad_linkwitz(fs, f0, q0, fp, qp):
     return coeffs
 
 
+# TODO gain biquad
+
 
 if __name__ == "__main__":
 

@@ -72,3 +72,5 @@ def test_limiter_peak_release(fs, rt, threshold):
 # TODO RMS tests
 # TODO hard limiter test
 # TODO int vs float test
+# TODO envelope detector tests
+# TODO compressor tests
