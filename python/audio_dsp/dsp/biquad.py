@@ -126,6 +126,16 @@ class biquad(dspg.dsp_block):
         return
 
 
+def biquad_bypass(fs):
+    coeffs = make_biquad_bypass(fs)
+    return biquad(coeffs)
+
+
+def biquad_gain(fs, gain_db):
+    coeffs = make_biquad_gain(fs, gain_db)
+    return biquad(coeffs)
+
+
 def biquad_lowpass(fs, f, q):
     coeffs = make_biquad_lowpass(fs, f, q)
     return biquad(coeffs)
@@ -261,6 +271,13 @@ def make_biquad_bypass(fs):
 def make_biquad_mute(fs):
     # take in fs to match other apis
     coeffs = [0, 0, 0, 0, 0]
+
+    return coeffs
+
+
+def make_biquad_gain(fs, gain_db):
+    coeffs = make_biquad_bypass(fs)
+    coeffs = apply_biquad_gain(coeffs, gain_db)
 
     return coeffs
 

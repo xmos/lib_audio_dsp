@@ -8,7 +8,7 @@ import audio_dsp.dsp.signal_gen as gen
 import audio_dsp.dsp.utils as utils
 
 
-def chirp_filter_test(filter: cbq.cascaded_biquads, fs):
+def chirp_filter_test(filter, fs):
     length = 0.5
     signal = gen.log_chirp(fs, length, 0.5)
 
@@ -48,11 +48,11 @@ def test_peq(fs, n_filters, seed):
                    ['notch', fs*2000/48000, 1],
                    ['lowshelf', fs*200/48000, 1, 3],
                    ['highshelf', fs*5000/48000, 1, -2],
-                   ['bypass'],]
-                #    ['gain', -2]]
+                   ['bypass'],
+                   ['gain', -2]]
     random.Random(seed**n_filters).shuffle(filter_spec)
     filter_spec = filter_spec[:n_filters]
-    peq = cbq.parametric_eq(fs, filter_spec)
+    peq = cbq.parametric_eq_8band(fs, filter_spec)
     chirp_filter_test(peq, fs)
 
 # TODO higher order filter tests
@@ -75,13 +75,13 @@ def test_nth_butterworth(filter_type, f, order, fs):
             f = 30
         filter = cbq.butterworth_highpass(fs, order, f)
 
-    # chirp_filter_test(filter, fs)
+    chirp_filter_test(filter, fs)
 
     # compare against scipy butterworth response
-    w, h = filter.freq_response(1024)
-    b, a = spsig.butter(order, f, fs=fs, btype=filter_type[:-4])
+    w, h = filter.freq_response(1024*32)
+    sos = spsig.butter(order, f, fs=fs, btype=filter_type[:-4], output='sos')
 
-    w_ref, h_ref = spsig.freqz(b, a, worN=1024)
+    w_ref, h_ref = spsig.sosfreqz(sos, worN=1024*32)
 
     top_half = utils.db(h) > -50
     err = np.abs(utils.db(h[top_half]) - utils.db(h_ref[top_half]))
@@ -90,3 +90,8 @@ def test_nth_butterworth(filter_type, f, order, fs):
     assert mean_error < 0.1
 
     print(mean_error)
+
+
+if __name__ == "__main__":
+    test_peq(1600, 1, 1)
+    # test_nth_butterworth("highpass", 20, 6, 16000)

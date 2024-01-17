@@ -6,12 +6,15 @@ from . import utils as utils
 from audio_dsp.dsp import generic as dspg
 
 
-class cascaded_biquads(dspg.dsp_block):
-    def __init__(self, coeffs_list, Q_sig=dspg.Q_SIG):
+class cascaded_biquads_8(dspg.dsp_block):
+    def __init__(self, coeffs_list, fs, Q_sig=dspg.Q_SIG):
         super().__init__(Q_sig)
-        self.biquads = []
-        for coeffs in coeffs_list:
-            self.biquads.append(bq.biquad(coeffs))
+        self.biquads = [None]*8
+        for n in range(8):
+            if n < len(coeffs_list):
+                self.biquads[n] = bq.biquad(coeffs_list[n])
+            else:
+                self.biquads[n] = bq.biquad_bypass(fs)
 
     def process(self, sample):
         y = sample
@@ -47,19 +50,19 @@ class cascaded_biquads(dspg.dsp_block):
             biquad.reset_state()
 
 
-class butterworth_lowpass(cascaded_biquads):
+class butterworth_lowpass(cascaded_biquads_8):
     def __init__(self, fs, N, fc):
         coeffs_list = make_butterworth_lowpass(N, fc, fs)
-        super().__init__(coeffs_list)
+        super().__init__(coeffs_list, fs)
 
 
-class butterworth_highpass(cascaded_biquads):
+class butterworth_highpass(cascaded_biquads_8):
     def __init__(self, fs, N, fc):
         coeffs_list = make_butterworth_highpass(N, fc, fs)
-        super().__init__(coeffs_list)
+        super().__init__(coeffs_list, fs)
 
 
-class parametric_eq(cascaded_biquads):
+class parametric_eq_8band(cascaded_biquads_8):
     def __init__(self, fs, filter_spec):
         coeffs_list = []
         for spec in filter_spec:
@@ -67,7 +70,7 @@ class parametric_eq(cascaded_biquads):
             class_handle = getattr(bq, class_name)
             coeffs_list.append(class_handle(fs, *spec[1:]))
 
-        super().__init__(coeffs_list)
+        super().__init__(coeffs_list, fs)
 
 
 def make_butterworth_lowpass(N, fc, fs):
@@ -77,6 +80,8 @@ def make_butterworth_lowpass(N, fc, fs):
     # The function will return N/2 sets of biquad coefficients
     #
     # translated from Neil Robertson's https://www.dsprelated.com/showarticle/1137.php
+    # 
+    # see also https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html
 
     assert (fc <= fs/2), 'fc must be less than fs/2'
     assert (N % 2 == 0), 'N must be even'
@@ -123,6 +128,8 @@ def make_butterworth_highpass(N, fc, fs):
     #
     # translated from from Neil Robertson's https://www.dsprelated.com/showarticle/1137.php and
     # https://www.dsprelated.com/showarticle/1135.php
+    #
+    # see also https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html
 
     assert (fc <= fs/2), 'fc must be less than fs/2'
     assert (N % 2 == 0), 'N must be even'
