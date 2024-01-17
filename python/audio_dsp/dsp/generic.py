@@ -7,7 +7,8 @@ HEADROOM_DB = utils.db(2**HEADROOM_BITS)
 
 
 class dsp_block():
-    def __init__(self, Q_sig=Q_SIG):
+    def __init__(self, fs, Q_sig=Q_SIG):
+        self.fs = fs
         self.Q_sig = Q_sig
         return
 
@@ -26,6 +27,6 @@ class dsp_block():
 
     def freq_response(self, nfft=512):
         # generic module has a flat response
-        w = np.fft.rfftfreq(nfft)
-        h = np.ones_like(w)
-        return w, h
+        f = np.fft.rfftfreq(nfft)*self.fs
+        h = np.ones_like(f)
+        return f, h

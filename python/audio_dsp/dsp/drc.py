@@ -8,7 +8,7 @@ import audio_dsp.dsp.signal_gen as gen
 
 class envelope_detector_peak(dspg.dsp_block):
     def __init__(self, fs, detect_t=None, attack_t=None, release_t=None, Q_sig=dspg.Q_SIG):
-        super().__init__(Q_sig)
+        super().__init__(fs, Q_sig)
 
         if detect_t and (attack_t or release_t):
             ValueError("either detect_t OR (attack_t AND release_t) must be specified")

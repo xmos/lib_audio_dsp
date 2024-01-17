@@ -13,7 +13,7 @@ def test_limiter_peak_attack(fs, at, threshold):
     # Attack time test bads on Figure 2 in Guy McNally's "Dynamic Range Control
     # of Digital Audio Signals"
     x = np.ones(int(at*2*fs))
-    x = utils.db2gain(threshold + 6)
+    x[:] = utils.db2gain(threshold + 6)
     t = np.arange(len(x))/fs
 
     lt = drc.limiter_peak(fs, threshold, at, 0.3)
@@ -74,3 +74,6 @@ def test_limiter_peak_release(fs, rt, threshold):
 # TODO int vs float test
 # TODO envelope detector tests
 # TODO compressor tests
+
+if __name__ == "__main__":
+    test_limiter_peak_attack(48000, 0.1, -10)

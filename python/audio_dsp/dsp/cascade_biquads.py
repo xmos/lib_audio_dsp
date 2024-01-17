@@ -8,11 +8,11 @@ from audio_dsp.dsp import generic as dspg
 
 class cascaded_biquads_8(dspg.dsp_block):
     def __init__(self, coeffs_list, fs, Q_sig=dspg.Q_SIG):
-        super().__init__(Q_sig)
+        super().__init__(fs, Q_sig)
         self.biquads = [None]*8
         for n in range(8):
             if n < len(coeffs_list):
-                self.biquads[n] = bq.biquad(coeffs_list[n])
+                self.biquads[n] = bq.biquad(coeffs_list[n], fs)
             else:
                 self.biquads[n] = bq.biquad_bypass(fs)
 
@@ -38,12 +38,12 @@ class cascaded_biquads_8(dspg.dsp_block):
         return y
 
     def freq_response(self, nfft=512):
-        w, h_all = self.biquads[0].freq_response(nfft)
+        f, h_all = self.biquads[0].freq_response(nfft)
         for biquad in self.biquads[1:]:
-            w, h = biquad.freq_response(nfft)
+            _, h = biquad.freq_response(nfft)
             h_all *= h
 
-        return w, h_all
+        return f, h_all
 
     def reset_state(self):
         for biquad in self.biquads:

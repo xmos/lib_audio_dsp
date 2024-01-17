@@ -43,7 +43,7 @@ def chirp_filter_test(filter: bq.biquad, fs):
 @pytest.mark.parametrize("fs", [16000, 24000, 44100, 48000, 88200, 96000, 192000])
 def test_high_gain(filter_type, f, q, gain, fs):
     filter_handle = getattr(bq, "make_%s" % filter_type)
-    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), b_shift=2)
+    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), fs, b_shift=2)
     chirp_filter_test(filter, fs)
 
 
@@ -60,7 +60,7 @@ def test_xpass_filters(filter_type, f, q, fs):
         f = max(fs*5e-4, f)
 
     filter_handle = getattr(bq, "make_%s" % filter_type)
-    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q), b_shift=0)
+    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q), fs, b_shift=0)
     chirp_filter_test(filter, fs)
 
 
@@ -78,7 +78,7 @@ def test_bandx_filters(filter_type, f, q, fs):
     if q >= 5 and f/(fs/2) > high_q_stability_limit:
         f = high_q_stability_limit*fs/2
 
-    filter = bq.biquad(filter_handle(fs, f, q), b_shift=0)
+    filter = bq.biquad(filter_handle(fs, f, q), fs, b_shift=0)
     chirp_filter_test(filter, fs)
 
 
