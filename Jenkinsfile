@@ -65,18 +65,18 @@ pipeline {
                 withTools(params.TOOLS_VERSION) {
                   dir("test/biquad") {
                     // running separately because it's faster for parallel tests
-                    sh "pytest -s test_biquad_python.py"
+                    runPytest("-s test_biquad_python.py")
                     sh "pytest -n auto test_biquad_c.py"
                   }
                   dir("test/cascaded_biquads") {
-                    sh "pytest -s test_cascaded_biquads_python.py"
+                    runPytest("-s test_cascaded_biquads_python.py")
                     sh "pytest -n auto test_casc_biquads_c.py"
                   }
                   dir("test/drc") {
-                    sh "pytest -s test_drc_python.py"
+                    runPytest("-s test_drc_python.py")
                   }
                   dir("test/utils") {
-                    sh "pytest -s test_utils_python.py"
+                    runPytest("-s test_utils_python.py")
                   }
                 }
               }
