@@ -45,6 +45,7 @@ pipeline {
                     script {
                       [
                       "test/biquad"
+                      "test/cascaded_biquads"
                       ].each {
                         sh "cmake -S ${it} -B ${it}/build"
                         sh "xmake -C ${it}/build -j"
@@ -65,6 +66,10 @@ pipeline {
                   dir("test/biquad") {
                     // running separately because it's faster for parallel tests
                     sh "pytest -s test_biquad_python.py"
+                    sh "pytest -n auto test_biquad_c.py"
+                  }
+                  dir("test/biquad") {
+
                     sh "pytest -n auto test_biquad_c.py"
                   }
                 }

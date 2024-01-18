@@ -27,6 +27,13 @@ class cascaded_biquads(dspg.dsp_block):
 
         return y
 
+    def process_vpu(self, sample):
+        y = sample
+        for biquad in self.biquads:
+            y = biquad.process_vpu(y)
+
+        return y
+
     def freq_response(self, nfft=512):
         w, h_all = self.biquads[0].freq_response(nfft)
         for biquad in self.biquads[1:]:
@@ -34,6 +41,12 @@ class cascaded_biquads(dspg.dsp_block):
             h_all *= h
 
         return w, h_all
+
+    def reset_state(self):
+        for biquad in self.biquads:
+            biquad.reset_state()
+        
+        return
 
 
 class butterworth_lowpass(cascaded_biquads):
@@ -97,7 +110,7 @@ def make_butterworth_lowpass(N, fc, fs):
         b1 = 2*K
         b2 = K
 
-        coeffs_list.append([b0, b1, b2, a0, a1, a2])
+        coeffs_list.append(bq.normalise_biquad((b0, b1, b2, a0, a1, a2)))
 
     return coeffs_list
 
@@ -142,7 +155,7 @@ def make_butterworth_highpass(N, fc, fs):
         b1 = -2*K
         b2 = K
 
-        coeffs_list.append([b0, b1, b2, a0, a1, a2])
+        coeffs_list.append(bq.normalise_biquad((b0, b1, b2, a0, a1, a2)))
 
     return coeffs_list
 
