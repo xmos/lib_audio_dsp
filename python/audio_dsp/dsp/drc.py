@@ -7,7 +7,7 @@ import audio_dsp.dsp.signal_gen as gen
 
 
 class envelope_detector_peak(dspg.dsp_block):
-    def __init__(self, fs, detect_t=None, attack_t=None, release_t=None, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, attack_t=None, release_t=None, detect_t=None, Q_sig=dspg.Q_SIG):
         super().__init__(fs, Q_sig)
 
         if detect_t and (attack_t or release_t):

@@ -69,11 +69,57 @@ def test_limiter_peak_release(fs, rt, threshold):
     assert measured_rt/rt < 1.2
 
 
-# TODO RMS tests
+@pytest.mark.parametrize("fs", [48000])
+@pytest.mark.parametrize("component, threshold", [("limiter_peak", -20),
+                                                  ("limiter_peak", -6),
+                                                  ("limiter_peak", 0),
+                                                  ("limiter_peak", 6),
+                                                  ("envelope_detector_peak", None)])
+@pytest.mark.parametrize("rt", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
+@pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
+def test_drc_component(fs, component, at, rt, threshold):
+    component_handle = getattr(drc, component)
+
+    if threshold is not None:
+        drcut = component_handle(fs, threshold, at, rt)
+    else:
+        drcut = component_handle(fs, at, rt)
+
+    signal = gen.log_chirp(fs, int(0.1+(rt+at)*2), 1)
+    len_sig = len(signal)
+    if threshold is not None:
+        signal[:len_sig//2] *= utils.db2gain(threshold + 6)
+        signal[len_sig//2:] *= utils.db2gain(threshold - 3)
+
+    output_int = np.zeros(len(signal))
+    output_flt = np.zeros(len(signal))
+
+    if "envelope" in component:
+        for n in np.arange(len(signal)):
+            output_int[n] = drcut.process_int(signal[n])
+        drcut.reset_state()
+        for n in np.arange(len(signal)):
+            output_flt[n] = drcut.process(signal[n])
+    else:        
+        for n in np.arange(len(signal)):
+            output_int[n], _, _ = drcut.process_int(signal[n])
+        drcut.reset_state()
+        for n in np.arange(len(signal)):
+            output_flt[n], _, _ = drcut.process(signal[n])
+
+    # small signals are always going to be ropey due to quantizing, so just check average error of top half
+    top_half = utils.db(output_int) > -50
+    if np.any(top_half):
+        error_flt = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
+        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        assert mean_error_flt < 0.055
+
+
+# TODO RMS limiter tests
 # TODO hard limiter test
-# TODO int vs float test
 # TODO envelope detector tests
 # TODO compressor tests
 
 if __name__ == "__main__":
-    test_limiter_peak_attack(48000, 0.1, -10)
+    test_drc_component(48000, drc.limiter_peak, 1, 1, 1)
+    # test_limiter_peak_attack(48000, 0.1, -10)
