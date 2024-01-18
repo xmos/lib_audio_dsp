@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include "biquad.h"
+#include "cascaded_biquads.h"
 
 FILE * _fopen(char * fname, char* mode) {
   FILE * fp = fopen(fname, mode);
@@ -16,9 +16,9 @@ FILE * _fopen(char * fname, char* mode) {
 
 int main()
 {
-  int32_t DWORD_ALIGNED taps_buf[5] = {0};
-  int32_t state[8] = {0};
-  left_shift_t lsh = 0;
+  int32_t DWORD_ALIGNED taps_buf[40] = {0};
+  int32_t state[64] = {0};
+  left_shift_t lsh[8] = {0};
 
   FILE * in = _fopen("../sig_48k.bin", "rb");
   FILE * out = _fopen("sig_out.bin", "wb");
@@ -28,16 +28,18 @@ int main()
   int in_len = ftell(in) / sizeof(int32_t);
   fseek(in, 0, SEEK_SET);
 
-  fread(taps_buf, sizeof(int32_t), 5, coeffs);
-  fread(&lsh, sizeof(int32_t), 1, coeffs);
-  //printf("%ld %ld %ld %ld %ld %d\n", taps_buf[0], taps_buf[1], taps_buf[2], taps_buf[3], taps_buf[4], lsh);
-  
+  for (unsigned n = 0; n < 8; n++){
+    fread(&taps_buf[n * 5], sizeof(int32_t), 5, coeffs);
+    fread(&lsh[n], sizeof(int32_t), 1, coeffs);
+    //printf("%ld %ld %ld %ld %ld %d\n", taps_buf[n * 5], taps_buf[n * 5 + 1], taps_buf[n * 5 + 2], taps_buf[n * 5 + 3], taps_buf[n * 5 + 4], lsh[n]);
+  }
+
   for (unsigned i = 0; i < in_len; i++)
   {
     int32_t samp = 0, samp_out = 0;
     fread(&samp, sizeof(int32_t), 1, in);
     //printf("%ld ", samp);
-    samp_out = adsp_biquad(samp, taps_buf, state, lsh);
+    samp_out = adsp_cascaded_biquads_8b(samp, taps_buf, state, lsh);
     //printf("%ld ", samp_out);
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }

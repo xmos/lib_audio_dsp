@@ -44,7 +44,8 @@ pipeline {
                   withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
                     script {
                       [
-                      "test/biquad"
+                      "test/biquad",
+                      "test/cascaded_biquads"
                       ].each {
                         sh "cmake -S ${it} -B ${it}/build"
                         sh "xmake -C ${it}/build -j"
@@ -66,6 +67,10 @@ pipeline {
                     // running separately because it's faster for parallel tests
                     sh "pytest -s test_biquad_python.py"
                     sh "pytest -n auto test_biquad_c.py"
+                  }
+                  dir("test/cascaded_biquads") {
+
+                    sh "pytest -n auto test_casc_biquads_c.py"
                   }
                 }
               }
