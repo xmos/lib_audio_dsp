@@ -74,7 +74,12 @@ def test_limiter_peak_release(fs, rt, threshold):
                                                   ("limiter_peak", -6),
                                                   ("limiter_peak", 0),
                                                   ("limiter_peak", 6),
-                                                  ("envelope_detector_peak", None)])
+                                                  ("limiter_rms", -20),
+                                                  ("limiter_rms", -6),
+                                                  ("limiter_rms", 0),
+                                                  ("limiter_rms", 6),
+                                                  ("envelope_detector_peak", None),
+                                                  ("envelope_detector_rms", None)])
 @pytest.mark.parametrize("rt", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
 def test_drc_component(fs, component, at, rt, threshold):
@@ -90,6 +95,9 @@ def test_drc_component(fs, component, at, rt, threshold):
     if threshold is not None:
         signal[:len_sig//2] *= utils.db2gain(threshold + 6)
         signal[len_sig//2:] *= utils.db2gain(threshold - 3)
+    else:
+        t = np.arange(len(signal))/fs
+        signal *= np.sin(t*2*np.pi*0.5)
 
     output_int = np.zeros(len(signal))
     output_flt = np.zeros(len(signal))
@@ -115,7 +123,7 @@ def test_drc_component(fs, component, at, rt, threshold):
         assert mean_error_flt < 0.055
 
 
-# TODO RMS limiter tests
+# TODO more RMS limiter tests
 # TODO hard limiter test
 # TODO envelope detector tests
 # TODO compressor tests

@@ -16,6 +16,7 @@ class envelope_detector_peak(dspg.dsp_block):
             attack_t = detect_t
             release_t = detect_t
 
+        # attack times simplified from McNally, seem pretty close
         T = 1/fs
         self.attack_alpha = 2*T / attack_t
         self.release_alpha = 2*T / release_t
@@ -31,11 +32,14 @@ class envelope_detector_peak(dspg.dsp_block):
 
     def process(self, sample):
         sample_mag = abs(sample)
+
+        # see if we're attacking or decaying
         if sample_mag > self.envelope:
             alpha = self.attack_alpha
         else:
             alpha = self.release_alpha
 
+        # do exponential moving average
         self.envelope = ((1-alpha) * self.envelope) + (alpha * sample_mag)
 
         return self.envelope
@@ -48,11 +52,13 @@ class envelope_detector_peak(dspg.dsp_block):
 
         sample_mag = abs(sample_s32)
 
+        # see if we're attacking or decaying
         if sample_mag > self.envelope_s32:
             alpha = self.attack_alpha_s32
         else:
             alpha = self.release_alpha_s32
 
+        # do exponential moving average
         self.envelope_s32 = ((utils.float_s32(1)-alpha) * self.envelope_s32) + (alpha * sample_mag)
 
         # if we got floats, return floats, otherwise return float_s32
@@ -66,15 +72,43 @@ class envelope_detector_rms(envelope_detector_peak):
     # note this returns the mean**2, no point doing the sqrt() as if the
     # ouptut is converted to dB, 10log10() can be taken instead of 20log10()
     def process(self, sample):
+        # for rms use power
         sample_mag = sample**2
+
+        # see if we're attacking or decaying
         if sample_mag > self.envelope:
             alpha = self.attack_alpha
         else:
             alpha = self.release_alpha
 
+        # do exponential moving average
         self.envelope = ((1-alpha) * self.envelope) + (alpha * sample_mag)
 
         return self.envelope
+
+    def process_int(self, sample):
+        if isinstance(sample, utils.float_s32):
+            sample_s32 = sample
+        else:
+            sample_s32 = utils.float_s32(sample)
+
+        # for rms use power (sample**2)
+        sample_mag = sample_s32 * sample_s32
+
+        # see if we're attacking or decaying
+        if sample_mag > self.envelope_s32:
+            alpha = self.attack_alpha_s32
+        else:
+            alpha = self.release_alpha_s32
+
+        # do exponential moving average
+        self.envelope_s32 = ((utils.float_s32(1)-alpha) * self.envelope_s32) + (alpha * sample_mag)
+
+        # if we got floats, return floats, otherwise return float_s32
+        if isinstance(sample, utils.float_s32):
+            return self.envelope_s32
+        else:
+            return float(self.envelope_s32)
 
 
 class limiter_base(dspg.dsp_block):
@@ -83,6 +117,7 @@ class limiter_base(dspg.dsp_block):
     def __init__(self, fs, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(Q_sig)
 
+        # attack times simplified from McNally, seem pretty close
         T = 1/fs
         self.attack_alpha = 2*T / attack_t
         self.release_alpha = 2*T / release_t
@@ -103,42 +138,51 @@ class limiter_base(dspg.dsp_block):
         self.gain_s32 = utils.float_s32(1)
 
     def process(self, sample):
-
+        # get envelope from envelope detector
         envelope = self.env_detector.process(sample)
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
+        # if envelope below threshold, apply unity gain, otherwise scale down
         new_gain = self.threshold/envelope
         new_gain = min(1, new_gain)
 
+        # see if we're attacking or decaying
         if new_gain < self.gain:
             alpha = self.attack_alpha
         else:
             alpha = self.release_alpha
 
+        # do exponential moving average
         self.gain = ((1-alpha) * self.gain) + (alpha * new_gain)
 
+        # apply gain to input
         y = self.gain*sample
         return y, new_gain, envelope
 
     def process_int(self, sample):
         sample = utils.float_s32(sample, self.Q_sig)
 
+        # get envelope from envelope detector
         envelope = self.env_detector.process_int(sample)
         # avoid /0
         if envelope.mant == 0:
             envelope.mant = 1
 
+        # if envelope below threshold, apply unity gain, otherwise scale down
         new_gain = self.threshold_s32/envelope
         new_gain = utils.float_s32_min(utils.float_s32(1), new_gain)
 
+        # see if we're attacking or decaying
         if new_gain < self.gain_s32:
             alpha = self.attack_alpha_s32
         else:
             alpha = self.release_alpha_s32
 
+        # do exponential moving average
         self.gain_s32 = ((utils.float_s32(1)-alpha) * self.gain_s32) + (alpha * new_gain)
 
+        # apply gain
         y = self.gain_s32*sample
 
         return float(y), float(new_gain), float(envelope)
@@ -172,12 +216,17 @@ class limiter_rms(limiter_base):
 class hard_limiter_peak(limiter_peak):
 
     def process(self, sample):
+        # do peak limiting
         y = super().process(sample)
+
+        # hard clip if above threshold
         if y > self.threshold:
             y = self.threshold
         if y < -self.threshold:
             y = -self.threshold
         return y
+
+    # TODO process_int, super().process_int will return float though...
 
 
 # TODO add soft limiter
