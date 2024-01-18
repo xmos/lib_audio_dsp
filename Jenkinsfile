@@ -68,9 +68,9 @@ pipeline {
                     sh "pytest -s test_biquad_python.py"
                     sh "pytest -n auto test_biquad_c.py"
                   }
-                  dir("test/biquad") {
+                  dir("test/cascaded_biquads") {
 
-                    sh "pytest -n auto test_biquad_c.py"
+                    sh "pytest -n auto test_casc_biquads_c.py"
                   }
                 }
               }
