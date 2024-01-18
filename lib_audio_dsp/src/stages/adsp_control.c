@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include <xcore/assert.h>
 #include "debug_print.h"
-#include "adsp_module.h"
-#include "adsp_control.h"
+#include "stages/adsp_module.h"
+#include "stages/adsp_control.h"
 
 
 typedef struct {

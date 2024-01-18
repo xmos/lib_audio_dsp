@@ -1,7 +1,7 @@
 #ifndef CMD_OFFSETS_H
 #define CMD_OFFSETS_H
 
-#include "adsp_module.h"
+#include "stages/adsp_module.h"
 
 #include "cmds.h"
 %for name in cmd_map:

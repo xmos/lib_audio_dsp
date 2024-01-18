@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include "biquad.h"
+#include "dsp/biquad.h"
 
 FILE * _fopen(char * fname, char* mode) {
   FILE * fp = fopen(fname, mode);

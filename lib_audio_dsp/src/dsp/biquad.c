@@ -1,5 +1,5 @@
 
-#include "biquad.h"
+#include "dsp/biquad.h"
 #include <xcore/assert.h>
 #include <stdio.h>
 
