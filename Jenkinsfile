@@ -44,7 +44,7 @@ pipeline {
                   withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
                     script {
                       [
-                      "test/biquad"
+                      "test/biquad",
                       "test/cascaded_biquads"
                       ].each {
                         sh "cmake -S ${it} -B ${it}/build"
