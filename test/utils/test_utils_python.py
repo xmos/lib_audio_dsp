@@ -3,6 +3,9 @@ import numpy as np
 
 import audio_dsp.dsp.utils as utils
 
+# seed RNG to avoid collection failures
+np.random.seed(0)
+
 @pytest.mark.parametrize('x', (2*np.random.rand(100)-1)*2**64)
 def test_float_s32_float(x):
     x_s32 = utils.float_s32(float(x))
