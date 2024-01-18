@@ -15,6 +15,10 @@ class StageOutput(Edge):
         self.frame_size = frame_size
         # TODO edges will probably need an associated type audio vs. data etc.
         # self.type = q23
+        
+    def __repr__(self) -> str:
+        dest = "-" if self.dest is None else f"{self.dest.index} {self.dest_index}"
+        return f"({self.source.index} {self.source_index} -> {dest})"
 
 class PropertyControlField:
     """For stages which have internal state they can register callbacks
