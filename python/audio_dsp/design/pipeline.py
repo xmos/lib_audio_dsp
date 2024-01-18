@@ -57,12 +57,8 @@ class Pipeline:
         """Render a dot diagram of this pipeline"""
         dot = graphviz.Digraph()
         dot.clear()
-        for i_thread, thread in enumerate(self._threads):
-            with dot.subgraph(name=f"cluster_{i_thread}") as subg:
-                subg.attr(label=f"thread {i_thread}")
-                for i, n in enumerate(self.graph.nodes):
-                    if thread.contains_stage(n):
-                        subg.node(n.id.hex, f"{i}: {type(n).__name__}")
+        for thread in self._threads:
+            thread.add_to_dot(dot)
         for e in self.graph.edges:
             source = e.source.id.hex if e.source is not None else "start"
             dest = e.dest.id.hex if e.dest is not None else "end"
