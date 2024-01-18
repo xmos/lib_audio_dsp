@@ -4,7 +4,7 @@ import soundfile as sf
 from pathlib import Path
 import shutil
 import subprocess
-import audio_dsp.dsp.cascade_biquads as casc_bq
+import audio_dsp.dsp.cascaded_biquads as casc_bq
 from audio_dsp.dsp.generic import Q_SIG
 import audio_dsp.dsp.signal_gen as gen
 import pytest
