@@ -23,7 +23,11 @@ class envelope_detector_peak(dspg.dsp_block):
 
         self.attack_alpha_s32 = utils.float_s32(self.attack_alpha)
         self.release_alpha_s32 = utils.float_s32(self.release_alpha)
-        self.envelope_s32 = utils.float_s32(0)
+        self.envelope_s32 = utils.float_s32(0, self.Q_sig)
+
+    def reset_state(self):
+        self.envelope = 0
+        self.envelope_s32 = utils.float_s32(0, self.Q_sig)
 
     def process(self, sample):
         sample_mag = abs(sample)
@@ -34,13 +38,15 @@ class envelope_detector_peak(dspg.dsp_block):
 
         self.envelope = ((1-alpha) * self.envelope) + (alpha * sample_mag)
 
-    def process_int(self, sample):
-        float_flag = False
-        if not isinstance(sample, utils.float_s32):
-            sample = utils.float_s32(sample)
-            float_flag = True
+        return self.envelope
 
-        sample_mag = abs(sample)
+    def process_int(self, sample):
+        if isinstance(sample, utils.float_s32):
+            sample_s32 = sample
+        else:
+            sample_s32 = utils.float_s32(sample)
+
+        sample_mag = abs(sample_s32)
 
         if sample_mag > self.envelope_s32:
             alpha = self.attack_alpha_s32
@@ -50,10 +56,10 @@ class envelope_detector_peak(dspg.dsp_block):
         self.envelope_s32 = ((utils.float_s32(1)-alpha) * self.envelope_s32) + (alpha * sample_mag)
 
         # if we got floats, return floats, otherwise return float_s32
-        if float_flag:
-            return float(self.envelope_s32)
-        else:
+        if isinstance(sample, utils.float_s32):
             return self.envelope_s32
+        else:
+            return float(self.envelope_s32)
 
 
 class envelope_detector_rms(envelope_detector_peak):
@@ -91,6 +97,11 @@ class limiter_base(dspg.dsp_block):
         self.threshold_s32 = None
         self.gain_s32 = utils.float_s32(1)
 
+    def reset_state(self):
+        self.env_detector.reset_state()
+        self.gain = 1
+        self.gain_s32 = utils.float_s32(1)
+
     def process(self, sample):
 
         envelope = self.env_detector.process(sample)
@@ -105,13 +116,13 @@ class limiter_base(dspg.dsp_block):
         else:
             alpha = self.release_alpha
 
-        self.gain = ((utils.float_s32(1)-alpha) * self.gain) + (alpha * new_gain)
+        self.gain = ((1-alpha) * self.gain) + (alpha * new_gain)
 
         y = self.gain*sample
         return y, new_gain, envelope
 
     def process_int(self, sample):
-        sample = utils.float_s32(sample)
+        sample = utils.float_s32(sample, self.Q_sig)
 
         envelope = self.env_detector.process_int(sample)
         # avoid /0
@@ -139,8 +150,10 @@ class limiter_peak(limiter_base):
         super().__init__(fs, attack_t, release_t, delay, Q_sig)
 
         self.threshold = utils.db2gain(threshold_db)
-        self.threshold_s32 = utils.float_s32(self.threshold)
-        self.env_detector = envelope_detector_peak(fs, attack_t=attack_t, release_t=release_t)
+        self.threshold_s32 = utils.float_s32(self.threshold, self.Q_sig)
+        self.env_detector = envelope_detector_peak(fs, attack_t=attack_t,
+                                                   release_t=release_t,
+                                                   Q_sig=self.Q_sig)
 
 
 class limiter_rms(limiter_base):
@@ -150,8 +163,10 @@ class limiter_rms(limiter_base):
 
         # note rms comes as x**2, so use db_pow
         self.threshold = utils.db_pow2gain(threshold_db)
-        self.threshold_s32 = utils.float_s32(self.threshold)
-        self.env_detector = envelope_detector_rms(fs, attack_t=attack_t, release_t=release_t)
+        self.threshold_s32 = utils.float_s32(self.threshold, self.Q_sig)
+        self.env_detector = envelope_detector_rms(fs, attack_t=attack_t,
+                                                  release_t=release_t,
+                                                  Q_sig=self.Q_sig)
 
 
 class hard_limiter_peak(limiter_peak):

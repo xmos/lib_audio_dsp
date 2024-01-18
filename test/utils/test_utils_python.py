@@ -12,6 +12,17 @@ def test_float_s32_float(x):
     assert np.isclose(x, x2, rtol=2**-31, atol=tol)
 
 
+@pytest.mark.parametrize('x, Q', np.stack(((2*np.random.rand(100)-1),
+                                           np.random.randint(0, 30, size=100)),
+                                          axis=-1))
+def test_float_s32_float_Q(x, Q):
+    x_s32 = utils.float_s32(float(x), Q_sig=Q)
+    x2 = float(x_s32)
+
+    tol = 2**-Q
+    assert np.isclose(x, x2, rtol=2**-31, atol=tol)
+
+
 @pytest.mark.parametrize('x', (2*np.random.rand(100)-1)*2**64)
 def test_float_s32_abs(x):
     x_s32 = utils.float_s32(float(x))
@@ -53,7 +64,7 @@ def test_float_s32_add(x, y):
 
     xy_s32 = x_s32 + y_s32
     xy = float(xy_s32)
-    
+
     tol = max(2**-31*2**x_s32.exp, 2**-31*2**y_s32.exp)
     assert np.isclose(x + y, xy, rtol=2**-29, atol=tol)
 

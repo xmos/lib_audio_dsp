@@ -80,7 +80,7 @@ def vlmaccr(vect1, vect2, out=0):
 
 
 def float_to_int32(x):
-    return int(round(x*(2**31 - 1)))
+    return int32(round(x*(2**31 - 1)))
 
 
 def int32_to_float(x):
@@ -88,8 +88,13 @@ def int32_to_float(x):
 
 
 class float_s32():
-    def __init__(self, value):
-        if isinstance(value, float):
+    def __init__(self, value, Q_sig=None):
+        self.Q_sig = Q_sig
+        if Q_sig and isinstance(value, float):
+            self.mant = int32(round(value * 2**Q_sig))
+            # add 31 here python expects a float mantissa < 1, but we use int32
+            self.exp = -Q_sig + 31
+        elif isinstance(value, float):
             self.mant, self.exp = math.frexp(value)
             self.mant = float_to_int32(self.mant)
         elif isinstance(value, int):
