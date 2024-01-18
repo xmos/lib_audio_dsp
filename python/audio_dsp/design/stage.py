@@ -5,12 +5,16 @@ import yaml
 
 
 class StageOutput(Edge):
-    def __init__(self):
+    def __init__(self, fs=48000, frame_size=1):
         super().__init__()
         # index of the multiple outputs that the source node has
         self.source_index = None
         # which input index is this
         self.dest_index = None
+        self.fs = fs
+        self.frame_size = frame_size
+        # TODO edges will probably need an associated type audio vs. data etc.
+        # self.type = q23
 
 class PropertyControlField:
     """For stages which have internal state they can register callbacks
@@ -35,16 +39,20 @@ class ValueControlField:
         self.value = value
 
 class Stage(Node):
-    def __init__(self, config, graph, inputs):
+    def __init__(self, config, inputs):
         super().__init__(self)
         self.i = [i for i in inputs]
         for i, input in enumerate(self.i):
             input.set_dest(self)
             input.dest_index = i
+        if self.i:
+            self.fs = self.i[0].fs
+            self.frame_size = self.i[0].frame_size
+        else:
+            self.fs = None
 
         self.n_in = len(self.i)
         self._o = None
-        self._graph = graph
         self.yaml_dict = yaml.load(config, Loader=yaml.Loader)
         # module dict contains 1 entry with the name of the module as its key
         self.name = next(iter(self.yaml_dict["module"].keys()))
@@ -63,7 +71,6 @@ class Stage(Node):
             output = StageOutput()
             output.source_index = i
             output.set_source(self)
-            self._graph.add_edge(output)
             self._o.append(output)
 
     def __setitem__(self, key, value):

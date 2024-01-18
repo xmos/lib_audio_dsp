@@ -19,8 +19,10 @@ class Thread:
 
         returns the created stage
         """
-        stage = stage_type(graph=self._graph, inputs=inputs, **kwargs)
+        stage = stage_type(inputs=inputs, **kwargs)
         self._graph.add_node(stage)
+        for edge in stage.o:
+            self._graph.add_edge(edge)
         self._nodes.append(stage)
         return stage
 
