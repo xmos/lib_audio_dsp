@@ -350,14 +350,16 @@ left_shift_t adsp_design_biquad_highshelf
 
 void adsp_design_biquad_linkwitz(
   int32_t coeffs[5],
-  const float fc,
+  const float f0,
   const float fs,
   const float q0,
   const float fp,
   const float qp
 ) {
+  xassert(fp <= fs / 2 && "fc must be less than fs/2");
+  xassert(f0 <= fs / 2 && "fc must be less than fs/2");
   // Compute common factors
-  float Fc = (fc + fp) / 2;
+  float fc = (f0 + fp) / 2;
 
   float d0i = 2 * pi * Fc;
   float d1i = d0i / q0;
@@ -367,7 +369,7 @@ void adsp_design_biquad_linkwitz(
   float c1i = c0i / qp;
   c0i = c0i * c0i;
 
-  float gn = (2 * pi * Fc) / (tanf(pi * Fc / fs));
+  float gn = (2 * pi * fc) / (tanf(pi * fc / fs));
   float gn_pow2 = gn * gn;
   float factor_b = gn * d1i;
   float factor_a = gn * c1i;

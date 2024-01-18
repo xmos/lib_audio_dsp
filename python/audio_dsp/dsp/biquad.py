@@ -477,6 +477,7 @@ def make_biquad_linkwitz(fs, f0, q0, fp, qp):
     # https://www.linkwitzlab.com/filters.htm#9
     # https://www.minidsp.com/applications/advanced-tools/linkwitz-transform
 
+    assert (max(f0, fp) <= fs/2), 'f0 and fp must be less than fs/2'
     fc = (f0 + fp) / 2
     fc = fc
     low = 1

@@ -79,7 +79,7 @@ left_shift_t adsp_design_biquad_highshelf(
 
 void adsp_design_biquad_linkwitz(
   int32_t coeffs[5],
-  const float fc,
+  const float f0,
   const float fs,
   const float q0,
   const float fp,
