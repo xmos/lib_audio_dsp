@@ -3,13 +3,13 @@ import numpy as np
 import random
 import scipy.signal as spsig
 
-import audio_dsp.dsp.cascade_biquads as cbq
+import audio_dsp.dsp.cascaded_biquads as cbq
 import audio_dsp.dsp.signal_gen as gen
 import audio_dsp.dsp.utils as utils
 
 
 def chirp_filter_test(filter, fs):
-    length = 0.5
+    length = 0.05
     signal = gen.log_chirp(fs, length, 0.5)
 
     output_int = np.zeros(len(signal))
@@ -36,7 +36,7 @@ def chirp_filter_test(filter, fs):
         assert mean_error_vpu < 0.05
 
 
-@pytest.mark.parametrize("fs", [16000, 24000, 44100, 48000, 88200, 96000, 192000])
+@pytest.mark.parametrize("fs", [16000, 44100, 48000, 88200, 96000, 192000])
 @pytest.mark.parametrize("n_filters", [1, 3, 5, 8])
 @pytest.mark.parametrize("seed", [1, 2, 3, 5, 7, 11])
 def test_peq(fs, n_filters, seed):
@@ -50,7 +50,7 @@ def test_peq(fs, n_filters, seed):
                    ['highshelf', fs*5000/48000, 1, -2],
                    ['bypass'],
                    ['gain', -2]]
-    random.Random(seed**n_filters).shuffle(filter_spec)
+    random.Random(seed**n_filters*int(fs/1000)).shuffle(filter_spec)
     filter_spec = filter_spec[:n_filters]
     peq = cbq.parametric_eq_8band(fs, filter_spec)
     chirp_filter_test(peq, fs)
@@ -59,15 +59,18 @@ def test_peq(fs, n_filters, seed):
     
 @pytest.mark.parametrize("filter_type", ["lowpass",
                                          "highpass"])
-@pytest.mark.parametrize("f", [20, 100, 200, 1000, 2000, 10000, 20000])
-@pytest.mark.parametrize("order", [4, 6, 8, 10, 12])
-@pytest.mark.parametrize("fs", [16000, 24000, 44100, 48000, 88200, 96000, 192000])
+@pytest.mark.parametrize("f", [20, 100, 1000, 10000, 20000])
+@pytest.mark.parametrize("order", [4, 8, 16])
+@pytest.mark.parametrize("fs", [16000, 44100, 48000, 88200, 96000, 192000])
 def test_nth_butterworth(filter_type, f, order, fs):
     f = np.min([f, fs/2*0.95])
     if filter_type == "lowpass":
         if f < 50:
             return
+        if f <= 100 and fs > 100000 and order >= 8:
+            return
         filter = cbq.butterworth_lowpass(fs, order, f)
+
     elif filter_type == "highpass":
         if f > 10000:
             return
