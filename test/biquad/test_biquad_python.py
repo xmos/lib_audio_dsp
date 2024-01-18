@@ -34,14 +34,30 @@ def chirp_filter_test(filter: bq.biquad, fs):
 
 
 @pytest.mark.parametrize("filter_type", ["biquad_peaking",
-                                         "biquad_constant_q",
-                                         "biquad_lowshelf",
-                                         "biquad_highshelf",])
+                                         "biquad_constant_q"])
 @pytest.mark.parametrize("f", [20, 100, 1000, 10000, 20000])
 @pytest.mark.parametrize("q", [0.1, 0.5, 1, 2, 10])
 @pytest.mark.parametrize("gain", [-12, -6, 0, 6, 12])
 @pytest.mark.parametrize("fs", [16000, 44100, 48000, 88200, 96000, 192000])
-def test_high_gain(filter_type, f, q, gain, fs):
+def test_peaking_filters(filter_type, f, q, gain, fs):
+    if f < fs*5e-4:
+        f = max(fs*5e-4, f)
+    filter_handle = getattr(bq, "make_%s" % filter_type)
+    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), fs, b_shift=2)
+    chirp_filter_test(filter, fs)
+
+
+@pytest.mark.parametrize("filter_type", ["biquad_lowshelf",
+                                         "biquad_highshelf",])
+@pytest.mark.parametrize("f", [20, 100, 1000, 10000, 20000])
+@pytest.mark.parametrize("q", [0.1, 0.5, 1, 2])
+@pytest.mark.parametrize("gain", [-12, -6, 0, 6, 12])
+@pytest.mark.parametrize("fs", [16000, 44100, 48000, 88200, 96000, 192000])
+def test_shelf_filters(filter_type, f, q, gain, fs):
+
+    if f < fs*5e-4:
+        f = max(fs*5e-4, f)
+
     filter_handle = getattr(bq, "make_%s" % filter_type)
     filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), fs, b_shift=2)
     chirp_filter_test(filter, fs)
