@@ -361,7 +361,7 @@ void adsp_design_biquad_linkwitz(
   // Compute common factors
   float fc = (f0 + fp) / 2;
 
-  float d0i = 2 * pi * Fc;
+  float d0i = 2 * pi * fc;
   float d1i = d0i / q0;
   d0i = d0i * d0i;
 
