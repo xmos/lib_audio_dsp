@@ -160,4 +160,4 @@ if __name__ =="__main__":
   #test_xpass_filters_c(sig_fl, "biquad_notch", 200, 0.7)
   #test_high_gain_c(sig_fl, "biquad_lowshelf", 2000, 0.1, 5)
   #test_bandx_filters_c(sig_fl, "biquad_bandpass", 200, 10)
-  test_linkwitz_filters_c(sig_fl, 100, 500, 0.5, 1)
+  test_linkwitz_filters_c(sig_fl, 100, 4, 0.5, 2)

@@ -48,6 +48,8 @@ class cascaded_biquads_8(dspg.dsp_block):
     def reset_state(self):
         for biquad in self.biquads:
             biquad.reset_state()
+        
+        return
 
 
 class butterworth_lowpass(cascaded_biquads_8):

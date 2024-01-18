@@ -8,6 +8,7 @@ import graphviz
 from IPython import display
 import yaml
 import subprocess
+from uuid import uuid4
 
 
 class Pipeline:
@@ -16,14 +17,14 @@ class Pipeline:
     are connected in series.
     """
 
-    def __init__(self, n_in):
+    def __init__(self, n_in, fs=48000):
         self.graph = Graph()
         self._threads = []
         self.n_in = n_in
         self.n_out = self.n_in
         self.frame_size = 1
 
-        self.i = [StageOutput() for _ in range(n_in)]
+        self.i = [StageOutput(fs=fs) for _ in range(n_in)]
         for i, input in enumerate(self.i):
             self.graph.add_edge(input)
             input.source_index = i
@@ -56,15 +57,15 @@ class Pipeline:
         """Render a dot diagram of this pipeline"""
         dot = graphviz.Digraph()
         dot.clear()
-        for i_thread, thread in enumerate(self._threads):
-            with dot.subgraph(name=f"cluster_{i_thread}") as subg:
-                subg.attr(label=f"thread {i_thread}")
-                for i, n in enumerate(self.graph.nodes):
-                    if thread.contains_stage(n):
-                        subg.node(n.id.hex, f"{i}: {type(n).__name__}")
+        for thread in self._threads:
+            thread.add_to_dot(dot)
         for e in self.graph.edges:
             source = e.source.id.hex if e.source is not None else "start"
             dest = e.dest.id.hex if e.dest is not None else "end"
+            if e.dest is None and e.dest_index is None:
+                # unconnected
+                dest = uuid4().hex
+                dot.node(dest, "", shape="point")
             dot.edge(source, dest, taillabel=str(e.source_index), headlabel=str(e.dest_index))
         display.display_svg(dot)
 
@@ -122,11 +123,15 @@ def filter_edges_by_thread(resolved_pipeline):
         input_edges = {}
         output_edges = {}
         internal_edges = []
+        dead_edges = []
         for edge in resolved_pipeline["edges"]:
             sit = source_in_thread(edge, thread)
             dit = dest_in_thread(edge, thread)
             if sit and dit:
                 internal_edges.append(edge)
+            elif (edge[1][0] is None and edge[1][1] is None) and (dit or sit):
+                # This edge is not connected to an output
+                dead_edges.append(edge)
             elif sit:
                 if edge[1][0] is None:
                     # pipeline output
@@ -151,7 +156,7 @@ def filter_edges_by_thread(resolved_pipeline):
                     input_edges[si].append(edge)
                 except KeyError:
                     input_edges[si] = [edge]
-        ret.append((input_edges, internal_edges, output_edges))
+        ret.append((input_edges, internal_edges, output_edges, dead_edges))
     return ret
 
 
@@ -188,13 +193,14 @@ def generate_dsp_threads(resolved_pipeline, block_size = 1):
         func = f"DECLARE_JOB(dsp_thread{thread_index}, (chanend_t*, chanend_t*, module_instance_t**));\n"
         func += f"void dsp_thread{thread_index}(chanend_t* c_source, chanend_t* c_dest, module_instance_t** modules) {{\n"
 
-        in_edges, internal_edges, all_output_edges = thread_edges
+        in_edges, internal_edges, all_output_edges, dead_edges = thread_edges
         all_edges = []
         for temp_in_e in in_edges.values():
             all_edges.extend(temp_in_e)
         all_edges.extend(internal_edges)
         for temp_out_e in all_output_edges.values():
             all_edges.extend(temp_out_e)
+        all_edges.extend(dead_edges)
         for i in range(len(all_edges)):
             func += f"\tint32_t edge{i}[{block_size}];\n"
         func += "\twhile(1) {\n"
@@ -209,24 +215,23 @@ def generate_dsp_threads(resolved_pipeline, block_size = 1):
         func += control
         func += f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
                                                           # the same channel being read twice
-        func += "\tSELECT_RES(\n"
-        for i, _ in enumerate(in_edges.values()):
-            func += f"\t\tCASE_THEN(c_source[{i}], case_{i}),\n"
-        func += "\t\tDEFAULT_THEN(do_control)\n"
-        func += "\t) {\n"
+        if len(in_edges.values()):
+            func += "\tSELECT_RES(\n"
+            for i, _ in enumerate(in_edges.values()):
+                func += f"\t\tCASE_THEN(c_source[{i}], case_{i}),\n"
+            func += "\t\tDEFAULT_THEN(do_control)\n"
+            func += "\t) {\n"
 
-        for i, edges in enumerate(in_edges.values()):
-            func += f"\t\tcase_{i}: {{\n"
-            for edge in edges:
-                func += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
-            func += f"\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}}\n"
-        func += "\t\tdo_control: {\n"
-        func += control
-        func += "\t\tcontinue; }\n"
-        func += "\t}\n"
+            for i, edges in enumerate(in_edges.values()):
+                func += f"\t\tcase_{i}: {{\n"
+                for edge in edges:
+                    func += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
+                func += f"\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}}\n"
+            func += "\t\tdo_control: {\n"
+            func += control
+            func += "\t\tcontinue; }\n"
+            func += "\t}\n"
 
-
-        # func += f'printstr("thread {thread_index}\\n");\n'
 
         for stage_thread_index, stage in enumerate(thread):
             # thread stages are already ordered during pipeline resolution
@@ -257,12 +262,12 @@ def determine_channels(resolved_pipeline):
     all_thread_edges = filter_edges_by_thread(resolved_pipeline)
     ret = []
     for s_idx, s_thread_edges in enumerate(all_thread_edges):
-        s_in_edges, _, _ = s_thread_edges
+        s_in_edges, _, _, _ = s_thread_edges
         # add pipeline entry channels
         if "pipeline_in" in s_in_edges.keys():
             ret.append(("pipeline_in", s_idx))
     for s_idx, s_thread_edges in enumerate(all_thread_edges):
-        _, _, s_out_edges = s_thread_edges
+        _, _, s_out_edges, _ = s_thread_edges
         ret.extend((s_idx, dest) for dest in s_out_edges.keys())
     return ret
 
@@ -426,7 +431,7 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
 
     all_thread_edges = filter_edges_by_thread(resolved_pipe)
     for thread_idx, (thread, thread_edges) in enumerate(zip(threads, all_thread_edges)):
-        thread_input_edges, _, thread_output_edges = thread_edges
+        thread_input_edges, _, thread_output_edges, _ = thread_edges
         # thread stages
         dsp_main += f"\tmodule_instance_t* thread_{thread_idx}_modules[] = {{\n"
         for stage_idx, _ in thread:

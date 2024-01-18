@@ -284,6 +284,7 @@ def make_biquad_gain(fs, gain_db):
 
 def make_biquad_lowpass(fs, filter_freq, q_factor):
 
+    assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     w0 = 2.0 * np.pi * filter_freq/fs
     alpha = np.sin(w0)/(2 * q_factor)
 
@@ -302,6 +303,7 @@ def make_biquad_lowpass(fs, filter_freq, q_factor):
 
 def make_biquad_highpass(fs, filter_freq, q_factor):
 
+    assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     w0 = 2.0 * np.pi * filter_freq/fs
     alpha = np.sin(w0)/(2 * q_factor)
 
@@ -321,6 +323,7 @@ def make_biquad_highpass(fs, filter_freq, q_factor):
 # Constant 0 dB peak gain
 def make_biquad_bandpass(fs, filter_freq, BW):
 
+    assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     w0 = 2.0 * np.pi * filter_freq/fs
     alpha = np.sin(w0) * np.sinh(np.log(2)/2 * BW * w0/np.sin(w0))
 
@@ -340,6 +343,7 @@ def make_biquad_bandpass(fs, filter_freq, BW):
 # Constant 0 dB peak gain
 def make_biquad_bandstop(fs, filter_freq, BW):
 
+    assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     w0 = 2.0 * np.pi * filter_freq/fs
     alpha = np.sin(w0) * np.sinh(np.log(2)/2 * BW * w0/np.sin(w0))
 
@@ -358,6 +362,7 @@ def make_biquad_bandstop(fs, filter_freq, BW):
 
 def make_biquad_notch(fs, filter_freq, q_factor):
 
+    assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     w0 = 2.0 * np.pi * filter_freq/fs
     alpha = np.sin(w0)/(2.0 * q_factor)
 
@@ -376,6 +381,7 @@ def make_biquad_notch(fs, filter_freq, q_factor):
 
 def make_biquad_allpass(fs, filter_freq, q_factor):
 
+    assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     w0 = 2.0 * np.pi * filter_freq/fs
     alpha = np.sin(w0)/(2.0 * q_factor)
 
@@ -394,6 +400,7 @@ def make_biquad_allpass(fs, filter_freq, q_factor):
 
 def make_biquad_peaking(fs, filter_freq, q_factor, boost_db):
 
+    assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     A = np.sqrt(10 ** (boost_db/20))
     w0 = 2.0 * np.pi * filter_freq/fs
     alpha = np.sin(w0)/(2.0 * q_factor)
@@ -415,6 +422,7 @@ def make_biquad_constant_q(fs, filter_freq, q_factor, boost_db):
 
     # https://www.musicdsp.org/en/latest/Filters/37-zoelzer-biquad-filters.html
 
+    assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     V = 10 ** (boost_db/20)
     w0 = 2.0 * np.pi * filter_freq/fs
     K = np.tan(w0/2)
@@ -443,6 +451,7 @@ def make_biquad_constant_q(fs, filter_freq, q_factor, boost_db):
 
 def make_biquad_lowshelf(fs, filter_freq, q_factor, gain_db):
 
+    assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     A = 10.0 ** (gain_db / 40.0)
     w0 = 2.0 * np.pi * filter_freq/fs
     alpha = np.sin(w0)/(2*q_factor)
@@ -462,6 +471,7 @@ def make_biquad_lowshelf(fs, filter_freq, q_factor, gain_db):
 
 def make_biquad_highshelf(fs, filter_freq, q_factor, gain_db):
 
+    assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     A = 10.0 ** (gain_db / 40.0)
     w0 = 2.0 * np.pi * filter_freq/fs
     alpha = np.sin(w0)/(2*q_factor)
@@ -484,6 +494,7 @@ def make_biquad_linkwitz(fs, f0, q0, fp, qp):
     # https://www.linkwitzlab.com/filters.htm#9
     # https://www.minidsp.com/applications/advanced-tools/linkwitz-transform
 
+    assert (max(f0, fp) <= fs/2), 'f0 and fp must be less than fs/2'
     fc = (f0 + fp) / 2
     fc = fc
     low = 1
