@@ -203,6 +203,19 @@ def generate_dsp_threads(resolved_pipeline, block_size = 1):
         all_edges.extend(dead_edges)
         for i in range(len(all_edges)):
             func += f"\tint32_t edge{i}[{block_size}];\n"
+
+        for stage_thread_index, stage in enumerate(thread):
+            # thread stages are already ordered during pipeline resolution
+            input_edges = [edge for edge in all_edges if edge[1][0] == stage[0]]
+            input_edges.sort(key = lambda e: e[1][1])
+            input_edges = ", ".join(f"edge{all_edges.index(e)}" for e in input_edges)
+            output_edges = [edge for edge in all_edges if edge[0][0] == stage[0]]
+            output_edges.sort(key = lambda e: e[0][1])
+            output_edges = ", ".join(f"edge{all_edges.index(e)}" for e in output_edges)
+            
+            func += f"\tint32_t* stage_{stage_thread_index}_input[] = {{{input_edges}}};\n"
+            func += f"\tint32_t* stage_{stage_thread_index}_output[] = {{{output_edges}}};\n"
+
         func += "\twhile(1) {\n"
 
         # Each thread must process the pending control requests at least once per loop.
@@ -235,16 +248,10 @@ def generate_dsp_threads(resolved_pipeline, block_size = 1):
 
         for stage_thread_index, stage in enumerate(thread):
             # thread stages are already ordered during pipeline resolution
-            input_edges = [edge for edge in all_edges if edge[1][0] == stage[0]]
-            input_edges.sort(key = lambda e: e[1][1])
-            input_edges = ", ".join(f"edge{all_edges.index(e)}" for e in input_edges)
-            output_edges = [edge for edge in all_edges if edge[0][0] == stage[0]]
-            output_edges.sort(key = lambda e: e[0][1])
-            output_edges = ", ".join(f"edge{all_edges.index(e)}" for e in output_edges)
 
             func += f"\tmodules[{stage_thread_index}]->process_sample(\n"
-            func += f"\t\t(int32_t*[]){{{input_edges}}},\n"
-            func += f"\t\t(int32_t*[]){{{output_edges}}},\n"
+            func += f"\t\tstage_{stage_thread_index}_input,\n"
+            func += f"\t\tstage_{stage_thread_index}_output,\n"
             func += f"\t\tmodules[{stage_thread_index}]->state);\n"
 
         for out_index, edges in enumerate(all_output_edges.values()):
