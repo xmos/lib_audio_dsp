@@ -21,7 +21,7 @@ includes:
   - "adsp_module.h"
 """
 
-class BiquadModule(Stage):
+class Biquad(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=BIQUAD_CONFIG, **kwargs)
         self.create_outputs(self.n_in)
