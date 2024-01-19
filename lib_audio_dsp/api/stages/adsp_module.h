@@ -10,14 +10,6 @@
 
 typedef enum
 {
-    parametric_eq = 0,
-    agc,
-    biquad,
-    num_dsp_modules
-}all_dsp_modules_t;
-
-typedef enum
-{
     config_read_pending,    // Control waiting to read the updated config from DSP
     config_write_pending,   // Config written by control and waiting for DSP to update
     config_read_updated,    // Config updated with the latest in order to service a read command
@@ -30,19 +22,19 @@ typedef struct
     void *config;
     uint32_t id;    // Unique module identifier assigned by the host
     uint32_t num_control_commands;
-    all_dsp_modules_t module_type;
+    uint8_t module_type;
     uint8_t cmd_id;
     config_rw_state_t config_rw_state;
 }module_control_t;
 
-#ifdef XCC_VERSION_MAJOR 
+#ifdef XCC_VERSION_MAJOR
 #define DSP_MODULE_PROCESS_ATTR  __attribute__((fptrgroup("dsp_module_process_fptr_grp")))
 #else
 #define DSP_MODULE_PROCESS_ATTR
 #endif
 typedef void (*dsp_module_process)(int32_t **input, int32_t **output, void *state);
 
-#ifdef XCC_VERSION_MAJOR 
+#ifdef XCC_VERSION_MAJOR
 #define DSP_MODULE_CONTROL_ATTR  __attribute__((fptrgroup("dsp_module_control_fptr_grp")))
 #else
 #define DSP_MODULE_CONTROL_ATTR

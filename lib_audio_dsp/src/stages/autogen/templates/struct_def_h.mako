@@ -14,7 +14,7 @@ typedef struct
 %for field_name, field_data in data.items():
 <%
     attrib_str = f'{field_data["attribute"]} ' if "attribute" in field_data else ""
-    size_str = "[" + field_data['size'] + "]" if "size" in field_data else ""
+    size_str = "[" + str(field_data['size']) + "]" if "size" in field_data else ""
 %>\
     ${field_data["type"]} ${attrib_str}${field_name}${size_str};
 %endfor

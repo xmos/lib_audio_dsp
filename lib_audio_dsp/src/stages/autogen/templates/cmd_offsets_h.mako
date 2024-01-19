@@ -8,6 +8,12 @@
 #include "${name}_config.h"
 %endfor
 
+typedef struct {
+    uint32_t cmd_id; // CmdID
+    uint32_t offset;    // offset
+    uint32_t size;      //size
+}module_config_offsets_t;
+
 %for name, data in cmd_map.items():
 // Offset and size of fields in the ${name}_config_t structure
 static module_config_offsets_t ${name}_config_offsets[] = {
@@ -20,8 +26,16 @@ static module_config_offsets_t ${name}_config_offsets[] = {
 
 static module_config_offsets_t *ptr_module_offsets[] = {
 %for name, data in cmd_map.items():
-${name}_config_offsets,
+    ${name}_config_offsets,
 %endfor
 };
+
+typedef enum
+{
+%for name in cmd_map:
+    e_dsp_stage_${name},
+%endfor
+    num_dsp_stages
+}all_dsp_stages_t;
 
 #endif
