@@ -69,7 +69,7 @@ module_instance_t* cascaded_biquads_init(uint8_t id, int n_inputs, int n_outputs
     module_instance->module_control = cascaded_biquads_control;
     module_instance->control.config = config;
     module_instance->control.id = id;
-    module_instance->control.module_type = e_dsp_stage_biquad;
+    module_instance->control.module_type = e_dsp_stage_cascaded_biquads;
     module_instance->control.num_control_commands = NUM_CMDS_BIQUAD;
     module_instance->control.config_rw_state = config_none_pending;
     return module_instance;

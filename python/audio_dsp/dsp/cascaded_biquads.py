@@ -171,6 +171,16 @@ def make_butterworth_highpass(N, fc, fs):
     return coeffs_list
 
 
+def make_paramentic_eq(fs, filter_spec):
+    coeffs_list = []
+    for spec in filter_spec:
+        class_name = f"make_biquad_{spec[0]}"
+        class_handle = getattr(bq, class_name)
+        coeffs_list.append(class_handle(fs, *spec[1:]))
+    
+    return coeffs_list
+
+
 if __name__ == "__main__":
 
     fs = 48000

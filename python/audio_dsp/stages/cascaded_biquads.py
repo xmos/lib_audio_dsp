@@ -31,7 +31,7 @@ class CascadedBiquads(Stage):
                   ['bypass'],
                   ['bypass'],
                   ['bypass']]
-        self.filt = casc_bq.parametric_eq(self.fs, filter_spec)
+        self.filt = casc_bq.parametric_eq_8band(self.fs, filter_spec)
 
         self.filter_coeffs = []
         self.left_shift = []
@@ -42,7 +42,7 @@ class CascadedBiquads(Stage):
         self.set_control_field_cb("filter_coeffs",
                                   lambda: " ".join([str(i) for i in self.get_fixed_point_coeffs()]))
         self.set_control_field_cb("left_shift",
-                                  lambda: " ".join([str(i) for i in self.left_shift]))
+                                  lambda: " ".join([str(i.b_shift) for i in self.filt.biquads]))
 
     def process(self, in_channels):
         """
@@ -56,5 +56,17 @@ class CascadedBiquads(Stage):
         """
 
     def get_fixed_point_coeffs(self):
-        a = np.array(self.filter_coeffs.coeffs)
+        fc = []
+        for bq in self.filt.biquads:
+            fc.extend(bq.coeffs)
+        a = np.array(fc)
         return np.array(a*(2**30), dtype=np.int32)
+
+    def make_parametric_eq(self, filter_spec):
+        self.filt = casc_bq.parametric_eq_8band(self.fs, filter_spec)
+    
+    def make_butterworth_highpass(self, N, fc):
+        self.filt = casc_bq.butterworth_highpass(self.fs, N, fc)
+    
+    def make_butterworth_lowpass(self, N, fc):
+        self.filt = casc_bq.butterworth_lowpass(self.fs, N, fc)
