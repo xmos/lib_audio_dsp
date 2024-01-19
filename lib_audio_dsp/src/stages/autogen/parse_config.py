@@ -54,6 +54,8 @@ for fl in files:
 
         cmd_map[struct_name] = data["module"][struct_name]
 
+cmd_map = dict(sorted(cmd_map.items()))
+
 with open(f"{args.out_dir}/generator/gen_cmd_map_offset.c", "w") as f_op:
     f_op.write(struct_offset_template.render(cmd_map=cmd_map))
 
