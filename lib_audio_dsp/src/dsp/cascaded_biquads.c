@@ -117,7 +117,7 @@ void adsp_design_butterworth_highpass_8b(
     pa[i].im = num / den;
 
     pa[i] = _get_p(pa[i]);
-    
+
     float a1 = -2 * pa[i].re;
     float a2 = pa[i].re * pa[i].re + pa[i].im * pa[i].im;
 
