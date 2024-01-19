@@ -1,7 +1,6 @@
 
-#include "cascaded_biquads.h"
-
-#include "biquad.h"
+#include "dsp/cascaded_biquads.h"
+#include "dsp/biquad.h"
 #include <xcore/assert.h>
 #include <stdio.h>
 

@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include "cascaded_biquads.h"
+#include "dsp/cascaded_biquads.h"
 
 FILE * _fopen(char * fname, char* mode) {
   FILE * fp = fopen(fname, mode);

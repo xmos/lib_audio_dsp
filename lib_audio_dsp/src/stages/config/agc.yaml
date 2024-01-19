@@ -1,7 +1,0 @@
-module:
-  agc:
-    gain:
-      type: float
-includes:
-  - stdint.h
-  - "adsp_module.h"

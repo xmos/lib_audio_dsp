@@ -1,7 +1,7 @@
 #ifndef ADSP_CONTROL_H
 #define ADSP_CONTROL_H
 #include <stdint.h>
-#include "adsp_module.h"
+#include "stages/adsp_module.h"
 
 // All the Control command information
 typedef struct

@@ -1,6 +1,6 @@
 #include <xcore/channel.h>
 #include <xcore/chanend.h>
-#include "adsp_module.h"
+#include "stages/adsp_module.h"
 
 static void do_control(module_instance_t** modules, size_t num_modules)
 {
