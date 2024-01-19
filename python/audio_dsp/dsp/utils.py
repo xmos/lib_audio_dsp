@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.signal as spsig
+import math
 
 FLT_MIN = np.finfo(float).tiny
 
@@ -16,6 +17,11 @@ def db_pow(input):
 
 def db2gain(input):
     out = 10**(input/20)
+    return out
+
+
+def db_pow2gain(input):
+    out = 10**(input/10)
     return out
 
 
@@ -71,3 +77,97 @@ def vlmaccr(vect1, vect2, out=0):
         out += vpu_mult(val1, val2)
 
     return int40(out)
+
+
+def float_to_int32(x):
+    return int32(round(x*(2**31 - 1)))
+
+
+def int32_to_float(x):
+    return x*2**-31
+
+
+class float_s32():
+    def __init__(self, value, Q_sig=None):
+        self.Q_sig = Q_sig
+        if Q_sig and isinstance(value, float):
+            self.mant = int32(round(value * 2**Q_sig))
+            # add 31 here python expects a float mantissa < 1, but we use int32
+            self.exp = -Q_sig + 31
+        elif isinstance(value, float):
+            self.mant, self.exp = math.frexp(value)
+            self.mant = float_to_int32(self.mant)
+        elif isinstance(value, int):
+            self.mant, self.exp = math.frexp(float(value))
+            self.mant = float_to_int32(self.mant)
+        elif isinstance(value, list):
+            self.mant = value[0]
+            self.exp = value[1]
+        else:
+            TypeError("s32 can only be initialised by float or list of ints [mant, exp]")
+
+        # overflow checks
+        self.mant = int32(self.mant)
+        self.exp = int32(self.exp)
+
+    def __mul__(self, other_s32):
+        if isinstance(other_s32, float_s32):
+            return float_s32(float(self) * float(other_s32))
+        else:
+            raise TypeError("s32 can only be multiplied by s32")
+
+    def __truediv__(self, other_s32):
+        if isinstance(other_s32, float_s32):
+            return float_s32(float(self) / float(other_s32))
+        else:
+            raise TypeError("s32 can only be divided by s32")
+
+    def __add__(self, other_s32):
+        if isinstance(other_s32, float_s32):
+            return float_s32(float(self) + float(other_s32))
+        else:
+            raise TypeError("s32 can only be added to s32")
+
+    def __sub__(self, other_s32):
+        if isinstance(other_s32, float_s32):
+            return float_s32(float(self) - float(other_s32))
+        else:
+            raise TypeError("s32 can only be subtracted from s32")
+
+    def __gt__(self, other_s32):
+        if isinstance(other_s32, float_s32):
+            return float(self) > float(other_s32)
+        else:
+            raise TypeError("s32 can only be compared against s32")
+
+    def __lt__(self, other_s32):
+        if isinstance(other_s32, float_s32):
+            return (float(self) < float(other_s32))
+        else:
+            raise TypeError("s32 can only be compared against s32")
+
+    def __abs__(self):
+        return float_s32([abs(self.mant), self.exp])
+
+    def __float__(self):
+        return math.ldexp(int32_to_float(self.mant), self.exp)
+
+    __rmul__ = __mul__
+
+
+def float_s32_min(x: float_s32, y: float_s32):
+    if x > y:
+        return y
+    else:
+        return x
+
+
+def float_s32_max(x: float_s32, y: float_s32):
+    if x > y:
+        return x
+    else:
+        return y
+
+
+def min_float_s32():
+    return float_s32([1, 0])

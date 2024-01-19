@@ -11,8 +11,8 @@ BOOST_BSHIFT = 2  # limit boosts to 12dB gain
 
 
 class biquad(dspg.dsp_block):
-    def __init__(self, coeffs: list, b_shift=0, Q_sig=dspg.Q_SIG):
-        super().__init__(Q_sig)
+    def __init__(self, coeffs: list, fs, b_shift=0, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, Q_sig)
 
         self.b_shift = b_shift
 
@@ -104,9 +104,9 @@ class biquad(dspg.dsp_block):
         b = [self.coeffs[0], self.coeffs[1], self.coeffs[2]]
         b = apply_biquad_bshift(b, self.b_shift)
         a = [1, -self.coeffs[3], -self.coeffs[4]]
-        w, h = spsig.freqz(b, a, worN=nfft)
+        f, h = spsig.freqz(b, a, worN=nfft, fs=self.fs)
 
-        return w, h
+        return f, h
 
     def check_gain(self):
         _, h = self.freq_response()
@@ -126,67 +126,77 @@ class biquad(dspg.dsp_block):
         return
 
 
+def biquad_bypass(fs):
+    coeffs = make_biquad_bypass(fs)
+    return biquad(coeffs, fs)
+
+
+def biquad_gain(fs, gain_db):
+    coeffs = make_biquad_gain(fs, gain_db)
+    return biquad(coeffs, fs)
+
+
 def biquad_lowpass(fs, f, q):
     coeffs = make_biquad_lowpass(fs, f, q)
-    return biquad(coeffs)
+    return biquad(coeffs, fs)
 
 
 def biquad_highpass(fs, f, q):
     coeffs = make_biquad_highpass(fs, f, q)
-    return biquad(coeffs)
+    return biquad(coeffs, fs)
 
 
 def biquad_bandpass(fs, f, bw):
     # bw is bandwidth in octaves
     coeffs = make_biquad_bandpass(fs, f, bw)
-    return biquad(coeffs)
+    return biquad(coeffs, fs)
 
 
 def biquad_bandstop(fs, f, bw):
     # bw is bandwidth in octaves
     coeffs = make_biquad_bandstop(fs, f, bw)
-    return biquad(coeffs)
+    return biquad(coeffs, fs)
 
 
 def biquad_notch(fs, f, q):
     coeffs = make_biquad_notch(fs, f, q)
-    return biquad(coeffs)
+    return biquad(coeffs, fs)
 
 
 def biquad_allpass(fs, f, q):
     coeffs = make_biquad_allpass(fs, f, q)
-    return biquad(coeffs)
+    return biquad(coeffs, fs)
 
 
 def biquad_peaking(fs, f, q, boost_db):
     coeffs = make_biquad_peaking(fs, f, q, boost_db)
-    return biquad(coeffs, b_shift=BOOST_BSHIFT)
+    return biquad(coeffs, fs, b_shift=BOOST_BSHIFT)
 
 
 def biquad_constant_q(fs, f, q, boost_db):
     coeffs = make_biquad_constant_q(fs, f, q, boost_db)
-    return biquad(coeffs, b_shift=BOOST_BSHIFT)
+    return biquad(coeffs, fs, b_shift=BOOST_BSHIFT)
 
 
 def biquad_lowshelf(fs, f, q, boost_db):
     # q is similar to standard low pass, i.e. > 0.707 will yield peakiness
     # the level change at f will be boost_db/2
     coeffs = make_biquad_lowshelf(fs, f, q, boost_db)
-    return biquad(coeffs, b_shift=BOOST_BSHIFT)
+    return biquad(coeffs, fs, b_shift=BOOST_BSHIFT)
 
 
 def biquad_highshelf(fs, f, q, boost_db):
     # q is similar to standard high pass, i.e. > 0.707 will yield peakiness
     # the level change at f will be boost_db/2
     coeffs = make_biquad_highshelf(fs, f, q, boost_db)
-    return biquad(coeffs, b_shift=BOOST_BSHIFT)
+    return biquad(coeffs, fs, b_shift=BOOST_BSHIFT)
 
 
 def biquad_linkwitz(fs, f0, q0, fp, qp):
     # used for changing one low frequency roll off slope for another,
     # e.g. in a loudspeaker
     coeffs = make_biquad_linkwitz(fs, f0, q0, fp, qp)
-    return biquad(coeffs, b_shift=0)
+    return biquad(coeffs, fs, b_shift=0)
 
 
 def round_to_q30(coeffs, b_shift):
@@ -261,6 +271,13 @@ def make_biquad_bypass(fs):
 def make_biquad_mute(fs):
     # take in fs to match other apis
     coeffs = [0, 0, 0, 0, 0]
+
+    return coeffs
+
+
+def make_biquad_gain(fs, gain_db):
+    coeffs = make_biquad_bypass(fs)
+    coeffs = apply_biquad_gain(coeffs, gain_db)
 
     return coeffs
 
@@ -507,6 +524,8 @@ def make_biquad_linkwitz(fs, f0, q0, fp, qp):
 
     return coeffs
 
+
+# TODO gain biquad
 
 
 if __name__ == "__main__":

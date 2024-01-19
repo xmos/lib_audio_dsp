@@ -107,7 +107,7 @@ def test_peq_c(in_signal):
                   ['bypass'],
                   ['bypass'],
                   ['bypass']]
-  peq = casc_bq.parametric_eq(fs, filter_spec)
+  peq = casc_bq.parametric_eq_8band(fs, filter_spec)
 
   filter_name = f"peq"
   single_test(peq, filter_name, in_signal)
