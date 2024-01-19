@@ -12,18 +12,22 @@ void biquad_process(int32_t **input, int32_t **output, void *app_data_state)
     xassert(app_data_state != NULL);
     biquad_state_t *state = app_data_state;
 
-    for(int i=0; i<state->n_outputs; i++)
-    {
+    // do while saves instructions for cases
+    // where the loop will always execute at
+    // least once
+    int i = 0;
+    do {
         int32_t *in = input[i];
         int32_t *out = output[i];
-        for(int j=0; j<state->frame_size; j++)
+        int j = 0;
+        do 
         {
             *out++ = adsp_biquad((*in++),
                         state->config.filter_coeffs,
                         state->filter_states[i],
                         state->config.left_shift);
-        }
-    }
+        } while (++j < state->frame_size);
+    } while (++i < state->n_outputs);
 }
 
 DSP_MODULE_INIT_ATTR
