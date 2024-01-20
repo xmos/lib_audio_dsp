@@ -71,6 +71,10 @@ class envelope_detector_peak(dspg.dsp_block):
         assert self.attack_alpha > 0
         assert self.release_alpha > 0
 
+        self.attack_alpha_int = utils.int32(round(self.attack_alpha * 2**30))
+        self.release_alpha_int = utils.int32(round(self.release_alpha * 2**30))
+        self.envelope_int = utils.int32(0)
+
         self.attack_alpha_f32 = np.float32(self.attack_alpha)
         self.release_alpha_f32 = np.float32(self.release_alpha)
 
@@ -115,7 +119,30 @@ class envelope_detector_peak(dspg.dsp_block):
         np.float32, return a np.float32, otherwise expect float input and return
         float output.
 
-        """
+    def process_int(self, sample):
+        if isinstance(sample, float):
+            sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        else:
+            sample_int = sample
+
+        sample_mag = abs(sample_int)
+
+        # see if we're attacking or decaying
+        if sample_mag > self.envelope_int:
+            alpha = self.attack_alpha_int
+        else:
+            alpha = self.release_alpha_int
+
+        # do exponential moving average, VPU mult uses 2**30, otherwise could use 2**31
+        self.envelope_int = utils.vpu_mult(2**30 - alpha, self.envelope_int)
+        self.envelope_int += utils.vpu_mult(alpha, sample_mag)
+
+        if isinstance(sample, float):
+            return (float(self.envelope_int)*2**-self.Q_sig)
+        else:
+            return self.envelope_int
+
+    def process_s32(self, sample):
         if isinstance(sample, np.float32):
             # don't do anything if we got np.float32, this function was probably
             # called from a limiter or compressor
@@ -237,7 +264,30 @@ class envelope_detector_rms(envelope_detector_peak):
         if the output is converted to dB, 10log10() can be taken instead of
         20log10().
 
-        """
+    def process_int(self, sample):
+        if isinstance(sample, float):
+            sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        else:
+            sample_int = sample
+
+        sample_mag = utils.int32(utils.int64(sample_int*sample_int) >> self.Q_sig)
+
+        # see if we're attacking or decaying
+        if sample_mag > self.envelope_int:
+            alpha = self.attack_alpha_int
+        else:
+            alpha = self.release_alpha_int
+
+        # do exponential moving average, VPU mult uses 2**30, otherwise could use 2**31
+        self.envelope_int = utils.vpu_mult(2**30 - alpha, self.envelope_int)
+        self.envelope_int += utils.vpu_mult(alpha, sample_mag)
+
+        if isinstance(sample, float):
+            return (float(self.envelope_int)*2**-self.Q_sig)
+        else:
+            return self.envelope_int
+
+    def process_s32(self, sample):
         if isinstance(sample, np.float32):
             # don't do anything if we got np.float32, this function was probably
             # called from a limiter or compressor
