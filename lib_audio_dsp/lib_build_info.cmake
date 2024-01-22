@@ -14,11 +14,13 @@ set(LIB_C_SRCS "")
 # if the are needed. If the dependencies are not present, then the auto gen
 # will not be added to the build, a message is printed, and any build which 
 # uses the stages api will fail at compile time.
+set(STAGES_INCLUDED OFF)
 find_program(PYTHON_EXE python)
 if(PYTHON_EXE)
     execute_process(COMMAND ${PYTHON_EXE} -c "import audio_dsp"
                     OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE AUDIO_DSP_NOT_INSTALLED)
     if(NOT ${AUDIO_DSP_NOT_INSTALLED})
+        set(STAGES_INCLUDED ON)
         set(AUTOGEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/src.autogen )
         set(LIB_AUDIO_DSP_PATH ${CMAKE_CURRENT_LIST_DIR})
         set(CONFIG_YAML_PATH ${LIB_AUDIO_DSP_PATH}/../stage_config)
@@ -50,15 +52,33 @@ if(PYTHON_EXE)
         set(PIPELINE_DESIGN_INCLUDE_DIRS ${REL_AUTOGEN_DIR}/common ${REL_AUTOGEN_DIR}/device)
 
         add_custom_target(cmd_map_generation
-            DEPENDS ${OUTPUT_C_FILES})
+            DEPENDS ${OUTPUT_C_FILES} ${OUTPUT_H_FILES})
         
         file(GLOB STAGES_C_SOURCES RELATIVE ${CMAKE_CURRENT_LIST_DIR} CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/src/stages/*.c")
         list(APPEND LIB_C_SRCS ${STAGES_C_SOURCES})
+        set_source_files_properties(${STAGES_C_SOURCES} PROPERTIES OBJECT_DEPENDS "${OUTPUT_H_FILES}")
     else()
         message("Excluding lib_audio_dsp stages as audio_dsp python package not available")
     endif()
 else()
     message("Excluding lib_audio_dsp stages as python not available")
+endif()
+
+# xcommon_cmake has no way to specify cmake targets to include
+# when a library is linked. This means that add_dependencies and
+# target_link_libraries has to be called _after_ the app has been
+# created and can't be done here. 
+# Create a macro that must be called after the app is created
+# in the top level CMakeLists.txt
+if(STAGES_INCLUDED)
+    macro(audio_dsp_add_dependencies)
+        foreach(BUILD_TARGET ${APP_BUILD_TARGETS})
+            add_dependencies(${BUILD_TARGET} cmd_map_generation)
+        endforeach()
+    endmacro()
+else()
+    macro(audio_dsp_add_dependencies)
+    endmacro()
 endif()
 
 set(LIB_NAME lib_audio_dsp)

@@ -21,3 +21,4 @@ set(APP_DEPENDENT_MODULES lib_audio_dsp)
 set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
 
 XMOS_REGISTER_APP()
+audio_dsp_add_dependencies()
