@@ -56,7 +56,6 @@ if(PYTHON_EXE)
         
         file(GLOB STAGES_C_SOURCES RELATIVE ${CMAKE_CURRENT_LIST_DIR} CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/src/stages/*.c")
         list(APPEND LIB_C_SRCS ${STAGES_C_SOURCES})
-        set_source_files_properties(${STAGES_C_SOURCES} PROPERTIES OBJECT_DEPENDS "${OUTPUT_H_FILES}")
     else()
         message("Excluding lib_audio_dsp stages as audio_dsp python package not available")
     endif()
@@ -64,22 +63,6 @@ else()
     message("Excluding lib_audio_dsp stages as python not available")
 endif()
 
-# xcommon_cmake has no way to specify cmake targets to include
-# when a library is linked. This means that add_dependencies and
-# target_link_libraries has to be called _after_ the app has been
-# created and can't be done here. 
-# Create a macro that must be called after the app is created
-# in the top level CMakeLists.txt
-if(STAGES_INCLUDED)
-    macro(audio_dsp_add_dependencies)
-        foreach(BUILD_TARGET ${APP_BUILD_TARGETS})
-            add_dependencies(${BUILD_TARGET} cmd_map_generation)
-        endforeach()
-    endmacro()
-else()
-    macro(audio_dsp_add_dependencies)
-    endmacro()
-endif()
 
 set(LIB_NAME lib_audio_dsp)
 set(LIB_VERSION 0.1.0)
@@ -91,3 +74,10 @@ set(LIB_COMPILER_FLAGS -Os -Wall -Werror -g -mcmodel=large)
 set(LIB_OPTIONAL_HEADERS adsp_generated.h)
 
 XMOS_REGISTER_MODULE()
+
+if(STAGES_INCLUDED)
+    # Super secret xcommon backdoor variable
+    foreach(target "${BUILD_TARGETS}")
+        add_dependencies(${target} cmd_map_generation)
+    endforeach() 
+endif()
