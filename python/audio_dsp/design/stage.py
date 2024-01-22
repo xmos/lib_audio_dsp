@@ -2,7 +2,13 @@
 
 from .graph import Edge, Node
 import yaml
+from pathlib import Path
 
+def find_config(name):
+    ret = Path(__file__).parents[3]/"stage_config"/f"{name}.yaml"
+    if not ret.exists():
+        raise ValueError(f"{ret} does not exist")
+    return ret
 
 class StageOutput(Edge):
     def __init__(self, fs=48000, frame_size=1):
@@ -57,7 +63,7 @@ class Stage(Node):
 
         self.n_in = len(self.i)
         self._o = None
-        self.yaml_dict = yaml.load(config, Loader=yaml.Loader)
+        self.yaml_dict = yaml.load(Path(config).read_text(), Loader=yaml.Loader)
         # module dict contains 1 entry with the name of the module as its key
         self.name = next(iter(self.yaml_dict["module"].keys()))
         self._control_fields = {name: ValueControlField() for name in self.yaml_dict["module"][self.name].keys()}

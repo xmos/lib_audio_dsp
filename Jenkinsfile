@@ -36,6 +36,18 @@ pipeline {
             sh 'git -C xcommon_cmake rev-parse HEAD'
             dir("lib_audio_dsp") {
               checkout scm
+              // try building a simple app without venv to check
+              // build that doesn't use design tools won't
+              // need python
+              withTools(params.TOOLS_VERSION) {
+                withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
+                  dir("test/biquad") {
+                    sh "cmake -B build"
+                    sh "cmake --build build"
+                  }
+                }
+              }
+
               createVenv("requirements.txt")
               // build everything
               withVenv {
