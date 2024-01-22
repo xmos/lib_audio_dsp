@@ -8,6 +8,7 @@ import audio_dsp.dsp.cascaded_biquads as casc_bq
 from audio_dsp.dsp.generic import Q_SIG
 import audio_dsp.dsp.signal_gen as gen
 import pytest
+import random
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
@@ -25,7 +26,7 @@ def qxx_to_float(arr_int, q = Q_SIG):
   return arr_float
 
 
-def get_sig(len=0.2):
+def get_sig(len=0.05):
 
   sig_fl = gen.log_chirp(fs, len, 0.5)
   sig_int = float_to_qxx(sig_fl)
@@ -97,27 +98,31 @@ def in_signal():
   return get_sig()
 
 
-def test_peq_c(in_signal):
+@pytest.mark.parametrize("n_filters", [1, 5, 8])
+@pytest.mark.parametrize("seed", [1, 5, 11])
+def test_peq_c(in_signal, n_filters, seed):
 
-  filter_spec = [['lowpass', 8000, 0.707],
-                  ['highpass', 200, 1],
-                  ['peaking', 1000, 5, 10],
-                  ['bypass'],
-                  ['bypass'],
-                  ['bypass'],
-                  ['bypass'],
-                  ['bypass']]
+  filter_spec = [['lowpass', fs * 0.4, 0.707],
+                   ['highpass', fs * 0.001, 1],
+                   ['peaking', 1000, 5, 10],
+                   ['constant_q', 500, 1, -10],
+                   ['notch', 2000, 1],
+                   ['lowshelf', 200, 1, 3],
+                   ['highshelf', 5000, 1, -2],
+                   ['bypass'],
+                   ['gain', -2]]
+  random.Random(seed**n_filters*int(fs/1000)).shuffle(filter_spec)
   peq = casc_bq.parametric_eq_8band(fs, filter_spec)
 
-  filter_name = f"peq"
+  filter_name = f"peq_{n_filters}_{seed}"
   single_test(peq, filter_name, in_signal)
 
 
 @pytest.mark.parametrize("filter_type", ["lowpass",
                                          "highpass",])
-@pytest.mark.parametrize("N", [16]) # can only be 16 for now
+@pytest.mark.parametrize("N", [4, 16]) # can only be 16 for now
 @pytest.mark.parametrize("f", [20, 20000])
-def test_butterworth_c(in_signal, filter_type, N, f):
+def test_nth_butterworth_c(in_signal, filter_type, N, f):
   f = np.min([f, fs / 2 * 0.95])
   filter_handle = getattr(casc_bq, f"butterworth_{filter_type}")
 
@@ -132,4 +137,4 @@ if __name__ =="__main__":
   sig_fl = get_sig()
   
   #test_peq_c(sig_fl)
-  test_butterworth_c(sig_fl, "lowpass", 16, 2000)
+  test_nth_butterworth_c(sig_fl, "lowpass", 16, 2000)
