@@ -367,8 +367,68 @@ class hard_limiter_peak(limiter_peak):
         return y
 
     # TODO process_int, super().process_int will return float though...
+    def process_int(self, sample):
+        raise NotImplementedError
 
 
+class soft_limiter_peak(limiter_peak):
+    def __init__(self, fs, threshold_db, attack_t, release_t, delay=0,
+                 nonlinear_point=0.5, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, threshold_db, attack_t, release_t, delay, Q_sig)
+        self.nonlinear_point = nonlinear_point
+        raise NotImplementedError
+
+    # TODO soft clipping
+    def process(self, sample):
+        raise NotImplementedError
+
+    def process_int(self, sample):
+        raise NotImplementedError
+
+
+class lookahead_limiter_peak(limiter_base):
+    # peak limiter with built in delay for avoiding clipping
+    def __init__(self, fs, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, attack_t, release_t, delay, Q_sig)
+
+        self.threshold = utils.db2gain(threshold_db)
+        self.threshold_s32 = utils.float_s32(self.threshold, self.Q_sig)
+        self.env_detector = envelope_detector_peak(fs, attack_t=attack_t,
+                                                   release_t=release_t,
+                                                   Q_sig=self.Q_sig)
+
+        self.delay = np.ceil(attack_t*fs)
+        self.delay_line = np.zeros(self.delay_line)
+        raise NotImplementedError
+
+    def process(self, sample):
+        raise NotImplementedError
+
+    def process_int(self, sample):
+        raise NotImplementedError
+
+
+class lookahead_limiter_rms(limiter_base):
+    # rms limiter with built in delay for avoiding clipping
+    def __init__(self, fs, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, attack_t, release_t, delay, Q_sig)
+
+        self.threshold = utils.db2gain(threshold_db)
+        self.threshold_s32 = utils.float_s32(self.threshold, self.Q_sig)
+        self.env_detector = envelope_detector_rms(fs, attack_t=attack_t,
+                                                  release_t=release_t,
+                                                  Q_sig=self.Q_sig)
+        self.delay = np.ceil(attack_t*fs)
+        self.delay_line = np.zeros(self.delay_line)
+        raise NotImplementedError
+
+    def process(self, sample):
+        raise NotImplementedError
+
+    def process_int(self, sample):
+        raise NotImplementedError
+
+# TODO lookahead limiters and compressors
 # TODO add soft limiter
 # TODO add RMS compressors
 # TODO add peak compressors
