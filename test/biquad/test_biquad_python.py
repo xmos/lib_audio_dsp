@@ -124,7 +124,7 @@ def test_gain_filters(gain, fs):
 # TODO check biquad actually filters
 # TODO check parameter generation
 # TODO check sample rates - use f/fs
-
+# TODO add gain and mute and bypass tests
 
 if __name__ == "__main__":
     # test_linkwitz_filters(500, 2, 20, 0.5, 48000)
