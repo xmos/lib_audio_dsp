@@ -1,29 +1,11 @@
-from ..design.stage import Stage
+from ..design.stage import Stage, find_config
 import audio_dsp.dsp.biquad as bq
 import numpy as np
 
-# Copied from Shuchita's branch of usb audio
-BIQUAD_CONFIG = """
----
-module:
-  biquad:
-    left_shift:
-      type: int32_t
-    filter_coeffs:
-      type: int32_t
-      size: "5"
-      attribute: DWORD_ALIGNED
-    reserved:
-      type: int32_t
-      size: "3"
-includes:
-  - "stdint.h"
-  - "adsp_module.h"
-"""
 
 class Biquad(Stage):
     def __init__(self, **kwargs):
-        super().__init__(config=BIQUAD_CONFIG, **kwargs)
+        super().__init__(config=find_config("biquad"), **kwargs)
         self.create_outputs(self.n_in)
         self.filt = bq.biquad_allpass(self.fs, 1000, 0.7)
         self.set_control_field_cb("filter_coeffs",

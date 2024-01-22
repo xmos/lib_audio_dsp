@@ -304,7 +304,7 @@ def generate_dsp_header(resolved_pipeline, out_dir = "build/dsp_pipeline"):
     header = "#pragma once\n"
     header += "#include <xccompat.h>\n"
     header += "#include <xcore/channel.h>\n"
-    header += "#include <adsp_module.h>\n"
+    header += "#include <stages/adsp_module.h>\n"
     header += generate_dsp_struct(resolved_pipeline)
 
     (out_dir / "adsp_generated.h").write_text(header)
@@ -423,7 +423,7 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
     chans = determine_channels(resolved_pipe)
 
     dsp_main = """
-#include "adsp_pipeline.h"
+#include <stages/adsp_pipeline.h>
 #include "dspt_main.h"
 #include <xcore/select.h>
 #include <xcore/channel.h>
