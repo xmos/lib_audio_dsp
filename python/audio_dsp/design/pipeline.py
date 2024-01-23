@@ -1,4 +1,8 @@
 
+"""
+Top level pipeline design class and code generation functions.
+"""
+
 from typing import Iterable
 from pathlib import Path
 from .graph import Graph
@@ -15,46 +19,75 @@ class Pipeline:
     """
     Top level class which is a container for a list of threads that
     are connected in series.
+
+    Parameters
+    ----------
+    n_in : int
+        Number of input channels into the pipeline
+    frame_size : int
+        Size of the input frame of all input channels
+    fs : int
+        Sample rate of the input channels
+
+    Attributes
+    ----------
+    i : list(StageOutput)
+        The inputs to the pipeline should be passed as the inputs to the
+        first stages in the pipeline
     """
 
-    def __init__(self, n_in, fs=48000):
+    def __init__(self, n_in, frame_size=1, fs=48000):
         self.graph = Graph()
         self._threads = []
-        self.n_in = n_in
-        self.n_out = self.n_in
-        self.frame_size = 1
 
-        self.i = [StageOutput(fs=fs) for _ in range(n_in)]
+        self.i = [StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)]
         for i, input in enumerate(self.i):
             self.graph.add_edge(input)
             input.source_index = i
-        self.o = None
 
     def add_thread(self):
+        """
+        Creates a new instance of audio_dsp.thread.Thread and adds it to 
+        the pipeline. Stages can then be instantiated in the thread.
+
+        Returns
+        -------
+        Thread
+            a new thread instance.
+        """
         ret = Thread(id=len(self._threads), graph=self.graph)
         self._threads.append(ret)
         return ret
 
     def set_outputs(self, output_edges):
-        """set the pipeline outputs, configures the output channel index"""
+        """
+        Set the pipeline outputs, configures the output channel index.
+
+        Parameters
+        ----------
+        output_edges : Iterable(None | StageOutput)
+            configure the output channels and their indices. Outputs of the pipeline
+            will be in the same indices as the input to this function. To have an empty
+            output index, pass in None.
+        """
         for i, edge in enumerate(output_edges):
-            edge.dest_index = i
+            if edge is not None:
+                edge.dest_index = i
 
     def validate(self):
-        """pipeline must be straight with no branches"""
-        graphdict = {}
-        for edge in self.graph.edges:
-            try:
-                graphdict[edge.dest].append(edge.source)
-            except KeyError:
-                graphdict[edge.dest] = [edge.source]
-        for dests in graphdict.values():
-            for a, b in zip(dests[:-1], dests[1:]):
-                if a is not b:
-                    raise ValueError("pipeline must be linear")
+        """
+        TODO validate pipeline assumptions
+        
+        - Thread connections must not lead to a scenario where the pipeline hangs
+        - Stages must fit on thread
+        - feedback must be within a thread (future)
+        - All edges have the same fs and frame_size (until future enhancements)
+        """
 
     def draw(self):
-        """Render a dot diagram of this pipeline"""
+        """
+        Render a dot diagram of this pipeline
+        """
         dot = graphviz.Digraph()
         dot.clear()
         for thread in self._threads:
@@ -73,6 +106,14 @@ class Pipeline:
         """
         Generate a dictionary with all of the information about the thread.
         Actual stage instances not included.
+        
+        Returns
+        -------
+        dict
+            "threads": list of [[(stage index, stage type name), ...], ...] for all threads
+            "edges": list of [[[source stage, source index], [dest stage, dest index]], ...] for all edges
+            "configs": list of dicts containing stage config for each stage.
+            "modules": list of stage yaml configs for all types of stage that are present
         """
         # 1. Order the graph
         sorted_nodes = self.graph.sort()
@@ -103,6 +144,18 @@ class Pipeline:
         }
 
 def send_config_to_device(pipeline: Pipeline, host_app = "xvf_host", protocol="usb"):
+    """
+    Sends the current config for all stages to the device.
+
+    Parameters
+    ----------
+    pipeline : Pipeline
+        A designed and optionally tuned pipeline
+    host_app : str
+        The path to the host app
+    protocol : str
+        Control protocol, "usb" is the only supported option.
+    """
     config = pipeline.resolve_pipeline()["configs"]
     for instance, instance_config in config.items():
         for command, value in instance_config.items():
@@ -113,8 +166,18 @@ def send_config_to_device(pipeline: Pipeline, host_app = "xvf_host", protocol="u
             subprocess.run([host_app, "--use", protocol, "--instance-id", str(instance),
                             command, *value.split()])
 
-def filter_edges_by_thread(resolved_pipeline):
-    """get thread input edges, output edges and internal edges for all threads"""
+def _filter_edges_by_thread(resolved_pipeline):
+    """
+    Get thread input edges, output edges and internal edges for all threads
+    
+    Returns
+    -------
+    list[tuple[]]
+        input_edges, internal_edges, output_edges, dead_edges for all threads in
+        the resolved pipeline. 
+        input_edges and output_edges are dictionaries of {source_or_dest_thread: [edges]}
+        internal and dead edges are list of edges.
+    """
     dest_in_thread = lambda edge, thread: edge[1][0] in (t[0] for t in thread)
     source_in_thread = lambda edge, thread: edge[0][0] in (t[0] for t in thread)
     ret = []
@@ -160,20 +223,24 @@ def filter_edges_by_thread(resolved_pipeline):
     return ret
 
 
-def generate_dsp_threads(resolved_pipeline, block_size = 1):
+def _generate_dsp_threads(resolved_pipeline, block_size = 1):
     """
+    Create the source string for all of the dsp threads.
+
     void dsp_thread(chanend_t* input_c, chanend_t* output_c, module_states, module_configs) {
         int32_t edge0[BLOCK_SIZE];
         int32_t edge1[BLOCK_SIZE];
         int32_t edge2[BLOCK_SIZE];
         int32_t edge3[BLOCK_SIZE];
         for(;;) {
+            do control;
             // input from 2 source threads
             int read_count = 2;
             while(read_count) {
                 select {
                     input_c[0]: chan_in_buf(edge0); read_count--;
                     input_c[1]: chan_in_buf(edge1); read_count--;
+                    default: do control;
                 }
             }
             modules[0]->process_sample(
@@ -187,7 +254,7 @@ def generate_dsp_threads(resolved_pipeline, block_size = 1):
         }
     }
     """
-    all_thread_edges = filter_edges_by_thread(resolved_pipeline)
+    all_thread_edges = _filter_edges_by_thread(resolved_pipeline)
     file_str = ""
     for thread_index, (thread_edges, thread) in enumerate(zip(all_thread_edges, resolved_pipeline["threads"])):
         func = f"DECLARE_JOB(dsp_thread{thread_index}, (chanend_t*, chanend_t*, module_instance_t**));\n"
@@ -262,11 +329,11 @@ def generate_dsp_threads(resolved_pipeline, block_size = 1):
         file_str += func
     return file_str
 
-def determine_channels(resolved_pipeline):
+def _determine_channels(resolved_pipeline):
     """
     create list of the required channels from the resolved pipeline structure.
     """
-    all_thread_edges = filter_edges_by_thread(resolved_pipeline)
+    all_thread_edges = _filter_edges_by_thread(resolved_pipeline)
     ret = []
     for s_idx, s_thread_edges in enumerate(all_thread_edges):
         s_in_edges, _, _, _ = s_thread_edges
@@ -278,26 +345,33 @@ def determine_channels(resolved_pipeline):
         ret.extend((s_idx, dest) for dest in s_out_edges.keys())
     return ret
 
-def resolved_pipeline_num_modules(resolved_pipeline):
+def _resolved_pipeline_num_modules(resolved_pipeline):
+    """Determine total number of module instances in the resolved pipeline across all threads"""
     return sum(len(t) for t in resolved_pipeline["threads"])
 
-def generate_dsp_struct(resolved_pipeline):
-
+def _generate_dsp_struct(resolved_pipeline):
+    """
+    Generate the struct which holds pipeline state. Contains
+    channels and module_instance_t
+    """
     channels = []
-    for c_source, c_dest in determine_channels(resolved_pipeline):
+    for c_source, c_dest in _determine_channels(resolved_pipeline):
         channels.append(f"channel_{c_source}_{c_dest}")
 
     struct = "struct audio_dsp_impl {\n\t"
     struct += "\n\t".join(f"channel_t {channel};" for channel in channels)
     struct += "\n"
 
-    num_modules = resolved_pipeline_num_modules(resolved_pipeline)
+    num_modules = _resolved_pipeline_num_modules(resolved_pipeline)
     struct += f"\tmodule_instance_t* modules[{num_modules}];\n" 
     struct += f"\tint num_modules;\n" 
     struct += "};"
     return struct
 
-def generate_dsp_header(resolved_pipeline, out_dir = "build/dsp_pipeline"):
+def _generate_dsp_header(resolved_pipeline, out_dir = "build/dsp_pipeline"):
+    """
+    Generate "adsp_generated.h" and save to disk.
+    """
     out_dir = Path(out_dir)
     out_dir.mkdir(exist_ok=True)
 
@@ -305,22 +379,22 @@ def generate_dsp_header(resolved_pipeline, out_dir = "build/dsp_pipeline"):
     header += "#include <xccompat.h>\n"
     header += "#include <xcore/channel.h>\n"
     header += "#include <stages/adsp_module.h>\n"
-    header += generate_dsp_struct(resolved_pipeline)
+    header += _generate_dsp_struct(resolved_pipeline)
 
     (out_dir / "adsp_generated.h").write_text(header)
 
-def generate_dsp_init(resolved_pipeline):
+def _generate_dsp_init(resolved_pipeline):
     """
-    create the init function
+    Create the init function which initialised all modules and channels.
     """
-    chans = determine_channels(resolved_pipeline)
+    chans = _determine_channels(resolved_pipeline)
 
     ret = "\nvoid adsp_pipeline_init(audio_dsp_t* adsp) {\n"
 
     for chan_s, chan_d in chans:
         ret += f"\tadsp->channel_{chan_s}_{chan_d} = chan_alloc();\n"
 
-    num_modules = resolved_pipeline_num_modules(resolved_pipeline)
+    num_modules = _resolved_pipeline_num_modules(resolved_pipeline)
     ret += f"\tadsp->num_modules = {num_modules};\n"
 
     # initialise the modules
@@ -335,13 +409,13 @@ def generate_dsp_init(resolved_pipeline):
     ret += "}\n\n"
     return ret
 
-def generate_dsp_source(resolved_pipeline):
+def _generate_dsp_source(resolved_pipeline):
     """
     Generate a function which will be called by the data source, 
     it receives the new samples as input and sends them over the 
     correct channels
     """
-    all_edges = filter_edges_by_thread(resolved_pipeline)
+    all_edges = _filter_edges_by_thread(resolved_pipeline)
     all_in_edges = [e[0] for e in all_edges]
 
     ret = "void adsp_pipeline_source(audio_dsp_t* adsp, int32_t** data) {\n"
@@ -357,14 +431,14 @@ def generate_dsp_source(resolved_pipeline):
     ret += "}\n\n"
     return ret
 
-def generate_dsp_sink(resolved_pipeline):
+def _generate_dsp_sink(resolved_pipeline):
     """
     Generate a function that will be called by the consumer of 
     the dsp output. It will read from the output channels. This function
     will not read from the channels until data is available to allow for 
     the case where 
     """
-    all_edges = filter_edges_by_thread(resolved_pipeline)
+    all_edges = _filter_edges_by_thread(resolved_pipeline)
     all_out_edges = [e[2] for e in all_edges]
 
     # function to check if channel is not empty
@@ -377,7 +451,6 @@ static bool check_chanend(chanend_t c) {
 }
 
 """
-
 
     sink_details = []
     for source_thread, thread_output_edges in enumerate(all_out_edges):
@@ -405,22 +478,26 @@ static bool check_chanend(chanend_t c) {
 
 def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
     """
-    Generate the sourcecode for dsp_main
-
-    TODO -  needs to support parallel threads i.e. each
-    thread can talk to more than one other thread.
+    Generate the source code for dsp_main
+    
+    Parameters
+    ----------
+    pipeline : Pipeline
+        The pipeline to generate code for.
+    out_dir : str
+        Directory to store generated code in. 
     """
     out_dir = Path(out_dir)
-    out_dir.mkdir(exist_ok=True)
+    out_dir.mkdir(exist_ok=True, parents=True)
 
     resolved_pipe = pipeline.resolve_pipeline()
 
-    generate_dsp_header(resolved_pipe)
+    _generate_dsp_header(resolved_pipe)
     threads = resolved_pipe["threads"]
 
     n_threads = len(threads)
 
-    chans = determine_channels(resolved_pipe)
+    chans = _determine_channels(resolved_pipe)
 
     dsp_main = """
 #include <stages/adsp_pipeline.h>
@@ -429,14 +506,14 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
 #include <xcore/channel.h>
 #include <print.h>
 """
-    dsp_main += generate_dsp_threads(resolved_pipe)
-    dsp_main += generate_dsp_source(resolved_pipe)
-    dsp_main += generate_dsp_sink(resolved_pipe)
+    dsp_main += _generate_dsp_threads(resolved_pipe)
+    dsp_main += _generate_dsp_source(resolved_pipe)
+    dsp_main += _generate_dsp_sink(resolved_pipe)
 
-    dsp_main += generate_dsp_init(resolved_pipe)
+    dsp_main += _generate_dsp_init(resolved_pipe)
     dsp_main += "void adsp_pipeline_main(audio_dsp_t* adsp) {\n"
 
-    all_thread_edges = filter_edges_by_thread(resolved_pipe)
+    all_thread_edges = _filter_edges_by_thread(resolved_pipe)
     for thread_idx, (thread, thread_edges) in enumerate(zip(threads, all_thread_edges)):
         thread_input_edges, _, thread_output_edges, _ = thread_edges
         # thread stages

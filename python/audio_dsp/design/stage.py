@@ -4,27 +4,83 @@ from .graph import Edge, Node
 import yaml
 from pathlib import Path
 
+
 def find_config(name):
+    """
+    Find the config yaml file for a stage by looking for it
+    in the default directory for built in stages.
+
+    Parameters
+    ----------
+    name : str
+        Name of stage, e.g. a stage whose config is saved in "biquad.yaml"
+        should pass in "biquad".
+    
+    Returns
+    -------
+    Path
+        Path to the config file.
+    """
     ret = Path(__file__).parents[3]/"stage_config"/f"{name}.yaml"
     if not ret.exists():
         raise ValueError(f"{ret} does not exist")
     return ret
 
+
 class StageOutput(Edge):
+    """
+    The Edge of a dsp pipeline.
+
+    Parameters
+    ----------
+    fs : int
+        Edge sample rate Hz
+    frame_size : int
+        Number of samples per frame
+
+    Attributes
+    ----------
+    source : audio_dsp.design.graph.Node
+        Inherited from Edge
+    dest : audio_dsp.design.graph.Node
+        Inherited from Edge
+    source_index : int | None
+        The index of the edge connection to source.
+    dest_index : int | None
+        The index of the edge connection to dest.
+    fs : int
+        see fs parameter
+    frame_size : int
+        see frame_size parameter
+    """
     def __init__(self, fs=48000, frame_size=1):
         super().__init__()
         # index of the multiple outputs that the source node has
         self.source_index = None
         # which input index is this
-        self.dest_index = None
+        self._dest_index = None
         self.fs = fs
         self.frame_size = frame_size
         # TODO edges will probably need an associated type audio vs. data etc.
         # self.type = q23
+    
+    @property
+    def dest_index(self):
+        return self._dest_index
+    
+    @dest_index.setter
+    def dest_index(self, value):
+        if self._dest_index is not None:
+            raise RuntimeError(f"This edge alread has a dest index, can't be changes to {value}")
+        self._dest_index = value
         
     def __repr__(self) -> str:
+        """
+        Makes print output usable
+        """
         dest = "-" if self.dest is None else f"{self.dest.index} {self.dest_index}"
         return f"({self.source.index} {self.source_index} -> {dest})"
+
 
 class PropertyControlField:
     """For stages which have internal state they can register callbacks
@@ -43,14 +99,50 @@ class PropertyControlField:
             raise RuntimeError("This control field can't be set directly")
         self._setter(value)
 
+
 class ValueControlField:
     """Simple field which can be updated directly"""
     def __init__(self, value=None):
         self.value = value
 
 class Stage(Node):
+    """
+    Base class for stages in the DSP pipeline. Each subclass
+    should have a corresponding C implementation. Enables 
+    code generation, tuning and simulation of a stage.
+
+    The stages config can be written and read using square brackets as with a
+    dictionary. This is shown in the below example, note that the config field
+    must have been declared in the stages yaml file.
+    
+        self["config_field"] = 2
+        assert self["config_field"] == 2
+    
+    Parameters
+    ----------
+    config : str | Path
+        Path to yaml file containing the stage definition for this stage. Config
+        parameters are derived from this config file.
+    inputs : Iterable[StageOutput]
+        Pipeline edges to connect to self
+    
+    Attributes
+    ----------
+    i : list[StageOutput]
+        This stages inputs.
+    o : list[StageOutput]
+        This stages outputs, use to connect to the next stage in the pipeline.
+        Subclass must call self.create_outputs() for this to exist.
+    fs : int | None
+        Sample rate.
+    frame_size : int | None
+        Samples in frame.
+    name : str
+        Module name determined from config file
+    yaml_dict : config parsed from the config file
+    """
     def __init__(self, config, inputs):
-        super().__init__(self)
+        super().__init__()
         self.i = [i for i in inputs]
         for i, input in enumerate(self.i):
             input.set_dest(self)
@@ -60,6 +152,7 @@ class Stage(Node):
             self.frame_size = self.i[0].frame_size
         else:
             self.fs = None
+            self.frame_size = None
 
         self.n_in = len(self.i)
         self._o = None
@@ -76,6 +169,16 @@ class Stage(Node):
         return self._o
 
     def create_outputs(self, n_out):
+        """
+        Create this stages outputs.
+
+        TODO fs and frame_size
+
+        Parameters
+        ----------
+        n_out : int
+            number of outputs to create.
+        """
         self._o = []
         for i in range(n_out):
             output = StageOutput()
@@ -84,11 +187,13 @@ class Stage(Node):
             self._o.append(output)
 
     def __setitem__(self, key, value):
+        """Support for dictionary like access to config fields"""
         if key not in self._control_fields:
             raise KeyError(f"{key} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}")
         self._control_fields[key].value = value
 
     def __getitem__(self, key):
+        """Support for dictionary like access to config fields"""
         if key not in self._control_fields:
             raise KeyError(f"{key} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}")
         return self._control_fields[key].value
@@ -97,10 +202,14 @@ class Stage(Node):
         """
         Register callbacks for getting and setting control fields, to be called by classes which implement stage
 
-        Args:
-            field: str name of the field
-            getter: a function which returns the current value
-            setter: A function which accepts 1 argument that will be used as the new value
+        Parameters
+        ----------
+        field : str 
+            name of the field
+        getter : function
+            A function which returns the current value
+        setter : function
+            A function which accepts 1 argument that will be used as the new value
         """
         if field not in self._control_fields:
             raise KeyError(f"{key} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}")
@@ -108,6 +217,14 @@ class Stage(Node):
         self._control_fields[field] = PropertyControlField(getter, setter)
 
     def get_config(self):
+        """Get a dictionary containing the current value of the control
+        fields which have been set
+        
+        Returns
+        -------
+        dict
+            current control fields
+        """
         ret = {}
         for command_name, cf in self._control_fields.items():
             if cf.value is not None:
@@ -115,4 +232,7 @@ class Stage(Node):
         return ret
 
     def process(self, channels):
+        """
+        TODO
+        """
         raise NotImplementedError()
