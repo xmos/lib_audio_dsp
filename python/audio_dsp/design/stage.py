@@ -228,7 +228,7 @@ class Stage(Node):
         ret = {}
         for command_name, cf in self._control_fields.items():
             if cf.value is not None:
-                ret[f"{self.name}_{command_name}"] = cf.value
+                ret[command_name] = cf.value
         return ret
 
     def process(self, channels):

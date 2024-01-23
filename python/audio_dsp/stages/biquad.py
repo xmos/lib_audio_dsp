@@ -9,9 +9,9 @@ class Biquad(Stage):
         self.create_outputs(self.n_in)
         self.filt = bq.biquad_allpass(self.fs, 1000, 0.7)
         self.set_control_field_cb("filter_coeffs",
-                                  lambda: " ".join([str(i) for i in self.get_fixed_point_coeffs()]))
+                                  lambda: [i for i in self.get_fixed_point_coeffs()])
         self.set_control_field_cb("left_shift",
-                                  lambda: str(self.filt.b_shift))
+                                  lambda: self.filt.b_shift)
 
     def process(self, in_channels):
         """

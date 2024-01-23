@@ -34,15 +34,17 @@ class Pipeline:
     i : list(StageOutput)
         The inputs to the pipeline should be passed as the inputs to the
         first stages in the pipeline
+    stages : List(Stage)
+        Flattened list of all the stages in the pipeline
     """
 
     def __init__(self, n_in, frame_size=1, fs=48000):
-        self.graph = Graph()
+        self._graph = Graph()
         self._threads = []
 
         self.i = [StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)]
         for i, input in enumerate(self.i):
-            self.graph.add_edge(input)
+            self._graph.add_edge(input)
             input.source_index = i
 
     def add_thread(self):
@@ -55,7 +57,7 @@ class Pipeline:
         Thread
             a new thread instance.
         """
-        ret = Thread(id=len(self._threads), graph=self.graph)
+        ret = Thread(id=len(self._threads), graph=self._graph)
         self._threads.append(ret)
         return ret
 
@@ -92,7 +94,7 @@ class Pipeline:
         dot.clear()
         for thread in self._threads:
             thread.add_to_dot(dot)
-        for e in self.graph.edges:
+        for e in self._graph.edges:
             source = e.source.id.hex if e.source is not None else "start"
             dest = e.dest.id.hex if e.dest is not None else "end"
             if e.dest is None and e.dest_index is None:
@@ -101,6 +103,10 @@ class Pipeline:
                 dot.node(dest, "", shape="point")
             dot.edge(source, dest, taillabel=str(e.source_index), headlabel=str(e.dest_index))
         display.display_svg(dot)
+        
+    @property
+    def stages(self):
+        return self._graph.nodes[:]
 
     def resolve_pipeline(self):
         """
@@ -116,7 +122,7 @@ class Pipeline:
             "modules": list of stage yaml configs for all types of stage that are present
         """
         # 1. Order the graph
-        sorted_nodes = self.graph.sort()
+        sorted_nodes = self._graph.sort()
 
         # 2. assign nodes to threads
         threads = [[] for _ in range(len(self._threads))]
@@ -127,14 +133,14 @@ class Pipeline:
 
 
         edges = []
-        for edge in self.graph.edges:
+        for edge in self._graph.edges:
             source = [edge.source.index, edge.source_index] if edge.source is not None else [None, edge.source_index]
             dest = [edge.dest.index, edge.dest_index] if edge.dest is not None else [None, edge.dest_index]
             edges.append([source, dest])
 
-        node_configs = {node.index: node.get_config() for node in self.graph.nodes}
+        node_configs = {node.index: node.get_config() for node in self._graph.nodes}
 
-        module_definitions = {node.name: node.yaml_dict for node in self.graph.nodes}
+        module_definitions = {node.name: node.yaml_dict for node in self._graph.nodes}
 
         return {
             "threads": threads, 
@@ -156,14 +162,16 @@ def send_config_to_device(pipeline: Pipeline, host_app = "xvf_host", protocol="u
     protocol : str
         Control protocol, "usb" is the only supported option.
     """
-    config = pipeline.resolve_pipeline()["configs"]
-    for instance, instance_config in config.items():
-        for command, value in instance_config.items():
+    for stage in pipeline.stages:
+        for command, value in stage.get_config().items():
+            command = f"{stage.name}_{command}"
             if isinstance(value, list) or isinstance(value, tuple):
                 value = " ".join(str(v) for v in value)
-            print(host_app, "--use", protocol, "--instance-id", str(instance),
+            else:
+                value = str(value)
+            print(host_app, "--use", protocol, "--instance-id", str(stage.index),
                             command, *value.split())
-            subprocess.run([host_app, "--use", protocol, "--instance-id", str(instance),
+            subprocess.run([host_app, "--use", protocol, "--instance-id", str(stage.index),
                             command, *value.split()])
 
 def _filter_edges_by_thread(resolved_pipeline):
@@ -289,8 +297,8 @@ def _generate_dsp_threads(resolved_pipeline, block_size = 1):
         # It will be done once before select to ensure it happens, then in the default
         # case of the select so that control will be processed if no audio is playing.
         control = ""
-        for i in range(len(thread)):
-            control += f"\t\tmodules[{i}]->module_control(modules[{i}]->state, &modules[{i}]->control);\n"
+        for i, (_, name) in enumerate(thread):
+            control += f"\t\t{name}_control(modules[{i}]->state, &modules[{i}]->control);\n"
 
         func += control
         func += f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
@@ -313,10 +321,10 @@ def _generate_dsp_threads(resolved_pipeline, block_size = 1):
             func += "\t}\n"
 
 
-        for stage_thread_index, stage in enumerate(thread):
+        for stage_thread_index, (_, name) in enumerate(thread):
             # thread stages are already ordered during pipeline resolution
 
-            func += f"\tmodules[{stage_thread_index}]->process_sample(\n"
+            func += f"\t{name}_process(\n"
             func += f"\t\tstage_{stage_thread_index}_input,\n"
             func += f"\t\tstage_{stage_thread_index}_output,\n"
             func += f"\t\tmodules[{stage_thread_index}]->state);\n"
@@ -403,8 +411,17 @@ def _generate_dsp_init(resolved_pipeline):
             stage_n_in = len([e for e in resolved_pipeline["edges"] if e[1][0] == stage_index])
             stage_n_out = len([e for e in resolved_pipeline["edges"] if e[0][0] == stage_index])
             stage_frame_size = 1 # TODO
+            
+            defaults = {}
+            for config_field, value in resolved_pipeline["configs"][stage_index].items():
+                if isinstance(value, list) or isinstance(value, tuple):
+                    defaults[config_field] = "{" + ", ".join(str(i) for i in value) + "}"
+                else:
+                    defaults[config_field] = str(value)
+            struct_val = ", ".join(f".{field} = {value}" for field, value in defaults.items())
+            default_str = f"&({stage_name}_config_t){{{struct_val}}}"
 
-            ret += f"\tadsp->modules[{stage_index}] = {stage_name}_init({stage_index}, {stage_n_in}, {stage_n_out}, {stage_frame_size}, NULL);\n"
+            ret += f"\tadsp->modules[{stage_index}] = {stage_name}_init({stage_index}, {stage_n_in}, {stage_n_out}, {stage_frame_size}, {default_str});\n"
 
     ret += "}\n\n"
     return ret
@@ -506,6 +523,8 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
 #include <xcore/channel.h>
 #include <print.h>
 """
+    # add includes for each stage type in the pipeline
+    dsp_main += "".join(f"#include <stages/{name}.h>\n" for name in resolved_pipe["modules"].keys())
     dsp_main += _generate_dsp_threads(resolved_pipe)
     dsp_main += _generate_dsp_source(resolved_pipe)
     dsp_main += _generate_dsp_sink(resolved_pipe)
