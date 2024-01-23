@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include "xmath/xmath.h"
-
 int32_t adsp_biquad(
   int32_t new_sample,
   int32_t coeffs[5],
