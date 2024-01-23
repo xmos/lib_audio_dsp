@@ -40,7 +40,7 @@ static inline complex_float_t _get_p(complex_float_t val) {
 }
 
 int32_t adsp_cascaded_biquads_8b(int32_t new_sample,
-                                int32_t coeffs[40],
+                                q2_30 coeffs[40],
                                 int32_t state[64],
                                 left_shift_t lsh[8]
 ) {
@@ -53,7 +53,7 @@ int32_t adsp_cascaded_biquads_8b(int32_t new_sample,
 }
 
 void adsp_design_butterworth_lowpass_8b(
-  int32_t coefficients[40],
+  q2_30 coeffs[40],
   const unsigned N,
   const float fc,
   const float fs
@@ -82,19 +82,19 @@ void adsp_design_butterworth_lowpass_8b(
     float b1 = 2 * b0;
     float b2 = b0;
 
-    coefficients[5 * i]     = _float2fixed(  b0 , Q_factor );
-    coefficients[5 * i + 1] = _float2fixed(  b1 , Q_factor );
-    coefficients[5 * i + 2] = _float2fixed(  b2 , Q_factor );
-    coefficients[5 * i + 3] = _float2fixed( -a1 , Q_factor );
-    coefficients[5 * i + 4] = _float2fixed( -a2 , Q_factor );
+    coeffs[5 * i]     = _float2fixed(  b0 , Q_factor );
+    coeffs[5 * i + 1] = _float2fixed(  b1 , Q_factor );
+    coeffs[5 * i + 2] = _float2fixed(  b2 , Q_factor );
+    coeffs[5 * i + 3] = _float2fixed( -a1 , Q_factor );
+    coeffs[5 * i + 4] = _float2fixed( -a2 , Q_factor );
   }
   for (unsigned i = N / 2; i < 8; i ++) {
-    adsp_design_biquad_bypass(&coefficients[5 * i]);
+    adsp_design_biquad_bypass(&coeffs[5 * i]);
   }
 }
 
 void adsp_design_butterworth_highpass_8b(
-  int32_t coefficients[40],
+  q2_30 coeffs[40],
   const unsigned N,
   const float fc,
   const float fs
@@ -124,13 +124,13 @@ void adsp_design_butterworth_highpass_8b(
     float b1 = - 2 * b0;
     float b2 = b0;
 
-    coefficients[5 * i]     = _float2fixed(  b0 , Q_factor );
-    coefficients[5 * i + 1] = _float2fixed(  b1 , Q_factor );
-    coefficients[5 * i + 2] = _float2fixed(  b2 , Q_factor );
-    coefficients[5 * i + 3] = _float2fixed( -a1 , Q_factor );
-    coefficients[5 * i + 4] = _float2fixed( -a2 , Q_factor );
+    coeffs[5 * i]     = _float2fixed(  b0 , Q_factor );
+    coeffs[5 * i + 1] = _float2fixed(  b1 , Q_factor );
+    coeffs[5 * i + 2] = _float2fixed(  b2 , Q_factor );
+    coeffs[5 * i + 3] = _float2fixed( -a1 , Q_factor );
+    coeffs[5 * i + 4] = _float2fixed( -a2 , Q_factor );
   }
   for (unsigned i = N / 2; i < 8; i ++) {
-    adsp_design_biquad_bypass(&coefficients[5 * i]);
+    adsp_design_biquad_bypass(&coeffs[5 * i]);
   }
 }

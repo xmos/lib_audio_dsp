@@ -16,7 +16,7 @@ static inline int32_t _float2fixed( float x, int32_t q )
   return 0;
 }
 
-void adsp_design_biquad_bypass(int32_t coeffs[5]) {
+void adsp_design_biquad_bypass(q2_30 coeffs[5]) {
   coeffs[0] = 1 << Q_factor;
 	coeffs[1] = 0;
 	coeffs[2] = 0;
@@ -24,7 +24,7 @@ void adsp_design_biquad_bypass(int32_t coeffs[5]) {
 	coeffs[4] = 0;
 }
 
-void adsp_design_biquad_mute(int32_t coeffs[5]) {
+void adsp_design_biquad_mute(q2_30 coeffs[5]) {
   coeffs[0] = 0;
 	coeffs[1] = 0;
 	coeffs[2] = 0;
@@ -34,7 +34,7 @@ void adsp_design_biquad_mute(int32_t coeffs[5]) {
 
 void adsp_design_biquad_lowpass
 (
-  int32_t coeffs[5],
+  q2_30 coeffs[5],
   const float fc,
   const float fs,
   const float filter_Q
@@ -62,7 +62,7 @@ void adsp_design_biquad_lowpass
 
 void adsp_design_biquad_highpass
 (
-  int32_t coeffs[5],
+  q2_30 coeffs[5],
   const float fc,
   const float fs,
   const float filter_Q
@@ -91,7 +91,7 @@ void adsp_design_biquad_highpass
 
 void adsp_design_biquad_bandpass
 (
-  int32_t coeffs[5],
+  q2_30 coeffs[5],
   const float fc,
   const float fs,
   const float bandwidth
@@ -119,7 +119,7 @@ void adsp_design_biquad_bandpass
 
 void adsp_design_biquad_bandstop
 (
-  int32_t coeffs[5],
+  q2_30 coeffs[5],
   const float fc,
   const float fs,
   const float bandwidth
@@ -147,7 +147,7 @@ void adsp_design_biquad_bandstop
 
 void adsp_design_biquad_notch
 (
-  int32_t coeffs[5],
+  q2_30 coeffs[5],
   const float fc,
   const float fs,
   const float filter_Q
@@ -175,7 +175,7 @@ void adsp_design_biquad_notch
 
 void adsp_design_biquad_allpass
 (
-  int32_t coeffs[5],
+  q2_30 coeffs[5],
   const float fc,
   const float fs,
   const float filter_Q
@@ -203,7 +203,7 @@ void adsp_design_biquad_allpass
 
 left_shift_t adsp_design_biquad_peaking
 (
-  int32_t coeffs[5],
+  q2_30 coeffs[5],
   const float fc,
   const float fs,
   const float filter_Q,
@@ -235,7 +235,7 @@ left_shift_t adsp_design_biquad_peaking
 
 left_shift_t adsp_design_biquad_const_q
 (
-  int32_t coeffs[5],
+  q2_30 coeffs[5],
   const float fc,
   const float fs,
   const float filter_Q,
@@ -278,7 +278,7 @@ left_shift_t adsp_design_biquad_const_q
 
 left_shift_t adsp_design_biquad_lowshelf
 (
-  int32_t coeffs[5],
+  q2_30 coeffs[5],
   const float fc,
   const float fs,
   const float filter_Q,
@@ -314,7 +314,7 @@ left_shift_t adsp_design_biquad_lowshelf
 
 left_shift_t adsp_design_biquad_highshelf
 (
-  int32_t coeffs[5],
+  q2_30 coeffs[5],
   const float fc,
   const float fs,
   const float filter_Q,
@@ -349,7 +349,7 @@ left_shift_t adsp_design_biquad_highshelf
 }
 
 void adsp_design_biquad_linkwitz(
-  int32_t coeffs[5],
+  q2_30 coeffs[5],
   const float f0,
   const float fs,
   const float q0,
