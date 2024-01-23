@@ -25,9 +25,9 @@ class CascadedBiquads(Stage):
             self.left_shift.append(bq.b_shift)
 
         self.set_control_field_cb("filter_coeffs",
-                                  lambda: " ".join([str(i) for i in self.get_fixed_point_coeffs()]))
+                                  lambda: [i for i in self.get_fixed_point_coeffs()])
         self.set_control_field_cb("left_shift",
-                                  lambda: " ".join([str(i.b_shift) for i in self.filt.biquads]))
+                                  lambda: [i.b_shift for i in self.filt.biquads])
 
     def process(self, in_channels):
         """

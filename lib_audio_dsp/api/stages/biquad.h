@@ -14,8 +14,8 @@ typedef struct
     int frame_size;
 }biquad_state_t;
 
-DSP_MODULE_INIT_ATTR module_instance_t* biquad_init(uint8_t id, int n_inputs, int n_outputs, int frame_size, void* module_config);
+module_instance_t* biquad_init(uint8_t id, int n_inputs, int n_outputs, int frame_size, void* module_config);
 
-DSP_MODULE_PROCESS_ATTR  void biquad_process(int32_t **input, int32_t **output, void *app_data_state);
+void biquad_process(int32_t **input, int32_t **output, void *app_data_state);
 
-DSP_MODULE_CONTROL_ATTR void biquad_control(void *state, module_control_t *control);
+void biquad_control(void *state, module_control_t *control);
