@@ -36,6 +36,18 @@ pipeline {
             sh 'git -C xcommon_cmake rev-parse HEAD'
             dir("lib_audio_dsp") {
               checkout scm
+              // try building a simple app without venv to check
+              // build that doesn't use design tools won't
+              // need python
+              withTools(params.TOOLS_VERSION) {
+                withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
+                  dir("test/biquad") {
+                    sh "cmake -B build"
+                    sh "cmake --build build"
+                  }
+                }
+              }
+
               createVenv("requirements.txt")
               // build everything
               withVenv {
@@ -64,19 +76,16 @@ pipeline {
               withVenv {
                 withTools(params.TOOLS_VERSION) {
                   dir("test/biquad") {
-                    // running separately because it's faster for parallel tests
-                    runPytest("-s test_biquad_python.py")
-                    sh "pytest -n auto test_biquad_c.py"
+                    runPytest("--dist worksteal")
                   }
                   dir("test/cascaded_biquads") {
-                    runPytest("-s test_cascaded_biquads_python.py")
-                    sh "pytest -n auto test_casc_biquads_c.py"
+                    runPytest("--dist worksteal")
                   }
                   dir("test/drc") {
-                    runPytest("-s test_drc_python.py")
+                    runPytest("--dist worksteal")
                   }
                   dir("test/utils") {
-                    runPytest("-s test_utils_python.py")
+                    runPytest("--dist worksteal")
                   }
                 }
               }

@@ -21,6 +21,19 @@ class CompositeStage:
     - Process method on the composite stage will need to know its inputs and 
       the order of the inputs (which input index corresponds to each input edge).
       However a CompositeStage doesn't know all of its inputs when it is created.
+      
+    Parameters
+    ----------
+    graph : audio_dsp.graph.Graph
+        instance of graph that all stages in this composite will be added to.
+    name : Name of this instance to use when drawing the pipeline, defaults to class name.
+
+    Attributes
+    ----------
+    o : list[audio_dsp.stage.StageOutput]
+        Outputs of this composite, dynamically computed by search graph for edges which
+        originate in this composite and whose destination is outside this composite. Order
+        not currently specified.
     """
 
     def __init__(self, graph, name=""):
@@ -57,6 +70,20 @@ class CompositeStage:
         """
         Create a new stage or composite stage and
         register it with this composite stage
+        
+        Parameters
+        ----------
+        stage_type : type
+            Must be a subclass of Stage or CompositeStage
+        inputs : Iterable[StageOutput]
+            Edges of the pipeline that will be connected to the newly created stage.
+        kwargs : dict
+            Additional args are forwarded to the stages constructore (__init__)
+        
+        Returns
+        -------
+        stage_type
+            Newly created stage or composite stage.
         """
         if issubclass(stage_type, CompositeStage):
             stage = stage_type(inputs=inputs, graph=self._graph, **kwargs)
@@ -85,7 +112,13 @@ class CompositeStage:
         return ret
 
     def contains_stage(self, stage):
-        """recursively search self for the stage"""
+        """recursively search self for the stage
+        
+        Returns
+        -------
+        bool
+            True if this composite contains the stage else False
+        """
         return stage in self.get_all_stages()
 
     def get_all_stages(self):
@@ -93,12 +126,16 @@ class CompositeStage:
         get a flat list of all stages contained within this composite stage
         and the composite stages within.
 
-        Returns:
+        Returns
+        -------
             list of stages.
         """
         return sum([c.get_all_stages() for c in self._composite_stages], start=self._stages)
     
     def process(self, data):
+        """
+        TODO
+        """
         raise NotImplementedError()
 
     def _internal_edges(self):
@@ -130,7 +167,12 @@ class CompositeStage:
         """
         Recursively adds composite stages to a dot diagram which is being
         contructed.
-        Does not add the edges. 
+        Does not add the edges.
+
+        Parameters
+        ----------
+        dot : graphviz.Diagraph
+            dot instance to add edges to.
         """
         with dot.subgraph(name=f"cluster_{uuid4().hex}") as subg:
             if self._name:
