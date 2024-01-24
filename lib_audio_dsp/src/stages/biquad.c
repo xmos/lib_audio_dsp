@@ -18,7 +18,7 @@ void biquad_process(int32_t **input, int32_t **output, void *app_data_state)
         int32_t *in = input[i];
         int32_t *out = output[i];
         int j = 0;
-        do 
+        do
         {
             *out++ = adsp_biquad((*in++),
                         state->config.filter_coeffs,
@@ -39,6 +39,10 @@ module_instance_t* biquad_init(uint8_t id, int n_inputs, int n_outputs, int fram
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
+
+    uint32_t n_bytes_state = n_inputs * 8 * sizeof(int32_t);
+    state->filter_states = DWORD_ALIGNED_MALLOC(n_bytes_state);
+    memset(state->filter_states, n_bytes_state, 0);
 
     if(module_config != NULL)
     {
