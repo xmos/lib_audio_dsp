@@ -8,13 +8,12 @@ set(APP_HW_TARGET XCORE-AI-EXPLORER)
 set(APP_INCLUDES src)
 
 set(APP_COMPILER_FLAGS
-    -Os
+    -O3
     -g
     -report
     -Wall
     -Werror
-    -fxscope
-    -mcmodel=large)
+    -fxscope)
 
 set(APP_DEPENDENT_MODULES lib_audio_dsp)
 
