@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <xmath/xmath.h>
 
-#define DWORD_ALIGNED_MALLOC(n_bytes) (void*)(((((uint64_t)malloc((n_bytes) + 8)) + 7) >> 3) << 3) // This is allocating more memory than required to sort of dword alignment.
+#define DWORD_ALIGNED_MALLOC(n_bytes) (void*)(((((uint64_t)malloc((n_bytes) + 7)) + 7) >> 3) << 3) // This is allocating more memory than required to sort of dword alignment.
                                                                                                    // This is done assuming that this memory is never freed.
 
 typedef enum
