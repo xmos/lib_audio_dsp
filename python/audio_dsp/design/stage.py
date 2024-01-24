@@ -139,7 +139,15 @@ class Stage(Node):
         Samples in frame.
     name : str
         Module name determined from config file
-    yaml_dict : config parsed from the config file
+    yaml_dict : dict
+        config parsed from the config file
+    n_in : int
+        number of inputs
+    n_out : int
+        number of outputs
+    details : dict
+        Dictionary of descriptive details which can be displayed to describe
+        current tuning of this stage
     """
     def __init__(self, config, inputs):
         super().__init__()
@@ -155,11 +163,13 @@ class Stage(Node):
             self.frame_size = None
 
         self.n_in = len(self.i)
+        self.n_out = 0
         self._o = None
         self.yaml_dict = yaml.load(Path(config).read_text(), Loader=yaml.Loader)
         # module dict contains 1 entry with the name of the module as its key
         self.name = next(iter(self.yaml_dict["module"].keys()))
         self._control_fields = {name: ValueControlField() for name in self.yaml_dict["module"][self.name].keys()}
+        self.details = {}
 
     @property
     def o(self):
@@ -179,6 +189,7 @@ class Stage(Node):
         n_out : int
             number of outputs to create.
         """
+        self.n_out = n_out
         self._o = []
         for i in range(n_out):
             output = StageOutput()
@@ -236,3 +247,24 @@ class Stage(Node):
         TODO
         """
         raise NotImplementedError()
+
+
+    def add_to_dot(self, dot):
+        """
+        Add this stage to a diagram that is being constructed.
+        Does not add the edges.
+
+        Parameters
+        ----------
+        dot : graphviz.Diagraph
+            dot instance to add edges to.
+        """
+        inputs = "|".join(f"<i{i}> " for i in range(self.n_in))
+        outputs = "|".join(f"<o{i}> " for i in range(self.n_out))
+        center = f"{self.index}: {type(self).__name__}\\n"
+        if self.details:
+            details = "\\n".join(f"{k}: {v}" for k, v in self.details.items())
+            label = f"{{ {{ {inputs} }} | {center} | {details} | {{ {outputs} }}}}"
+        else:
+            label = f"{{ {{ {inputs} }} | {center} | {{ {outputs} }}}}"
+        dot.node(self.id.hex, label)
