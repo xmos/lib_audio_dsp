@@ -70,7 +70,7 @@ set(LIB_INCLUDES api ${PIPELINE_DESIGN_INCLUDE_DIRS})
 file(GLOB DSP_C_SOURCES RELATIVE ${CMAKE_CURRENT_LIST_DIR} CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/src/dsp/*.c")
 list(APPEND LIB_C_SRCS ${DSP_C_SOURCES})
 set(LIB_DEPENDENT_MODULES "lib_xcore_math(xcommon_cmake)" "lib_logging")
-set(LIB_COMPILER_FLAGS -Os -Wall -Werror -g -mcmodel=large)
+set(LIB_COMPILER_FLAGS -Os -Wall -Werror -g )
 set(LIB_OPTIONAL_HEADERS adsp_generated.h)
 
 XMOS_REGISTER_MODULE()
