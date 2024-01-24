@@ -77,7 +77,7 @@ XMOS_REGISTER_MODULE()
 
 if(STAGES_INCLUDED)
     # Super secret xcommon backdoor variable
-    foreach(target "${BUILD_TARGETS}")
+    foreach(target ${BUILD_TARGETS})
         add_dependencies(${target} cmd_map_generation)
     endforeach() 
 endif()
