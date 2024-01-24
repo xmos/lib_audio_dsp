@@ -133,7 +133,7 @@ def biquad_bypass(fs):
 
 def biquad_gain(fs, gain_db):
     coeffs = make_biquad_gain(fs, gain_db)
-    return biquad(coeffs, fs)
+    return biquad(coeffs, fs, b_shift=BOOST_BSHIFT)
 
 
 def biquad_lowpass(fs, f, q):
