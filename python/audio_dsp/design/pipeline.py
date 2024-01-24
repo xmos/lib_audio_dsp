@@ -13,6 +13,7 @@ from IPython import display
 import yaml
 import subprocess
 from uuid import uuid4
+from ._draw import new_record_digraph
 
 
 class Pipeline:
@@ -41,6 +42,8 @@ class Pipeline:
     def __init__(self, n_in, frame_size=1, fs=48000):
         self._graph = Graph()
         self._threads = []
+        self._n_in = n_in
+        self._n_out = 0
 
         self.i = [StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)]
         for i, input in enumerate(self.i):
@@ -75,6 +78,7 @@ class Pipeline:
         for i, edge in enumerate(output_edges):
             if edge is not None:
                 edge.dest_index = i
+        self._n_out = i + 1
 
     def validate(self):
         """
@@ -90,18 +94,23 @@ class Pipeline:
         """
         Render a dot diagram of this pipeline
         """
-        dot = graphviz.Digraph()
-        dot.clear()
+        dot = new_record_digraph()
         for thread in self._threads:
             thread.add_to_dot(dot)
+        start_label = f"{{ start | {{ {'|'.join(f'<o{i}> {i}' for i in range(self._n_in))} }} }}"
+        end_label = f"{{ {{ {'|'.join(f'<i{i}> {i}' for i in range(self._n_out))} }} | end }}"
+        dot.node("start", label=start_label)
+        dot.node("end", label=end_label)
         for e in self._graph.edges:
             source = e.source.id.hex if e.source is not None else "start"
+            source = f"{source}:o{e.source_index}:s" #  "s" means connect to the "south" of the port
             dest = e.dest.id.hex if e.dest is not None else "end"
+            dest = f"{dest}:i{e.dest_index}:n" #  "n" means connect to the "north" of the port
             if e.dest is None and e.dest_index is None:
                 # unconnected
                 dest = uuid4().hex
                 dot.node(dest, "", shape="point")
-            dot.edge(source, dest, taillabel=str(e.source_index), headlabel=str(e.dest_index))
+            dot.edge(source, dest)
         display.display_svg(dot)
         
     @property

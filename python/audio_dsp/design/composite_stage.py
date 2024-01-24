@@ -2,7 +2,7 @@ from typing import Iterable
 
 from .stage import StageOutput, Stage
 
-import graphviz
+from ._draw import new_record_digraph
 from IPython import display
 from uuid import uuid4
 
@@ -148,19 +148,21 @@ class CompositeStage:
         """
         Draws the stages and edges present in this instance of a composite stage
         """
-        dot = graphviz.Digraph()
-        dot.clear()
+        dot = new_record_digraph()
         self.add_to_dot(dot)
         output_edges = self.o
         internal_edges = self._internal_edges()
         for e in internal_edges:
-            source = e.source.id.hex
-            dest = e.dest.id.hex
-            dot.edge(source, dest, taillabel=str(e.source_index), headlabel=str(e.dest_index))
+            source = f"{e.source.id.hex}:o{e.source_index}:s"
+            dest = f"{e.dest.id.hex}:i{e.dest_index}:n"
+            dot.edge(source, dest)
+
+        end_label = f"{{ {{ {'|'.join(f'<i{i}> {i}' for i in range(len(output_edges)))} }} | end }}"
+        dot.node("end", label=end_label)
         for i, e in enumerate(output_edges):
-            source = e.source.id.hex
-            dest = "end"
-            dot.edge(source, dest, taillabel=str(e.source_index), headlabel=str(i))
+            source = f"{e.source.id.hex}:o{e.source_index}:s"
+            dest = f"end:i{i}:n"
+            dot.edge(source, dest)
         display.display_svg(dot)
 
     def add_to_dot(self, dot):
@@ -175,9 +177,11 @@ class CompositeStage:
             dot instance to add edges to.
         """
         with dot.subgraph(name=f"cluster_{uuid4().hex}") as subg:
+            subg.attr(color="grey")
+            subg.attr(fontcolor="grey")
             if self._name:
                 subg.attr(label=self._name)
             for n in self._stages:
-                subg.node(n.id.hex, f"{n.index}: {type(n).__name__}")
+                n.add_to_dot(subg)
             for composite_stage in self._composite_stages:
                 composite_stage.add_to_dot(subg)

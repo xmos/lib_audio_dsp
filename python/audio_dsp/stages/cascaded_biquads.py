@@ -48,10 +48,16 @@ class CascadedBiquads(Stage):
         return np.array(a*(2**30), dtype=np.int32)
 
     def make_parametric_eq(self, filter_spec):
+        self.details = dict(type="parametric")
         self.filt = casc_bq.parametric_eq_8band(self.fs, filter_spec)
+        return self
     
     def make_butterworth_highpass(self, N, fc):
+        self.details = dict(type="butterworth highpass", N=N, fc=fc)
         self.filt = casc_bq.butterworth_highpass(self.fs, N, fc)
+        return self
     
     def make_butterworth_lowpass(self, N, fc):
+        self.details = dict(type="butterworth lowpass", N=N, fc=fc)
         self.filt = casc_bq.butterworth_lowpass(self.fs, N, fc)
+        return self
