@@ -169,10 +169,13 @@ def send_config_to_device(pipeline: Pipeline, host_app = "xvf_host", protocol="u
                 value = " ".join(str(v) for v in value)
             else:
                 value = str(value)
+            ret = subprocess.run([host_app, "--use", protocol, "--instance-id", str(stage.index),
+                            command, *value.split()])
+            if ret.returncode:
+                print("Unable to connect connect to device")
+                return
             print(host_app, "--use", protocol, "--instance-id", str(stage.index),
                             command, *value.split())
-            subprocess.run([host_app, "--use", protocol, "--instance-id", str(stage.index),
-                            command, *value.split()])
 
 def _filter_edges_by_thread(resolved_pipeline):
     """
