@@ -76,16 +76,16 @@ pipeline {
               withVenv {
                 withTools(params.TOOLS_VERSION) {
                   dir("test/biquad") {
-                    runPytest("--dist worksteal")
+                    runPytest("--numprocesses=1")
                   }
                   dir("test/cascaded_biquads") {
-                    runPytest("--dist worksteal")
+                    runPytest("--numprocesses=1")
                   }
                   dir("test/drc") {
-                    runPytest("--dist worksteal")
+                    runPytest("--numprocesses=1")
                   }
                   dir("test/utils") {
-                    runPytest("--dist worksteal")
+                    runPytest("--numprocesses=1")
                   }
                 }
               }
