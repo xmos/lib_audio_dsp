@@ -2,13 +2,10 @@ cmake_minimum_required(VERSION 3.21)
 include($ENV{XMOS_CMAKE_PATH}/xcommon.cmake)
 project(cascaded_biquads_test)
 
-
-
 set(APP_HW_TARGET XCORE-AI-EXPLORER)
-set(APP_INCLUDES src)
 
 set(APP_COMPILER_FLAGS
-    -Os
+    -O3
     -g
     -report
     -Wall

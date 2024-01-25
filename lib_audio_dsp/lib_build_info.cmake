@@ -51,8 +51,10 @@ if(PYTHON_EXE)
         file(RELATIVE_PATH REL_AUTOGEN_DIR ${CMAKE_CURRENT_LIST_DIR} ${AUTOGEN_DIR})
         set(PIPELINE_DESIGN_INCLUDE_DIRS ${REL_AUTOGEN_DIR}/common ${REL_AUTOGEN_DIR}/device)
 
-        add_custom_target(cmd_map_generation
-            DEPENDS ${OUTPUT_C_FILES} ${OUTPUT_H_FILES})
+        if(NOT TARGET cmd_map_generation)
+            add_custom_target(cmd_map_generation
+                DEPENDS ${OUTPUT_C_FILES} ${OUTPUT_H_FILES})
+        endif()
         
         file(GLOB STAGES_C_SOURCES RELATIVE ${CMAKE_CURRENT_LIST_DIR} CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/src/stages/*.c")
         list(APPEND LIB_C_SRCS ${STAGES_C_SOURCES})
@@ -79,5 +81,5 @@ if(STAGES_INCLUDED)
     # Super secret xcommon backdoor variable
     foreach(target "${BUILD_TARGETS}")
         add_dependencies(${target} cmd_map_generation)
-    endforeach() 
+    endforeach()
 endif()

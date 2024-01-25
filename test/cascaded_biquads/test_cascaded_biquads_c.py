@@ -1,4 +1,3 @@
-from scipy import signal
 import numpy as np
 import soundfile as sf
 from pathlib import Path
