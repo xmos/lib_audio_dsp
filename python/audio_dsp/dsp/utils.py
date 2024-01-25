@@ -132,7 +132,20 @@ class float_s32():
 
     def __add__(self, other_s32):
         if isinstance(other_s32, float_s32):
-            return float_s32(float(self) + float(other_s32))
+            # from float_s32_add in lib_xcore_math
+            x_hr = 31 - self.mant.bit_length() - 1
+            y_hr = 31 - other_s32.mant.bit_length() - 1
+            x_min_exp = self.exp - x_hr
+            y_min_exp = other_s32.exp - y_hr
+
+            res_exp = max(x_min_exp, y_min_exp) + 1
+
+            x_shr = res_exp - self.exp
+            y_shr = res_exp - other_s32.exp
+
+            mant = ashr32(self.mant, x_shr) + ashr32(other_s32.mant, y_shr)
+
+            return float_s32([mant, res_exp])
         else:
             raise TypeError("s32 can only be added to s32")
 
@@ -162,6 +175,13 @@ class float_s32():
         return math.ldexp(int32_to_float(self.mant), self.exp + 31)
 
     __rmul__ = __mul__
+
+
+def ashr32(x, shr):
+    if shr >= 0:
+        return x >> shr
+    else:
+        return x << -shr
 
 
 def float_s32_min(x: float_s32, y: float_s32):
