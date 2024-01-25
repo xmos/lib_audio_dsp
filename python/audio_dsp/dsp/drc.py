@@ -22,6 +22,9 @@ class envelope_detector_peak(dspg.dsp_block):
         self.release_alpha = 2*T / release_t
         self.envelope = 0
 
+        self.attack_alpha_uq30 = round(self.attack_alpha * 2**30)
+        self.release_alpha_uq30 = round(self.release_alpha * 2**30)
+
         self.attack_alpha_s32 = utils.float_s32(self.attack_alpha)
         self.release_alpha_s32 = utils.float_s32(self.release_alpha)
         self.envelope_s32 = utils.float_s32(0, self.Q_sig)
@@ -60,6 +63,7 @@ class envelope_detector_peak(dspg.dsp_block):
 
         # do exponential moving average
         self.envelope_s32 = ((utils.float_s32(1)-alpha) * self.envelope_s32) + (alpha * sample_mag)
+        # self.envelope_s32 = (sample_mag, self.envelope_s32, alpha)
 
         # if we got floats, return floats, otherwise return float_s32
         if isinstance(sample, utils.float_s32):

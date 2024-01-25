@@ -63,6 +63,13 @@ def int40(val: int):
     raise OverflowError
 
 
+def uq_2_30(val: int):
+    # special type for unsigned Q2.30 format, used by EWM
+    if 0 < val < (2 ** 32):
+        return int(val)
+    raise OverflowError
+
+
 def vpu_mult(x1: int, x2: int):
 
     y = int64(x1*x2)
@@ -92,14 +99,15 @@ class float_s32():
         self.Q_sig = Q_sig
         if Q_sig and isinstance(value, float):
             self.mant = int32(round(value * 2**Q_sig))
-            # add 31 here python expects a float mantissa < 1, but we use int32
-            self.exp = -Q_sig + 31
+            self.exp = -Q_sig
         elif isinstance(value, float):
             self.mant, self.exp = math.frexp(value)
             self.mant = float_to_int32(self.mant)
+            self.exp -= 31
         elif isinstance(value, int):
             self.mant, self.exp = math.frexp(float(value))
             self.mant = float_to_int32(self.mant)
+            self.exp -= 31
         elif isinstance(value, list):
             self.mant = value[0]
             self.exp = value[1]
@@ -150,7 +158,8 @@ class float_s32():
         return float_s32([abs(self.mant), self.exp])
 
     def __float__(self):
-        return math.ldexp(int32_to_float(self.mant), self.exp)
+        # add 31 here python expects a float mantissa < 1, but we use int32
+        return math.ldexp(int32_to_float(self.mant), self.exp + 31)
 
     __rmul__ = __mul__
 
@@ -171,3 +180,12 @@ def float_s32_max(x: float_s32, y: float_s32):
 
 def min_float_s32():
     return float_s32([1, 0])
+
+
+def float_s32_ema(x: float_s32, y: float, alpha: int):
+    t = float_s32([alpha, -30])
+    s = float_s32([2**30 - alpha, -30])
+
+    output = (x*t) + (y*s)
+
+    return output
