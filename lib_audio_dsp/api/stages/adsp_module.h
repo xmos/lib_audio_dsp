@@ -5,8 +5,8 @@
 #include <stdbool.h>
 #include <xmath/xmath.h>
 
-#define DSP_INPUT_CHANNELS (4)  // For the 2ch USB + 2ch I2S config for now. TODO: Fix this
-#define DSP_OUTPUT_CHANNELS (DSP_INPUT_CHANNELS)
+#define DWORD_ALIGNED_MALLOC(n_bytes) (void*)(((((uint64_t)malloc((n_bytes) + 7)) + 7) >> 3) << 3) // This is allocating more memory than requested to sort out dword alignment.
+                                                                                                   // This is done assuming that this memory is never freed.
 
 typedef enum
 {
@@ -39,6 +39,8 @@ typedef struct
 {
     uint8_t instance_id;
 }module_info_t;
+
+
 
 
 #endif

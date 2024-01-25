@@ -10,8 +10,7 @@ set(APP_COMPILER_FLAGS
     -report
     -Wall
     -Werror
-    -fxscope
-    -mcmodel=large)
+    -fxscope)
 
 set(APP_DEPENDENT_MODULES lib_audio_dsp)
 

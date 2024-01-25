@@ -113,6 +113,14 @@ def test_linkwitz_filters(f0, fp_ratio, q0, qp, fs):
     chirp_filter_test(filter, fs)
 
 
+@pytest.mark.parametrize("gain", [-10, 0, 10])
+@pytest.mark.parametrize("fs", [16000, 44100, 48000, 88200, 96000, 192000])
+def test_gain_filters(gain, fs):
+
+    filter = bq.biquad_gain(fs, gain)
+    chirp_filter_test(filter, fs)
+
+
 # TODO check biquad actually filters
 # TODO check parameter generation
 # TODO check sample rates - use f/fs
