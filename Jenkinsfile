@@ -57,7 +57,7 @@ pipeline {
                     script {
                       [
                       "test/biquad",
-                      "test/cascaded_biquads"
+                      "test/cascaded_biquads",
                       "test/drc"
                       ].each {
                         sh "cmake -S ${it} -B ${it}/build"
