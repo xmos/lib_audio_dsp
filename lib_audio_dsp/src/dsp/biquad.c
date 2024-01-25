@@ -32,6 +32,18 @@ void adsp_design_biquad_mute(int32_t coeffs[5]) {
 	coeffs[4] = 0;
 }
 
+left_shift_t adsp_design_biquad_gain(q2_30 coeffs[5], const float gain_db) {
+  float A  = powf(10, (gain_db / 20));
+  
+  coeffs[0] = _float2fixed(  A, Q_factor - BOOST_BSHIFT );
+  coeffs[1] = 0;
+	coeffs[2] = 0;
+	coeffs[3] = 0;
+	coeffs[4] = 0;
+
+  return BOOST_BSHIFT;
+}
+
 void adsp_design_biquad_lowpass
 (
   int32_t coeffs[5],
