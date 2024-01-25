@@ -120,7 +120,37 @@ class float_s32():
 
     def __mul__(self, other_s32):
         if isinstance(other_s32, float_s32):
-            return float_s32(float(self) * float(other_s32))
+
+            # vect_s32_mul_prepare
+            b_hr = hr_s32(self)
+            c_hr = hr_s32(other_s32)
+            total_hr = b_hr + c_hr
+
+            if total_hr == 0:
+                b_shr = 1
+                c_shr = 1
+            elif total_hr == 1:
+                b_shr = 1 if b_hr == 0 else 0
+                c_shr = 1 if c_hr == 0 else 0
+            elif b_hr == 0:
+                b_shr = 0
+                c_shr = 2 - total_hr
+            elif c_hr == 0:
+                b_shr = 2 - total_hr
+                c_shr = 0
+            else:
+                b_shr = 1 - b_hr
+                c_shr = 1 - c_hr
+
+            res_exp = self.exp + other_s32.exp + b_shr + c_shr + 30
+
+            # vect_s32_mul
+            B = ashr32(self.mant, b_shr)
+            C = ashr32(other_s32.mant, c_shr)
+
+            A = vpu_mult(B, C)
+
+            return float_s32([A, res_exp])
         else:
             raise TypeError("s32 can only be multiplied by s32")
 
@@ -133,8 +163,8 @@ class float_s32():
     def __add__(self, other_s32):
         if isinstance(other_s32, float_s32):
             # from float_s32_add in lib_xcore_math
-            x_hr = 31 - self.mant.bit_length() - 1
-            y_hr = 31 - other_s32.mant.bit_length() - 1
+            x_hr = hr_s32(self)
+            y_hr = hr_s32(other_s32)
             x_min_exp = self.exp - x_hr
             y_min_exp = other_s32.exp - y_hr
 
@@ -177,7 +207,13 @@ class float_s32():
     __rmul__ = __mul__
 
 
+def hr_s32(x: float_s32):
+    # calculate number of leading zeros on the mantissa
+    return 31 - x.mant.bit_length() - 1
+
+
 def ashr32(x, shr):
+    # right shift, with negative values shifting left
     if shr >= 0:
         return x >> shr
     else:
