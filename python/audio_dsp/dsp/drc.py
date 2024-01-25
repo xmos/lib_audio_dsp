@@ -22,16 +22,13 @@ class envelope_detector_peak(dspg.dsp_block):
         self.release_alpha = 2*T / release_t
         self.envelope = 0
 
-        self.attack_alpha_uq30 = round(self.attack_alpha * 2**30)
-        self.release_alpha_uq30 = round(self.release_alpha * 2**30)
-
-        self.attack_alpha_s32 = utils.float_s32(self.attack_alpha)
-        self.release_alpha_s32 = utils.float_s32(self.release_alpha)
-        self.envelope_s32 = utils.float_s32(0, self.Q_sig)
+        self.attack_alpha_uq30 = utils.uq_2_30(round(self.attack_alpha * 2**30))
+        self.release_alpha_uq30 = utils.uq_2_30(round(self.release_alpha * 2**30))
+        self.envelope_s32 = utils.float_s32([0, -self.Q_sig])
 
     def reset_state(self):
         self.envelope = 0
-        self.envelope_s32 = utils.float_s32(0, self.Q_sig)
+        self.envelope_s32 = utils.float_s32(0, -self.Q_sig)
 
     def process(self, sample):
         sample_mag = abs(sample)
@@ -57,13 +54,12 @@ class envelope_detector_peak(dspg.dsp_block):
 
         # see if we're attacking or decaying
         if sample_mag > self.envelope_s32:
-            alpha = self.attack_alpha_s32
+            alpha = self.attack_alpha_uq30
         else:
-            alpha = self.release_alpha_s32
+            alpha = self.release_alpha_uq30
 
         # do exponential moving average
-        self.envelope_s32 = ((utils.float_s32(1)-alpha) * self.envelope_s32) + (alpha * sample_mag)
-        # self.envelope_s32 = (sample_mag, self.envelope_s32, alpha)
+        self.envelope_s32 = utils.float_s32_ema(sample_mag, self.envelope_s32, alpha)
 
         # if we got floats, return floats, otherwise return float_s32
         if isinstance(sample, utils.float_s32):
@@ -101,12 +97,12 @@ class envelope_detector_rms(envelope_detector_peak):
 
         # see if we're attacking or decaying
         if sample_mag > self.envelope_s32:
-            alpha = self.attack_alpha_s32
+            alpha = self.attack_alpha_uq30
         else:
-            alpha = self.release_alpha_s32
+            alpha = self.release_alpha_uq30
 
         # do exponential moving average
-        self.envelope_s32 = ((utils.float_s32(1)-alpha) * self.envelope_s32) + (alpha * sample_mag)
+        self.envelope_s32 = utils.float_s32_ema(sample_mag, self.envelope_s32, alpha)
 
         # if we got floats, return floats, otherwise return float_s32
         if isinstance(sample, utils.float_s32):
@@ -131,10 +127,10 @@ class limiter_base(dspg.dsp_block):
         self.threshold = None
         self.env_detector = None
 
-        self.attack_alpha_s32 = utils.float_s32(self.attack_alpha)
-        self.release_alpha_s32 = utils.float_s32(self.release_alpha)
+        self.attack_alpha_uq30 = utils.uq_2_30(round(self.attack_alpha * 2**30))
+        self.release_alpha_uq30 = utils.uq_2_30(round(self.release_alpha * 2**30))
         self.threshold_s32 = None
-        self.gain_s32 = utils.float_s32(1)
+        self.gain_s32 = utils.float_s32([2**30, -30])
 
     def reset_state(self):
         self.env_detector.reset_state()
@@ -179,12 +175,12 @@ class limiter_base(dspg.dsp_block):
 
         # see if we're attacking or decaying
         if new_gain < self.gain_s32:
-            alpha = self.attack_alpha_s32
+            alpha = self.attack_alpha_uq30
         else:
-            alpha = self.release_alpha_s32
+            alpha = self.release_alpha_uq30
 
         # do exponential moving average
-        self.gain_s32 = ((utils.float_s32(1)-alpha) * self.gain_s32) + (alpha * new_gain)
+        self.gain_s32 = utils.float_s32_ema(new_gain, self.gain_s32, alpha)
 
         # apply gain
         y = self.gain_s32*sample

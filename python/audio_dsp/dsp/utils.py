@@ -109,8 +109,8 @@ class float_s32():
             self.mant = float_to_int32(self.mant)
             self.exp -= 31
         elif isinstance(value, list):
-            self.mant = value[0]
-            self.exp = value[1]
+            self.mant = int32(value[0])
+            self.exp = int32(value[1])
         else:
             TypeError("s32 can only be initialised by float or list of ints [mant, exp]")
 
@@ -183,6 +183,7 @@ def min_float_s32():
 
 
 def float_s32_ema(x: float_s32, y: float, alpha: int):
+    # this is an implementation of float_s32_ema in lib_xcore_math
     t = float_s32([alpha, -30])
     s = float_s32([2**30 - alpha, -30])
 
