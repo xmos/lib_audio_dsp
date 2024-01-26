@@ -41,9 +41,9 @@ module_instance_t* cascaded_biquads_init(uint8_t id, int n_inputs, int n_outputs
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    uint32_t n_bytes_state = n_inputs * 64 * sizeof(int32_t);
-    state->filter_states = DWORD_ALIGNED_MALLOC(n_bytes_state);
-    memset(state->filter_states, n_bytes_state, 0);
+    //uint32_t n_bytes_state = n_inputs * 64 * sizeof(int32_t);
+    //state->filter_states = DWORD_ALIGNED_MALLOC(n_bytes_state);
+    //memset(state->filter_states, n_bytes_state, 0);
 
     if(module_config != NULL)
     {
