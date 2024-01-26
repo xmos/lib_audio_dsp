@@ -13,6 +13,8 @@ void adsp_design_biquad_bypass(q2_30 coeffs[5]);
 
 void adsp_design_biquad_mute(q2_30 coeffs[5]);
 
+left_shift_t adsp_design_biquad_gain(q2_30 coeffs[5], const float gain_db);
+
 void adsp_design_biquad_lowpass(
   q2_30 coeffs[5],
   const float fc,
