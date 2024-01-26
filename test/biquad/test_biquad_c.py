@@ -152,6 +152,13 @@ def test_linkwitz_filters_c(in_signal, f0, fp_ratio, q0, qp):
   filter_name = f"biquad_linkwitz_{f0}_{fp_ratio}_{q0}_{qp}"
   single_test(filt, filter_name, in_signal)
 
+@pytest.mark.parametrize("gain", [-10, 0, 10])
+def test_gain_filters_c(in_signal, gain):
+  
+  filt = bq.biquad_gain(fs, gain)
+  filter_name = f"biquad_gain_{gain}"
+  single_test(filt, filter_name, in_signal)
+
 
 if __name__ =="__main__":
   bin_dir.mkdir(exist_ok=True, parents=True)
@@ -160,4 +167,5 @@ if __name__ =="__main__":
   #test_xpass_filters_c(sig_fl, "biquad_notch", 200, 0.7)
   #test_high_gain_c(sig_fl, "biquad_lowshelf", 2000, 0.1, 5)
   #test_bandx_filters_c(sig_fl, "biquad_bandpass", 200, 10)
-  test_linkwitz_filters_c(sig_fl, 100, 4, 0.5, 2)
+  #test_linkwitz_filters_c(sig_fl, 100, 4, 0.5, 2)
+  test_gain_filters_c(sig_fl, -10)
