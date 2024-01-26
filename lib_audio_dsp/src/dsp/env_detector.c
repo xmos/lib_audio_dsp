@@ -3,8 +3,6 @@
 
 #include <xcore/assert.h>
 
-#define Q_sig -27
-
 static inline int32_t float_to_fixed(float x, exponent_t output_exp){
   float_s32_t v = f32_to_float_s32(x);
   right_shift_t shr = output_exp - v.exp;
@@ -30,7 +28,7 @@ env_detector_t adsp_env_detector_init(
   fs = 2 / fs;
   env_det.attack_alpha = float_to_fixed(fs / attack_t, -30);
   env_det.release_alpha = float_to_fixed(fs / release_t, -30);
-  env_det.envelope = (float_s32_t){0, Q_sig};
+  env_det.envelope = (float_s32_t){0, SIG_EXP};
 
   return env_det;
 }
@@ -39,7 +37,7 @@ void adsp_env_detector_peak(
   env_detector_t * env_det,
   int32_t new_sample
 ) {
-  float_s32_t samp = (float_s32_t){new_sample, Q_sig};
+  float_s32_t samp = (float_s32_t){new_sample, SIG_EXP};
   samp = float_s32_abs(samp);
 
   uq2_30 alpha = env_det->release_alpha;
@@ -54,7 +52,7 @@ void adsp_env_detector_rms(
   env_detector_t * env_det,
   int32_t new_sample
 ) {
-  float_s32_t samp = (float_s32_t){new_sample, Q_sig};
+  float_s32_t samp = (float_s32_t){new_sample, SIG_EXP};
   samp = float_s32_mul(samp, samp);
 
   uq2_30 alpha = env_det->release_alpha;

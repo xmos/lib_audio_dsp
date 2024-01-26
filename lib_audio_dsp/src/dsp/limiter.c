@@ -1,8 +1,6 @@
 
 #include "dsp/adsp.h"
 
-#define Q_sig -27
-
 static const float_s32_t one = (float_s32_t){0x40000000, -30};
 static const float_s32_t delta = (float_s32_t){1, -60};
 
@@ -53,8 +51,8 @@ int32_t adsp_limiter_peak(
   }
 
   lim->gain = float_s32_ema(new_gain, lim->gain, alpha);
-  float_s32_t y = float_s32_mul((float_s32_t){new_samp, Q_sig}, lim->gain);
-  return float_s32_to_fixed(y, Q_sig);
+  float_s32_t y = float_s32_mul((float_s32_t){new_samp, SIG_EXP}, lim->gain);
+  return float_s32_to_fixed(y, SIG_EXP);
 }
 
 int32_t adsp_limiter_rms(
@@ -72,6 +70,6 @@ int32_t adsp_limiter_rms(
   }
 
   lim->gain = float_s32_ema(new_gain, lim->gain, alpha);
-  float_s32_t y = float_s32_mul((float_s32_t){new_samp, Q_sig}, lim->gain);
-  return float_s32_to_fixed(y, Q_sig);
+  float_s32_t y = float_s32_mul((float_s32_t){new_samp, SIG_EXP}, lim->gain);
+  return float_s32_to_fixed(y, SIG_EXP);
 }
