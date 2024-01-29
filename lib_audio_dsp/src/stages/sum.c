@@ -8,23 +8,34 @@
 
 #include <print.h>
 
+static inline void accumulate(int32_t accumulator[2], int32_t new_val) {
+    const int32_t two = 4;
+    asm("maccs %0,%1,%2,%3":"+r"(accumulator[1]),"+r"(accumulator[0]):"r"(two),"r"(new_val));
+}
+static inline int32_t extract(int32_t accumulator[2]) {
+    int32_t one = 2;
+    asm("lsats %0,%1,%2":"+r"(accumulator[1]),"+r"(accumulator[0]):"r"(one));
+    asm("lextract %0,%0,%1,%2,32":"+r"(accumulator[1]):"r"(accumulator[0]),"r"(one));
+    return accumulator[1];
+}
+
 void sum_process(int32_t **input, int32_t **output, void *app_data_state)
 {
     sum_state_t *state = app_data_state;
 
-    int input_idx = 0;
-    for(int output_idx = 0; output_idx < state->n_outputs; ++ output_idx) {
-        int32_t* out = output[output_idx];
-        for(int frame_idx = 0; frame_idx < state->frame_size; ++frame_idx) {
-            out[frame_idx] = input[input_idx][frame_idx];
-        }
-        input_idx += 1;
-
-        for(int i = 1; i < state->n_per_sum; ++i) {
-            for(int frame_idx = 0; frame_idx < state->frame_size; ++frame_idx) {
-                out[frame_idx] += input[input_idx][frame_idx];
-            }
+    for(int frame_idx = 0; frame_idx < state->frame_size; ++frame_idx) {
+        int input_idx = 0;
+        for(int output_idx = 0; output_idx < state->n_outputs; ++ output_idx) {
+            int32_t accumulator[2] = {0, 0};
+            accumulate(accumulator, input[input_idx][frame_idx]);
             input_idx += 1;
+
+            for(int i = 1; i < state->n_per_sum; ++i) {
+                accumulate(accumulator, input[input_idx][frame_idx]);
+                input_idx += 1;
+            }
+            int32_t* out = output[output_idx];
+            out[frame_idx] = extract(accumulator);
         }
     }
 }

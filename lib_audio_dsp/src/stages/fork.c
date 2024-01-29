@@ -34,7 +34,6 @@ module_instance_t* fork_init(uint8_t id, int n_inputs, int n_outputs, int frame_
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
     state->n_forks = n_outputs / n_inputs;
-    printf("in: %d, out: %d, fs: %d, nf: %d\n", state->n_inputs, state->n_outputs, state->frame_size, state->n_forks);
     xassert(n_outputs % n_inputs == 0); // must be able to fork all the inputs
 
     if(module_config != NULL)
