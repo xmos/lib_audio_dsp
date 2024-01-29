@@ -1,0 +1,6 @@
+module:
+  sum:
+    _reserved:
+      type: int
+includes:
+  - "stdint.h"
