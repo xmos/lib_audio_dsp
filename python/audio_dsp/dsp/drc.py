@@ -168,6 +168,7 @@ class limiter_base(dspg.dsp_block):
         # avoid /0
         if envelope.mant == 0:
             envelope.mant = 1
+            envelope.exp = -60
 
         # if envelope below threshold, apply unity gain, otherwise scale down
         new_gain = self.threshold_s32/envelope

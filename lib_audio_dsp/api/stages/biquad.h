@@ -8,6 +8,7 @@
 typedef struct
 {
     biquad_config_t config;
+    //int32_t (*filter_states)[8];
     int32_t DWORD_ALIGNED filter_states[MAX_CHANNELS][8];
     int n_inputs;
     int n_outputs;
