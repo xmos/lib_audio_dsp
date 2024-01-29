@@ -179,11 +179,11 @@ class float_s32():
         else:
             raise TypeError("s32 can only be added to s32")
 
-    def __sub__(self, other_s32):
-        if isinstance(other_s32, float_s32):
-            return float_s32(float(self) - float(other_s32))
-        else:
-            raise TypeError("s32 can only be subtracted from s32")
+    # def __sub__(self, other_s32):
+    #     if isinstance(other_s32, float_s32):
+    #         return float_s32(float(self) - float(other_s32))
+    #     else:
+    #         raise TypeError("s32 can only be subtracted from s32")
 
     def __gt__(self, other_s32):
         if isinstance(other_s32, float_s32):
@@ -238,7 +238,7 @@ def min_float_s32():
     return float_s32([1, 0])
 
 
-def float_s32_ema(x: float_s32, y: float, alpha: int):
+def float_s32_ema(x: float_s32, y: float_s32, alpha: int):
     # this is an implementation of float_s32_ema in lib_xcore_math
     t = float_s32([alpha, -30])
     s = float_s32([2**30 - alpha, -30])
