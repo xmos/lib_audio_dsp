@@ -156,11 +156,11 @@ class float_s32():
 
     def __truediv__(self, other_s32):
         if isinstance(other_s32, float_s32):
-            # float_s32_div and  s32_inverse
+            # float_s32_div and s32_inverse
             b_hr = hr_s32(other_s32)
             scale = 2*30 - b_hr
             dividend = 1 << scale
-            t = float_s32([dividend / other_s32], -other_s32.exp)
+            t = float_s32([dividend / other_s32.mant, -scale - other_s32.exp])
 
             return self.__mul__(t)
 
@@ -186,21 +186,36 @@ class float_s32():
         else:
             raise TypeError("s32 can only be added to s32")
 
-    # def __sub__(self, other_s32):
-    #     if isinstance(other_s32, float_s32):
-    #         return float_s32(float(self) - float(other_s32))
-    #     else:
-    #         raise TypeError("s32 can only be subtracted from s32")
+    def __sub__(self, other_s32):
+        if isinstance(other_s32, float_s32):
+            # from flaot_s32_sub
+            x_hr = hr_s32(self)
+            y_hr = hr_s32(other_s32)
+            x_min_exp = self.exp - x_hr
+            y_min_exp = other_s32.exp - y_hr
+
+            res_exp = max(x_min_exp, y_min_exp) + 1
+
+            x_shr = res_exp - self.exp
+            y_shr = res_exp - other_s32.exp
+
+            mant = ashr32(self.mant, x_shr) - ashr32(other_s32.mant, y_shr)
+
+            return float_s32([mant, res_exp])
+        else:
+            raise TypeError("s32 can only be subtracted from s32")
 
     def __gt__(self, other_s32):
         if isinstance(other_s32, float_s32):
-            return float(self) > float(other_s32)
+            delta = self.__sub__(other_s32)
+            return delta.mant > 0
         else:
             raise TypeError("s32 can only be compared against s32")
 
     def __lt__(self, other_s32):
         if isinstance(other_s32, float_s32):
-            return (float(self) < float(other_s32))
+            delta = self.__sub__(other_s32)
+            return delta.mant < 0
         else:
             raise TypeError("s32 can only be compared against s32")
 
