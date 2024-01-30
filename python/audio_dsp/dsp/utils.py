@@ -209,7 +209,7 @@ class float_s32():
 
 def hr_s32(x: float_s32):
     # calculate number of leading zeros on the mantissa
-    return 31 - x.mant.bit_length() - 1
+    return 31 - x.mant.bit_length()
 
 
 def ashr32(x, shr):
