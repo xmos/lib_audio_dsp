@@ -120,6 +120,52 @@ def test_gain_filters(gain, fs):
     filter = bq.biquad_gain(fs, gain)
     chirp_filter_test(filter, fs)
 
+@pytest.mark.parametrize("fs", [48000])
+@pytest.mark.parametrize("filter_n", np.arange(9))
+@pytest.mark.parametrize("n_chans", [1, 2, 4])
+def test_frames(filter_n, fs, n_chans):
+    filter_spec = [['lowpass', fs*0.4, 0.707],
+                   ['highpass', fs*0.001, 1],
+                   ['peaking', fs*1000/48000, 5, 10],
+                   ['constant_q', fs*500/48000, 1, -10],
+                   ['notch', fs*2000/48000, 1],
+                   ['lowshelf', fs*200/48000, 1, 3],
+                   ['highshelf', fs*5000/48000, 1, -2],
+                   ['bypass'],
+                   ['gain', -2]]
+
+    filter_spec = filter_spec[filter_n]
+
+    class_name = f"biquad_{filter_spec[0]}"
+    class_handle = getattr(bq, class_name)
+    filter = class_handle(fs, n_chans, *filter_spec[1:])
+
+    length = 0.05
+    signal = gen.log_chirp(fs, length, 0.5)
+    signal = np.tile(signal, [n_chans, 1])
+
+    signal_frames = utils.frame_signal(signal, 1, 1)
+
+    output_int = np.zeros_like(signal)
+    output_flt = np.zeros_like(signal)
+    output_vpu = np.zeros_like(signal)
+    frame_size = 1
+    for n in np.arange(signal_frames.shape[0]):
+        output_int[:, n:n+frame_size] = filter.process_frame_int(signal_frames[n])
+    assert np.all(output_int[0, :] == output_int)
+    filter.reset_state()
+
+    for n in np.arange(len(signal)):
+        output_flt[:, n:n+frame_size] = filter.process_frame(signal_frames[n])
+    assert np.all(output_flt[0, :] == output_flt)
+    filter.reset_state()
+
+    for n in np.arange(len(signal)):
+        output_vpu[:, n:n+frame_size] = filter.process_frame_vpu(signal_frames[n])
+    assert np.all(output_vpu[0, :] == output_vpu)
+
+
+
 
 # TODO check biquad actually filters
 # TODO check parameter generation

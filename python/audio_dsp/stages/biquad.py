@@ -38,6 +38,16 @@ class Biquad(Stage):
         Returns:
             list of numpy arrays.
         """
+        # TODO check what i/o we actually want
+        in_frame = np.stack(in_channels)
+        # use float implementation as it is faster
+        out_frame = self.filt.process_frame(in_frame)
+        return out_frame
+
+    def get_frequency_response(self, nfft=512):
+        f, h = self.filt.freq_response(nfft)
+
+        return f, h
 
     def get_fixed_point_coeffs(self):
         a = np.array(self.filt.coeffs)

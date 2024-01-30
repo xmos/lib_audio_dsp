@@ -248,6 +248,8 @@ class Stage(Node):
         """
         raise NotImplementedError()
 
+    def get_frequency_response(self, nfft=512):
+        raise NotImplementedError()
 
     def add_to_dot(self, dot):
         """
