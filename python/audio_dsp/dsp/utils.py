@@ -268,3 +268,12 @@ def float_s32_ema(x: float_s32, y: float_s32, alpha: int):
     output = (x*t) + (y*s)
 
     return output
+
+def float_s32_to_fixed(val : float_s32, out_exp : int):
+    shr = out_exp - val.exp
+    return ashr32(val.mant, shr)
+
+def float_s32_use_exp(val : float_s32, out_exp : int):
+    val.mant = float_s32_to_fixed(val, out_exp)
+    val.exp = out_exp
+    return val

@@ -41,7 +41,7 @@ def get_c_wav(dir_name, lim_name, sim = True):
   app = "xsim" if sim else "xrun --io"
   run_cmd = app + " " + str(bin_dir / lim_name) + "_test.xe"
   stdout = subprocess.check_output(run_cmd, cwd = dir_name, shell = True)
-  #print("run msg:\n", stdout)
+  print("run msg:\n", stdout)
 
   sig_bin = dir_name / "sig_out.bin"
   assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
@@ -82,7 +82,7 @@ def single_test(lim, lim_name, tname, sig_fl):
   out_c = get_c_wav(test_dir, lim_name)
   shutil.rmtree(test_dir)
 
-  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=1e-8)
+  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
 @pytest.fixture(scope="module")
 def in_signal():
@@ -107,5 +107,5 @@ if __name__ == "__main__":
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
 
-  test_limiter_c(sig_fl, "limiter_rms", 0.01, 0.07, -20)
-  test_limiter_c(sig_fl, "limiter_peak", 0.01, 0.07, -20)
+  test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -20)
+  #test_limiter_c(sig_fl, "limiter_peak", 0.01, 0.07, -20)
