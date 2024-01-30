@@ -186,6 +186,9 @@ class limiter_base(dspg.dsp_block):
         # apply gain
         y = self.gain_s32*sample
 
+        # quantize before return
+        y = utils.float_s32_use_exp(y, -27)
+
         return float(y), float(new_gain), float(envelope)
 
 

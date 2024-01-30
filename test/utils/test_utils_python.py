@@ -56,7 +56,7 @@ def test_float_s32_div(x, y):
     xy_s32 = x_s32/y_s32
     xy = float(xy_s32)
 
-    tol = 2**-31*2**xy_s32.exp
+    tol = 2**xy_s32.exp
     assert np.isclose(x/y, xy, rtol=2**-29, atol=tol)
 
 
@@ -68,20 +68,20 @@ def test_float_s32_add(x, y):
     xy_s32 = x_s32 + y_s32
     xy = float(xy_s32)
 
-    tol = 2**(max(x_s32.exp, y_s32.exp) + 3)
+    tol = 2**(max(x_s32.exp, y_s32.exp) + 2)
     assert np.isclose(x + y, xy, rtol=2**-29, atol=tol)
 
 
-# @pytest.mark.parametrize("x, y", (2*np.random.rand(100, 2)-1)*2**30)
-# def test_float_s32_subt(x, y):
-#     x_s32 = utils.float_s32(float(x))
-#     y_s32 = utils.float_s32(float(y))
+@pytest.mark.parametrize("x, y", (2*np.random.rand(100, 2)-1)*2**30)
+def test_float_s32_subt(x, y):
+    x_s32 = utils.float_s32(float(x))
+    y_s32 = utils.float_s32(float(y))
 
-#     xy_s32 = x_s32-y_s32
-#     xy = float(xy_s32)
+    xy_s32 = x_s32-y_s32
+    xy = float(xy_s32)
 
-#     tol = max(2**x_s32.exp, 2**y_s32.exp)
-#     assert np.isclose(x-y, xy, rtol=2**-29, atol=tol)
+    tol = 2**(max(x_s32.exp, y_s32.exp) + 1)
+    assert np.isclose(x-y, xy, rtol=2**-29, atol=tol)
 
 
 @pytest.mark.parametrize("x, y", (2*np.random.rand(100, 2)-1)*2**30)
