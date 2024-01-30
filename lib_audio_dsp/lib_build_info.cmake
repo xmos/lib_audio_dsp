@@ -15,7 +15,7 @@ set(LIB_C_SRCS "")
 # will not be added to the build, a message is printed, and any build which
 # uses the stages api will fail at compile time.
 set(STAGES_INCLUDED OFF)
-find_program(PYTHON_EXE python)
+find_program(PYTHON_EXE python NO_CACHE)
 if(PYTHON_EXE)
     execute_process(COMMAND ${PYTHON_EXE} -c "import audio_dsp"
                     OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE AUDIO_DSP_NOT_INSTALLED)
