@@ -109,7 +109,7 @@ def test_linkwitz_filters(f0, fp_ratio, q0, qp, fs):
     if fs > 100000 and f0 < 50 and fp_ratio < 1:
         f0 = 30
 
-    filter = bq.biquad_linkwitz(fs, f0, q0, f0*fp_ratio, qp)
+    filter = bq.biquad_linkwitz(fs, 1, f0, q0, f0*fp_ratio, qp)
     chirp_filter_test(filter, fs)
 
 
@@ -117,7 +117,7 @@ def test_linkwitz_filters(f0, fp_ratio, q0, qp, fs):
 @pytest.mark.parametrize("fs", [16000, 44100, 48000, 88200, 96000, 192000])
 def test_gain_filters(gain, fs):
 
-    filter = bq.biquad_gain(fs, gain)
+    filter = bq.biquad_gain(fs, 1, gain)
     chirp_filter_test(filter, fs)
 
 @pytest.mark.parametrize("fs", [48000])
