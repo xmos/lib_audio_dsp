@@ -82,7 +82,7 @@ def single_test(lim, lim_name, tname, sig_fl):
   out_c = get_c_wav(test_dir, lim_name)
   shutil.rmtree(test_dir)
 
-  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=1e-7)
+  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=1e-9)
 
 @pytest.fixture(scope="module")
 def in_signal():

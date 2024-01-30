@@ -156,7 +156,14 @@ class float_s32():
 
     def __truediv__(self, other_s32):
         if isinstance(other_s32, float_s32):
-            return float_s32(float(self) / float(other_s32))
+            # float_s32_div and  s32_inverse
+            b_hr = hr_s32(other_s32)
+            scale = 2*30 - b_hr
+            dividend = 1 << scale
+            t = float_s32([dividend / other_s32], -other_s32.exp)
+
+            return self.__mul__(t)
+
         else:
             raise TypeError("s32 can only be divided by s32")
 
