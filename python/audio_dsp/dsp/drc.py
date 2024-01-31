@@ -134,14 +134,13 @@ class limiter_base(dspg.dsp_block):
         self.gain_s32 = [utils.float_s32([2**30, -30])] * n_chans
 
     def reset_state(self):
-        for n in range(self.n_chans):
-            self.env_detector[n].reset_state()
+        self.env_detector.reset_state()
         self.gain = [1] * self.n_chans
         self.gain_s32 = [utils.float_s32([2**30, -30])] * self.n_chans
 
     def process(self, sample, channel=0):
         # get envelope from envelope detector
-        envelope = self.env_detector[channel].process(sample)
+        envelope = self.env_detector.process(sample, channel)
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
@@ -166,7 +165,7 @@ class limiter_base(dspg.dsp_block):
         sample = utils.float_s32(sample, self.Q_sig)
 
         # get envelope from envelope detector
-        envelope = self.env_detector[channel].process_int(sample)
+        envelope = self.env_detector.process_int(sample, channel)
         # avoid /0
         if envelope.mant == 0:
             envelope.mant = 1
@@ -201,9 +200,10 @@ class limiter_peak(limiter_base):
 
         self.threshold = utils.db2gain(threshold_db)
         self.threshold_s32 = utils.float_s32(self.threshold, self.Q_sig)
-        self.env_detector = [envelope_detector_peak(fs, attack_t=attack_t,
-                                                    release_t=release_t,
-                                                    Q_sig=self.Q_sig)] * n_chans
+        self.env_detector = envelope_detector_peak(fs, n_chans=n_chans,
+                                                   attack_t=attack_t,
+                                                   release_t=release_t,
+                                                   Q_sig=self.Q_sig)
 
 
 class limiter_rms(limiter_base):
@@ -214,16 +214,17 @@ class limiter_rms(limiter_base):
         # note rms comes as x**2, so use db_pow
         self.threshold = utils.db_pow2gain(threshold_db)
         self.threshold_s32 = utils.float_s32(self.threshold, self.Q_sig)
-        self.env_detector = [envelope_detector_rms(fs, attack_t=attack_t,
-                                                   release_t=release_t,
-                                                   Q_sig=self.Q_sig)] * n_chans
+        self.env_detector = envelope_detector_rms(fs, n_chans=n_chans,
+                                                  attack_t=attack_t,
+                                                  release_t=release_t,
+                                                  Q_sig=self.Q_sig)
 
 
 class hard_limiter_peak(limiter_peak):
 
-    def process(self, sample):
+    def process(self, sample, channel=0):
         # do peak limiting
-        y = super().process(sample)
+        y = super().process(sample, channel)
 
         # hard clip if above threshold
         if y > self.threshold:
