@@ -26,8 +26,15 @@ int main(int argc, char* argv[])
     // an application since the config yaml files might specified size in terms of #defines (for eg. FILTERS * NUM_COEFFS_PER_BIQUAD)
 %for name, data in cmd_map.items():
     %for field_name, field_data in data.items():
-<% field_data["size"] = field_data["size"] if "size" in field_data else 1 %>\
-    fprintf(fp, "#define NUM_VALUES_${name.upper()}_${field_name.upper()} %u\n", ${field_data["size"]});
+<%
+    if "size" in field_data:
+        size = field_data["size"]
+    elif field_data["type"] == "float_s32_t":
+        size = 2
+    else:
+        size = 1
+%>\
+    fprintf(fp, "#define NUM_VALUES_${name.upper()}_${field_name.upper()} %u\n", ${size});
     fprintf(fp, "\n");
     %endfor
 %endfor

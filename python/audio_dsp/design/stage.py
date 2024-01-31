@@ -192,7 +192,7 @@ class Stage(Node):
         self.n_out = n_out
         self._o = []
         for i in range(n_out):
-            output = StageOutput()
+            output = StageOutput(fs=self.fs, frame_size=self.frame_size)
             output.source_index = i
             output.set_source(self)
             self._o.append(output)
