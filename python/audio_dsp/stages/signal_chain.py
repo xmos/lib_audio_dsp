@@ -12,36 +12,6 @@ class Bypass(Stage):
         self.create_outputs(self.n_in)
 
 
-class Sum(Stage):
-    """
-    Adds channels together. 
-
-    Below are two examples, "a" and "b" represent stages which have the same
-    number of output channels, lets say 2. The first examples sums the stereo
-    inputs to make a stereo output. The second sums all four channels to make
-    a mono output.
-
-        t.stage(Sum, [a.o, b.o])
-        t.stage(Sum, [*a.o, *b.o])
-
-    The decision is based on whether inputs is a list of StageOutputs, or a list
-    containing lists of StageOutputs.
-    """
-    def __init__(self, inputs, **kwargs):
-        if not isinstance(inputs[0], StageOutput):
-            flat_inputs = list(chain.from_iterable(zip(*inputs)))
-            n_out = len(inputs[0])
-            # check all inputs have the same length
-            lengths = [len(i) for i in inputs]
-            for la, lb in zip(lengths[1:], lengths[:-1]):
-                if la != lb:
-                    raise ValueError(f"All inputs to sum must be the same length, got {', '.join(str(i) for i in lengths)}")
-        else:
-            flat_inputs = inputs
-            n_out = 1
-        super().__init__(inputs = flat_inputs, config=find_config("sum"), **kwargs)
-        self.create_outputs(n_out)
-
 class Fork(Stage):
     """
     Fork the signal, use if the same data needs to go down parallel 
