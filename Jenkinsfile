@@ -51,8 +51,8 @@ pipeline {
               createVenv("requirements.txt")
               // build everything
               withVenv {
-                sh "pip install -r requirements.txt"
                 withTools(params.TOOLS_VERSION) {
+                  sh "pip install -r requirements.txt"
                   withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
                     script {
                       [
