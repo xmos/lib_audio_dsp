@@ -14,7 +14,7 @@ set(APP_COMPILER_FLAGS
     -fxscope
     -DTEST_WAV_XSCOPE=1)
 
-set(APP_DEPENDENT_MODULES lib_audio_dsp xscope_fileio)
+set(APP_DEPENDENT_MODULES lib_audio_dsp "xscope_fileio(develop)")
 
 set(APP_INCLUDES src src/file_utils build/dsp_pipeline/)
 

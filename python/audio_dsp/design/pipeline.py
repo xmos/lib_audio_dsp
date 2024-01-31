@@ -521,7 +521,7 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
 
     resolved_pipe = pipeline.resolve_pipeline()
 
-    _generate_dsp_header(resolved_pipe)
+    _generate_dsp_header(resolved_pipe, out_dir)
     threads = resolved_pipe["threads"]
 
     n_threads = len(threads)
