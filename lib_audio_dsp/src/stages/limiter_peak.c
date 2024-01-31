@@ -42,14 +42,6 @@ void limiter_peak_process(int32_t **input, int32_t **output, void *app_data_stat
     } while(++i < state->n_outputs);
 }
 
-// TODO multiple copies
-static inline int32_t float_to_fixed(float x, exponent_t output_exp){
-  float_s32_t v = f32_to_float_s32(x);
-  right_shift_t shr = output_exp - v.exp;
-  if(shr >= 0) return (v.mant >> ( shr) );
-  else         return (v.mant << (-shr) );
-}
-
 module_instance_t* limiter_peak_init(uint8_t id, int n_inputs, int n_outputs, int frame_size, void* module_config)
 {
     module_instance_t *module_instance = malloc(sizeof(module_instance_t));
