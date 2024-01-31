@@ -173,7 +173,6 @@ class Stage(Node):
 
     @property
     def o(self):
-        """stage output channels"""
         if self._o is None:
             raise RuntimeError("Stage must add outputs with create_outputs in its __init__ method")
         return self._o

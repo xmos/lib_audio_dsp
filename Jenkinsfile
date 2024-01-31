@@ -94,6 +94,21 @@ pipeline {
           }
         } // Test
 
+        stage ('Docs') {
+          steps {
+            sh 'git clone git@github.com:xmos/xmosdoc'
+
+            withVenv {
+              withTools(params.TOOLS_VERSION) {
+                sh 'pip install -e xmosdoc'
+                dir('lib_audio_dsp') {
+                  sh 'xmosdoc -dvvv'
+                }
+              }
+            }
+          }
+        }
+
       } // stages
       post {
         cleanup {
