@@ -16,7 +16,7 @@ def test_limiter_peak_attack(fs, at, threshold):
     x[:] = utils.db2gain(threshold + 6)
     t = np.arange(len(x))/fs
 
-    lt = drc.limiter_peak(fs, threshold, at, 0.3)
+    lt = drc.limiter_peak(fs, 1, threshold, at, 0.3)
 
     y = np.zeros_like(x)
     f = np.zeros_like(x)
@@ -48,7 +48,7 @@ def test_limiter_peak_release(fs, rt, threshold):
     x[fs//2:] = utils.db2gain(threshold - 3)
     t = np.arange(len(x))/fs
 
-    lt = drc.limiter_peak(fs, threshold, 0.01, rt)
+    lt = drc.limiter_peak(fs, 1, threshold, 0.01, rt)
 
     y = np.zeros_like(x)
     f = np.zeros_like(x)
@@ -86,9 +86,9 @@ def test_drc_component(fs, component, at, rt, threshold):
     component_handle = getattr(drc, component)
 
     if threshold is not None:
-        drcut = component_handle(fs, threshold, at, rt)
+        drcut = component_handle(fs, 1, threshold, at, rt)
     else:
-        drcut = component_handle(fs, at, rt)
+        drcut = component_handle(fs, 1, at, rt)
 
     signal = gen.log_chirp(fs, int(0.1+(rt+at)*2), 1)
     len_sig = len(signal)
