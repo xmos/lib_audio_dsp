@@ -41,7 +41,7 @@ def get_c_wav(dir_name, lim_name, sim = True):
   app = "xsim" if sim else "xrun --io"
   run_cmd = app + " " + str(bin_dir / lim_name) + "_test.xe"
   stdout = subprocess.check_output(run_cmd, cwd = dir_name, shell = True)
-  #print("run msg:\n", stdout)
+  print("run msg:\n", stdout)
 
   sig_bin = dir_name / "sig_out.bin"
   assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
@@ -70,24 +70,19 @@ def run_py(filt, sig_fl):
   return out_fl, out_int
 
 
-def write_lim_info(tname, th, at, rt):
+def single_test(lim, lim_name, tname, sig_fl):
   test_dir = bin_dir / tname
   test_dir.mkdir(exist_ok = True, parents = True)
 
-  lim_info = [th, at, rt]
-  lim_info = np.array(lim_info, dtype = np.float32)
+  lim_info = [lim.threshold_s32.mant, lim.threshold_s32.exp, lim.attack_alpha_uq30, lim.release_alpha_uq30]
+  lim_info = np.array(lim_info, dtype = np.int32)
   lim_info.tofile(test_dir / "lim_info.bin")
 
-
-def single_test(filt, lim_name, tname, sig_fl):
-  test_dir = bin_dir / tname
-  test_dir.mkdir(exist_ok = True, parents = True)
-
-  out_py_fl, out_py_int = run_py(filt, sig_fl)
+  out_py_fl, out_py_int = run_py(lim, sig_fl)
   out_c = get_c_wav(test_dir, lim_name)
   shutil.rmtree(test_dir)
 
-  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=2e-6)
+  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
 @pytest.fixture(scope="module")
 def in_signal():
@@ -104,7 +99,7 @@ def test_limiter_c(in_signal, lim_name, at, rt, threshold):
   lim_handle = getattr(drc, lim_name)
   lim = lim_handle(fs, threshold, at, rt)
   test_name = f"{lim_name}_{threshold}_{at}_{rt}"
-  write_lim_info(test_name, threshold, at, rt)
+
   single_test(lim, lim_name, test_name, in_signal)
 
 if __name__ == "__main__":
@@ -112,5 +107,5 @@ if __name__ == "__main__":
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
 
-  test_limiter_c(sig_fl, "limiter_rms", 0.01, 0.07, -20)
-  test_limiter_c(sig_fl, "limiter_peak", 0.01, 0.07, -20)
+  test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -20)
+  #test_limiter_c(sig_fl, "limiter_peak", 0.01, 0.07, -20)
