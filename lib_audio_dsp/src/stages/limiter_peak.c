@@ -64,20 +64,10 @@ module_instance_t* limiter_peak_init(uint8_t id, int n_inputs, int n_outputs, in
 
     state->lim.gain = (float_s32_t){0x40000000, -30};
 
-    if(module_config != NULL)
-    {
-        limiter_peak_config_t *init_config = module_config;
-        limiter_copy_config_to_state(&state->lim, init_config);
-    }
-    else
-    {
-        state->lim.threshold = f32_to_float_s32(powf(10, 0.0 / 20));
+    xassert(module_config != NULL);
 
-        float fs = 48000;
-        fs = 2 / fs;
-        state->lim.env_det.attack_alpha = float_to_fixed(fs / 0.01, -30);
-        state->lim.env_det.release_alpha = float_to_fixed(fs / 0.2, -30);
-    }
+    limiter_peak_config_t *init_config = module_config;
+    limiter_copy_config_to_state(&state->lim, init_config);
 
     limiter_copy_state_to_config(config, &state->lim);
 
