@@ -35,7 +35,7 @@ class envelope_detector_peak(dspg.dsp_block):
         sample_mag = abs(sample)
 
         # see if we're attacking or decaying
-        if sample_mag > self.envelope:
+        if sample_mag > self.envelope[channel]:
             alpha = self.attack_alpha
         else:
             alpha = self.release_alpha
@@ -191,6 +191,30 @@ class limiter_base(dspg.dsp_block):
         y = utils.float_s32_use_exp(y, -27)
 
         return float(y), float(new_gain), float(envelope)
+
+    def process_frame(self, frame):
+        # same as generic, but only take 1st output
+        n_outputs = frame.shape[0]
+        frame_size = frame.shape[1]
+        output = np.zeros_like(frame)
+        for chan in range(n_outputs):
+            for sample in range(frame_size):
+                output[chan, sample] = self.process(frame[chan, sample],
+                                                    channel=chan)[0]
+
+        return output
+
+    def process_frame_int(self, frame):
+        # same as generic, but only take 1st output
+        n_outputs = frame.shape[0]
+        frame_size = frame.shape[1]
+        output = np.zeros_like(frame)
+        for chan in range(n_outputs):
+            for sample in range(frame_size):
+                output[chan, sample] = self.process_int(frame[chan, sample],
+                                                        channel=chan)[0]
+
+        return output
 
 
 class limiter_peak(limiter_base):
