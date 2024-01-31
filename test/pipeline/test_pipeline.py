@@ -14,15 +14,16 @@ import run_pipeline_xcoreai
 import audio_helpers
 
 # Test config
-num_in_channels = 2
-num_out_channels = 2
-infile = "test_input.wav"
-outfile = "test_output.wav"
-input_dtype = np.int32
-compare = True
 PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
+num_in_channels = 2
+num_out_channels = 2
+input_dtype = np.int32
+infile = "test_input.wav"
+outfile = "test_output.wav"
+compare = True
+
 
 def create_pipeline():
     # Create pipeline
@@ -49,13 +50,14 @@ def test_pipeline():
     audio_helpers.generate_test_signal(infile, type="sine", fs=48000, duration=10, amplitude=0.8, num_channels=2, sig_dtype=input_dtype)
 
     # Run
-    # TODO Run from a tmp directory 
+    # TODO Run from a tmp directory
     xe = APP_DIR / f"bin/{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels)
 
     # Compare
     if compare:
-        all_close, delay = audio_helpers.correlate_and_diff(outfile, infile, [0,num_out_channels-1], [0,num_out_channels-1], 0, 0, 1e-8)
+        all_close, maxdiff, delay = audio_helpers.correlate_and_diff(outfile, infile, [0,num_out_channels-1], [0,num_out_channels-1], 0, 0, 1e-8)
+        assert maxdiff == 0, "Pipline input and output not bit-exact"
         assert all_close == True, "Pipline input and output not close enough"
 
 

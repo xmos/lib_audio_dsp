@@ -17,7 +17,7 @@ def generate_test_signal(wav_file_name, type="sine", fs=48000, duration=10, num_
         for i in range(num_channels):
             f_sig = f * (i+1) # Generate harmonics of 1KHz
             sig[:,i] = (amplitude * np.sin(2 * np.pi * f_sig * sample_space)).T
-        
+
         if (sig_dtype == np.int32) or (sig_dtype == np.int16):
             sig = np.array(sig * np.iinfo(sig_dtype).max, dtype=sig_dtype)
         scipy.io.wavfile.write(wav_file_name, fs, sig)
@@ -74,6 +74,7 @@ def correlate_and_diff(output_file, input_file, out_ch_start_end, in_ch_start_en
 
     num_channels = out_ch_start_end[1]-out_ch_start_end[0]+1
     all_close = True
+    max_diff = []
     for ch in range(num_channels):
         print(f"comparing ch {ch}")
         close = np.isclose(
@@ -96,12 +97,12 @@ def correlate_and_diff(output_file, input_file, out_ch_start_end, in_ch_start_en
                             count += 1
 
         diff = np.abs((data_in[skip_samples_start : data_size - delay, ch]) - (data_out[skip_samples_start + delay : data_size, ch]))
-        max_diff = np.amax(diff)
-        print(f"max diff value is {max_diff}")
+        max_diff.append(np.amax(diff))
+        print(f"max diff value is {max_diff[-1]}")
         all_close = all_close & np.all(close)
 
     print(f"all_close: {np.all(all_close)}")
-    return all_close, delay_orig
+    return all_close, max(max_diff), delay_orig
 
 
 

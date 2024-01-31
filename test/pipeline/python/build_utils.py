@@ -1,5 +1,5 @@
 """
-Utility functions for building and running the application within 
+Utility functions for building and running the application within
 the jupyter notebook
 """
 import subprocess
@@ -29,9 +29,9 @@ def build(source_dir, build_dir, target):
         if ret.returncode:
             print("Configuring failed, check log for details\r")
             return
-    
+
     print("Compiling...\r")
-    ret = subprocess.run(f"cmake --build {build_dir} --target {target}".split())
+    ret = subprocess.run(f"cmake --build {build_dir} --target {target} -j".split())
     if ret.returncode:
         print("ERROR: Building failed, check log for details\r")
         assert(0)
