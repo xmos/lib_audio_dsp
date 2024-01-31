@@ -7,11 +7,7 @@ from audio_dsp.design.pipeline import Pipeline
 from audio_dsp.stages.biquad import Biquad
 from audio_dsp.stages.cascaded_biquads import CascadedBiquads
 from audio_dsp.design.pipeline import generate_dsp_main
-import sys
-sys.path.append("python")
-import build_utils
-import run_pipeline_xcoreai
-import audio_helpers
+from python import build_utils, run_pipeline_xcoreai, audio_helpers
 
 # Test config
 PKG_DIR = Path(__file__).parent
@@ -20,9 +16,11 @@ BUILD_DIR = APP_DIR / "build"
 num_in_channels = 2
 num_out_channels = 2
 input_dtype = np.int32
+test_duration = 0.1 # in seconds
 infile = "test_input.wav"
 outfile = "test_output.wav"
 compare = True
+
 
 
 def create_pipeline():
@@ -47,7 +45,7 @@ def test_pipeline():
     build_utils.build(APP_DIR, BUILD_DIR, target)
 
     # Generate input
-    audio_helpers.generate_test_signal(infile, type="sine", fs=48000, duration=10, amplitude=0.8, num_channels=2, sig_dtype=input_dtype)
+    audio_helpers.generate_test_signal(infile, type="sine", fs=48000, duration=test_duration, amplitude=0.8, num_channels=2, sig_dtype=input_dtype)
 
     # Run
     # TODO Run from a tmp directory

@@ -11,8 +11,8 @@ from pathlib import Path
 def generate_test_signal(wav_file_name, type="sine", fs=48000, duration=10, num_channels=2, amplitude=0.8, sig_dtype=np.int32):
     if type == "sine":
         f = 1000
-        sig = np.empty((fs*duration, num_channels))
-        sample_space = np.linspace(0, duration, fs*duration)
+        sig = np.empty((int(fs*duration), num_channels))
+        sample_space = np.linspace(0, duration, int(fs*duration))
 
         for i in range(num_channels):
             f_sig = f * (i+1) # Generate harmonics of 1KHz
@@ -29,6 +29,13 @@ def generate_test_signal(wav_file_name, type="sine", fs=48000, duration=10, num_
 def correlate_and_diff(output_file, input_file, out_ch_start_end, in_ch_start_end, skip_seconds_start, skip_seconds_end, tol, corr_plot_file=None, verbose=False):
     rate_out, data_out = scipy.io.wavfile.read(output_file)
     rate_in, data_in = scipy.io.wavfile.read(input_file)
+
+    if data_out.ndim == 1:
+        data_out = data_out.reshape(len(data_out), 1)
+
+    if data_in.ndim == 1:
+        data_in = data_in.reshape(len(data_in), 1)
+
     if rate_out != rate_in:
         assert False, f"input and output file rates are not equal. input rate {rate_in}, output rate {rate_out}"
 
@@ -54,8 +61,9 @@ def correlate_and_diff(output_file, input_file, out_ch_start_end, in_ch_start_en
     data_in = data_in[:,in_ch_start_end[0]:in_ch_start_end[1]+1]
     data_out = data_out[:,out_ch_start_end[0]:out_ch_start_end[1]+1]
 
-    data_in_small = data_in[skip_samples_start:64000+skip_samples_start, :].astype(np.float64)
-    data_out_small = data_out[skip_samples_start:64000+skip_samples_start, :].astype(np.float64)
+    small_len = min(len(data_in), len(data_out), 64000)
+    data_in_small = data_in[skip_samples_start : small_len+skip_samples_start, :].astype(np.float64)
+    data_out_small = data_out[skip_samples_start : small_len+skip_samples_start, :].astype(np.float64)
 
     corr = scipy.signal.correlate(data_in_small[:, 0], data_out_small[:, 0], "full")
     delay = (corr.shape[0] // 2) - np.argmax(corr)

@@ -28,7 +28,7 @@ def build(source_dir, build_dir, target):
             ret = subprocess.run([*(f"cmake -S {source_dir} -B {build_dir} -G".split()), generator])
         if ret.returncode:
             print("Configuring failed, check log for details\r")
-            return
+            assert(0)
 
     print("Compiling...\r")
     ret = subprocess.run(f"cmake --build {build_dir} --target {target} -j".split())
