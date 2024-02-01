@@ -53,7 +53,7 @@ pipeline {
               }
 
             }
-            createVenv("requirements.txt")
+            createVenv("lib_audio_dsp/requirements.txt")
 
             dir("lib_audio_dsp") {
               // build everything
@@ -78,48 +78,52 @@ pipeline {
           }
         } // Build
 
-        parallel {
-          stage ('Test') {
-            steps {
-              dir("lib_audio_dsp") {
+        stage('test and docs') {
+          parallel {
+            stage ('Test') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      dir("test/biquad") {
+                        runPytest("--dist worksteal")
+                      }
+                      dir("test/cascaded_biquads") {
+                        runPytest("--dist worksteal")
+                      }
+                      dir("test/drc") {
+                        runPytest("--dist worksteal")
+                      }
+                      dir("test/utils") {
+                        runPytest("--dist worksteal")
+                      }
+                    }
+                  }
+                }
+              }
+            } // Test
+
+            stage ('Docs') {
+              steps {
                 withVenv {
                   withTools(params.TOOLS_VERSION) {
-                    dir("test/biquad") {
-                      runPytest("--dist worksteal")
-                    }
-                    dir("test/cascaded_biquads") {
-                      runPytest("--dist worksteal")
-                    }
-                    dir("test/drc") {
-                      runPytest("--dist worksteal")
-                    }
-                    dir("test/utils") {
-                      runPytest("--dist worksteal")
+                    dir('lib_audio_dsp') {
+                      sh "python doc/programming_guide/gen/autogen.py"
+                      sh """docker run -u "\$(id -u):\$(id -g)" \
+                            --rm \
+                            -v ${WORKSPACE}/lib_audio_dsp:/build \
+                            --entrypoint /build/doc/build_docs.sh \
+                            ghcr.io/xmos/xmosdoc:$XMOSDOC_VERSION -v"""
+                      archiveArtifacts artifacts: "doc/_out/pdf/*.pdf"
+                      archiveArtifacts artifacts: "doc/_out/html/**/*"
+                      archiveArtifacts artifacts: "doc/_out/linkcheck/**/*"
                     }
                   }
                 }
               }
-            }
-          } // Test
-
-          stage ('Docs') {
-            steps {
-              sh 'git clone git@github.com:xmos/xmosdoc'
-
-              withVenv {
-                withTools(params.TOOLS_VERSION) {
-                  dir('lib_audio_dsp') {
-                    sh 'python doc/programming_guide/gen/autogen.py'
-                    sh """docker run -u "\$(id -u):\$(id -g)" \
-                          --rm \
-                          -v ${WORKSPACE}/${REPO}:/build \
-                          ghcr.io/xmos/xmosdoc:$XMOSDOC_VERSION -v"""
-                  }
-                }
-              }
-            }
-          } // Docs
-        } // parallel
+            } // Docs
+          } // parallel
+        } // test and docs
 
       } // stages
       post {
