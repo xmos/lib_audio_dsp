@@ -124,17 +124,17 @@ def test_peq_frame(fs, n_filters, seed, n_chans):
     output_flt = np.zeros_like(signal)
     output_vpu = np.zeros_like(signal)
     frame_size = 1
-    for n in np.arange(signal_frames.shape[0]):
+    for n in range(len(signal_frames)):
         output_int[:, n:n+frame_size] = peq.process_frame_int(signal_frames[n])
     assert np.all(output_int[0, :] == output_int)
     peq.reset_state()
 
-    for n in np.arange(len(signal)):
+    for n in range(len(signal_frames)):
         output_flt[:, n:n+frame_size] = peq.process_frame(signal_frames[n])
     assert np.all(output_flt[0, :] == output_flt)
     peq.reset_state()
 
-    for n in np.arange(len(signal)):
+    for n in range(len(signal_frames)):
         output_vpu[:, n:n+frame_size] = peq.process_frame_vpu(signal_frames[n])
     assert np.all(output_vpu[0, :] == output_vpu)
 
@@ -171,17 +171,17 @@ def test_nth_order_frame(filter_type, fs, f, order, n_chans):
     output_flt = np.zeros_like(signal)
     output_vpu = np.zeros_like(signal)
     frame_size = 1
-    for n in np.arange(signal_frames.shape[0]):
+    for n in range(len(signal_frames)):
         output_int[:, n:n+frame_size] = filter.process_frame_int(signal_frames[n])
     assert np.all(output_int[0, :] == output_int)
     filter.reset_state()
 
-    for n in np.arange(len(signal)):
+    for n in range(len(signal_frames)):
         output_flt[:, n:n+frame_size] = filter.process_frame(signal_frames[n])
     assert np.all(output_flt[0, :] == output_flt)
     filter.reset_state()
 
-    for n in np.arange(len(signal)):
+    for n in range(len(signal_frames)):
         output_vpu[:, n:n+frame_size] = filter.process_frame_vpu(signal_frames[n])
     assert np.all(output_vpu[0, :] == output_vpu)
 

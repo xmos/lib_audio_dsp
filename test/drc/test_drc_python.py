@@ -158,16 +158,16 @@ def test_drc_component_frames(fs, component, at, rt, threshold, n_chans):
     output_flt = np.zeros_like(signal)
 
     if "envelope" in component:
-        for n in np.arange(signal_frames.shape[0]):
+        for n in range(len(signal_frames)):
             output_int[:, n:n+frame_size] = drcut.process_frame_int(signal_frames[n])
         drcut.reset_state()
-        for n in np.arange(signal_frames.shape[0]):
+        for n in range(len(signal_frames)):
             output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])
     else:        
-        for n in np.arange(signal_frames.shape[0]):
+        for n in range(len(signal_frames)):
             output_int[:, n:n+frame_size] = drcut.process_frame_int(signal_frames[n])
         drcut.reset_state()
-        for n in np.arange(signal_frames.shape[0]):
+        for n in range(len(signal_frames)):
             output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])
 
     assert np.all(output_int[0, :] == output_int)

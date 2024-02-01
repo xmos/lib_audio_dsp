@@ -273,18 +273,19 @@ def float_s32_to_fixed(val : float_s32, out_exp : int):
     shr = out_exp - val.exp
     return ashr32(val.mant, shr)
 
+
 def float_s32_use_exp(val : float_s32, out_exp : int):
     val.mant = float_s32_to_fixed(val, out_exp)
     val.exp = out_exp
     return val
 
+
 def frame_signal(signal, buffer_len, step_size):
-    n_chans = signal.shape[0]
     n_samples = signal.shape[1]
     n_frames = int(np.floor((n_samples - buffer_len)/step_size) + 1)
-    output = np.zeros((n_frames, n_chans, buffer_len))
+    output = []
 
     for n in range(n_frames):
-        output[n] = signal[:, n*step_size:n*step_size + buffer_len]
+        output.append(np.copy(signal[:, n*step_size:n*step_size + buffer_len]))
 
     return output
