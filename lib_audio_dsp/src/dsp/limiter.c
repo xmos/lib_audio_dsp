@@ -10,6 +10,15 @@ static inline int32_t float_s32_to_fixed(float_s32_t v, exponent_t output_exp){
   else         return (v.mant << (-shr ));
 }
 
+/*static inline int32_t dsp_math_multiply_sat( int32_t input1_value, int32_t input2_value, int32_t q_format )
+{
+  int32_t ah; uint32_t al;
+  asm("maccs %0,%1,%2,%3":"=r"(ah),"=r"(al):"r"(input1_value),"r"(input2_value),"0"(0),"1"(1<<(q_format-1)) );
+  //asm("lsats %0,%1,%2":"=r"(ah),"=r"(al):"r"(q_format),"0"(ah),"1"(al));
+  asm("lextract %0,%1,%2,%3,32":"=r"(ah):"r"(ah),"r"(al),"r"(q_format));
+  return ah;
+}*/
+
 limiter_t adsp_limiter_peak_init(
   float fs,
   float threshold_db,
@@ -42,8 +51,7 @@ int32_t adsp_limiter_peak(
 ) {
   adsp_env_detector_peak(&lim->env_det, new_samp);
   float_s32_t env = (lim->env_det.envelope.mant == 0) ? delta : lim->env_det.envelope;
-  float_s32_t new_gain = float_s32_div(lim->threshold, env);
-  new_gain = (float_s32_gt(new_gain, one)) ? one : new_gain;
+  float_s32_t new_gain = (float_s32_gt(lim->threshold, env)) ? one : float_s32_div(lim->threshold, env);
 
   uq2_30 alpha = lim->env_det.release_alpha;
   if (float_s32_gt(lim->gain, new_gain)) {
@@ -61,8 +69,7 @@ int32_t adsp_limiter_rms(
 ) {
   adsp_env_detector_rms(&lim->env_det, new_samp);
   float_s32_t env = (lim->env_det.envelope.mant == 0) ? delta : lim->env_det.envelope;
-  float_s32_t new_gain = float_s32_div(lim->threshold, env);
-  new_gain = (float_s32_gt(new_gain, one)) ? one : new_gain;
+  float_s32_t new_gain = (float_s32_gt(lim->threshold, env)) ? one : float_s32_div(lim->threshold, env);
 
   uq2_30 alpha = lim->env_det.release_alpha;
   if (float_s32_gt(lim->gain, new_gain)) {

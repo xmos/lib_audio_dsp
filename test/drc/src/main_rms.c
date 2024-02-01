@@ -31,6 +31,7 @@ int main()
   fread(&th.exp, sizeof(exponent_t), 1, lim_info);
   fread(&at_al, sizeof(uq2_30), 1, lim_info);
   fread(&re_al, sizeof(uq2_30), 1, lim_info);
+  fclose(lim_info);
 
   limiter_t lim = (limiter_t){
                   (env_detector_t){at_al, re_al, (float_s32_t){0, SIG_EXP}},
@@ -48,6 +49,9 @@ int main()
     //printf("%ld ", samp_out);
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }
+
+  fclose(in);
+  fclose(out);
 
   return 0;
 }
