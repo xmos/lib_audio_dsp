@@ -17,6 +17,10 @@ pipeline {
     )
   } // parameters
 
+  environment {
+    XMOSDOC_VERSION = "v5.1.0"
+  } // environment
+
   options {
     skipDefaultCheckout()
     timestamps()
@@ -48,7 +52,10 @@ pipeline {
                 }
               }
 
-              createVenv("requirements.txt")
+            }
+            createVenv("requirements.txt")
+
+            dir("lib_audio_dsp") {
               // build everything
               withVenv {
                 sh "pip install -r requirements.txt"
@@ -101,9 +108,12 @@ pipeline {
 
               withVenv {
                 withTools(params.TOOLS_VERSION) {
-                  sh 'pip install -e xmosdoc'
                   dir('lib_audio_dsp') {
-                    sh 'xmosdoc -dvvv'
+                    sh 'python doc/programming_guide/gen/autogen.py'
+                    sh """docker run -u "\$(id -u):\$(id -g)" \
+                          --rm \
+                          -v ${WORKSPACE}/${REPO}:/build \
+                          ghcr.io/xmos/xmosdoc:$XMOSDOC_VERSION -v"""
                   }
                 }
               }
