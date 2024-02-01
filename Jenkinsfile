@@ -71,43 +71,45 @@ pipeline {
           }
         } // Build
 
-        stage ('Test') {
-          steps {
-            dir("lib_audio_dsp") {
+        parallel {
+          stage ('Test') {
+            steps {
+              dir("lib_audio_dsp") {
+                withVenv {
+                  withTools(params.TOOLS_VERSION) {
+                    dir("test/biquad") {
+                      runPytest("--dist worksteal")
+                    }
+                    dir("test/cascaded_biquads") {
+                      runPytest("--dist worksteal")
+                    }
+                    dir("test/drc") {
+                      runPytest("--dist worksteal")
+                    }
+                    dir("test/utils") {
+                      runPytest("--dist worksteal")
+                    }
+                  }
+                }
+              }
+            }
+          } // Test
+
+          stage ('Docs') {
+            steps {
+              sh 'git clone git@github.com:xmos/xmosdoc'
+
               withVenv {
                 withTools(params.TOOLS_VERSION) {
-                  dir("test/biquad") {
-                    runPytest("--dist worksteal")
-                  }
-                  dir("test/cascaded_biquads") {
-                    runPytest("--dist worksteal")
-                  }
-                  dir("test/drc") {
-                    runPytest("--dist worksteal")
-                  }
-                  dir("test/utils") {
-                    runPytest("--dist worksteal")
+                  sh 'pip install -e xmosdoc'
+                  dir('lib_audio_dsp') {
+                    sh 'xmosdoc -dvvv'
                   }
                 }
               }
             }
-          }
-        } // Test
-
-        stage ('Docs') {
-          steps {
-            sh 'git clone git@github.com:xmos/xmosdoc'
-
-            withVenv {
-              withTools(params.TOOLS_VERSION) {
-                sh 'pip install -e xmosdoc'
-                dir('lib_audio_dsp') {
-                  sh 'xmosdoc -dvvv'
-                }
-              }
-            }
-          }
-        }
+          } // Docs
+        } // parallel
 
       } // stages
       post {
