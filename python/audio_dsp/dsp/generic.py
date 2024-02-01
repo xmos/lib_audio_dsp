@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import numpy as np
 from audio_dsp.dsp import utils as utils
 
@@ -30,7 +32,7 @@ class dsp_block():
         # simple multichannel, assumes no channel unique states!
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
-        output = frame.copy()
+        output = deepcopy(frame)
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):
@@ -43,7 +45,7 @@ class dsp_block():
         # simple multichannel, but integer. Assumes no channel unique states!
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
-        output = frame.copy()
+        output = deepcopy(frame)
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):

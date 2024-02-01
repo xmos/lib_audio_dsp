@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -196,7 +198,7 @@ class limiter_base(dspg.dsp_block):
         # same as generic, but only take 1st output
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
-        output = frame.copy()
+        output = deepcopy(frame)
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):
@@ -209,7 +211,7 @@ class limiter_base(dspg.dsp_block):
         # same as generic, but only take 1st output
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
-        output = frame.copy()
+        output = deepcopy(frame)
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):

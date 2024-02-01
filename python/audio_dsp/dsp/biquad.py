@@ -1,4 +1,5 @@
 import warnings
+from copy import deepcopy
 
 import numpy as np
 import scipy.signal as spsig
@@ -105,7 +106,7 @@ class biquad(dspg.dsp_block):
         # simple multichannel, but integer. Assumes no channel unique states!
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
-        output = frame.copy()
+        output = deepcopy(frame)
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):
