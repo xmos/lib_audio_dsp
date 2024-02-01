@@ -1,5 +1,6 @@
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
+from ..dsp import generic as dspg
 import numpy as np
 
 
@@ -30,3 +31,8 @@ class LimiterPeak(Stage):
         Returns:
             list of numpy arrays.
         """
+        
+    def make_limiter_peak(self, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+        self.details = dict(threshold_db=threshold_db, attack_t=attack_t, release_t=release_t, delay=delay, Q_sig=Q_sig)
+        self.lt = drc.limiter_peak(self.fs, threshold_db, attack_t, release_t, delay, Q_sig)
+        return self
