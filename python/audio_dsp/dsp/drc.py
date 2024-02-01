@@ -37,10 +37,10 @@ class envelope_detector_peak(dspg.dsp_block):
         point processing.
     envelope : float
         Current envelope value for floating point processing.
-    attack_alpha_s32 : float_s32
-        attack_alpha in float_s32 format.
-    release_alpha_s32 : float_s32
-        release_alpha in float_s32 format.
+    attack_alpha_uq30 : int
+        attack_alpha in unsigned Q2.30 format.
+    release_alpha_uq30 : int
+        release_alpha in unsigned Q2.30 format.
     envelope_s32 : float_s32
         current envelope value in float_s32 format.
 
@@ -66,9 +66,9 @@ class envelope_detector_peak(dspg.dsp_block):
 
         # very long times might quantize to zero, maybe just limit a better way
         assert self.attack_alpha > 0
-        assert self.release_alpha > 0        
+        assert self.release_alpha > 0
 
-		self.attack_alpha_uq30 = utils.uq_2_30(round(self.attack_alpha * 2**30))
+        self.attack_alpha_uq30 = utils.uq_2_30(round(self.attack_alpha * 2**30))
         self.release_alpha_uq30 = utils.uq_2_30(round(self.release_alpha * 2**30))
         self.envelope_s32 = utils.float_s32([0, -self.Q_sig])
 
@@ -173,10 +173,10 @@ class envelope_detector_rms(envelope_detector_peak):
         point processing.
     envelope : float
         Current mean squared envelope value for floating point processing.
-    attack_alpha_s32 : float_s32
-        attack_alpha in float_s32 format.
-    release_alpha_s32 : float_s32
-        release_alpha in float_s32 format.
+    attack_alpha_uq30 : int
+        attack_alpha in unsigned Q2.30 format.
+    release_alpha_uq30 : int
+        release_alpha in unsigned Q2.30 format.
     envelope_s32 : float_s32
         current mean squared envelope value in float_s32 format.
 
