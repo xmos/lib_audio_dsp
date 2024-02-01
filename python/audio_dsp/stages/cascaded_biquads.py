@@ -39,6 +39,7 @@ class CascadedBiquads(Stage):
         Returns:
             list of numpy arrays.
         """
+        return self.filt.process_frame(in_channels)
 
     def get_fixed_point_coeffs(self):
         fc = []

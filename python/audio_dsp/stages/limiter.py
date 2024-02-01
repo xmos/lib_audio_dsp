@@ -31,6 +31,7 @@ class LimiterPeak(Stage):
         Returns:
             list of numpy arrays.
         """
+        return self.lt.process_frame(in_channels)
         
     def make_limiter_peak(self, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         self.details = dict(threshold_db=threshold_db, attack_t=attack_t, release_t=release_t, delay=delay, Q_sig=Q_sig)
