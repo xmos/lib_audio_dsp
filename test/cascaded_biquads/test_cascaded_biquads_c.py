@@ -111,7 +111,7 @@ def test_peq_c(in_signal, n_filters, seed):
                    ['bypass'],
                    ['gain', -2]]
   random.Random(seed**n_filters*int(fs/1000)).shuffle(filter_spec)
-  peq = casc_bq.parametric_eq_8band(fs, filter_spec)
+  peq = casc_bq.parametric_eq_8band(fs, 1, filter_spec)
 
   filter_name = f"peq_{n_filters}_{seed}"
   single_test(peq, filter_name, in_signal)
@@ -125,7 +125,7 @@ def test_nth_butterworth_c(in_signal, filter_type, N, f):
   f = np.min([f, fs / 2 * 0.95])
   filter_handle = getattr(casc_bq, f"butterworth_{filter_type}")
 
-  filt = filter_handle(fs, N, f)
+  filt = filter_handle(fs, 1, N, f)
   filter_name = f"butterworth_{filter_type}_{N}_{f}"
   single_test(filt, filter_name, in_signal)
 
