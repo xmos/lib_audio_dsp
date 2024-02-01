@@ -45,26 +45,9 @@ module_instance_t* cascaded_biquads_init(uint8_t id, int n_inputs, int n_outputs
     //state->filter_states = DWORD_ALIGNED_MALLOC(n_bytes_state);
     //memset(state->filter_states, n_bytes_state, 0);
 
-    if(module_config != NULL)
-    {
-        cascaded_biquads_config_t *init_config = module_config;
-        memcpy(&state->config, init_config, sizeof(cascaded_biquads_config_t));
-    }
-    else
-    {
-        // b2 / a0 b1 / a0 b0 / a0 -a1 / a0 -a2 / a0
-        int32_t DWORD_ALIGNED filter_coeffs [40] = {0};
-        filter_coeffs[0] = 1073741824;
-        filter_coeffs[5] = 1073741824;
-        filter_coeffs[10] = 1073741824;
-        filter_coeffs[15] = 1073741824;
-        filter_coeffs[20] = 1073741824;
-        filter_coeffs[25] = 1073741824;
-        filter_coeffs[30] = 1073741824;
-        filter_coeffs[35] = 1073741824;
-
-        memcpy(state->config.filter_coeffs, filter_coeffs, sizeof(filter_coeffs));
-    }
+    xassert(module_config != NULL);
+    cascaded_biquads_config_t *init_config = module_config;
+    memcpy(&state->config, init_config, sizeof(cascaded_biquads_config_t));
 
     memcpy(config, &state->config, sizeof(cascaded_biquads_config_t));
 
@@ -74,7 +57,7 @@ module_instance_t* cascaded_biquads_init(uint8_t id, int n_inputs, int n_outputs
     module_instance->control.config = config;
     module_instance->control.id = id;
     module_instance->control.module_type = e_dsp_stage_cascaded_biquads;
-    module_instance->control.num_control_commands = NUM_CMDS_BIQUAD;
+    module_instance->control.num_control_commands = NUM_CMDS_CASCADED_BIQUADS;
     module_instance->control.config_rw_state = config_none_pending;
     return module_instance;
 }

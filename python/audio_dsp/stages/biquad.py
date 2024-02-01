@@ -22,11 +22,11 @@ class Biquad(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=find_config("biquad"), **kwargs)
         self.create_outputs(self.n_in)
-        self.filt = bq.biquad_allpass(self.fs, 1000, 0.7)
         self.set_control_field_cb("filter_coeffs",
                                   lambda: [i for i in self.get_fixed_point_coeffs()])
         self.set_control_field_cb("left_shift",
                                   lambda: self.filt.b_shift)
+        self.make_bypass()
 
     def process(self, in_channels):
         """
@@ -42,6 +42,11 @@ class Biquad(Stage):
     def get_fixed_point_coeffs(self):
         a = np.array(self.filt.coeffs)
         return np.array(a*(2**30), dtype=np.int32)
+
+    def make_bypass(self):
+        self.details = {}
+        self.filt =  bq.biquad_bypass(self.fs)
+        return self
 
     def make_lowpass(self, f, q):
         self.details = dict(type="low pass", **_ws(locals()))
