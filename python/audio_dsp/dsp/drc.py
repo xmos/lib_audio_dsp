@@ -46,8 +46,8 @@ class envelope_detector_peak(dspg.dsp_block):
 
     """
 
-    def __init__(self, fs, attack_t=None, release_t=None, detect_t=None, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, Q_sig)
+    def __init__(self, fs, n_chans=1, attack_t=None, release_t=None, detect_t=None, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, Q_sig)
 
         if detect_t and (attack_t or release_t):
             ValueError("either detect_t OR (attack_t AND release_t) must be specified")
@@ -62,7 +62,6 @@ class envelope_detector_peak(dspg.dsp_block):
         # attack/release time can't be faster than the length of 2 samples.
         self.attack_alpha = min(2*T / attack_t, 1.0)
         self.release_alpha = min(2*T / release_t, 1.0)
-        self.envelope = 0
 
         # very long times might quantize to zero, maybe just limit a better way
         assert self.attack_alpha > 0
@@ -70,18 +69,20 @@ class envelope_detector_peak(dspg.dsp_block):
 
         self.attack_alpha_uq30 = utils.uq_2_30(round(self.attack_alpha * 2**30))
         self.release_alpha_uq30 = utils.uq_2_30(round(self.release_alpha * 2**30))
-        self.envelope_s32 = utils.float_s32([0, -self.Q_sig])
 
         # very long times might quantize to zero
         assert self.attack_alpha_uq30 > 0
         assert self.attack_alpha_uq30 > 0
 
+        # initalise envelope state
+        self.reset_state()
+
     def reset_state(self):
         """Reset the envelope to zero."""
-        self.envelope = 0
-        self.envelope_s32 = utils.float_s32(0, -self.Q_sig)
+        self.envelope = [0] * self.n_chans
+        self.envelope_s32 = [utils.float_s32([0, -self.Q_sig])] * self.n_chans
 
-    def process(self, sample):
+    def process(self, sample, channel=0):
         """
         Update the peak envelope for a signal, using floating point maths.
 
@@ -92,17 +93,17 @@ class envelope_detector_peak(dspg.dsp_block):
         sample_mag = abs(sample)
 
         # see if we're attacking or decaying
-        if sample_mag > self.envelope:
+        if sample_mag > self.envelope[channel]:
             alpha = self.attack_alpha
         else:
             alpha = self.release_alpha
 
         # do exponential moving average
-        self.envelope = ((1-alpha) * self.envelope) + (alpha * sample_mag)
+        self.envelope[channel] = ((1-alpha) * self.envelope[channel]) + (alpha * sample_mag)
 
-        return self.envelope
+        return self.envelope[channel]
 
-    def process_int(self, sample):
+    def process_int(self, sample, channel=0):
         """
         Update the peak envelope for a signal, using float_s32 maths.
 
@@ -122,19 +123,19 @@ class envelope_detector_peak(dspg.dsp_block):
         sample_mag = abs(sample_s32)
 
         # see if we're attacking or decaying
-        if sample_mag > self.envelope_s32:
+        if sample_mag > self.envelope_s32[channel]:
             alpha = self.attack_alpha_uq30
         else:
             alpha = self.release_alpha_uq30
 
         # do exponential moving average
-        self.envelope_s32 = utils.float_s32_ema(sample_mag, self.envelope_s32, alpha)
+        self.envelope_s32[channel] = utils.float_s32_ema(sample_mag, self.envelope_s32[channel], alpha)
 
         # if we got floats, return floats, otherwise return float_s32
         if isinstance(sample, utils.float_s32):
-            return self.envelope_s32
+            return self.envelope_s32[channel]
         else:
-            return float(self.envelope_s32)
+            return float(self.envelope_s32[channel])
 
 
 class envelope_detector_rms(envelope_detector_peak):
@@ -182,7 +183,7 @@ class envelope_detector_rms(envelope_detector_peak):
 
     """
 
-    def process(self, sample):
+    def process(self, sample, channel=0):
         """
         Update the RMS envelope for a signal, using floating point maths.
 
@@ -198,17 +199,17 @@ class envelope_detector_rms(envelope_detector_peak):
         sample_mag = sample**2
 
         # see if we're attacking or decaying
-        if sample_mag > self.envelope:
+        if sample_mag > self.envelope[channel]:
             alpha = self.attack_alpha
         else:
             alpha = self.release_alpha
 
         # do exponential moving average
-        self.envelope = ((1-alpha) * self.envelope) + (alpha * sample_mag)
+        self.envelope[channel] = ((1-alpha) * self.envelope[channel]) + (alpha * sample_mag)
 
-        return self.envelope
+        return self.envelope[channel]
 
-    def process_int(self, sample):
+    def process_int(self, sample, channel=0):
         """
         Update the RMS envelope for a signal, using float_s32 maths.
 
@@ -232,32 +233,32 @@ class envelope_detector_rms(envelope_detector_peak):
         sample_mag = sample_s32 * sample_s32
 
         # see if we're attacking or decaying
-        if sample_mag > self.envelope_s32:
+        if sample_mag > self.envelope_s32[channel]:
             alpha = self.attack_alpha_uq30
         else:
             alpha = self.release_alpha_uq30
 
         # do exponential moving average
-        self.envelope_s32 = utils.float_s32_ema(sample_mag, self.envelope_s32, alpha)
+        self.envelope_s32[channel] = utils.float_s32_ema(sample_mag, self.envelope_s32[channel], alpha)
 
         # if we got floats, return floats, otherwise return float_s32
         if isinstance(sample, utils.float_s32):
-            return self.envelope_s32
+            return self.envelope_s32[channel]
         else:
-            return float(self.envelope_s32)
+            return float(self.envelope_s32[channel])
 
 
 class limiter_base(dspg.dsp_block):
     # Limiter after Zolzer's DAFX & Guy McNally's "Dynamic Range Control of
     # Digital Audio Signals"
-    def __init__(self, fs, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        super().__init__(Q_sig)
+    def __init__(self, fs, n_chans, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, Q_sig)
 
         # attack times simplified from McNally, seem pretty close
         T = 1/fs
         self.attack_alpha = 2*T / attack_t
         self.release_alpha = 2*T / release_t
-        self.gain = 1
+        self.gain = [1] * n_chans
 
         # These are defined differently for peak and RMS limiters
         self.threshold = None
@@ -266,16 +267,16 @@ class limiter_base(dspg.dsp_block):
         self.attack_alpha_uq30 = utils.uq_2_30(round(self.attack_alpha * 2**30))
         self.release_alpha_uq30 = utils.uq_2_30(round(self.release_alpha * 2**30))
         self.threshold_s32 = None
-        self.gain_s32 = utils.float_s32([2**30, -30])
+        self.gain_s32 = [utils.float_s32([2**30, -30])] * n_chans
 
     def reset_state(self):
         self.env_detector.reset_state()
-        self.gain = 1
-        self.gain_s32 = utils.float_s32(1)
+        self.gain = [1] * self.n_chans
+        self.gain_s32 = [utils.float_s32([2**30, -30])] * self.n_chans
 
-    def process(self, sample):
+    def process(self, sample, channel=0):
         # get envelope from envelope detector
-        envelope = self.env_detector.process(sample)
+        envelope = self.env_detector.process(sample, channel)
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
@@ -284,23 +285,23 @@ class limiter_base(dspg.dsp_block):
         new_gain = min(1, new_gain)
 
         # see if we're attacking or decaying
-        if new_gain < self.gain:
+        if new_gain < self.gain[channel]:
             alpha = self.attack_alpha
         else:
             alpha = self.release_alpha
 
         # do exponential moving average
-        self.gain = ((1-alpha) * self.gain) + (alpha * new_gain)
+        self.gain[channel] = ((1-alpha) * self.gain[channel]) + (alpha * new_gain)
 
         # apply gain to input
-        y = self.gain*sample
+        y = self.gain[channel]*sample
         return y, new_gain, envelope
 
-    def process_int(self, sample):
+    def process_int(self, sample, channel=0):
         sample = utils.float_s32(sample, self.Q_sig)
 
         # get envelope from envelope detector
-        envelope = self.env_detector.process_int(sample)
+        envelope = self.env_detector.process_int(sample, channel)
         # avoid /0
         if envelope.mant == 0:
             envelope.mant = 1
@@ -311,53 +312,79 @@ class limiter_base(dspg.dsp_block):
         new_gain = utils.float_s32_min(utils.float_s32(1), new_gain)
 
         # see if we're attacking or decaying
-        if new_gain < self.gain_s32:
+        if new_gain < self.gain_s32[channel]:
             alpha = self.attack_alpha_uq30
         else:
             alpha = self.release_alpha_uq30
 
         # do exponential moving average
-        self.gain_s32 = utils.float_s32_ema(new_gain, self.gain_s32, alpha)
+        self.gain_s32[channel] = utils.float_s32_ema(new_gain, self.gain_s32[channel], alpha)
 
         # apply gain
-        y = self.gain_s32*sample
+        y = self.gain_s32[channel]*sample
 
         # quantize before return
         y = utils.float_s32_use_exp(y, -27)
 
         return float(y), float(new_gain), float(envelope)
 
+    def process_frame(self, frame):
+        # same as generic, but only take 1st output
+        n_outputs = frame.shape[0]
+        frame_size = frame.shape[1]
+        output = np.zeros_like(frame)
+        for chan in range(n_outputs):
+            for sample in range(frame_size):
+                output[chan, sample] = self.process(frame[chan, sample],
+                                                    channel=chan)[0]
+
+        return output
+
+    def process_frame_int(self, frame):
+        # same as generic, but only take 1st output
+        n_outputs = frame.shape[0]
+        frame_size = frame.shape[1]
+        output = np.zeros_like(frame)
+        for chan in range(n_outputs):
+            for sample in range(frame_size):
+                output[chan, sample] = self.process_int(frame[chan, sample],
+                                                        channel=chan)[0]
+
+        return output
+
 
 class limiter_peak(limiter_base):
 
-    def __init__(self, fs, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, attack_t, release_t, delay, Q_sig)
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         self.threshold = utils.db2gain(threshold_db)
         self.threshold_s32 = utils.float_s32(self.threshold, self.Q_sig)
-        self.env_detector = envelope_detector_peak(fs, attack_t=attack_t,
+        self.env_detector = envelope_detector_peak(fs, n_chans=n_chans,
+                                                   attack_t=attack_t,
                                                    release_t=release_t,
                                                    Q_sig=self.Q_sig)
 
 
 class limiter_rms(limiter_base):
 
-    def __init__(self, fs, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, attack_t, release_t, delay, Q_sig)
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         # note rms comes as x**2, so use db_pow
         self.threshold = utils.db_pow2gain(threshold_db)
         self.threshold_s32 = utils.float_s32(self.threshold, self.Q_sig)
-        self.env_detector = envelope_detector_rms(fs, attack_t=attack_t,
+        self.env_detector = envelope_detector_rms(fs, n_chans=n_chans,
+                                                  attack_t=attack_t,
                                                   release_t=release_t,
                                                   Q_sig=self.Q_sig)
 
 
 class hard_limiter_peak(limiter_peak):
 
-    def process(self, sample):
+    def process(self, sample, channel=0):
         # do peak limiting
-        y = super().process(sample)
+        y = super().process(sample, channel)
 
         # hard clip if above threshold
         if y > self.threshold:

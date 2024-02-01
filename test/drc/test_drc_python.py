@@ -20,7 +20,7 @@ def test_limiter_peak_attack(fs, at, threshold):
     t = np.arange(len(x))/fs
 
     # fixed release time, not that we're going to use it
-    lt = drc.limiter_peak(fs, threshold, at, 0.3)
+    lt = drc.limiter_peak(fs, 1, threshold, at, 0.3)
 
     y = np.zeros_like(x)
     f = np.zeros_like(x)
@@ -58,7 +58,7 @@ def test_limiter_peak_release(fs, rt, threshold):
     t = np.arange(len(x))/fs
 
     # fixed attack time of 0.01, so should have converged by 0.5s
-    lt = drc.limiter_peak(fs, threshold, 0.01, rt)
+    lt = drc.limiter_peak(fs, 1, threshold, 0.01, rt)
 
     y = np.zeros_like(x)
     f = np.zeros_like(x)
@@ -98,9 +98,9 @@ def test_drc_component(fs, component, at, rt, threshold):
     component_handle = getattr(drc, component)
 
     if threshold is not None:
-        drcut = component_handle(fs, threshold, at, rt)
+        drcut = component_handle(fs, 1, threshold, at, rt)
     else:
-        drcut = component_handle(fs, at, rt)
+        drcut = component_handle(fs, 1, at, rt)
 
     signal = gen.log_chirp(fs, int(0.1+(rt+at)*2), 1)
     len_sig = len(signal)
@@ -140,6 +140,58 @@ def test_drc_component(fs, component, at, rt, threshold):
         error_flt = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
         assert mean_error_flt < 0.055
+
+
+@pytest.mark.parametrize("fs", [48000])
+@pytest.mark.parametrize("component, threshold", [("limiter_peak", -20),
+                                                  ("limiter_peak", 6),
+                                                  ("limiter_rms", -20),
+                                                  ("limiter_rms", 6),
+                                                  ("envelope_detector_peak", None),
+                                                  ("envelope_detector_rms", None)])
+@pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
+@pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
+@pytest.mark.parametrize("n_chans", [1, 2, 4])
+def test_drc_component_frames(fs, component, at, rt, threshold, n_chans):
+    component_handle = getattr(drc, component)
+
+    if threshold is not None:
+        drcut = component_handle(fs, n_chans, threshold, at, rt)
+    else:
+        drcut = component_handle(fs, n_chans, at, rt)
+
+    signal = gen.log_chirp(fs, int(0.1+(rt+at)*2), 1)
+    len_sig = len(signal)
+    if threshold is not None:
+        signal[:len_sig//2] *= utils.db2gain(threshold + 6)
+        signal[len_sig//2:] *= utils.db2gain(threshold - 3)
+    else:
+        t = np.arange(len(signal))/fs
+        signal *= np.sin(t*2*np.pi*0.5)
+
+    signal = np.tile(signal, [n_chans, 1])
+    frame_size = 1
+    signal_frames = utils.frame_signal(signal, frame_size, 1)
+
+    output_int = np.zeros_like(signal)
+    output_flt = np.zeros_like(signal)
+
+    if "envelope" in component:
+        for n in np.arange(signal_frames.shape[0]):
+            output_int[:, n:n+frame_size] = drcut.process_frame_int(signal_frames[n])
+        drcut.reset_state()
+        for n in np.arange(signal_frames.shape[0]):
+            output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])
+    else:        
+        for n in np.arange(signal_frames.shape[0]):
+            output_int[:, n:n+frame_size] = drcut.process_frame_int(signal_frames[n])
+        drcut.reset_state()
+        for n in np.arange(signal_frames.shape[0]):
+            output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])
+
+    assert np.all(output_int[0, :] == output_int)
+    assert np.all(output_flt[0, :] == output_flt)
+
 
 
 # TODO more RMS limiter tests

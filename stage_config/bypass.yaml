@@ -1,0 +1,6 @@
+module:
+  bypass:
+    _reserved:
+      type: int
+includes:
+  - "stdint.h"

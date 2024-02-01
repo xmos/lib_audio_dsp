@@ -102,7 +102,7 @@ def test_xpass_filters_c(in_signal, filter_type, f, q):
   f = np.min([f, fs / 2 * 0.95])
   filter_handle = getattr(bq, filter_type)
 
-  filt = filter_handle(fs, f, q)
+  filt = filter_handle(fs, 1, f, q)
   filter_name = f"{filter_type}_{f}_{q}"
   single_test(filt, filter_name, in_signal)
 
@@ -119,7 +119,7 @@ def test_high_gain_c(in_signal, filter_type, f, q, gain):
   f = np.min([f, fs / 2 * 0.95])
   filter_handle = getattr(bq, filter_type)
 
-  filt = filter_handle(fs, f, q, gain)
+  filt = filter_handle(fs, 1, f, q, gain)
   filter_name = f"{filter_type}_{f}_{q}_{gain}"
   single_test(filt, filter_name, in_signal)
 
@@ -136,7 +136,7 @@ def test_bandx_filters_c(in_signal, filter_type, f, q):
     f = high_q_stability_limit * fs / 2
   filter_handle = getattr(bq, filter_type)
 
-  filt = filter_handle(fs, f, q)
+  filt = filter_handle(fs, 1, f, q)
   filter_name = f"{filter_type}_{f}_{q}"
   single_test(filt, filter_name, in_signal)
 
@@ -147,14 +147,14 @@ def test_bandx_filters_c(in_signal, filter_type, f, q):
 def test_linkwitz_filters_c(in_signal, f0, fp_ratio, q0, qp):
 
   fp = f0*fp_ratio
-  filt = bq.biquad_linkwitz(fs, f0, q0, fp, qp)
+  filt = bq.biquad_linkwitz(fs, 1, f0, q0, fp, qp)
   filter_name = f"biquad_linkwitz_{f0}_{fp_ratio}_{q0}_{qp}"
   single_test(filt, filter_name, in_signal)
 
 @pytest.mark.parametrize("gain", [-10, 0, 10])
 def test_gain_filters_c(in_signal, gain):
   
-  filt = bq.biquad_gain(fs, gain)
+  filt = bq.biquad_gain(fs, 1, gain)
   filter_name = f"biquad_gain_{gain}"
   single_test(filt, filter_name, in_signal)
 

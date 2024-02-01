@@ -242,6 +242,23 @@ def _filter_edges_by_thread(resolved_pipeline):
         ret.append((input_edges, internal_edges, output_edges, dead_edges))
     return ret
 
+def _gen_chan_buf_read_q31_to_q27(channel, edge, frame_size):
+    """
+    Generate the C code to read from a channel and convert from q31 to q27
+    """
+    return f"for(int idx = 0; idx < {frame_size}; ++idx) {edge}[idx] = ((int32_t)chan_in_word({channel})) >> 4;"
+
+def _gen_chan_buf_write_q27_to_q31(channel, edge, frame_size):
+    """Generate the C code to wrtie to a channel and convert from q27 to q31 and saturate"""
+    q_in = 27
+    in_min = -(2 ** (q_in))
+    in_max = (-in_min) - 1
+    q_out = 31
+    out_min = -(2**(q_out))
+    out_max = (-out_min) - 1
+    edge = f"{edge}[idx]"
+    sat = f"({edge} < {in_min}) ? {out_min} : (({edge} > {in_max}) ? {out_max} : ({edge} << {q_out - q_in}))"
+    return f"for(int idx = 0; idx < {frame_size}; ++idx) chan_out_word({channel}, {sat});"
 
 def _generate_dsp_threads(resolved_pipeline, block_size = 1):
     """
@@ -322,10 +339,13 @@ def _generate_dsp_threads(resolved_pipeline, block_size = 1):
             func += "\t\tDEFAULT_THEN(do_control)\n"
             func += "\t) {\n"
 
-            for i, edges in enumerate(in_edges.values()):
+            for i, (origin, edges) in enumerate(in_edges.items()):
                 func += f"\t\tcase_{i}: {{\n"
                 for edge in edges:
-                    func += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
+                    if origin == "pipeline_in":
+                        func += "\t\t\t" + _gen_chan_buf_read_q31_to_q27(f"c_source[{i}]", f"edge{all_edges.index(edge)}", block_size) + "\n"
+                    else:
+                        func += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
                 func += f"\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}}\n"
             func += "\t\tdo_control: {\n"
             func += control
@@ -341,9 +361,12 @@ def _generate_dsp_threads(resolved_pipeline, block_size = 1):
             func += f"\t\tstage_{stage_thread_index}_output,\n"
             func += f"\t\tmodules[{stage_thread_index}]->state);\n"
 
-        for out_index, edges in enumerate(all_output_edges.values()):
+        for out_index, (dest, edges) in enumerate(all_output_edges.items()):
             for edge in edges:
-                func += f"\tchan_out_buf_word(c_dest[{out_index}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
+                if dest == "pipeline_out":
+                    func += "\t" + _gen_chan_buf_write_q27_to_q31(f"c_dest[{out_index}]", f"edge{all_edges.index(edge)}", block_size) + "\n"
+                else:
+                    func += f"\tchan_out_buf_word(c_dest[{out_index}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
 
         func += "\t}\n}\n"
         file_str += func

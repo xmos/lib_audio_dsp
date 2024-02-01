@@ -7,19 +7,26 @@ from audio_dsp.dsp import generic as dspg
 
 
 class cascaded_biquads_8(dspg.dsp_block):
-    def __init__(self, coeffs_list, fs, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, Q_sig)
+    def __init__(self, coeffs_list, fs, n_chans, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, Q_sig)
         self.biquads = [None]*8
         for n in range(8):
             if n < len(coeffs_list):
-                self.biquads[n] = bq.biquad(coeffs_list[n], fs)
+                self.biquads[n] = bq.biquad(coeffs_list[n], fs, n_chans)
             else:
-                self.biquads[n] = bq.biquad_bypass(fs)
+                self.biquads[n] = bq.biquad_bypass(fs, n_chans)
 
     def process(self, sample):
         y = sample
         for biquad in self.biquads:
             y = biquad.process(y)
+
+        return y
+
+    def process_frame(self, frame):
+        y = frame
+        for biquad in self.biquads:
+            y = biquad.process_frame(y)
 
         return y
 
@@ -30,10 +37,24 @@ class cascaded_biquads_8(dspg.dsp_block):
 
         return y
 
+    def process_frame_int(self, frame):
+        y = frame
+        for biquad in self.biquads:
+            y = biquad.process_frame_int(y)
+
+        return y
+
     def process_vpu(self, sample):
         y = sample
         for biquad in self.biquads:
             y = biquad.process_vpu(y)
+
+        return y
+
+    def process_frame_vpu(self, frame):
+        y = frame
+        for biquad in self.biquads:
+            y = biquad.process_frame_vpu(y)
 
         return y
 
@@ -53,26 +74,26 @@ class cascaded_biquads_8(dspg.dsp_block):
 
 
 class butterworth_lowpass(cascaded_biquads_8):
-    def __init__(self, fs, N, fc):
+    def __init__(self, fs, n_chans, N, fc):
         coeffs_list = make_butterworth_lowpass(N, fc, fs)
-        super().__init__(coeffs_list, fs)
+        super().__init__(coeffs_list, fs, n_chans)
 
 
 class butterworth_highpass(cascaded_biquads_8):
-    def __init__(self, fs, N, fc):
+    def __init__(self, fs, n_chans, N, fc):
         coeffs_list = make_butterworth_highpass(N, fc, fs)
-        super().__init__(coeffs_list, fs)
+        super().__init__(coeffs_list, fs, n_chans)
 
 
 class parametric_eq_8band(cascaded_biquads_8):
-    def __init__(self, fs, filter_spec):
+    def __init__(self, fs, n_chans, filter_spec):
         coeffs_list = []
         for spec in filter_spec:
             class_name = f"make_biquad_{spec[0]}"
             class_handle = getattr(bq, class_name)
             coeffs_list.append(class_handle(fs, *spec[1:]))
 
-        super().__init__(coeffs_list, fs)
+        super().__init__(coeffs_list, fs, n_chans)
 
 
 def make_butterworth_lowpass(N, fc, fs):
