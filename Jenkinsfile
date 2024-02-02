@@ -111,7 +111,7 @@ pipeline {
           }
         }
 
-        Stage('docs') {
+        stage('docs') {
 
           agent {
             label 'linux&&x86_64'
