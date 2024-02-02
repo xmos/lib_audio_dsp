@@ -44,19 +44,10 @@ module_instance_t* biquad_init(uint8_t id, int n_inputs, int n_outputs, int fram
     //state->filter_states = DWORD_ALIGNED_MALLOC(n_bytes_state);
     //memset(state->filter_states, n_bytes_state, 0);
 
-    if(module_config != NULL)
-    {
-        biquad_config_t *init_config = module_config;
-        memcpy(&state->config, init_config, sizeof(biquad_config_t));
-    }
-    else
-    {
-        // b2 / a0 b1 / a0 b0 / a0 -a1 / a0 -a2 / a0
-        const int32_t DWORD_ALIGNED filter_coeffs [5] = {
-            1073741824 , 0 , 0 , 0 , 0 ,
-        };
-        memcpy(state->config.filter_coeffs, filter_coeffs, sizeof(filter_coeffs));
-    }
+    xassert(module_config != NULL);
+
+    biquad_config_t *init_config = module_config;
+    memcpy(&state->config, init_config, sizeof(biquad_config_t));
 
     memcpy(config, &state->config, sizeof(biquad_config_t));
 

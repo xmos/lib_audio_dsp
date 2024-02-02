@@ -191,7 +191,7 @@ class Stage(Node):
         self.n_out = n_out
         self._o = []
         for i in range(n_out):
-            output = StageOutput()
+            output = StageOutput(fs=self.fs, frame_size=self.frame_size)
             output.source_index = i
             output.set_source(self)
             self._o.append(output)
@@ -247,6 +247,8 @@ class Stage(Node):
         """
         raise NotImplementedError()
 
+    def get_frequency_response(self, nfft=512):
+        raise NotImplementedError()
 
     def add_to_dot(self, dot):
         """

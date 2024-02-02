@@ -2,3 +2,4 @@ soundfile
 -e ./python
 pytest
 pytest-xdist
+git+ssh://git@github.com/xmos/xscope_fileio@develop
