@@ -3,7 +3,7 @@
 from .graph import Edge, Node
 import yaml
 from pathlib import Path
-
+from audio_dsp.design import plot
 
 def find_config(name):
     """
@@ -171,6 +171,9 @@ class Stage(Node):
         self._control_fields = {name: ValueControlField() for name in self.yaml_dict["module"][self.name].keys()}
         self.details = {}
 
+        # this will point to a dsp block class (e.g. biquad etc), to be set by the child class
+        self.dsp_block = None
+
     @property
     def o(self):
         if self._o is None:
@@ -241,14 +244,25 @@ class Stage(Node):
                 ret[command_name] = cf.value
         return ret
 
-    def process(self, channels):
+    def process(self, in_channels):
         """
-        TODO
+        Run dsp object on the input channels and return the output
+
+        Args:
+            in_channels: list of numpy arrays
+
+        Returns:
+            list of numpy arrays.
         """
-        raise NotImplementedError()
+        # use float implementation as it is faster
+        return self.dsp_obj.process_frame(in_channels)
 
     def get_frequency_response(self, nfft=512):
-        raise NotImplementedError()
+        return self.dsp_obj.freq_response(nfft)
+
+    def plot_frequency_response(self, nfft=512):
+        f, h = self.get_frequency_response(nfft)
+        plot.plot_frequency_response(f, h)
 
     def add_to_dot(self, dot):
         """

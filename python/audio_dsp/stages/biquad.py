@@ -25,87 +25,69 @@ class Biquad(Stage):
         self.set_control_field_cb("filter_coeffs",
                                   lambda: [i for i in self.get_fixed_point_coeffs()])
         self.set_control_field_cb("left_shift",
-                                  lambda: self.filt.b_shift)
+                                  lambda: self.dsp_block.b_shift)
         self.make_bypass()
 
-    def process(self, in_channels):
-        """
-        Run Biquad on the input channels and return the output
-
-        Args:
-            in_channels: list of numpy arrays
-
-        Returns:
-            list of numpy arrays.
-        """
-        # use float implementation as it is faster
-        return self.filt.process_frame(in_channels)
-
-    def get_frequency_response(self, nfft=512):
-        f, h = self.filt.freq_response(nfft)
-
-        return f, h
-
     def get_fixed_point_coeffs(self):
-        a = np.array(self.filt.coeffs)
+        a = np.array(self.dsp_block.coeffs)
         return np.array(a*(2**30), dtype=np.int32)
 
     def make_bypass(self):
         self.details = {}
-        self.filt =  bq.biquad_bypass(self.fs)
+        self.dsp_block =  bq.biquad_bypass(self.fs)
         return self
 
     def make_lowpass(self, f, q):
         self.details = dict(type="low pass", **_ws(locals()))
-        self.filt =  bq.biquad_lowpass(self.fs, f, q)
+        self.dsp_block =  bq.biquad_lowpass(self.fs, f, q)
         return self
 
     def make_highpass(self, f, q):
         self.details = dict(type="high pass", **_ws(locals()))
-        self.filt =  bq.biquad_highpass(self.fs, f, q)
+        self.dsp_block =  bq.biquad_highpass(self.fs, f, q)
         return self
 
     def make_bandpass(self, f, bw):
         self.details = dict(type="band pass", **_ws(locals()))
-        self.filt =  bq.biquad_bandpass(self.fs, f, bw)
+        self.dsp_block =  bq.biquad_bandpass(self.fs, f, bw)
         return self
 
     def make_bandstop(self, f, bw):
         self.details = dict(type="band stop", **_ws(locals()))
-        self.filt =  bq.biquad_bandstop(self.fs, f, bw)
+        self.dsp_block =  bq.biquad_bandstop(self.fs, f, bw)
         return self
 
     def make_notch(self, f, q):
         self.details = dict(type="notch", **_ws(locals()))
-        self.filt =  bq.biquad_notch(self.fs, f, q)
+        self.dsp_block =  bq.biquad_notch(self.fs, f, q)
         return self
 
     def make_allpass(self, f, q):
         self.details = dict(type="all pass", **_ws(locals()))
-        self.filt =  bq.biquad_allpass(self.fs, f, q)
+        self.dsp_block =  bq.biquad_allpass(self.fs, f, q)
         return self
 
     def make_peaking(self, f, q, boost_db):
         self.details = dict(type="peaking", **_ws(locals()))
-        self.filt =  bq.biquad_peaking(self.fs, f, q, boost_db)
+        self.dsp_block =  bq.biquad_peaking(self.fs, f, q, boost_db)
         return self
 
     def make_constant_q(self, f, q, boost_db):
         self.details = dict(type="constant q", **_ws(locals()))
-        self.filt =  bq.biquad_constant_q(self.fs, f, q, boost_db)
+        self.dsp_block =  bq.biquad_constant_q(self.fs, f, q, boost_db)
         return self
 
     def make_lowshelf(self, f, q, boost_db):
         self.details = dict(type="lowshelf", **_ws(locals()))
-        self.filt =  bq.biquad_lowshelf(self.fs, f, q, boost_db)
+        self.dsp_block =  bq.biquad_lowshelf(self.fs, f, q, boost_db)
         return self
 
     def make_highshelf(self, f, q, boost_db):
         self.details = dict(type="highshelf", **_ws(locals()))
-        self.filt =  bq.biquad_highshelf(self.fs, f, q, boost_db)
+        self.dsp_block =  bq.biquad_highshelf(self.fs, f, q, boost_db)
         return self
 
     def make_linkwitz(self, f0, q0, fp, qp):
         self.details = dict(type="linkwitz", **_ws(locals()))
-        self.filt =  bq.biquad_linkwitz(self.fs, f0, q0, fp, qp)
+        self.dsp_block =  bq.biquad_linkwitz(self.fs, f0, q0, fp, qp)
         return self
