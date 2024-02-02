@@ -33,3 +33,7 @@ class Fork(Stage):
         super().__init__(config=find_config("fork"), **kwargs)
         self.create_outputs(self.n_in * count)
         self.forks = [self.o[i:i + self.n_in] for i in range(0, self.n_in * count, self.n_in)]
+
+    def get_frequency_response(self, nfft=512):
+        # not sure what this looks like!
+        raise NotImplementedError
