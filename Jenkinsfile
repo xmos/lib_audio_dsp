@@ -28,59 +28,59 @@ pipeline {
   } // options
 
   stages {
-    stage ('Build & Test') {
-      agent {
-        label 'linux&&x86_64'
-      }
-      stages {
-        stage ('Build') {
-          steps {
-            runningOn(env.NODE_NAME)
-            sh 'git clone -b develop git@github.com:xmos/xcommon_cmake'
-            sh 'git -C xcommon_cmake rev-parse HEAD'
-            dir("lib_audio_dsp") {
-              checkout scm
-              // try building a simple app without venv to check
-              // build that doesn't use design tools won't
-              // need python
-              withTools(params.TOOLS_VERSION) {
-                withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
-                  dir("test/biquad") {
-                    sh "cmake -B build"
-                    sh "cmake --build build"
+    stage('CI') {
+      parallel {
+        stage ('Build & Test') {
+          agent {
+            label 'linux&&x86_64'
+          }
+          stages {
+            stage ('Build') {
+              steps {
+                runningOn(env.NODE_NAME)
+                sh 'git clone -b develop git@github.com:xmos/xcommon_cmake'
+                sh 'git -C xcommon_cmake rev-parse HEAD'
+                dir("lib_audio_dsp") {
+                  checkout scm
+                  // try building a simple app without venv to check
+                  // build that doesn't use design tools won't
+                  // need python
+                  withTools(params.TOOLS_VERSION) {
+                    withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
+                      dir("test/biquad") {
+                        sh "cmake -B build"
+                        sh "cmake --build build"
+                      }
+                    }
                   }
+
                 }
-              }
+                createVenv("lib_audio_dsp/requirements.txt")
 
-            }
-            createVenv("lib_audio_dsp/requirements.txt")
-
-            dir("lib_audio_dsp") {
-              // build everything
-              withVenv {
-                sh "pip install -r requirements.txt"
-                withTools(params.TOOLS_VERSION) {
-                  withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
-                    script {
-                      [
-                      "test/biquad",
-                      "test/cascaded_biquads",
-                      "test/drc"
-                      ].each {
-                        sh "cmake -S ${it} -B ${it}/build"
-                        sh "xmake -C ${it}/build -j"
+                dir("lib_audio_dsp") {
+                  // build everything
+                  withVenv {
+                    sh "pip install -r requirements.txt"
+                    withTools(params.TOOLS_VERSION) {
+                      withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
+                        script {
+                          [
+                          "test/biquad",
+                          "test/cascaded_biquads",
+                          "test/drc"
+                          ].each {
+                            sh "cmake -S ${it} -B ${it}/build"
+                            sh "xmake -C ${it}/build -j"
+                          }
+                        }
                       }
                     }
                   }
                 }
               }
-            }
-          }
-        } // Build
+            } // Build
 
-        stage('test and docs') {
-          parallel {
-            stage ('Test') {
+            stage('test') {
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
@@ -101,35 +101,39 @@ pipeline {
                   }
                 }
               }
-            } // Test
+            } // test
+          }
 
-            stage ('Docs') {
-              steps {
-                withVenv {
-                  withTools(params.TOOLS_VERSION) {
-                    dir('lib_audio_dsp') {
-                      sh """docker run -u "\$(id -u):\$(id -g)" \
-                            --rm \
-                            -v ${WORKSPACE}/lib_audio_dsp:/build \
-                            --entrypoint /build/doc/build_docs.sh \
-                            ghcr.io/xmos/xmosdoc:$XMOSDOC_VERSION -v"""
-                      archiveArtifacts artifacts: "doc/_out/pdf/*.pdf"
-                      archiveArtifacts artifacts: "doc/_out/html/**/*"
-                      archiveArtifacts artifacts: "doc/_out/linkcheck/**/*"
-                    }
-                  }
-                }
-              }
-            } // Docs
-          } // parallel
-        } // test and docs
-
-      } // stages
-      post {
-        cleanup {
-          xcoreCleanSandbox()
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
         }
-      }
+
+        Stage('docs') {
+
+          agent {
+            label 'linux&&x86_64'
+          }
+          steps {
+            checkout scm
+            sh """docker run -u "\$(id -u):\$(id -g)" \
+                  --rm \
+                  -v ${WORKSPACE}/lib_audio_dsp:/build \
+                  --entrypoint /build/doc/build_docs.sh \
+                  ghcr.io/xmos/xmosdoc:$XMOSDOC_VERSION -v"""
+            archiveArtifacts artifacts: "doc/_out/pdf/*.pdf"
+            archiveArtifacts artifacts: "doc/_out/html/**/*"
+            archiveArtifacts artifacts: "doc/_out/linkcheck/**/*"
+          }
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
+        } // docs
+      } // stages
     } // Build & Test
   } // stages
 } // pipeline
