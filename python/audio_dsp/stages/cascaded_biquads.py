@@ -16,7 +16,7 @@ class CascadedBiquads(Stage):
                   ['bypass'],
                   ['bypass'],
                   ['bypass']]
-        self.filt = casc_bq.parametric_eq_8band(self.fs, filter_spec)
+        self.filt = casc_bq.parametric_eq_8band(self.fs, self.n_in, filter_spec)
 
         self.filter_coeffs = []
         self.left_shift = []
