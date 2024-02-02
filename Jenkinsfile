@@ -133,6 +133,50 @@ pipeline {
             }
           }
         } // docs
+
+        stage ('Hardware Test') {
+          agent {
+            label 'xcore.ai-explorer && uhubctl'
+          }
+
+          steps {
+            runningOn(env.NODE_NAME)
+            sh 'git clone -b develop git@github.com:xmos/xcommon_cmake'
+            sh 'git -C xcommon_cmake rev-parse HEAD'
+            sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
+            dir("lib_audio_dsp") {
+              checkout scm
+            }
+            createVenv("lib_audio_dsp/requirements.txt")
+
+            dir("lib_audio_dsp") {
+              withVenv {
+                withTools(params.TOOLS_VERSION) {
+                  sh "pip install -r requirements.txt"
+                  sh "pip install -e ${WORKSPACE}/xtagctl"
+                  withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
+                    withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
+                      dir("test/pipeline") {
+                        sh "python -m pytest --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+            always {
+              dir("${WORKSPACE}/lib_audio_dsp/test/pipeline") {
+                junit "pytest_result.xml"
+              }
+            }
+          }
+        }
       } // stages
     } // Build & Test
   } // stages

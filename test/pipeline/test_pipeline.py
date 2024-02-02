@@ -114,6 +114,9 @@ def test_pipeline_q27(input, add, output):
     np.testing.assert_equal(expected, out_data)
 
 def test_complex_pipeline():
+    """
+    Generate a multithreaded pipeline and check the output is as expected
+    """
     infile = "incomplex.wav"
     outfile = "outcomplex.wav"
     n_samps, channels, rate = 1024, 2, 48000
