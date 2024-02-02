@@ -27,18 +27,6 @@ class dsp_block():
         sampling frequency in Hz.
     Q_sig: int
         Q format of the signal, number of bits after the decimal point.
-
-    Methods
-    -------
-    process(sample)
-        Take 1 new sample and return 1 processed sample, using float math.
-        Input should be scaled with 0dB = 1.0.
-    process_int(sample)
-        Take 1 new sample and return 1 processed sample, using int math.
-        Expects the same float input as process.
-    freq_response(nfft=512)
-        The frequency response of the module for a nominal input.
-
     """
 
     def __init__(self, fs, n_chans, Q_sig=Q_SIG):
