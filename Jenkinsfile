@@ -18,7 +18,7 @@ pipeline {
   } // parameters
 
   environment {
-    XMOSDOC_VERSION = "v5.1.0"
+    XMOSDOC_VERSION = "v5.1.1"
   } // environment
 
   options {
@@ -108,7 +108,6 @@ pipeline {
                 withVenv {
                   withTools(params.TOOLS_VERSION) {
                     dir('lib_audio_dsp') {
-                      sh "python doc/programming_guide/gen/autogen.py"
                       sh """docker run -u "\$(id -u):\$(id -g)" \
                             --rm \
                             -v ${WORKSPACE}/lib_audio_dsp:/build \
