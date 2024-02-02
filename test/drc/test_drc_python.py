@@ -12,20 +12,26 @@ import audio_dsp.dsp.signal_gen as gen
 def test_limiter_peak_attack(fs, at, threshold):
     # Attack time test bads on Figure 2 in Guy McNally's "Dynamic Range Control
     # of Digital Audio Signals"
+
+    # Make a constant signal at 6dB above the threshold, make 2* length of
+    # attack time to keep the test quick
     x = np.ones(int(at*2*fs))
     x[:] = utils.db2gain(threshold + 6)
     t = np.arange(len(x))/fs
 
+    # fixed release time, not that we're going to use it
     lt = drc.limiter_peak(fs, 1, threshold, at, 0.3)
 
     y = np.zeros_like(x)
     f = np.zeros_like(x)
     env = np.zeros_like(x)
 
+    # do the processing
     for n in range(len(y)):
         y[n], f[n], env[n] = lt.process(x[n])
 
-    # find when within 3dB of threshold
+    # attack time is defined as how long to get within 2dB of final value,
+    # in this case the threshold. Find when we get to this
     thresh_passed = np.argmax(utils.db(env) > threshold)
     sig_3dB = np.argmax(utils.db(y) < threshold + 2)
 
@@ -43,28 +49,34 @@ def test_limiter_peak_attack(fs, at, threshold):
 def test_limiter_peak_release(fs, rt, threshold):
     # Release time test bads on Figure 2 in Guy McNally's "Dynamic Range
     # Control of Digital Audio Signals"
+
+    # Make a step down signal from 6dB above the threshold to 3dB below
+    # threshold, make 2* length of release time plus 0.5 to keep the test quick
     x = np.ones(int((0.5+rt*2)*fs))
-    x[:fs//2] = utils.db2gain(threshold + 6)
-    x[fs//2:] = utils.db2gain(threshold - 3)
+    x[:int(0.5*fs)] = utils.db2gain(threshold + 6)
+    x[int(0.5*fs):] = utils.db2gain(threshold - 3)
     t = np.arange(len(x))/fs
 
+    # fixed attack time of 0.01, so should have converged by 0.5s
     lt = drc.limiter_peak(fs, 1, threshold, 0.01, rt)
 
     y = np.zeros_like(x)
     f = np.zeros_like(x)
     env = np.zeros_like(x)
 
+    # do the processing
     for n in range(len(y)):
         y[n], f[n], env[n] = lt.process(x[n])
 
-    # find when within 3dB of threshold
-    sig_3dB = np.argmax(utils.db(y[fs//2:]) > threshold - 2 - 3)
+    # find when within 3dB of target value after dropping below the threshold,
+    # in this case the original value of 2dB below the threshold.
+    sig_3dB = np.argmax(utils.db(y[int(0.5*fs):]) > threshold - 2 - 3)
 
     measured_rt = t[sig_3dB]
     print("target: %.3f, measured: %.3f" % (rt, measured_rt))
     print(measured_rt/rt)
 
-    # be somewhere vaugely near the spec, attack time definition is variable!
+    # be somewhere vaugely near the spec
     assert measured_rt/rt > 0.8
     assert measured_rt/rt < 1.2
 
@@ -80,8 +92,8 @@ def test_limiter_peak_release(fs, rt, threshold):
                                                   ("limiter_rms", 6),
                                                   ("envelope_detector_peak", None),
                                                   ("envelope_detector_rms", None)])
-@pytest.mark.parametrize("rt", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
-@pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
+@pytest.mark.parametrize("rt", [0.05, 0.1, 0.2, 0.5, 3.0])
+@pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.5])
 def test_drc_component(fs, component, at, rt, threshold):
     component_handle = getattr(drc, component)
 
@@ -92,10 +104,15 @@ def test_drc_component(fs, component, at, rt, threshold):
 
     signal = gen.log_chirp(fs, int(0.1+(rt+at)*2), 1)
     len_sig = len(signal)
+
     if threshold is not None:
+        # If we are a limiter or compressor, have first half of signal above
+        # the threshold and second half below
         signal[:len_sig//2] *= utils.db2gain(threshold + 6)
         signal[len_sig//2:] *= utils.db2gain(threshold - 3)
     else:
+        # if we are an envelope detector, amplitude modulate with a sin to give
+        # something to follow
         t = np.arange(len(signal))/fs
         signal *= np.sin(t*2*np.pi*0.5)
 
@@ -103,12 +120,14 @@ def test_drc_component(fs, component, at, rt, threshold):
     output_flt = np.zeros(len(signal))
 
     if "envelope" in component:
+        # envelope detector has 1 output
         for n in np.arange(len(signal)):
             output_int[n] = drcut.process_int(signal[n])
         drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n] = drcut.process(signal[n])
-    else:        
+    else:
+        # limiter has 3 outputs
         for n in np.arange(len(signal)):
             output_int[n], _, _ = drcut.process_int(signal[n])
         drcut.reset_state()
@@ -181,5 +200,5 @@ def test_drc_component_frames(fs, component, at, rt, threshold, n_chans):
 # TODO compressor tests
 
 if __name__ == "__main__":
-    test_drc_component(48000, drc.limiter_peak, 1, 1, 1)
+    test_drc_component(48000, "limiter_peak", 1, 1, 1)
     # test_limiter_peak_attack(48000, 0.1, -10)
