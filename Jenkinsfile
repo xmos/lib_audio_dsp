@@ -120,7 +120,7 @@ pipeline {
             checkout scm
             sh """docker run -u "\$(id -u):\$(id -g)" \
                   --rm \
-                  -v ${WORKSPACE}/lib_audio_dsp:/build \
+                  -v ${WORKSPACE}:/build \
                   --entrypoint /build/doc/build_docs.sh \
                   ghcr.io/xmos/xmosdoc:$XMOSDOC_VERSION -v"""
             archiveArtifacts artifacts: "doc/_out/pdf/*.pdf"
