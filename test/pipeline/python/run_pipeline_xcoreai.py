@@ -7,7 +7,13 @@ import subprocess
 import scipy.io.wavfile
 import pathlib
 
+FORCE_ADAPTER_ID = None
+
 def get_adapter_id():
+    # check the --adapter-id option
+    if FORCE_ADAPTER_ID is not None:
+        return FORCE_ADAPTER_ID
+
     try:
         xrun_out = subprocess.check_output(['xrun', '-l'], text=True, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
@@ -92,7 +98,7 @@ if __name__ == "__main__":
             args.num_out_channels = 1
         else:
             args.num_out_channels = data.shape[1]
-    
+
     print(f"num_out_channels = {args.num_out_channels}")
     run(args.xe, args.input, args.output, args.num_out_channels)
 

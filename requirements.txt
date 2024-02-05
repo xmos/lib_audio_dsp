@@ -1,3 +1,5 @@
+# python_version 3.12.1
+# pip_version 23.2.1
 soundfile
 -e ./python
 pytest
