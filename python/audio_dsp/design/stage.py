@@ -173,7 +173,6 @@ class Stage(Node):
 
     @property
     def o(self):
-        """stage output channels"""
         if self._o is None:
             raise RuntimeError("Stage must add outputs with create_outputs in its __init__ method")
         return self._o
@@ -248,6 +247,8 @@ class Stage(Node):
         """
         raise NotImplementedError()
 
+    def get_frequency_response(self, nfft=512):
+        raise NotImplementedError()
 
     def add_to_dot(self, dot):
         """

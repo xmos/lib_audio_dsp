@@ -97,7 +97,7 @@ def in_signal():
 @pytest.mark.parametrize("threshold", [-20, 0])
 def test_limiter_c(in_signal, lim_name, at, rt, threshold):
   lim_handle = getattr(drc, lim_name)
-  lim = lim_handle(fs, threshold, at, rt)
+  lim = lim_handle(fs, 1, threshold, at, rt)
   test_name = f"{lim_name}_{threshold}_{at}_{rt}"
 
   single_test(lim, lim_name, test_name, in_signal)

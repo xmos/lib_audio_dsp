@@ -20,30 +20,48 @@ if(PYTHON_EXE)
     execute_process(COMMAND ${PYTHON_EXE} -c "import audio_dsp"
                     OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE AUDIO_DSP_NOT_INSTALLED)
     if(NOT ${AUDIO_DSP_NOT_INSTALLED})
+
+        set(ADSP_ADDITIONAL_STAGE_CONFIG "" CACHE STRING "semicolon separated list of stage yaml config files")
+
         set(STAGES_INCLUDED ON)
         set(AUTOGEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/src.autogen )
         set(LIB_AUDIO_DSP_PATH ${CMAKE_CURRENT_LIST_DIR})
         set(CONFIG_YAML_PATH ${LIB_AUDIO_DSP_PATH}/../stage_config)
         file(GLOB MODULE_CONFIG_YAML_FILES  ${CONFIG_YAML_PATH}/*.yaml )
+        list(APPEND MODULE_CONFIG_YAML_FILES ${ADSP_ADDITIONAL_STAGE_CONFIG})
         file(GLOB TEMPLATE_FILES ${LIB_AUDIO_DSP_PATH}/../python/audio_dsp/design/templates/*.mako)
+        set(ALL_CONFIG_YAML_DIR ${AUTOGEN_DIR}/yaml)
         unset(CMD_MAP_GEN_ARGS)
-        list(APPEND CMD_MAP_GEN_ARGS --config-dir ${CONFIG_YAML_PATH} --out-dir ${AUTOGEN_DIR})
+        list(APPEND CMD_MAP_GEN_ARGS --config-dir ${ALL_CONFIG_YAML_DIR} --out-dir ${AUTOGEN_DIR})
         set(CMD_MAP_GEN_SCRIPT ${LIB_AUDIO_DSP_PATH}/../python/audio_dsp/design/parse_config.py)
 
         # Get output C file names
         set(OUTPUT_C_FILES ${AUTOGEN_DIR}/generator/gen_cmd_map_offset.c)
 
         # output h file names
+        set(COPIED_YAML_FILES "")
         set(OUTPUT_H_FILES ${AUTOGEN_DIR}/common/cmds.h ${AUTOGEN_DIR}/device/cmd_offsets.h ${AUTOGEN_DIR}/host/host_cmd_map.h)
         foreach(YAML_FILE ${MODULE_CONFIG_YAML_FILES})
             get_filename_component(STAGE_NAME ${YAML_FILE} NAME_WE)
             list(APPEND OUTPUT_H_FILES ${AUTOGEN_DIR}/common/${STAGE_NAME}_config.h)
+
+            # copy all yaml files to the same directory so 
+            # they can be used by generation script
+            set(copied_config ${ALL_CONFIG_YAML_DIR}/${STAGE_NAME}.yaml)
+            add_custom_command(
+                OUTPUT ${copied_config}
+                COMMAND ${CMAKE_COMMAND} -E copy ${YAML_FILE} ${copied_config}
+                DEPENDS ${YAML_FILE}
+                COMMENT "Copying ${STAGE_NAME}.yaml"
+                VERBATIM
+            )
+            list(APPEND COPIED_YAML_FILES ${copied_config}) 
         endforeach()
 
         add_custom_command(
             OUTPUT ${OUTPUT_C_FILES} ${OUTPUT_H_FILES}
             COMMAND ${PYTHON_EXE} -m audio_dsp.design.parse_config ${CMD_MAP_GEN_ARGS}
-            DEPENDS ${MODULE_CONFIG_YAML_FILES} ${CMD_MAP_GEN_SCRIPT} ${TEMPLATE_FILES}
+            DEPENDS ${COPIED_YAML_FILES} ${CMD_MAP_GEN_SCRIPT} ${TEMPLATE_FILES}
             COMMENT "Generating cmd_map files included in the device and host application"
             VERBATIM
         )

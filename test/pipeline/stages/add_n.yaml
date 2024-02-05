@@ -1,0 +1,5 @@
+module:
+  add_n:
+    n:
+      type: int
+includes: []

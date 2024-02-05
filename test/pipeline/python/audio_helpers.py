@@ -8,6 +8,8 @@ import scipy
 import matplotlib.pyplot as plt
 from pathlib import Path
 
+from audio_dsp.dsp import generic
+
 def generate_test_signal(wav_file_name, type="sine", fs=48000, duration=10, num_channels=2, amplitude=0.8, sig_dtype=np.int32):
     if type == "sine":
         f = 1000
@@ -24,7 +26,23 @@ def generate_test_signal(wav_file_name, type="sine", fs=48000, duration=10, num_
     else:
         assert False, f"ERROR: Generating {type} signal not supported"
 
+def read_wav(path):
+    rate, data = scipy.io.wavfile.read(path)
+    return rate, data
 
+def write_wav(path, fs, data):
+    return scipy.io.wavfile.write(path, fs, data)
+
+def read_and_truncate(path, f_bits=generic.Q_SIG):
+    """Read wav and truncate the least significant fractional bits"""
+    rate, data = read_wav(path)
+
+    if data.dtype != np.int32:
+        raise TypeError(f"wav data type {data.dtype} not supported")
+
+    mask = ~int(2**(31 - f_bits) - 1)
+    print("mask ", mask)
+    return rate, data & mask
 
 def correlate_and_diff(output_file, input_file, out_ch_start_end, in_ch_start_end, skip_seconds_start, skip_seconds_end, tol, corr_plot_file=None, verbose=False):
     rate_out, data_out = scipy.io.wavfile.read(output_file)

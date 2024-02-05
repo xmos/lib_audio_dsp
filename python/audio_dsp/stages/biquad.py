@@ -38,6 +38,13 @@ class Biquad(Stage):
         Returns:
             list of numpy arrays.
         """
+        # use float implementation as it is faster
+        return self.filt.process_frame(in_channels)
+
+    def get_frequency_response(self, nfft=512):
+        f, h = self.filt.freq_response(nfft)
+
+        return f, h
 
     def get_fixed_point_coeffs(self):
         a = np.array(self.filt.coeffs)
@@ -45,60 +52,60 @@ class Biquad(Stage):
 
     def make_bypass(self):
         self.details = {}
-        self.filt =  bq.biquad_bypass(self.fs)
+        self.filt =  bq.biquad_bypass(self.fs, self.n_in)
         return self
 
     def make_lowpass(self, f, q):
         self.details = dict(type="low pass", **_ws(locals()))
-        self.filt =  bq.biquad_lowpass(self.fs, f, q)
+        self.filt =  bq.biquad_lowpass(self.fs, self.n_in, f, q)
         return self
 
     def make_highpass(self, f, q):
         self.details = dict(type="high pass", **_ws(locals()))
-        self.filt =  bq.biquad_highpass(self.fs, f, q)
+        self.filt =  bq.biquad_highpass(self.fs, self.n_in, f, q)
         return self
 
     def make_bandpass(self, f, bw):
         self.details = dict(type="band pass", **_ws(locals()))
-        self.filt =  bq.biquad_bandpass(self.fs, f, bw)
+        self.filt =  bq.biquad_bandpass(self.fs, self.n_in, f, bw)
         return self
 
     def make_bandstop(self, f, bw):
         self.details = dict(type="band stop", **_ws(locals()))
-        self.filt =  bq.biquad_bandstop(self.fs, f, bw)
+        self.filt =  bq.biquad_bandstop(self.fs, self.n_in, f, bw)
         return self
 
     def make_notch(self, f, q):
         self.details = dict(type="notch", **_ws(locals()))
-        self.filt =  bq.biquad_notch(self.fs, f, q)
+        self.filt =  bq.biquad_notch(self.fs, self.n_in, f, q)
         return self
 
     def make_allpass(self, f, q):
         self.details = dict(type="all pass", **_ws(locals()))
-        self.filt =  bq.biquad_allpass(self.fs, f, q)
+        self.filt =  bq.biquad_allpass(self.fs, self.n_in, f, q)
         return self
 
     def make_peaking(self, f, q, boost_db):
         self.details = dict(type="peaking", **_ws(locals()))
-        self.filt =  bq.biquad_peaking(self.fs, f, q, boost_db)
+        self.filt =  bq.biquad_peaking(self.fs, self.n_in, f, q, boost_db)
         return self
 
     def make_constant_q(self, f, q, boost_db):
         self.details = dict(type="constant q", **_ws(locals()))
-        self.filt =  bq.biquad_constant_q(self.fs, f, q, boost_db)
+        self.filt =  bq.biquad_constant_q(self.fs, self.n_in, f, q, boost_db)
         return self
 
     def make_lowshelf(self, f, q, boost_db):
         self.details = dict(type="lowshelf", **_ws(locals()))
-        self.filt =  bq.biquad_lowshelf(self.fs, f, q, boost_db)
+        self.filt =  bq.biquad_lowshelf(self.fs, self.n_in, f, q, boost_db)
         return self
 
     def make_highshelf(self, f, q, boost_db):
         self.details = dict(type="highshelf", **_ws(locals()))
-        self.filt =  bq.biquad_highshelf(self.fs, f, q, boost_db)
+        self.filt =  bq.biquad_highshelf(self.fs, self.n_in, f, q, boost_db)
         return self
 
     def make_linkwitz(self, f0, q0, fp, qp):
         self.details = dict(type="linkwitz", **_ws(locals()))
-        self.filt =  bq.biquad_linkwitz(self.fs, f0, q0, fp, qp)
+        self.filt =  bq.biquad_linkwitz(self.fs, self.n_in, f0, q0, fp, qp)
         return self

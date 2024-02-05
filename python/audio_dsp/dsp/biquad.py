@@ -1,4 +1,5 @@
 import warnings
+from copy import deepcopy
 
 import numpy as np
 import scipy.signal as spsig
@@ -11,8 +12,8 @@ BOOST_BSHIFT = 2  # limit boosts to 12dB gain
 
 
 class biquad(dspg.dsp_block):
-    def __init__(self, coeffs: list, fs, b_shift=0, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, Q_sig)
+    def __init__(self, coeffs: list, fs, n_chans=1, b_shift=0, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, Q_sig)
 
         self.b_shift = b_shift
 
@@ -23,10 +24,10 @@ class biquad(dspg.dsp_block):
         self.check_gain()
 
         # state variables
-        self.x1 = 0
-        self.x2 = 0
-        self.y1 = 0
-        self.y2 = 0
+        self.x1 = [0]*n_chans
+        self.x2 = [0]*n_chans
+        self.y1 = [0]*n_chans
+        self.y2 = [0]*n_chans
 
         return
 
@@ -36,62 +37,63 @@ class biquad(dspg.dsp_block):
 
         return
 
-    def process(self, sample):
+    def process(self, sample, channel=0):
         # process a single sample using direct form 1
         y = (self.coeffs[0]*sample +
-             self.coeffs[1]*self.x1 +
-             self.coeffs[2]*self.x2 +
-             self.coeffs[3]*self.y1 +
-             self.coeffs[4]*self.y2)
+             self.coeffs[1]*self.x1[channel] +
+             self.coeffs[2]*self.x2[channel] +
+             self.coeffs[3]*self.y1[channel] +
+             self.coeffs[4]*self.y2[channel])
 
-        self.x2 = self.x1
-        self.x1 = sample
-        self.y2 = self.y1
-        self.y1 = y
+        self.x2[channel] = self.x1[channel]
+        self.x1[channel] = sample
+        self.y2[channel] = self.y1[channel]
+        self.y1[channel] = y
 
         y = y * 2**self.b_shift
 
         return y
 
-    def process_int(self, sample):
+    def process_int(self, sample, channel=0):
 
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
 
         # process a single sample using direct form 1
         y = utils.int64(((sample_int*self.int_coeffs[0])) +
-                        ((self.x1*self.int_coeffs[1])) +
-                        ((self.x2*self.int_coeffs[2])) +
-                        (((self.y1*self.int_coeffs[3]) >> self.b_shift)) +
-                        (((self.y2*self.int_coeffs[4]) >> self.b_shift)))
+                        ((self.x1[channel]*self.int_coeffs[1])) +
+                        ((self.x2[channel]*self.int_coeffs[2])) +
+                        (((self.y1[channel]*self.int_coeffs[3]) >> self.b_shift)) +
+                        (((self.y2[channel]*self.int_coeffs[4]) >> self.b_shift)))
 
         # combine the b_shift with the >> 30
         y = y + 2**(29 - self.b_shift)
         y = utils.int32(y >> (30 - self.b_shift))
 
         # save states
-        self.x2 = utils.int32(self.x1)
-        self.x1 = utils.int32(sample_int)
-        self.y2 = utils.int32(self.y1)
-        self.y1 = utils.int32(y)
+        self.x2[channel] = utils.int32(self.x1[channel])
+        self.x1[channel] = utils.int32(sample_int)
+        self.y2[channel] = utils.int32(self.y1[channel])
+        self.y1[channel] = utils.int32(y)
 
         y_flt = (float(y)*2**-self.Q_sig)
 
         return y_flt
 
-    def process_vpu(self, sample):
+    def process_vpu(self, sample, channel=0):
 
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
 
         # process a single sample using direct form 1. In the VPU the ``>> 30``
         # comes before accumulation
-        y = utils.vlmaccr([sample_int, self.x1, self.x2, self.y1, self.y2],
+        y = utils.vlmaccr([sample_int, self.x1[channel], self.x2[channel],
+                           self.y1[channel], self.y2[channel]],
                           self.int_coeffs)
 
         # save states
-        self.x2 = utils.int32(self.x1)
-        self.x1 = utils.int32(sample_int)
-        self.y2 = utils.int32(self.y1)
-        self.y1 = utils.int32(y)
+        self.x2[channel] = utils.int32(self.x1[channel])
+        self.x1[channel] = utils.int32(sample_int)
+        self.y2[channel] = utils.int32(self.y1[channel])
+        self.y1[channel] = utils.int32(y)
 
         # compensate for coefficients
         y = utils.int32(y << self.b_shift)
@@ -99,6 +101,19 @@ class biquad(dspg.dsp_block):
         y_flt = (float(y)*2**-self.Q_sig)
 
         return y_flt
+
+    def process_frame_vpu(self, frame):
+        # simple multichannel, but integer. Assumes no channel unique states!
+        n_outputs = len(frame)
+        frame_size = frame[0].shape[0]
+        output = deepcopy(frame)
+        for chan in range(n_outputs):
+            this_chan = output[chan]
+            for sample in range(frame_size):
+                this_chan[sample] = self.process_vpu(this_chan[sample],
+                                                     channel=chan)
+
+        return output
 
     def freq_response(self, nfft=512):
         b = [self.coeffs[0], self.coeffs[1], self.coeffs[2]]
@@ -118,85 +133,86 @@ class biquad(dspg.dsp_block):
         return
 
     def reset_state(self):
-        self.x1 = 0
-        self.x2 = 0
-        self.y1 = 0
-        self.y2 = 0
+        for chan in range(self.n_chans):
+            self.x1[chan] = 0
+            self.x2[chan] = 0
+            self.y1[chan] = 0
+            self.y2[chan] = 0
 
         return
 
 
-def biquad_bypass(fs):
+def biquad_bypass(fs, n_chans):
     coeffs = make_biquad_bypass(fs)
-    return biquad(coeffs, fs)
+    return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_gain(fs, gain_db):
+def biquad_gain(fs, n_chans, gain_db):
     coeffs = make_biquad_gain(fs, gain_db)
-    return biquad(coeffs, fs, b_shift=BOOST_BSHIFT)
+    return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_lowpass(fs, f, q):
+def biquad_lowpass(fs, n_chans, f, q):
     coeffs = make_biquad_lowpass(fs, f, q)
-    return biquad(coeffs, fs)
+    return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_highpass(fs, f, q):
+def biquad_highpass(fs, n_chans, f, q):
     coeffs = make_biquad_highpass(fs, f, q)
-    return biquad(coeffs, fs)
+    return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_bandpass(fs, f, bw):
+def biquad_bandpass(fs, n_chans, f, bw):
     # bw is bandwidth in octaves
     coeffs = make_biquad_bandpass(fs, f, bw)
-    return biquad(coeffs, fs)
+    return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_bandstop(fs, f, bw):
+def biquad_bandstop(fs, n_chans, f, bw):
     # bw is bandwidth in octaves
     coeffs = make_biquad_bandstop(fs, f, bw)
-    return biquad(coeffs, fs)
+    return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_notch(fs, f, q):
+def biquad_notch(fs, n_chans, f, q):
     coeffs = make_biquad_notch(fs, f, q)
-    return biquad(coeffs, fs)
+    return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_allpass(fs, f, q):
+def biquad_allpass(fs, n_chans, f, q):
     coeffs = make_biquad_allpass(fs, f, q)
-    return biquad(coeffs, fs)
+    return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_peaking(fs, f, q, boost_db):
+def biquad_peaking(fs, n_chans, f, q, boost_db):
     coeffs = make_biquad_peaking(fs, f, q, boost_db)
-    return biquad(coeffs, fs, b_shift=BOOST_BSHIFT)
+    return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_constant_q(fs, f, q, boost_db):
+def biquad_constant_q(fs, n_chans, f, q, boost_db):
     coeffs = make_biquad_constant_q(fs, f, q, boost_db)
-    return biquad(coeffs, fs, b_shift=BOOST_BSHIFT)
+    return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_lowshelf(fs, f, q, boost_db):
+def biquad_lowshelf(fs, n_chans, f, q, boost_db):
     # q is similar to standard low pass, i.e. > 0.707 will yield peakiness
     # the level change at f will be boost_db/2
     coeffs = make_biquad_lowshelf(fs, f, q, boost_db)
-    return biquad(coeffs, fs, b_shift=BOOST_BSHIFT)
+    return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_highshelf(fs, f, q, boost_db):
+def biquad_highshelf(fs, n_chans, f, q, boost_db):
     # q is similar to standard high pass, i.e. > 0.707 will yield peakiness
     # the level change at f will be boost_db/2
     coeffs = make_biquad_highshelf(fs, f, q, boost_db)
-    return biquad(coeffs, fs, b_shift=BOOST_BSHIFT)
+    return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_linkwitz(fs, f0, q0, fp, qp):
+def biquad_linkwitz(fs, n_chans, f0, q0, fp, qp):
     # used for changing one low frequency roll off slope for another,
     # e.g. in a loudspeaker
     coeffs = make_biquad_linkwitz(fs, f0, q0, fp, qp)
-    return biquad(coeffs, fs, b_shift=0)
+    return biquad(coeffs, fs, n_chans=n_chans, b_shift=0)
 
 
 def round_to_q30(coeffs, b_shift):
