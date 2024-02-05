@@ -109,7 +109,7 @@ pipeline {
               xcoreCleanSandbox()
             }
           }
-        }
+        } // Build and test
 
         stage('docs') {
 
@@ -176,8 +176,8 @@ pipeline {
               }
             }
           }
-        }
-      } // stages
-    } // Build & Test
+        } // Hardware test
+      } // parallel
+    } // CI
   } // stages
 } // pipeline
