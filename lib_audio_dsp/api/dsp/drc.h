@@ -2,15 +2,15 @@
 #pragma once
 
 typedef struct{
-  uq2_30 attack_alpha;
-  uq2_30 release_alpha;
-  float_s32_t envelope;
+  float attack_alpha;
+  float release_alpha;
+  float envelope;
 }env_detector_t;
 
 typedef struct{
   env_detector_t env_det;
-  float_s32_t threshold;
-  float_s32_t gain;
+  float threshold;
+  float gain;
 }limiter_t;
 
 env_detector_t adsp_env_detector_init(

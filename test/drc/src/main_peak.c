@@ -18,13 +18,13 @@ int main()
 {
   FILE * in = _fopen("../sig_48k.bin", "rb");
   FILE * out = _fopen("sig_out.bin", "wb");
-  FILE * lim_info = _fopen("lim_info.bin", "rb");
+  //FILE * lim_info = _fopen("lim_info.bin", "rb");
 
   fseek(in, 0, SEEK_END);
   int in_len = ftell(in) / sizeof(int32_t);
   fseek(in, 0, SEEK_SET);
 
-  float_s32_t th;
+  /*float_s32_t th;
   uq2_30 at_al, re_al;
 
   fread(&th.mant, sizeof(int32_t), 1, lim_info);
@@ -36,7 +36,8 @@ int main()
   limiter_t lim = (limiter_t){
                   (env_detector_t){at_al, re_al, (float_s32_t){0, SIG_EXP}},
                   th, (float_s32_t){0x40000000, -30}
-  };
+  };*/
+  limiter_t lim = adsp_limiter_peak_init(48000, -20, 0.01, 0.07);
 
   //printf("%ld %d %ld %ld\n", th.mant, th.exp, at_al, re_al);
 
