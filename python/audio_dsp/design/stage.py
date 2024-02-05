@@ -148,6 +148,8 @@ class Stage(Node):
     details : dict
         Dictionary of descriptive details which can be displayed to describe
         current tuning of this stage
+    dsp_block : None | audio_dsp.dsp.generic.dsp_block
+        This will point to a dsp block class (e.g. biquad etc), to be set by the child class
     """
     def __init__(self, config, inputs):
         super().__init__()
@@ -170,8 +172,6 @@ class Stage(Node):
         self.name = next(iter(self.yaml_dict["module"].keys()))
         self._control_fields = {name: ValueControlField() for name in self.yaml_dict["module"][self.name].keys()}
         self.details = {}
-
-        # this will point to a dsp block class (e.g. biquad etc), to be set by the child class
         self.dsp_block = None
 
     @property
@@ -255,10 +255,10 @@ class Stage(Node):
             list of numpy arrays.
         """
         # use float implementation as it is faster
-        return self.dsp_obj.process_frame(in_channels)
+        return self.dsp_block.process_frame(in_channels)
 
     def get_frequency_response(self, nfft=512):
-        return self.dsp_obj.freq_response(nfft)
+        return self.dsp_block.freq_response(nfft)
 
     def plot_frequency_response(self, nfft=512):
         f, h = self.get_frequency_response(nfft)

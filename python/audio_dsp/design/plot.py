@@ -1,3 +1,7 @@
+"""
+Helper functions for displaying plots in the jupyter notebook pipeline
+design
+"""
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -5,6 +9,16 @@ import audio_dsp.dsp.utils as utils
 
 
 def plot_frequency_response(f, h, range=50):
+    """
+    Plot the frequency response
+
+    Parameters
+    ----------
+    f : numpy.ndarray
+        Frequencies (The X axis)
+    h : numpy.ndarray
+        Frequency response at the corresponding frequencies in ``f``
+    """
     h_db = utils.db(h)
 
     y_max = np.max(h_db) + 1
