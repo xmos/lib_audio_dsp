@@ -262,7 +262,7 @@ class Stage(Node):
 
     def plot_frequency_response(self, nfft=512):
         f, h = self.get_frequency_response(nfft)
-        plot.plot_frequency_response(f, h)
+        plot.plot_frequency_response(f, h, name=self.name)
 
     def add_to_dot(self, dot):
         """
