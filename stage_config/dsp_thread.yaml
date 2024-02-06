@@ -1,0 +1,6 @@
+module:
+  dsp_thread:
+    max_cycles:
+      type: uint32_t
+includes:
+  - "stdint.h"

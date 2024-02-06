@@ -77,6 +77,9 @@ class Graph:
             Ordered list of nodes
         """
         graph = {}
+        for node in self.nodes:
+            graph[node] = set()
+
         for edge in self.edges:
             if edge.dest is not None:
                 try:

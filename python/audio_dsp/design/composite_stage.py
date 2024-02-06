@@ -11,23 +11,23 @@ import itertools
 
 class CompositeStage:
     """
-    This is a higher order stage, contains stages as well as other composite 
+    This is a higher order stage, contains stages as well as other composite
     stages. A thread will be a composite stage. Composite stages allow
 
     - drawing the detail with graphviz
     - process
     - frequency response
-    
+
     TODO:
-    - Process method on the composite stage will need to know its inputs and 
+    - Process method on the composite stage will need to know its inputs and
     the order of the inputs (which input index corresponds to each input edge).
     However a CompositeStage doesn't know all of its inputs when it is created.
-      
+
     Parameters
     ----------
     graph : audio_dsp.graph.Graph
         instance of graph that all stages in this composite will be added to.
-    name : str 
+    name : str
         Name of this instance to use when drawing the pipeline, defaults to class name.
 
     Attributes
@@ -56,7 +56,7 @@ class CompositeStage:
         new = CompositeStage(graph=self._graph, name=name)
         self._composite_stages.append(new)
         return new
-    
+
     @property
     def o(self):
         all_stages = self.get_all_stages()
@@ -67,7 +67,7 @@ class CompositeStage:
         """
         Create a new stage or composite stage and
         register it with this composite stage
-        
+
         Parameters
         ----------
         stage_type : type
@@ -76,7 +76,7 @@ class CompositeStage:
             Edges of the pipeline that will be connected to the newly created stage.
         kwargs : dict
             Additional args are forwarded to the stages constructore (__init__)
-        
+
         Returns
         -------
         stage_type
@@ -110,7 +110,7 @@ class CompositeStage:
 
     def contains_stage(self, stage):
         """recursively search self for the stage
-        
+
         Returns
         -------
         bool
@@ -128,7 +128,7 @@ class CompositeStage:
             list of stages.
         """
         return sum([c.get_all_stages() for c in self._composite_stages], start=self._stages)
-    
+
     def process(self, data):
         """
         TODO
