@@ -170,8 +170,6 @@ def send_config_to_device(pipeline: Pipeline):
     ----------
     pipeline : Pipeline
         A designed and optionally tuned pipeline
-    protocol : str
-        Control protocol, "usb" is the only supported option.
     """
     for stage in pipeline.stages:
         for command, value in stage.get_config().items():
