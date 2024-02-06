@@ -8,6 +8,7 @@ from uuid import uuid4
 
 import itertools
 
+
 class CompositeStage:
     """
     This is a higher order stage, contains stages as well as other composite 
@@ -19,14 +20,15 @@ class CompositeStage:
     
     TODO:
     - Process method on the composite stage will need to know its inputs and 
-      the order of the inputs (which input index corresponds to each input edge).
-      However a CompositeStage doesn't know all of its inputs when it is created.
+    the order of the inputs (which input index corresponds to each input edge).
+    However a CompositeStage doesn't know all of its inputs when it is created.
       
     Parameters
     ----------
     graph : audio_dsp.graph.Graph
         instance of graph that all stages in this composite will be added to.
-    name : Name of this instance to use when drawing the pipeline, defaults to class name.
+    name : str 
+        Name of this instance to use when drawing the pipeline, defaults to class name.
 
     Attributes
     ----------
@@ -57,11 +59,6 @@ class CompositeStage:
     
     @property
     def o(self):
-        """
-        get the output edges of this stage,
-        that is all edges whose source node is
-        in this stage, and dest node is not.
-        """
         all_stages = self.get_all_stages()
         all_edges = list(itertools.chain.from_iterable([stage.o for stage in all_stages]))
         return [edge for edge in all_edges if edge.dest not in all_stages]
