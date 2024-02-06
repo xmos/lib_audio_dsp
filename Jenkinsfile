@@ -86,13 +86,16 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       dir("test/biquad") {
-                        runPytest("--dist worksteal")
+                        runPytest("test_biquad_python.py --dist worksteal")
+                        runPytest("test_biquad_c.py --dist worksteal")
                       }
                       dir("test/cascaded_biquads") {
-                        runPytest("--dist worksteal")
+                        runPytest("test_cascaded_biquads_python.py --dist worksteal")
+                        runPytest("test_cascaded_biquads_c.py --dist worksteal")
                       }
                       dir("test/drc") {
-                        runPytest("--dist worksteal")
+                        runPytest("test_drc_python.py --dist worksteal")
+                        runPytest("test_drc_c.py --dist worksteal")
                       }
                       dir("test/utils") {
                         runPytest("--dist worksteal")
@@ -109,7 +112,7 @@ pipeline {
               xcoreCleanSandbox()
             }
           }
-        }
+        } // Build and test
 
         stage('docs') {
 
@@ -136,7 +139,7 @@ pipeline {
 
         stage ('Hardware Test') {
           agent {
-            label 'xcore.ai-explorer && uhubctl'
+            label 'xcore.ai && uhubctl'
           }
 
           steps {
@@ -176,8 +179,8 @@ pipeline {
               }
             }
           }
-        }
-      } // stages
-    } // Build & Test
+        } // Hardware test
+      } // parallel
+    } // CI
   } // stages
 } // pipeline

@@ -42,8 +42,7 @@ int32_t adsp_limiter_peak(
 ) {
   adsp_env_detector_peak(&lim->env_det, new_samp);
   float_s32_t env = (lim->env_det.envelope.mant == 0) ? delta : lim->env_det.envelope;
-  float_s32_t new_gain = float_s32_div(lim->threshold, env);
-  new_gain = (float_s32_gt(new_gain, one)) ? one : new_gain;
+  float_s32_t new_gain = (float_s32_gt(lim->threshold, env)) ? one : float_s32_div(lim->threshold, env);
 
   uq2_30 alpha = lim->env_det.release_alpha;
   if (float_s32_gt(lim->gain, new_gain)) {
@@ -61,8 +60,7 @@ int32_t adsp_limiter_rms(
 ) {
   adsp_env_detector_rms(&lim->env_det, new_samp);
   float_s32_t env = (lim->env_det.envelope.mant == 0) ? delta : lim->env_det.envelope;
-  float_s32_t new_gain = float_s32_div(lim->threshold, env);
-  new_gain = (float_s32_gt(new_gain, one)) ? one : new_gain;
+  float_s32_t new_gain = (float_s32_gt(lim->threshold, env)) ? one : float_s32_div(lim->threshold, env);
 
   uq2_30 alpha = lim->env_det.release_alpha;
   if (float_s32_gt(lim->gain, new_gain)) {

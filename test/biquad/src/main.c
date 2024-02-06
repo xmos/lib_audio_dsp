@@ -31,6 +31,7 @@ int main()
   fread(taps_buf, sizeof(int32_t), 5, coeffs);
   fread(&lsh, sizeof(int32_t), 1, coeffs);
   //printf("%ld %ld %ld %ld %ld %d\n", taps_buf[0], taps_buf[1], taps_buf[2], taps_buf[3], taps_buf[4], lsh);
+  fclose(coeffs);
   
   for (unsigned i = 0; i < in_len; i++)
   {
@@ -41,6 +42,9 @@ int main()
     //printf("%ld ", samp_out);
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }
+
+  fclose(in);
+  fclose(out);
 
   return 0;
 }
