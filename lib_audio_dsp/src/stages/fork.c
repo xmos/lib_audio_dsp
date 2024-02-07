@@ -12,8 +12,8 @@ void fork_process(int32_t **input, int32_t **output, void *app_data_state)
     fork_state_t *state = app_data_state;
 
     int output_idx = 0;
-    for(int fork_count = 0; fork_count < state->n_forks; fork_count++) {
-        for(int input_index = 0; input_index < state->n_inputs; ++input_index) {
+    for(int input_index = 0; input_index < state->n_inputs; ++input_index) {
+        for(int fork_count = 0; fork_count < state->n_forks; fork_count++) {
             int32_t *in = input[input_index];
             int32_t *out = output[output_idx++];
             memcpy(out, in, sizeof(int32_t) * state->frame_size);

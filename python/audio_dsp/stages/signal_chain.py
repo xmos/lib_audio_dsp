@@ -1,5 +1,6 @@
 
 from ..design.stage import Stage, find_config, StageOutput
+from operator import itemgetter
 from itertools import chain
 
 class Bypass(Stage):
@@ -32,7 +33,8 @@ class Fork(Stage):
     def __init__(self, count=2, **kwargs):
         super().__init__(config=find_config("fork"), **kwargs)
         self.create_outputs(self.n_in * count)
-        self.forks = [self.o[i:i + self.n_in] for i in range(0, self.n_in * count, self.n_in)]
+        fork_indices = [list(range(i, self.n_in*count, count)) for i in range(count)]
+        self.forks = [itemgetter(*i)(self.o) for i in fork_indices]
 
     def get_frequency_response(self, nfft=512):
         # not sure what this looks like!
