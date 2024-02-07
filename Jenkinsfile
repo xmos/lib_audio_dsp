@@ -117,15 +117,18 @@ pipeline {
         stage('docs') {
 
           agent {
-            label 'linux&&x86_64'
+            label 'documentation'
           }
           steps {
             checkout scm
-            sh """docker run -u "\$(id -u):\$(id -g)" \
-                  --rm \
-                  -v ${WORKSPACE}:/build \
-                  --entrypoint /build/doc/build_docs.sh \
-                  ghcr.io/xmos/xmosdoc:$XMOSDOC_VERSION -v"""
+            createVenv("requirements.txt")
+
+            withVenv {
+              withTools(params.TOOLS_VERSION) {
+                sh "pip install -e python git+ssh://git@github.com/xmos/xmosdoc"
+                sh "xmosdoc -dvvv"
+              }
+            }
             archiveArtifacts artifacts: "doc/_out/pdf/*.pdf"
             archiveArtifacts artifacts: "doc/_out/html/**/*"
             archiveArtifacts artifacts: "doc/_out/linkcheck/**/*"
