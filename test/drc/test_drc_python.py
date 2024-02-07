@@ -122,14 +122,14 @@ def test_drc_component(fs, component, at, rt, threshold):
     if "envelope" in component:
         # envelope detector has 1 output
         for n in np.arange(len(signal)):
-            output_int[n] = drcut.process_int(signal[n])
+            output_int[n] = drcut.process_f32(signal[n])
         drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n] = drcut.process(signal[n])
     else:
         # limiter has 3 outputs
         for n in np.arange(len(signal)):
-            output_int[n], _, _ = drcut.process_int(signal[n])
+            output_int[n], _, _ = drcut.process_f32(signal[n])
         drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n], _, _ = drcut.process(signal[n])
@@ -178,13 +178,13 @@ def test_drc_component_frames(fs, component, at, rt, threshold, n_chans):
 
     if "envelope" in component:
         for n in range(len(signal_frames)):
-            output_int[:, n:n+frame_size] = drcut.process_frame_int(signal_frames[n])
+            output_int[:, n:n+frame_size] = drcut.process_frame_f32(signal_frames[n])
         drcut.reset_state()
         for n in range(len(signal_frames)):
             output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])
     else:        
         for n in range(len(signal_frames)):
-            output_int[:, n:n+frame_size] = drcut.process_frame_int(signal_frames[n])
+            output_int[:, n:n+frame_size] = drcut.process_frame_f32(signal_frames[n])
         drcut.reset_state()
         for n in range(len(signal_frames)):
             output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])

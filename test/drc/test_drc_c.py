@@ -53,21 +53,21 @@ def get_c_wav(dir_name, lim_name, sim = True):
 
 
 def run_py(filt, sig_fl):
-  out_int = np.zeros(sig_fl.size)
-  out_fl = np.zeros(sig_fl.size)
+  out_f32 = np.zeros(sig_fl.size)
+  out_f64 = np.zeros(sig_fl.size)
   
   for n in range(sig_fl.size):
-    out_int[n], _, __ = filt.process_int(sig_fl[n])
+    out_f32[n], _, _ = filt.process_f32(sig_fl[n])
 
-  sf.write(gen_dir / "sig_py_int.wav", out_int, fs, "PCM_24")
+  sf.write(gen_dir / "sig_py_int.wav", out_f32, fs, "PCM_24")
   filt.reset_state()
 
   for n in range(sig_fl.size):
-    out_fl[n], _, __ = filt.process(sig_fl[n])
+    out_f64[n], _, _ = filt.process(sig_fl[n])
 
-  sf.write(gen_dir / "sig_py_flt.wav", out_fl, fs, "PCM_24")
+  sf.write(gen_dir / "sig_py_flt.wav", out_f64, fs, "PCM_24")
 
-  return out_fl, out_int
+  return out_f64, out_f32
 
 
 def single_test(lim, lim_name, tname, sig_fl):
