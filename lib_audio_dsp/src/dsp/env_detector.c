@@ -30,7 +30,7 @@ void adsp_env_detector_peak(
   env_detector_t * env_det,
   int32_t new_sample
 ) {
-  float samp = float_s32_to_float((float_s32_t){new_sample, -27});
+  float samp = float_s32_to_float((float_s32_t){new_sample, SIG_EXP});
   samp = fabsf(samp);
 
   float alpha = env_det->release_alpha;
@@ -45,7 +45,7 @@ void adsp_env_detector_rms(
   env_detector_t * env_det,
   int32_t new_sample
 ) {
-  float samp = float_s32_to_float((float_s32_t){new_sample, -27});
+  float samp = float_s32_to_float((float_s32_t){new_sample, SIG_EXP});
   samp *= samp;
 
   float alpha = env_det->release_alpha;

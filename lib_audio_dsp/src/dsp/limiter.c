@@ -4,8 +4,6 @@
 static inline int32_t f32_to_fixed(float x, exponent_t output_exp){
   float_s32_t v = f32_to_float_s32(x);
   right_shift_t shr = output_exp - v.exp;
-  //if(shr >= 0) return (v.mant >> ( shr) );
-  //else         return (v.mant << (-shr) );
   asm("ashr %0, %1, %2" : "=r" (v.mant) : "r" (v.mant), "r" (shr));
   return v.mant;
 }
@@ -50,8 +48,8 @@ int32_t adsp_limiter_peak(
   }
 
   lim->gain = ((1 - alpha) * lim->gain) + (alpha * new_gain);
-  float y = float_s32_to_float((float_s32_t){new_samp, -27});
-  return f32_to_fixed(y * lim->gain, -27);
+  float y = float_s32_to_float((float_s32_t){new_samp, SIG_EXP});
+  return f32_to_fixed(y * lim->gain, SIG_EXP);
 }
 
 int32_t adsp_limiter_rms(
@@ -68,6 +66,6 @@ int32_t adsp_limiter_rms(
   }
 
   lim->gain = ((1 - alpha) * lim->gain) + (alpha * new_gain);
-  float y = float_s32_to_float((float_s32_t){new_samp, -27});
-  return f32_to_fixed(y * lim->gain, -27);
+  float y = float_s32_to_float((float_s32_t){new_samp, SIG_EXP});
+  return f32_to_fixed(y * lim->gain, SIG_EXP);
 }
