@@ -35,8 +35,10 @@ def create_pipeline():
         bi = t.stage(Biquad, p.i)
         cb = t.stage(CascadedBiquads, bi.o)
         by = t.stage(Bypass, cb.o)
+    with p.add_thread() as t:                # ch   0   1
+        by1 = t.stage(Bypass, by.o)
 
-    p.set_outputs(by.o)
+    p.set_outputs(by1.o)
     return p
 
 

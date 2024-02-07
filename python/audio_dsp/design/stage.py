@@ -1,5 +1,4 @@
 
-
 from .graph import Edge, Node
 import yaml
 from pathlib import Path
@@ -15,7 +14,7 @@ def find_config(name):
     name : str
         Name of stage, e.g. a stage whose config is saved in "biquad.yaml"
         should pass in "biquad".
-    
+
     Returns
     -------
     Path
@@ -63,17 +62,17 @@ class StageOutput(Edge):
         self.frame_size = frame_size
         # TODO edges will probably need an associated type audio vs. data etc.
         # self.type = q23
-    
+
     @property
     def dest_index(self):
         return self._dest_index
-    
+
     @dest_index.setter
     def dest_index(self, value):
         if self._dest_index is not None:
             raise RuntimeError(f"This edge alread has a dest index, can't be changes to {value}")
         self._dest_index = value
-        
+
     def __repr__(self) -> str:
         """
         Makes print output usable
@@ -108,16 +107,16 @@ class ValueControlField:
 class Stage(Node):
     """
     Base class for stages in the DSP pipeline. Each subclass
-    should have a corresponding C implementation. Enables 
+    should have a corresponding C implementation. Enables
     code generation, tuning and simulation of a stage.
 
     The stages config can be written and read using square brackets as with a
     dictionary. This is shown in the below example, note that the config field
     must have been declared in the stages yaml file.
-    
+
         self["config_field"] = 2
         assert self["config_field"] == 2
-    
+
     Parameters
     ----------
     config : str | Path
@@ -125,7 +124,7 @@ class Stage(Node):
         parameters are derived from this config file.
     inputs : Iterable[StageOutput]
         Pipeline edges to connect to self
-    
+
     Attributes
     ----------
     i : list[StageOutput]
@@ -217,7 +216,7 @@ class Stage(Node):
 
         Parameters
         ----------
-        field : str 
+        field : str
             name of the field
         getter : function
             A function which returns the current value
@@ -232,7 +231,7 @@ class Stage(Node):
     def get_config(self):
         """Get a dictionary containing the current value of the control
         fields which have been set
-        
+
         Returns
         -------
         dict
