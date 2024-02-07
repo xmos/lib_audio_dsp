@@ -18,7 +18,6 @@ def set_host_app(host_app, protocol="usb"):
     global HOST_APP
     global PROTOCOL
     HOST_APP = Path(host_app)
-    print("HOST_APP = ", HOST_APP)
     if not HOST_APP.is_file():
         raise RuntimeError(f"Host App file {str(HOST_APP)} doesn't exist")
     PROTOCOL = protocol

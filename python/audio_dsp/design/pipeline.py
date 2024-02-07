@@ -5,6 +5,7 @@ Top level pipeline design class and code generation functions.
 
 from typing import Iterable
 from pathlib import Path
+from tabulate import tabulate
 from .graph import Graph
 from .stage import StageOutput
 from .thread import Thread
@@ -375,7 +376,7 @@ def _generate_dsp_threads(resolved_pipeline, block_size = 1):
             output_edges = [edge for edge in all_edges if edge[0][0] == stage_index]
 
             # thread stages are already ordered during pipeline resolution
-            if len(input_edges) > 0 and len(output_edges) > 0:
+            if len(input_edges) > 0 or len(output_edges) > 0:
                 func += f"\t{name}_process(\n"
                 func += f"\t\tstage_{stage_thread_index}_input,\n"
                 func += f"\t\tstage_{stage_thread_index}_output,\n"
@@ -637,8 +638,29 @@ def profile_pipeline(pipeline: Pipeline):
         A designed and optionally tuned pipeline
     """
     host_app, protocol = get_host_app()
-    print("Thread Index     Max Cycles")
+    #print("Thread Index     Max Cycles")
+    profile_info = []
     for thread in pipeline.threads:
+        thread_fs = None
+        thread_frame_size = None
+        stages = thread.get_all_stages()
+        for stg in stages:
+            if stg.fs != None:
+                thread_fs = stg.fs
+                thread_frame_size = stg.frame_size
+                break
+        # Assuming that all stages in the thread have the same sampling freq and frame size
+        if thread_fs == None:
+            raise RuntimeError(f"Could not find out the sampling frequency for thread index {thread.id}")
+
+        if thread_frame_size == None:
+            raise RuntimeError(f"Could not find out the frame size for thread index {thread.id}")
+
+        reference_timer_freq_hz = 100e6
+        frame_time_s = float(thread_frame_size)/thread_fs
+        ticks_per_sample_time_s = reference_timer_freq_hz * frame_time_s
+        ticks_per_sample_time_s = ticks_per_sample_time_s
+
         # TODO Implement a generic way of reading all config from the stage
         command = "dsp_thread_max_cycles"
         ret = subprocess.run([host_app, "--use", protocol, "--instance-id", str(thread.thread_stage.index),
@@ -646,5 +668,7 @@ def profile_pipeline(pipeline: Pipeline):
         if ret.returncode:
             print("Unable to connect connect to device")
             return
-        stdout = ret.stdout.splitlines()[0].decode('utf-8')
-        print(f"{thread.id}                 {stdout}")
+        cycles = int(ret.stdout.splitlines()[0].decode('utf-8'))
+        percentage_used = (cycles / ticks_per_sample_time_s)*100
+        profile_info.append([thread.id, round(ticks_per_sample_time_s, 2), cycles, round(percentage_used, 2)])
+    print(tabulate(profile_info, headers=['thread index', 'available time (ref timer ticks)', 'max ticks consumed', '% consumed'], tablefmt='pretty'))
