@@ -100,7 +100,7 @@ class float_s32():
         if Q_sig and isinstance(value, float):
             self.mant = int32(round(value * 2**Q_sig))
             self.exp = -Q_sig
-        elif isinstance(value, float):
+        elif isinstance(value, float) or isinstance(value, np.float32):
             self.mant, self.exp = math.frexp(value)
             self.mant = float_to_int32(self.mant)
             self.exp -= 31

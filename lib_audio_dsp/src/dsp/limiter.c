@@ -4,8 +4,10 @@
 static inline int32_t f32_to_fixed(float x, exponent_t output_exp){
   float_s32_t v = f32_to_float_s32(x);
   right_shift_t shr = output_exp - v.exp;
-  if(shr >= 0) return (v.mant >> ( shr) );
-  else         return (v.mant << (-shr) );
+  //if(shr >= 0) return (v.mant >> ( shr) );
+  //else         return (v.mant << (-shr) );
+  asm("ashr %0, %1, %2" : "=r" (v.mant) : "r" (v.mant), "r" (shr));
+  return v.mant;
 }
 
 limiter_t adsp_limiter_peak_init(
@@ -56,7 +58,7 @@ int32_t adsp_limiter_rms(
   limiter_t * lim,
   int32_t new_samp
 ) {
-  adsp_env_detector_peak(&lim->env_det, new_samp);
+  adsp_env_detector_rms(&lim->env_det, new_samp);
   float env = (lim->env_det.envelope == 0) ? 1e-20 : lim->env_det.envelope;
   float new_gain = (lim->threshold > env) ? 1 : lim->threshold / env;
 

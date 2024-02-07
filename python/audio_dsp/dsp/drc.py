@@ -69,12 +69,12 @@ class envelope_detector_peak(dspg.dsp_block):
         assert self.attack_alpha > 0
         assert self.release_alpha > 0
 
-        self.attack_alpha_uq30 = utils.uq_2_30(round(self.attack_alpha * 2**30))
-        self.release_alpha_uq30 = utils.uq_2_30(round(self.release_alpha * 2**30))
+        self.attack_alpha_f32 = np.float32(self.attack_alpha)
+        self.release_alpha_f32 = np.float32(self.release_alpha)
 
         # very long times might quantize to zero
-        assert self.attack_alpha_uq30 > 0
-        assert self.attack_alpha_uq30 > 0
+        assert self.attack_alpha_f32 > np.float32(0)
+        assert self.attack_alpha_f32 > np.float32(0)
 
         # initalise envelope state
         self.reset_state()
@@ -82,7 +82,7 @@ class envelope_detector_peak(dspg.dsp_block):
     def reset_state(self):
         """Reset the envelope to zero."""
         self.envelope = [0] * self.n_chans
-        self.envelope_s32 = [utils.float_s32([0, -self.Q_sig])] * self.n_chans
+        self.envelope_f32 = [np.float32(0)] * self.n_chans
 
     def process(self, sample, channel=0):
         """
@@ -114,30 +114,30 @@ class envelope_detector_peak(dspg.dsp_block):
         float output.
 
         """
-        if isinstance(sample, utils.float_s32):
+        if isinstance(sample, np.float32):
             # don't do anything if we got float_s32, this function was probably
             # called from a limiter or compressor
-            sample_s32 = sample
+            sample_f32 = sample
         else:
             # if input isn't float_s32, convert it
-            sample_s32 = utils.float_s32(sample)
+            sample_f32 = np.float32(sample)
 
-        sample_mag = abs(sample_s32)
+        sample_mag = abs(sample_f32)
 
         # see if we're attacking or decaying
-        if sample_mag > self.envelope_s32[channel]:
-            alpha = self.attack_alpha_uq30
+        if sample_mag > self.envelope_f32[channel]:
+            alpha = self.attack_alpha_f32
         else:
-            alpha = self.release_alpha_uq30
+            alpha = self.release_alpha_f32
 
         # do exponential moving average
-        self.envelope_s32[channel] = utils.float_s32_ema(sample_mag, self.envelope_s32[channel], alpha)
+        self.envelope_f32[channel] = (np.float32(1) - alpha) * self.envelope_f32[channel] + alpha * sample_mag
 
         # if we got floats, return floats, otherwise return float_s32
-        if isinstance(sample, utils.float_s32):
-            return self.envelope_s32[channel]
+        if isinstance(sample, np.float32):
+            return self.envelope_f32[channel]
         else:
-            return float(self.envelope_s32[channel])
+            return float(self.envelope_f32[channel])
 
 
 class envelope_detector_rms(envelope_detector_peak):
@@ -223,31 +223,31 @@ class envelope_detector_rms(envelope_detector_peak):
         20log10().
 
         """
-        if isinstance(sample, utils.float_s32):
+        if isinstance(sample, np.float32):
             # don't do anything if we got float_s32, this function was probably
             # called from a limiter or compressor
-            sample_s32 = sample
+            sample_f32 = sample
         else:
             # if input isn't float_s32, convert it
-            sample_s32 = utils.float_s32(sample)
+            sample_f32 = np.float32(sample)
 
         # for rms use power (sample**2)
-        sample_mag = sample_s32 * sample_s32
+        sample_mag = sample_f32 * sample_f32
 
         # see if we're attacking or decaying
-        if sample_mag > self.envelope_s32[channel]:
-            alpha = self.attack_alpha_uq30
+        if sample_mag > self.envelope_f32[channel]:
+            alpha = self.attack_alpha_f32
         else:
-            alpha = self.release_alpha_uq30
+            alpha = self.release_alpha_f32
 
         # do exponential moving average
-        self.envelope_s32[channel] = utils.float_s32_ema(sample_mag, self.envelope_s32[channel], alpha)
+        self.envelope_f32[channel] = (np.float32(1) - alpha) * self.envelope_f32[channel] + alpha * sample_mag
 
         # if we got floats, return floats, otherwise return float_s32
-        if isinstance(sample, utils.float_s32):
-            return self.envelope_s32[channel]
+        if isinstance(sample, np.float32):
+            return self.envelope_f32[channel]
         else:
-            return float(self.envelope_s32[channel])
+            return float(self.envelope_f32[channel])
 
 
 class limiter_base(dspg.dsp_block):
@@ -266,15 +266,15 @@ class limiter_base(dspg.dsp_block):
         self.threshold = None
         self.env_detector = None
 
-        self.attack_alpha_uq30 = utils.uq_2_30(round(self.attack_alpha * 2**30))
-        self.release_alpha_uq30 = utils.uq_2_30(round(self.release_alpha * 2**30))
-        self.threshold_s32 = None
-        self.gain_s32 = [utils.float_s32([2**30, -30])] * n_chans
+        self.attack_alpha_f32 = np.float32(self.attack_alpha)
+        self.release_alpha_f32 = np.float32(self.release_alpha)
+        self.threshold_f32 = None
+        self.gain_f32 = [np.float32(1)] * n_chans
 
     def reset_state(self):
         self.env_detector.reset_state()
         self.gain = [1] * self.n_chans
-        self.gain_s32 = [utils.float_s32([2**30, -30])] * self.n_chans
+        self.gain_f32 = [np.float32(1)] * self.n_chans
 
     def process(self, sample, channel=0):
         # get envelope from envelope detector
@@ -300,35 +300,38 @@ class limiter_base(dspg.dsp_block):
         return y, new_gain, envelope
 
     def process_int(self, sample, channel=0):
-        sample = utils.float_s32(sample, self.Q_sig)
+        # quantize
+        sample = utils.float_s32(sample)
+        sample = utils.float_s32_use_exp(sample, -27)
+        sample = np.float32(float(sample))
 
         # get envelope from envelope detector
         envelope = self.env_detector.process_int(sample, channel)
         # avoid /0
-        if envelope.mant == 0:
-            envelope.mant = 1
-            envelope.exp = -60
+        if envelope == np.float32(0):
+            envelope = np.float32(1e-20)
 
         # if envelope below threshold, apply unity gain, otherwise scale down
-        new_gain = self.threshold_s32/envelope
-        new_gain = utils.float_s32_min(utils.float_s32(1), new_gain)
+        new_gain = self.threshold_f32/envelope
+        new_gain = new_gain if new_gain < np.float32(1) else np.float32(1)
 
         # see if we're attacking or decaying
-        if new_gain < self.gain_s32[channel]:
-            alpha = self.attack_alpha_uq30
+        if new_gain < self.gain_f32[channel]:
+            alpha = self.attack_alpha_f32
         else:
-            alpha = self.release_alpha_uq30
+            alpha = self.release_alpha_f32
 
         # do exponential moving average
-        self.gain_s32[channel] = utils.float_s32_ema(new_gain, self.gain_s32[channel], alpha)
+        self.gain_f32[channel] = (np.float32(1) - alpha) * self.gain_f32[channel] + alpha * new_gain
 
         # apply gain
-        y = self.gain_s32[channel]*sample
+        y = self.gain_f32[channel]*sample
 
         # quantize before return
+        y = utils.float_s32(y)
         y = utils.float_s32_use_exp(y, -27)
 
-        return float(y), float(new_gain), float(envelope)
+        return np.float32(float(y)), float(new_gain), float(envelope)
 
     def process_frame(self, frame):
         # same as generic, but only take 1st output
@@ -363,7 +366,7 @@ class limiter_peak(limiter_base):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         self.threshold = utils.db2gain(threshold_db)
-        self.threshold_s32 = utils.float_s32(self.threshold, self.Q_sig)
+        self.threshold_f32 = np.float32(self.threshold)
         self.env_detector = envelope_detector_peak(fs, n_chans=n_chans,
                                                    attack_t=attack_t,
                                                    release_t=release_t,
@@ -377,7 +380,7 @@ class limiter_rms(limiter_base):
 
         # note rms comes as x**2, so use db_pow
         self.threshold = utils.db_pow2gain(threshold_db)
-        self.threshold_s32 = utils.float_s32(self.threshold, self.Q_sig)
+        self.threshold_f32 = np.float32(self.threshold)
         self.env_detector = envelope_detector_rms(fs, n_chans=n_chans,
                                                   attack_t=attack_t,
                                                   release_t=release_t,
