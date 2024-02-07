@@ -8,18 +8,18 @@
 
 static inline void limiter_copy_config_to_state(limiter_t *lim_state, const limiter_peak_config_t *lim_config)
 {
-    //lim_state->env_det.attack_alpha = lim_config->attack_alpha;
-    //lim_state->env_det.release_alpha = lim_config->release_alpha;
-    //lim_state->threshold = lim_config->threshold;
+    lim_state->env_det.attack_alpha = lim_config->attack_alpha;
+    lim_state->env_det.release_alpha = lim_config->release_alpha;
+    lim_state->threshold = lim_config->threshold;
 }
 
 static inline void limiter_copy_state_to_config(limiter_peak_config_t *lim_config, const limiter_t *lim_state)
 {
-    //lim_config->attack_alpha = lim_state->env_det.attack_alpha;
-    //lim_config->release_alpha = lim_state->env_det.release_alpha;
-    //lim_config->envelope = lim_state->env_det.envelope;
-    //lim_config->gain = lim_state->gain;
-    //lim_config->threshold = lim_state->threshold;
+    lim_config->attack_alpha = lim_state->env_det.attack_alpha;
+    lim_config->release_alpha = lim_state->env_det.release_alpha;
+    lim_config->envelope = lim_state->env_det.envelope;
+    lim_config->gain = lim_state->gain;
+    lim_config->threshold = lim_state->threshold;
 }
 
 void limiter_peak_process(int32_t **input, int32_t **output, void *app_data_state)
@@ -54,7 +54,8 @@ module_instance_t* limiter_peak_init(uint8_t id, int n_inputs, int n_outputs, in
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    //state->lim.gain = (float_s32_t){0x40000000, -30};
+    state->lim.gain = 1;
+    state->lim.env_det.envelope = 0;
 
     xassert(module_config != NULL);
 

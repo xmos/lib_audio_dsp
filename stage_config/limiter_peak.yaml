@@ -1,15 +1,14 @@
 module:
   limiter_peak:
     attack_alpha:
-      type: uint32_t
+      type: float
     release_alpha:
-      type: uint32_t
+      type: float
     envelope:
-      type: float_s32_t
+      type: float
     threshold:
-      type: float_s32_t
+      type: float
     gain:
-      type: float_s32_t
+      type: float
 includes:
-  - "stdint.h"
   - "stages/adsp_module.h"

@@ -225,7 +225,7 @@ class Stage(Node):
             A function which accepts 1 argument that will be used as the new value
         """
         if field not in self._control_fields:
-            raise KeyError(f"{key} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}")
+            raise KeyError(f"{field} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}")
 
         self._control_fields[field] = PropertyControlField(getter, setter)
 

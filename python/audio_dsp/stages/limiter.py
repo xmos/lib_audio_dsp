@@ -15,11 +15,11 @@ class LimiterPeak(Stage):
         self.dsp_block = drc.limiter_peak(self.fs, self.n_in, threshold, at, rt)
 
         self.set_control_field_cb("attack_alpha",
-                                  lambda: self.dsp_block.attack_alpha_uq30)
+                                  lambda: self.dsp_block.attack_alpha_f32)
         self.set_control_field_cb("release_alpha",
-                                  lambda: self.dsp_block.release_alpha_uq30)
+                                  lambda: self.dsp_block.release_alpha_f32)
         self.set_control_field_cb("threshold",
-                                  lambda: [self.dsp_block.threshold_s32.mant, self.dsp_block.threshold_s32.exp])
+                                  lambda: self.dsp_block.threshold_f32)
 
     def make_limiter_peak(self, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         self.details = dict(threshold_db=threshold_db, attack_t=attack_t, release_t=release_t, delay=delay, Q_sig=Q_sig)
