@@ -15,7 +15,7 @@ import yaml
 import subprocess
 from uuid import uuid4
 from ._draw import new_record_digraph
-from .host_app import get_host_app
+from .host_app import get_host_app, InvalidHostAppError
 
 
 class Pipeline:
@@ -179,7 +179,11 @@ def send_config_to_device(pipeline: Pipeline):
                 value = " ".join(str(v) for v in value)
             else:
                 value = str(value)
-            host_app, protocol = get_host_app()
+            try:
+                host_app, protocol = get_host_app()
+            except InvalidHostAppError as e:
+                print(*e.args)
+                return
             ret = subprocess.run([host_app, "--use", protocol, "--instance-id", str(stage.index),
                             command, *value.split()])
             if ret.returncode:
@@ -637,7 +641,11 @@ def profile_pipeline(pipeline: Pipeline):
     pipeline : Pipeline
         A designed and optionally tuned pipeline
     """
-    host_app, protocol = get_host_app()
+    try:
+        host_app, protocol = get_host_app()
+    except InvalidHostAppError as e:
+        print(*e.args)
+        return
     #print("Thread Index     Max Cycles")
     profile_info = []
     for thread in pipeline.threads:
