@@ -37,13 +37,19 @@ module_instance_t* cascaded_biquads_init(uint8_t id, int n_inputs, int n_outputs
     cascaded_biquads_config_t *config = malloc(sizeof(cascaded_biquads_config_t)); // malloc_from_heap
 
     memset(state, 0, sizeof(cascaded_biquads_state_t));
+
     state->n_inputs = n_inputs;
+
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    //uint32_t n_bytes_state = n_inputs * 64 * sizeof(int32_t);
-    //state->filter_states = DWORD_ALIGNED_MALLOC(n_bytes_state);
-    //memset(state->filter_states, n_bytes_state, 0);
+
+    state->filter_states = (int32_t**)malloc(n_inputs * sizeof(int32_t*)); // Allocate memory for the 1D pointers
+    for(int i=0; i<n_inputs; i++)
+    {
+        state->filter_states[i] = (int32_t*)malloc(CASCADED_BIQUADS_STATE_LEN * sizeof(int32_t));
+        memset(state->filter_states[i], 0, CASCADED_BIQUADS_STATE_LEN * sizeof(int32_t));
+    }
 
     xassert(module_config != NULL);
     cascaded_biquads_config_t *init_config = module_config;
