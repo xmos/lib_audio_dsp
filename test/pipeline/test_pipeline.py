@@ -56,7 +56,7 @@ def test_pipeline():
     build_utils.build(APP_DIR, BUILD_DIR, target)
 
     # Generate input
-    audio_helpers.generate_test_signal(infile, type="sine", fs=48000, duration=test_duration, amplitude=0.8, num_channels=2, sig_dtype=input_dtype)
+    audio_helpers.generate_test_signal(infile, type="sine", fs=48000, duration=test_duration, amplitude=0.8, num_channels=num_in_channels, sig_dtype=input_dtype)
 
     # Run
     # TODO Run from a tmp directory
