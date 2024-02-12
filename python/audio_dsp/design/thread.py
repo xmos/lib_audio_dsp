@@ -1,5 +1,31 @@
 
 from .composite_stage import CompositeStage
+from .stage import Stage, find_config, ValueControlField
+from .graph import Edge, Node
+import yaml
+from pathlib import Path
+
+class DSPThreadStage(Stage):
+    """
+    Stage for the DSP thread. Does not support processing of data through it. Only
+    used for DSP thread level control commands, for example, querying the max cycles
+    consumed by the thread.
+    """
+    def __init__(self, **kwargs):
+        super().__init__(config=find_config("dsp_thread"), **kwargs)
+        self.create_outputs(0)
+
+    """
+    Override the CompositeStage.add_to_dot() function to ensure DSPThreadStage
+    type stages are not added to the dot diagram
+
+    Parameters
+    ----------
+    dot : graphviz.Diagraph
+        dot instance to add edges to.
+    """
+    def add_to_dot(self, dot): # Override this to not add the stage to the diagram
+        return
 
 class Thread(CompositeStage):
     """
@@ -17,10 +43,13 @@ class Thread(CompositeStage):
     ----------
     id : int
         Thread index
+    thread_stage : Stage
+        DSPThreadStage stage
     """
     def __init__(self, id: int, **kwargs):
         super().__init__(name = f"Thread {id}", **kwargs)
         self.id = id
+        self.thread_stage = self.stage(DSPThreadStage, [])
 
     def __enter__(self):
         """Support for context manager"""
@@ -30,4 +59,3 @@ class Thread(CompositeStage):
         """Support for context manager"""
         ...
 
-        

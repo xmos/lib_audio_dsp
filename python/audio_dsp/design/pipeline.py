@@ -5,6 +5,7 @@ Top level pipeline design class and code generation functions.
 
 from typing import Iterable
 from pathlib import Path
+from tabulate import tabulate
 from .graph import Graph
 from .stage import StageOutput
 from .thread import Thread
@@ -14,6 +15,7 @@ import yaml
 import subprocess
 from uuid import uuid4
 from ._draw import new_record_digraph
+from .host_app import get_host_app, InvalidHostAppError
 
 
 class Pipeline:
@@ -37,11 +39,13 @@ class Pipeline:
         first stages in the pipeline
     stages : List(Stage)
         Flattened list of all the stages in the pipeline
+    threads : list(Thread)
+        List of all the threads in the pipeline
     """
 
     def __init__(self, n_in, frame_size=1, fs=48000):
         self._graph = Graph()
-        self._threads = []
+        self.threads = []
         self._n_in = n_in
         self._n_out = 0
 
@@ -52,7 +56,7 @@ class Pipeline:
 
     def add_thread(self):
         """
-        Creates a new instance of audio_dsp.thread.Thread and adds it to 
+        Creates a new instance of audio_dsp.thread.Thread and adds it to
         the pipeline. Stages can then be instantiated in the thread.
 
         Returns
@@ -60,8 +64,8 @@ class Pipeline:
         Thread
             a new thread instance.
         """
-        ret = Thread(id=len(self._threads), graph=self._graph)
-        self._threads.append(ret)
+        ret = Thread(id=len(self.threads), graph=self._graph)
+        self.threads.append(ret)
         return ret
 
     def set_outputs(self, output_edges):
@@ -83,7 +87,7 @@ class Pipeline:
     def validate(self):
         """
         TODO validate pipeline assumptions
-        
+
         - Thread connections must not lead to a scenario where the pipeline hangs
         - Stages must fit on thread
         - feedback must be within a thread (future)
@@ -95,7 +99,7 @@ class Pipeline:
         Render a dot diagram of this pipeline
         """
         dot = new_record_digraph()
-        for thread in self._threads:
+        for thread in self.threads:
             thread.add_to_dot(dot)
         start_label = f"{{ start | {{ {'|'.join(f'<o{i}> {i}' for i in range(self._n_in))} }} }}"
         end_label = f"{{ {{ {'|'.join(f'<i{i}> {i}' for i in range(self._n_out))} }} | end }}"
@@ -112,7 +116,7 @@ class Pipeline:
                 dot.node(dest, "", shape="point")
             dot.edge(source, dest)
         display.display_svg(dot)
-        
+
     @property
     def stages(self):
         return self._graph.nodes[:]
@@ -121,7 +125,7 @@ class Pipeline:
         """
         Generate a dictionary with all of the information about the thread.
         Actual stage instances not included.
-        
+
         Returns
         -------
         dict
@@ -134,8 +138,8 @@ class Pipeline:
         sorted_nodes = self._graph.sort()
 
         # 2. assign nodes to threads
-        threads = [[] for _ in range(len(self._threads))]
-        for i, thread in enumerate(self._threads):
+        threads = [[] for _ in range(len(self.threads))]
+        for i, thread in enumerate(self.threads):
             for node in sorted_nodes:
                 if thread.contains_stage(node):
                     threads[i].append([node.index, node.name])
@@ -152,24 +156,21 @@ class Pipeline:
         module_definitions = {node.name: node.yaml_dict for node in self._graph.nodes}
 
         return {
-            "threads": threads, 
-            "edges": edges, 
-            "configs": node_configs, 
+            "threads": threads,
+            "edges": edges,
+            "configs": node_configs,
             "modules": module_definitions
         }
 
-def send_config_to_device(pipeline: Pipeline, host_app = "xvf_host", protocol="usb"):
+def send_config_to_device(pipeline: Pipeline):
     """
     Sends the current config for all stages to the device.
+    Make sure set_host_app() is called before calling this to set a valid host app.
 
     Parameters
     ----------
     pipeline : Pipeline
         A designed and optionally tuned pipeline
-    host_app : str
-        The path to the host app
-    protocol : str
-        Control protocol, "usb" is the only supported option.
     """
     for stage in pipeline.stages:
         for command, value in stage.get_config().items():
@@ -178,6 +179,11 @@ def send_config_to_device(pipeline: Pipeline, host_app = "xvf_host", protocol="u
                 value = " ".join(str(v) for v in value)
             else:
                 value = str(value)
+            try:
+                host_app, protocol = get_host_app()
+            except InvalidHostAppError as e:
+                print(*e.args)
+                return
             ret = subprocess.run([host_app, "--use", protocol, "--instance-id", str(stage.index),
                             command, *value.split()])
             if ret.returncode:
@@ -189,12 +195,12 @@ def send_config_to_device(pipeline: Pipeline, host_app = "xvf_host", protocol="u
 def _filter_edges_by_thread(resolved_pipeline):
     """
     Get thread input edges, output edges and internal edges for all threads
-    
+
     Returns
     -------
     list[tuple[]]
         input_edges, internal_edges, output_edges, dead_edges for all threads in
-        the resolved pipeline. 
+        the resolved pipeline.
         input_edges and output_edges are dictionaries of {source_or_dest_thread: [edges]}
         internal and dead edges are list of edges.
     """
@@ -281,9 +287,9 @@ def _generate_dsp_threads(resolved_pipeline, block_size = 1):
                 }
             }
             modules[0]->process_sample(
-                (int32_t*[]){edge0, edge1}, 
-                (int32_t*[]){edge2, edge3}, 
-                modules[0]->state, 
+                (int32_t*[]){edge0, edge1},
+                (int32_t*[]){edge2, edge3},
+                modules[0]->state,
                 &modules[0]->control
             );
             chan_out_buf(output_c[0], edge2);
@@ -311,16 +317,22 @@ def _generate_dsp_threads(resolved_pipeline, block_size = 1):
         for stage_thread_index, stage in enumerate(thread):
             # thread stages are already ordered during pipeline resolution
             input_edges = [edge for edge in all_edges if edge[1][0] == stage[0]]
-            input_edges.sort(key = lambda e: e[1][1])
-            input_edges = ", ".join(f"edge{all_edges.index(e)}" for e in input_edges)
+            if len(input_edges) > 0: # To avoid compilation warnings
+                input_edges.sort(key = lambda e: e[1][1])
+                input_edges = ", ".join(f"edge{all_edges.index(e)}" for e in input_edges)
+                func += f"\tint32_t* stage_{stage_thread_index}_input[] = {{{input_edges}}};\n"
+
             output_edges = [edge for edge in all_edges if edge[0][0] == stage[0]]
-            output_edges.sort(key = lambda e: e[0][1])
-            output_edges = ", ".join(f"edge{all_edges.index(e)}" for e in output_edges)
-            
-            func += f"\tint32_t* stage_{stage_thread_index}_input[] = {{{input_edges}}};\n"
-            func += f"\tint32_t* stage_{stage_thread_index}_output[] = {{{output_edges}}};\n"
+            if len(output_edges) > 0:
+                output_edges.sort(key = lambda e: e[0][1])
+                output_edges = ", ".join(f"edge{all_edges.index(e)}" for e in output_edges)
+                func += f"\tint32_t* stage_{stage_thread_index}_output[] = {{{output_edges}}};\n"
+
+        func += f"\tuint32_t start_ts, end_ts, start_control_ts, control_ticks;\n"
+        func += f"\tbool control_done;\n"
 
         func += "\twhile(1) {\n"
+        func += f"\tcontrol_done = false;\n"
 
         # Each thread must process the pending control requests at least once per loop.
         # It will be done once before select to ensure it happens, then in the default
@@ -329,7 +341,6 @@ def _generate_dsp_threads(resolved_pipeline, block_size = 1):
         for i, (_, name) in enumerate(thread):
             control += f"\t\t{name}_control(modules[{i}]->state, &modules[{i}]->control);\n"
 
-        func += control
         func += f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
                                                           # the same channel being read twice
         if len(in_edges.values()):
@@ -348,18 +359,40 @@ def _generate_dsp_threads(resolved_pipeline, block_size = 1):
                         func += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
                 func += f"\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}}\n"
             func += "\t\tdo_control: {\n"
+            func += "\t\tstart_control_ts = get_reference_time();\n"
             func += control
+            func += "\t\tcontrol_done = true;\n"
+            func += "\t\tcontrol_ticks = get_reference_time() - start_control_ts;\n"
             func += "\t\tcontinue; }\n"
             func += "\t}\n"
 
+        func += "\tif(!control_done){\n"
+        func += "\t\tstart_control_ts = get_reference_time();\n"
+        func += control
+        func += "\t\tcontrol_ticks = get_reference_time() - start_control_ts;\n"
+        func += "\t}\n"
 
-        for stage_thread_index, (_, name) in enumerate(thread):
+        func += "\tstart_ts = get_reference_time();\n\n"
+
+        for stage_thread_index, (stage_index, name) in enumerate(thread):
+
+            input_edges = [edge for edge in all_edges if edge[1][0] == stage_index]
+            output_edges = [edge for edge in all_edges if edge[0][0] == stage_index]
+
             # thread stages are already ordered during pipeline resolution
+            if len(input_edges) > 0 or len(output_edges) > 0:
+                func += f"\t{name}_process(\n"
+                func += f"\t\tstage_{stage_thread_index}_input,\n"
+                func += f"\t\tstage_{stage_thread_index}_output,\n"
+                func += f"\t\tmodules[{stage_thread_index}]->state);\n"
 
-            func += f"\t{name}_process(\n"
-            func += f"\t\tstage_{stage_thread_index}_input,\n"
-            func += f"\t\tstage_{stage_thread_index}_output,\n"
-            func += f"\t\tmodules[{stage_thread_index}]->state);\n"
+        func += "\n\tend_ts = get_reference_time();\n"
+        func += "\tuint32_t process_plus_control_ticks = (end_ts - start_ts) + control_ticks;\n"
+        func += "\tif(process_plus_control_ticks > ((dsp_thread_state_t*)(modules[0]->state))->max_cycles)\n"
+        func += "\t{\n"
+        func += "\t\t((dsp_thread_state_t*)(modules[0]->state))->max_cycles = process_plus_control_ticks;\n"
+        func += "\t}\n"
+
 
         for out_index, (dest, edges) in enumerate(all_output_edges.items()):
             for edge in edges:
@@ -406,8 +439,8 @@ def _generate_dsp_struct(resolved_pipeline):
     struct += "\n"
 
     num_modules = _resolved_pipeline_num_modules(resolved_pipeline)
-    struct += f"\tmodule_instance_t* modules[{num_modules}];\n" 
-    struct += f"\tint num_modules;\n" 
+    struct += f"\tmodule_instance_t* modules[{num_modules}];\n"
+    struct += f"\tint num_modules;\n"
     struct += "};"
     return struct
 
@@ -446,7 +479,7 @@ def _generate_dsp_init(resolved_pipeline):
             stage_n_in = len([e for e in resolved_pipeline["edges"] if e[1][0] == stage_index])
             stage_n_out = len([e for e in resolved_pipeline["edges"] if e[0][0] == stage_index])
             stage_frame_size = 1 # TODO
-            
+
             defaults = {}
             for config_field, value in resolved_pipeline["configs"][stage_index].items():
                 if isinstance(value, list) or isinstance(value, tuple):
@@ -463,8 +496,8 @@ def _generate_dsp_init(resolved_pipeline):
 
 def _generate_dsp_source(resolved_pipeline):
     """
-    Generate a function which will be called by the data source, 
-    it receives the new samples as input and sends them over the 
+    Generate a function which will be called by the data source,
+    it receives the new samples as input and sends them over the
     correct channels
     """
     all_edges = _filter_edges_by_thread(resolved_pipeline)
@@ -485,10 +518,10 @@ def _generate_dsp_source(resolved_pipeline):
 
 def _generate_dsp_sink(resolved_pipeline):
     """
-    Generate a function that will be called by the consumer of 
+    Generate a function that will be called by the consumer of
     the dsp output. It will read from the output channels. This function
-    will not read from the channels until data is available to allow for 
-    the case where 
+    will not read from the channels until data is available to allow for
+    the case where
     """
     all_edges = _filter_edges_by_thread(resolved_pipeline)
     all_out_edges = [e[2] for e in all_edges]
@@ -513,7 +546,7 @@ static bool check_chanend(chanend_t c) {
                 sink_details.append((f"adsp->channel_{source_thread}_pipeline_out.end_b", edge[1][1], frame_size))
         except KeyError:
             pass  # this thread doesn't consume from the pipeline input
-    
+
     chanends = set(c for c, _, _ in sink_details)
     ret += "bool adsp_pipeline_sink_nowait(audio_dsp_t* adsp, int32_t** data) {\n"
     ret += f"\tif({' && '.join(f'check_chanend({c})' for c in chanends)}) {{\n"
@@ -531,13 +564,13 @@ static bool check_chanend(chanend_t c) {
 def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
     """
     Generate the source code for dsp_main
-    
+
     Parameters
     ----------
     pipeline : Pipeline
         The pipeline to generate code for.
     out_dir : str
-        Directory to store generated code in. 
+        Directory to store generated code in.
     """
     out_dir = Path(out_dir)
     out_dir.mkdir(exist_ok=True, parents=True)
@@ -556,6 +589,7 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
 #include "dspt_main.h"
 #include <xcore/select.h>
 #include <xcore/channel.h>
+#include <xcore/hwtimer.h>
 #include <print.h>
 """
     # add includes for each stage type in the pipeline
@@ -595,3 +629,54 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
 
     for name, defintion in resolved_pipe["modules"].items():
         (yaml_dir / f"{name}.yaml").write_text(yaml.dump(defintion))
+
+
+def profile_pipeline(pipeline: Pipeline):
+    """
+    Profiles the DSP threads that are a part of the pipeline.
+    Make sure set_host_app() is called before calling this to set a valid host app.
+
+    Parameters
+    ----------
+    pipeline : Pipeline
+        A designed and optionally tuned pipeline
+    """
+    try:
+        host_app, protocol = get_host_app()
+    except InvalidHostAppError as e:
+        print(*e.args)
+        return
+    #print("Thread Index     Max Cycles")
+    profile_info = []
+    for thread in pipeline.threads:
+        thread_fs = None
+        thread_frame_size = None
+        stages = thread.get_all_stages()
+        for stg in stages:
+            if stg.fs != None:
+                thread_fs = stg.fs
+                thread_frame_size = stg.frame_size
+                break
+        # Assuming that all stages in the thread have the same sampling freq and frame size
+        if thread_fs == None:
+            raise RuntimeError(f"Could not find out the sampling frequency for thread index {thread.id}")
+
+        if thread_frame_size == None:
+            raise RuntimeError(f"Could not find out the frame size for thread index {thread.id}")
+
+        reference_timer_freq_hz = 100e6
+        frame_time_s = float(thread_frame_size)/thread_fs
+        ticks_per_sample_time_s = reference_timer_freq_hz * frame_time_s
+        ticks_per_sample_time_s = ticks_per_sample_time_s
+
+        # TODO Implement a generic way of reading all config from the stage
+        command = "dsp_thread_max_cycles"
+        ret = subprocess.run([host_app, "--use", protocol, "--instance-id", str(thread.thread_stage.index),
+            command], stdout=subprocess.PIPE)
+        if ret.returncode:
+            print("Unable to connect connect to device")
+            return
+        cycles = int(ret.stdout.splitlines()[0].decode('utf-8'))
+        percentage_used = (cycles / ticks_per_sample_time_s)*100
+        profile_info.append([thread.id, round(ticks_per_sample_time_s, 2), cycles, round(percentage_used, 2)])
+    print(tabulate(profile_info, headers=['thread index', 'available time (ref timer ticks)', 'max ticks consumed', '% consumed'], tablefmt='pretty'))

@@ -21,7 +21,8 @@ setuptools.setup(
         'graphviz',
         'IPython',
         'pyyaml',
-        'mako'
+        'mako',
+        'tabulate'
     ],
     dependency_links=[],
 )

@@ -35,8 +35,10 @@ def create_pipeline():
         bi = t.stage(Biquad, p.i)
         cb = t.stage(CascadedBiquads, bi.o)
         by = t.stage(Bypass, cb.o)
+    with p.add_thread() as t:                # ch   0   1
+        by1 = t.stage(Bypass, by.o)
 
-    p.set_outputs(by.o)
+    p.set_outputs(by1.o)
     return p
 
 
@@ -54,7 +56,7 @@ def test_pipeline():
     build_utils.build(APP_DIR, BUILD_DIR, target)
 
     # Generate input
-    audio_helpers.generate_test_signal(infile, type="sine", fs=48000, duration=test_duration, amplitude=0.8, num_channels=2, sig_dtype=input_dtype)
+    audio_helpers.generate_test_signal(infile, type="sine", fs=48000, duration=test_duration, amplitude=0.8, num_channels=num_in_channels, sig_dtype=input_dtype)
 
     # Run
     # TODO Run from a tmp directory
