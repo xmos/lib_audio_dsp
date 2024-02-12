@@ -44,17 +44,17 @@ class cascaded_biquads_8(dspg.dsp_block):
 
         return y
 
-    def process_vpu(self, sample):
+    def process_xcore(self, sample):
         y = sample
         for biquad in self.biquads:
-            y = biquad.process_vpu(y)
+            y = biquad.process_xcore(y)
 
         return y
 
-    def process_frame_vpu(self, frame):
+    def process_frame_xcore(self, frame):
         y = frame
         for biquad in self.biquads:
-            y = biquad.process_frame_vpu(y)
+            y = biquad.process_frame_xcore(y)
 
         return y
 

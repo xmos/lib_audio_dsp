@@ -42,7 +42,7 @@ class dsp_block():
         """
         return sample
 
-    def process_int(self, sample: float):
+    def process_xcore(self, sample: float):
         """
         Take 1 new sample and return 1 processed sample.
 
@@ -68,16 +68,17 @@ class dsp_block():
 
         return output
 
-    def process_frame_int(self, frame):
-        # simple multichannel, but integer. Assumes no channel unique states!
+    def process_frame_xcore(self, frame):
+        # simple multichannel, but bit exact xcore implementation.
+        # Assumes no channel unique states!
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
         output = deepcopy(frame)
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):
-                this_chan[sample] = self.process_int(this_chan[sample],
-                                                     channel=chan)
+                this_chan[sample] = self.process_xcore(this_chan[sample],
+                                                       channel=chan)
 
         return output
 

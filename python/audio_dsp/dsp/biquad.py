@@ -79,7 +79,7 @@ class biquad(dspg.dsp_block):
 
         return y_flt
 
-    def process_vpu(self, sample, channel=0):
+    def process_xcore(self, sample, channel=0):
 
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
 
@@ -102,16 +102,17 @@ class biquad(dspg.dsp_block):
 
         return y_flt
 
-    def process_frame_vpu(self, frame):
-        # simple multichannel, but integer. Assumes no channel unique states!
+    def process_frame_int(self, frame):
+        # simple multichannel, but integer (not xcore).
+        # Assumes no channel unique states!
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
         output = deepcopy(frame)
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):
-                this_chan[sample] = self.process_vpu(this_chan[sample],
-                                                     channel=chan)
+                this_chan[sample] = self.process_int(this_chan[sample],
+                                                       channel=chan)
 
         return output
 
@@ -565,10 +566,10 @@ if __name__ == "__main__":
     output_5 = np.zeros(len(signal))
 
     for n in np.arange(len(signal)):
-        output_1[n] = biquad_1.process_int(signal[n])
-        output_2[n] = biquad_2.process_int(signal[n])
-        output_3[n] = biquad_3.process_int(signal[n])
-        output_4[n] = biquad_4.process_int(signal[n])
+        output_1[n] = biquad_1.process_xcore(signal[n])
+        output_2[n] = biquad_2.process_xcore(signal[n])
+        output_3[n] = biquad_3.process_xcore(signal[n])
+        output_4[n] = biquad_4.process_xcore(signal[n])
         output_5[n] = biquad_5.process(signal[n])
 
     # plt.plot(signal)
