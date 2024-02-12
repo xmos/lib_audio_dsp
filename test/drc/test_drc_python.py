@@ -118,31 +118,41 @@ def test_drc_component(fs, component, at, rt, threshold):
         t = np.arange(len(signal))/fs
         signal *= np.sin(t*2*np.pi*0.5)
 
-    output_int = np.zeros(len(signal))
+    output_xcore = np.zeros(len(signal))
     output_flt = np.zeros(len(signal))
+    output_int = np.zeros(len(signal))
 
     if "envelope" in component:
         # envelope detector has 1 output
         for n in np.arange(len(signal)):
-            output_int[n] = drcut.process_xcore(signal[n])
+            output_xcore[n] = drcut.process_xcore(signal[n])
         drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n] = drcut.process(signal[n])
+        drcut.reset_state()
+        for n in np.arange(len(signal)):
+            output_int[n] = drcut.process_int(signal[n])
     else:
         # limiter has 3 outputs
         for n in np.arange(len(signal)):
-            output_int[n], _, _ = drcut.process_xcore(signal[n])
+            output_xcore[n], _, _ = drcut.process_xcore(signal[n])
         drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n], _, _ = drcut.process(signal[n])
+        drcut.reset_state()
+        for n in np.arange(len(signal)):
+            output_int[n], _, _ = drcut.process_int(signal[n])
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
     top_half = utils.db(output_flt) > -50
     if np.any(top_half):
-        error_flt = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
+        error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
         assert mean_error_flt < 0.055
 
+        error_int = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
+        mean_error_int = utils.db(np.nanmean(utils.db2gain(error_int)))
+        assert mean_error_int < 0.055
 
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("component, threshold", [("limiter_peak", -20),
