@@ -5,6 +5,7 @@
 #include <xcore/chanend.h>
 #include <xcore/channel.h>
 #include <xcore/parallel.h>
+#include <xcore/select.h>
 
 #include <stages/adsp_module.h>
 

@@ -441,7 +441,7 @@ def _generate_dsp_header(resolved_pipeline, out_dir = "build/dsp_pipeline"):
     header = "#pragma once\n"
     header += "#include <stages/adsp_pipeline.h>\n"
     header += "\n"
-    header += f"void * adsp_{resolved_pipeline["identifier"]}_pipeline_init();\n"
+    header += f"adsp_pipeline_t * adsp_{resolved_pipeline["identifier"]}_pipeline_init();\n"
     header += f"void adsp_{resolved_pipeline["identifier"]}_pipeline_main(adsp_pipeline_t* adsp);\n"
 
     (out_dir / f"adsp_generated_{resolved_pipeline['identifier']}.h").write_text(header)
