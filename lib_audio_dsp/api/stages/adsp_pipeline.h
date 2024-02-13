@@ -9,21 +9,21 @@
 
 #include <stages/adsp_module.h>
 
-typedef struct adsp_mux_elem_t
+typedef struct
 {
     uint32_t channel_idx;
     uint32_t data_idx;
     uint32_t frame_size;
 } adsp_mux_elem_t;
 
-typedef struct adsp_mux_t
+typedef struct
 {
     adsp_mux_elem_t *chan_cfg;
     size_t n_chan;
 } adsp_mux_t;
 
 // All fields of this structure are private. Please do not access directly.
-typedef struct adsp_pipeline_t
+typedef struct
 {
     channel_t *p_in;
     size_t n_in;
