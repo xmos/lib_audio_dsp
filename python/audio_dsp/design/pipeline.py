@@ -475,7 +475,7 @@ def _generate_dsp_init(resolved_pipeline):
     ret += f"\tstatic channel_t {adsp}_link_chans[{link_channels}];\n"
 
     num_modules = _resolved_pipeline_num_modules(resolved_pipeline)
-    ret += f"\tstatic module_instance_t * {adsp}_modules;\n"
+    ret += f"\tstatic module_instance_t * {adsp}_modules[{num_modules}];\n"
 
     # We assume that this function generates the arrays adsp_<x>_(in|out)_mux_cfgs
     # and that it will initialise the .(input|output)_mux members of adsp
