@@ -47,7 +47,7 @@ int32_t adsp_limiter_peak(
     alpha = lim->env_det.attack_alpha;
   }
 
-  lim->gain = ((1 - alpha) * lim->gain) + (alpha * new_gain);
+  lim->gain = lim->gain + alpha * (new_gain - lim->gain);
   float y = float_s32_to_float((float_s32_t){new_samp, SIG_EXP});
   return f32_to_fixed(y * lim->gain, SIG_EXP);
 }
@@ -65,7 +65,7 @@ int32_t adsp_limiter_rms(
     alpha = lim->env_det.attack_alpha;
   }
 
-  lim->gain = ((1 - alpha) * lim->gain) + (alpha * new_gain);
+  lim->gain = lim->gain + alpha * (new_gain - lim->gain);
   float y = float_s32_to_float((float_s32_t){new_samp, SIG_EXP});
   return f32_to_fixed(y * lim->gain, SIG_EXP);
 }

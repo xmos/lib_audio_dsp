@@ -38,7 +38,7 @@ void adsp_env_detector_peak(
     alpha = env_det->attack_alpha;
   }
 
-  env_det->envelope = ((1 - alpha) * env_det->envelope) + (alpha * samp);
+  env_det->envelope = env_det->envelope + alpha * (samp - env_det->envelope);
 }
 
 void adsp_env_detector_rms(
@@ -53,5 +53,5 @@ void adsp_env_detector_rms(
     alpha = env_det->attack_alpha;
   }
 
-  env_det->envelope = ((1 - alpha) * env_det->envelope) + (alpha * samp);
+  env_det->envelope = env_det->envelope + alpha * (samp - env_det->envelope);
 }
