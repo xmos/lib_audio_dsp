@@ -83,7 +83,7 @@ def pink_noise(fs, length, amplitude, precision=24):
     # https://www.musicdsp.org/en/latest/Filters/76-pink-noise-filter.html
 
     a, g, output_g = pink_filter(fs)
-    signal = np.zeros(length*fs)
+    signal = np.zeros(int(length*fs))
     y = np.zeros(len(a))
     for n in range(len(signal)):
         w = 2*np.random.rand() - 1

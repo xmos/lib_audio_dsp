@@ -135,7 +135,7 @@ def test_drc_component(fs, component, at, rt, threshold):
             output_flt[n], _, _ = drcut.process(signal[n])
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
-    top_half = utils.db(output_int) > -50
+    top_half = utils.db(output_flt) > -50
     if np.any(top_half):
         error_flt = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
