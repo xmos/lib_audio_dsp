@@ -113,6 +113,7 @@ class fixed_gain(dspg.dsp_block):
     """
     def __init__(self, fs, n_chans, gain_db, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
+        assert gain_db < 6, "Maximum fixed gain is +6dB"
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
         self.gain_int = utils.int32(self.gain * 2**30)
@@ -139,6 +140,7 @@ class fixed_gain(dspg.dsp_block):
 class volume_control(fixed_gain):
     # just a fixed gain with an exposed set gain
     def set_gain(self, gain_db):
+        assert gain_db < 6, "Maximum volume control gain is +6dB"
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
         self.gain_int = utils.int32(self.gain * 2**30)
