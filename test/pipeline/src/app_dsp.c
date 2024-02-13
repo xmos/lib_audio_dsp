@@ -6,8 +6,9 @@
 //#include "dspt_control.h"
 
 #include <stages/adsp_pipeline.h>
+#include <adsp_generated_auto.h>
 
-static audio_dsp_t m_dsp;
+static adsp_pipeline_t * m_dsp;
 
 // send data to dsp
 void app_dsp_source(REFERENCE_PARAM(int32_t, data), int num_channels) {
@@ -30,18 +31,13 @@ void app_dsp_sink(REFERENCE_PARAM(int32_t, data), int num_channels) {
     adsp_pipeline_sink(&m_dsp, out_data);
 }
 
-
-
 // do dsp
 void app_dsp_main(chanend_t c_control) {
-    adsp_pipeline_init(&m_dsp);
-
-    adsp_module_array_t modules = adsp_pipeline_get_modules(&m_dsp);
-    (void)modules;
+    m_dsp = adsp_auto_pipeline_init();
+    
     PAR_JOBS(
-        PJOB(adsp_pipeline_main, (&m_dsp))
-        //PJOB(dsp_control_thread, (c_control, modules.modules, modules.num_modules)) // TODO
+        PJOB(adsp_auto_pipeline_main, (&m_dsp))
+        //PJOB(dsp_control_thread, (c_control, m_dsp.modules, m_dsp.n_modules)) // TODO
     );
-    adsp_pipeline_main(&m_dsp);
 }
 

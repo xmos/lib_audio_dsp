@@ -27,6 +27,9 @@ class Pipeline:
     ----------
     n_in : int
         Number of input channels into the pipeline
+    identifier: string
+        Short identifier for pipeline. Baked into _init() and _main() methods
+        for the pipeline, so make sure it is succinct.
     frame_size : int
         Size of the input frame of all input channels
     fs : int
@@ -43,11 +46,12 @@ class Pipeline:
         List of all the threads in the pipeline
     """
 
-    def __init__(self, n_in, frame_size=1, fs=48000):
+    def __init__(self, n_in, identifier="auto", frame_size=1, fs=48000):
         self._graph = Graph()
         self.threads = []
         self._n_in = n_in
         self._n_out = 0
+        self._id = identifier
 
         self.i = [StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)]
         for i, input in enumerate(self.i):
@@ -129,6 +133,7 @@ class Pipeline:
         Returns
         -------
         dict
+            "identifier": string identifier for the pipeline
             "threads": list of [[(stage index, stage type name), ...], ...] for all threads
             "edges": list of [[[source stage, source index], [dest stage, dest index]], ...] for all edges
             "configs": list of dicts containing stage config for each stage.
@@ -156,6 +161,7 @@ class Pipeline:
         module_definitions = {node.name: node.yaml_dict for node in self._graph.nodes}
 
         return {
+            "identifier": self._id,
             "threads": threads,
             "edges": edges,
             "configs": node_configs,
@@ -187,7 +193,7 @@ def send_config_to_device(pipeline: Pipeline):
             ret = subprocess.run([host_app, "--use", protocol, "--instance-id", str(stage.index),
                             command, *value.split()])
             if ret.returncode:
-                print("Unable to connect connect to device")
+                print(f"Unable to connect to device using {host_app}")
                 return
             print(host_app, "--use", protocol, "--instance-id", str(stage.index),
                             command, *value.split())
@@ -425,53 +431,68 @@ def _resolved_pipeline_num_modules(resolved_pipeline):
     """Determine total number of module instances in the resolved pipeline across all threads"""
     return sum(len(t) for t in resolved_pipeline["threads"])
 
-def _generate_dsp_struct(resolved_pipeline):
-    """
-    Generate the struct which holds pipeline state. Contains
-    channels and module_instance_t
-    """
-    channels = []
-    for c_source, c_dest in _determine_channels(resolved_pipeline):
-        channels.append(f"channel_{c_source}_{c_dest}")
-
-    struct = "struct audio_dsp_impl {\n\t"
-    struct += "\n\t".join(f"channel_t {channel};" for channel in channels)
-    struct += "\n"
-
-    num_modules = _resolved_pipeline_num_modules(resolved_pipeline)
-    struct += f"\tmodule_instance_t* modules[{num_modules}];\n"
-    struct += f"\tint num_modules;\n"
-    struct += "};"
-    return struct
-
 def _generate_dsp_header(resolved_pipeline, out_dir = "build/dsp_pipeline"):
     """
-    Generate "adsp_generated.h" and save to disk.
+    Generate "adsp_generated_<x>.h" and save to disk.
     """
     out_dir = Path(out_dir)
     out_dir.mkdir(exist_ok=True)
 
     header = "#pragma once\n"
-    header += "#include <xccompat.h>\n"
-    header += "#include <xcore/channel.h>\n"
-    header += "#include <stages/adsp_module.h>\n"
-    header += _generate_dsp_struct(resolved_pipeline)
+    header += "#include <stages/adsp_pipeline.h>\n"
+    header += "\n"
+    header += f"void * adsp_{resolved_pipeline["identifier"]}_pipeline_init();\n"
+    header += f"void adsp_{resolved_pipeline["identifier"]}_pipeline_main(adsp_pipeline_t* adsp);\n"
 
-    (out_dir / "adsp_generated.h").write_text(header)
+    (out_dir / f"adsp_generated_{resolved_pipeline['identifier']}.h").write_text(header)
 
 def _generate_dsp_init(resolved_pipeline):
     """
     Create the init function which initialised all modules and channels.
     """
     chans = _determine_channels(resolved_pipeline)
+    adsp = f"adsp_{resolved_pipeline["identifier"]}"
 
-    ret = "\nvoid adsp_pipeline_init(audio_dsp_t* adsp) {\n"
+    ret = f"adsp_pipeline_t * {adsp}_pipeline_init() {{\n"
+    ret += f"\tstatic adsp_pipeline_t {adsp};\n\n"
+
+    # Track the number of channels so we can initialise them
+    input_channels = 0
+    link_channels = 0
+    output_channels = 0
 
     for chan_s, chan_d in chans:
-        ret += f"\tadsp->channel_{chan_s}_{chan_d} = chan_alloc();\n"
+        # We assume that there is no channel pipeline_in -> pipeline_out
+        if chan_s == "pipeline_in":
+            input_channels += 1
+        elif chan_d == "pipeline_out":
+            output_channels += 1
+        else:
+            link_channels += 1
+
+    ret += f"\tstatic channel_t {adsp}_in_chans[{input_channels}];\n"
+    ret += f"\tstatic channel_t {adsp}_out_chans[{output_channels}];\n"
+    ret += f"\tstatic channel_t {adsp}_link_chans[{link_channels}];\n"
+    for chan in range(input_channels):
+        ret += f"\t{adsp}_in_chans[{chan}] = chan_alloc();\n"
+    for chan in range(output_channels):
+        ret += f"\t{adsp}_out_chans[{chan}] = chan_alloc();\n"
+    for chan in range(link_channels):
+        ret += f"\t{adsp}_link_chans[{chan}] = chan_alloc();\n"
+
+    # We assume that this function generates the arrays adsp_<x>_(in|out)_mux_cfgs
+    # and that it will initialise the .(input|output)_mux members of adsp
+    ret += _generate_dsp_muxes(resolved_pipeline)
+
+    ret += f"\t{adsp}.p_in = (channel_t *) {adsp}_in_chans;\n"
+    ret += f"\t{adsp}.n_in = {input_channels};\n"
+    ret += f"\t{adsp}.p_out = (channel_t *) {adsp}_out_chans;\n"
+    ret += f"\t{adsp}.n_out = {output_channels};\n"
+    ret += f"\t{adsp}.p_link = (channel_t *) {adsp}_link_chans;\n"
+    ret += f"\t{adsp}.n_link = {link_channels};\n"
 
     num_modules = _resolved_pipeline_num_modules(resolved_pipeline)
-    ret += f"\tadsp->num_modules = {num_modules};\n"
+    ret += f"\t{adsp}.n_modules = {num_modules};\n"
 
     # initialise the modules
     for thread in resolved_pipeline["threads"]:
@@ -489,81 +510,65 @@ def _generate_dsp_init(resolved_pipeline):
             struct_val = ", ".join(f".{field} = {value}" for field, value in defaults.items())
             default_str = f"&({stage_name}_config_t){{{struct_val}}}"
 
-            ret += f"\tadsp->modules[{stage_index}] = {stage_name}_init({stage_index}, {stage_n_in}, {stage_n_out}, {stage_frame_size}, {default_str});\n"
-
+            ret += f"\t{adsp}.modules[{stage_index}] = {stage_name}_init({stage_index}, {stage_n_in}, {stage_n_out}, {stage_frame_size}, {default_str});\n"
+    ret += f"\treturn &{adsp};\n"
     ret += "}\n\n"
     return ret
 
-def _generate_dsp_source(resolved_pipeline):
-    """
-    Generate a function which will be called by the data source,
-    it receives the new samples as input and sends them over the
-    correct channels
-    """
+def _generate_dsp_muxes(resolved_pipeline):
+    # We assume that this function generates the arrays adsp_<x>_(in|out)_mux_cfgs
+    # and that it will initialise the .(input|output)_mux members of adsp
+    # We assume that dictionaries are ordered (which is true as of Python 3.7)
+
     all_edges = _filter_edges_by_thread(resolved_pipeline)
     all_in_edges = [e[0] for e in all_edges]
+    all_out_edges = [e[2] for e in all_edges]
+    adsp = f"adsp_{resolved_pipeline["identifier"]}"
 
-    ret = "void adsp_pipeline_source(audio_dsp_t* adsp, int32_t** data) {\n"
+    # We're basically assuming here that the dictionary is ordered the same way
+    # as it's going to be when we construct main, so these thread relationships
+    # are always going to be the same. I think this is true.
 
-    for dest_thread, thread_input_edges in enumerate(all_in_edges):
+    input_chan_idx = 0
+    num_input_mux_cfgs = 0
+    ret = f"\tstatic adsp_mux_elem_t {adsp}_in_mux_cfgs[] = {{\n"
+    for thread_input_edges in all_in_edges:
         try:
             edges = thread_input_edges["pipeline_in"]
             for edge in edges:
                 frame_size = 1  # TODO
-                ret += f"\tchan_out_buf_word(adsp->channel_pipeline_in_{dest_thread}.end_a, (uint32_t*)data[{edge[0][1]}], {frame_size});\n"
+                ret += f"\t\t{{ .channel_idx = {input_chan_idx}, .data_idx = {edge[0][1]}, .frame_size = {frame_size}}},\n"
+                num_input_mux_cfgs += 1
+            input_chan_idx += 1
         except KeyError:
             pass  # this thread doesn't consume from the pipeline input
-    ret += "}\n\n"
-    return ret
+    ret += "\t};\n"
 
-def _generate_dsp_sink(resolved_pipeline):
-    """
-    Generate a function that will be called by the consumer of
-    the dsp output. It will read from the output channels. This function
-    will not read from the channels until data is available to allow for
-    the case where
-    """
-    all_edges = _filter_edges_by_thread(resolved_pipeline)
-    all_out_edges = [e[2] for e in all_edges]
-
-    # function to check if channel is not empty
-    ret = """
-static bool check_chanend(chanend_t c) {
-    SELECT_RES(CASE_THEN(c, has_data), DEFAULT_THEN(no_data)) {
-        has_data: return true;
-        no_data: return false;
-    }
-}
-
-"""
-
-    sink_details = []
-    for source_thread, thread_output_edges in enumerate(all_out_edges):
+    output_chan_idx = 0
+    num_output_mux_cfgs = 0
+    ret += f"\tstatic adsp_mux_elem_t {adsp}_out_mux_cfgs[] = {{\n"
+    for thread_input_edges in all_out_edges:
         try:
-            edges = thread_output_edges["pipeline_out"]
+            edges = thread_input_edges["pipeline_out"]
             for edge in edges:
                 frame_size = 1  # TODO
-                sink_details.append((f"adsp->channel_{source_thread}_pipeline_out.end_b", edge[1][1], frame_size))
+                ret += f"\t\t{{ .channel_idx = {output_chan_idx}, .data_idx = {edge[1][1]}, .frame_size = {frame_size}}},\n"
+                num_output_mux_cfgs += 1
+            output_chan_idx += 1
         except KeyError:
             pass  # this thread doesn't consume from the pipeline input
+    ret += "\t};\n"
 
-    chanends = set(c for c, _, _ in sink_details)
-    ret += "bool adsp_pipeline_sink_nowait(audio_dsp_t* adsp, int32_t** data) {\n"
-    ret += f"\tif({' && '.join(f'check_chanend({c})' for c in chanends)}) {{\n"
-    for chan, data_idx, frame_size in sink_details:
-        ret += f"\t\tchan_in_buf_word({chan}, (uint32_t*)data[{data_idx}], {frame_size});\n"
-    ret += "\t\treturn true;\n\t} else { return false; }\n"
-    ret += "}\n\n"
+    ret += f"\t{adsp}.input_mux.n_chan = {num_input_mux_cfgs};\n"
+    ret += f"\t{adsp}.input_mux.chan_cfg = (adsp_mux_elem_t *) {adsp}_in_mux_cfgs;\n"
+    ret += f"\t{adsp}.output_mux.n_chan = {num_output_mux_cfgs};\n"
+    ret += f"\t{adsp}.output_mux.chan_cfg = (adsp_mux_elem_t *) {adsp}_out_mux_cfgs;\n"
 
-    ret += "void adsp_pipeline_sink(audio_dsp_t* adsp, int32_t** data) {\n"
-    for chan, data_idx, frame_size in sink_details:
-        ret += f"\tchan_in_buf_word({chan}, (uint32_t*)data[{data_idx}], {frame_size});\n"
-    ret += "}\n\n"
     return ret
 
 def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
     """
-    Generate the source code for dsp_main
+    Generate the source code for adsp_generated_<x>.c
 
     Parameters
     ----------
@@ -580,10 +585,6 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
     _generate_dsp_header(resolved_pipe, out_dir)
     threads = resolved_pipe["threads"]
 
-    n_threads = len(threads)
-
-    chans = _determine_channels(resolved_pipe)
-
     dsp_main = """
 #include <stages/adsp_pipeline.h>
 #include "dspt_main.h"
@@ -595,13 +596,14 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
     # add includes for each stage type in the pipeline
     dsp_main += "".join(f"#include <stages/{name}.h>\n" for name in resolved_pipe["modules"].keys())
     dsp_main += _generate_dsp_threads(resolved_pipe)
-    dsp_main += _generate_dsp_source(resolved_pipe)
-    dsp_main += _generate_dsp_sink(resolved_pipe)
-
     dsp_main += _generate_dsp_init(resolved_pipe)
-    dsp_main += "void adsp_pipeline_main(audio_dsp_t* adsp) {\n"
 
+    dsp_main += f"void adsp_{resolved_pipe["identifier"]}_pipeline_main(adsp_pipeline_t* adsp) {{\n"
+
+    input_chan_idx = 0
+    output_chan_idx = 0
     all_thread_edges = _filter_edges_by_thread(resolved_pipe)
+    determined_channels = _determine_channels(resolved_pipe)
     for thread_idx, (thread, thread_edges) in enumerate(zip(threads, all_thread_edges)):
         thread_input_edges, _, thread_output_edges, _ = thread_edges
         # thread stages
@@ -609,11 +611,47 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
         for stage_idx, _ in thread:
             dsp_main += f"\t\tadsp->modules[{stage_idx}],\n"
         dsp_main += "\t};\n"
+
         # thread input chanends
-        input_channels = ",\n\t\t".join([f"adsp->channel_{source}_{thread_idx}.end_b" for source in thread_input_edges.keys()])
+        input_channel_array = []
+        for source in thread_input_edges.keys():
+            if source == "pipeline_in":
+                array_source = "adsp->p_in"
+                idx_num = input_chan_idx
+                input_chan_idx += 1
+            else:
+                array_source = "adsp->p_link"
+                link_idx = 0
+                for chan_s, chan_d in determined_channels:
+                    if chan_s != "pipeline_in" and chan_d != "pipeline_out":
+                        if source == chan_s and thread_idx == chan_d:
+                            idx_num = link_idx
+                            break
+                        else:
+                            link_idx += 1
+            input_channel_array.append(f"{array_source}[{idx_num}].end_b")
+        input_channels = ",\n\t\t".join(input_channel_array)
         dsp_main += f"\tchanend_t thread_{thread_idx}_inputs[] = {{\n\t\t{input_channels}}};\n"
+        
         # thread output chanends
-        output_channels = ",\n\t\t".join([f"adsp->channel_{thread_idx}_{dest}.end_a" for dest in thread_output_edges.keys()])
+        output_channel_array = []
+        for dest in thread_output_edges.keys():
+            if dest == "pipeline_out":
+                array_source = "adsp->p_out"
+                idx_num = output_chan_idx
+                output_chan_idx += 1
+            else:
+                array_source = "adsp->p_link"
+                link_idx = 0
+                for chan_s, chan_d in determined_channels:
+                    if chan_s != "pipeline_in" and chan_d != "pipeline_out":
+                        if chan_s == thread_idx:
+                            idx_num = link_idx
+                            break
+                        else:
+                            link_idx += 1
+            output_channel_array.append(f"{array_source}[{idx_num}].end_a")
+        output_channels = ",\n\t\t".join(output_channel_array)
         dsp_main += f"\tchanend_t thread_{thread_idx}_outputs[] = {{\n\t\t{output_channels}}};\n"
 
     dsp_main += "\tPAR_JOBS(\n\t\t"
@@ -622,7 +660,7 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
 
     dsp_main += "}\n"
 
-    (out_dir / "dsp_main.c").write_text(dsp_main)
+    (out_dir / f"adsp_generated_{resolved_pipe['identifier']}.c").write_text(dsp_main)
 
     yaml_dir = out_dir/"yaml"
     yaml_dir.mkdir(exist_ok=True)
@@ -674,7 +712,7 @@ def profile_pipeline(pipeline: Pipeline):
         ret = subprocess.run([host_app, "--use", protocol, "--instance-id", str(thread.thread_stage.index),
             command], stdout=subprocess.PIPE)
         if ret.returncode:
-            print("Unable to connect connect to device")
+            print(f"Unable to connect to device using {host_app}")
             return
         cycles = int(ret.stdout.splitlines()[0].decode('utf-8'))
         percentage_used = (cycles / ticks_per_sample_time_s)*100
