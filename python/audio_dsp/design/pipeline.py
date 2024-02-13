@@ -133,7 +133,7 @@ class Pipeline:
         Returns
         -------
         dict
-            "identifier": string identifier for the pipeline
+            'identifier': string identifier for the pipeline
             "threads": list of [[(stage index, stage type name), ...], ...] for all threads
             "edges": list of [[[source stage, source index], [dest stage, dest index]], ...] for all edges
             "configs": list of dicts containing stage config for each stage.
@@ -161,7 +161,7 @@ class Pipeline:
         module_definitions = {node.name: node.yaml_dict for node in self._graph.nodes}
 
         return {
-            "identifier": self._id,
+            'identifier': self._id,
             "threads": threads,
             "edges": edges,
             "configs": node_configs,
@@ -441,8 +441,8 @@ def _generate_dsp_header(resolved_pipeline, out_dir = "build/dsp_pipeline"):
     header = "#pragma once\n"
     header += "#include <stages/adsp_pipeline.h>\n"
     header += "\n"
-    header += f"adsp_pipeline_t * adsp_{resolved_pipeline["identifier"]}_pipeline_init();\n"
-    header += f"void adsp_{resolved_pipeline["identifier"]}_pipeline_main(adsp_pipeline_t* adsp);\n"
+    header += f"adsp_pipeline_t * adsp_{resolved_pipeline['identifier']}_pipeline_init();\n"
+    header += f"void adsp_{resolved_pipeline['identifier']}_pipeline_main(adsp_pipeline_t* adsp);\n"
 
     (out_dir / f"adsp_generated_{resolved_pipeline['identifier']}.h").write_text(header)
 
@@ -451,7 +451,7 @@ def _generate_dsp_init(resolved_pipeline):
     Create the init function which initialised all modules and channels.
     """
     chans = _determine_channels(resolved_pipeline)
-    adsp = f"adsp_{resolved_pipeline["identifier"]}"
+    adsp = f"adsp_{resolved_pipeline['identifier']}"
 
     ret = f"adsp_pipeline_t * {adsp}_pipeline_init() {{\n"
     ret += f"\tstatic adsp_pipeline_t {adsp};\n\n"
@@ -523,7 +523,7 @@ def _generate_dsp_muxes(resolved_pipeline):
     all_edges = _filter_edges_by_thread(resolved_pipeline)
     all_in_edges = [e[0] for e in all_edges]
     all_out_edges = [e[2] for e in all_edges]
-    adsp = f"adsp_{resolved_pipeline["identifier"]}"
+    adsp = f"adsp_{resolved_pipeline['identifier']}"
 
     # We're basically assuming here that the dictionary is ordered the same way
     # as it's going to be when we construct main, so these thread relationships
@@ -598,7 +598,7 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
     dsp_main += _generate_dsp_threads(resolved_pipe)
     dsp_main += _generate_dsp_init(resolved_pipe)
 
-    dsp_main += f"void adsp_{resolved_pipe["identifier"]}_pipeline_main(adsp_pipeline_t* adsp) {{\n"
+    dsp_main += f"void adsp_{resolved_pipe['identifier']}_pipeline_main(adsp_pipeline_t* adsp) {{\n"
 
     input_chan_idx = 0
     output_chan_idx = 0
