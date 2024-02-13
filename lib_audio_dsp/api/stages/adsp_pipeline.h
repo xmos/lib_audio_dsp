@@ -42,7 +42,7 @@ static inline void adsp_pipeline_source(adsp_pipeline_t *adsp, int32_t **data)
     for (size_t chan_id = 0; chan_id < adsp->input_mux.n_chan; chan_id++)
     {
         adsp_mux_elem_t cfg = adsp->input_mux.chan_cfg[chan_id];
-        chan_in_buf_word(adsp->p_in[cfg.channel_idx].end_a,
+        chan_out_buf_word(adsp->p_in[cfg.channel_idx].end_a,
                          (uint32_t *)data[cfg.data_idx],
                          cfg.frame_size);
     }
