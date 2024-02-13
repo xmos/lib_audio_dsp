@@ -131,7 +131,7 @@ class envelope_detector_peak(dspg.dsp_block):
             alpha = self.release_alpha_f32
 
         # do exponential moving average
-        self.envelope_f32[channel] = (np.float32(1) - alpha) * self.envelope_f32[channel] + alpha * sample_mag
+        self.envelope_f32[channel] = self.envelope_f32[channel] + alpha * (sample_mag - self.envelope_f32[channel])
 
         # if we got floats, return floats, otherwise return np.float32
         if isinstance(sample, np.float32):
@@ -254,7 +254,7 @@ class envelope_detector_rms(envelope_detector_peak):
             alpha = self.release_alpha_f32
 
         # do exponential moving average
-        self.envelope_f32[channel] = (np.float32(1) - alpha) * self.envelope_f32[channel] + alpha * sample_mag
+        self.envelope_f32[channel] = self.envelope_f32[channel] + alpha * (sample_mag - self.envelope_f32[channel])
 
         # if we got floats, return floats, otherwise return np.float32
         if isinstance(sample, np.float32):
@@ -335,7 +335,7 @@ class limiter_base(dspg.dsp_block):
             alpha = self.release_alpha_f32
 
         # do exponential moving average
-        self.gain_f32[channel] = (np.float32(1) - alpha) * self.gain_f32[channel] + alpha * new_gain
+        self.gain_f32[channel] = self.gain_f32[channel] + alpha * (new_gain - self.gain_f32[channel])
 
         # apply gain
         y = self.gain_f32[channel]*sample
