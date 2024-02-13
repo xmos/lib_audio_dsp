@@ -64,7 +64,8 @@ module_instance_t* limiter_peak_init(uint8_t id, int n_inputs, int n_outputs, in
 
     for(int i=0; i<state->n_inputs; i++)
     {
-        state->lim[i].gain = (float_s32_t){0x40000000, -30};
+        state->lim[i].gain = 1;
+        state->lim[i].env_det.envelope = 0;
     }
 
     xassert(module_config != NULL);
