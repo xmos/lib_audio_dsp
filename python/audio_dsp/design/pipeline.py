@@ -306,8 +306,8 @@ def _generate_dsp_threads(resolved_pipeline, block_size = 1):
     all_thread_edges = _filter_edges_by_thread(resolved_pipeline)
     file_str = ""
     for thread_index, (thread_edges, thread) in enumerate(zip(all_thread_edges, resolved_pipeline["threads"])):
-        func = f"DECLARE_JOB(dsp_thread{thread_index}, (chanend_t*, chanend_t*, module_instance_t**));\n"
-        func += f"void dsp_thread{thread_index}(chanend_t* c_source, chanend_t* c_dest, module_instance_t** modules) {{\n"
+        func = f"DECLARE_JOB(dsp_{resolved_pipeline['identifier']}_thread{thread_index}, (chanend_t*, chanend_t*, module_instance_t**));\n"
+        func += f"void dsp_{resolved_pipeline['identifier']}_thread{thread_index}(chanend_t* c_source, chanend_t* c_dest, module_instance_t** modules) {{\n"
 
         in_edges, internal_edges, all_output_edges, dead_edges = thread_edges
         all_edges = []
@@ -655,7 +655,7 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
         dsp_main += f"\tchanend_t thread_{thread_idx}_outputs[] = {{\n\t\t{output_channels}}};\n"
 
     dsp_main += "\tPAR_JOBS(\n\t\t"
-    dsp_main += ",\n\t\t".join(f"PJOB(dsp_thread{ti}, (thread_{ti}_inputs, thread_{ti}_outputs, thread_{ti}_modules))" for ti in range(len(threads)))
+    dsp_main += ",\n\t\t".join(f"PJOB(dsp_{resolved_pipe['identifier']}_thread{ti}, (thread_{ti}_inputs, thread_{ti}_outputs, thread_{ti}_modules))" for ti in range(len(threads)))
     dsp_main += "\n\t);\n"
 
     dsp_main += "}\n"
