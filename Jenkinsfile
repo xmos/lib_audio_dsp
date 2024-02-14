@@ -133,7 +133,7 @@ pipeline {
             archiveArtifacts artifacts: "doc/_out/html/**/*"
             archiveArtifacts artifacts: "doc/_out/linkcheck/**/*"
             sh 'find doc/_out/pdf -type f -not -name "*.pdf" -exec rm {} +'  // delete latex junk
-            zip zipFile: "sw_audio_dsp_docs.zip", archive: true, dir: "doc/_out", exclude: "linkcheck/**"
+            zip zipFile: "lib_audio_dsp_docs.zip", archive: true, dir: "doc/_out", exclude: "linkcheck/**"
           }
           post {
             cleanup {
