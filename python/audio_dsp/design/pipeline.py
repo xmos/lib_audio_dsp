@@ -549,9 +549,9 @@ def _generate_dsp_muxes(resolved_pipeline):
     output_chan_idx = 0
     num_output_mux_cfgs = 0
     ret += f"\tstatic adsp_mux_elem_t {adsp}_out_mux_cfgs[] = {{\n"
-    for thread_input_edges in all_out_edges:
+    for thread_output_edges in all_out_edges:
         try:
-            edges = thread_input_edges["pipeline_out"]
+            edges = thread_output_edges["pipeline_out"]
             for edge in edges:
                 frame_size = 1  # TODO
                 ret += f"\t\t{{ .channel_idx = {output_chan_idx}, .data_idx = {edge[1][1]}, .frame_size = {frame_size}}},\n"
