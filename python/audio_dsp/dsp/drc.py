@@ -385,7 +385,7 @@ class limiter_base(dspg.dsp_block):
         envelope_int = max(envelope_int, 1)
 
         # if envelope below threshold, apply unity gain, otherwise scale down
-        new_gain = float(self.threshold_int/envelope_int)
+        new_gain = float(self.threshold_int)/float(envelope_int)
         new_gain = min(1.0, new_gain)
         new_gain_int = utils.int32(new_gain * 2**30)
 
