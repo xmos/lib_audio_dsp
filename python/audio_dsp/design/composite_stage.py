@@ -75,7 +75,7 @@ class CompositeStage:
         inputs : Iterable[StageOutput]
             Edges of the pipeline that will be connected to the newly created stage.
         kwargs : dict
-            Additional args are forwarded to the stages constructore (__init__)
+            Additional args are forwarded to the stages constructors (__init__)
 
         Returns
         -------
@@ -165,7 +165,7 @@ class CompositeStage:
     def add_to_dot(self, dot):
         """
         Recursively adds composite stages to a dot diagram which is being
-        contructed.
+        constructed.
         Does not add the edges.
 
         Parameters

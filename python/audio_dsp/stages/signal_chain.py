@@ -6,7 +6,7 @@ from itertools import chain
 class Bypass(Stage):
     """
     Stage which does not modify its inputs. Useful if data needs to flow through
-    a thread which it is not being processed on to keep pipeline lengths aligned.
+    a thread which is not being processed on to keep pipeline lengths aligned.
     """
     def __init__(self, **kwargs):
         super().__init__(config=find_config("bypass"), **kwargs)
@@ -15,7 +15,7 @@ class Bypass(Stage):
 
 class Fork(Stage):
     """
-    Fork the signal, use if the same data needs to go down parallel 
+    Fork the signal, use if the same data needs to go down parallel
     data paths
 
         a = t.stage(Example, ...)
