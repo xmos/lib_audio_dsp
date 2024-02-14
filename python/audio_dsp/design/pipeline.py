@@ -647,7 +647,7 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
                 link_idx = 0
                 for chan_s, chan_d in determined_channels:
                     if chan_s != "pipeline_in" and chan_d != "pipeline_out":
-                        if chan_s == thread_idx:
+                        if chan_s == thread_idx and chan_d == dest:
                             idx_num = link_idx
                             break
                         else:
