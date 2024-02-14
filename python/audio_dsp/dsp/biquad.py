@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from audio_dsp.dsp import utils as utils
 from audio_dsp.dsp import generic as dspg
 
-BOOST_BSHIFT = 2  # limit boosts to 12dB gain
+BOOST_BSHIFT = 2  # limit boosts to 12 dB gain
 
 
 class biquad(dspg.dsp_block):

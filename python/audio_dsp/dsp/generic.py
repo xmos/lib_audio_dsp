@@ -37,17 +37,17 @@ class dsp_block():
 
     def process(self, sample: float):
         """
-        Take 1 new sample and give it back. Do no processing for the generic
+        Take one new sample and give it back. Do no processing for the generic
         block.
         """
         return sample
 
     def process_xcore(self, sample: float):
         """
-        Take 1 new sample and return 1 processed sample.
+        Take one new sample and return 1 processed sample.
 
         For the generic implementation, scale and quantize the input, call the
-        float implementation, then scale back to 1.0 = 0dB.
+        float implementation, then scale back to 1.0 = 0 dB.
         """
         sample_int = utils.int32(sample * 2**self.Q_sig)
         y = self.process(float(sample_int))

@@ -9,7 +9,7 @@ from audio_dsp.dsp import generic as dspg
 
 class envelope_detector_peak(dspg.dsp_block):
     """
-    Envelope detector that follows the absolute peak value of a signal
+    Envelope detector that follows the absolute peak value of a signal.
 
     The attack time sets how fast the envelope detector ramps up. The decay
     time sets how fast the envelope detector ramps down.
@@ -58,7 +58,7 @@ class envelope_detector_peak(dspg.dsp_block):
             release_t = detect_t
 
         # attack times simplified from McNally, seem pretty close. Assumes the
-        # time constant of a digital filter is the -3dB point where
+        # time constant of a digital filter is the -3 dB point where
         # abs(H(z))**2 = 0.5.
         T = 1/fs
         # attack/release time can't be faster than the length of 2 samples.
@@ -88,7 +88,7 @@ class envelope_detector_peak(dspg.dsp_block):
         """
         Update the peak envelope for a signal, using floating point maths.
 
-        Take 1 new sample and return the updated envelope. Input should be
+        Take one new sample and return the updated envelope. Input should be
         scaled with 0dB = 1.0.
 
         """
@@ -109,7 +109,7 @@ class envelope_detector_peak(dspg.dsp_block):
         """
         Update the peak envelope for a signal, using np.float32 maths.
 
-        Take 1 new sample and return the updated envelope. If the input is
+        Take one new sample and return the updated envelope. If the input is
         np.float32, return a np.float32, otherwise expect float input and return
         float output.
 
@@ -138,7 +138,7 @@ class envelope_detector_peak(dspg.dsp_block):
             return self.envelope_f32[channel]
         else:
             return float(self.envelope_f32[channel])
-        
+
     def process_frame_xcore(self, frame):
         # same as generic, but only take 1st output
         n_outputs = len(frame)
@@ -202,7 +202,7 @@ class envelope_detector_rms(envelope_detector_peak):
         """
         Update the RMS envelope for a signal, using floating point maths.
 
-        Take 1 new sample and return the updated envelope. Input should be
+        Take one new sample and return the updated envelope. Input should be
         scaled with 0dB = 1.0.
 
         Note this returns the mean**2 value, there is no need to do the sqrt() as
@@ -228,7 +228,7 @@ class envelope_detector_rms(envelope_detector_peak):
         """
         Update the RMS envelope for a signal, using np.float32 maths.
 
-        Take 1 new sample and return the updated envelope. Input should be
+        Take one new sample and return the updated envelope. Input should be
         scaled with 0dB = 1.0.
 
         Note this returns the mean**2 value, there is no need to do the sqrt() as
