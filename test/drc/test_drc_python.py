@@ -84,6 +84,90 @@ def test_limiter_peak_release(fs, rt, threshold):
 
 
 @pytest.mark.parametrize("fs", [48000])
+@pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
+@pytest.mark.parametrize("threshold", [-20, -10, -6, 0])
+def comp_vs_limiter(fs, at, threshold):
+    # check infinite ratio compressor is a limiter
+
+    # Make a constant signal at 6dB above the threshold, make 2* length of
+    # attack time to keep the test quick
+    x = np.ones(int(at*2*fs))
+    x[:] = utils.db2gain(threshold + 6)
+    t = np.arange(len(x))/fs
+
+    rt = 0.3
+    comp_type = "rms"
+    comp_handle = getattr(drc, "compressor_%s" % comp_type)
+    lim_handle = getattr(drc, "limiter_%s" % comp_type)
+
+    comp_thing = comp_handle(fs, 1, threshold, np.inf, at, rt)
+    lim_thing = lim_handle(fs, 1, threshold, at, rt)
+
+    y_p = np.zeros_like(x)
+    f_p = np.zeros_like(x)
+    env_p = np.zeros_like(x)
+
+    # do the processing
+    for n in range(len(y_p)):
+        y_p[n], f_p[n], env_p[n] = comp_thing.process(x[n])
+
+    y_r = np.zeros_like(x)
+    f_r = np.zeros_like(x)
+    env_r = np.zeros_like(x)
+
+    # do the processing
+    for n in range(len(y_r)):
+        y_r[n], f_r[n], env_r[n] = lim_thing.process(x[n])
+
+    # limiter and infinite ratio compressor should be the same
+    np.testing.assert_allclose(utils.db(y_p),
+                               utils.db(y_r),
+                               atol=0.002)
+
+
+@pytest.mark.parametrize("fs", [48000])
+@pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
+@pytest.mark.parametrize("threshold", [-20, -10, -6, 0])
+def peak_vs_rms(fs, at, threshold):
+    # check peak and rms converge to same value
+
+    # Make a constant signal at 6dB above the threshold, make 2* length of
+    # attack time to keep the test quick
+    x = np.ones(int(at*10*fs))
+    x[:] = utils.db2gain(threshold + 6)
+    t = np.arange(len(x))/fs
+
+    rt = 0.3
+    comp_type = "limiter"
+    peak_handle = getattr(drc, "%s_peak" % comp_type)
+    rms_handle = getattr(drc, "%s_rms" % comp_type)
+
+    peak_thing = peak_handle(fs, 1, threshold, at, rt)
+    rms_thing = rms_handle(fs, 1, threshold, at, rt)
+
+    y_p = np.zeros_like(x)
+    f_p = np.zeros_like(x)
+    env_p = np.zeros_like(x)
+
+    # do the processing
+    for n in range(len(y_p)):
+        y_p[n], f_p[n], env_p[n] = peak_thing.process(x[n])
+
+    y_r = np.zeros_like(x)
+    f_r = np.zeros_like(x)
+    env_r = np.zeros_like(x)
+
+    # do the processing
+    for n in range(len(y_r)):
+        y_r[n], f_r[n], env_r[n] = rms_thing.process(x[n])
+
+    # rms and peak limiter should converge to the same value
+    np.testing.assert_allclose(utils.db(y_p[int(fs*at*5):]),
+                               utils.db(y_r[int(fs*at*5):]),
+                               atol=0.002)
+
+
+@pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("component, threshold", [("limiter_peak", -20),
                                                   ("limiter_peak", -6),
                                                   ("limiter_peak", 0),
@@ -214,3 +298,4 @@ def test_drc_component_frames(fs, component, at, rt, threshold, n_chans):
 if __name__ == "__main__":
     test_drc_component(48000, "limiter_peak", 1, 1, 1)
     # test_limiter_peak_attack(48000, 0.1, -10)
+    comp_vs_limiter(48000, 0.001, 0)
