@@ -1,5 +1,5 @@
 module:
-  limiter_peak:
+  limiter_rms:
     attack_alpha:
       type: float
     release_alpha:
