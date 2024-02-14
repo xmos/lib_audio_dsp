@@ -69,7 +69,7 @@ class cascaded_biquads_8(dspg.dsp_block):
     def reset_state(self):
         for biquad in self.biquads:
             biquad.reset_state()
-        
+
         return
 
 
@@ -103,7 +103,7 @@ def make_butterworth_lowpass(N, fc, fs):
     # The function will return N/2 sets of biquad coefficients
     #
     # translated from Neil Robertson's https://www.dsprelated.com/showarticle/1137.php
-    # 
+    #
     # see also https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html
 
     assert (fc <= fs/2), 'fc must be less than fs/2'
@@ -198,7 +198,7 @@ if __name__ == "__main__":
     filter_spec = [['lowpass', 8000, 0.707],
                    ['highpass', 200, 1],
                    ['peaking', 1000, 5, 10]]
-    peq = parametric_eq_8band(fs, filter_spec)
+    peq = parametric_eq_8band(fs, 1, filter_spec)
 
     w, response = peq.freq_response()
 
@@ -216,9 +216,9 @@ if __name__ == "__main__":
 
     a = make_butterworth_highpass(6, fc, fs)
 
-    bq0 = bq.biquad(bq.normalise_biquad(a[0]))
-    bq1 = bq.biquad(bq.normalise_biquad(a[1]))
-    bq2 = bq.biquad(bq.normalise_biquad(a[2]))
+    bq0 = bq.biquad(bq.normalise_biquad(a[0]), fs, 1)
+    bq1 = bq.biquad(bq.normalise_biquad(a[1]), fs, 1)
+    bq2 = bq.biquad(bq.normalise_biquad(a[2]), fs, 1)
 
     w, response0 = bq0.freq_response()
     w, response1 = bq1.freq_response()

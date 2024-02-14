@@ -1,7 +1,7 @@
 """
 some graphviz helpers.
 """
-import graphviz
+import graphviz  # type: ignore
 
 def new_record_digraph():
     """

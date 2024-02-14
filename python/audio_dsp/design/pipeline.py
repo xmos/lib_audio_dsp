@@ -9,7 +9,6 @@ from tabulate import tabulate
 from .graph import Graph
 from .stage import StageOutput
 from .thread import Thread
-import graphviz
 from IPython import display
 import yaml
 import subprocess
@@ -444,11 +443,10 @@ def _generate_dsp_struct(resolved_pipeline):
     struct += "};"
     return struct
 
-def _generate_dsp_header(resolved_pipeline, out_dir = "build/dsp_pipeline"):
+def _generate_dsp_header(resolved_pipeline, out_dir = Path("build/dsp_pipeline")):
     """
     Generate "adsp_generated.h" and save to disk.
     """
-    out_dir = Path(out_dir)
     out_dir.mkdir(exist_ok=True)
 
     header = "#pragma once\n"
@@ -649,8 +647,8 @@ def profile_pipeline(pipeline: Pipeline):
     #print("Thread Index     Max Cycles")
     profile_info = []
     for thread in pipeline.threads:
-        thread_fs = None
-        thread_frame_size = None
+        thread_fs = 0
+        thread_frame_size = 0
         stages = thread.get_all_stages()
         for stg in stages:
             if stg.fs != None:
@@ -658,10 +656,10 @@ def profile_pipeline(pipeline: Pipeline):
                 thread_frame_size = stg.frame_size
                 break
         # Assuming that all stages in the thread have the same sampling freq and frame size
-        if thread_fs == None:
+        if not thread_fs:
             raise RuntimeError(f"Could not find out the sampling frequency for thread index {thread.id}")
 
-        if thread_frame_size == None:
+        if not thread_frame_size:
             raise RuntimeError(f"Could not find out the frame size for thread index {thread.id}")
 
         reference_timer_freq_hz = 100e6

@@ -138,7 +138,7 @@ class envelope_detector_peak(dspg.dsp_block):
             return self.envelope_f32[channel]
         else:
             return float(self.envelope_f32[channel])
-        
+
     def process_frame_f32(self, frame):
         # same as generic, but only take 1st output
         n_outputs = len(frame)
@@ -498,7 +498,7 @@ if __name__ == "__main__":
     threshold = -6
     at = 0.01
 
-    lt = limiter_peak(fs, threshold, at, 0.3)
+    lt = limiter_peak(fs, threshold, at, 0.3, 0.0)
 
     y = np.zeros_like(x)
     f = np.zeros_like(x)
