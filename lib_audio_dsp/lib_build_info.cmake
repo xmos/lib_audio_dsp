@@ -91,7 +91,6 @@ file(GLOB DSP_C_SOURCES RELATIVE ${CMAKE_CURRENT_LIST_DIR} CONFIGURE_DEPENDS "${
 list(APPEND LIB_C_SRCS ${DSP_C_SOURCES})
 set(LIB_DEPENDENT_MODULES "lib_xcore_math(xcommon_cmake)" "lib_logging")
 set(LIB_COMPILER_FLAGS -O3 -Wall -Werror -g )
-set(LIB_OPTIONAL_HEADERS adsp_generated_auto.h)
 
 XMOS_REGISTER_MODULE()
 

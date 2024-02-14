@@ -28,8 +28,12 @@ class Pipeline:
     n_in : int
         Number of input channels into the pipeline
     identifier: string
-        Short identifier for pipeline. Baked into _init() and _main() methods
-        for the pipeline, so make sure it is succinct.
+        Unique identifier for this pipeline. This identifier will be included in
+        the generated header file name (as "adsp_generated_<identifier>.h"), the
+        generated source file name (as "adsp_generated_<identifier>.c"), and the
+        pipeline's generated initialisation and main functions (as 
+        "adsp_<identifier>_pipeline_init" and 
+        "adsp_<identifier>_pipeline_main")
     frame_size : int
         Size of the input frame of all input channels
     fs : int
@@ -493,8 +497,8 @@ def _generate_dsp_init(resolved_pipeline):
     ret += f"\t{adsp}.n_out = {output_channels};\n"
     ret += f"\t{adsp}.p_link = (channel_t *) {adsp}_link_chans;\n"
     ret += f"\t{adsp}.n_link = {link_channels};\n"
-    ret += f"\t{adsp}.n_modules = {num_modules};\n"
     ret += f"\t{adsp}.modules = (module_instance_t **) {adsp}_modules;\n"
+    ret += f"\t{adsp}.n_modules = {num_modules};\n"
 
     # initialise the modules
     for thread in resolved_pipeline["threads"]:

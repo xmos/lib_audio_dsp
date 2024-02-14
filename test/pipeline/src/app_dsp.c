@@ -37,7 +37,7 @@ void app_dsp_main(chanend_t c_control) {
     
     PAR_JOBS(
         PJOB(adsp_auto_pipeline_main, (m_dsp))
-        //PJOB(dsp_control_thread, (c_control, m_dsp.modules, m_dsp.n_modules)) // TODO
+        //PJOB(dsp_control_thread, (c_control, m_dsp->modules, m_dsp->n_modules)) // TODO
     );
 }
 
