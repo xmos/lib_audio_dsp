@@ -21,7 +21,7 @@ class Node:
     """
     def __init__(self):
         self.id = uuid4()
-        self.index = None
+        self.index: int | None= None
 
     def __hash__(self) -> int:
         """Support for using as dictionary/set keys"""
@@ -41,8 +41,8 @@ class Edge:
     """
     def __init__(self):
         self.id = uuid4()
-        self.source = None
-        self.dest = None
+        self.source: None | Node = None
+        self.dest: None | Node = None
 
     def __hash__(self) -> int:
         """Support for using as dictionary/set keys"""
@@ -56,8 +56,8 @@ class Edge:
 
 class Graph:
     def __init__(self) -> None:
-        self.nodes = []
-        self.edges = []
+        self.nodes: list[Node] = []
+        self.edges: list[Edge] = []
 
     def add_node(self, node: Node) -> None:
         assert isinstance(node, Node)

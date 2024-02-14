@@ -46,13 +46,13 @@ def envelope(x, N=None):
     return np.abs(y)
 
 
-def int32(val: int):
+def int32(val: float) -> int:
     if -2 ** 31 <= val < (2 ** 31 - 1):
         return int(val)
     raise OverflowError
 
 
-def int64(val: int):
+def int64(val: float):
     if -2 ** 63 <= val < (2 ** 63 - 1):
         return int(val)
     raise OverflowError
