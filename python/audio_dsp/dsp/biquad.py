@@ -115,7 +115,7 @@ class biquad(dspg.dsp_block):
         b = [self.coeffs[0], self.coeffs[1], self.coeffs[2]]
         b = apply_biquad_bshift(b, self.b_shift)
         a = [1, -self.coeffs[3], -self.coeffs[4]]
-        f, h = spsig.freqz(b, a, worN=nfft, fs=self.fs)
+        f, h = spsig.freqz(b, a, worN=nfft, fs=self.fs)  # type: ignore  it thinks a is supposed to be an int?
 
         return f, h
 

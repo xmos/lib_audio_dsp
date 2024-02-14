@@ -12,8 +12,8 @@ class mixer(dspg.dsp_block):
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
 
-    def process(self, sample_list):
-        scaled_samples = np.array(sample_list)*self.gain
+    def process(self, sample, channel=0):
+        scaled_samples = np.array(sample)*self.gain
         y = np.sum(scaled_samples)
 
         return y
@@ -33,8 +33,8 @@ class adder(mixer):
 
 class subtractor(dspg.dsp_block):
     # subtract 1st input from the second
-    def process(self, sample_list):
-        y = sample_list[0] - sample_list[1]
+    def process(self, sample, channel=0):
+        y = sample[0] - sample[1]
 
         return y
 
@@ -46,7 +46,7 @@ class fixed_gain(dspg.dsp_block):
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
 
-    def process(self, sample):
+    def process(self, sample, channel=0):
         y = sample*self.gain
         return y
 
@@ -70,8 +70,8 @@ class switch(dspg.dsp_block):
         self.switch_position = 0
         return
 
-    def process(self, sample_list):
-        y = sample_list[self.switch_position]
+    def process(self, sample, channel=0):
+        y = sample[self.switch_position]
         return y
 
     def move_switch(self, position):

@@ -426,10 +426,10 @@ class soft_limiter_peak(limiter_peak):
         raise NotImplementedError
 
     # TODO soft clipping
-    def process(self, sample):
+    def process(self, sample, channel=0):
         raise NotImplementedError
 
-    def process_int(self, sample):
+    def process_int(self, sample, channel=0):
         raise NotImplementedError
 
 
@@ -448,10 +448,10 @@ class lookahead_limiter_peak(limiter_base):
         self.delay_line = np.zeros(self.delay_line)
         raise NotImplementedError
 
-    def process(self, sample):
+    def process(self, sample, channel=0):
         raise NotImplementedError
 
-    def process_int(self, sample):
+    def process_int(self, sample, channel=0):
         raise NotImplementedError
 
 
@@ -469,10 +469,10 @@ class lookahead_limiter_rms(limiter_base):
         self.delay_line = np.zeros(self.delay_line)
         raise NotImplementedError
 
-    def process(self, sample):
+    def process(self, sample, channel=0):
         raise NotImplementedError
 
-    def process_int(self, sample):
+    def process_int(self, sample, channel=0):
         raise NotImplementedError
 
 # TODO lookahead limiters and compressors
