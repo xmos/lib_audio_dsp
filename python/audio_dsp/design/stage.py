@@ -261,6 +261,10 @@ class Stage(Node):
         return self.dsp_block.freq_response(nfft)
 
     def plot_frequency_response(self, nfft=512):
+        """
+        Plot magnitude and phase response of this stage using matplotlib. Will
+        be displayed inline in a jupyter notebook.
+        """
         f, h = self.get_frequency_response(nfft)
         plot.plot_frequency_response(f, h, name=self.name)
 

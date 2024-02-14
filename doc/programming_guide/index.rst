@@ -6,5 +6,6 @@ LIB AUDIO DSP DOCUMENTATION
     :maxdepth: 3
 
     introduction
+    pipeline_design_tutorial
     dsp
     pipeline_design
