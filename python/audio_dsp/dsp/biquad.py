@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from audio_dsp.dsp import utils as utils
 from audio_dsp.dsp import generic as dspg
 
-BOOST_BSHIFT = 2  # limit boosts to 12dB gain
+BOOST_BSHIFT = 2  # limit boosts to 12 dB gain
 
 
 class biquad(dspg.dsp_block):
@@ -112,7 +112,7 @@ class biquad(dspg.dsp_block):
 
     def freq_response(self, nfft: int=512) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         b = [self.coeffs[0], self.coeffs[1], self.coeffs[2]]
-        b = apply_biquad_bshift(b, self.b_shift)
+        b = apply_biquad_bshift(b, -self.b_shift)
         a = [1, -self.coeffs[3], -self.coeffs[4]]
         f, h = spsig.freqz(b, a, worN=nfft, fs=self.fs)  # type: ignore  it thinks a is supposed to be an int?
 
