@@ -117,7 +117,7 @@ class biquad(dspg.dsp_block):
 
     def freq_response(self, nfft=512):
         b = [self.coeffs[0], self.coeffs[1], self.coeffs[2]]
-        b = apply_biquad_bshift(b, self.b_shift)
+        b = apply_biquad_bshift(b, -self.b_shift)
         a = [1, -self.coeffs[3], -self.coeffs[4]]
         f, h = spsig.freqz(b, a, worN=nfft, fs=self.fs)
 
