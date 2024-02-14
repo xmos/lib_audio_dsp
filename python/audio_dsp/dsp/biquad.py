@@ -13,7 +13,7 @@ BOOST_BSHIFT = 2  # limit boosts to 12dB gain
 
 
 class biquad(dspg.dsp_block):
-    def __init__(self, coeffs: list[float], fs: float, n_chans: int=1, b_shift: int=0, Q_sig: float=dspg.Q_SIG):
+    def __init__(self, coeffs: list[float], fs: int, n_chans: int=1, b_shift: int=0, Q_sig: int=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
         self.b_shift = b_shift
@@ -51,8 +51,7 @@ class biquad(dspg.dsp_block):
         return y
 
     def process_int(self, sample: float, channel: int=0) -> float:
-        round_int = lambda x: int(utils.int32(round(x)))
-        sample_int = round_int(sample * 2**self.Q_sig)
+        sample_int = utils.int32(round(sample * 2**self.Q_sig))
 
         # process a single sample using direct form 1
         y = utils.int64(((sample_int*self.int_coeffs[0])) +
@@ -98,7 +97,7 @@ class biquad(dspg.dsp_block):
 
         return y_flt
 
-    def process_frame_vpu(self, frame: np.ndarray) -> np.ndarray:
+    def process_frame_vpu(self, frame: list[np.ndarray]) -> list[np.ndarray]:
         # simple multichannel, but integer. Assumes no channel unique states!
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
@@ -135,80 +134,80 @@ class biquad(dspg.dsp_block):
             self.y2[chan] = 0
 
 
-def biquad_bypass(fs: float, n_chans: int) -> biquad:
+def biquad_bypass(fs: int, n_chans: int) -> biquad:
     coeffs = make_biquad_bypass(fs)
     return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_gain(fs: float, n_chans: int, gain_db: float) -> biquad:
+def biquad_gain(fs: int, n_chans: int, gain_db: float) -> biquad:
     coeffs = make_biquad_gain(fs, gain_db)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_lowpass(fs: float, n_chans: int, f: float, q: float) -> biquad:
+def biquad_lowpass(fs: int, n_chans: int, f: float, q: float) -> biquad:
     coeffs = make_biquad_lowpass(fs, f, q)
     return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_highpass(fs: float, n_chans: int, f: float, q: float) -> biquad:
+def biquad_highpass(fs: int, n_chans: int, f: float, q: float) -> biquad:
     coeffs = make_biquad_highpass(fs, f, q)
     return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_bandpass(fs: float, n_chans: int, f: float, bw: float) -> biquad:
+def biquad_bandpass(fs: int, n_chans: int, f: float, bw: float) -> biquad:
     # bw is bandwidth in octaves
     coeffs = make_biquad_bandpass(fs, f, bw)
     return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_bandstop(fs: float, n_chans: int, f: float, bw: float) -> biquad:
+def biquad_bandstop(fs: int, n_chans: int, f: float, bw: float) -> biquad:
     # bw is bandwidth in octaves
     coeffs = make_biquad_bandstop(fs, f, bw)
     return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_notch(fs: float, n_chans: int, f: float, q: float) -> biquad:
+def biquad_notch(fs: int, n_chans: int, f: float, q: float) -> biquad:
     coeffs = make_biquad_notch(fs, f, q)
     return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_allpass(fs: float, n_chans: int, f: float, q: float) -> biquad:
+def biquad_allpass(fs: int, n_chans: int, f: float, q: float) -> biquad:
     coeffs = make_biquad_allpass(fs, f, q)
     return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_peaking(fs: float, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
+def biquad_peaking(fs: int, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
     coeffs = make_biquad_peaking(fs, f, q, boost_db)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_constant_q(fs: float, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
+def biquad_constant_q(fs: int, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
     coeffs = make_biquad_constant_q(fs, f, q, boost_db)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_lowshelf(fs: float, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
+def biquad_lowshelf(fs: int, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
     # q is similar to standard low pass, i.e. > 0.707 will yield peakiness
     # the level change at f will be boost_db/2
     coeffs = make_biquad_lowshelf(fs, f, q, boost_db)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_highshelf(fs: float, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
+def biquad_highshelf(fs: int, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
     # q is similar to standard high pass, i.e. > 0.707 will yield peakiness
     # the level change at f will be boost_db/2
     coeffs = make_biquad_highshelf(fs, f, q, boost_db)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_linkwitz(fs: float, n_chans: int, f0: float, q0: float, fp: float, qp: float) -> biquad:
+def biquad_linkwitz(fs: int, n_chans: int, f0: float, q0: float, fp: float, qp: float) -> biquad:
     # used for changing one low frequency roll off slope for another,
     # e.g. in a loudspeaker
     coeffs = make_biquad_linkwitz(fs, f0, q0, fp, qp)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=0)
 
 
-def round_to_q30(coeffs: list[float], b_shift: float) -> tuple[list[float], list[int]]:
+def round_to_q30(coeffs: list[float], b_shift: int) -> tuple[list[float], list[int]]:
     rounded_coeffs = [0.0] * len(coeffs)
     int_coeffs = [0] * len(coeffs)
 
@@ -237,7 +236,7 @@ def apply_biquad_gain(coeffs: list[float], gain_db: float) -> list[float]:
     return coeffs
 
 
-def apply_biquad_bshift(coeffs: list[float], b_shift: float) -> list[float]:
+def apply_biquad_bshift(coeffs: list[float], b_shift: int) -> list[float]:
     """apply linear bitshift to the b coefficients"""
     gain = 2**-b_shift
     coeffs[0] = coeffs[0] * gain
@@ -258,7 +257,7 @@ def normalise_biquad(coeffs: list[float]) -> list[float]:
     return coeffs
 
 
-def round_and_check(coeffs: list[float], b_shift: float=0) -> tuple[list[float], list[int]]:
+def round_and_check(coeffs: list[float], b_shift: int=0) -> tuple[list[float], list[int]]:
     # round to int32 precision
     coeffs = apply_biquad_bshift(coeffs, b_shift)
     coeffs, int_coeffs = round_to_q30(coeffs, b_shift)
@@ -270,28 +269,28 @@ def round_and_check(coeffs: list[float], b_shift: float=0) -> tuple[list[float],
     return coeffs, int_coeffs
 
 
-def make_biquad_bypass(fs: float) -> list[float]:
+def make_biquad_bypass(fs: int) -> list[float]:
     # take in fs to match other apis
     coeffs = [1.0, 0.0, 0.0, 0.0, 0.0]
 
     return coeffs
 
 
-def make_biquad_mute(fs: float) -> list[float]:
+def make_biquad_mute(fs: int) -> list[float]:
     # take in fs to match other apis
     coeffs = [0.0, 0.0, 0.0, 0.0, 0.0]
 
     return coeffs
 
 
-def make_biquad_gain(fs: float, gain_db: float) -> list[float]:
+def make_biquad_gain(fs: int, gain_db: float) -> list[float]:
     coeffs = make_biquad_bypass(fs)
     coeffs = apply_biquad_gain(coeffs, gain_db)
 
     return coeffs
 
 
-def make_biquad_lowpass(fs: float, filter_freq: float, q_factor: float) -> list[float]:
+def make_biquad_lowpass(fs: int, filter_freq: float, q_factor: float) -> list[float]:
 
     assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     w0 = 2.0 * np.pi * filter_freq/fs
@@ -310,7 +309,7 @@ def make_biquad_lowpass(fs: float, filter_freq: float, q_factor: float) -> list[
     return coeffs
 
 
-def make_biquad_highpass(fs: float, filter_freq: float, q_factor: float) -> list[float]:
+def make_biquad_highpass(fs: int, filter_freq: float, q_factor: float) -> list[float]:
 
     assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     w0 = 2.0 * np.pi * filter_freq/fs
@@ -330,7 +329,7 @@ def make_biquad_highpass(fs: float, filter_freq: float, q_factor: float) -> list
 
 
 # Constant 0 dB peak gain
-def make_biquad_bandpass(fs: float, filter_freq: float, BW) -> list[float]:
+def make_biquad_bandpass(fs: int, filter_freq: float, BW) -> list[float]:
 
     assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     w0 = 2.0 * np.pi * filter_freq/fs
@@ -350,7 +349,7 @@ def make_biquad_bandpass(fs: float, filter_freq: float, BW) -> list[float]:
 
 
 # Constant 0 dB peak gain
-def make_biquad_bandstop(fs: float, filter_freq: float, BW: float) -> list[float]:
+def make_biquad_bandstop(fs: int, filter_freq: float, BW: float) -> list[float]:
 
     assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     w0 = 2.0 * np.pi * filter_freq/fs
@@ -369,7 +368,7 @@ def make_biquad_bandstop(fs: float, filter_freq: float, BW: float) -> list[float
     return coeffs
 
 
-def make_biquad_notch(fs: float, filter_freq: float, q_factor: float) -> list[float]:
+def make_biquad_notch(fs: int, filter_freq: float, q_factor: float) -> list[float]:
 
     assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     w0 = 2.0 * np.pi * filter_freq/fs
@@ -388,7 +387,7 @@ def make_biquad_notch(fs: float, filter_freq: float, q_factor: float) -> list[fl
     return coeffs
 
 
-def make_biquad_allpass(fs: float, filter_freq: float, q_factor: float) -> list[float]:
+def make_biquad_allpass(fs: int, filter_freq: float, q_factor: float) -> list[float]:
 
     assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     w0 = 2.0 * np.pi * filter_freq/fs
@@ -407,7 +406,7 @@ def make_biquad_allpass(fs: float, filter_freq: float, q_factor: float) -> list[
     return coeffs
 
 
-def make_biquad_peaking(fs: float, filter_freq: float, q_factor: float, boost_db: float) -> list[float]:
+def make_biquad_peaking(fs: int, filter_freq: float, q_factor: float, boost_db: float) -> list[float]:
 
     assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     A = np.sqrt(10 ** (boost_db/20))
@@ -427,7 +426,7 @@ def make_biquad_peaking(fs: float, filter_freq: float, q_factor: float, boost_db
     return coeffs
 
 
-def make_biquad_constant_q(fs: float, filter_freq: float, q_factor: float, boost_db: float) -> list[float]:
+def make_biquad_constant_q(fs: int, filter_freq: float, q_factor: float, boost_db: float) -> list[float]:
 
     # https://www.musicdsp.org/en/latest/Filters/37-zoelzer-biquad-filters.html
 
@@ -458,7 +457,7 @@ def make_biquad_constant_q(fs: float, filter_freq: float, q_factor: float, boost
     return coeffs
 
 
-def make_biquad_lowshelf(fs: float, filter_freq: float, q_factor: float, gain_db: float) -> list[float]:
+def make_biquad_lowshelf(fs: int, filter_freq: float, q_factor: float, gain_db: float) -> list[float]:
 
     assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     A = 10.0 ** (gain_db / 40.0)
@@ -478,7 +477,7 @@ def make_biquad_lowshelf(fs: float, filter_freq: float, q_factor: float, gain_db
     return coeffs
 
 
-def make_biquad_highshelf(fs: float, filter_freq: float, q_factor: float, gain_db: float) -> list[float]:
+def make_biquad_highshelf(fs: int, filter_freq: float, q_factor: float, gain_db: float) -> list[float]:
 
     assert (filter_freq <= fs/2), 'filter_freq must be less than fs/2'
     A = 10.0 ** (gain_db / 40.0)
@@ -498,7 +497,7 @@ def make_biquad_highshelf(fs: float, filter_freq: float, q_factor: float, gain_d
     return coeffs
 
 
-def make_biquad_linkwitz(fs: float, f0: float, q0: float, fp: float, qp: float) -> list[float]:
+def make_biquad_linkwitz(fs: int, f0: float, q0: float, fp: float, qp: float) -> list[float]:
 
     # https://www.linkwitzlab.com/filters.htm#9
     # https://www.minidsp.com/applications/advanced-tools/linkwitz-transform

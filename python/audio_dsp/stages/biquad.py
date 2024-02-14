@@ -23,7 +23,7 @@ class Biquad(Stage):
         super().__init__(config=find_config("biquad"), **kwargs)
         if self.fs is None:
             raise ValueError("Biquad requires inputs with a valid fs")
-        self.fs = float(self.fs)
+        self.fs = int(self.fs)
         self.create_outputs(self.n_in)
         self.set_control_field_cb("filter_coeffs",
                                   lambda: [i for i in self.get_fixed_point_coeffs()])
