@@ -27,8 +27,9 @@ class mixer(dspg.dsp_block):
         for sample in sample_list:
             sample_int = utils.int32(round(sample * 2**self.Q_sig))
             scaled_sample = utils.int32_mult_sat_extract(sample_int, self.gain_int, self.Q_sig)
-            y = utils.int32(y + scaled_sample)
+            y = utils.int40(y + scaled_sample)
 
+        y = utils.int32(y)
         y_flt = (float(y)*2**-self.Q_sig)
 
         return y_flt
