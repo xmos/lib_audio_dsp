@@ -84,21 +84,6 @@ When running the above snippet in a jupyter notebook it will output the followin
    Generated pipeline diagram
 
 
-This example shows how to add stages to the thread and configure the pipeline outputs. Every stage has an :py:attr:`o <audio_dsp.design.stages.Stage.o>` attribute.
-This is a list of stage output instances. When creating a stage, all stages will require a list of stage outputs as it's inputs. A stages outputs can be sliced and joined
-with another stages output and passed as an input to a third stage.
-
-.. code-block:: python
-
-    with p.add_thread() as t:
-       # split the pipeline inputs
-       b0 = t.stage(Biquad, p.i[0:2]
-       b1 = t.stage(Biquad, p.i[2:])
-
-       # join biquad outputs
-       b2 = t.stage(Biquad, b0.o + b1.o)
-
-
 Tuning Phase
 ------------
 
@@ -157,7 +142,7 @@ as the structure of the pipeline has not changed, the configuration of the pipel
 
 This will use the host app to send configuration to the devices whilst it is running. This will not update the generated code and therefore the
 device configuration will be lost when it is switched off. Rerun ``generate_dsp_main()`` in order to create an application with updated tuning parameters
-baked in.
+baked in::
 
     # send the current config to the device
     send_config_to_device(p)
@@ -168,3 +153,42 @@ whilst the device is running and the value displayed is the worst case that has 
 
     # Read back the thread utilisation
     profile_pipeline(p)
+
+
+Designing Complex Pipelines
+===========================
+
+The audio dsp library is not limited to the simple linear pipelines shown above. Stages can scale to take an arbitrary number of inputs and the outputs of
+each stage can be split and joined arbitrarily.
+
+Every stage has an :py:attr:`o <audio_dsp.design.stages.Stage.o>` attribute. This is a list of stage output instances. When creating a stage, all stages will
+require a list of stage outputs as its inputs. A stages outputs can be sliced and joined with another stages output and passed as an input to a third stage.
+
+.. code-block:: python
+
+    with p.add_thread() as t:
+       # split the pipeline inputs
+       b0 = t.stage(Biquad, p.i[0:2]
+       b1 = t.stage(Biquad, p.i[2:])
+
+       # join biquad outputs
+       b2 = t.stage(Biquad, b0.o + b1.o)
+
+As the pipeline grows it will also become necessary to add more threads. To determine when a new thread is used, the output of ``profile_pipeline()`` should
+be observed as the pipeline grows. If a thread nears 100% utilisation then it is time to add a new thread. Each thread in the pipeline represents an xcore
+hardware thread. Do not add more threads than are available in your application. The maximum number of threads that should be used, if available, is 5. This
+due to the architecture of the xcore processor.
+
+.. code-block:: python
+
+    # thread 0
+    with p.add_thread() as t:
+        b0 = t.stage(Biquad, p.i)
+
+    # thread 1
+    with p.add_thread() as t:
+        b1 = t.stage(Biquad, b0.o)
+
+    # thread 2
+    with p.add_thread() as t:
+        b1 = t.stage(Biquad, b1.o)
