@@ -4,6 +4,7 @@
 **CHANGELOG*
 **LICENSE*
 
+.doc_venv/*
 test/*
 build/*
 
