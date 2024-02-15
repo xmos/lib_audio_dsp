@@ -22,7 +22,7 @@ class mixer(dspg.dsp_block):
 
         return y
 
-    def process_xcore(self, sample_list):
+    def process_xcore(self, sample_list, channel=0):  # type:ignore
         y = 0
         for sample in sample_list:
             sample_int = utils.int32(round(sample * 2**self.Q_sig))
@@ -34,7 +34,7 @@ class mixer(dspg.dsp_block):
 
         return y_flt
 
-    def process_frame(self, frame):
+    def process_frame(self, frame, channel=0):
         # convert to np array to make taking all channels for the nth sample easy
         frame_np = np.array(frame)
         frame_size = frame[0].shape[0]
@@ -44,7 +44,7 @@ class mixer(dspg.dsp_block):
 
         return [output]
 
-    def process_frame_xcore(self, frame):
+    def process_frame_xcore(self, frame, channel=0):
         # convert to np array to make taking all channels for the nth sample easy
         frame_np = np.array(frame)
         frame_size = frame[0].shape[0]
@@ -79,7 +79,7 @@ class subtractor(dspg.dsp_block):
 
         return y
 
-    def process_xcore(self, sample_list):
+    def process_xcore(self, sample_list, channel=0):  # type:ignore
         sample_int_0 = utils.int32(round(sample_list[0] * 2**self.Q_sig))
         sample_int_1 = utils.int32(round(sample_list[1] * 2**self.Q_sig))
 
@@ -89,7 +89,7 @@ class subtractor(dspg.dsp_block):
 
         return y_flt
 
-    def process_frame(self, frame):
+    def process_frame(self, frame, channel=0):
         # convert to np array to make taking all channels for the nth sample easy
         frame_size = frame[0].shape[0]
         output = np.zeros(frame_size)
@@ -98,7 +98,7 @@ class subtractor(dspg.dsp_block):
 
         return [output]
 
-    def process_frame_xcore(self, frame):
+    def process_frame_xcore(self, frame, channel=0):
         # convert to np array to make taking all channels for the nth sample easy
         frame_size = frame[0].shape[0]
         output = np.zeros(frame_size)
@@ -160,7 +160,7 @@ class switch(dspg.dsp_block):
         y = sample[self.switch_position]
         return y
 
-    def process_xcore(self, sample_list):
+    def process_xcore(self, sample_list, channel=0):  # type:ignore
         return self.process(sample_list)
 
     def move_switch(self, position):

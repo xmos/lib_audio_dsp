@@ -416,7 +416,7 @@ class hard_limiter_peak(limiter_peak):
         return y
 
     # TODO process_int, super().process_int will return float though...
-    def process_xcore(self, sample):
+    def process_xcore(self, sample, channel=0):
         raise NotImplementedError
 
 
