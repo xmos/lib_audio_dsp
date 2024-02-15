@@ -4,15 +4,16 @@
 **CHANGELOG*
 **LICENSE*
 
-*/test/*
-*/build/*
+test/*
+build/*
+*/.doc_venv/*
 
 # Do not build .md files
 *.md
 **/*.md
 
 # Do not build the app docs
-*/tools/*
+tools/*
 
 # Don't include libraries in user docs
 
