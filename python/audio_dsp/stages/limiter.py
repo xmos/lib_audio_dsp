@@ -1,3 +1,5 @@
+# Copyright 2024 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
 from ..dsp import generic as dspg
