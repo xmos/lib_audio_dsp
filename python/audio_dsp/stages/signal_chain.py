@@ -3,7 +3,6 @@
 
 from ..design.stage import Stage, find_config, StageOutput
 from operator import itemgetter
-from itertools import chain
 
 class Bypass(Stage):
     """
@@ -18,7 +17,7 @@ class Bypass(Stage):
 class Fork(Stage):
     """
     Fork the signal, use if the same data needs to go down parallel
-    data paths
+    data paths::
 
         a = t.stage(Example, ...)
         f = t.stage(Fork, a.o, count=2)  # count optional, default is 2
@@ -27,7 +26,7 @@ class Fork(Stage):
 
     Attributes
     ----------
-    forks
+    forks : list[list[StageOutput]]
         For convenience, each forked output will be available in this list
         each entry contains a set of outputs which will contain the same
         data as the input.
