@@ -11,9 +11,10 @@ class mixer(dspg.dsp_block):
     def __init__(self, fs, num_channels, gain_db=-6, Q_sig=dspg.Q_SIG):
         super().__init__(fs, num_channels, Q_sig)
         self.num_channels = num_channels
+        assert gain_db <= 24, "Maximum mixer gain is +24dB"
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
-        self.gain_int = utils.int32(self.gain * 2**30)
+        self.gain_int = utils.int32(self.gain * 2**self.Q_sig)
 
     def process(self, sample, channel=0):
         scaled_samples = np.array(sample)*self.gain
@@ -25,7 +26,7 @@ class mixer(dspg.dsp_block):
         y = 0
         for sample in sample_list:
             sample_int = utils.int32(round(sample * 2**self.Q_sig))
-            scaled_sample = utils.vpu_mult(sample_int, self.gain_int)
+            scaled_sample = utils.int32_mult_sat_extract(sample_int, self.gain_int, self.Q_sig)
             y = utils.int32(y + scaled_sample)
 
         y_flt = (float(y)*2**-self.Q_sig)
@@ -115,10 +116,10 @@ class fixed_gain(dspg.dsp_block):
     """
     def __init__(self, fs, n_chans, gain_db, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
-        assert gain_db < 6, "Maximum fixed gain is +6dB"
+        assert gain_db <= 24, "Maximum fixed gain is +24dB"
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
-        self.gain_int = utils.int32(self.gain * 2**30)
+        self.gain_int = utils.int32(self.gain * 2**self.Q_sig)
 
     def process(self, sample, channel=0):
         y = sample*self.gain
@@ -126,7 +127,7 @@ class fixed_gain(dspg.dsp_block):
 
     def process_xcore(self, sample, channel=0):
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
-        y = utils.vpu_mult(sample_int, self.gain_int)
+        y = utils.int32_mult_sat_extract(sample_int, self.gain_int, self.Q_sig)
 
         y_flt = (float(y)*2**-self.Q_sig)
 
@@ -142,7 +143,7 @@ class fixed_gain(dspg.dsp_block):
 class volume_control(fixed_gain):
     # just a fixed gain with an exposed set gain
     def set_gain(self, gain_db):
-        assert gain_db < 6, "Maximum volume control gain is +6dB"
+        assert gain_db <= 24, "Maximum volume control gain is +24dB"
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
         self.gain_int = utils.int32(self.gain * 2**30)

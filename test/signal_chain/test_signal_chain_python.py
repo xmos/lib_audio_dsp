@@ -30,8 +30,8 @@ def chirp_filter_test(filter, fs):
 @pytest.mark.parametrize("n_chans", [1])
 def test_gains(filter_n, fs, n_chans):
     filter_spec = [['fixed_gain', -10],
-                   ['fixed_gain', 6],
-                   ['volume_control', 6],
+                   ['fixed_gain', 24],
+                   ['volume_control', 24],
                    ['volume_control', -10]]
 
     filter_spec = filter_spec[filter_n]
@@ -48,8 +48,8 @@ def test_gains(filter_n, fs, n_chans):
 @pytest.mark.parametrize("n_chans", [1, 2, 4])
 def test_gains_frames(filter_n, fs, n_chans):
     filter_spec = [['fixed_gain', -10],
-                   ['fixed_gain', 6],
-                   ['volume_control', 6],
+                   ['fixed_gain', 24],
+                   ['volume_control', 24],
                    ['volume_control', -10]]
 
     filter_spec = filter_spec[filter_n]
