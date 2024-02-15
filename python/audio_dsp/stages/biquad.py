@@ -85,7 +85,7 @@ class Biquad(Stage):
 
     def make_allpass(self, f: float, q: float) -> "Biquad":
         """
-        Make this biquad a allpass.
+        Make this biquad an allpass.
         """
         self.details = dict(type="all pass", **_ws(locals()))
         self.dsp_block =  bq.biquad_allpass(self.fs, self.n_in, f, q)
