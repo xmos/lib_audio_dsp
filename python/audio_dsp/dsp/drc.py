@@ -323,7 +323,12 @@ class envelope_detector_rms(envelope_detector_peak):
             return float(self.envelope_f32[channel])
 
 
-class limiter_base(dspg.dsp_block):
+class compressor_limiter_base(dspg.dsp_block):
+    """
+    The compressor and limiter have very similar structures, with differences
+    in the gain calculation. All the shared code and parameters are calculated 
+    in this base class.
+    """
     # Limiter after Zolzer's DAFX & Guy McNally's "Dynamic Range Control of
     # Digital Audio Signals"
     def __init__(self, fs, n_chans, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
@@ -355,6 +360,96 @@ class limiter_base(dspg.dsp_block):
         self.gain_f32 = [np.float32(1)] * self.n_chans
         self.gain_int = [2**30] * self.n_chans
 
+    def gain_calc(self, envelope):
+        raise NotImplementedError
+
+    def gain_calc_int(self, envelope_int):
+        raise NotImplementedError
+
+    def gain_calc_xcore(self, envelope):
+        raise NotImplementedError
+
+    def process(self, sample, channel=0):
+        # get envelope from envelope detector
+        envelope = self.env_detector.process(sample, channel)
+        # avoid /0
+        envelope = np.maximum(envelope, np.finfo(float).tiny)
+
+        # if envelope below threshold, apply unity gain, otherwise scale down
+        # new_gain = self.threshold/envelope
+        # new_gain = min(1, new_gain)
+        new_gain = self.gain_calc(envelope)
+
+        # see if we're attacking or decaying
+        if new_gain < self.gain[channel]:
+            alpha = self.attack_alpha
+        else:
+            alpha = self.release_alpha
+
+        # do exponential moving average
+        self.gain[channel] = ((1-alpha) * self.gain[channel]) + (alpha * new_gain)
+
+        # apply gain to input
+        y = self.gain[channel]*sample
+        return y, new_gain, envelope
+
+    def process_int(self, sample, channel=0):
+        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        # get envelope from envelope detector
+        envelope_int = self.env_detector.process_int(sample_int, channel)
+        # avoid /0
+        envelope_int = max(envelope_int, 1)
+
+        # if envelope below threshold, apply unity gain, otherwise scale down
+        new_gain_int = self.gain_calc_int(envelope_int)
+
+        # see if we're attacking or decaying
+        if new_gain_int < self.gain_int[channel]:
+            alpha = self.attack_alpha_int
+        else:
+            alpha = self.release_alpha_int
+
+        # do exponential moving average, VPU mult uses 2**30, otherwise could use 2**31
+        self.gain_int[channel] = utils.vpu_mult(2**30 - alpha, self.gain_int[channel])
+        self.gain_int[channel] += utils.vpu_mult(alpha, new_gain_int)
+
+        y = utils.vpu_mult(self.gain_int[channel], sample_int)
+
+        return (float(y)*2**-self.Q_sig), (float(new_gain_int)*2**-self.Q_sig), (float(envelope_int)*2**-self.Q_sig)
+
+    def process_xcore(self, sample, channel=0):
+        # quantize
+        sample = utils.float_s32(sample)
+        sample = utils.float_s32_use_exp(sample, -27)
+        sample = np.float32(float(sample))
+
+        # get envelope from envelope detector
+        envelope = self.env_detector.process_xcore(sample, channel)
+        # avoid /0
+        if envelope == np.float32(0):
+            envelope = np.float32(1e-20)
+
+        # if envelope below threshold, apply unity gain, otherwise scale down
+        new_gain = self.gain_calc_xcore(envelope)
+
+        # see if we're attacking or decaying
+        if new_gain < self.gain_f32[channel]:
+            alpha = self.attack_alpha_f32
+        else:
+            alpha = self.release_alpha_f32
+
+        # do exponential moving average
+        self.gain_f32[channel] = self.gain_f32[channel] + alpha * (new_gain - self.gain_f32[channel])
+
+        # apply gain
+        y = self.gain_f32[channel]*sample
+
+        # quantize before return
+        y = utils.float_s32(y)
+        y = utils.float_s32_use_exp(y, -27)
+
+        return np.float32(float(y)), float(new_gain), float(envelope)
+
     def process_frame(self, frame):
         # same as generic, but only take 1st output
         n_outputs = len(frame)
@@ -382,7 +477,7 @@ class limiter_base(dspg.dsp_block):
         return output
 
 
-class limiter_peak(limiter_base):
+class limiter_peak(compressor_limiter_base):
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
@@ -395,91 +490,24 @@ class limiter_peak(limiter_base):
                                                    release_t=release_t,
                                                    Q_sig=self.Q_sig)
 
-    def process(self, sample, channel=0):
-        # get envelope from envelope detector
-        envelope = self.env_detector.process(sample, channel)
-        # avoid /0
-        envelope = np.maximum(envelope, np.finfo(float).tiny)
-
-        # if envelope below threshold, apply unity gain, otherwise scale down
+    def gain_calc(self, envelope):
         new_gain = self.threshold/envelope
         new_gain = min(1, new_gain)
+        return new_gain
 
-        # see if we're attacking or decaying
-        if new_gain < self.gain[channel]:
-            alpha = self.attack_alpha
-        else:
-            alpha = self.release_alpha
-
-        # do exponential moving average
-        self.gain[channel] = ((1-alpha) * self.gain[channel]) + (alpha * new_gain)
-
-        # apply gain to input
-        y = self.gain[channel]*sample
-        return y, new_gain, envelope
-
-    def process_int(self, sample, channel=0):
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
-        # get envelope from envelope detector
-        envelope_int = self.env_detector.process_int(sample_int, channel)
-        # avoid /0
-        envelope_int = max(envelope_int, 1)
-
-        # if envelope below threshold, apply unity gain, otherwise scale down
+    def gain_calc_int(self, envelope_int):
         new_gain = float(self.threshold_int)/float(envelope_int)
         new_gain = min(1.0, new_gain)
         new_gain_int = utils.int32(new_gain * 2**30)
+        return new_gain_int
 
-        # see if we're attacking or decaying
-        if new_gain_int < self.gain_int[channel]:
-            alpha = self.attack_alpha_int
-        else:
-            alpha = self.release_alpha_int
-
-        # do exponential moving average, VPU mult uses 2**30, otherwise could use 2**31
-        self.gain_int[channel] = utils.vpu_mult(2**30 - alpha, self.gain_int[channel])
-        self.gain_int[channel] += utils.vpu_mult(alpha, new_gain_int)
-
-        y = utils.vpu_mult(self.gain_int[channel], sample_int)
-
-        return (float(y)*2**-self.Q_sig), (float(new_gain)*2**-self.Q_sig), (float(envelope_int)*2**-self.Q_sig)
-
-    def process_xcore(self, sample, channel=0):
-        # quantize
-        sample = utils.float_s32(sample)
-        sample = utils.float_s32_use_exp(sample, -27)
-        sample = np.float32(float(sample))
-
-        # get envelope from envelope detector
-        envelope = self.env_detector.process_xcore(sample, channel)
-        # avoid /0
-        if envelope == np.float32(0):
-            envelope = np.float32(1e-20)
-
-        # if envelope below threshold, apply unity gain, otherwise scale down
+    def gain_calc_xcore(self, envelope):
         new_gain = self.threshold_f32/envelope
         new_gain = new_gain if new_gain < np.float32(1) else np.float32(1)
-
-        # see if we're attacking or decaying
-        if new_gain < self.gain_f32[channel]:
-            alpha = self.attack_alpha_f32
-        else:
-            alpha = self.release_alpha_f32
-
-        # do exponential moving average
-        self.gain_f32[channel] = self.gain_f32[channel] + alpha * (new_gain - self.gain_f32[channel])
-
-        # apply gain
-        y = self.gain_f32[channel]*sample
-
-        # quantize before return
-        y = utils.float_s32(y)
-        y = utils.float_s32_use_exp(y, -27)
-
-        return np.float32(float(y)), float(new_gain), float(envelope)
+        return new_gain
 
 
-class limiter_rms(limiter_base):
+class limiter_rms(compressor_limiter_base):
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
@@ -493,88 +521,21 @@ class limiter_rms(limiter_base):
                                                   release_t=release_t,
                                                   Q_sig=self.Q_sig)
 
-    def process(self, sample, channel=0):
-        # get envelope from envelope detector
-        envelope = self.env_detector.process(sample, channel)
-        # avoid /0
-        envelope = np.maximum(envelope, np.finfo(float).tiny)
-
-        # if envelope below threshold, apply unity gain, otherwise scale down
+    def gain_calc(self, envelope):
         new_gain = sqrt(self.threshold/envelope)
         new_gain = min(1, new_gain)
+        return new_gain
 
-        # see if we're attacking or decaying
-        if new_gain < self.gain[channel]:
-            alpha = self.attack_alpha
-        else:
-            alpha = self.release_alpha
-
-        # do exponential moving average
-        self.gain[channel] = ((1-alpha) * self.gain[channel]) + (alpha * new_gain)
-
-        # apply gain to input
-        y = self.gain[channel]*sample
-        return y, new_gain, envelope
-
-    def process_int(self, sample, channel=0):
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
-        # get envelope from envelope detector
-        envelope_int = self.env_detector.process_int(sample_int, channel)
-        # avoid /0
-        envelope_int = max(envelope_int, 1)
-
-        # if envelope below threshold, apply unity gain, otherwise scale down
+    def gain_calc_int(self, envelope_int):
         new_gain = sqrt(float(self.threshold_int)/float(envelope_int))
         new_gain = min(1.0, new_gain)
         new_gain_int = utils.int32(new_gain * 2**30)
+        return new_gain_int
 
-        # see if we're attacking or decaying
-        if new_gain_int < self.gain_int[channel]:
-            alpha = self.attack_alpha_int
-        else:
-            alpha = self.release_alpha_int
-
-        # do exponential moving average, VPU mult uses 2**30, otherwise could use 2**31
-        self.gain_int[channel] = utils.vpu_mult(2**30 - alpha, self.gain_int[channel])
-        self.gain_int[channel] += utils.vpu_mult(alpha, new_gain_int)
-
-        y = utils.vpu_mult(self.gain_int[channel], sample_int)
-
-        return (float(y)*2**-self.Q_sig), (float(new_gain)*2**-self.Q_sig), (float(envelope_int)*2**-self.Q_sig)
-
-    def process_xcore(self, sample, channel=0):
-        # quantize
-        sample = utils.float_s32(sample)
-        sample = utils.float_s32_use_exp(sample, -27)
-        sample = np.float32(float(sample))
-
-        # get envelope from envelope detector
-        envelope = self.env_detector.process_xcore(sample, channel)
-        # avoid /0
-        if envelope == np.float32(0):
-            envelope = np.float32(1e-20)
-
-        # if envelope below threshold, apply unity gain, otherwise scale down
+    def gain_calc_xcore(self, envelope):
         new_gain = sqrt(self.threshold_f32/envelope)
         new_gain = new_gain if new_gain < np.float32(1) else np.float32(1)
-
-        # see if we're attacking or decaying
-        if new_gain < self.gain_f32[channel]:
-            alpha = self.attack_alpha_f32
-        else:
-            alpha = self.release_alpha_f32
-
-        # do exponential moving average
-        self.gain_f32[channel] = self.gain_f32[channel] + alpha * (new_gain - self.gain_f32[channel])
-
-        # apply gain
-        y = self.gain_f32[channel]*sample
-
-        # quantize before return
-        y = utils.float_s32(y)
-        y = utils.float_s32_use_exp(y, -27)
-
-        return np.float32(float(y)), float(new_gain), float(envelope)
+        return new_gain
 
 
 class hard_limiter_peak(limiter_peak):
@@ -610,7 +571,7 @@ class soft_limiter_peak(limiter_peak):
         raise NotImplementedError
 
 
-class lookahead_limiter_peak(limiter_base):
+class lookahead_limiter_peak(compressor_limiter_base):
     # peak limiter with built in delay for avoiding clipping
     def __init__(self, fs, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, attack_t, release_t, delay, Q_sig)
@@ -632,12 +593,12 @@ class lookahead_limiter_peak(limiter_base):
         raise NotImplementedError
 
 
-class lookahead_limiter_rms(limiter_base):
+class lookahead_limiter_rms(compressor_limiter_base):
     # rms limiter with built in delay for avoiding clipping
     def __init__(self, fs, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, attack_t, release_t, delay, Q_sig)
 
-        self.threshold = utils.db2gain(threshold_db)
+        self.threshold = utils.db_pow2gain(threshold_db)
         self.threshold_f32 = np.float32(self.threshold)
         self.env_detector = envelope_detector_rms(fs, attack_t=attack_t,
                                                   release_t=release_t,
@@ -660,64 +621,9 @@ class lookahead_limiter_rms(limiter_base):
 # TODO add lookup compressors w/ some magic interface
 
 
-class compressor_base(dspg.dsp_block):
-    def __init__(self, fs, n_chans, ratio, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, Q_sig)
-
-        # attack times simplified from McNally, seem pretty close
-        T = 1/fs
-        self.attack_alpha = 2*T / attack_t
-        self.release_alpha = 2*T / release_t
-        self.gain = [1] * n_chans
-
-        # These are defined differently for peak and RMS compressors
-        self.threshold = None
-        self.env_detector = None
-
-        self.attack_alpha_f32 = np.float32(self.attack_alpha)
-        self.release_alpha_f32 = np.float32(self.release_alpha)
-        self.threshold_f32 = None
-        self.gain_f32 = [np.float32(1)] * n_chans
-
-        self.ratio = ratio
-        self.slope = 1 - 1/self.ratio
-
-    def reset_state(self):
-        self.env_detector.reset_state()
-        self.gain = [1] * self.n_chans
-        self.gain_f32 = [np.float32(1)] * self.n_chans
-
-    def process_frame(self, frame):
-        # same as generic, but only take 1st output
-        n_outputs = len(frame)
-        frame_size = frame[0].shape[0]
-        output = deepcopy(frame)
-        for chan in range(n_outputs):
-            this_chan = output[chan]
-            for sample in range(frame_size):
-                this_chan[sample] = self.process(this_chan[sample],
-                                                 channel=chan)[0]
-
-        return output
-
-    def process_frame_xcore(self, frame):
-        # same as generic, but only take 1st output
-        n_outputs = len(frame)
-        frame_size = frame[0].shape[0]
-        output = deepcopy(frame)
-        for chan in range(n_outputs):
-            this_chan = output[chan]
-            for sample in range(frame_size):
-                this_chan[sample] = self.process_xcore(this_chan[sample],
-                                                       channel=chan)[0]
-
-        return output
-
-
-class compressor_rms(compressor_base):
-
-    def __init__(self, fs, n_chans, threshold_db, ratio, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, ratio, attack_t, release_t, delay, Q_sig)
+class compressor_rms(compressor_limiter_base):
+    def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         # note rms comes as x**2, so use db_pow
         self.threshold = utils.db_pow2gain(threshold_db)
@@ -728,88 +634,27 @@ class compressor_rms(compressor_base):
                                                   release_t=release_t,
                                                   Q_sig=self.Q_sig)
 
-    def process(self, sample, channel=0):
-        # get envelope from envelope detector
-        envelope = self.env_detector.process(sample, channel)
-        # avoid /0
-        envelope = np.maximum(envelope, np.finfo(float).tiny)
+        self.ratio = ratio
+        self.slope = 1 - 1/self.ratio
 
-        # if envelope below threshold, apply unity gain, otherwise scale down
+    def gain_calc(self, envelope):
         new_gain = (self.threshold/envelope)**(self.slope/2)
         new_gain = min(1, new_gain)
+        return new_gain
 
-        # see if we're attacking or decaying
-        if new_gain < self.gain[channel]:
-            alpha = self.attack_alpha
-        else:
-            alpha = self.release_alpha
-
-        # do exponential moving average
-        self.gain[channel] = ((1-alpha) * self.gain[channel]) + (alpha * new_gain)
-
-        # apply gain to input
-        y = self.gain[channel]*sample
-        return y, new_gain, envelope
-
-    def process_int(self, sample, channel=0):
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
-        # get envelope from envelope detector
-        envelope_int = self.env_detector.process_int(sample_int, channel)
-        # avoid /0
-        envelope_int = max(envelope_int, 1)
-
+    def gain_calc_int(self, envelope_int):
         # if envelope below threshold, apply unity gain, otherwise scale down
         new_gain = (float(self.threshold_int)/float(envelope_int))**(self.slope/2)
         new_gain = min(1.0, new_gain)
         new_gain_int = utils.int32(new_gain * 2**30)
+        return new_gain_int
 
-        # see if we're attacking or decaying
-        if new_gain_int < self.gain_int[channel]:
-            alpha = self.attack_alpha_int
-        else:
-            alpha = self.release_alpha_int
-
-        # do exponential moving average, VPU mult uses 2**30, otherwise could use 2**31
-        self.gain_int[channel] = utils.vpu_mult(2**30 - alpha, self.gain_int[channel])
-        self.gain_int[channel] += utils.vpu_mult(alpha, new_gain_int)
-
-        y = utils.vpu_mult(self.gain_int[channel], sample_int)
-
-        return (float(y)*2**-self.Q_sig), (float(new_gain)*2**-self.Q_sig), (float(envelope_int)*2**-self.Q_sig)
-
-    def process_xcore(self, sample, channel=0):
-        # quantize
-        sample = utils.float_s32(sample)
-        sample = utils.float_s32_use_exp(sample, -27)
-        sample = np.float32(float(sample))
-
-        # get envelope from envelope detector
-        envelope = self.env_detector.process_xcore(sample, channel)
-        # avoid /0
-        if envelope == np.float32(0):
-            envelope = np.float32(1e-20)
-
+    def gain_calc_xcore(self, envelope):
         # if envelope below threshold, apply unity gain, otherwise scale down
         new_gain = (self.threshold_f32/envelope)**(self.slope/2)
         new_gain = new_gain if new_gain < np.float32(1) else np.float32(1)
+        return new_gain
 
-        # see if we're attacking or decaying
-        if new_gain < self.gain_f32[channel]:
-            alpha = self.attack_alpha_f32
-        else:
-            alpha = self.release_alpha_f32
-
-        # do exponential moving average
-        self.gain_f32[channel] = self.gain_f32[channel] + alpha * (new_gain - self.gain_f32[channel])
-
-        # apply gain
-        y = self.gain_f32[channel]*sample
-
-        # quantize before return
-        y = utils.float_s32(y)
-        y = utils.float_s32_use_exp(y, -27)
-
-        return np.float32(float(y)), float(new_gain), float(envelope)
 
 if __name__ == "__main__":
     import audio_dsp.dsp.signal_gen as gen

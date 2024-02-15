@@ -54,7 +54,7 @@ def get_c_wav(dir_name, lim_name, sim = True):
   return sig_fl
 
 
-def run_py(filt: drc.limiter_base, sig_fl):
+def run_py(filt: drc.compressor_limiter_base, sig_fl):
   out_f32 = np.zeros(sig_fl.size)
   out_f64 = np.zeros(sig_fl.size)
   
