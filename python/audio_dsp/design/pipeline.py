@@ -1,3 +1,5 @@
+# Copyright 2024 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 """
 Top level pipeline design class and code generation functions.
@@ -31,8 +33,8 @@ class Pipeline:
         Unique identifier for this pipeline. This identifier will be included in
         the generated header file name (as "adsp_generated_<identifier>.h"), the
         generated source file name (as "adsp_generated_<identifier>.c"), and the
-        pipeline's generated initialisation and main functions (as 
-        "adsp_<identifier>_pipeline_init" and 
+        pipeline's generated initialisation and main functions (as
+        "adsp_<identifier>_pipeline_init" and
         "adsp_<identifier>_pipeline_main")
     frame_size : int
         Size of the input frame of all input channels
@@ -435,7 +437,7 @@ def _resolved_pipeline_num_modules(resolved_pipeline):
     """Determine total number of module instances in the resolved pipeline across all threads"""
     return sum(len(t) for t in resolved_pipeline["threads"])
 
-def _generate_dsp_header(resolved_pipeline, out_dir = "build/dsp_pipeline"):
+def _generate_dsp_header(resolved_pipeline, out_dir = Path("build/dsp_pipeline")):
     """
     Generate "adsp_generated_<x>.h" and save to disk.
     """
@@ -635,10 +637,12 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
                             break
                         else:
                             link_idx += 1
+                else:
+                    raise RuntimeError("Channel not found")
             input_channel_array.append(f"{array_source}[{idx_num}].end_b")
         input_channels = ",\n\t\t".join(input_channel_array)
         dsp_main += f"\tchanend_t thread_{thread_idx}_inputs[] = {{\n\t\t{input_channels}}};\n"
-        
+
         # thread output chanends
         output_channel_array = []
         for dest in thread_output_edges.keys():
@@ -656,6 +660,8 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
                             break
                         else:
                             link_idx += 1
+                else:
+                    raise RuntimeError("Channel not found")
             output_channel_array.append(f"{array_source}[{idx_num}].end_a")
         output_channels = ",\n\t\t".join(output_channel_array)
         dsp_main += f"\tchanend_t thread_{thread_idx}_outputs[] = {{\n\t\t{output_channels}}};\n"

@@ -1,3 +1,5 @@
+# Copyright 2024 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 from .graph import Edge, Node
 import yaml
@@ -78,7 +80,8 @@ class StageOutput(Edge):
         Makes print output usable
         """
         dest = "-" if self.dest is None else f"{self.dest.index} {self.dest_index}"
-        return f"({self.source.index} {self.source_index} -> {dest})"
+        source = "-" if self.source is None else f"{self.source.index} {self.source_index}"
+        return f"({source} -> {dest})"
 
 
 class PropertyControlField:
@@ -150,7 +153,7 @@ class Stage(Node):
     dsp_block : None | audio_dsp.dsp.generic.dsp_block
         This will point to a dsp block class (e.g. biquad etc), to be set by the child class
     """
-    def __init__(self, config, inputs):
+    def __init__(self, config: Path | str, inputs: list[StageOutput]):
         super().__init__()
         self.i = [i for i in inputs]
         for i, input in enumerate(self.i):
@@ -260,6 +263,10 @@ class Stage(Node):
         return self.dsp_block.freq_response(nfft)
 
     def plot_frequency_response(self, nfft=512):
+        """
+        Plot magnitude and phase response of this stage using matplotlib. Will
+        be displayed inline in a jupyter notebook.
+        """
         f, h = self.get_frequency_response(nfft)
         plot.plot_frequency_response(f, h, name=self.name)
 

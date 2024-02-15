@@ -1,3 +1,5 @@
+# Copyright 2024 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import numpy as np
 
 from audio_dsp.dsp import generic as dspg
@@ -13,8 +15,8 @@ class mixer(dspg.dsp_block):
         self.gain = utils.db2gain(gain_db)
         self.gain_int = utils.int32(self.gain * 2**30)
 
-    def process(self, sample_list):
-        scaled_samples = np.array(sample_list)*self.gain
+    def process(self, sample, channel=0):
+        scaled_samples = np.array(sample)*self.gain
         y = np.sum(scaled_samples)
 
         return y
@@ -70,8 +72,8 @@ class subtractor(dspg.dsp_block):
         super().__init__(fs, 2, Q_sig)
 
     # subtract 1st input from the second
-    def process(self, sample_list):
-        y = sample_list[0] - sample_list[1]
+    def process(self, sample, channel=0):
+        y = sample[0] - sample[1]
 
         return y
 
@@ -152,8 +154,8 @@ class switch(dspg.dsp_block):
         self.switch_position = 0
         return
 
-    def process(self, sample_list):
-        y = sample_list[self.switch_position]
+    def process(self, sample, channel=0):
+        y = sample[self.switch_position]
         return y
 
     def process_xcore(self, sample_list):
