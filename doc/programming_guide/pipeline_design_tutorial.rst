@@ -140,7 +140,7 @@ as the structure of the pipeline has not changed, the configuration of the pipel
 
     set_host_app("path/to/xvf_host")  # pass the correct path to a host app here
 
-This will use the host app to send configuration to the devices whilst it is running. This will not update the generated code and therefore the
+This will use the host app to send the configuration to the device whilst it is running. This will not update the generated code and therefore the
 device configuration will be lost when it is switched off. Rerun ``generate_dsp_main()`` in order to create an application with updated tuning parameters
 baked in::
 
@@ -149,7 +149,7 @@ baked in::
 
 
 The second is for profiling the thread utilisation. This will display a table which reports the percentage utilisation of each thread. This number is measured
-whilst the device is running and the value displayed is the worst case that has been observed since the device booted for each thread::
+whilst the device is running, and the value displayed is the worst case that has been observed since the device booted for each thread::
 
     # Read back the thread utilisation
     profile_pipeline(p)
@@ -158,17 +158,17 @@ whilst the device is running and the value displayed is the worst case that has 
 Designing Complex Pipelines
 ===========================
 
-The audio dsp library is not limited to the simple linear pipelines shown above. Stages can scale to take an arbitrary number of inputs and the outputs of
+The audio dsp library is not limited to the simple linear pipelines shown above. Stages can scale to take an arbitrary number of inputs, and the outputs of
 each stage can be split and joined arbitrarily.
 
 Every stage has an :py:attr:`o <audio_dsp.design.stages.Stage.o>` attribute. This is a list of stage output instances. When creating a stage, all stages will
-require a list of stage outputs as its inputs. A stages outputs can be sliced and joined with another stages output and passed as an input to a third stage.
+require a list of stage outputs as its inputs. A stage's outputs can be sliced and joined with another stages output and passed as an input to a third stage.
 
 .. code-block:: python
 
     with p.add_thread() as t:
        # split the pipeline inputs
-       b0 = t.stage(Biquad, p.i[0:2]
+       b0 = t.stage(Biquad, p.i[0:2])
        b1 = t.stage(Biquad, p.i[2:])
 
        # join biquad outputs
