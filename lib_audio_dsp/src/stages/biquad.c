@@ -1,3 +1,5 @@
+// Copyright 2024 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include <string.h>
 #include <stdlib.h>
 #include <xcore/assert.h>
@@ -40,9 +42,12 @@ module_instance_t* biquad_init(uint8_t id, int n_inputs, int n_outputs, int fram
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    //uint32_t n_bytes_state = n_inputs * 8 * sizeof(int32_t);
-    //state->filter_states = DWORD_ALIGNED_MALLOC(n_bytes_state);
-    //memset(state->filter_states, n_bytes_state, 0);
+    state->filter_states = malloc(n_inputs * sizeof(int32_t*)); // Allocate memory for the 1D pointers
+    for(int i=0; i<n_inputs; i++)
+    {
+        state->filter_states[i] = DWORD_ALIGNED_MALLOC(BIQUAD_STATE_LEN * sizeof(int32_t));
+        memset(state->filter_states[i], 0, BIQUAD_STATE_LEN * sizeof(int32_t));
+    }
 
     xassert(module_config != NULL);
 

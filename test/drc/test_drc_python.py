@@ -1,3 +1,5 @@
+# Copyright 2024 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import numpy as np
 import pytest
 
@@ -13,7 +15,7 @@ def test_limiter_peak_attack(fs, at, threshold):
     # Attack time test bads on Figure 2 in Guy McNally's "Dynamic Range Control
     # of Digital Audio Signals"
 
-    # Make a constant signal at 6dB above the threshold, make 2* length of
+    # Make a constant signal at 6 dB above the threshold, make 2* length of
     # attack time to keep the test quick
     x = np.ones(int(at*2*fs))
     x[:] = utils.db2gain(threshold + 6)
@@ -30,7 +32,7 @@ def test_limiter_peak_attack(fs, at, threshold):
     for n in range(len(y)):
         y[n], f[n], env[n] = lt.process(x[n])
 
-    # attack time is defined as how long to get within 2dB of final value,
+    # attack time is defined as how long to get within 2 dB of final value,
     # in this case the threshold. Find when we get to this
     thresh_passed = np.argmax(utils.db(env) > threshold)
     sig_3dB = np.argmax(utils.db(y) < threshold + 2)
@@ -50,7 +52,7 @@ def test_limiter_peak_release(fs, rt, threshold):
     # Release time test bads on Figure 2 in Guy McNally's "Dynamic Range
     # Control of Digital Audio Signals"
 
-    # Make a step down signal from 6dB above the threshold to 3dB below
+    # Make a step down signal from 6 dB above the threshold to 3 dB below
     # threshold, make 2* length of release time plus 0.5 to keep the test quick
     x = np.ones(int((0.5+rt*2)*fs))
     x[:int(0.5*fs)] = utils.db2gain(threshold + 6)
@@ -68,8 +70,8 @@ def test_limiter_peak_release(fs, rt, threshold):
     for n in range(len(y)):
         y[n], f[n], env[n] = lt.process(x[n])
 
-    # find when within 3dB of target value after dropping below the threshold,
-    # in this case the original value of 2dB below the threshold.
+    # find when within 3 dB of target value after dropping below the threshold,
+    # in this case the original value of 2 dB below the threshold.
     sig_3dB = np.argmax(utils.db(y[int(0.5*fs):]) > threshold - 2 - 3)
 
     measured_rt = t[sig_3dB]
@@ -122,14 +124,14 @@ def test_drc_component(fs, component, at, rt, threshold):
     if "envelope" in component:
         # envelope detector has 1 output
         for n in np.arange(len(signal)):
-            output_int[n] = drcut.process_int(signal[n])
+            output_int[n] = drcut.process_f32(signal[n])
         drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n] = drcut.process(signal[n])
     else:
         # limiter has 3 outputs
         for n in np.arange(len(signal)):
-            output_int[n], _, _ = drcut.process_int(signal[n])
+            output_int[n], _, _ = drcut.process_f32(signal[n])
         drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n], _, _ = drcut.process(signal[n])
@@ -178,13 +180,13 @@ def test_drc_component_frames(fs, component, at, rt, threshold, n_chans):
 
     if "envelope" in component:
         for n in range(len(signal_frames)):
-            output_int[:, n:n+frame_size] = drcut.process_frame_int(signal_frames[n])
+            output_int[:, n:n+frame_size] = drcut.process_frame_f32(signal_frames[n])
         drcut.reset_state()
         for n in range(len(signal_frames)):
             output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])
-    else:        
+    else:
         for n in range(len(signal_frames)):
-            output_int[:, n:n+frame_size] = drcut.process_frame_int(signal_frames[n])
+            output_int[:, n:n+frame_size] = drcut.process_frame_f32(signal_frames[n])
         drcut.reset_state()
         for n in range(len(signal_frames)):
             output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])

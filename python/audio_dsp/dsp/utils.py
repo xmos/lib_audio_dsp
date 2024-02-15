@@ -1,3 +1,5 @@
+# Copyright 2024 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import numpy as np
 import scipy.signal as spsig
 import math
@@ -44,13 +46,13 @@ def envelope(x, N=None):
     return np.abs(y)
 
 
-def int32(val: int):
+def int32(val: float) -> int:
     if -2 ** 31 <= val < (2 ** 31 - 1):
         return int(val)
     raise OverflowError
 
 
-def int64(val: int):
+def int64(val: float):
     if -2 ** 63 <= val < (2 ** 63 - 1):
         return int(val)
     raise OverflowError
@@ -100,7 +102,7 @@ class float_s32():
         if Q_sig and isinstance(value, float):
             self.mant = int32(round(value * 2**Q_sig))
             self.exp = -Q_sig
-        elif isinstance(value, float):
+        elif isinstance(value, float) or isinstance(value, np.float32):
             self.mant, self.exp = math.frexp(value)
             self.mant = float_to_int32(self.mant)
             self.exp -= 31

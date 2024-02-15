@@ -100,6 +100,9 @@ pipeline {
                       dir("test/utils") {
                         runPytest("--dist worksteal")
                       }
+                      dir("python") {
+                        sh "pyright audio_dsp --skipunannotated --level warning"
+                      }
                     }
                   }
                 }
@@ -129,6 +132,8 @@ pipeline {
             archiveArtifacts artifacts: "doc/_out/pdf/*.pdf"
             archiveArtifacts artifacts: "doc/_out/html/**/*"
             archiveArtifacts artifacts: "doc/_out/linkcheck/**/*"
+            sh 'find doc/_out/pdf -type f -not -name "*.pdf" -exec rm {} +'  // delete latex junk
+            zip zipFile: "lib_audio_dsp_docs.zip", archive: true, dir: "doc/_out", exclude: "linkcheck/**"
           }
           post {
             cleanup {

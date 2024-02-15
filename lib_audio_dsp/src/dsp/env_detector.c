@@ -1,14 +1,10 @@
+// Copyright 2024 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include "dsp/adsp.h"
 
+#include <math.h>
 #include <xcore/assert.h>
-
-static inline int32_t float_to_fixed(float x, exponent_t output_exp){
-  float_s32_t v = f32_to_float_s32(x);
-  right_shift_t shr = output_exp - v.exp;
-  if(shr >= 0) return (v.mant >> ( shr) );
-  else         return (v.mant << (-shr) );
-}
 
 env_detector_t adsp_env_detector_init(
   float fs,
@@ -25,10 +21,9 @@ env_detector_t adsp_env_detector_init(
     release_t = detect_t;
   }
 
-  fs = 2 / fs;
-  env_det.attack_alpha = float_to_fixed(fs / attack_t, -30);
-  env_det.release_alpha = float_to_fixed(fs / release_t, -30);
-  env_det.envelope = (float_s32_t){0, SIG_EXP};
+  env_det.attack_alpha = 2 / (fs * attack_t);
+  env_det.release_alpha = 2 / (fs * release_t);
+  env_det.envelope = 0;
 
   return env_det;
 }
@@ -37,28 +32,28 @@ void adsp_env_detector_peak(
   env_detector_t * env_det,
   int32_t new_sample
 ) {
-  float_s32_t samp = (float_s32_t){new_sample, SIG_EXP};
-  samp = float_s32_abs(samp);
+  float samp = float_s32_to_float((float_s32_t){new_sample, SIG_EXP});
+  samp = fabsf(samp);
 
-  uq2_30 alpha = env_det->release_alpha;
-  if (float_s32_gt(samp, env_det->envelope)) {
+  float alpha = env_det->release_alpha;
+  if (samp > env_det->envelope) {
     alpha = env_det->attack_alpha;
   }
 
-  env_det->envelope = float_s32_ema(samp, env_det->envelope, alpha);
+  env_det->envelope = env_det->envelope + alpha * (samp - env_det->envelope);
 }
 
 void adsp_env_detector_rms(
   env_detector_t * env_det,
   int32_t new_sample
 ) {
-  float_s32_t samp = (float_s32_t){new_sample, SIG_EXP};
-  samp = float_s32_mul(samp, samp);
+  float samp = float_s32_to_float((float_s32_t){new_sample, SIG_EXP});
+  samp *= samp;
 
-  uq2_30 alpha = env_det->release_alpha;
-  if (float_s32_gt(samp, env_det->envelope)) {
+  float alpha = env_det->release_alpha;
+  if (samp > env_det->envelope) {
     alpha = env_det->attack_alpha;
   }
 
-  env_det->envelope = float_s32_ema(samp, env_det->envelope, alpha);
+  env_det->envelope = env_det->envelope + alpha * (samp - env_det->envelope);
 }

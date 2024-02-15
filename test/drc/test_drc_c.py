@@ -1,3 +1,5 @@
+# Copyright 2024 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import numpy as np
 import soundfile as sf
 from pathlib import Path
@@ -53,36 +55,36 @@ def get_c_wav(dir_name, lim_name, sim = True):
 
 
 def run_py(filt, sig_fl):
-  out_int = np.zeros(sig_fl.size)
-  out_fl = np.zeros(sig_fl.size)
+  out_f32 = np.zeros(sig_fl.size)
+  out_f64 = np.zeros(sig_fl.size)
   
   for n in range(sig_fl.size):
-    out_int[n], _, __ = filt.process_int(sig_fl[n])
+    out_f32[n], _, _ = filt.process_f32(sig_fl[n])
 
-  sf.write(gen_dir / "sig_py_int.wav", out_int, fs, "PCM_24")
+  sf.write(gen_dir / "sig_py_int.wav", out_f32, fs, "PCM_24")
   filt.reset_state()
 
   for n in range(sig_fl.size):
-    out_fl[n], _, __ = filt.process(sig_fl[n])
+    out_f64[n], _, _ = filt.process(sig_fl[n])
 
-  sf.write(gen_dir / "sig_py_flt.wav", out_fl, fs, "PCM_24")
+  sf.write(gen_dir / "sig_py_flt.wav", out_f64, fs, "PCM_24")
 
-  return out_fl, out_int
+  return out_f64, out_f32
 
 
 def single_test(lim, lim_name, tname, sig_fl):
   test_dir = bin_dir / tname
   test_dir.mkdir(exist_ok = True, parents = True)
 
-  lim_info = [lim.threshold_s32.mant, lim.threshold_s32.exp, lim.attack_alpha_uq30, lim.release_alpha_uq30]
-  lim_info = np.array(lim_info, dtype = np.int32)
+  lim_info = [lim.threshold_f32, lim.attack_alpha_f32, lim.release_alpha_f32]
+  lim_info = np.array(lim_info, dtype = np.float32)
   lim_info.tofile(test_dir / "lim_info.bin")
 
   out_py_fl, out_py_int = run_py(lim, sig_fl)
   out_c = get_c_wav(test_dir, lim_name)
   shutil.rmtree(test_dir)
 
-  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
+  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=2e-8)
 
 @pytest.fixture(scope="module")
 def in_signal():
@@ -107,5 +109,5 @@ if __name__ == "__main__":
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
 
-  test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -20)
-  #test_limiter_c(sig_fl, "limiter_peak", 0.01, 0.07, -20)
+  #test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -20)
+  test_limiter_c(sig_fl, "limiter_peak", 0.01, 0.07, -20)

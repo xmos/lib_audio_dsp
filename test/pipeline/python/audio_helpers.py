@@ -1,3 +1,5 @@
+# Copyright 2024 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 """
 Helper functions for creating and validating audio files
@@ -17,7 +19,7 @@ def generate_test_signal(wav_file_name, type="sine", fs=48000, duration=10, num_
         sample_space = np.linspace(0, duration, int(fs*duration))
 
         for i in range(num_channels):
-            f_sig = f * (i+1) # Generate harmonics of 1KHz
+            f_sig = f * (i+1) # Generate harmonics of 1 KHz
             sig[:,i] = (amplitude * np.sin(2 * np.pi * f_sig * sample_space)).T
 
         if (sig_dtype == np.int32) or (sig_dtype == np.int16):

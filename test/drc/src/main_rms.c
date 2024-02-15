@@ -1,3 +1,5 @@
+// Copyright 2024 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -24,21 +26,17 @@ int main()
   int in_len = ftell(in) / sizeof(int32_t);
   fseek(in, 0, SEEK_SET);
 
-  float_s32_t th;
-  uq2_30 at_al, re_al;
+  float th, at_al, re_al;
 
-  fread(&th.mant, sizeof(int32_t), 1, lim_info);
-  fread(&th.exp, sizeof(exponent_t), 1, lim_info);
-  fread(&at_al, sizeof(uq2_30), 1, lim_info);
-  fread(&re_al, sizeof(uq2_30), 1, lim_info);
+  fread(&th, sizeof(float), 1, lim_info);
+  fread(&at_al, sizeof(float), 1, lim_info);
+  fread(&re_al, sizeof(float), 1, lim_info);
   fclose(lim_info);
 
   limiter_t lim = (limiter_t){
-                  (env_detector_t){at_al, re_al, (float_s32_t){0, SIG_EXP}},
-                  th, (float_s32_t){0x40000000, -30}
-  };
+              (env_detector_t){at_al, re_al, 0}, th, 1};
 
-  //printf("%ld %d %ld %ld\n", th.mant, th.exp, at_al, re_al);
+  //printf("%f %f %f\n", th, at_al, re_al);
 
   for (unsigned i = 0; i < in_len; i++)
   {
