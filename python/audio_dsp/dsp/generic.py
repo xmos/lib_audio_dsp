@@ -19,6 +19,8 @@ class dsp_block():
     ----------
     fs : int
         sampling frequency in Hz.
+    n_chans : int
+        number of channels the block runs on.
     Q_sig: int, optional
         Q format of the signal, number of bits after the decimal point.
         Defaults to Q27.
@@ -27,6 +29,8 @@ class dsp_block():
     ----------
     fs : int
         sampling frequency in Hz.
+    n_chans : int
+        number of channels the block runs on.
     Q_sig: int
         Q format of the signal, number of bits after the decimal point.
     """
@@ -57,8 +61,17 @@ class dsp_block():
 
         return y_flt
 
-    def process_frame(self, frame):
-        # simple multichannel, assumes no channel unique states!
+    def process_frame(self, frame: list):
+        """
+        Take a list frames of samples and return the processed frames.
+
+        A frame is defined as a list of 1-D numpy arrays, where the number of 
+        arrays is equal to the number of channels, and the length of the arrays
+        is equal to the frame size.
+
+        For the generic implementation, just call process for each sample for 
+        each channel.
+        """
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
         output = deepcopy(frame)
@@ -70,9 +83,18 @@ class dsp_block():
 
         return output
 
-    def process_frame_xcore(self, frame):
-        # simple multichannel, but bit exact xcore implementation.
-        # Assumes no channel unique states!
+    def process_frame_xcore(self, frame: list):
+        """
+        Take a list frames of samples and return the processed frames, using
+        a bit exact xcore implementation.
+
+        A frame is defined as a list of 1-D numpy arrays, where the number of
+        arrays is equal to the number of channels, and the length of the arrays
+        is equal to the frame size.
+
+        For the generic implementation, just call process for each sample for
+        each channel.
+        """
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
         output = deepcopy(frame)
