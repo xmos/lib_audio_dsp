@@ -15,6 +15,11 @@ pipeline {
       defaultValue: '15.2.1',
       description: 'The XTC tools version'
     )
+    string(
+      name: 'XCOMMON_CMAKE_VERSION',
+      defaultValue: 'v0.2.0',
+      description: 'The xcommon cmake version'
+    )
   } // parameters
 
   environment {
@@ -38,7 +43,7 @@ pipeline {
             stage ('Build') {
               steps {
                 runningOn(env.NODE_NAME)
-                sh 'git clone -b develop git@github.com:xmos/xcommon_cmake'
+                sh "git clone -b ${params.XCOMMON_CMAKE_VERSION} git@github.com:xmos/xcommon_cmake"
                 sh 'git -C xcommon_cmake rev-parse HEAD'
                 dir("lib_audio_dsp") {
                   checkout scm
@@ -149,7 +154,7 @@ pipeline {
 
           steps {
             runningOn(env.NODE_NAME)
-            sh 'git clone -b develop git@github.com:xmos/xcommon_cmake'
+            sh "git clone -b ${params.XCOMMON_CMAKE_VERSION} git@github.com:xmos/xcommon_cmake"
             sh 'git -C xcommon_cmake rev-parse HEAD'
             sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
             dir("lib_audio_dsp") {
