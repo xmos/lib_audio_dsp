@@ -1,16 +1,17 @@
 
 #include "dsp/adsp.h"
 
-static inline int32_t f32_to_fixed(float x){
-  float_s32_t v = f32_to_float_s32(x);
-  right_shift_t shr = SIG_EXP - v.exp;
-  asm("ashr %0, %1, %2": "=r" (v.mant): "r" (v.mant), "r" (shr));
-  return v.mant;
-}
-
 int32_t adsp_dB_to_gain(float dB_gain) {
+  xassert(dB_gain <= 24 && "Maximum fixed gain is +24 dB");
   float gain_fl = powf(10, (dB_gain / 20));
-  return f32_to_fixed(gain_fl);
+  // gain_fl will always be positive
+  int32_t zero, exp; unsigned mant;
+  asm("fsexp %0, %1, %2": "=r" (zero), "=r" (exp): "r" (gain_fl));
+  asm("fmant %0, %1": "=r" (mant): "r" (gain_fl));
+  // mant to q27
+  right_shift_t shr = SIG_EXP - exp + 23;
+  mant >>= shr;
+  return mant;
 }
 
 int32_t adsp_from_q31(int32_t input) {
@@ -24,7 +25,7 @@ int32_t adsp_to_q31(int32_t input) {
   // and then to get -31 saturate and extract with sig_exp - 1
   int32_t ah = input, al = 0, pos = -SIG_EXP + 1;
   asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (pos), "0" (ah), "1" (al));
-  asm("lextract %0,%1,%2,%3,32":"=r"(ah):"r"(ah),"r"(al),"r"(pos));
+  asm("lextract %0, %1, %2, %3, 32":"=r"(ah):"r"(ah),"r"(al),"r"(pos));
   return ah;
 }
 
@@ -37,16 +38,16 @@ int32_t adsp_adder(int32_t * input, unsigned n_ch) {
   }
   // make sure we didn't overflow 32 bits
   asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (one), "0" (ah), "1" (al));
-  asm("lextract %0 ,%1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (one));
+  asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (one));
   return ah;
 }
 
-int32_t adsp_subtractor(int32_t in1, int32_t in2) {
+int32_t adsp_subtractor(int32_t x, int32_t y) {
   // there is a bug in lsats, so it doesn't work if we give it 0,
   // so mul all samples by 2 and then lsats and lextract with 1
   int32_t ah = 0, al = 0, mul = 2, one = 1;
-  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (in1), "r" (mul), "0" (ah), "1" (al));
-  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (in2), "r" (-mul), "0" (ah), "1" (al));
+  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (x), "r" (mul), "0" (ah), "1" (al));
+  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (y), "r" (-mul), "0" (ah), "1" (al));
   // make sure we didn't overflow 32 bits
   asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (one), "0" (ah), "1" (al));
   asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (one));
@@ -54,16 +55,16 @@ int32_t adsp_subtractor(int32_t in1, int32_t in2) {
 }
 
 int32_t adsp_fixed_gain(int32_t input, int32_t gain) {
-  int32_t ah, al;
   int32_t q_format = -SIG_EXP;
-  // adding 1 << (q_format -1) for rounding
-  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (input), "r" (gain), "0" (0), "1" (1 << (q_format - 1)));
+  // adding 1 << (q_format - 1) for rounding
+  int32_t ah = 0, al = 1 << (q_format - 1);
+  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (input), "r" (gain), "0" (ah), "1" (al));
   asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (q_format), "0" (ah), "1" (al));
-  asm("lextract %0 ,%1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (q_format));
+  asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (q_format));
   return ah;
 }
 
-int32_t adsp_mixer(int32_t * input, int32_t gain, unsigned n_ch) {
+int32_t adsp_mixer(int32_t * input, unsigned n_ch, int32_t gain) {
   // there is a bug in lsats, so it doesn't work if we give it 0,
   // so mul all samples by 2 and then lsats and lextract with 1
   int32_t ah = 0, al = 0, mul = 2, one = 1;
@@ -73,7 +74,6 @@ int32_t adsp_mixer(int32_t * input, int32_t gain, unsigned n_ch) {
   }
   // make sure we didn't overflow 32 bits
   asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (one), "0" (ah), "1" (al));
-  asm("lextract %0 ,%1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (one));
+  asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (one));
   return ah;
 }
-
