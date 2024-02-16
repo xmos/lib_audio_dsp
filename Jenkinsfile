@@ -106,7 +106,7 @@ pipeline {
                         println 'runPytest("--dist worksteal")'
                       }
                       dir("python") {
-                        println 'sh "pyright audio_dsp --skipunannotated --level warning"'
+                        sh "pyright audio_dsp --skipunannotated --level warning"
                       }
                     }
                   //}
