@@ -388,7 +388,7 @@ class compressor_limiter_base(dspg.dsp_block):
         attack_alpha in 32-bit float format.
     release_alpha_f32 : np.float32
         release_alpha in 32-bit float format.
-    threshold : int
+    threshold_int : int
         Value above which comression/limiting occurs for int32 fixed point
         processing.
     gain_int : list[int]
@@ -640,7 +640,7 @@ class limiter_peak(compressor_limiter_base):
         attack_alpha in 32-bit float format.
     release_alpha_f32 : np.float32
         release_alpha in 32-bit float format.
-    threshold : int
+    threshold_int : int
         Value above which limiting occurs for int32 fixed point
         processing.
     gain_int : list[int]
@@ -734,7 +734,7 @@ class limiter_rms(compressor_limiter_base):
         attack_alpha in 32-bit float format.
     release_alpha_f32 : np.float32
         release_alpha in 32-bit float format.
-    threshold : int
+    threshold_int : int
         Value above which limiting occurs for int32 fixed point
         processing.
     gain_int : list[int]
@@ -935,7 +935,7 @@ class compressor_rms(compressor_limiter_base):
         attack_alpha in 32-bit float format.
     release_alpha_f32 : np.float32
         release_alpha in 32-bit float format.
-    threshold : int
+    threshold_int : int
         Value above which compression occurs for int32 fixed point processing.
     gain_int : list[int]
         Current gain to be applied to the signal for each channel for int32
