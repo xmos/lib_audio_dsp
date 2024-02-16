@@ -35,6 +35,31 @@ def chirp_filter_test(filter: bq.biquad, fs):
         assert mean_error_vpu < 0.05
 
 
+@pytest.mark.parametrize("fs", [16000, 44100, 48000, 88200, 96000, 192000])
+@pytest.mark.parametrize("amplitude", [0.5, 1, 2, 16])
+def test_bypass(fs, amplitude):
+    filter = bq.biquad_bypass(fs, 1)
+    length = 0.05
+    signal = gen.log_chirp(fs, length, amplitude)
+
+    output_int = np.zeros(len(signal))
+    output_flt = np.zeros(len(signal))
+    output_xcore = np.zeros(len(signal))
+
+    for n in np.arange(len(signal)):
+        output_int[n] = filter.process_int(signal[n])
+    filter.reset_state()
+    for n in np.arange(len(signal)):
+        output_flt[n] = filter.process(signal[n])
+    filter.reset_state()
+    for n in np.arange(len(signal)):
+        output_xcore[n] = filter.process_xcore(signal[n])
+
+    np.testing.assert_array_equal(signal, output_flt)
+    np.testing.assert_array_equal(signal, output_int)
+    np.testing.assert_array_equal(signal, output_xcore)
+
+
 @pytest.mark.parametrize("filter_type", ["biquad_peaking",
                                          "biquad_constant_q"])
 @pytest.mark.parametrize("f", [20, 100, 1000, 10000, 20000])
@@ -172,7 +197,7 @@ def test_frames(filter_n, fs, n_chans):
 # TODO check biquad actually filters
 # TODO check parameter generation
 # TODO check sample rates - use f/fs
-# TODO add gain and mute and bypass tests
+# TODO add mute tests
 
 if __name__ == "__main__":
     # test_linkwitz_filters(500, 2, 20, 0.5, 48000)
