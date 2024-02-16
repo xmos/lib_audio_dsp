@@ -15,11 +15,6 @@ pipeline {
       defaultValue: '15.2.1',
       description: 'The XTC tools version'
     )
-    string(
-      name: 'XCOMMON_CMAKE_VERSION',
-      defaultValue: 'v0.2.0',
-      description: 'The xcommon cmake version'
-    )
   } // parameters
 
   environment {
@@ -43,7 +38,7 @@ pipeline {
             stage ('Build') {
               steps {
                 runningOn(env.NODE_NAME)
-                sh "git clone -b ${params.XCOMMON_CMAKE_VERSION} git@github.com:xmos/xcommon_cmake"
+                sh 'git clone -b develop git@github.com:xmos/xcommon_cmake'
                 sh 'git -C xcommon_cmake rev-parse HEAD'
                 dir("lib_audio_dsp") {
                   checkout scm
@@ -90,81 +85,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      dir("test/biquad") {
-                        println 'runPytest("test_biquad_python.py --dist worksteal")'
-                        println 'runPytest("test_biquad_c.py --dist worksteal")'
-                      }
-                      dir("test/cascaded_biquads") {
-                        println '"test_cascaded_biquads_python.py --dist worksteal")'
-                        println 'runPytest("test_cascaded_biquads_c.py --dist worksteal")'
-                      }
-                      dir("test/drc") {
-                        println 'runPytest("test_drc_python.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                      }
-                      dir("test/utils") {
-                        println 'runPytest("--dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                        println 'runPytest("test_drc_c.py --dist worksteal")'
-                      }
+                      runPytest("test/biquad test/cascaded_biquads test/drc test/utils --dist worksteal")
                       dir("python") {
                         sh "pyright audio_dsp --skipunannotated --level warning"
                       }
@@ -189,7 +110,16 @@ pipeline {
           }
           steps {
             checkout scm
-            println "nuilding docs"
+            sh """docker run -u "\$(id -u):\$(id -g)" \
+                  --rm \
+                  -v ${WORKSPACE}:/build \
+                  --entrypoint /build/doc/build_docs.sh \
+                  ghcr.io/xmos/xmosdoc:$XMOSDOC_VERSION -v"""
+            archiveArtifacts artifacts: "doc/_out/pdf/*.pdf"
+            archiveArtifacts artifacts: "doc/_out/html/**/*"
+            archiveArtifacts artifacts: "doc/_out/linkcheck/**/*"
+            sh 'find doc/_out/pdf -type f -not -name "*.pdf" -exec rm {} +'  // delete latex junk
+            zip zipFile: "lib_audio_dsp_docs.zip", archive: true, dir: "doc/_out", exclude: "linkcheck/**"
           }
           post {
             cleanup {
@@ -205,9 +135,29 @@ pipeline {
 
           steps {
             runningOn(env.NODE_NAME)
+            sh 'git clone -b develop git@github.com:xmos/xcommon_cmake'
+            sh 'git -C xcommon_cmake rev-parse HEAD'
+            sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
+            dir("lib_audio_dsp") {
+              checkout scm
+            }
+            createVenv("lib_audio_dsp/requirements.txt")
 
             dir("lib_audio_dsp") {
-              println 'hardware testing'
+              withVenv {
+                withTools(params.TOOLS_VERSION) {
+                  sh "pip install -r requirements.txt"
+                  sh "pip install -e ${WORKSPACE}/xtagctl"
+                  withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
+                    withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
+                      sh "xtagctl reset ${adapterIDs[0]}"
+                      dir("test/pipeline") {
+                        sh "python -m pytest --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
 
@@ -215,8 +165,13 @@ pipeline {
             cleanup {
               xcoreCleanSandbox()
             }
+            always {
+              dir("${WORKSPACE}/lib_audio_dsp/test/pipeline") {
+                junit "pytest_result.xml"
+              }
+            }
           }
-        } // Hardware test        
+        } // Hardware test
       } // parallel
     } // CI
   } // stages
