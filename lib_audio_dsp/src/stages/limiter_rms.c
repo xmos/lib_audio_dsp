@@ -49,7 +49,7 @@ void limiter_rms_process(int32_t **input, int32_t **output, void *app_data_state
     } while(++i < state->n_outputs);
 }
 
-void limiter_rms_init(module_instance_t* instance, uint8_t id, int n_inputs, int n_outputs, int frame_size)
+void limiter_rms_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
 
     limiter_rms_state_t *state = instance->state;
@@ -60,7 +60,7 @@ void limiter_rms_init(module_instance_t* instance, uint8_t id, int n_inputs, int
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    state->lim = malloc(state->n_inputs * sizeof(limiter_t));
+    state->lim = adsp_bump_allocator_malloc(allocator, state->n_inputs * sizeof(limiter_t));
     memset(state->lim, 0, state->n_inputs * sizeof(limiter_t));
 
     for(int i=0; i<state->n_inputs; i++)

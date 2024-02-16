@@ -31,7 +31,7 @@ void cascaded_biquads_process(int32_t **input, int32_t **output, void *app_data_
     } while(++i < state->n_outputs);
 }
 
-void cascaded_biquads_init(module_instance_t* instance, uint8_t id, int n_inputs, int n_outputs, int frame_size)
+void cascaded_biquads_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
     cascaded_biquads_state_t *state = instance->state;
     cascaded_biquads_config_t *config = instance->control.config;
@@ -44,10 +44,10 @@ void cascaded_biquads_init(module_instance_t* instance, uint8_t id, int n_inputs
     state->frame_size = frame_size;
 
 
-    state->filter_states = malloc(n_inputs * sizeof(int32_t*)); // Allocate memory for the 1D pointers
+    state->filter_states = adsp_bump_allocator_malloc(allocator, _CBQ_ARR_MEMORY(n_inputs)); // Allocate memory for the 1D pointers
     for(int i=0; i<n_inputs; i++)
     {
-        state->filter_states[i] = malloc(CASCADED_BIQUADS_STATE_LEN * sizeof(int32_t));
+        state->filter_states[i] = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, _CBQ_FILTER_MEMORY);
         memset(state->filter_states[i], 0, CASCADED_BIQUADS_STATE_LEN * sizeof(int32_t));
     }
 

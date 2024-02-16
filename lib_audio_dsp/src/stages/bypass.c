@@ -23,7 +23,7 @@ void bypass_process(int32_t **input, int32_t **output, void *app_data_state)
     } while (++i < state->n_outputs);
 }
 
-void bypass_init(module_instance_t* module_instance, uint8_t id, int n_inputs, int n_outputs, int frame_size)
+void bypass_init(module_instance_t* module_instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
     bypass_state_t *state =module_instance->state;
     bypass_config_t *config = module_instance->control.config;

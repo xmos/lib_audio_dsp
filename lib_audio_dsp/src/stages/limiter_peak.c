@@ -49,7 +49,7 @@ void limiter_peak_process(int32_t **input, int32_t **output, void *app_data_stat
     } while(++i < state->n_outputs);
 }
 
-void limiter_peak_init(module_instance_t* instance, uint8_t id, int n_inputs, int n_outputs, int frame_size)
+void limiter_peak_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
     limiter_peak_state_t *state = instance->state;
     limiter_peak_config_t *config = instance->control.config;
@@ -59,7 +59,7 @@ void limiter_peak_init(module_instance_t* instance, uint8_t id, int n_inputs, in
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    state->lim = malloc(state->n_inputs * sizeof(limiter_t));
+    state->lim = adsp_bump_allocator_malloc(allocator, state->n_inputs * sizeof(limiter_t));
     memset(state->lim, 0, state->n_inputs * sizeof(limiter_t));
 
     for(int i=0; i<state->n_inputs; i++)

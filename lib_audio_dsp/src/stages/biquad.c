@@ -30,7 +30,12 @@ void biquad_process(int32_t **input, int32_t **output, void *app_data_state)
     } while (++i < state->n_outputs);
 }
 
-void biquad_init(module_instance_t* instance, uint8_t id, int n_inputs, int n_outputs, int frame_size)
+void biquad_init(module_instance_t* instance,
+                 adsp_bump_allocator_t* allocator,
+                 uint8_t id,
+                 int n_inputs,
+                 int n_outputs,
+                 int frame_size)
 {
     biquad_state_t *state = instance->state;
     biquad_config_t *config = instance->control.config;
@@ -40,11 +45,11 @@ void biquad_init(module_instance_t* instance, uint8_t id, int n_inputs, int n_ou
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    state->filter_states = malloc(n_inputs * sizeof(int32_t*)); // Allocate memory for the 1D pointers
+    state->filter_states = adsp_bump_allocator_malloc(allocator, _BQ_ARR_MEMORY(n_inputs)); // Allocate memory for the 1D pointers
     for(int i=0; i<n_inputs; i++)
     {
-        state->filter_states[i] = DWORD_ALIGNED_MALLOC(BIQUAD_STATE_LEN * sizeof(int32_t));
-        memset(state->filter_states[i], 0, BIQUAD_STATE_LEN * sizeof(int32_t));
+        state->filter_states[i] = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, _BQ_FILTER_MEMORY);
+        memset(state->filter_states[i], 0, _BQ_FILTER_MEMORY);
     }
 
     // copy default config

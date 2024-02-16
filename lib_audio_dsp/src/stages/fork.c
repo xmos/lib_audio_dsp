@@ -24,10 +24,10 @@ void fork_process(int32_t **input, int32_t **output, void *app_data_state)
 
 }
 
-void fork_init(module_instance_t* module_instance, uint8_t id, int n_inputs, int n_outputs, int frame_size)
+void fork_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
-    fork_state_t *state = module_instance->state;
-    fork_config_t *config = module_instance->control.config;
+    fork_state_t *state = instance->state;
+    fork_config_t *config = instance->control.config;
 
     memset(state, 0, sizeof(fork_state_t));
     state->n_inputs = n_inputs;

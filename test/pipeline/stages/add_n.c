@@ -27,7 +27,7 @@ void add_n_process(int32_t **input, int32_t **output, void *app_data_state)
     } while (++i < state->n_outputs);
 }
 
-void add_n_init(module_instance_t* instance, uint8_t id, int n_inputs, int n_outputs, int frame_size)
+void add_n_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
     add_n_state_t *state = instance->state;
     add_n_config_t *config = instance->control.config;
