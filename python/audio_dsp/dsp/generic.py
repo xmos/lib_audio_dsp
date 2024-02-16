@@ -41,14 +41,14 @@ class dsp_block():
         self.Q_sig = Q_sig
         return
 
-    def process(self, sample: float):
+    def process(self, sample: float, channel=0):
         """
         Take one new sample and give it back. Do no processing for the generic
         block.
         """
         return sample
 
-    def process_xcore(self, sample: float):
+    def process_xcore(self, sample: float, channel=0):
         """
         Take one new sample and return 1 processed sample.
 
