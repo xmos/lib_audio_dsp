@@ -168,6 +168,57 @@ def peak_vs_rms(fs, at, threshold):
 
 
 @pytest.mark.parametrize("fs", [48000])
+@pytest.mark.parametrize("component, threshold, ratio", [("limiter_peak", 0, None),
+                                                         ("limiter_rms", 0, None),
+                                                         ("compressor_rms", 0, 6),
+                                                         ("compressor_rms", 0, 2)])
+@pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
+@pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
+def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
+    # check that a 24b quantized chirp is bit exact if it's below the threshold
+    component_handle = getattr(drc, component)
+
+    if threshold is not None:
+        if ratio is not None:
+            drcut = component_handle(fs, 1, ratio, threshold, at, rt)
+        else:
+            drcut = component_handle(fs, 1, threshold, at, rt)
+    else:
+        drcut = component_handle(fs, 1, at, rt)
+
+    signal = gen.log_chirp(fs, int(0.1+(rt+at)*2), 1)
+
+    output_xcore = np.zeros(len(signal))
+    output_flt = np.zeros(len(signal))
+    output_int = np.zeros(len(signal))
+
+    if "envelope" in component:
+        # envelope detector has 1 output
+        for n in np.arange(len(signal)):
+            output_xcore[n] = drcut.process_xcore(signal[n])
+        drcut.reset_state()
+        for n in np.arange(len(signal)):
+            output_flt[n] = drcut.process(signal[n])
+        drcut.reset_state()
+        for n in np.arange(len(signal)):
+            output_int[n] = drcut.process_int(signal[n])
+    else:
+        # limiter and compressor have 3 outputs
+        for n in np.arange(len(signal)):
+            output_xcore[n], _, _ = drcut.process_xcore(signal[n])
+        drcut.reset_state()
+        for n in np.arange(len(signal)):
+            output_flt[n], _, _ = drcut.process(signal[n])
+        drcut.reset_state()
+        for n in np.arange(len(signal)):
+            output_int[n], _, _ = drcut.process_int(signal[n])
+
+    np.testing.assert_array_equal(signal, output_flt)
+    np.testing.assert_array_equal(signal, output_int)
+    np.testing.assert_array_equal(signal, output_xcore)
+
+
+@pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("component, threshold, ratio", [("limiter_peak", -20, None),
                                                          ("limiter_peak", 6, None),
                                                          ("limiter_rms", -20, None),
@@ -185,7 +236,7 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
 
     if threshold is not None:
         if ratio is not None:
-            drcut = component_handle(fs, 1, threshold, ratio, at, rt)
+            drcut = component_handle(fs, 1, ratio, threshold, at, rt)
         else:
             drcut = component_handle(fs, 1, threshold, at, rt)
     else:
@@ -241,6 +292,7 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
         mean_error_int = utils.db(np.nanmean(utils.db2gain(error_int)))
         assert mean_error_int < 0.055
 
+
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("component, threshold, ratio", [("limiter_peak", -20, None),
                                                          ("limiter_peak", 6, None),
@@ -260,7 +312,7 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
 
     if threshold is not None:
         if ratio is not None:
-            drcut = component_handle(fs, n_chans, threshold, ratio, at, rt)
+            drcut = component_handle(fs, n_chans, ratio, threshold, at, rt)
         else:
             drcut = component_handle(fs, n_chans, threshold, at, rt)
     else:
