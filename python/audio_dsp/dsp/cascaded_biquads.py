@@ -25,10 +25,10 @@ class cascaded_biquads_8(dspg.dsp_block):
 
         return y
 
-    def process_frame(self, frame, channel=0):
+    def process_frame(self, frame):
         y = frame
         for biquad in self.biquads:
-            y = biquad.process_frame(y, channel)
+            y = biquad.process_frame(y)
 
         return y
 
@@ -39,10 +39,10 @@ class cascaded_biquads_8(dspg.dsp_block):
 
         return y
 
-    def process_frame_int(self, frame, channel=0):
+    def process_frame_int(self, frame):
         y = frame
         for biquad in self.biquads:
-            y = biquad.process_frame_int(y, channel)
+            y = biquad.process_frame_int(y)
 
         return y
 
@@ -53,7 +53,7 @@ class cascaded_biquads_8(dspg.dsp_block):
 
         return y
 
-    def process_frame_xcore(self, frame, channel=0):
+    def process_frame_xcore(self, frame):
         y = frame
         for biquad in self.biquads:
             y = biquad.process_frame_xcore(y)
