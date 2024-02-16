@@ -1,4 +1,5 @@
 Lib Audio DSP
 #############
 
-hoo ra
+Audio DSP library for the xcore.
+
