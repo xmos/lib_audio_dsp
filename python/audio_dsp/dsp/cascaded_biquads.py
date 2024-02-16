@@ -18,42 +18,42 @@ class cascaded_biquads_8(dspg.dsp_block):
             else:
                 self.biquads[n] = bq.biquad_bypass(fs, n_chans)
 
-    def process(self, sample):
+    def process(self, sample, channel=0):
         y = sample
         for biquad in self.biquads:
-            y = biquad.process(y)
+            y = biquad.process(y, channel)
 
         return y
 
-    def process_frame(self, frame):
+    def process_frame(self, frame, channel=0):
         y = frame
         for biquad in self.biquads:
-            y = biquad.process_frame(y)
+            y = biquad.process_frame(y, channel)
 
         return y
 
-    def process_int(self, sample):
+    def process_int(self, sample, channel=0):
         y = sample
         for biquad in self.biquads:
-            y = biquad.process_int(y)
+            y = biquad.process_int(y, channel)
 
         return y
 
-    def process_frame_int(self, frame):
+    def process_frame_int(self, frame, channel=0):
         y = frame
         for biquad in self.biquads:
-            y = biquad.process_frame_int(y)
+            y = biquad.process_frame_int(y, channel)
 
         return y
 
-    def process_xcore(self, sample):
+    def process_xcore(self, sample, channel=0):
         y = sample
         for biquad in self.biquads:
-            y = biquad.process_xcore(y)
+            y = biquad.process_xcore(y, channel)
 
         return y
 
-    def process_frame_xcore(self, frame):
+    def process_frame_xcore(self, frame, channel=0):
         y = frame
         for biquad in self.biquads:
             y = biquad.process_frame_xcore(y)

@@ -168,23 +168,26 @@ def peak_vs_rms(fs, at, threshold):
 
 
 @pytest.mark.parametrize("fs", [48000])
-@pytest.mark.parametrize("component, threshold", [("limiter_peak", -20),
-                                                  ("limiter_peak", -6),
-                                                  ("limiter_peak", 0),
-                                                  ("limiter_peak", 6),
-                                                  ("limiter_rms", -20),
-                                                  ("limiter_rms", -6),
-                                                  ("limiter_rms", 0),
-                                                  ("limiter_rms", 6),
-                                                  ("envelope_detector_peak", None),
-                                                  ("envelope_detector_rms", None)])
+@pytest.mark.parametrize("component, threshold, ratio", [("limiter_peak", -20, None),
+                                                         ("limiter_peak", 6, None),
+                                                         ("limiter_rms", -20, None),
+                                                         ("limiter_rms", 6, None),
+                                                         ("envelope_detector_peak", None, None),
+                                                         ("envelope_detector_rms", None, None),
+                                                         ("compressor_rms", -20, 6),
+                                                         ("compressor_rms", -20, 2),
+                                                         ("compressor_rms", 6, 6),
+                                                         ("compressor_rms", 6, 2)])
 @pytest.mark.parametrize("rt", [0.05, 0.1, 0.2, 0.5, 3.0])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.5])
-def test_drc_component(fs, component, at, rt, threshold):
+def test_drc_component(fs, component, at, rt, threshold, ratio):
     component_handle = getattr(drc, component)
 
     if threshold is not None:
-        drcut = component_handle(fs, 1, threshold, at, rt)
+        if ratio is not None:
+            drcut = component_handle(fs, 1, threshold, ratio, at, rt)
+        else:
+            drcut = component_handle(fs, 1, threshold, at, rt)
     else:
         drcut = component_handle(fs, 1, at, rt)
 
@@ -217,7 +220,7 @@ def test_drc_component(fs, component, at, rt, threshold):
         for n in np.arange(len(signal)):
             output_int[n] = drcut.process_int(signal[n])
     else:
-        # limiter has 3 outputs
+        # limiter and compressor have 3 outputs
         for n in np.arange(len(signal)):
             output_xcore[n], _, _ = drcut.process_xcore(signal[n])
         drcut.reset_state()
@@ -239,20 +242,27 @@ def test_drc_component(fs, component, at, rt, threshold):
         assert mean_error_int < 0.055
 
 @pytest.mark.parametrize("fs", [48000])
-@pytest.mark.parametrize("component, threshold", [("limiter_peak", -20),
-                                                  ("limiter_peak", 6),
-                                                  ("limiter_rms", -20),
-                                                  ("limiter_rms", 6),
-                                                  ("envelope_detector_peak", None),
-                                                  ("envelope_detector_rms", None)])
+@pytest.mark.parametrize("component, threshold, ratio", [("limiter_peak", -20, None),
+                                                         ("limiter_peak", 6, None),
+                                                         ("limiter_rms", -20, None),
+                                                         ("limiter_rms", 6, None),
+                                                         ("envelope_detector_peak", None, None),
+                                                         ("envelope_detector_rms", None, None),
+                                                         ("compressor_rms", -20, 6),
+                                                         ("compressor_rms", -20, 2),
+                                                         ("compressor_rms", 6, 6),
+                                                         ("compressor_rms", 6, 2)])
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 @pytest.mark.parametrize("n_chans", [1, 2, 4])
-def test_drc_component_frames(fs, component, at, rt, threshold, n_chans):
+def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
     component_handle = getattr(drc, component)
 
     if threshold is not None:
-        drcut = component_handle(fs, n_chans, threshold, at, rt)
+        if ratio is not None:
+            drcut = component_handle(fs, n_chans, threshold, ratio, at, rt)
+        else:
+            drcut = component_handle(fs, n_chans, threshold, at, rt)
     else:
         drcut = component_handle(fs, n_chans, at, rt)
 
@@ -272,18 +282,11 @@ def test_drc_component_frames(fs, component, at, rt, threshold, n_chans):
     output_int = np.zeros_like(signal)
     output_flt = np.zeros_like(signal)
 
-    if "envelope" in component:
-        for n in range(len(signal_frames)):
-            output_int[:, n:n+frame_size] = drcut.process_frame_xcore(signal_frames[n])
-        drcut.reset_state()
-        for n in range(len(signal_frames)):
-            output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])
-    else:
-        for n in range(len(signal_frames)):
-            output_int[:, n:n+frame_size] = drcut.process_frame_xcore(signal_frames[n])
-        drcut.reset_state()
-        for n in range(len(signal_frames)):
-            output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])
+    for n in range(len(signal_frames)):
+        output_int[:, n:n+frame_size] = drcut.process_frame_xcore(signal_frames[n])
+    drcut.reset_state()
+    for n in range(len(signal_frames)):
+        output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])
 
     assert np.all(output_int[0, :] == output_int)
     assert np.all(output_flt[0, :] == output_flt)
