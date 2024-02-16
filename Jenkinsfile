@@ -121,6 +121,42 @@ pipeline {
             }
           }
         } // Build and test
+
+        stage('docs') {
+
+          agent {
+            label 'linux&&x86_64'
+          }
+          steps {
+            checkout scm
+            println "nuilding docs"
+          }
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
+        } // docs
+
+        stage ('Hardware Test') {
+          agent {
+            label 'xcore.ai && uhubctl'
+          }
+
+          steps {
+            runningOn(env.NODE_NAME)
+
+            dir("lib_audio_dsp") {
+              println 'hardware testing'
+            }
+          }
+
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
+        } // Hardware test        
       } // parallel
     } // CI
   } // stages
