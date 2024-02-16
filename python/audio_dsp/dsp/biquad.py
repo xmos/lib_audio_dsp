@@ -536,9 +536,6 @@ def make_biquad_linkwitz(fs: int, f0: float, q0: float, fp: float, qp: float) ->
     return coeffs
 
 
-# TODO gain biquad
-
-
 if __name__ == "__main__":
 
     fs = 48000

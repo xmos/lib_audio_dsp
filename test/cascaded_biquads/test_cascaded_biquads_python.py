@@ -57,8 +57,7 @@ def test_peq(fs, n_filters, seed):
     peq = cbq.parametric_eq_8band(fs, 1, filter_spec)
     chirp_filter_test(peq, fs)
 
-# TODO higher order filter tests
-    
+
 @pytest.mark.parametrize("filter_type", ["lowpass",
                                          "highpass"])
 @pytest.mark.parametrize("f", [20, 100, 1000, 10000, 20000])
