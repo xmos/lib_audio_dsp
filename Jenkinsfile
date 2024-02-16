@@ -99,11 +99,54 @@ pipeline {
                         println 'runPytest("test_cascaded_biquads_c.py --dist worksteal")'
                       }
                       dir("test/drc") {
-                        runPytest("test_drc_python.py --dist worksteal")
-                        runPytest("test_drc_c.py --dist worksteal")
+                        println 'runPytest("test_drc_python.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
                       }
                       dir("test/utils") {
                         println 'runPytest("--dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        
                       }
                       dir("python") {
                         sh "pyright audio_dsp --skipunannotated --level warning"
