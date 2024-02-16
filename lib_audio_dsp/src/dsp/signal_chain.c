@@ -1,6 +1,8 @@
 
 #include "dsp/adsp.h"
 
+#include <xcore/assert.h>
+
 int32_t adsp_dB_to_gain(float dB_gain) {
   xassert(dB_gain <= 24 && "Maximum fixed gain is +24 dB");
   float gain_fl = powf(10, (dB_gain / 20));
