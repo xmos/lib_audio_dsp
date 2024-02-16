@@ -95,8 +95,8 @@ pipeline {
                         println 'runPytest("test_biquad_c.py --dist worksteal")'
                       }
                       dir("test/cascaded_biquads") {
-                        println 'runPytest("test_cascaded_biquads_python.py --dist worksteal")'
-                        println 'runPytest("test_cascaded_biquads_c.py --dist worksteal")'
+                        runPytest("test_cascaded_biquads_python.py --dist worksteal")
+                        runPytest("test_cascaded_biquads_c.py --dist worksteal")
                       }
                       dir("test/drc") {
                         runPytest("test_drc_python.py --dist worksteal")
