@@ -4,9 +4,10 @@
 #include "dsp/adsp.h"
 
 #include <xcore/assert.h>
+#include <math.h>
 
 #define Q_factor 30
-static const float pi =    3.14159265359;
+static const float pi =    M_PI;
 
 static inline int32_t _float2fixed( float x, int32_t q )
 {

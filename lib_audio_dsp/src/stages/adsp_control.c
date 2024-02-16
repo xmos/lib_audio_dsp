@@ -13,7 +13,6 @@
 
 static module_instance_t* get_module_instance(module_instance_t **modules, uint32_t res_id, size_t num_modules)
 {
-    //printf("res id = %d\n", res_id);
     for(int i=0; i<num_modules; i++)
     {
         if(modules[i]->control.id == res_id)
@@ -21,14 +20,13 @@ static module_instance_t* get_module_instance(module_instance_t **modules, uint3
             return modules[i];
         }
     }
-    printf("ERROR: Cannot find a module for the instance-id %lu\n", res_id);
+    debug_printf("ERROR: Cannot find a module for the instance-id %lu\n", res_id);
     xassert(0);
     return NULL;
 }
 
 static void get_control_cmd_config_offset(module_instance_t *module, uint8_t cmd_id, uint32_t *offset, uint32_t *size)
 {
-    //printf("cmd id = %d\n", cmd_id);
     uint8_t module_type = module->control.module_type;
     module_config_offsets_t *config_offsets = ptr_module_offsets[module_type];
 
@@ -41,7 +39,7 @@ static void get_control_cmd_config_offset(module_instance_t *module, uint8_t cmd
             return;
         }
     }
-    printf("ERROR: cmd_id %d not found in module_type %d\n", cmd_id, module_type);
+    debug_printf("ERROR: cmd_id %d not found in module_type %d\n", cmd_id, module_type);
     xassert(0);
     return;
 }

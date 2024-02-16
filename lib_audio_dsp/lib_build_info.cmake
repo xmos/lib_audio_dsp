@@ -1,7 +1,5 @@
 set(LIB_C_SRCS "")
 
-# TODO Let the user specify their own extra stages
-#
 # The sources in the "stages" subdirectories of src/ and api/ require
 # some code generation to take place. The below implements the code
 # generation using some python that is a part of this repo.
@@ -11,7 +9,7 @@ set(LIB_C_SRCS "")
 # python dependencies should not be required for that use case. Therefore
 # the below checks if the dependencies are available. If they are then it
 # always adds the code gen to the build and it is up to Make to decide
-# if the are needed. If the dependencies are not present, then the auto gen
+# if they are needed. If the dependencies are not present, then the auto gen
 # will not be added to the build, a message is printed, and any build which
 # uses the stages api will fail at compile time.
 set(STAGES_INCLUDED OFF)
@@ -45,7 +43,7 @@ if(PYTHON_EXE)
             get_filename_component(STAGE_NAME ${YAML_FILE} NAME_WE)
             list(APPEND OUTPUT_H_FILES ${AUTOGEN_DIR}/common/${STAGE_NAME}_config.h)
 
-            # copy all yaml files to the same directory so 
+            # copy all yaml files to the same directory so
             # they can be used by generation script
             set(copied_config ${ALL_CONFIG_YAML_DIR}/${STAGE_NAME}.yaml)
             add_custom_command(
@@ -55,7 +53,7 @@ if(PYTHON_EXE)
                 COMMENT "Copying ${STAGE_NAME}.yaml"
                 VERBATIM
             )
-            list(APPEND COPIED_YAML_FILES ${copied_config}) 
+            list(APPEND COPIED_YAML_FILES ${copied_config})
         endforeach()
 
         add_custom_command(
@@ -73,7 +71,7 @@ if(PYTHON_EXE)
             add_custom_target(cmd_map_generation
                 DEPENDS ${OUTPUT_C_FILES} ${OUTPUT_H_FILES})
         endif()
-        
+
         file(GLOB STAGES_C_SOURCES RELATIVE ${CMAKE_CURRENT_LIST_DIR} CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/src/stages/*.c")
         list(APPEND LIB_C_SRCS ${STAGES_C_SOURCES})
     else()

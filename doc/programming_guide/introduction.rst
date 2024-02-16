@@ -14,8 +14,7 @@ lib_audio_dsp has been designed to support xcommon cmake based projects. Therefo
 is as easy as adding "lib_audio_dsp" to your projects "APP_DEPENDENT_MODULES".
 
 Using the pipeline generation utility will additionally require installing the python module that is found in the "python"
-subdirectory of lib_audio_dsp. So once you have run cmake and lib_audio_dsp has been downloaded into your sandbox, run
-the following command from the root of your sandbox::
+subdirectory of lib_audio_dsp. Having run cmake to download lib_audio_dsp into a sandbox, run the following command from the sandbox root::
 
     pip install -e lib_audio_dsp/python
 

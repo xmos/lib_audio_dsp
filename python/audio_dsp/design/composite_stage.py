@@ -111,7 +111,8 @@ class CompositeStage:
         return ret
 
     def contains_stage(self, stage):
-        """recursively search self for the stage
+        """
+        Recursively search self for the stage
 
         Returns
         -------
@@ -122,7 +123,7 @@ class CompositeStage:
 
     def get_all_stages(self):
         """
-        get a flat list of all stages contained within this composite stage
+        Get a flat list of all stages contained within this composite stage
         and the composite stages within.
 
         Returns
@@ -132,13 +133,12 @@ class CompositeStage:
         return sum([c.get_all_stages() for c in self._composite_stages], start=self._stages)
 
     def process(self, data):
-        """
-        TODO
-        """
         raise NotImplementedError()
 
     def _internal_edges(self):
-        """returns list of edges whose source and dest are within this composite"""
+        """
+        Returns list of edges whose source and dest are within this composite
+        """
         all_stages = self.get_all_stages()
         all_edges = list(itertools.chain.from_iterable([stage.o for stage in all_stages]))
         return [edge for edge in all_edges if edge.dest in all_stages and edge.source in all_stages]

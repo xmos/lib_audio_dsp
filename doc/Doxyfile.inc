@@ -4,7 +4,7 @@
 # for higher priority settings
 
 PROJECT_NAME = Lib audio dsp
-PROJECT_BRIEF = "DSP for the xcore"
+PROJECT_BRIEF = "Audio DSP for the xcore"
 
 INPUT += ../lib_audio_dsp/api
 

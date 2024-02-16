@@ -107,4 +107,7 @@ void limiter_peak_control(void *module_state, module_control_t *control)
         limiter_copy_state_to_config(config, state->lim);
         control->config_rw_state = config_read_updated;
     }
+    else {
+        // nothing to do
+    }
 }

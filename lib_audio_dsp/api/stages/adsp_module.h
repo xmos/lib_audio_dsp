@@ -1,7 +1,6 @@
 // Copyright 2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
-#ifndef DSPT_MODULE_H
-#define DSPT_MODULE_H
+#pragma once
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -42,7 +41,3 @@ typedef struct
     uint8_t instance_id;
 }module_info_t;
 
-
-
-
-#endif

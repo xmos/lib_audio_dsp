@@ -1,8 +1,7 @@
 // Copyright 2022-2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
-#ifndef WAV_UTILS_H
-#define WAV_UTILS_H
 
+#pragma once
 #include <stdint.h>
 
 #define WAV_HEADER_BYTES 44
@@ -42,4 +41,4 @@ unsigned wav_get_num_bytes_per_frame(const wav_header *s);
 int wav_get_num_frames(const wav_header *s);
 
 long wav_get_frame_start(const wav_header *s, unsigned frame_number, uint32_t wavheader_size);
-#endif
+
