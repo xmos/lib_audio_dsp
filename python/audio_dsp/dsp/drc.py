@@ -785,7 +785,8 @@ class limiter_rms(compressor_limiter_base):
         Note that as the RMS envelope detector returns x**2, we need to sqrt
         the gain.
         """
-        new_gain = sqrt(self.threshold_f32/envelope)
+        # note use np.sqrt to ensure we stay in f32, using math.sqrt will return float!
+        new_gain = np.sqrt(self.threshold_f32/envelope)
         new_gain = new_gain if new_gain < np.float32(1) else np.float32(1)
         return new_gain
 
@@ -960,6 +961,7 @@ class compressor_rms(compressor_limiter_base):
 
         self.ratio = ratio
         self.slope = 1 - 1/self.ratio
+        self.slope_f32 = np.float32(self.slope)
 
     def gain_calc(self, envelope):
         """Calculate the float gain for the current sample
@@ -981,7 +983,7 @@ class compressor_rms(compressor_limiter_base):
         to avoid the log domain.
         """
         # if envelope below threshold, apply unity gain, otherwise scale down
-        new_gain = (float(self.threshold_int)/float(envelope_int))**(self.slope/2)
+        new_gain = (np.float32(self.threshold_int)/np.float32(envelope_int))**(self.slope_f32/2)
         new_gain = min(1.0, new_gain)
         new_gain_int = utils.int32(new_gain * 2**30)
         return new_gain_int
@@ -994,7 +996,7 @@ class compressor_rms(compressor_limiter_base):
         to avoid the log domain.
         """
         # if envelope below threshold, apply unity gain, otherwise scale down
-        new_gain = (self.threshold_f32/envelope)**(self.slope/2)
+        new_gain = (self.threshold_f32/envelope)**(self.slope_f32/2)
         new_gain = new_gain if new_gain < np.float32(1) else np.float32(1)
         return new_gain
 
@@ -1014,7 +1016,7 @@ if __name__ == "__main__":
     threshold = -6
     at = 0.01
 
-    lt = limiter_peak(fs, 1, threshold, at, 0.3)
+    lt = limiter_rms(fs, 1, threshold, at, 0.3)
 
     y = np.zeros_like(x)
     f = np.zeros_like(x)
@@ -1029,12 +1031,12 @@ if __name__ == "__main__":
     f_int = np.zeros_like(x)
     env_int = np.zeros_like(x)
 
-    import cProfile
+    # import cProfile
 
-    with cProfile.Profile() as pr:
-        for n in range(len(y)):
-            y_int[n], f_int[n], env_int[n] = lt.process_int(x[n])
-        pr.print_stats(sort='time')
+    # with cProfile.Profile() as pr:
+    for n in range(len(y)):
+        y_int[n], f_int[n], env_int[n] = lt.process_xcore(x[n])
+        # pr.print_stats(sort='time')
 
 
     thresh_passed = np.argmax(utils.db(env) > threshold)
