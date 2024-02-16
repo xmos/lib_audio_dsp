@@ -1,3 +1,5 @@
+.. _programming_guide_introduction:
+
 INTRODUCTION
 ############
 
