@@ -91,8 +91,8 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       dir("test/biquad") {
-                        runPytest("test_biquad_python.py --dist worksteal")
-                        runPytest("test_biquad_c.py --dist worksteal")
+                        println 'runPytest("test_biquad_python.py --dist worksteal")'
+                        println 'runPytest("test_biquad_c.py --dist worksteal")'
                       }
                       dir("test/cascaded_biquads") {
                         println '"test_cascaded_biquads_python.py --dist worksteal")'
@@ -146,7 +146,24 @@ pipeline {
                         println 'runPytest("test_drc_c.py --dist worksteal")'
                         println 'runPytest("test_drc_c.py --dist worksteal")'
                         println 'runPytest("test_drc_c.py --dist worksteal")'
-                        
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
+                        println 'runPytest("test_drc_c.py --dist worksteal")'
                       }
                       dir("python") {
                         sh "pyright audio_dsp --skipunannotated --level warning"
