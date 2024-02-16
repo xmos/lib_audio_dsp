@@ -15,7 +15,7 @@ typedef struct
     int frame_size;
 }cascaded_biquads_state_t;
 
-module_instance_t* cascaded_biquads_init(uint8_t id, int n_inputs, int n_outputs, int frame_size, void* module_config);
+void cascaded_biquads_init(module_instance_t* instance, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 
 void cascaded_biquads_process(int32_t **input, int32_t **output, void *app_data_state);
 

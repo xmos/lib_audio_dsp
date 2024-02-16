@@ -11,6 +11,7 @@ from audio_dsp.design.pipeline import Pipeline
 from audio_dsp.stages.biquad import Biquad
 from audio_dsp.stages.cascaded_biquads import CascadedBiquads
 from audio_dsp.stages.signal_chain import Bypass
+from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak
 from audio_dsp.design.pipeline import generate_dsp_main
 
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
@@ -37,8 +38,10 @@ def create_pipeline():
         bi = t.stage(Biquad, p.i)
         cb = t.stage(CascadedBiquads, bi.o)
         by = t.stage(Bypass, cb.o)
+        lp = t.stage(LimiterPeak, by.o)
+        lr = t.stage(LimiterRMS, lp.o)
     with p.add_thread() as t:                # ch   0   1
-        by1 = t.stage(Bypass, by.o)
+        by1 = t.stage(Bypass, lr.o)
 
     p.set_outputs(by1.o)
     return p
@@ -58,7 +61,7 @@ def test_pipeline():
     build_utils.build(APP_DIR, BUILD_DIR, target)
 
     # Generate input
-    audio_helpers.generate_test_signal(infile, type="sine", fs=48000, duration=test_duration, amplitude=0.8, num_channels=num_in_channels, sig_dtype=input_dtype)
+    audio_helpers.generate_test_signal(infile, type="sine", fs=48000, duration=test_duration, amplitude=0.1, num_channels=num_in_channels, sig_dtype=input_dtype)
 
     # Run
     xe = APP_DIR / f"bin/{target}.xe"
@@ -160,6 +163,3 @@ def test_complex_pipeline():
     _, out_data = audio_helpers.read_wav(outfile)
     np.testing.assert_equal(expected, out_data)
 
-
-if __name__ == "__main__":
-    test_pipeline()

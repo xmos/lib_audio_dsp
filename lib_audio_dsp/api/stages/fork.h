@@ -13,7 +13,7 @@ typedef struct
     int n_forks;  // n_outputs / n_inputs
 }fork_state_t;
 
-module_instance_t* fork_init(uint8_t id, int n_inputs, int n_outputs, int frame_size, void* module_config);
+void fork_init(module_instance_t* instance, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 
 void fork_process(int32_t **input, int32_t **output, void *app_data_state);
 

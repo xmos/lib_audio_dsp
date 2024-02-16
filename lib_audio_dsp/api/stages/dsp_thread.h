@@ -10,5 +10,5 @@ typedef struct
     uint32_t max_cycles;
 }dsp_thread_state_t;
 
-module_instance_t* dsp_thread_init(uint8_t id, int n_inputs, int n_outputs, int frame_size, void* module_config);
+void dsp_thread_init(module_instance_t* instance, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 void dsp_thread_control(void *state, module_control_t *control);

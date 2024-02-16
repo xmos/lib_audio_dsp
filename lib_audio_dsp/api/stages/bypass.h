@@ -12,7 +12,7 @@ typedef struct
     int frame_size;
 }bypass_state_t;
 
-module_instance_t* bypass_init(uint8_t id, int n_inputs, int n_outputs, int frame_size, void* module_config);
+void bypass_init(module_instance_t* instance, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 
 void bypass_process(int32_t **input, int32_t **output, void *app_data_state);
 
