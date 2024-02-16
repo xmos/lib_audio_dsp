@@ -88,7 +88,7 @@ pipeline {
             stage('test') {
               steps {
                 dir("lib_audio_dsp") {
-                  println 'withVenv {'
+                  withVenv {
                     withTools(params.TOOLS_VERSION) {
                       dir("test/biquad") {
                         println 'runPytest("test_biquad_python.py --dist worksteal")'
@@ -109,7 +109,7 @@ pipeline {
                         sh "pyright audio_dsp --skipunannotated --level warning"
                       }
                     }
-                  //}
+                  }
                 }
               }
             } // test
