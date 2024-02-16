@@ -82,6 +82,41 @@ def test_limiter_peak_release(fs, rt, threshold):
     assert measured_rt/rt > 0.8
     assert measured_rt/rt < 1.2
 
+@pytest.mark.parametrize("fs", [48000])
+@pytest.mark.parametrize("threshold", [0, -6, -12])
+@pytest.mark.parametrize("ratio", (1, 2, 6, np.inf))
+@pytest.mark.parametrize("rt", [0.00000001])
+@pytest.mark.parametrize("at", [0.00000001])
+def test_comp_ratio(fs, at, rt, ratio, threshold):
+
+    drcut = drc.compressor_rms(fs, 1, ratio, threshold, at, rt)
+
+    signal = gen.log_chirp(fs, (0.1+(rt+at)*2), 1)
+
+    output_xcore = np.zeros(len(signal))
+    output_flt = np.zeros(len(signal))
+    output_int = np.zeros(len(signal))
+
+    # limiter and compressor have 3 outputs
+    for n in np.arange(len(signal)):
+        output_xcore[n], _, _ = drcut.process_xcore(signal[n])
+    drcut.reset_state()
+    for n in np.arange(len(signal)):
+        output_flt[n], _, _ = drcut.process(signal[n])
+    drcut.reset_state()
+    for n in np.arange(len(signal)):
+        output_int[n], _, _ = drcut.process_int(signal[n])
+
+    # lazy limiter
+    ref_signal = np.copy(signal)
+    over_thresh = utils.db(ref_signal) > threshold
+    ref_signal[over_thresh] *= utils.db2gain((1 - 1/ratio)*(threshold - utils.db(ref_signal[over_thresh])))
+
+    np.testing.assert_allclose(ref_signal, output_flt, atol=2e-16)
+    # I'm not sure why these are so close!!
+    np.testing.assert_allclose(output_flt, output_int, atol=2e-16)
+    np.testing.assert_allclose(output_flt, output_xcore, atol=2e-16)
+
 
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
@@ -186,7 +221,7 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
     else:
         drcut = component_handle(fs, 1, at, rt)
 
-    signal = gen.log_chirp(fs, int(0.1+(rt+at)*2), 1)
+    signal = gen.log_chirp(fs, (0.1+(rt+at)*2), 1)
 
     output_xcore = np.zeros(len(signal))
     output_flt = np.zeros(len(signal))
@@ -242,7 +277,7 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
     else:
         drcut = component_handle(fs, 1, at, rt)
 
-    signal = gen.log_chirp(fs, int(0.1+(rt+at)*2), 1)
+    signal = gen.log_chirp(fs, (0.1+(rt+at)*2), 1)
     len_sig = len(signal)
 
     if threshold is not None:
@@ -318,7 +353,7 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
     else:
         drcut = component_handle(fs, n_chans, at, rt)
 
-    signal = gen.log_chirp(fs, int(0.1+(rt+at)*2), 1)
+    signal = gen.log_chirp(fs, (0.1+(rt+at)*2), 1)
     len_sig = len(signal)
     if threshold is not None:
         signal[:len_sig//2] *= utils.db2gain(threshold + 6)
@@ -351,6 +386,7 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
 # TODO compressor tests
 
 if __name__ == "__main__":
-    test_drc_component(48000, "limiter_peak", 1, 1, 1)
+    # test_drc_component(48000, "limiter_peak", 1, 1, 1)
     # test_limiter_peak_attack(48000, 0.1, -10)
-    comp_vs_limiter(48000, 0.001, 0)
+    # comp_vs_limiter(48000, 0.001, 0)
+    test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)

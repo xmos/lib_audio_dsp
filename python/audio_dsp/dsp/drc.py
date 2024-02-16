@@ -405,10 +405,13 @@ class compressor_limiter_base(dspg.dsp_block):
     def __init__(self, fs, n_chans, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
-        # attack times simplified from McNally, seem pretty close
+        # attack times simplified from McNally, seem pretty close. Assumes the
+        # time constant of a digital filter is the -3 dB point where
+        # abs(H(z))**2 = 0.5.
         T = 1/fs
-        self.attack_alpha = 2*T / attack_t
-        self.release_alpha = 2*T / release_t
+        # attack/release time can't be faster than the length of 2 samples.
+        self.attack_alpha = min(2*T / attack_t, 1.0)
+        self.release_alpha = min(2*T / release_t, 1.0)
         self.gain = [1] * n_chans
 
         # These are defined differently for peak and RMS limiters
