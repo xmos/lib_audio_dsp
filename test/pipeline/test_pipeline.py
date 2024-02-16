@@ -61,7 +61,6 @@ def test_pipeline():
     audio_helpers.generate_test_signal(infile, type="sine", fs=48000, duration=test_duration, amplitude=0.8, num_channels=num_in_channels, sig_dtype=input_dtype)
 
     # Run
-    # TODO Run from a tmp directory
     xe = APP_DIR / f"bin/{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels)
 

@@ -3,12 +3,14 @@
 
 #include "dsp/adsp.h"
 
+#include <math.h>
+
 #include <xcore/assert.h>
 
 #define Q_factor 30
 #define BOOST_BSHIFT 2
 
-static const float pi =    3.14159265359;
+static const float pi =    M_PI;
 static const float log_2 = 0.69314718055;
 
 static inline int32_t _float2fixed( float x, int32_t q )
@@ -36,7 +38,7 @@ void adsp_design_biquad_mute(q2_30 coeffs[5]) {
 
 left_shift_t adsp_design_biquad_gain(q2_30 coeffs[5], const float gain_db) {
   float A  = powf(10, (gain_db / 20));
-  
+
   coeffs[0] = _float2fixed( A, Q_factor - BOOST_BSHIFT );
   coeffs[1] = 0;
   coeffs[2] = 0;
@@ -65,7 +67,7 @@ void adsp_design_biquad_lowpass
   float a0 =  1.0 + alpha;
   float a1 = -2.0 * f32_cos(w0);
   float a2 =  1.0 - alpha;
-  
+
   // Store as fixed-point values
   coeffs[0] = _float2fixed(  b0 / a0, Q_factor );
   coeffs[1] = _float2fixed(  b1 / a0, Q_factor );
@@ -93,7 +95,7 @@ void adsp_design_biquad_highpass
   float a0 =   1.0 + alpha;
   float a1 =  -2.0 * f32_cos(w0);
   float a2 =   1.0 - alpha;
-  
+
   // Store as fixed-point values
   coeffs[0] = _float2fixed(  b0 / a0, Q_factor );
   coeffs[1] = _float2fixed(  b1 / a0, Q_factor );
@@ -122,7 +124,7 @@ void adsp_design_biquad_bandpass
   float a0 =  1.0 + alpha;
   float a1 = -2.0 * f32_cos(w0);
   float a2 =  1.0 - alpha;
-  
+
   // Store as fixed-point values
   coeffs[0] = _float2fixed(  b0 / a0, Q_factor );
   coeffs[1] = _float2fixed(  b1 / a0, Q_factor );
@@ -142,7 +144,7 @@ void adsp_design_biquad_bandstop
   // Compute common factors
   float w0    = 2.0 * pi * fc / fs;
   float alpha = f32_sin(w0) * sinhf(log_2 / 2 * bandwidth * w0 / f32_sin(w0));
-  
+
   // Compute coeffs
   float b0 =  1.0;
   float b1 = -2.0 * f32_cos(w0);
@@ -178,7 +180,7 @@ void adsp_design_biquad_notch
   float a0 =  1.0 + alpha;
   float a1 =  b1;
   float a2 =  1.0 - alpha;
-  
+
   // Store as fixed-point values
   coeffs[0] = _float2fixed(  b0 / a0, Q_factor );
   coeffs[1] = _float2fixed(  b1 / a0, Q_factor );
@@ -206,7 +208,7 @@ void adsp_design_biquad_allpass
   float a0 =  1.0 + alpha;
   float a1 =  b1;
   float a2 =  1.0 - alpha;
-  
+
   // Store as fixed-point values
   coeffs[0] = _float2fixed(  b0 / a0, Q_factor );
   coeffs[1] = _float2fixed(  b1 / a0, Q_factor );
@@ -236,7 +238,7 @@ left_shift_t adsp_design_biquad_peaking
   float a0 =  1.0 + alpha / A;
   float a1 =  b1;
   float a2 =  1.0 - alpha / A;
-  
+
   // Store as fixed-point values
   coeffs[0] = _float2fixed(  b0 / a0, Q_factor - BOOST_BSHIFT );
   coeffs[1] = _float2fixed(  b1 / a0, Q_factor - BOOST_BSHIFT );
@@ -279,7 +281,7 @@ left_shift_t adsp_design_biquad_const_q
   float a0 = 1 + factor_a + K_pow2;
   float a1 = b1;
   float a2 = 1 - factor_a + K_pow2;
-  
+
   // Store as fixed-point values
   coeffs[0] = _float2fixed(  b0 / a0, Q_factor - BOOST_BSHIFT );
   coeffs[1] = _float2fixed(  b1 / a0, Q_factor - BOOST_BSHIFT );
@@ -307,7 +309,7 @@ left_shift_t adsp_design_biquad_lowshelf
   float alpha_factor = 2 * sqrtf(A) * alpha;
   float Am1_cosw0 = (A - 1) * f32_cos(w0);
   float Ap1_cosw0 = (A + 1) * f32_cos(w0);
-  
+
   // Compute coeffs
   float b0 =  A * ((A + 1) - Am1_cosw0 + alpha_factor);
   float b1 =  2 * A * ((A - 1) - Ap1_cosw0);
@@ -315,7 +317,7 @@ left_shift_t adsp_design_biquad_lowshelf
   float a0 = (A + 1) + Am1_cosw0 + alpha_factor;
   float a1 = -2 * ((A - 1) + Ap1_cosw0);
   float a2 = (A + 1) + Am1_cosw0 - alpha_factor;
-  
+
   // Store as fixed-point values
   coeffs[0] = _float2fixed(  b0 / a0, Q_factor - BOOST_BSHIFT );
   coeffs[1] = _float2fixed(  b1 / a0, Q_factor - BOOST_BSHIFT );
@@ -343,7 +345,7 @@ left_shift_t adsp_design_biquad_highshelf
   float alpha_factor = 2 * sqrtf(A) * alpha;
   float Am1_cosw0 = (A - 1) * f32_cos(w0);
   float Ap1_cosw0 = (A + 1) * f32_cos(w0);
-  
+
   // Compute coeffs
   float b0 =  A * ((A + 1) + Am1_cosw0 + alpha_factor);
   float b1 = -2 * A * ((A - 1) + Ap1_cosw0);
@@ -351,7 +353,7 @@ left_shift_t adsp_design_biquad_highshelf
   float a0 = (A + 1) - Am1_cosw0 + alpha_factor;
   float a1 =  2 * ((A - 1) - Ap1_cosw0);
   float a2 = (A + 1) - Am1_cosw0 - alpha_factor;
-  
+
   // Store as fixed-point values
   coeffs[0] = _float2fixed(  b0 / a0, Q_factor - BOOST_BSHIFT );
   coeffs[1] = _float2fixed(  b1 / a0, Q_factor - BOOST_BSHIFT );

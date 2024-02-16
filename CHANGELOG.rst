@@ -1,5 +1,5 @@
-lib_audio_dsp change log
-========================
+Audio DSP library change log
+============================
 
 0.1.0
 -----

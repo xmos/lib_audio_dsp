@@ -280,34 +280,34 @@ def _gen_chan_buf_write_q27_to_q31(channel, edge, frame_size):
 
 def _generate_dsp_threads(resolved_pipeline, block_size = 1):
     """
-    Create the source string for all of the dsp threads.
+    Create the source string for all of the dsp threads. Output looks approximately like the below::
 
-    void dsp_thread(chanend_t* input_c, chanend_t* output_c, module_states, module_configs) {
-        int32_t edge0[BLOCK_SIZE];
-        int32_t edge1[BLOCK_SIZE];
-        int32_t edge2[BLOCK_SIZE];
-        int32_t edge3[BLOCK_SIZE];
-        for(;;) {
-            do control;
-            // input from 2 source threads
-            int read_count = 2;
-            while(read_count) {
-                select {
-                    input_c[0]: chan_in_buf(edge0); read_count--;
-                    input_c[1]: chan_in_buf(edge1); read_count--;
-                    default: do control;
+        void dsp_thread(chanend_t* input_c, chanend_t* output_c, module_states, module_configs) {
+            int32_t edge0[BLOCK_SIZE];
+            int32_t edge1[BLOCK_SIZE];
+            int32_t edge2[BLOCK_SIZE];
+            int32_t edge3[BLOCK_SIZE];
+            for(;;) {
+                do control;
+                // input from 2 source threads
+                int read_count = 2;
+                while(read_count) {
+                    select {
+                        input_c[0]: chan_in_buf(edge0); read_count--;
+                        input_c[1]: chan_in_buf(edge1); read_count--;
+                        default: do control;
+                    }
                 }
+                modules[0]->process_sample(
+                    (int32_t*[]){edge0, edge1},
+                    (int32_t*[]){edge2, edge3},
+                    modules[0]->state,
+                    &modules[0]->control
+                );
+                chan_out_buf(output_c[0], edge2);
+                chan_out_buf(output_c[1], edge3);
             }
-            modules[0]->process_sample(
-                (int32_t*[]){edge0, edge1},
-                (int32_t*[]){edge2, edge3},
-                modules[0]->state,
-                &modules[0]->control
-            );
-            chan_out_buf(output_c[0], edge2);
-            chan_out_buf(output_c[1], edge3);
         }
-    }
     """
     all_thread_edges = _filter_edges_by_thread(resolved_pipeline)
     file_str = ""
