@@ -529,6 +529,7 @@ class compressor_limiter_base(dspg.dsp_block):
         should be scaled with 0dB = 1.0.
         """
         # quantize
+        sample_int = utils.int32(round(sample * 2**self.Q_sig))
         sample = utils.float_s32(sample)
         sample = utils.float_s32_use_exp(sample, -27)
         sample = np.float32(float(sample))
@@ -553,14 +554,14 @@ class compressor_limiter_base(dspg.dsp_block):
             new_gain - self.gain_f32[channel]
         )
 
-        # apply gain
-        y = self.gain_f32[channel] * sample
+        # apply gain in int32
+        this_gain_int = utils.int32(self.gain_f32[channel] * 2**30)
+        y = utils.vpu_mult(this_gain_int, sample_int)
 
         # quantize before return
-        y = utils.float_s32(y)
-        y = utils.float_s32_use_exp(y, -27)
+        y = (float(y) * 2**-self.Q_sig)
 
-        return np.float32(float(y)), float(new_gain), float(envelope)
+        return y, float(new_gain), float(envelope)
 
     def process_frame(self, frame):
         """
@@ -997,7 +998,7 @@ class compressor_rms(compressor_limiter_base):
         )
 
         self.ratio = ratio
-        self.slope = 1 - 1 / self.ratio
+        self.slope = (1 - 1 / self.ratio) / 2.0
         self.slope_f32 = np.float32(self.slope)
 
     def gain_calc(self, envelope):
@@ -1008,7 +1009,7 @@ class compressor_rms(compressor_limiter_base):
         to avoid the log domain.
         """
         # if envelope below threshold, apply unity gain, otherwise scale down
-        new_gain = (self.threshold / envelope) ** (self.slope / 2)
+        new_gain = (self.threshold / envelope) ** self.slope
         new_gain = min(1, new_gain)
         return new_gain
 
@@ -1020,9 +1021,7 @@ class compressor_rms(compressor_limiter_base):
         to avoid the log domain.
         """
         # if envelope below threshold, apply unity gain, otherwise scale down
-        new_gain = (np.float32(self.threshold_int) / np.float32(envelope_int)) ** (
-            self.slope_f32 / 2
-        )
+        new_gain = (np.float32(self.threshold_int) / np.float32(envelope_int)) ** self.slope_f32
         new_gain = min(1.0, new_gain)
         new_gain_int = utils.int32(new_gain * 2**30)
         return new_gain_int
@@ -1035,7 +1034,7 @@ class compressor_rms(compressor_limiter_base):
         to avoid the log domain.
         """
         # if envelope below threshold, apply unity gain, otherwise scale down
-        new_gain = (self.threshold_f32 / envelope) ** (self.slope_f32 / 2)
+        new_gain = (self.threshold_f32 / envelope) ** self.slope_f32
         new_gain = new_gain if new_gain < np.float32(1) else np.float32(1)
         return new_gain
 

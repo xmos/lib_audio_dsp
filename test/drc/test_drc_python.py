@@ -112,10 +112,9 @@ def test_comp_ratio(fs, at, rt, ratio, threshold):
     over_thresh = utils.db(ref_signal) > threshold
     ref_signal[over_thresh] *= utils.db2gain((1 - 1/ratio)*(threshold - utils.db(ref_signal[over_thresh])))
 
-    np.testing.assert_allclose(ref_signal, output_flt, atol=2e-16)
-    # I'm not sure why these are so close!!
-    np.testing.assert_allclose(output_flt, output_int, atol=2e-16)
-    np.testing.assert_allclose(output_flt, output_xcore, atol=2e-16)
+    np.testing.assert_allclose(ref_signal, output_flt, atol=2e-16, rtol=0)
+    np.testing.assert_allclose(output_flt, output_int, atol=6e-8, rtol=0)
+    np.testing.assert_allclose(output_flt, output_xcore, atol=6e-8, rtol=0)
 
 
 @pytest.mark.parametrize("fs", [48000])
