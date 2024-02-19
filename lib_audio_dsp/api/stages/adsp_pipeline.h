@@ -33,7 +33,7 @@ typedef struct
     size_t n_out;
     channel_t *p_link;
     size_t n_link;
-    module_instance_t **modules;
+    module_instance_t *modules;
     size_t n_modules;
     adsp_mux_t input_mux;
     adsp_mux_t output_mux;
