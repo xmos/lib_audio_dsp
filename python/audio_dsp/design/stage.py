@@ -6,6 +6,7 @@ import yaml
 from pathlib import Path
 from audio_dsp.design import plot
 
+
 def find_config(name):
     """
     Find the config yaml file for a stage by looking for it
@@ -22,7 +23,7 @@ def find_config(name):
     Path
         Path to the config file.
     """
-    ret = Path(__file__).parents[3]/"stage_config"/f"{name}.yaml"
+    ret = Path(__file__).parents[3] / "stage_config" / f"{name}.yaml"
     if not ret.exists():
         raise ValueError(f"{ret} does not exist")
     return ret
@@ -54,6 +55,7 @@ class StageOutput(Edge):
     frame_size : int
         see frame_size parameter
     """
+
     def __init__(self, fs=48000, frame_size=1):
         super().__init__()
         # index of the multiple outputs that the source node has
@@ -76,9 +78,7 @@ class StageOutput(Edge):
         self._dest_index = value
 
     def __repr__(self) -> str:
-        """
-        Makes print output usable
-        """
+        """Makes print output usable."""
         dest = "-" if self.dest is None else f"{self.dest.index} {self.dest_index}"
         source = "-" if self.source is None else f"{self.source.index} {self.source_index}"
         return f"({source} -> {dest})"
@@ -86,7 +86,9 @@ class StageOutput(Edge):
 
 class PropertyControlField:
     """For stages which have internal state they can register callbacks
-    for getting and setting control fields"""
+    for getting and setting control fields.
+    """
+
     def __init__(self, get, set=None):
         self._getter = get
         self._setter = set
@@ -103,9 +105,11 @@ class PropertyControlField:
 
 
 class ValueControlField:
-    """Simple field which can be updated directly"""
+    """Simple field which can be updated directly."""
+
     def __init__(self, value=None):
         self.value = value
+
 
 class Stage(Node):
     """
@@ -153,6 +157,7 @@ class Stage(Node):
     dsp_block : None | audio_dsp.dsp.generic.dsp_block
         This will point to a dsp block class (e.g. biquad etc), to be set by the child class
     """
+
     def __init__(self, config: Path | str, inputs: list[StageOutput]):
         super().__init__()
         self.i = [i for i in inputs]
@@ -172,7 +177,9 @@ class Stage(Node):
         self.yaml_dict = yaml.load(Path(config).read_text(), Loader=yaml.Loader)
         # module dict contains 1 entry with the name of the module as its key
         self.name = next(iter(self.yaml_dict["module"].keys()))
-        self._control_fields = {name: ValueControlField() for name in self.yaml_dict["module"][self.name].keys()}
+        self._control_fields = {
+            name: ValueControlField() for name in self.yaml_dict["module"][self.name].keys()
+        }
         self.details = {}
         self.dsp_block = None
 
@@ -200,20 +207,24 @@ class Stage(Node):
             self._o.append(output)
 
     def __setitem__(self, key, value):
-        """Support for dictionary like access to config fields"""
+        """Support for dictionary like access to config fields."""
         if key not in self._control_fields:
-            raise KeyError(f"{key} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}")
+            raise KeyError(
+                f"{key} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}"
+            )
         self._control_fields[key].value = value
 
     def __getitem__(self, key):
-        """Support for dictionary like access to config fields"""
+        """Support for dictionary like access to config fields."""
         if key not in self._control_fields:
-            raise KeyError(f"{key} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}")
+            raise KeyError(
+                f"{key} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}"
+            )
         return self._control_fields[key].value
 
     def set_control_field_cb(self, field, getter, setter=None):
         """
-        Register callbacks for getting and setting control fields, to be called by classes which implement stage
+        Register callbacks for getting and setting control fields, to be called by classes which implement stage.
 
         Parameters
         ----------
@@ -225,13 +236,15 @@ class Stage(Node):
             A function which accepts 1 argument that will be used as the new value
         """
         if field not in self._control_fields:
-            raise KeyError(f"{field} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}")
+            raise KeyError(
+                f"{field} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}"
+            )
 
         self._control_fields[field] = PropertyControlField(getter, setter)
 
     def get_config(self):
         """Get a dictionary containing the current value of the control
-        fields which have been set
+        fields which have been set.
 
         Returns
         -------
@@ -246,12 +259,13 @@ class Stage(Node):
 
     def process(self, in_channels):
         """
-        Run dsp object on the input channels and return the output
+        Run dsp object on the input channels and return the output.
 
         Args:
             in_channels: list of numpy arrays
 
-        Returns:
+        Returns
+        -------
             list of numpy arrays.
         """
         # use float implementation as it is faster

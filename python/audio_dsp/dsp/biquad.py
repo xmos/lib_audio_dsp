@@ -245,7 +245,7 @@ def round_to_q30(coeffs: list[float], b_shift: int) -> tuple[list[float], list[i
 
 
 def apply_biquad_gain(coeffs: list[float], gain_db: float) -> list[float]:
-    """apply linear gain to the b coefficients"""
+    """Apply linear gain to the b coefficients."""
     gain = 10 ** (gain_db / 20)
     coeffs[0] = coeffs[0] * gain
     coeffs[1] = coeffs[1] * gain
@@ -255,7 +255,7 @@ def apply_biquad_gain(coeffs: list[float], gain_db: float) -> list[float]:
 
 
 def apply_biquad_bshift(coeffs: list[float], b_shift: int) -> list[float]:
-    """apply linear bitshift to the b coefficients"""
+    """Apply linear bitshift to the b coefficients."""
     gain = 2**-b_shift
     coeffs[0] = coeffs[0] * gain
     coeffs[1] = coeffs[1] * gain
@@ -522,16 +522,13 @@ def make_biquad_linkwitz(fs: int, f0: float, q0: float, fp: float, qp: float) ->
     assert max(f0, fp) <= fs / 2, "f0 and fp must be less than fs/2"
     fc = (f0 + fp) / 2
     fc = fc
-    low = 1
     # 1 = 1
 
     d0i = (2 * np.pi * f0) ** 2
     d1i = (2 * np.pi * f0) / q0
-    d2i = 1
 
     c0i = (2 * np.pi * fp) ** 2
     c1i = (2 * np.pi * fp) / qp
-    c2i = 1
 
     gn = (2 * np.pi * fc) / (np.tan(np.pi * fc / fs))
     cci = c0i + gn * c1i + (gn**2)
