@@ -7,6 +7,7 @@ typedef struct
 {
     char *input_filename;
     char *output_filename;
+    int num_discard_frames;
     int num_output_channels;
 }test_config_t;
 
