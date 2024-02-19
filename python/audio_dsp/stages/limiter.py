@@ -20,9 +20,7 @@ class LimiterRMS(Stage):
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_f32)
 
     def make_limiter_rms(self, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        """
-        Update limiter configuration based on new parameters.
-        """
+        """Update limiter configuration based on new parameters."""
         self.details = dict(
             threshold_db=threshold_db,
             attack_t=attack_t,
@@ -51,9 +49,7 @@ class LimiterPeak(Stage):
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_f32)
 
     def make_limiter_peak(self, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        """
-        Update limiter configuration based on new parameters.
-        """
+        """Update limiter configuration based on new parameters."""
         self.details = dict(
             threshold_db=threshold_db,
             attack_t=attack_t,

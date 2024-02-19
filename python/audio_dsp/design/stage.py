@@ -78,9 +78,7 @@ class StageOutput(Edge):
         self._dest_index = value
 
     def __repr__(self) -> str:
-        """
-        Makes print output usable
-        """
+        """Makes print output usable."""
         dest = "-" if self.dest is None else f"{self.dest.index} {self.dest_index}"
         source = "-" if self.source is None else f"{self.source.index} {self.source_index}"
         return f"({source} -> {dest})"
@@ -88,7 +86,8 @@ class StageOutput(Edge):
 
 class PropertyControlField:
     """For stages which have internal state they can register callbacks
-    for getting and setting control fields"""
+    for getting and setting control fields.
+    """
 
     def __init__(self, get, set=None):
         self._getter = get
@@ -106,7 +105,7 @@ class PropertyControlField:
 
 
 class ValueControlField:
-    """Simple field which can be updated directly"""
+    """Simple field which can be updated directly."""
 
     def __init__(self, value=None):
         self.value = value
@@ -208,7 +207,7 @@ class Stage(Node):
             self._o.append(output)
 
     def __setitem__(self, key, value):
-        """Support for dictionary like access to config fields"""
+        """Support for dictionary like access to config fields."""
         if key not in self._control_fields:
             raise KeyError(
                 f"{key} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}"
@@ -216,7 +215,7 @@ class Stage(Node):
         self._control_fields[key].value = value
 
     def __getitem__(self, key):
-        """Support for dictionary like access to config fields"""
+        """Support for dictionary like access to config fields."""
         if key not in self._control_fields:
             raise KeyError(
                 f"{key} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}"
@@ -225,7 +224,7 @@ class Stage(Node):
 
     def set_control_field_cb(self, field, getter, setter=None):
         """
-        Register callbacks for getting and setting control fields, to be called by classes which implement stage
+        Register callbacks for getting and setting control fields, to be called by classes which implement stage.
 
         Parameters
         ----------
@@ -245,7 +244,7 @@ class Stage(Node):
 
     def get_config(self):
         """Get a dictionary containing the current value of the control
-        fields which have been set
+        fields which have been set.
 
         Returns
         -------
@@ -260,12 +259,13 @@ class Stage(Node):
 
     def process(self, in_channels):
         """
-        Run dsp object on the input channels and return the output
+        Run dsp object on the input channels and return the output.
 
         Args:
             in_channels: list of numpy arrays
 
-        Returns:
+        Returns
+        -------
             list of numpy arrays.
         """
         # use float implementation as it is faster

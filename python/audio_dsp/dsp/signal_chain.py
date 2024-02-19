@@ -109,7 +109,7 @@ class subtractor(dspg.dsp_block):
 
 class fixed_gain(dspg.dsp_block):
     """
-    Multiply every sample by a fixed gain value
+    Multiply every sample by a fixed gain value.
 
     In the current implementation, the maximum boost is 6dB.
 

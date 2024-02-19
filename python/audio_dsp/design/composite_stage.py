@@ -14,7 +14,7 @@ import itertools
 class CompositeStage:
     """
     This is a higher order stage, contains stages as well as other composite
-    stages. A thread will be a composite stage. Composite stages allow
+    stages. A thread will be a composite stage. Composite stages allow.
 
     - drawing the detail with graphviz
     - process
@@ -68,7 +68,7 @@ class CompositeStage:
     def stage(self, stage_type, inputs, **kwargs):
         """
         Create a new stage or composite stage and
-        register it with this composite stage
+        register it with this composite stage.
 
         Parameters
         ----------
@@ -99,7 +99,7 @@ class CompositeStage:
 
     def stages(self, stage_types, inputs: Iterable[StageOutput]):
         """
-        Same as stage but takes an array of stage type and connects them together
+        Same as stage but takes an array of stage type and connects them together.
 
         Returns a list of the created instances.
         """
@@ -112,7 +112,7 @@ class CompositeStage:
 
     def contains_stage(self, stage):
         """
-        Recursively search self for the stage
+        Recursively search self for the stage.
 
         Returns
         -------
@@ -136,9 +136,7 @@ class CompositeStage:
         raise NotImplementedError()
 
     def _internal_edges(self):
-        """
-        Returns list of edges whose source and dest are within this composite
-        """
+        """Returns list of edges whose source and dest are within this composite."""
         all_stages = self.get_all_stages()
         all_edges = list(itertools.chain.from_iterable([stage.o for stage in all_stages]))
         return [
@@ -146,9 +144,7 @@ class CompositeStage:
         ]
 
     def draw(self):
-        """
-        Draws the stages and edges present in this instance of a composite stage
-        """
+        """Draws the stages and edges present in this instance of a composite stage."""
         dot = new_record_digraph()
         self.add_to_dot(dot)
         output_edges = self.o

@@ -1,9 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
-"""
-Top level pipeline design class and code generation functions.
-"""
+"""Top level pipeline design class and code generation functions."""
 
 from pathlib import Path
 from tabulate import tabulate
@@ -94,7 +92,7 @@ class Pipeline:
 
     def validate(self):
         """
-        TODO validate pipeline assumptions
+        TODO validate pipeline assumptions.
 
         - Thread connections must not lead to a scenario where the pipeline hangs
         - Stages must fit on thread
@@ -103,9 +101,7 @@ class Pipeline:
         """
 
     def draw(self):
-        """
-        Render a dot diagram of this pipeline
-        """
+        """Render a dot diagram of this pipeline."""
         dot = new_record_digraph()
         for thread in self.threads:
             thread.add_to_dot(dot)
@@ -231,7 +227,7 @@ def send_config_to_device(pipeline: Pipeline):
 
 def _filter_edges_by_thread(resolved_pipeline):
     """
-    Get thread input edges, output edges and internal edges for all threads
+    Get thread input edges, output edges and internal edges for all threads.
 
     Returns
     -------
@@ -292,14 +288,12 @@ def _filter_edges_by_thread(resolved_pipeline):
 
 
 def _gen_chan_buf_read_q31_to_q27(channel, edge, frame_size):
-    """
-    Generate the C code to read from a channel and convert from q31 to q27
-    """
+    """Generate the C code to read from a channel and convert from q31 to q27."""
     return f"for(int idx = 0; idx < {frame_size}; ++idx) {edge}[idx] = ((int32_t)chan_in_word({channel})) >> 4;"
 
 
 def _gen_chan_buf_write_q27_to_q31(channel, edge, frame_size):
-    """Generate the C code to wrtie to a channel and convert from q27 to q31 and saturate"""
+    """Generate the C code to wrtie to a channel and convert from q27 to q31 and saturate."""
     q_in = 27
     in_min = -(2 ** (q_in))
     in_max = (-in_min) - 1
@@ -478,9 +472,7 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
 
 
 def _determine_channels(resolved_pipeline):
-    """
-    create list of the required channels from the resolved pipeline structure.
-    """
+    """Create list of the required channels from the resolved pipeline structure."""
     all_thread_edges = _filter_edges_by_thread(resolved_pipeline)
     ret = []
     for s_idx, s_thread_edges in enumerate(all_thread_edges):
@@ -495,14 +487,12 @@ def _determine_channels(resolved_pipeline):
 
 
 def _resolved_pipeline_num_modules(resolved_pipeline):
-    """Determine total number of module instances in the resolved pipeline across all threads"""
+    """Determine total number of module instances in the resolved pipeline across all threads."""
     return sum(len(t) for t in resolved_pipeline["threads"])
 
 
 def _generate_dsp_header(resolved_pipeline, out_dir=Path("build/dsp_pipeline")):
-    """
-    Generate "adsp_generated_<x>.h" and save to disk.
-    """
+    """Generate "adsp_generated_<x>.h" and save to disk."""
     out_dir = Path(out_dir)
     out_dir.mkdir(exist_ok=True)
 
@@ -518,9 +508,7 @@ def _generate_dsp_header(resolved_pipeline, out_dir=Path("build/dsp_pipeline")):
 
 
 def _generate_dsp_init(resolved_pipeline):
-    """
-    Create the init function which initialised all modules and channels.
-    """
+    """Create the init function which initialised all modules and channels."""
     chans = _determine_channels(resolved_pipeline)
     adsp = f"adsp_{resolved_pipeline['identifier']}"
 
@@ -657,7 +645,7 @@ def _generate_dsp_muxes(resolved_pipeline):
 
 def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
     """
-    Generate the source code for adsp_generated_<x>.c
+    Generate the source code for adsp_generated_<x>.c.
 
     Parameters
     ----------

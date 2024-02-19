@@ -1,16 +1,14 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
-"""
-Basic data structures for managing the pipeline graph.
-"""
+"""Basic data structures for managing the pipeline graph."""
 from uuid import uuid4
 import graphlib
 
 
 class Node:
     """
-    Graph node
+    Graph node.
 
     Attributes
     ----------
@@ -26,13 +24,13 @@ class Node:
         self.index: int | None = None
 
     def __hash__(self) -> int:
-        """Support for using as dictionary/set keys"""
+        """Support for using as dictionary/set keys."""
         return self.id.int
 
 
 class Edge:
     """
-    Graph node
+    Graph node.
 
     Attributes
     ----------
@@ -49,7 +47,7 @@ class Edge:
         self.dest: None | Node = None
 
     def __hash__(self) -> int:
-        """Support for using as dictionary/set keys"""
+        """Support for using as dictionary/set keys."""
         return self.id.int
 
     def set_source(self, node: Node):

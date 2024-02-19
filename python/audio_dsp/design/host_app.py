@@ -1,8 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""
-Global host app management, to provide easy access to the host app.
-"""
+"""Global host app management, to provide easy access to the host app."""
 from pathlib import Path
 import platform
 
@@ -12,16 +10,14 @@ PROTOCOL = "usb"
 
 
 class InvalidHostAppError(Exception):
-    """
-    Raised when there is a issue with the configured host app.
-    """
+    """Raised when there is a issue with the configured host app."""
 
     pass
 
 
 def set_host_app(host_app, protocol="usb"):
     """
-    Set the host_app and the protocol to use for control
+    Set the host_app and the protocol to use for control.
 
     Raises
     ------
@@ -51,7 +47,7 @@ def set_host_app(host_app, protocol="usb"):
 
 def get_host_app():
     """
-    Get the host_app and the protocol to use for control
+    Get the host_app and the protocol to use for control.
 
     Raises
     ------
@@ -59,7 +55,7 @@ def get_host_app():
         If executable for binary not set
 
     Returns
-    ----------
+    -------
     host_app and control protocol to use
     """
     if not HOST_APP.is_file():

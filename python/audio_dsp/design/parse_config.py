@@ -18,8 +18,7 @@ if __name__ == "__main__":
     templates_dir = f"{pkg_dir}/templates"
 
     def parse_arguments():
-        """Parse command line arguments"""
-
+        """Parse command line arguments."""
         parser = argparse.ArgumentParser(description="Generate config struct files")
         parser.add_argument(
             "--config-dir",

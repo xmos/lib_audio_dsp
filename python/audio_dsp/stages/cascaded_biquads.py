@@ -44,26 +44,20 @@ class CascadedBiquads(Stage):
         return np.array(a * (2**30), dtype=np.int32)
 
     def make_parametric_eq(self, filter_spec: list[list[Any]]) -> "CascadedBiquads":
-        """
-        Configure this instance as a Parametric Equaliser.
-        """
+        """Configure this instance as a Parametric Equaliser."""
         self.details = dict(type="parametric")
         self.dsp_block = casc_bq.parametric_eq_8band(self.fs, self.n_in, filter_spec)
         return self
 
     def make_butterworth_highpass(self, N: int, fc: float) -> "CascadedBiquads":
-        """
-        Configure this instance as a Butterworth highpass filter.
-        """
+        """Configure this instance as a Butterworth highpass filter."""
         self.details = dict(type="butterworth lowpass", N=N, fc=fc)
         self.details = dict(type="butterworth highpass", N=N, fc=fc)
         self.dsp_block = casc_bq.butterworth_highpass(self.fs, self.n_in, N, fc)
         return self
 
     def make_butterworth_lowpass(self, N: int, fc: float) -> "CascadedBiquads":
-        """
-        Configure this instance as a Butterworth lowpass filter.
-        """
+        """Configure this instance as a Butterworth lowpass filter."""
         self.details = dict(type="butterworth lowpass", N=N, fc=fc)
         self.dsp_block = casc_bq.butterworth_lowpass(self.fs, self.n_in, N, fc)
         return self

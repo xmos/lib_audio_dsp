@@ -56,9 +56,9 @@ class Thread(CompositeStage):
         self.thread_stage = self.stage(DSPThreadStage, [])
 
     def __enter__(self):
-        """Support for context manager"""
+        """Support for context manager."""
         return self
 
     def __exit__(self, type, value, traceback):
-        """Support for context manager"""
+        """Support for context manager."""
         ...
