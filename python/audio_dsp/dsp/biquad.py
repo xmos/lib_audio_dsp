@@ -76,7 +76,7 @@ class biquad(dspg.dsp_block):
 
         return y_flt
 
-    def process_vpu(self, sample: float, channel: int=0) -> float:
+    def process_xcore(self, sample: float, channel: int=0) -> float:
 
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
 
@@ -99,16 +99,17 @@ class biquad(dspg.dsp_block):
 
         return y_flt
 
-    def process_frame_vpu(self, frame: list[np.ndarray]) -> list[np.ndarray]:
-        # simple multichannel, but integer. Assumes no channel unique states!
+    def process_frame_int(self, frame: list[np.ndarray]) -> list[np.ndarray]:
+        # simple multichannel, but integer (not xcore).
+        # Assumes no channel unique states!
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
         output = deepcopy(frame)
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):
-                this_chan[sample] = self.process_vpu(this_chan[sample],
-                                                     channel=chan)
+                this_chan[sample] = self.process_int(this_chan[sample],
+                                                       channel=chan)
 
         return output
 
@@ -535,9 +536,6 @@ def make_biquad_linkwitz(fs: int, f0: float, q0: float, fp: float, qp: float) ->
     return coeffs
 
 
-# TODO gain biquad
-
-
 if __name__ == "__main__":
 
     fs = 48000
@@ -559,10 +557,10 @@ if __name__ == "__main__":
     output_5 = np.zeros(len(signal))
 
     for n in range(len(signal)):
-        output_1[n] = biquad_1.process_int(signal[n])
-        output_2[n] = biquad_2.process_int(signal[n])
-        output_3[n] = biquad_3.process_int(signal[n])
-        output_4[n] = biquad_4.process_int(signal[n])
+        output_1[n] = biquad_1.process_xcore(signal[n])
+        output_2[n] = biquad_2.process_xcore(signal[n])
+        output_3[n] = biquad_3.process_xcore(signal[n])
+        output_4[n] = biquad_4.process_xcore(signal[n])
         output_5[n] = biquad_5.process(signal[n])
 
     # plt.plot(signal)

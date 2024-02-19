@@ -107,7 +107,7 @@ class envelope_detector_peak(dspg.dsp_block):
 
         return self.envelope[channel]
 
-    def process_f32(self, sample, channel=0):
+    def process_xcore(self, sample, channel=0):
         """
         Update the peak envelope for a signal, using np.float32 maths.
 
@@ -141,7 +141,7 @@ class envelope_detector_peak(dspg.dsp_block):
         else:
             return float(self.envelope_f32[channel])
 
-    def process_frame_f32(self, frame):
+    def process_frame_xcore(self, frame):
         # same as generic, but only take 1st output
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
@@ -149,8 +149,8 @@ class envelope_detector_peak(dspg.dsp_block):
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):
-                this_chan[sample] = self.process_f32(this_chan[sample],
-                                                 channel=chan)
+                this_chan[sample] = self.process_xcore(this_chan[sample],
+                                                       channel=chan)
 
         return output
 
@@ -226,7 +226,7 @@ class envelope_detector_rms(envelope_detector_peak):
 
         return self.envelope[channel]
 
-    def process_f32(self, sample, channel=0):
+    def process_xcore(self, sample, channel=0):
         """
         Update the RMS envelope for a signal, using np.float32 maths.
 
@@ -314,14 +314,14 @@ class limiter_base(dspg.dsp_block):
         y = self.gain[channel]*sample
         return y, new_gain, envelope
 
-    def process_f32(self, sample, channel=0):
+    def process_xcore(self, sample, channel=0):
         # quantize
         sample = utils.float_s32(sample)
         sample = utils.float_s32_use_exp(sample, -27)
         sample = np.float32(float(sample))
 
         # get envelope from envelope detector
-        envelope = self.env_detector.process_f32(sample, channel)
+        envelope = self.env_detector.process_xcore(sample, channel)
         # avoid /0
         if envelope == np.float32(0):
             envelope = np.float32(1e-20)
@@ -361,7 +361,7 @@ class limiter_base(dspg.dsp_block):
 
         return output
 
-    def process_frame_f32(self, frame):
+    def process_frame_xcore(self, frame):
         # same as generic, but only take 1st output
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
@@ -369,8 +369,8 @@ class limiter_base(dspg.dsp_block):
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):
-                this_chan[sample] = self.process_f32(this_chan[sample],
-                                                 channel=chan)[0]
+                this_chan[sample] = self.process_xcore(this_chan[sample],
+                                                       channel=chan)[0]
 
         return output
 
@@ -416,7 +416,7 @@ class hard_limiter_peak(limiter_peak):
         return y
 
     # TODO process_int, super().process_int will return float though...
-    def process_int(self, sample):
+    def process_xcore(self, sample, channel=0):
         raise NotImplementedError
 
 
@@ -431,7 +431,7 @@ class soft_limiter_peak(limiter_peak):
     def process(self, sample, channel=0):
         raise NotImplementedError
 
-    def process_int(self, sample, channel=0):
+    def process_xcore(self, sample, channel=0):
         raise NotImplementedError
 
 
@@ -453,7 +453,7 @@ class lookahead_limiter_peak(limiter_base):
     def process(self, sample, channel=0):
         raise NotImplementedError
 
-    def process_int(self, sample, channel=0):
+    def process_xcore(self, sample, channel=0):
         raise NotImplementedError
 
 
@@ -474,7 +474,7 @@ class lookahead_limiter_rms(limiter_base):
     def process(self, sample, channel=0):
         raise NotImplementedError
 
-    def process_int(self, sample, channel=0):
+    def process_xcore(self, sample, channel=0):
         raise NotImplementedError
 
 # TODO lookahead limiters and compressors
@@ -519,7 +519,7 @@ if __name__ == "__main__":
 
     with cProfile.Profile() as pr:
         for n in range(len(y)):
-            y_int[n], f_int[n], env_int[n] = lt.process_int(x[n])
+            y_int[n], f_int[n], env_int[n] = lt.process_xcore(x[n])
         pr.print_stats(sort='time')
 
 

@@ -124,20 +124,20 @@ def test_drc_component(fs, component, at, rt, threshold):
     if "envelope" in component:
         # envelope detector has 1 output
         for n in np.arange(len(signal)):
-            output_int[n] = drcut.process_f32(signal[n])
+            output_int[n] = drcut.process_xcore(signal[n])
         drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n] = drcut.process(signal[n])
     else:
         # limiter has 3 outputs
         for n in np.arange(len(signal)):
-            output_int[n], _, _ = drcut.process_f32(signal[n])
+            output_int[n], _, _ = drcut.process_xcore(signal[n])
         drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n], _, _ = drcut.process(signal[n])
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
-    top_half = utils.db(output_int) > -50
+    top_half = utils.db(output_flt) > -50
     if np.any(top_half):
         error_flt = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
@@ -180,13 +180,13 @@ def test_drc_component_frames(fs, component, at, rt, threshold, n_chans):
 
     if "envelope" in component:
         for n in range(len(signal_frames)):
-            output_int[:, n:n+frame_size] = drcut.process_frame_f32(signal_frames[n])
+            output_int[:, n:n+frame_size] = drcut.process_frame_xcore(signal_frames[n])
         drcut.reset_state()
         for n in range(len(signal_frames)):
             output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])
     else:
         for n in range(len(signal_frames)):
-            output_int[:, n:n+frame_size] = drcut.process_frame_f32(signal_frames[n])
+            output_int[:, n:n+frame_size] = drcut.process_frame_xcore(signal_frames[n])
         drcut.reset_state()
         for n in range(len(signal_frames)):
             output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])

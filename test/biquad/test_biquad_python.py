@@ -22,10 +22,10 @@ def chirp_filter_test(filter: bq.biquad, fs):
         output_flt[n] = filter.process(signal[n])
     filter.reset_state()
     for n in np.arange(len(signal)):
-        output_vpu[n] = filter.process_vpu(signal[n])
+        output_vpu[n] = filter.process_xcore(signal[n])
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
-    top_half = utils.db(output_int) > -50
+    top_half = utils.db(output_flt) > -50
     if np.any(top_half):
         error_flt = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
@@ -163,7 +163,7 @@ def test_frames(filter_n, fs, n_chans):
     filter.reset_state()
 
     for n in range(len(signal_frames)):
-        output_vpu[:, n:n+frame_size] = filter.process_frame_vpu(signal_frames[n])
+        output_vpu[:, n:n+frame_size] = filter.process_frame_xcore(signal_frames[n])
     assert np.all(output_vpu[0, :] == output_vpu)
 
 

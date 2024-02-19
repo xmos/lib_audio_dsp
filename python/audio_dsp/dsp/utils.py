@@ -81,6 +81,17 @@ def vpu_mult(x1: int, x2: int):
     return y
 
 
+def int32_mult_sat_extract(x1: int, x2: int, Q: int):
+    y = int64(x1*x2)
+    if y > 2**(32 + Q):
+        y = 2**(32 + Q)
+    elif y < -2**(32 + Q):
+        y = -2**(32 + Q)
+    y = int32(y >> Q)
+
+    return y
+
+
 def vlmaccr(vect1, vect2, out=0):
     for val1, val2 in zip(vect1, vect2):
         out += vpu_mult(val1, val2)
