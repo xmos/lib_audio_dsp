@@ -1,7 +1,6 @@
 // Copyright 2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
-#ifndef ADSP_CONTROL_H
-#define ADSP_CONTROL_H
+#pragma once
 #include <stdint.h>
 #include "stages/adsp_module.h"
 
@@ -22,15 +21,14 @@ typedef enum
 }adsp_control_status_t;
 
 // Read a module instance's config structure for a given command ID
-adsp_control_status_t adsp_read_module_config(module_instance_t** modules, // Array of module instance pointers
+adsp_control_status_t adsp_read_module_config(module_instance_t* modules, // Array of module instance pointers
                                             size_t num_modules, // Total number of modules
                                             adsp_stage_control_cmd_t *cmd
                                         );
 
 // Write to a module instance's config structure for a given command ID
-adsp_control_status_t adsp_write_module_config(module_instance_t** modules, // Array of module instance pointers
+adsp_control_status_t adsp_write_module_config(module_instance_t* modules, // Array of module instance pointers
                                             size_t num_modules, // Total number of modules
                                             adsp_stage_control_cmd_t *cmd
                                         );
 
-#endif

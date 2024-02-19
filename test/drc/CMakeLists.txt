@@ -11,8 +11,7 @@ set(APP_COMPILER_FLAGS
     -report
     -Wall
     -Werror
-    -fxscope
-    -mcmodel=large)
+    -fxscope)
 
 set(APP_DEPENDENT_MODULES lib_audio_dsp)
 set(APP_C_SRCS src/main_peak.c)
@@ -31,8 +30,7 @@ set(APP_COMPILER_FLAGS
     -report
     -Wall
     -Werror
-    -fxscope
-    -mcmodel=large)
+    -fxscope)
 
 set(APP_DEPENDENT_MODULES lib_audio_dsp)
 set(APP_C_SRCS src/main_rms.c)

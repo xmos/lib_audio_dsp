@@ -62,7 +62,7 @@ class StageOutput(Edge):
         self._dest_index = None
         self.fs = fs
         self.frame_size = frame_size
-        # TODO edges will probably need an associated type audio vs. data etc.
+        # edges will probably need an associated type audio vs. data etc.
         # self.type = q23
 
     @property
@@ -186,8 +186,6 @@ class Stage(Node):
         """
         Create this stages outputs.
 
-        TODO fs and frame_size
-
         Parameters
         ----------
         n_out : int
@@ -266,6 +264,11 @@ class Stage(Node):
         """
         Plot magnitude and phase response of this stage using matplotlib. Will
         be displayed inline in a jupyter notebook.
+
+        Parameters
+        ----------
+        nfft : int
+            Number of frequency bins to calculate in the fft.
         """
         f, h = self.get_frequency_response(nfft)
         plot.plot_frequency_response(f, h, name=self.name)

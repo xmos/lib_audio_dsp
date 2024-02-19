@@ -31,12 +31,10 @@ void cascaded_biquads_process(int32_t **input, int32_t **output, void *app_data_
     } while(++i < state->n_outputs);
 }
 
-module_instance_t* cascaded_biquads_init(uint8_t id, int n_inputs, int n_outputs, int frame_size, void* module_config)
+void cascaded_biquads_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
-    module_instance_t *module_instance = malloc(sizeof(module_instance_t));
-
-    cascaded_biquads_state_t *state = malloc(sizeof(cascaded_biquads_state_t)); // malloc_from_heap
-    cascaded_biquads_config_t *config = malloc(sizeof(cascaded_biquads_config_t)); // malloc_from_heap
+    cascaded_biquads_state_t *state = instance->state;
+    cascaded_biquads_config_t *config = instance->control.config;
 
     memset(state, 0, sizeof(cascaded_biquads_state_t));
 
@@ -46,28 +44,14 @@ module_instance_t* cascaded_biquads_init(uint8_t id, int n_inputs, int n_outputs
     state->frame_size = frame_size;
 
 
-    state->filter_states = malloc(n_inputs * sizeof(int32_t*)); // Allocate memory for the 1D pointers
+    state->filter_states = adsp_bump_allocator_malloc(allocator, _CBQ_ARR_MEMORY(n_inputs)); // Allocate memory for the 1D pointers
     for(int i=0; i<n_inputs; i++)
     {
-        state->filter_states[i] = malloc(CASCADED_BIQUADS_STATE_LEN * sizeof(int32_t));
+        state->filter_states[i] = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, _CBQ_FILTER_MEMORY);
         memset(state->filter_states[i], 0, CASCADED_BIQUADS_STATE_LEN * sizeof(int32_t));
     }
 
-    xassert(module_config != NULL);
-    cascaded_biquads_config_t *init_config = module_config;
-    memcpy(&state->config, init_config, sizeof(cascaded_biquads_config_t));
-
-    memcpy(config, &state->config, sizeof(cascaded_biquads_config_t));
-
-    module_instance->state = state;
-
-    // Control stuff
-    module_instance->control.config = config;
-    module_instance->control.id = id;
-    module_instance->control.module_type = e_dsp_stage_cascaded_biquads;
-    module_instance->control.num_control_commands = NUM_CMDS_CASCADED_BIQUADS;
-    module_instance->control.config_rw_state = config_none_pending;
-    return module_instance;
+    memcpy(&state->config, config, sizeof(cascaded_biquads_config_t));
 }
 
 void cascaded_biquads_control(void *module_state, module_control_t *control)
@@ -87,5 +71,9 @@ void cascaded_biquads_control(void *module_state, module_control_t *control)
     {
         memcpy(config, &state->config, sizeof(cascaded_biquads_config_t));
         control->config_rw_state = config_read_updated;
+    }
+    else
+    {
+        // nothing to do.
     }
 }

@@ -49,19 +49,17 @@ void limiter_peak_process(int32_t **input, int32_t **output, void *app_data_stat
     } while(++i < state->n_outputs);
 }
 
-module_instance_t* limiter_peak_init(uint8_t id, int n_inputs, int n_outputs, int frame_size, void* module_config)
+void limiter_peak_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
-    module_instance_t *module_instance = malloc(sizeof(module_instance_t));
-
-    limiter_peak_state_t *state = malloc(sizeof(limiter_peak_state_t)); // malloc_from_heap
-    limiter_peak_config_t *config = malloc(sizeof(limiter_peak_config_t)); // malloc_from_heap
+    limiter_peak_state_t *state = instance->state;
+    limiter_peak_config_t *config = instance->control.config;
 
     memset(state, 0, sizeof(limiter_peak_state_t));
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    state->lim = malloc(state->n_inputs * sizeof(limiter_t));
+    state->lim = adsp_bump_allocator_malloc(allocator, state->n_inputs * sizeof(limiter_t));
     memset(state->lim, 0, state->n_inputs * sizeof(limiter_t));
 
     for(int i=0; i<state->n_inputs; i++)
@@ -70,22 +68,7 @@ module_instance_t* limiter_peak_init(uint8_t id, int n_inputs, int n_outputs, in
         state->lim[i].env_det.envelope = 0;
     }
 
-    xassert(module_config != NULL);
-
-    limiter_peak_config_t *init_config = module_config;
-    limiter_copy_config_to_state(state->lim, state->n_inputs, init_config);
-
-    limiter_copy_state_to_config(config, state->lim);
-
-    module_instance->state = state;
-
-    // Control stuff
-    module_instance->control.config = config;
-    module_instance->control.id = id;
-    module_instance->control.module_type = e_dsp_stage_limiter_peak;
-    module_instance->control.num_control_commands = NUM_CMDS_LIMITER_PEAK;
-    module_instance->control.config_rw_state = config_none_pending;
-    return module_instance;
+    limiter_copy_config_to_state(state->lim, state->n_inputs, config);
 }
 
 void limiter_peak_control(void *module_state, module_control_t *control)
@@ -106,5 +89,8 @@ void limiter_peak_control(void *module_state, module_control_t *control)
     {
         limiter_copy_state_to_config(config, state->lim);
         control->config_rw_state = config_read_updated;
+    }
+    else {
+        // nothing to do
     }
 }

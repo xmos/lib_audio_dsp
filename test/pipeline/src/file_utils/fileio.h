@@ -1,7 +1,6 @@
 // Copyright 2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
-#ifndef FILEIO_H
-#define FILEIO_H
+#pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,4 +29,3 @@ void shutdown_session(); //Needed for XSCOPE_ID_HOST_QUIT in xscope_close_all_fi
 
 int get_current_file_offset(file_t *fp);
 int get_file_size(file_t *fp);
-#endif

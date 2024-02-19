@@ -14,6 +14,7 @@ static void show_usage()
         "         -o     output wav file (eg. -o output.wav)\n\n"
         "         -n     no. of output channels (eg. -o 2. If not specified, set to be same as input channels)\n\n"
         "         -h     Show this usage message and abort\n\n"
+        "         -t     Input/output offset, number of samples to throw out at boot to account for pipeline length\n\n"
         );
 
     exit(0);
@@ -35,6 +36,10 @@ static void parse_one_arg(char *arg_part_1, test_config_t *test_config)
     if(strcmp(arg_part_1, "-n") == 0)
     {
         test_config->num_output_channels = atoi(arg_part_2);
+    }
+    else if(strcmp(arg_part_1, "-t") == 0)
+    {
+        test_config->num_discard_frames = atoi(arg_part_2);
     }
     else if(strcmp(arg_part_1, "-i") == 0)
     {

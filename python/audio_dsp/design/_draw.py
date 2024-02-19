@@ -16,9 +16,6 @@ def new_record_digraph():
     """
     dot = graphviz.Digraph()
     dot.clear()
-    dot.attr(fontname="Arial Nova Light")
     dot.attr(ranksep="1.0")
     dot.attr('node', shape='record')
-    dot.attr('node', fontname='Arial Nova Light')
-    dot.attr('edge', fontname='Arial Nova Light')
     return dot

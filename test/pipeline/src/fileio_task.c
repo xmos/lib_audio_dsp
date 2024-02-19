@@ -111,24 +111,53 @@ void fileio_task(chanend_t c_control)
 
     printf("Num input channels = %d\n", input_header_struct.num_channels);
     printf("Num output channels = %d\n", test_config.num_output_channels);
+    printf("Discard frames = %d\n", test_config.num_discard_frames);
     printf("bytes_per_frame = %d\n", bytes_per_frame);
     printf("Block count = %d\n", block_count);
 
     int32_t input[ FILEREAD_CHUNK_SIZE * MAX_CHANNELS] = {0}; // Array for storing interleaved input read from wav file
     int32_t output[FILEREAD_CHUNK_SIZE * MAX_CHANNELS] = {0};
 
+    int discard = test_config.num_discard_frames;
     for(int i=0; i<block_count; i++)
     {
         printf("block %d\n", i);
         read_input_frame(&input_file, input, &input_header_struct);
 
-        for(int i=0; i<FILEREAD_CHUNK_SIZE; i++)
+        int32_t* block_input = input;
+        int32_t* block_output = output;
+
+        printf("1\n");
+        // 1. discard initial outputs which will be 0
+        for(int d = 0; d < discard; d++) {
+            app_dsp_source(block_input, input_header_struct.num_channels);
+            block_input += input_header_struct.num_channels;
+
+            // discard these outputs
+            int32_t temp_output[MAX_CHANNELS];
+            app_dsp_sink(temp_output, test_config.num_output_channels);
+        }
+
+        printf("2\n");
+        // 2. source and sink pipeline
+        int loop_n = FILEREAD_CHUNK_SIZE ;//- test_config.num_discard_frames;
+        for(int j=0; j < loop_n; j++)
         {
-            app_dsp_source(&input[i * input_header_struct.num_channels], input_header_struct.num_channels);
-            app_dsp_sink(&output[i * test_config.num_output_channels], test_config.num_output_channels);
+            app_dsp_source(block_input, input_header_struct.num_channels);
+            app_dsp_sink(block_output, test_config.num_output_channels);
+            block_input += input_header_struct.num_channels;
+            block_output += test_config.num_output_channels;
+        }
+
+        printf("3\n");
+        // 3. read only, should empty the pipeline
+        for(int d = 0; d < discard; d++) {
+            app_dsp_sink(block_output, test_config.num_output_channels);
+            block_output += test_config.num_output_channels;
         }
 
         file_write(&output_file, (uint8_t*)&output[0], test_config.num_output_channels * FILEREAD_CHUNK_SIZE * sizeof(int32_t));
+        discard = 0; // synchronisation complete
     }
     file_close(&input_file);
     file_close(&output_file);
