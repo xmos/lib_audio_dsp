@@ -1,8 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""
-Global host app management, to provide easy access to the host app.
-"""
+"""Global host app management, to provide easy access to the host app."""
 from pathlib import Path
 import platform
 
@@ -10,15 +8,16 @@ import platform
 HOST_APP = Path("xvf_host")
 PROTOCOL = "usb"
 
+
 class InvalidHostAppError(Exception):
-    """
-    Raised when there is a issue with the configured host app.
-    """
+    """Raised when there is a issue with the configured host app."""
+
     pass
+
 
 def set_host_app(host_app, protocol="usb"):
     """
-    Set the host_app and the protocol to use for control
+    Set the host_app and the protocol to use for control.
 
     Raises
     ------
@@ -35,17 +34,20 @@ def set_host_app(host_app, protocol="usb"):
     global HOST_APP
     global PROTOCOL
     HOST_APP = Path(host_app)
-    if platform.system().lower() == "windows" and HOST_APP.suffix != '.exe':
-        HOST_APP = HOST_APP.with_suffix('.exe')
+    if platform.system().lower() == "windows" and HOST_APP.suffix != ".exe":
+        HOST_APP = HOST_APP.with_suffix(".exe")
     if not HOST_APP.is_file():
         raise InvalidHostAppError(f"Host App file {str(HOST_APP)} doesn't exist")
     PROTOCOL = protocol
     if PROTOCOL != "usb":
-        raise InvalidHostAppError(f"Host control over {PROTOCOL} protocol not supported. Only usb protocol supported")
+        raise InvalidHostAppError(
+            f"Host control over {PROTOCOL} protocol not supported. Only usb protocol supported"
+        )
+
 
 def get_host_app():
     """
-    Get the host_app and the protocol to use for control
+    Get the host_app and the protocol to use for control.
 
     Raises
     ------
@@ -53,11 +55,11 @@ def get_host_app():
         If executable for binary not set
 
     Returns
-    ----------
+    -------
     host_app and control protocol to use
     """
     if not HOST_APP.is_file():
         raise InvalidHostAppError(f"Invalid Host App file {HOST_APP}. Call set_host_app() to set")
     if PROTOCOL != "usb":
-        raise InvalidHostAppError(f"Invalid host control protocol. Call set_host_app() to set")
+        raise InvalidHostAppError("Invalid host control protocol. Call set_host_app() to set")
     return HOST_APP, PROTOCOL

@@ -50,7 +50,9 @@ class envelope_detector_peak(dspg.dsp_block):
 
     """
 
-    def __init__(self, fs, n_chans=1, attack_t=None, release_t=None, detect_t=None, Q_sig=dspg.Q_SIG):
+    def __init__(
+        self, fs, n_chans=1, attack_t=None, release_t=None, detect_t=None, Q_sig=dspg.Q_SIG
+    ):
         super().__init__(fs, n_chans, Q_sig)
 
         if detect_t and (attack_t or release_t):
@@ -62,10 +64,10 @@ class envelope_detector_peak(dspg.dsp_block):
         # attack times simplified from McNally, seem pretty close. Assumes the
         # time constant of a digital filter is the -3 dB point where
         # abs(H(z))**2 = 0.5.
-        T = 1/fs
+        T = 1 / fs
         # attack/release time can't be faster than the length of 2 samples.
-        self.attack_alpha = min(2*T / attack_t, 1.0)
-        self.release_alpha = min(2*T / release_t, 1.0)
+        self.attack_alpha = min(2 * T / attack_t, 1.0)
+        self.release_alpha = min(2 * T / release_t, 1.0)
 
         # very long times might quantize to zero, maybe just limit a better way
         assert self.attack_alpha > 0
@@ -103,7 +105,7 @@ class envelope_detector_peak(dspg.dsp_block):
             alpha = self.release_alpha
 
         # do exponential moving average
-        self.envelope[channel] = ((1-alpha) * self.envelope[channel]) + (alpha * sample_mag)
+        self.envelope[channel] = ((1 - alpha) * self.envelope[channel]) + (alpha * sample_mag)
 
         return self.envelope[channel]
 
@@ -133,7 +135,9 @@ class envelope_detector_peak(dspg.dsp_block):
             alpha = self.release_alpha_f32
 
         # do exponential moving average
-        self.envelope_f32[channel] = self.envelope_f32[channel] + alpha * (sample_mag - self.envelope_f32[channel])
+        self.envelope_f32[channel] = self.envelope_f32[channel] + alpha * (
+            sample_mag - self.envelope_f32[channel]
+        )
 
         # if we got floats, return floats, otherwise return np.float32
         if isinstance(sample, np.float32):
@@ -149,8 +153,7 @@ class envelope_detector_peak(dspg.dsp_block):
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):
-                this_chan[sample] = self.process_xcore(this_chan[sample],
-                                                       channel=chan)
+                this_chan[sample] = self.process_xcore(this_chan[sample], channel=chan)
 
         return output
 
@@ -222,7 +225,7 @@ class envelope_detector_rms(envelope_detector_peak):
             alpha = self.release_alpha
 
         # do exponential moving average
-        self.envelope[channel] = ((1-alpha) * self.envelope[channel]) + (alpha * sample_mag)
+        self.envelope[channel] = ((1 - alpha) * self.envelope[channel]) + (alpha * sample_mag)
 
         return self.envelope[channel]
 
@@ -256,7 +259,9 @@ class envelope_detector_rms(envelope_detector_peak):
             alpha = self.release_alpha_f32
 
         # do exponential moving average
-        self.envelope_f32[channel] = self.envelope_f32[channel] + alpha * (sample_mag - self.envelope_f32[channel])
+        self.envelope_f32[channel] = self.envelope_f32[channel] + alpha * (
+            sample_mag - self.envelope_f32[channel]
+        )
 
         # if we got floats, return floats, otherwise return np.float32
         if isinstance(sample, np.float32):
@@ -272,9 +277,9 @@ class limiter_base(dspg.dsp_block):
         super().__init__(fs, n_chans, Q_sig)
 
         # attack times simplified from McNally, seem pretty close
-        T = 1/fs
-        self.attack_alpha = 2*T / attack_t
-        self.release_alpha = 2*T / release_t
+        T = 1 / fs
+        self.attack_alpha = 2 * T / attack_t
+        self.release_alpha = 2 * T / release_t
         self.gain = [1] * n_chans
 
         # These are defined differently for peak and RMS limiters
@@ -298,7 +303,7 @@ class limiter_base(dspg.dsp_block):
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
         # if envelope below threshold, apply unity gain, otherwise scale down
-        new_gain = self.threshold/envelope
+        new_gain = self.threshold / envelope
         new_gain = min(1, new_gain)
 
         # see if we're attacking or decaying
@@ -308,10 +313,10 @@ class limiter_base(dspg.dsp_block):
             alpha = self.release_alpha
 
         # do exponential moving average
-        self.gain[channel] = ((1-alpha) * self.gain[channel]) + (alpha * new_gain)
+        self.gain[channel] = ((1 - alpha) * self.gain[channel]) + (alpha * new_gain)
 
         # apply gain to input
-        y = self.gain[channel]*sample
+        y = self.gain[channel] * sample
         return y, new_gain, envelope
 
     def process_xcore(self, sample, channel=0):
@@ -327,7 +332,7 @@ class limiter_base(dspg.dsp_block):
             envelope = np.float32(1e-20)
 
         # if envelope below threshold, apply unity gain, otherwise scale down
-        new_gain = self.threshold_f32/envelope
+        new_gain = self.threshold_f32 / envelope
         new_gain = new_gain if new_gain < np.float32(1) else np.float32(1)
 
         # see if we're attacking or decaying
@@ -337,10 +342,12 @@ class limiter_base(dspg.dsp_block):
             alpha = self.release_alpha_f32
 
         # do exponential moving average
-        self.gain_f32[channel] = self.gain_f32[channel] + alpha * (new_gain - self.gain_f32[channel])
+        self.gain_f32[channel] = self.gain_f32[channel] + alpha * (
+            new_gain - self.gain_f32[channel]
+        )
 
         # apply gain
-        y = self.gain_f32[channel]*sample
+        y = self.gain_f32[channel] * sample
 
         # quantize before return
         y = utils.float_s32(y)
@@ -356,8 +363,7 @@ class limiter_base(dspg.dsp_block):
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):
-                this_chan[sample] = self.process(this_chan[sample],
-                                                 channel=chan)[0]
+                this_chan[sample] = self.process(this_chan[sample], channel=chan)[0]
 
         return output
 
@@ -369,41 +375,35 @@ class limiter_base(dspg.dsp_block):
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):
-                this_chan[sample] = self.process_xcore(this_chan[sample],
-                                                       channel=chan)[0]
+                this_chan[sample] = self.process_xcore(this_chan[sample], channel=chan)[0]
 
         return output
 
 
 class limiter_peak(limiter_base):
-
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         self.threshold = utils.db2gain(threshold_db)
         self.threshold_f32 = np.float32(self.threshold)
-        self.env_detector = envelope_detector_peak(fs, n_chans=n_chans,
-                                                   attack_t=attack_t,
-                                                   release_t=release_t,
-                                                   Q_sig=self.Q_sig)
+        self.env_detector = envelope_detector_peak(
+            fs, n_chans=n_chans, attack_t=attack_t, release_t=release_t, Q_sig=self.Q_sig
+        )
 
 
 class limiter_rms(limiter_base):
-
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         # note rms comes as x**2, so use db_pow
         self.threshold = utils.db_pow2gain(threshold_db)
         self.threshold_f32 = np.float32(self.threshold)
-        self.env_detector = envelope_detector_rms(fs, n_chans=n_chans,
-                                                  attack_t=attack_t,
-                                                  release_t=release_t,
-                                                  Q_sig=self.Q_sig)
+        self.env_detector = envelope_detector_rms(
+            fs, n_chans=n_chans, attack_t=attack_t, release_t=release_t, Q_sig=self.Q_sig
+        )
 
 
 class hard_limiter_peak(limiter_peak):
-
     def process(self, sample, channel=0):
         # do peak limiting
         y = super().process(sample, channel)
@@ -421,8 +421,9 @@ class hard_limiter_peak(limiter_peak):
 
 
 class soft_limiter_peak(limiter_peak):
-    def __init__(self, fs, threshold_db, attack_t, release_t, delay=0,
-                 nonlinear_point=0.5, Q_sig=dspg.Q_SIG):
+    def __init__(
+        self, fs, threshold_db, attack_t, release_t, delay=0, nonlinear_point=0.5, Q_sig=dspg.Q_SIG
+    ):
         super().__init__(fs, threshold_db, attack_t, release_t, delay, Q_sig)
         self.nonlinear_point = nonlinear_point
         raise NotImplementedError
@@ -442,11 +443,11 @@ class lookahead_limiter_peak(limiter_base):
 
         self.threshold = utils.db2gain(threshold_db)
         self.threshold_f32 = np.float32(self.threshold)
-        self.env_detector = envelope_detector_peak(fs, attack_t=attack_t,
-                                                   release_t=release_t,
-                                                   Q_sig=self.Q_sig)
+        self.env_detector = envelope_detector_peak(
+            fs, attack_t=attack_t, release_t=release_t, Q_sig=self.Q_sig
+        )
 
-        self.delay = np.ceil(attack_t*fs)
+        self.delay = np.ceil(attack_t * fs)
         self.delay_line = np.zeros(self.delay_line)
         raise NotImplementedError
 
@@ -464,10 +465,10 @@ class lookahead_limiter_rms(limiter_base):
 
         self.threshold = utils.db2gain(threshold_db)
         self.threshold_f32 = np.float32(self.threshold)
-        self.env_detector = envelope_detector_rms(fs, attack_t=attack_t,
-                                                  release_t=release_t,
-                                                  Q_sig=self.Q_sig)
-        self.delay = np.ceil(attack_t*fs)
+        self.env_detector = envelope_detector_rms(
+            fs, attack_t=attack_t, release_t=release_t, Q_sig=self.Q_sig
+        )
+        self.delay = np.ceil(attack_t * fs)
         self.delay_line = np.zeros(self.delay_line)
         raise NotImplementedError
 
@@ -476,6 +477,7 @@ class lookahead_limiter_rms(limiter_base):
 
     def process_xcore(self, sample, channel=0):
         raise NotImplementedError
+
 
 # TODO lookahead limiters and compressors
 # TODO add soft limiter
@@ -486,16 +488,14 @@ class lookahead_limiter_rms(limiter_base):
 
 
 if __name__ == "__main__":
-    import audio_dsp.dsp.signal_gen as gen
-
     fs = 48000
-    x1 = np.ones(int(fs*0.5))
-    x2 = 0.1*np.ones(int(fs*0.5))
+    x1 = np.ones(int(fs * 0.5))
+    x2 = 0.1 * np.ones(int(fs * 0.5))
 
     x = np.concatenate((x1, x2, x1, x2))
     # x = gen.sin(fs, 0.2, 997*4, 1)
 
-    t = np.arange(len(x))/fs
+    t = np.arange(len(x)) / fs
 
     threshold = -6
     at = 0.01
@@ -520,8 +520,7 @@ if __name__ == "__main__":
     with cProfile.Profile() as pr:
         for n in range(len(y)):
             y_int[n], f_int[n], env_int[n] = lt.process_xcore(x[n])
-        pr.print_stats(sort='time')
-
+        pr.print_stats(sort="time")
 
     thresh_passed = np.argmax(utils.db(env) > threshold)
     sig_3dB = np.argmax(utils.db(y) < (threshold + 3))
@@ -530,6 +529,7 @@ if __name__ == "__main__":
     print(measured_at)
 
     import matplotlib.pyplot as plt
+
     # plt.plot(t, utils.db(x))
     plt.plot(t, utils.db(y))
     plt.plot(t, utils.db(env))
