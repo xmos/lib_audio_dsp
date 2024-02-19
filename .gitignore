@@ -1,8 +1,8 @@
-# Editor cruft
+# Editor 
 **/.vscode/
 **/*.swp
 
-# Build cruft
+# Build 
 **/build*/
 **/_build*/
 **/_templates*/
@@ -10,12 +10,12 @@
 **/bin*/
 **/dist*/
 
-# Build & debug cruft
+# Build & debug 
 *.a
 *.vcd
 *.gtkw
 
-# Python cruft
+# Python 
 **/.venv/
 **/.python-version
 **/*.pyc
@@ -23,8 +23,8 @@
 **/*.egg-info/
 **/.pytest_cache
 
-# test cruft
+# test 
 **/test_*.log
 
-# macOS cruft
+# macOS 
 .DS_Store

@@ -1,0 +1,12 @@
+module:
+  cascaded_biquads:
+    left_shift:
+      type: int
+      size: 8
+    filter_coeffs:
+      type: int32_t
+      size: 40
+      attribute: DWORD_ALIGNED
+includes:
+  - "stdint.h"
+  - "stages/adsp_module.h"

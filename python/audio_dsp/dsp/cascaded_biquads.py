@@ -1,15 +1,22 @@
+# Copyright 2024 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import numpy as np
 import matplotlib.pyplot as plt
 
-import audio_dsp.biquad as bq
-import audio_dsp.utils as utils
+from . import biquad as bq
+from . import utils as utils
+from audio_dsp.dsp import generic as dspg
 
 
-class cascaded_biquads():
-    def __init__(self, coeffs_list):
-        self.biquads = []
-        for coeffs in coeffs_list:
-            self.biquads.append(bq.biquad(coeffs))
+class cascaded_biquads_8(dspg.dsp_block):
+    def __init__(self, coeffs_list, fs, n_chans, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, Q_sig)
+        self.biquads = [None]*8
+        for n in range(8):
+            if n < len(coeffs_list):
+                self.biquads[n] = bq.biquad(coeffs_list[n], fs, n_chans)
+            else:
+                self.biquads[n] = bq.biquad_bypass(fs, n_chans)
 
     def process(self, sample):
         y = sample
@@ -18,38 +25,77 @@ class cascaded_biquads():
 
         return y
 
+    def process_frame(self, frame):
+        y = frame
+        for biquad in self.biquads:
+            y = biquad.process_frame(y)
+
+        return y
+
+    def process_int(self, sample):
+        y = sample
+        for biquad in self.biquads:
+            y = biquad.process_int(y)
+
+        return y
+
+    def process_frame_int(self, frame):
+        y = frame
+        for biquad in self.biquads:
+            y = biquad.process_frame_int(y)
+
+        return y
+
+    def process_vpu(self, sample):
+        y = sample
+        for biquad in self.biquads:
+            y = biquad.process_vpu(y)
+
+        return y
+
+    def process_frame_vpu(self, frame):
+        y = frame
+        for biquad in self.biquads:
+            y = biquad.process_frame_vpu(y)
+
+        return y
+
     def freq_response(self, nfft=512):
-        w, h_all = self.biquads[0].freq_response(nfft)
+        f, h_all = self.biquads[0].freq_response(nfft)
         for biquad in self.biquads[1:]:
-            w, h = biquad.freq_response(nfft)
+            _, h = biquad.freq_response(nfft)
             h_all *= h
 
-        return w, h_all
+        return f, h_all
+
+    def reset_state(self):
+        for biquad in self.biquads:
+            biquad.reset_state()
+
+        return
 
 
-class butterworth_lowpass(cascaded_biquads):
-    def __init__(self, fs, N, fc):
+class butterworth_lowpass(cascaded_biquads_8):
+    def __init__(self, fs, n_chans, N, fc):
         coeffs_list = make_butterworth_lowpass(N, fc, fs)
-        super().__init__(coeffs_list)
+        super().__init__(coeffs_list, fs, n_chans)
 
 
-class butterworth_highpass(cascaded_biquads):
-    def __init__(self, fs, N, fc):
+class butterworth_highpass(cascaded_biquads_8):
+    def __init__(self, fs, n_chans, N, fc):
         coeffs_list = make_butterworth_highpass(N, fc, fs)
-        super().__init__(coeffs_list)
+        super().__init__(coeffs_list, fs, n_chans)
 
 
-class parametric_eq(cascaded_biquads):
-    def __init__(self, fs, filter_spec):
+class parametric_eq_8band(cascaded_biquads_8):
+    def __init__(self, fs, n_chans, filter_spec):
         coeffs_list = []
         for spec in filter_spec:
             class_name = f"make_biquad_{spec[0]}"
             class_handle = getattr(bq, class_name)
             coeffs_list.append(class_handle(fs, *spec[1:]))
 
-        super().__init__(coeffs_list)
-
-
+        super().__init__(coeffs_list, fs, n_chans)
 
 
 def make_butterworth_lowpass(N, fc, fs):
@@ -59,6 +105,8 @@ def make_butterworth_lowpass(N, fc, fs):
     # The function will return N/2 sets of biquad coefficients
     #
     # translated from Neil Robertson's https://www.dsprelated.com/showarticle/1137.php
+    #
+    # see also https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html
 
     assert (fc <= fs/2), 'fc must be less than fs/2'
     assert (N % 2 == 0), 'N must be even'
@@ -90,7 +138,9 @@ def make_butterworth_lowpass(N, fc, fs):
         b1 = 2*K
         b2 = K
 
-        coeffs_list.append([b0, b1, b2, a0, a1, a2])
+        coeffs = (b0, b1, b2, a0, a1, a2)
+        coeffs = bq.normalise_biquad(coeffs)
+        coeffs_list.append(coeffs)
 
     return coeffs_list
 
@@ -103,6 +153,8 @@ def make_butterworth_highpass(N, fc, fs):
     #
     # translated from from Neil Robertson's https://www.dsprelated.com/showarticle/1137.php and
     # https://www.dsprelated.com/showarticle/1135.php
+    #
+    # see also https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html
 
     assert (fc <= fs/2), 'fc must be less than fs/2'
     assert (N % 2 == 0), 'N must be even'
@@ -135,7 +187,9 @@ def make_butterworth_highpass(N, fc, fs):
         b1 = -2*K
         b2 = K
 
-        coeffs_list.append([b0, b1, b2, a0, a1, a2])
+        coeffs = (b0, b1, b2, a0, a1, a2)
+        coeffs = bq.normalise_biquad(coeffs)
+        coeffs_list.append(coeffs)
 
     return coeffs_list
 
@@ -146,7 +200,7 @@ if __name__ == "__main__":
     filter_spec = [['lowpass', 8000, 0.707],
                    ['highpass', 200, 1],
                    ['peaking', 1000, 5, 10]]
-    peq = parametric_eq(fs, filter_spec)
+    peq = parametric_eq_8band(fs, 1, filter_spec)
 
     w, response = peq.freq_response()
 
@@ -164,9 +218,9 @@ if __name__ == "__main__":
 
     a = make_butterworth_highpass(6, fc, fs)
 
-    bq0 = bq.biquad(bq.normalise_biquad(a[0]))
-    bq1 = bq.biquad(bq.normalise_biquad(a[1]))
-    bq2 = bq.biquad(bq.normalise_biquad(a[2]))
+    bq0 = bq.biquad(bq.normalise_biquad(a[0]), fs, 1)
+    bq1 = bq.biquad(bq.normalise_biquad(a[1]), fs, 1)
+    bq2 = bq.biquad(bq.normalise_biquad(a[2]), fs, 1)
 
     w, response0 = bq0.freq_response()
     w, response1 = bq1.freq_response()
@@ -184,6 +238,5 @@ if __name__ == "__main__":
     figs[1].grid()
 
     plt.show()
-
 
     pass

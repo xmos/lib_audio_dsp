@@ -1,0 +1,49 @@
+project: lib_audio_dsp
+version: 0.1.0
+
+## example of overridable setting
+# watermarks is redefined in documentation and again for a specific product
+# eg different products might have different setting but we'd like to provide defaults
+watermarks: []
+
+products:
+  lib_audio_dsp:
+    documentation:
+      build_path: doc/_build
+      output_path: doc/_out
+
+documentation:
+  title: Audio DSP Library
+  root_doc: index.rst
+  exclude_patterns_path: doc/exclude_patterns.inc
+  substitutions_path: doc/substitutions.inc
+  linkcheck_ignore_regex: []
+  doc_dirname: doc
+  build_path: doc/_build
+  output_path: doc/_out
+  doxygen_dirname: _doxygen
+  doctrees_dirname: _doctrees
+  watermarks: []
+  autosection_label_depth: 3
+  latex_toc_depth: 3
+  latex_secnum_depth: 3
+  enable_latex_index: false
+  custom_ref_directives:
+    my-special-thing: A special thing for a special project
+  cognidox_part_number: XM-999999
+  run_before: |
+    python doc/programming_guide/gen/autogen.py
+  extra_sphinx_opts: [-W]
+  doxygen_projects:
+    lib_audio_dsp:
+      doxyfile_path: doc/Doxyfile.inc
+      doxy_overrides: |
+        GENERATE_HTML = yes
+        GENERATE_LATEX = yes
+        WARN_AS_ERROR = yes
+        WARN_IF_UNDOCUMENTED = no
+
+  pdfs:
+    doc/programming_guide/index:
+      pdf_title: '{{product}} - Programming Guide'
+      pdf_filename: '{{product}}_programming_guide_v{{version}}'
