@@ -5,6 +5,7 @@ some graphviz helpers.
 """
 import graphviz  # type: ignore
 
+
 def new_record_digraph():
     """
     Create a digraph with some attributes set
@@ -17,5 +18,5 @@ def new_record_digraph():
     dot = graphviz.Digraph()
     dot.clear()
     dot.attr(ranksep="1.0")
-    dot.attr('node', shape='record')
+    dot.attr("node", shape="record")
     return dot

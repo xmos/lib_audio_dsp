@@ -11,7 +11,7 @@ from audio_dsp.dsp import generic as dspg
 class cascaded_biquads_8(dspg.dsp_block):
     def __init__(self, coeffs_list, fs, n_chans, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
-        self.biquads = [None]*8
+        self.biquads = [None] * 8
         for n in range(8):
             if n < len(coeffs_list):
                 self.biquads[n] = bq.biquad(coeffs_list[n], fs, n_chans)
@@ -108,34 +108,34 @@ def make_butterworth_lowpass(N, fc, fs):
     #
     # see also https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html
 
-    assert (fc <= fs/2), 'fc must be less than fs/2'
-    assert (N % 2 == 0), 'N must be even'
+    assert fc <= fs / 2, "fc must be less than fs/2"
+    assert N % 2 == 0, "N must be even"
 
     # Find analog filter poles above the real axis for the low-pass
-    ks = np.arange(1, N//2 + 1)
-    theta = (2*ks - 1)*np.pi/(2*N)
-    pa = -np.sin(theta) + 1j*np.cos(theta)
+    ks = np.arange(1, N // 2 + 1)
+    theta = (2 * ks - 1) * np.pi / (2 * N)
+    pa = -np.sin(theta) + 1j * np.cos(theta)
     # reverse sequence of poles – put high Q last to minimise change of clipping
     pa = np.flip(pa)
 
     # scale poles in frequency
-    Fc = fs/np.pi * np.tan(np.pi*fc/fs)
-    pa = pa*2*np.pi*Fc
+    Fc = fs / np.pi * np.tan(np.pi * fc / fs)
+    pa = pa * 2 * np.pi * Fc
 
     # poles in the z plane by bilinear transform
-    p = (1 + pa/(2*fs))/(1 - pa/(2*fs))
+    p = (1 + pa / (2 * fs)) / (1 - pa / (2 * fs))
 
     coeffs_list = []
     for k in ks:
         # denominator coefficients
         a0 = 1
-        a1 = -2*np.real(p[k-1])
-        a2 = abs(p[k-1])**2
+        a1 = -2 * np.real(p[k - 1])
+        a2 = abs(p[k - 1]) ** 2
 
         # numerator coefficients
         K = (a0 + a1 + a2) / 4
         b0 = K
-        b1 = 2*K
+        b1 = 2 * K
         b2 = K
 
         coeffs = (b0, b1, b2, a0, a1, a2)
@@ -156,35 +156,35 @@ def make_butterworth_highpass(N, fc, fs):
     #
     # see also https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html
 
-    assert (fc <= fs/2), 'fc must be less than fs/2'
-    assert (N % 2 == 0), 'N must be even'
+    assert fc <= fs / 2, "fc must be less than fs/2"
+    assert N % 2 == 0, "N must be even"
 
     # Find analog filter poles above the real axis for the low-pass
-    ks = np.arange(1, N//2 + 1)
-    theta = (2*ks - 1)*np.pi/(2*N)
-    pa = -np.sin(theta) + 1j*np.cos(theta)
+    ks = np.arange(1, N // 2 + 1)
+    theta = (2 * ks - 1) * np.pi / (2 * N)
+    pa = -np.sin(theta) + 1j * np.cos(theta)
     # reverse sequence of poles – put high Q last to minimise change of clipping
     pa = np.flip(pa)
 
     # scale poles in frequency
-    Fc = fs/np.pi * np.tan(np.pi*fc/fs)
+    Fc = fs / np.pi * np.tan(np.pi * fc / fs)
     # transform to hp poles
-    pa = 2*np.pi*Fc/pa
+    pa = 2 * np.pi * Fc / pa
 
     # poles in the z plane by bilinear transform
-    p = (1 + pa/(2*fs))/(1 - pa/(2*fs))
+    p = (1 + pa / (2 * fs)) / (1 - pa / (2 * fs))
 
     coeffs_list = []
     for k in ks:
         # denominator coefficients
         a0 = 1
-        a1 = -2*np.real(p[k-1])
-        a2 = abs(p[k-1])**2
+        a1 = -2 * np.real(p[k - 1])
+        a2 = abs(p[k - 1]) ** 2
 
         # numerator coefficients
         K = (a0 - a1 + a2) / 4
         b0 = K
-        b1 = -2*K
+        b1 = -2 * K
         b2 = K
 
         coeffs = (b0, b1, b2, a0, a1, a2)
@@ -195,20 +195,21 @@ def make_butterworth_highpass(N, fc, fs):
 
 
 if __name__ == "__main__":
-
     fs = 48000
-    filter_spec = [['lowpass', 8000, 0.707],
-                   ['highpass', 200, 1],
-                   ['peaking', 1000, 5, 10]]
+    filter_spec = [
+        ["lowpass", 8000, 0.707],
+        ["highpass", 200, 1],
+        ["peaking", 1000, 5, 10],
+    ]
     peq = parametric_eq_8band(fs, 1, filter_spec)
 
     w, response = peq.freq_response()
 
     fig, figs = plt.subplots(2, 1)
-    figs[0].semilogx(w/(2*np.pi)*fs, utils.db(response))
+    figs[0].semilogx(w / (2 * np.pi) * fs, utils.db(response))
     figs[0].grid()
 
-    figs[1].semilogx(w/(2*np.pi)*fs, np.angle(response))
+    figs[1].semilogx(w / (2 * np.pi) * fs, np.angle(response))
     figs[1].grid()
 
     plt.show()
@@ -225,16 +226,16 @@ if __name__ == "__main__":
     w, response0 = bq0.freq_response()
     w, response1 = bq1.freq_response()
     w, response2 = bq2.freq_response()
-    response = response0*response1*response2
+    response = response0 * response1 * response2
 
     fig, figs = plt.subplots(2, 1)
-    figs[0].plot(w/(2*np.pi)*fs, utils.db(response0))
-    figs[0].plot(w/(2*np.pi)*fs, utils.db(response1))
-    figs[0].plot(w/(2*np.pi)*fs, utils.db(response2))
-    figs[0].plot(w/(2*np.pi)*fs, utils.db(response))
+    figs[0].plot(w / (2 * np.pi) * fs, utils.db(response0))
+    figs[0].plot(w / (2 * np.pi) * fs, utils.db(response1))
+    figs[0].plot(w / (2 * np.pi) * fs, utils.db(response2))
+    figs[0].plot(w / (2 * np.pi) * fs, utils.db(response))
     figs[0].grid()
 
-    figs[1].plot(w/(2*np.pi)*fs, np.angle(response))
+    figs[1].plot(w / (2 * np.pi) * fs, np.angle(response))
     figs[1].grid()
 
     plt.show()

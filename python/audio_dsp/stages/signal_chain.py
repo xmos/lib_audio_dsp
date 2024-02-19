@@ -4,11 +4,13 @@
 from ..design.stage import Stage, find_config, StageOutput
 from operator import itemgetter
 
+
 class Bypass(Stage):
     """
     Stage which does not modify its inputs. Useful if data needs to flow through
     a thread which is not being processed on to keep pipeline lengths aligned.
     """
+
     def __init__(self, **kwargs):
         super().__init__(config=find_config("bypass"), **kwargs)
         self.create_outputs(self.n_in)
@@ -31,11 +33,14 @@ class Fork(Stage):
         each entry contains a set of outputs which will contain the same
         data as the input.
     """
+
     def __init__(self, count=2, **kwargs):
         super().__init__(config=find_config("fork"), **kwargs)
         self.create_outputs(self.n_in * count)
-        fork_indices = [list(range(i, self.n_in*count, count)) for i in range(count)]
-        self.forks: list[list[StageOutput]]  = [list(itemgetter(*i)(self.o)) for i in fork_indices]
+        fork_indices = [list(range(i, self.n_in * count, count)) for i in range(count)]
+        self.forks: list[list[StageOutput]] = [
+            list(itemgetter(*i)(self.o)) for i in fork_indices
+        ]
 
     def get_frequency_response(self, nfft=512):
         # not sure what this looks like!

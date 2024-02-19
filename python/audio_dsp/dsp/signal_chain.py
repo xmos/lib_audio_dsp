@@ -17,7 +17,7 @@ class mixer(dspg.dsp_block):
         self.gain_int = utils.int32(self.gain * 2**self.Q_sig)
 
     def process(self, sample, channel=0):
-        scaled_samples = np.array(sample)*self.gain
+        scaled_samples = np.array(sample) * self.gain
         y = np.sum(scaled_samples)
 
         return y
@@ -26,11 +26,13 @@ class mixer(dspg.dsp_block):
         y = 0
         for sample in sample_list:
             sample_int = utils.int32(round(sample * 2**self.Q_sig))
-            scaled_sample = utils.int32_mult_sat_extract(sample_int, self.gain_int, self.Q_sig)
+            scaled_sample = utils.int32_mult_sat_extract(
+                sample_int, self.gain_int, self.Q_sig
+            )
             y = utils.int40(y + scaled_sample)
 
         y = utils.int32(y)
-        y_flt = (float(y)*2**-self.Q_sig)
+        y_flt = float(y) * 2**-self.Q_sig
 
         return y_flt
 
@@ -57,7 +59,7 @@ class mixer(dspg.dsp_block):
     def freq_response(self, nfft=512):
         # flat response scaled by gain
         w = np.fft.rfftfreq(nfft)
-        h = np.ones_like(w)*self.gain
+        h = np.ones_like(w) * self.gain
         return w, h
 
 
@@ -68,7 +70,6 @@ class adder(mixer):
 
 
 class subtractor(dspg.dsp_block):
-
     def __init__(self, fs, Q_sig=dspg.Q_SIG):
         # always has 2 channels
         super().__init__(fs, 2, Q_sig)
@@ -85,7 +86,7 @@ class subtractor(dspg.dsp_block):
 
         y = utils.int32(sample_int_0 - sample_int_1)
 
-        y_flt = (float(y)*2**-self.Q_sig)
+        y_flt = float(y) * 2**-self.Q_sig
 
         return y_flt
 
@@ -115,6 +116,7 @@ class fixed_gain(dspg.dsp_block):
     In the current implementation, the maximum boost is 6dB.
 
     """
+
     def __init__(self, fs, n_chans, gain_db, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
         assert gain_db <= 24, "Maximum fixed gain is +24dB"
@@ -123,21 +125,21 @@ class fixed_gain(dspg.dsp_block):
         self.gain_int = utils.int32(self.gain * 2**self.Q_sig)
 
     def process(self, sample, channel=0):
-        y = sample*self.gain
+        y = sample * self.gain
         return y
 
     def process_xcore(self, sample, channel=0):
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
         y = utils.int32_mult_sat_extract(sample_int, self.gain_int, self.Q_sig)
 
-        y_flt = (float(y)*2**-self.Q_sig)
+        y_flt = float(y) * 2**-self.Q_sig
 
         return y_flt
 
     def freq_response(self, nfft=512):
         # flat response scaled by gain
         w = np.fft.rfftfreq(nfft)
-        h = np.ones_like(w)*self.gain
+        h = np.ones_like(w) * self.gain
         return w, h
 
 

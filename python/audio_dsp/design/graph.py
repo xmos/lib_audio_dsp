@@ -7,6 +7,7 @@ Basic data structures for managing the pipeline graph.
 from uuid import uuid4
 import graphlib
 
+
 class Node:
     """
     Graph node
@@ -19,13 +20,15 @@ class Node:
         node index in the graph. This is set by Graph
         when it is added to the graph.
     """
+
     def __init__(self):
         self.id = uuid4()
-        self.index: int | None= None
+        self.index: int | None = None
 
     def __hash__(self) -> int:
         """Support for using as dictionary/set keys"""
         return self.id.int
+
 
 class Edge:
     """
@@ -39,6 +42,7 @@ class Edge:
     dest : Node | None
         source and dest are the graph nodes that this edge connects between.
     """
+
     def __init__(self):
         self.id = uuid4()
         self.source: None | Node = None
@@ -53,6 +57,7 @@ class Edge:
 
     def set_dest(self, node: Node):
         self.dest = node
+
 
 class Graph:
     def __init__(self) -> None:
@@ -90,5 +95,3 @@ class Graph:
                     graph[edge.dest] = set((edge.source,))
 
         return tuple(graphlib.TopologicalSorter(graph).static_order())
-
-

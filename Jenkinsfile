@@ -107,6 +107,7 @@ pipeline {
                       }
                       dir("python") {
                         sh "pyright audio_dsp --skipunannotated --level warning"
+                        sh "black audio_dsp --check"
                       }
                     }
                   }
