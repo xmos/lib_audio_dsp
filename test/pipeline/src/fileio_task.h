@@ -1,7 +1,6 @@
 // Copyright 2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
-#ifndef FILEIO_TASK_H
-#define FILEIO_TASK_H
+#pragma once
 
 #define FILEREAD_CHUNK_SIZE (1024)
 typedef struct
@@ -13,4 +12,3 @@ typedef struct
 
 void parse_args(const char *args_file, test_config_t *test_config);
 
-#endif

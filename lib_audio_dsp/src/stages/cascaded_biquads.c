@@ -88,4 +88,8 @@ void cascaded_biquads_control(void *module_state, module_control_t *control)
         memcpy(config, &state->config, sizeof(cascaded_biquads_config_t));
         control->config_rw_state = config_read_updated;
     }
+    else
+    {
+        // nothing to do.
+    }
 }

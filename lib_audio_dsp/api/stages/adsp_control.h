@@ -1,7 +1,6 @@
 // Copyright 2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
-#ifndef ADSP_CONTROL_H
-#define ADSP_CONTROL_H
+#pragma once
 #include <stdint.h>
 #include "stages/adsp_module.h"
 
@@ -33,4 +32,3 @@ adsp_control_status_t adsp_write_module_config(module_instance_t** modules, // A
                                             adsp_stage_control_cmd_t *cmd
                                         );
 
-#endif
