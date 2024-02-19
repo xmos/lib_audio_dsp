@@ -38,9 +38,7 @@ class Fork(Stage):
         super().__init__(config=find_config("fork"), **kwargs)
         self.create_outputs(self.n_in * count)
         fork_indices = [list(range(i, self.n_in * count, count)) for i in range(count)]
-        self.forks: list[list[StageOutput]] = [
-            list(itemgetter(*i)(self.o)) for i in fork_indices
-        ]
+        self.forks: list[list[StageOutput]] = [list(itemgetter(*i)(self.o)) for i in fork_indices]
 
     def get_frequency_response(self, nfft=512):
         # not sure what this looks like!

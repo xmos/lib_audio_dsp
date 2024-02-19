@@ -111,17 +111,15 @@ class Pipeline:
         dot = new_record_digraph()
         for thread in self.threads:
             thread.add_to_dot(dot)
-        start_label = (
-            f"{{ start | {{ {'|'.join(f'<o{i}> {i}' for i in range(self._n_in))} }} }}"
-        )
-        end_label = (
-            f"{{ {{ {'|'.join(f'<i{i}> {i}' for i in range(self._n_out))} }} | end }}"
-        )
+        start_label = f"{{ start | {{ {'|'.join(f'<o{i}> {i}' for i in range(self._n_in))} }} }}"
+        end_label = f"{{ {{ {'|'.join(f'<i{i}> {i}' for i in range(self._n_out))} }} | end }}"
         dot.node("start", label=start_label)
         dot.node("end", label=end_label)
         for e in self._graph.edges:
             source = e.source.id.hex if e.source is not None else "start"
-            source = f"{source}:o{e.source_index}:s"  #  "s" means connect to the "south" of the port
+            source = (
+                f"{source}:o{e.source_index}:s"  #  "s" means connect to the "south" of the port
+            )
             dest = e.dest.id.hex if e.dest is not None else "end"
             dest = f"{dest}:i{e.dest_index}:n"  #  "n" means connect to the "north" of the port
             if e.dest is None and e.dest_index is None:
@@ -307,9 +305,7 @@ def _gen_chan_buf_write_q27_to_q31(channel, edge, frame_size):
     out_max = (-out_min) - 1
     edge = f"{edge}[idx]"
     sat = f"({edge} < {in_min}) ? {out_min} : (({edge} > {in_max}) ? {out_max} : ({edge} << {q_out - q_in}))"
-    return (
-        f"for(int idx = 0; idx < {frame_size}; ++idx) chan_out_word({channel}, {sat});"
-    )
+    return f"for(int idx = 0; idx < {frame_size}; ++idx) chan_out_word({channel}, {sat});"
 
 
 def _generate_dsp_threads(resolved_pipeline, block_size=1):
@@ -372,17 +368,13 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
             input_edges = [edge for edge in all_edges if edge[1][0] == stage[0]]
             if len(input_edges) > 0:  # To avoid compilation warnings
                 input_edges.sort(key=lambda e: e[1][1])
-                input_edges = ", ".join(
-                    f"edge{all_edges.index(e)}" for e in input_edges
-                )
+                input_edges = ", ".join(f"edge{all_edges.index(e)}" for e in input_edges)
                 func += f"\tint32_t* stage_{stage_thread_index}_input[] = {{{input_edges}}};\n"
 
             output_edges = [edge for edge in all_edges if edge[0][0] == stage[0]]
             if len(output_edges) > 0:
                 output_edges.sort(key=lambda e: e[0][1])
-                output_edges = ", ".join(
-                    f"edge{all_edges.index(e)}" for e in output_edges
-                )
+                output_edges = ", ".join(f"edge{all_edges.index(e)}" for e in output_edges)
                 func += f"\tint32_t* stage_{stage_thread_index}_output[] = {{{output_edges}}};\n"
 
         func += f"\tuint32_t start_ts, end_ts, start_control_ts, control_ticks;\n"
@@ -396,9 +388,7 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
         # case of the select so that control will be processed if no audio is playing.
         control = ""
         for i, (_, name) in enumerate(thread):
-            control += (
-                f"\t\t{name}_control(modules[{i}]->state, &modules[{i}]->control);\n"
-            )
+            control += f"\t\t{name}_control(modules[{i}]->state, &modules[{i}]->control);\n"
 
         read = f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
         # the same channel being read twice
@@ -416,17 +406,13 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
                         read += (
                             "\t\t\t"
                             + _gen_chan_buf_read_q31_to_q27(
-                                f"c_source[{i}]",
-                                f"edge{all_edges.index(edge)}",
-                                block_size,
+                                f"c_source[{i}]", f"edge{all_edges.index(edge)}", block_size
                             )
                             + "\n"
                         )
                     else:
                         read += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
-                read += (
-                    f"\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}}\n"
-                )
+                read += f"\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}}\n"
             read += "\t\tdo_control: {\n"
             read += "\t\tstart_control_ts = get_reference_time();\n"
             read += control
@@ -469,9 +455,7 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
                     out += (
                         "\t"
                         + _gen_chan_buf_write_q27_to_q31(
-                            f"c_dest[{out_index}]",
-                            f"edge{all_edges.index(edge)}",
-                            block_size,
+                            f"c_dest[{out_index}]", f"edge{all_edges.index(edge)}", block_size
                         )
                         + "\n"
                     )
@@ -522,10 +506,10 @@ def _generate_dsp_header(resolved_pipeline, out_dir=Path("build/dsp_pipeline")):
     header = "#pragma once\n"
     header += "#include <stages/adsp_pipeline.h>\n"
     header += "\n"
+    header += f"adsp_pipeline_t * adsp_{resolved_pipeline['identifier']}_pipeline_init();\n"
     header += (
-        f"adsp_pipeline_t * adsp_{resolved_pipeline['identifier']}_pipeline_init();\n"
+        f"void adsp_{resolved_pipeline['identifier']}_pipeline_main(adsp_pipeline_t* adsp);\n"
     )
-    header += f"void adsp_{resolved_pipeline['identifier']}_pipeline_main(adsp_pipeline_t* adsp);\n"
 
     (out_dir / f"adsp_generated_{resolved_pipeline['identifier']}.h").write_text(header)
 
@@ -583,27 +567,17 @@ def _generate_dsp_init(resolved_pipeline):
     # initialise the modules
     for thread in resolved_pipeline["threads"]:
         for stage_index, stage_name in thread:
-            stage_n_in = len(
-                [e for e in resolved_pipeline["edges"] if e[1][0] == stage_index]
-            )
-            stage_n_out = len(
-                [e for e in resolved_pipeline["edges"] if e[0][0] == stage_index]
-            )
+            stage_n_in = len([e for e in resolved_pipeline["edges"] if e[1][0] == stage_index])
+            stage_n_out = len([e for e in resolved_pipeline["edges"] if e[0][0] == stage_index])
             stage_frame_size = 1  # TODO
 
             defaults = {}
-            for config_field, value in resolved_pipeline["configs"][
-                stage_index
-            ].items():
+            for config_field, value in resolved_pipeline["configs"][stage_index].items():
                 if isinstance(value, list) or isinstance(value, tuple):
-                    defaults[config_field] = (
-                        "{" + ", ".join(str(i) for i in value) + "}"
-                    )
+                    defaults[config_field] = "{" + ", ".join(str(i) for i in value) + "}"
                 else:
                     defaults[config_field] = str(value)
-            struct_val = ", ".join(
-                f".{field} = {value}" for field, value in defaults.items()
-            )
+            struct_val = ", ".join(f".{field} = {value}" for field, value in defaults.items())
             # default_str = f"&({stage_name}_config_t){{{struct_val}}}"
             ret += f"""
             static {stage_name}_config_t config{stage_index} = {{ {struct_val} }};
@@ -723,7 +697,9 @@ def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
     dsp_main += _generate_dsp_threads(resolved_pipe)
     dsp_main += _generate_dsp_init(resolved_pipe)
 
-    dsp_main += f"void adsp_{resolved_pipe['identifier']}_pipeline_main(adsp_pipeline_t* adsp) {{\n"
+    dsp_main += (
+        f"void adsp_{resolved_pipe['identifier']}_pipeline_main(adsp_pipeline_t* adsp) {{\n"
+    )
 
     input_chan_idx = 0
     output_chan_idx = 0
@@ -758,9 +734,7 @@ def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
                     raise RuntimeError("Channel not found")
             input_channel_array.append(f"{array_source}[{idx_num}].end_b")
         input_channels = ",\n\t\t".join(input_channel_array)
-        dsp_main += (
-            f"\tchanend_t thread_{thread_idx}_inputs[] = {{\n\t\t{input_channels}}};\n"
-        )
+        dsp_main += f"\tchanend_t thread_{thread_idx}_inputs[] = {{\n\t\t{input_channels}}};\n"
 
         # thread output chanends
         output_channel_array = []
@@ -836,9 +810,7 @@ def profile_pipeline(pipeline: Pipeline):
             )
 
         if thread_frame_size == None:
-            raise RuntimeError(
-                f"Could not find out the frame size for thread index {thread.id}"
-            )
+            raise RuntimeError(f"Could not find out the frame size for thread index {thread.id}")
 
         reference_timer_freq_hz = 100e6
         frame_time_s = float(thread_frame_size) / thread_fs
@@ -864,12 +836,7 @@ def profile_pipeline(pipeline: Pipeline):
         cycles = int(ret.stdout.splitlines()[0].decode("utf-8"))
         percentage_used = (cycles / ticks_per_sample_time_s) * 100
         profile_info.append(
-            [
-                thread.id,
-                round(ticks_per_sample_time_s, 2),
-                cycles,
-                round(percentage_used, 2),
-            ]
+            [thread.id, round(ticks_per_sample_time_s, 2), cycles, round(percentage_used, 2)]
         )
     print(
         tabulate(

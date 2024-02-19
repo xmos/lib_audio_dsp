@@ -62,9 +62,7 @@ class CompositeStage:
     @property
     def o(self):
         all_stages = self.get_all_stages()
-        all_edges = list(
-            itertools.chain.from_iterable([stage.o for stage in all_stages])
-        )
+        all_edges = list(itertools.chain.from_iterable([stage.o for stage in all_stages]))
         return [edge for edge in all_edges if edge.dest not in all_stages]
 
     def stage(self, stage_type, inputs, **kwargs):
@@ -132,9 +130,7 @@ class CompositeStage:
         -------
             list of stages.
         """
-        return sum(
-            [c.get_all_stages() for c in self._composite_stages], start=self._stages
-        )
+        return sum([c.get_all_stages() for c in self._composite_stages], start=self._stages)
 
     def process(self, data):
         raise NotImplementedError()
@@ -144,13 +140,9 @@ class CompositeStage:
         Returns list of edges whose source and dest are within this composite
         """
         all_stages = self.get_all_stages()
-        all_edges = list(
-            itertools.chain.from_iterable([stage.o for stage in all_stages])
-        )
+        all_edges = list(itertools.chain.from_iterable([stage.o for stage in all_stages]))
         return [
-            edge
-            for edge in all_edges
-            if edge.dest in all_stages and edge.source in all_stages
+            edge for edge in all_edges if edge.dest in all_stages and edge.source in all_stages
         ]
 
     def draw(self):
@@ -166,7 +158,9 @@ class CompositeStage:
             dest = f"{e.dest.id.hex}:i{e.dest_index}:n"
             dot.edge(source, dest)
 
-        end_label = f"{{ {{ {'|'.join(f'<i{i}> {i}' for i in range(len(output_edges)))} }} | end }}"
+        end_label = (
+            f"{{ {{ {'|'.join(f'<i{i}> {i}' for i in range(len(output_edges)))} }} | end }}"
+        )
         dot.node("end", label=end_label)
         for i, e in enumerate(output_edges):
             source = f"{e.source.id.hex}:o{e.source_index}:s"

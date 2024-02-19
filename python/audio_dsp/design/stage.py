@@ -74,9 +74,7 @@ class StageOutput(Edge):
     @dest_index.setter
     def dest_index(self, value):
         if self._dest_index is not None:
-            raise RuntimeError(
-                f"This edge alread has a dest index, can't be changes to {value}"
-            )
+            raise RuntimeError(f"This edge alread has a dest index, can't be changes to {value}")
         self._dest_index = value
 
     def __repr__(self) -> str:
@@ -84,9 +82,7 @@ class StageOutput(Edge):
         Makes print output usable
         """
         dest = "-" if self.dest is None else f"{self.dest.index} {self.dest_index}"
-        source = (
-            "-" if self.source is None else f"{self.source.index} {self.source_index}"
-        )
+        source = "-" if self.source is None else f"{self.source.index} {self.source_index}"
         return f"({source} -> {dest})"
 
 
@@ -183,8 +179,7 @@ class Stage(Node):
         # module dict contains 1 entry with the name of the module as its key
         self.name = next(iter(self.yaml_dict["module"].keys()))
         self._control_fields = {
-            name: ValueControlField()
-            for name in self.yaml_dict["module"][self.name].keys()
+            name: ValueControlField() for name in self.yaml_dict["module"][self.name].keys()
         }
         self.details = {}
         self.dsp_block = None
@@ -192,9 +187,7 @@ class Stage(Node):
     @property
     def o(self):
         if self._o is None:
-            raise RuntimeError(
-                "Stage must add outputs with create_outputs in its __init__ method"
-            )
+            raise RuntimeError("Stage must add outputs with create_outputs in its __init__ method")
         return self._o
 
     def create_outputs(self, n_out):

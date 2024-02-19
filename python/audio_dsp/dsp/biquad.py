@@ -93,13 +93,7 @@ class biquad(dspg.dsp_block):
         # process a single sample using direct form 1. In the VPU the ``>> 30``
         # comes before accumulation
         y = utils.vlmaccr(
-            [
-                sample_int,
-                self.x1[channel],
-                self.x2[channel],
-                self.y1[channel],
-                self.y2[channel],
-            ],
+            [sample_int, self.x1[channel], self.x2[channel], self.y1[channel], self.y2[channel]],
             self.int_coeffs,
         )
 
@@ -199,41 +193,31 @@ def biquad_allpass(fs: int, n_chans: int, f: float, q: float) -> biquad:
     return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_peaking(
-    fs: int, n_chans: int, f: float, q: float, boost_db: float
-) -> biquad:
+def biquad_peaking(fs: int, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
     coeffs = make_biquad_peaking(fs, f, q, boost_db)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_constant_q(
-    fs: int, n_chans: int, f: float, q: float, boost_db: float
-) -> biquad:
+def biquad_constant_q(fs: int, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
     coeffs = make_biquad_constant_q(fs, f, q, boost_db)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_lowshelf(
-    fs: int, n_chans: int, f: float, q: float, boost_db: float
-) -> biquad:
+def biquad_lowshelf(fs: int, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
     # q is similar to standard low pass, i.e. > 0.707 will yield peakiness
     # the level change at f will be boost_db/2
     coeffs = make_biquad_lowshelf(fs, f, q, boost_db)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_highshelf(
-    fs: int, n_chans: int, f: float, q: float, boost_db: float
-) -> biquad:
+def biquad_highshelf(fs: int, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
     # q is similar to standard high pass, i.e. > 0.707 will yield peakiness
     # the level change at f will be boost_db/2
     coeffs = make_biquad_highshelf(fs, f, q, boost_db)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_linkwitz(
-    fs: int, n_chans: int, f0: float, q0: float, fp: float, qp: float
-) -> biquad:
+def biquad_linkwitz(fs: int, n_chans: int, f0: float, q0: float, fp: float, qp: float) -> biquad:
     # used for changing one low frequency roll off slope for another,
     # e.g. in a loudspeaker
     coeffs = make_biquad_linkwitz(fs, f0, q0, fp, qp)
@@ -293,18 +277,14 @@ def normalise_biquad(coeffs: list[float]) -> list[float]:
     return coeffs
 
 
-def round_and_check(
-    coeffs: list[float], b_shift: int = 0
-) -> tuple[list[float], list[int]]:
+def round_and_check(coeffs: list[float], b_shift: int = 0) -> tuple[list[float], list[int]]:
     # round to int32 precision
     coeffs = apply_biquad_bshift(coeffs, b_shift)
     coeffs, int_coeffs = round_to_q30(coeffs, b_shift)
 
     # check filter is stable
     poles = np.roots([1, -coeffs[3], -coeffs[4]])
-    assert np.all(
-        np.abs(poles) < 1
-    ), "Poles lie outside the unit circle, the filter is unstable"
+    assert np.all(np.abs(poles) < 1), "Poles lie outside the unit circle, the filter is unstable"
 
     return coeffs, int_coeffs
 
@@ -535,9 +515,7 @@ def make_biquad_highshelf(
     return coeffs
 
 
-def make_biquad_linkwitz(
-    fs: int, f0: float, q0: float, fp: float, qp: float
-) -> list[float]:
+def make_biquad_linkwitz(fs: int, f0: float, q0: float, fp: float, qp: float) -> list[float]:
     # https://www.linkwitzlab.com/filters.htm#9
     # https://www.minidsp.com/applications/advanced-tools/linkwitz-transform
 

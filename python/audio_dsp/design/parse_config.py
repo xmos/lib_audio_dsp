@@ -50,14 +50,10 @@ if __name__ == "__main__":
     os.makedirs(f"{args.out_dir}/generator", exist_ok=True)
 
     struct_def_template = Template(filename=f"{templates_dir}/struct_def_h.mako")
-    struct_offset_template = Template(
-        filename=f"{templates_dir}/gen_command_map_offsets_c.mako"
-    )
+    struct_offset_template = Template(filename=f"{templates_dir}/gen_command_map_offsets_c.mako")
     cmd_map_template = Template(filename=f"{templates_dir}/host_cmd_map.mako")
     cmd_ids_template = Template(filename=f"{templates_dir}/cmds_h.mako")
-    module_config_offsets_template = Template(
-        filename=f"{templates_dir}/cmd_offsets_h.mako"
-    )
+    module_config_offsets_template = Template(filename=f"{templates_dir}/cmd_offsets_h.mako")
 
     cmd_map = {}
 

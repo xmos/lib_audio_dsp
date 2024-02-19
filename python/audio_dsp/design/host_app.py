@@ -63,11 +63,7 @@ def get_host_app():
     host_app and control protocol to use
     """
     if not HOST_APP.is_file():
-        raise InvalidHostAppError(
-            f"Invalid Host App file {HOST_APP}. Call set_host_app() to set"
-        )
+        raise InvalidHostAppError(f"Invalid Host App file {HOST_APP}. Call set_host_app() to set")
     if PROTOCOL != "usb":
-        raise InvalidHostAppError(
-            f"Invalid host control protocol. Call set_host_app() to set"
-        )
+        raise InvalidHostAppError(f"Invalid host control protocol. Call set_host_app() to set")
     return HOST_APP, PROTOCOL

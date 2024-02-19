@@ -51,13 +51,7 @@ class envelope_detector_peak(dspg.dsp_block):
     """
 
     def __init__(
-        self,
-        fs,
-        n_chans=1,
-        attack_t=None,
-        release_t=None,
-        detect_t=None,
-        Q_sig=dspg.Q_SIG,
+        self, fs, n_chans=1, attack_t=None, release_t=None, detect_t=None, Q_sig=dspg.Q_SIG
     ):
         super().__init__(fs, n_chans, Q_sig)
 
@@ -111,9 +105,7 @@ class envelope_detector_peak(dspg.dsp_block):
             alpha = self.release_alpha
 
         # do exponential moving average
-        self.envelope[channel] = ((1 - alpha) * self.envelope[channel]) + (
-            alpha * sample_mag
-        )
+        self.envelope[channel] = ((1 - alpha) * self.envelope[channel]) + (alpha * sample_mag)
 
         return self.envelope[channel]
 
@@ -233,9 +225,7 @@ class envelope_detector_rms(envelope_detector_peak):
             alpha = self.release_alpha
 
         # do exponential moving average
-        self.envelope[channel] = ((1 - alpha) * self.envelope[channel]) + (
-            alpha * sample_mag
-        )
+        self.envelope[channel] = ((1 - alpha) * self.envelope[channel]) + (alpha * sample_mag)
 
         return self.envelope[channel]
 
@@ -385,45 +375,31 @@ class limiter_base(dspg.dsp_block):
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):
-                this_chan[sample] = self.process_xcore(this_chan[sample], channel=chan)[
-                    0
-                ]
+                this_chan[sample] = self.process_xcore(this_chan[sample], channel=chan)[0]
 
         return output
 
 
 class limiter_peak(limiter_base):
-    def __init__(
-        self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
-    ):
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         self.threshold = utils.db2gain(threshold_db)
         self.threshold_f32 = np.float32(self.threshold)
         self.env_detector = envelope_detector_peak(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
+            fs, n_chans=n_chans, attack_t=attack_t, release_t=release_t, Q_sig=self.Q_sig
         )
 
 
 class limiter_rms(limiter_base):
-    def __init__(
-        self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
-    ):
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         # note rms comes as x**2, so use db_pow
         self.threshold = utils.db_pow2gain(threshold_db)
         self.threshold_f32 = np.float32(self.threshold)
         self.env_detector = envelope_detector_rms(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
+            fs, n_chans=n_chans, attack_t=attack_t, release_t=release_t, Q_sig=self.Q_sig
         )
 
 
@@ -446,14 +422,7 @@ class hard_limiter_peak(limiter_peak):
 
 class soft_limiter_peak(limiter_peak):
     def __init__(
-        self,
-        fs,
-        threshold_db,
-        attack_t,
-        release_t,
-        delay=0,
-        nonlinear_point=0.5,
-        Q_sig=dspg.Q_SIG,
+        self, fs, threshold_db, attack_t, release_t, delay=0, nonlinear_point=0.5, Q_sig=dspg.Q_SIG
     ):
         super().__init__(fs, threshold_db, attack_t, release_t, delay, Q_sig)
         self.nonlinear_point = nonlinear_point
@@ -469,9 +438,7 @@ class soft_limiter_peak(limiter_peak):
 
 class lookahead_limiter_peak(limiter_base):
     # peak limiter with built in delay for avoiding clipping
-    def __init__(
-        self, fs, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
-    ):
+    def __init__(self, fs, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, attack_t, release_t, delay, Q_sig)
 
         self.threshold = utils.db2gain(threshold_db)
@@ -493,9 +460,7 @@ class lookahead_limiter_peak(limiter_base):
 
 class lookahead_limiter_rms(limiter_base):
     # rms limiter with built in delay for avoiding clipping
-    def __init__(
-        self, fs, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
-    ):
+    def __init__(self, fs, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, attack_t, release_t, delay, Q_sig)
 
         self.threshold = utils.db2gain(threshold_db)

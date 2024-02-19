@@ -124,9 +124,7 @@ class float_s32:
             self.mant = int32(value[0])
             self.exp = int32(value[1])
         else:
-            TypeError(
-                "s32 can only be initialised by float or list of ints [mant, exp]"
-            )
+            TypeError("s32 can only be initialised by float or list of ints [mant, exp]")
 
         # overflow checks
         self.mant = int32(self.mant)
