@@ -613,59 +613,6 @@ class limiter_peak(compressor_limiter_base):
     sets how fast the limiter starts limiting. The release time sets how long
     the signal takes to ramp up to it's original level after the envelope is
     below the threshold.
-
-    Parameters
-    ----------
-    fs : int
-        sampling frequency in Hz.
-    n_chans : int
-        number of parallel channels the limiter runs on. The channels
-        are limited separately, only the constant parameters are shared.
-    threshold_db : float
-        The peak level above which limiting occurs
-    attack_t : float, optional
-        Attack time of the limiter in seconds.
-    release_t: float, optional
-        Release time of the limiter in seconds.
-    Q_sig: int, optional
-        Q format of the signal, number of bits after the decimal point.
-        Defaults to Q27.
-
-    Attributes
-    ----------
-    env_detector : envelope_detector_peak
-        Nested peak envelope detector used to calculate the envelope of the signal.
-    threshold : float
-        Value above which limiting occurs for floating point
-        processing.
-    gain : list[float]
-        Current gain to be applied to the signal for each channel for floating point processing.
-    attack_alpha : float
-        Attack time parameter used for exponential moving average in floating
-        point processing.
-    release_alpha : float
-        Release time parameter used for exponential moving average in floating
-        point processing.
-    threshold_f32 : np.float32
-        Value above which limiting occurs for floating point
-        processing.
-    gain_f32 : list[np.float32]
-        Current gain to be applied to the signal for each channel for floating point processing.
-    attack_alpha_f32 : np.float32
-        attack_alpha in 32-bit float format.
-    release_alpha_f32 : np.float32
-        release_alpha in 32-bit float format.
-    threshold_int : int
-        Value above which limiting occurs for int32 fixed point
-        processing.
-    gain_int : list[int]
-        Current gain to be applied to the signal for each channel for int32 fixed point
-        processing.
-    attack_alpha_int : int
-        attack_alpha in 32-bit int format.
-    release_alpha_int : int
-        release_alpha in 32-bit int format.
-
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
