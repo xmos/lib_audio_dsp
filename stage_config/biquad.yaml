@@ -1,0 +1,14 @@
+module:
+  biquad:
+    left_shift:
+      type: int
+    filter_coeffs:
+      type: int32_t
+      size: 5
+      attribute: DWORD_ALIGNED
+    reserved:
+      type: int32_t
+      size: 3
+includes:
+  - "stdint.h"
+  - "stages/adsp_module.h"

@@ -1,4 +1,4 @@
-# Copyright 2019-2023 XMOS LIMITED.
+# Copyright 2019-2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import setuptools
 
@@ -17,6 +17,12 @@ setuptools.setup(
         'scipy',
         'matplotlib',
         'soundfile',
+        'IPyWidgets',
+        'graphviz',
+        'IPython',
+        'pyyaml',
+        'mako',
+        'tabulate'
     ],
     dependency_links=[],
 )
