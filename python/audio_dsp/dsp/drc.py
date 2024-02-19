@@ -488,8 +488,6 @@ class lookahead_limiter_rms(limiter_base):
 
 
 if __name__ == "__main__":
-    import audio_dsp.dsp.signal_gen as gen
-
     fs = 48000
     x1 = np.ones(int(fs * 0.5))
     x2 = 0.1 * np.ones(int(fs * 0.5))

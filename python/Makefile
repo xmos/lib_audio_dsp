@@ -4,7 +4,9 @@
 
 check:
 	pyright audio_dsp --skipunannotated --level warning
-	black audio_dsp --check
+	ruff check
+	ruff format --check
 
 update:
-	black audio_dsp
+	ruff check --fix
+	ruff format

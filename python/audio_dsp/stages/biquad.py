@@ -5,13 +5,13 @@ import audio_dsp.dsp.biquad as bq
 import numpy as np
 
 
-def _ws(l):
+def _ws(locals):
     """
     without self
 
     Parameters
     ----------
-    l : dict
+    locals : dict
         a dictionary
 
     Returns
@@ -19,7 +19,7 @@ def _ws(l):
     dict
         l with the entry "self" removed
     """
-    return {k: v for k, v in l.items() if k != "self"}
+    return {k: v for k, v in locals.items() if k != "self"}
 
 
 class Biquad(Stage):

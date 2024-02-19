@@ -5,13 +5,11 @@
 Top level pipeline design class and code generation functions.
 """
 
-from typing import Iterable
 from pathlib import Path
 from tabulate import tabulate
 from .graph import Graph
 from .stage import StageOutput
 from .thread import Thread
-import graphviz
 from IPython import display
 import yaml
 import subprocess
@@ -243,8 +241,13 @@ def _filter_edges_by_thread(resolved_pipeline):
         input_edges and output_edges are dictionaries of {source_or_dest_thread: [edges]}
         internal and dead edges are list of edges.
     """
-    dest_in_thread = lambda edge, thread: edge[1][0] in (t[0] for t in thread)
-    source_in_thread = lambda edge, thread: edge[0][0] in (t[0] for t in thread)
+
+    def dest_in_thread(edge, thread):
+        return edge[1][0] in (t[0] for t in thread)
+
+    def source_in_thread(edge, thread):
+        return edge[0][0] in (t[0] for t in thread)
+
     ret = []
 
     for thread in resolved_pipeline["threads"]:
@@ -377,11 +380,11 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
                 output_edges = ", ".join(f"edge{all_edges.index(e)}" for e in output_edges)
                 func += f"\tint32_t* stage_{stage_thread_index}_output[] = {{{output_edges}}};\n"
 
-        func += f"\tuint32_t start_ts, end_ts, start_control_ts, control_ticks;\n"
-        func += f"\tbool control_done;\n"
+        func += "\tuint32_t start_ts, end_ts, start_control_ts, control_ticks;\n"
+        func += "\tbool control_done;\n"
 
         func += "\twhile(1) {\n"
-        func += f"\tcontrol_done = false;\n"
+        func += "\tcontrol_done = false;\n"
 
         # Each thread must process the pending control requests at least once per loop.
         # It will be done once before select to ensure it happens, then in the default
@@ -412,7 +415,7 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
                         )
                     else:
                         read += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
-                read += f"\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}}\n"
+                read += "\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}\n"
             read += "\t\tdo_control: {\n"
             read += "\t\tstart_control_ts = get_reference_time();\n"
             read += control
@@ -799,17 +802,17 @@ def profile_pipeline(pipeline: Pipeline):
         thread_frame_size = None
         stages = thread.get_all_stages()
         for stg in stages:
-            if stg.fs != None:
+            if stg.fs is not None:
                 thread_fs = stg.fs
                 thread_frame_size = stg.frame_size
                 break
         # Assuming that all stages in the thread have the same sampling freq and frame size
-        if thread_fs == None:
+        if thread_fs is None:
             raise RuntimeError(
                 f"Could not find out the sampling frequency for thread index {thread.id}"
             )
 
-        if thread_frame_size == None:
+        if thread_frame_size is None:
             raise RuntimeError(f"Could not find out the frame size for thread index {thread.id}")
 
         reference_timer_freq_hz = 100e6

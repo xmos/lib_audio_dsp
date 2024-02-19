@@ -26,6 +26,6 @@ dependencies = [
     "tabulate"
 ]
 
-[tool.black]
+[tool.ruff]
 line-length = 99
 

@@ -66,11 +66,11 @@ class biquad(dspg.dsp_block):
 
         # process a single sample using direct form 1
         y = utils.int64(
-            ((sample_int * self.int_coeffs[0]))
-            + ((self.x1[channel] * self.int_coeffs[1]))
-            + ((self.x2[channel] * self.int_coeffs[2]))
-            + ((int(self.y1[channel] * self.int_coeffs[3]) >> self.b_shift))
-            + ((int(self.y2[channel] * self.int_coeffs[4]) >> self.b_shift))
+            (sample_int * self.int_coeffs[0])
+            + (self.x1[channel] * self.int_coeffs[1])
+            + (self.x2[channel] * self.int_coeffs[2])
+            + (int(self.y1[channel] * self.int_coeffs[3]) >> self.b_shift)
+            + (int(self.y2[channel] * self.int_coeffs[4]) >> self.b_shift)
         )
 
         # combine the b_shift with the >> 30
@@ -233,9 +233,9 @@ def round_to_q30(coeffs: list[float], b_shift: int) -> tuple[list[float], list[i
         # scale to Q30 ints
         rounded_coeffs[n] = round(coeffs[n] * 2**Q)
         # check for overflow
-        assert rounded_coeffs[n] > -(2**31) and rounded_coeffs[n] < (
-            2**31 - 1
-        ), "Filter coefficient will overflow (%.4f, %d), reduce gain" % (coeffs[n], n)
+        assert rounded_coeffs[n] > -(2**31) and rounded_coeffs[n] < (2**31 - 1), (
+            "Filter coefficient will overflow (%.4f, %d), reduce gain" % (coeffs[n], n)
+        )
 
         int_coeffs[n] = utils.int32(rounded_coeffs[n])
         # rescale to floats
@@ -522,16 +522,13 @@ def make_biquad_linkwitz(fs: int, f0: float, q0: float, fp: float, qp: float) ->
     assert max(f0, fp) <= fs / 2, "f0 and fp must be less than fs/2"
     fc = (f0 + fp) / 2
     fc = fc
-    low = 1
     # 1 = 1
 
     d0i = (2 * np.pi * f0) ** 2
     d1i = (2 * np.pi * f0) / q0
-    d2i = 1
 
     c0i = (2 * np.pi * fp) ** 2
     c1i = (2 * np.pi * fp) / qp
-    c2i = 1
 
     gn = (2 * np.pi * fc) / (np.tan(np.pi * fc / fs))
     cci = c0i + gn * c1i + (gn**2)
