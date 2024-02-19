@@ -4,5 +4,5 @@ soundfile
 -e ./python
 pytest
 pytest-xdist
-git+ssh://git@github.com/xmos/xscope_fileio@develop
+git+ssh://git@github.com/xmos/xscope_fileio@v1.2.0
 pyright
