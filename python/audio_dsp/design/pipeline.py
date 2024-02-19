@@ -315,16 +315,21 @@ def _generate_dsp_threads(resolved_pipeline, block_size = 1):
         func = f"DECLARE_JOB(dsp_{resolved_pipeline['identifier']}_thread{thread_index}, (chanend_t*, chanend_t*, module_instance_t**));\n"
         func += f"void dsp_{resolved_pipeline['identifier']}_thread{thread_index}(chanend_t* c_source, chanend_t* c_dest, module_instance_t** modules) {{\n"
 
+        # set high priority thread bit to ensure we get the required
+        # MIPS
+        func += "\tlocal_thread_mode_set_bits(thread_mode_high_priority);"
+
         in_edges, internal_edges, all_output_edges, dead_edges = thread_edges
+        is_input_thread = "pipeline_in" in in_edges
         all_edges = []
         for temp_in_e in in_edges.values():
-            all_edges.extend(temp_in_e)
+            all_edges.extend(temp_in_e) 
         all_edges.extend(internal_edges)
         for temp_out_e in all_output_edges.values():
             all_edges.extend(temp_out_e)
         all_edges.extend(dead_edges)
         for i in range(len(all_edges)):
-            func += f"\tint32_t edge{i}[{block_size}];\n"
+            func += f"\tint32_t edge{i}[{block_size}] = {{0}};\n"
 
         for stage_thread_index, stage in enumerate(thread):
             # thread stages are already ordered during pipeline resolution
@@ -353,38 +358,38 @@ def _generate_dsp_threads(resolved_pipeline, block_size = 1):
         for i, (_, name) in enumerate(thread):
             control += f"\t\t{name}_control(modules[{i}]->state, &modules[{i}]->control);\n"
 
-        func += f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
+        read = f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
                                                           # the same channel being read twice
         if len(in_edges.values()):
-            func += "\tSELECT_RES(\n"
+            read += "\tSELECT_RES(\n"
             for i, _ in enumerate(in_edges.values()):
-                func += f"\t\tCASE_THEN(c_source[{i}], case_{i}),\n"
-            func += "\t\tDEFAULT_THEN(do_control)\n"
-            func += "\t) {\n"
+                read += f"\t\tCASE_THEN(c_source[{i}], case_{i}),\n"
+            read += "\t\tDEFAULT_THEN(do_control)\n"
+            read += "\t) {\n"
 
             for i, (origin, edges) in enumerate(in_edges.items()):
-                func += f"\t\tcase_{i}: {{\n"
+                read += f"\t\tcase_{i}: {{\n"
                 for edge in edges:
                     if origin == "pipeline_in":
-                        func += "\t\t\t" + _gen_chan_buf_read_q31_to_q27(f"c_source[{i}]", f"edge{all_edges.index(edge)}", block_size) + "\n"
+                        read += "\t\t\t" + _gen_chan_buf_read_q31_to_q27(f"c_source[{i}]", f"edge{all_edges.index(edge)}", block_size) + "\n"
                     else:
-                        func += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
-                func += f"\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}}\n"
-            func += "\t\tdo_control: {\n"
-            func += "\t\tstart_control_ts = get_reference_time();\n"
-            func += control
-            func += "\t\tcontrol_done = true;\n"
-            func += "\t\tcontrol_ticks = get_reference_time() - start_control_ts;\n"
-            func += "\t\tcontinue; }\n"
-            func += "\t}\n"
+                        read += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
+                read += f"\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}}\n"
+            read += "\t\tdo_control: {\n"
+            read += "\t\tstart_control_ts = get_reference_time();\n"
+            read += control
+            read += "\t\tcontrol_done = true;\n"
+            read += "\t\tcontrol_ticks = get_reference_time() - start_control_ts;\n"
+            read += "\t\tcontinue; }\n"
+            read += "\t}\n"
 
-        func += "\tif(!control_done){\n"
-        func += "\t\tstart_control_ts = get_reference_time();\n"
-        func += control
-        func += "\t\tcontrol_ticks = get_reference_time() - start_control_ts;\n"
-        func += "\t}\n"
+        read += "\tif(!control_done){\n"
+        read += "\t\tstart_control_ts = get_reference_time();\n"
+        read += control
+        read += "\t\tcontrol_ticks = get_reference_time() - start_control_ts;\n"
+        read += "\t}\n"
 
-        func += "\tstart_ts = get_reference_time();\n\n"
+        process = "\tstart_ts = get_reference_time();\n\n"
 
         for stage_thread_index, (stage_index, name) in enumerate(thread):
 
@@ -393,28 +398,37 @@ def _generate_dsp_threads(resolved_pipeline, block_size = 1):
 
             # thread stages are already ordered during pipeline resolution
             if len(input_edges) > 0 or len(output_edges) > 0:
-                func += f"\t{name}_process(\n"
-                func += f"\t\tstage_{stage_thread_index}_input,\n"
-                func += f"\t\tstage_{stage_thread_index}_output,\n"
-                func += f"\t\tmodules[{stage_thread_index}]->state);\n"
+                process += f"\t{name}_process(\n"
+                process += f"\t\tstage_{stage_thread_index}_input,\n"
+                process += f"\t\tstage_{stage_thread_index}_output,\n"
+                process += f"\t\tmodules[{stage_thread_index}]->state);\n"
 
-        func += "\n\tend_ts = get_reference_time();\n"
-        func += "\tuint32_t process_plus_control_ticks = (end_ts - start_ts) + control_ticks;\n"
-        func += "\tif(process_plus_control_ticks > ((dsp_thread_state_t*)(modules[0]->state))->max_cycles)\n"
-        func += "\t{\n"
-        func += "\t\t((dsp_thread_state_t*)(modules[0]->state))->max_cycles = process_plus_control_ticks;\n"
-        func += "\t}\n"
+        process += "\n\tend_ts = get_reference_time();\n"
+        
+        profile ="\tuint32_t process_plus_control_ticks = (end_ts - start_ts) + control_ticks;\n"
+        profile += "\tif(process_plus_control_ticks > ((dsp_thread_state_t*)(modules[0]->state))->max_cycles)\n"
+        profile += "\t{\n"
+        profile += "\t\t((dsp_thread_state_t*)(modules[0]->state))->max_cycles = process_plus_control_ticks;\n"
+        profile += "\t}\n"
 
 
+        out = ""
         for out_index, (dest, edges) in enumerate(all_output_edges.items()):
             for edge in edges:
                 if dest == "pipeline_out":
-                    func += "\t" + _gen_chan_buf_write_q27_to_q31(f"c_dest[{out_index}]", f"edge{all_edges.index(edge)}", block_size) + "\n"
+                    out += "\t" + _gen_chan_buf_write_q27_to_q31(f"c_dest[{out_index}]", f"edge{all_edges.index(edge)}", block_size) + "\n"
                 else:
-                    func += f"\tchan_out_buf_word(c_dest[{out_index}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
+                    out += f"\tchan_out_buf_word(c_dest[{out_index}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
 
-        func += "\t}\n}\n"
-        file_str += func
+        # The pipeline start condition must be that it is already full so reads
+        # can be done without worrying about synchronisation. This is done
+        # by starting on a read for the input threads, and starting on an 
+        # out for the other threads
+        if is_input_thread:
+            file_str += func + read + process + profile + out + "\t}\n}\n"
+        else:
+            file_str += func + out + read + process + profile + "\t}\n}\n"
+            
     return file_str
 
 def _determine_channels(resolved_pipeline):
@@ -613,6 +627,7 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
 #include <xcore/select.h>
 #include <xcore/channel.h>
 #include <xcore/hwtimer.h>
+#include <xcore/thread.h>
 #include <print.h>
 #include "cmds.h" // Autogenerated
 #include "cmd_offsets.h" // Autogenerated
@@ -620,6 +635,7 @@ def generate_dsp_main(pipeline: Pipeline, out_dir = "build/dsp_pipeline"):
 
 // MAX macro
 #define _ADSP_MAX(A, B) (((A) > (B)) ? (A) : (B))
+
 """
     # add includes for each stage type in the pipeline
     dsp_main += "".join(f"#include <stages/{name}.h>\n" for name in resolved_pipe["modules"].keys())
