@@ -37,7 +37,7 @@ def do_test(p, in_ch, out_ch):
     audio_helpers.write_wav(infile, rate, sig)
 
     xe = APP_DIR / f"bin/{target}.xe"
-    run_pipeline_xcoreai.run(xe, infile, outfile, 2)
+    run_pipeline_xcoreai.run(xe, infile, outfile, 2, 1)
 
     _, out_data = audio_helpers.read_wav(outfile)
     for in_i, out_i in zip(in_ch, out_ch):

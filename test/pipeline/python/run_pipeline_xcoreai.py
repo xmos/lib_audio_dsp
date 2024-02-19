@@ -69,9 +69,29 @@ def parse_arguments():
     args = parser.parse_args()
     return args
 
-def run(xe, input_file, output_file, num_out_channels, return_stdout=False):
+def run(xe, input_file, output_file, num_out_channels, pipeline_stages=1, return_stdout=False):
+    """
+    Run an xe on an xcore with fileio enabled.
+
+    Parameters
+    ----------
+    xe : str
+        file to run
+    input_file : str
+        wav file to play
+    output_file : str
+        output wav file
+    num_out_channels : int
+        number of channels the pipeline will output.
+    pipeline_stages : int
+        Number of stages in the pipeline, the frame delay from the input to the output. This
+        is used to synchronise inputs and outputs. Set to 1 to get unmodified output from the
+        pipeline.
+    return_stdout : bool
+        if true the process output will be returned
+    """
     # Create the cmd line string
-    args = f"-i {input_file} -o {output_file} -n {num_out_channels}"
+    args = f"-i {input_file} -o {output_file} -n {num_out_channels} -t {pipeline_stages - 1}"
     with open("args.txt", "w") as fp:
         fp.write(args)
 

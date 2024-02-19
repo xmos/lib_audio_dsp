@@ -41,14 +41,15 @@ def create_pipeline():
         by1 = t.stage(Bypass, by.o)
 
     p.set_outputs(by1.o)
-    return p
+    stages = 2
+    return p, stages
 
 
 def test_pipeline():
     """
     Basic test playing a sine wave through a stage
     """
-    p = create_pipeline()
+    p, n_stages = create_pipeline()
 
     # Autogenerate C code
     generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
@@ -62,7 +63,7 @@ def test_pipeline():
 
     # Run
     xe = APP_DIR / f"bin/{target}.xe"
-    run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels)
+    run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels, n_stages)
 
     # pipeline operates at q27 so truncate the input to match expected output
     audio_helpers.write_wav(expectedfile, *audio_helpers.read_and_truncate(infile))
@@ -110,7 +111,7 @@ def test_pipeline_q27(input, add, output):
     audio_helpers.write_wav(infile, rate, sig)
 
     xe = APP_DIR / f"bin/{target}.xe"
-    run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels)
+    run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels, pipeline_stages=1)
 
     expected = np.multiply(np.ones((n_samps, channels), dtype=np.int32), output, dtype=np.int32)
     _, out_data = audio_helpers.read_wav(outfile)
@@ -143,6 +144,7 @@ def test_complex_pipeline():
         a = t.stage(AddN, a0.o + a1.o, n=1)  #     +5  +6
 
     p.set_outputs(a.o)
+    n_stages = 3  # 2 of the 4 threads are parallel
 
     generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
     target = "pipeline_test"
@@ -156,7 +158,7 @@ def test_complex_pipeline():
     audio_helpers.write_wav(infile, rate, sig)
 
     xe = APP_DIR / f"bin/{target}.xe"
-    run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels)
+    run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels, n_stages)
     _, out_data = audio_helpers.read_wav(outfile)
     np.testing.assert_equal(expected, out_data)
 
