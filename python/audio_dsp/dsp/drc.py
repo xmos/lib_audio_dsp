@@ -19,11 +19,6 @@ class envelope_detector_peak(dspg.dsp_block):
 
     Parameters
     ----------
-    fs : int
-        sampling frequency in Hz.
-    n_chans : int
-        number of parallel channels the envelope detector runs on. The channels
-        are not combined, only the constant parameters are shared.
     attack_t : float, optional
         Attack time of the envelope detector in seconds.
     release_t: float, optional
@@ -31,9 +26,6 @@ class envelope_detector_peak(dspg.dsp_block):
     detect_t : float, optional
         Attack and relase time of the envelope detector in seconds. Sets
         attack_t == release_t Cannot be used with attack_t or release_t inputs.
-    Q_sig: int, optional
-        Q format of the signal, number of bits after the decimal point.
-        Defaults to Q27.
 
     Attributes
     ----------
@@ -202,47 +194,6 @@ class envelope_detector_rms(envelope_detector_peak):
 
     The attack time sets how fast the envelope detector ramps up. The release
     time sets how fast the envelope detector ramps down.
-
-    Parameters
-    ----------
-    fs : int
-        sampling frequency in Hz.
-    n_chans : int
-        number of parallel channels the envelope detector runs on. The channels
-        are not combined, only the constant parameters are shared.
-    attack_t : float, optional
-        Attack time of the envelope detector in seconds.
-    release_t: float, optional
-        Release time of the envelope detector in seconds.
-    detect_t : float, optional
-        Attack and relase time of the envelope detector in seconds. Sets
-        attack_t == release_t Cannot be used with attack_t or release_t inputs.
-    Q_sig: int, optional
-        Q format of the signal, number of bits after the decimal point.
-        Defaults to Q27.
-
-    Attributes
-    ----------
-    attack_alpha : float
-        Attack time parameter used for exponential moving average in floating
-        point processing.
-    release_alpha : float
-        Release time parameter used for exponential moving average in floating
-        point processing.
-    envelope : list[float]
-        Current envelope value for each channel for floating point processing.
-    attack_alpha_f32 : np.float32
-        attack_alpha in 32-bit float format.
-    release_alpha_f32 : np.float32
-        release_alpha in 32-bit float format.
-    envelope_f32 : list[np.float32]
-        current envelope value for each channel in 32-bit float format.
-    attack_alpha_int : int
-        attack_alpha in 32-bit int format.
-    release_alpha_int : int
-        release_alpha in 32-bit int format.
-    envelope_int : list[int]
-        current envelope value for each channel in 32-bit int format.
 
     """
 
@@ -608,6 +559,12 @@ class limiter_peak(compressor_limiter_base):
     sets how fast the limiter starts limiting. The release time sets how long
     the signal takes to ramp up to it's original level after the envelope is
     below the threshold.
+
+    Attributes
+    ----------
+    env_detector : envelope_detector_peak
+        Nested peak envelope detector used to calculate the envelope of the signal.
+    
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
@@ -654,22 +611,6 @@ class limiter_rms(compressor_limiter_base):
     the signal takes to ramp up to it's original level after the envelope is
     below the threshold.
 
-    Parameters
-    ----------
-    fs : int
-        sampling frequency in Hz.
-    n_chans : int
-        number of parallel channels the limiter runs on. The channels
-        are limited separately, only the constant parameters are shared.
-    threshold_db : float
-        The peak level above which limiting occurs
-    attack_t : float, optional
-        Attack time of the limiter in seconds.
-    release_t: float, optional
-        Release time of the limiter in seconds.
-    Q_sig: int, optional
-        Q format of the signal, number of bits after the decimal point.
-        Defaults to Q27.
 
     Attributes
     ----------
@@ -677,34 +618,8 @@ class limiter_rms(compressor_limiter_base):
         Nested RMS envelope detector used to calculate the envelope of the signal.
     threshold : float
         Value above which limiting occurs for floating point
-        processing.
-    gain : list[float]
-        Current gain to be applied to the signal for each channel for floating point processing.
-    attack_alpha : float
-        Attack time parameter used for exponential moving average in floating
-        point processing.
-    release_alpha : float
-        Release time parameter used for exponential moving average in floating
-        point processing.
-    threshold_f32 : np.float32
-        Value above which limiting occurs for floating point
-        processing.
-    gain_f32 : list[np.float32]
-        Current gain to be applied to the signal for each channel for floating point processing.
-    attack_alpha_f32 : np.float32
-        attack_alpha in 32-bit float format.
-    release_alpha_f32 : np.float32
-        release_alpha in 32-bit float format.
-    threshold_int : int
-        Value above which limiting occurs for int32 fixed point
-        processing.
-    gain_int : list[int]
-        Current gain to be applied to the signal for each channel for int32 fixed point
-        processing.
-    attack_alpha_int : int
-        attack_alpha in 32-bit int format.
-    release_alpha_int : int
-        release_alpha in 32-bit int format.
+        processing. Note the threshold is saves in the power domain, as
+        the RMS envelope detector returns x**2
 
     """
 
@@ -863,22 +778,8 @@ class compressor_rms(compressor_limiter_base):
 
     Parameters
     ----------
-    fs : int
-        sampling frequency in Hz.
-    n_chans : int
-        number of parallel channels the compressor runs on. The channels
-        are compressed separately, only the constant parameters are shared.
     ratio : float
         Compression gain ratio applied when the signal is above the threshold
-    threshold_db : float
-        The peak level above which compression occurs
-    attack_t : float, optional
-        Attack time of the limiter in seconds.
-    release_t: float, optional
-        Release time of the limiter in seconds.
-    Q_sig: int, optional
-        Q format of the signal, number of bits after the decimal point.
-        Defaults to Q27.
 
     Attributes
     ----------
@@ -889,36 +790,16 @@ class compressor_rms(compressor_limiter_base):
         Compression gain ratio applied when the signal is above the threshold.
     slope : float
         The slope factor of the compressor, defined as `slope = (1 - 1/ratio)`.
+    slope : np.float32
+        The slope factor of the compressor, used for int32 ot float32 
+        processing.
     threshold : float
         Value above which compression occurs for floating point
         processing.
-    gain : list[float]
-        Current gain to be applied to the signal for each channel for floating
-        point processing.
-    attack_alpha : float
-        Attack time parameter used for exponential moving average in floating
-        point processing.
-    release_alpha : float
-        Release time parameter used for exponential moving average in floating
-        point processing.
     threshold_f32 : np.float32
         Value above which compression occurs for floating point processing.
-    gain_f32 : list[np.float32]
-        Current gain to be applied to the signal for each channel for floating
-        point processing.
-    attack_alpha_f32 : np.float32
-        attack_alpha in 32-bit float format.
-    release_alpha_f32 : np.float32
-        release_alpha in 32-bit float format.
     threshold_int : int
         Value above which compression occurs for int32 fixed point processing.
-    gain_int : list[int]
-        Current gain to be applied to the signal for each channel for int32
-        fixed point processing.
-    attack_alpha_int : int
-        attack_alpha in 32-bit int format.
-    release_alpha_int : int
-        release_alpha in 32-bit int format.
 
     """
 
