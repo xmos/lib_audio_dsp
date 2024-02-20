@@ -896,7 +896,7 @@ class compressor_rms(compressor_limiter_base):
 
 
 if __name__ == "__main__":
-    import audio_dsp.dsp.signal_gen as gen
+    # import audio_dsp.dsp.signal_gen as gen
 
     fs = 48000
     x1 = np.ones(int(fs * 0.5))
