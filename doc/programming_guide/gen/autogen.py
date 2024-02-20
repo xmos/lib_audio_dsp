@@ -20,6 +20,7 @@ ${"="*len(module)}
 .. automodule:: ${module}
    :members:
    :show-inheritance:
+   :inherited-members:
 
 
 %endfor

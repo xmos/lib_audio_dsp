@@ -14,4 +14,5 @@ source .doc_venv/bin/activate
 pip install -e /xmosdoc  # xmosdoc is cloned in this directory of the docker container
 pip install -e /build/python  # Install lib_audio_dsp into the docker container so that
                               # autodoc can document its APIs
+pip install docstring-inheritance # used for inheriting docstrings in classes
 xmosdoc -dvvv clean html pdf linkcheck
