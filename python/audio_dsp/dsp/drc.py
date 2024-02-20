@@ -355,8 +355,6 @@ class compressor_limiter_base(dspg.dsp_block):
 
     Parameters
     ----------
-    fs : int
-        sampling frequency in Hz.
     n_chans : int
         number of parallel channels the compressor/limiter runs on. The
         channels are limited/compressed separately, only the constant
@@ -365,9 +363,6 @@ class compressor_limiter_base(dspg.dsp_block):
         Attack time of the compressor/limiter in seconds.
     release_t: float, optional
         Release time of the compressor/limiter in seconds.
-    Q_sig: int, optional
-        Q format of the signal, number of bits after the decimal point.
-        Defaults to Q27.
 
     Attributes
     ----------
