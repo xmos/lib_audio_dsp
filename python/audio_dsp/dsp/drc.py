@@ -69,7 +69,7 @@ class envelope_detector_peak(dspg.dsp_block):
         # Assumes the time constant of a digital filter is the -3 dB
         # point where abs(H(z))**2 = 0.5.
         T = 1 / fs
-        # attack/release time can't be faster than the length of 2 
+        # attack/release time can't be faster than the length of 2
         # samples.
         self.attack_alpha = min(2 * T / attack_t, 1.0)
         self.release_alpha = min(2 * T / release_t, 1.0)
@@ -524,7 +524,7 @@ class compressor_limiter_base(dspg.dsp_block):
         y = utils.vpu_mult(this_gain_int, sample_int)
 
         # quantize before return
-        y = (float(y) * 2**-self.Q_sig)
+        y = float(y) * 2**-self.Q_sig
 
         return y, float(new_gain), float(envelope)
 
@@ -585,7 +585,7 @@ class limiter_peak(compressor_limiter_base):
     env_detector : envelope_detector_peak
         Nested peak envelope detector used to calculate the envelope of
         the signal.
-    
+
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
@@ -819,7 +819,7 @@ class compressor_rms(compressor_limiter_base):
         The slope factor of the compressor, defined as
         `slope = (1 - 1/ratio)`.
     slope : np.float32
-        The slope factor of the compressor, used for int32 ot float32 
+        The slope factor of the compressor, used for int32 to float32
         processing.
     threshold : float
         Value above which compression occurs for floating point
