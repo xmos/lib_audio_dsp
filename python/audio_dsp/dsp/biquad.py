@@ -7,6 +7,7 @@ import numpy as np
 import numpy.typing as npt
 import scipy.signal as spsig  # type: ignore
 import matplotlib.pyplot as plt
+from docstring_inheritance import inherit_numpy_docstring
 
 from audio_dsp.dsp import utils as utils
 from audio_dsp.dsp import generic as dspg
@@ -33,7 +34,7 @@ class biquad(dspg.dsp_block):
     b_shift : int
         The number of right shift bits applied to the b coefficients.
         The default coefficient scaling allows for a maximum coefficient
-        value of 2, but high gain shelf and peaking filters can have 
+        value of 2, but high gain shelf and peaking filters can have
         coefficients above this value. Shifting the b coefficients down
         allows coefficients greater than 2, with the cost of b_shift
         bits of precision.
@@ -48,6 +49,7 @@ class biquad(dspg.dsp_block):
         form `[b0, b1, b2, -a1, -a2]/a0`, scaled and rounded to int32.
 
     """
+
     def __init__(
         self,
         coeffs: list[float],
@@ -103,7 +105,7 @@ class biquad(dspg.dsp_block):
 
     def process_int(self, sample: float, channel: int = 0) -> float:
         """
-        Filter a single sample using direct form 1 biquad using int32 
+        Filter a single sample using direct form 1 biquad using int32
         fixed point maths.
 
         The float input sample is quantized to int32, and returned to
@@ -137,7 +139,7 @@ class biquad(dspg.dsp_block):
 
     def process_xcore(self, sample: float, channel: int = 0) -> float:
         """
-        Filter a single sample using direct form 1 biquad using int32 
+        Filter a single sample using direct form 1 biquad using int32
         fixed point maths, with use of the XS3 VPU
 
         The float input sample is quantized to int32, and returned to
@@ -149,7 +151,13 @@ class biquad(dspg.dsp_block):
         # process a single sample using direct form 1. In the VPU the
         # ``>> 30`` comes before accumulation
         y = utils.vlmaccr(
-            [sample_int, self._x1[channel], self._x2[channel], self._y1[channel], self._y2[channel]],
+            [
+                sample_int,
+                self._x1[channel],
+                self._x2[channel],
+                self._y1[channel],
+                self._y2[channel],
+            ],
             self.int_coeffs,
         )
 
@@ -192,7 +200,7 @@ class biquad(dspg.dsp_block):
         """
         Calculate the frequency response of the biquad filter
 
-        The biquad filter coeffieints are scaled and returned to 
+        The biquad filter coeffieints are scaled and returned to
         numerator and demonimator coeffieicnts, before being passed to
         `scipy.signal.freqz` to calculate the frequency response.
 
@@ -242,112 +250,120 @@ def biquad_bypass(fs: int, n_chans: int) -> biquad:
 def biquad_gain(fs: int, n_chans: int, gain_db: float) -> biquad:
     """
     Returns a biquad object with a fixed linear gain
-    
+
     """
     coeffs = make_biquad_gain(fs, gain_db)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_lowpass(fs: int, n_chans: int, f: float, q: float) -> biquad:
+def biquad_lowpass(fs: int, n_chans: int, filter_freq: float, q_factor: float) -> biquad:
     """
     Returns a biquad object with low pass filter coefficients
-    
+
     """
-    coeffs = make_biquad_lowpass(fs, f, q)
+    coeffs = make_biquad_lowpass(fs, filter_freq, q_factor)
     return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_highpass(fs: int, n_chans: int, f: float, q: float) -> biquad:
+def biquad_highpass(fs: int, n_chans: int, filter_freq: float, q_factor: float) -> biquad:
     """
     Returns a biquad object with high pass filter coefficients
-    
+
     """
-    coeffs = make_biquad_highpass(fs, f, q)
+    coeffs = make_biquad_highpass(fs, filter_freq, q_factor)
     return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_bandpass(fs: int, n_chans: int, f: float, bw: float) -> biquad:
+def biquad_bandpass(fs: int, n_chans: int, filter_freq: float, bw: float) -> biquad:
     """
     Returns a biquad object with bandpass filter coefficients
-    
+
     """
     # bw is bandwidth in octaves
-    coeffs = make_biquad_bandpass(fs, f, bw)
+    coeffs = make_biquad_bandpass(fs, filter_freq, bw)
     return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_bandstop(fs: int, n_chans: int, f: float, bw: float) -> biquad:
+def biquad_bandstop(fs: int, n_chans: int, filter_freq: float, bw: float) -> biquad:
     """
     Returns a biquad object with bandstop filter coefficients
-    
+
     """
     # bw is bandwidth in octaves
-    coeffs = make_biquad_bandstop(fs, f, bw)
+    coeffs = make_biquad_bandstop(fs, filter_freq, bw)
     return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_notch(fs: int, n_chans: int, f: float, q: float) -> biquad:
+def biquad_notch(fs: int, n_chans: int, filter_freq: float, q_factor: float) -> biquad:
     """
     Returns a biquad object with notch filter coefficients
-    
+
     """
-    coeffs = make_biquad_notch(fs, f, q)
+    coeffs = make_biquad_notch(fs, filter_freq, q_factor)
     return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_allpass(fs: int, n_chans: int, f: float, q: float) -> biquad:
+def biquad_allpass(fs: int, n_chans: int, filter_freq: float, q_factor: float) -> biquad:
     """
     Returns a biquad object with allpass filter coefficients
-    
+
     """
-    coeffs = make_biquad_allpass(fs, f, q)
+    coeffs = make_biquad_allpass(fs, filter_freq, q_factor)
     return biquad(coeffs, fs, n_chans=n_chans)
 
 
-def biquad_peaking(fs: int, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
+def biquad_peaking(
+    fs: int, n_chans: int, filter_freq: float, q_factor: float, boost_db: float
+) -> biquad:
     """
     Returns a biquad object with peaking filter coefficients
-    
+
     """
-    coeffs = make_biquad_peaking(fs, f, q, boost_db)
+    coeffs = make_biquad_peaking(fs, filter_freq, q_factor, boost_db)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_constant_q(fs: int, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
+def biquad_constant_q(
+    fs: int, n_chans: int, filter_freq: float, q_factor: float, boost_db: float
+) -> biquad:
     """
     Returns a biquad object with constant q peaking filter coefficients
-    
+
     """
-    coeffs = make_biquad_constant_q(fs, f, q, boost_db)
+    coeffs = make_biquad_constant_q(fs, filter_freq, q_factor, boost_db)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_lowshelf(fs: int, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
+def biquad_lowshelf(
+    fs: int, n_chans: int, filter_freq: float, q_factor: float, boost_db: float
+) -> biquad:
     """
     Returns a biquad object with low shelf filter coefficients
-    
+
     """
     # q is similar to standard low pass, i.e. > 0.707 will yield peakiness
     # the level change at f will be boost_db/2
-    coeffs = make_biquad_lowshelf(fs, f, q, boost_db)
+    coeffs = make_biquad_lowshelf(fs, filter_freq, q_factor, boost_db)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
-def biquad_highshelf(fs: int, n_chans: int, f: float, q: float, boost_db: float) -> biquad:
+def biquad_highshelf(
+    fs: int, n_chans: int, filter_freq: float, q_factor: float, boost_db: float
+) -> biquad:
     """
     Returns a biquad object with high shelf filter coefficients
-    
+
     """
     # q is similar to standard high pass, i.e. > 0.707 will yield peakiness
     # the level change at f will be boost_db/2
-    coeffs = make_biquad_highshelf(fs, f, q, boost_db)
+    coeffs = make_biquad_highshelf(fs, filter_freq, q_factor, boost_db)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 
 
 def biquad_linkwitz(fs: int, n_chans: int, f0: float, q0: float, fp: float, qp: float) -> biquad:
     """
     Returns a biquad object with Linkwitz transform filter coefficients
-    
+
     """
     # used for changing one low frequency roll off slope for another,
     # e.g. in a loudspeaker
@@ -398,11 +414,11 @@ def apply_biquad_gain(coeffs: list[float], gain_db: float) -> list[float]:
 def apply_biquad_bshift(coeffs: list[float], b_shift: int) -> list[float]:
     """
     Apply linear bitshift to the b coefficients.
-    
+
     This can be used for high gain shelf and peaking filters, where the
     filter coefficients are greater than 2, and so cannot be represented
     in Q30 format.
-    
+
     """
     gain = 2**-b_shift
     coeffs[0] = coeffs[0] * gain
@@ -655,7 +671,7 @@ def make_biquad_bandstop(fs: int, filter_freq: float, BW: float) -> list[float]:
     -------
     list[float]
         The coefficients of the biquad bandstop filter.
-    """    
+    """
     assert filter_freq <= fs / 2, "filter_freq must be less than fs/2"
     w0 = 2.0 * np.pi * filter_freq / fs
     alpha = np.sin(w0) * np.sinh(np.log(2) / 2 * BW * w0 / np.sin(w0))
@@ -934,7 +950,7 @@ def make_biquad_linkwitz(fs: int, f0: float, q0: float, fp: float, qp: float) ->
     Create coefficients for a Linkwitz Transform biquad filter.
 
     The Linkwitz Transform is commonly used to change the low frequency
-    roll off slope of a loudspeaker. When applied to a loudspeaker, it 
+    roll off slope of a loudspeaker. When applied to a loudspeaker, it
     will change the cutoff frequency from f0 to fp, and the quality
     factor from q0 to qp.
 
@@ -995,6 +1011,20 @@ def make_biquad_linkwitz(fs: int, f0: float, q0: float, fp: float, qp: float) ->
 
     return coeffs
 
+
+# inherit docstrings from make_biquad functions
+inherit_numpy_docstring(make_biquad_bypass.__doc__, biquad_bypass)
+inherit_numpy_docstring(make_biquad_gain.__doc__, biquad_gain)
+inherit_numpy_docstring(make_biquad_lowpass.__doc__, biquad_lowpass)
+inherit_numpy_docstring(make_biquad_highpass.__doc__, biquad_highpass)
+inherit_numpy_docstring(make_biquad_bandpass.__doc__, biquad_bandpass)
+inherit_numpy_docstring(make_biquad_bandstop.__doc__, biquad_bandstop)
+inherit_numpy_docstring(make_biquad_notch.__doc__, biquad_notch)
+inherit_numpy_docstring(make_biquad_allpass.__doc__, biquad_allpass)
+inherit_numpy_docstring(make_biquad_constant_q.__doc__, biquad_constant_q)
+inherit_numpy_docstring(make_biquad_lowshelf.__doc__, biquad_lowshelf)
+inherit_numpy_docstring(make_biquad_highshelf.__doc__, biquad_highshelf)
+inherit_numpy_docstring(make_biquad_linkwitz.__doc__, biquad_linkwitz)
 
 if __name__ == "__main__":
     fs = 48000
