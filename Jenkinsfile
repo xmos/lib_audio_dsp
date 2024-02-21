@@ -61,7 +61,6 @@ pipeline {
 
                 }
                 createVenv("lib_audio_dsp/requirements.txt")
-
                 dir("lib_audio_dsp") {
                   // build everything
                   withVenv {
@@ -84,8 +83,7 @@ pipeline {
                 }
               }
             } // Build
-
-            stage('test') {
+            stage('Test Biquad') {
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
@@ -94,28 +92,67 @@ pipeline {
                         runPytest("test_biquad_python.py --dist worksteal")
                         runPytest("test_biquad_c.py --dist worksteal")
                       }
+                    }
+                  }
+                }
+              }
+            } // test biquad
+            stage('Test Cascaded Biquads') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
                       dir("test/cascaded_biquads") {
                         runPytest("test_cascaded_biquads_python.py --dist worksteal")
                         runPytest("test_cascaded_biquads_c.py --dist worksteal")
-                      }
-                      dir("test/drc") {
-                        runPytest("test_drc_python.py --dist worksteal")
-                        runPytest("test_drc_c.py --dist worksteal")
-                      }
-                      dir("test/utils") {
-                        runPytest("test_signal_chain_python.py --dist worksteal")
-                        runPytest("test_signal_chain_c.py --dist worksteal")
-                      }
-                      dir("python") {
-                        sh "pyright audio_dsp --skipunannotated --level warning"
                       }
                     }
                   }
                 }
               }
-            } // test
+            } // test cascaded biquad
+            stage('Test DRC') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      dir("test/drc") {
+                        runPytest("test_drc_python.py --dist worksteal")
+                        runPytest("test_drc_c.py --dist worksteal")
+                      }
+                    }
+                  }
+                }
+              }
+            } // test drc
+            stage('Test Utils') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      dir("test/utils") {
+                        runPytest("test_signal_chain_python.py --dist worksteal")
+                        runPytest("test_signal_chain_c.py --dist worksteal")
+                      }
+                    }
+                  }
+                }
+              }
+            } // test utils
+            stage('Test Code Style') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      dir("python") {
+                        sh "make check"
+                      }
+                    }
+                  }
+                }
+              }
+            } // test style
           }
-
           post {
             cleanup {
               xcoreCleanSandbox()

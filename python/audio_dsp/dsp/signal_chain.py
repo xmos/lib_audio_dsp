@@ -17,7 +17,7 @@ class mixer(dspg.dsp_block):
         self.gain_int = utils.int32(self.gain * 2**self.Q_sig)
 
     def process(self, sample, channel=0):
-        scaled_samples = np.array(sample)*self.gain
+        scaled_samples = np.array(sample) * self.gain
         y = np.sum(scaled_samples)
 
         return y
@@ -30,7 +30,7 @@ class mixer(dspg.dsp_block):
             y = utils.int40(y + scaled_sample)
 
         y = utils.int32(y)
-        y_flt = (float(y)*2**-self.Q_sig)
+        y_flt = float(y) * 2**-self.Q_sig
 
         return y_flt
 
@@ -57,7 +57,7 @@ class mixer(dspg.dsp_block):
     def freq_response(self, nfft=512):
         # flat response scaled by gain
         w = np.fft.rfftfreq(nfft)
-        h = np.ones_like(w)*self.gain
+        h = np.ones_like(w) * self.gain
         return w, h
 
 
@@ -68,7 +68,6 @@ class adder(mixer):
 
 
 class subtractor(dspg.dsp_block):
-
     def __init__(self, fs, Q_sig=dspg.Q_SIG):
         # always has 2 channels
         super().__init__(fs, 2, Q_sig)
@@ -88,7 +87,7 @@ class subtractor(dspg.dsp_block):
         acc += sample_int_1 * -2
         y = utils.int32_mult_sat_extract(acc, 1, 1)
 
-        y_flt = (float(y)*2**-self.Q_sig)
+        y_flt = float(y) * 2**-self.Q_sig
 
         return y_flt
 
@@ -113,11 +112,12 @@ class subtractor(dspg.dsp_block):
 
 class fixed_gain(dspg.dsp_block):
     """
-    Multiply every sample by a fixed gain value
+    Multiply every sample by a fixed gain value.
 
     In the current implementation, the maximum boost is +24dB.
 
     """
+
     def __init__(self, fs, n_chans, gain_db, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
         assert gain_db <= 24, "Maximum fixed gain is +24dB"
@@ -126,7 +126,7 @@ class fixed_gain(dspg.dsp_block):
         self.gain_int = utils.int32(self.gain * 2**self.Q_sig)
 
     def process(self, sample, channel=0):
-        y = sample*self.gain
+        y = sample * self.gain
         return y
 
     def process_xcore(self, sample, channel=0):
@@ -136,14 +136,14 @@ class fixed_gain(dspg.dsp_block):
         acc += sample_int * self.gain_int
         y = utils.int32_mult_sat_extract(acc, 1, self.Q_sig)
 
-        y_flt = (float(y)*2**-self.Q_sig)
+        y_flt = float(y) * 2**-self.Q_sig
 
         return y_flt
 
     def freq_response(self, nfft=512):
         # flat response scaled by gain
         w = np.fft.rfftfreq(nfft)
-        h = np.ones_like(w)*self.gain
+        h = np.ones_like(w) * self.gain
         return w, h
 
 

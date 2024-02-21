@@ -6,11 +6,11 @@ import numpy as np
 from audio_dsp.dsp import utils as utils
 
 Q_SIG = 27
-HEADROOM_BITS = 31-Q_SIG
+HEADROOM_BITS = 31 - Q_SIG
 HEADROOM_DB = utils.db(2**HEADROOM_BITS)
 
 
-class dsp_block():
+class dsp_block:
     """
     Generic DSP block, all blocks should inherit from this class and implement
     it's methods.
@@ -53,7 +53,7 @@ class dsp_block():
         """
         sample_int = utils.int32(sample * 2**self.Q_sig)
         y = self.process(float(sample_int))
-        y_flt = float(y)*2**-self.Q_sig
+        y_flt = float(y) * 2**-self.Q_sig
 
         return y_flt
 
@@ -65,8 +65,7 @@ class dsp_block():
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):
-                this_chan[sample] = self.process(this_chan[sample],
-                                                 channel=chan)
+                this_chan[sample] = self.process(this_chan[sample], channel=chan)
 
         return output
 
@@ -79,8 +78,7 @@ class dsp_block():
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):
-                this_chan[sample] = self.process_xcore(this_chan[sample],
-                                                       channel=chan)
+                this_chan[sample] = self.process_xcore(this_chan[sample], channel=chan)
 
         return output
 
@@ -90,6 +88,6 @@ class dsp_block():
 
         The generic module has a flat frequency response.
         """
-        f = np.fft.rfftfreq(nfft)*self.fs
+        f = np.fft.rfftfreq(nfft) * self.fs
         h = np.ones_like(f)
         return f, h
