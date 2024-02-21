@@ -512,7 +512,7 @@ def make_biquad_bypass(fs: int) -> list[float]:
     list[float]
         The coefficients of the bypass biquad filter.
     """
-    coeffs = np.array([1.0, 0.0, 0.0, 0.0, 0.0], dtype=float)
+    coeffs = np.array([1.0, 0.0, 0.0, 0.0, 0.0], dtype=float).tolist()
     return coeffs
 
 
