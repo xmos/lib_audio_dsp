@@ -9,6 +9,28 @@ from audio_dsp.dsp import generic as dspg
 
 
 class cascaded_biquads_8(dspg.dsp_block):
+    """A class representing a cascaded biquad filter with up to 8
+    biquads.
+
+    This can be used to either implement a parametric equaliser or a
+    higher order filter built out of second order sections.
+
+    8 biquad objects are always created, if there are less than 8
+    biquads in the cascade, the remaining biquads are set to bypass
+    (b0 = 1).
+
+    Parameters
+    ----------
+    coeffs_list : list
+        List of coefficients for each biquad in the cascade.
+
+    Attributes
+    ----------
+    biquads : list
+        List of biquad objects representing each biquad in the cascade.
+
+    """
+
     def __init__(self, coeffs_list, fs, n_chans, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
         self.biquads = [None] * 8
@@ -19,6 +41,21 @@ class cascaded_biquads_8(dspg.dsp_block):
                 self.biquads[n] = bq.biquad_bypass(fs, n_chans)
 
     def process(self, sample, channel=0):
+        """Process the input sample through the cascaded biquads using
+        floating point maths.
+
+        Parameters
+        ----------
+        sample : _type_
+            The input sample to be processed.
+        channel : int, optional
+            The channel index to process the sample on. Default is 0.
+
+        Returns
+        -------
+        _type_
+            The processed output sample.
+        """
         y = sample
         for biquad in self.biquads:
             y = biquad.process(y, channel)
@@ -26,6 +63,27 @@ class cascaded_biquads_8(dspg.dsp_block):
         return y
 
     def process_frame(self, frame):
+        """
+        Take a list frames of samples and return the processed frames
+        using floating point maths.
+
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        The all the samples are run through each biquad in turn.
+
+        Parameters
+        ----------
+        frame : list
+            List of frames, where each frame is a 1-D numpy array.
+
+        Returns
+        -------
+        list
+            List of processed frames, with the same structure as the
+            input frame.
+        """
         y = frame
         for biquad in self.biquads:
             y = biquad.process_frame(y)
@@ -33,6 +91,12 @@ class cascaded_biquads_8(dspg.dsp_block):
         return y
 
     def process_int(self, sample, channel=0):
+        """Process the input sample through the cascaded biquads using
+        int32 fixed point maths.
+
+        The float input sample is quantized to int32, and returned to
+        float before outputting
+        """
         y = sample
         for biquad in self.biquads:
             y = biquad.process_int(y, channel)
@@ -40,6 +104,26 @@ class cascaded_biquads_8(dspg.dsp_block):
         return y
 
     def process_frame_int(self, frame):
+        """
+        Take a list frames of samples and return the processed frames
+        using an int32 fixed point implementation.
+
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        Parameters
+        ----------
+        frame : list
+            List of frames, where each frame is a 1-D numpy array.
+
+        Returns
+        -------
+        list
+            List of processed frames, with the same structure as the
+            input frame.
+        """
+        # in the future we could use a more efficient implementation
         y = frame
         for biquad in self.biquads:
             y = biquad.process_frame_int(y)
@@ -47,6 +131,13 @@ class cascaded_biquads_8(dspg.dsp_block):
         return y
 
     def process_xcore(self, sample, channel=0):
+        """Process the input sample through the cascaded biquads using
+        int32 fixed point maths, with use of the XS3 VPU
+
+        The float input sample is quantized to int32, and returned to
+        float before outputting
+        """
+        # in the future we could use a more efficient implementation
         y = sample
         for biquad in self.biquads:
             y = biquad.process_xcore(y, channel)
@@ -54,6 +145,26 @@ class cascaded_biquads_8(dspg.dsp_block):
         return y
 
     def process_frame_xcore(self, frame):
+        """
+        Take a list frames of samples and return the processed frames
+        using int32 fixed point maths, with use of the XS3 VPU
+
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        Parameters
+        ----------
+        frame : list
+            List of frames, where each frame is a 1-D numpy array.
+
+        Returns
+        -------
+        list
+            List of processed frames, with the same structure as the
+            input frame.
+        """
+        # in the future we could use a more efficient implementation
         y = frame
         for biquad in self.biquads:
             y = biquad.process_frame_xcore(y)
@@ -61,6 +172,30 @@ class cascaded_biquads_8(dspg.dsp_block):
         return y
 
     def freq_response(self, nfft=512):
+        """
+        Calculate the frequency response of the cascaded biquad filters.
+
+        The biquad filter coefficients for each biquad are scaled and
+        returned to numerator and denominator coefficients, before being
+        passed to `scipy.signal.freqz` to calculate the frequency
+        response.
+
+        The stages are then combined by multiplying the complex
+        frequency responses.
+
+        Parameters
+        ----------
+        nfft : int, optional
+            The number of points to compute in the frequency response,
+            by default 512.
+
+        Returns
+        -------
+        tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]
+            A tuple containing the frequency vector and the complex
+            frequency response.
+
+        """
         f, h_all = self.biquads[0].freq_response(nfft)
         for biquad in self.biquads[1:]:
             _, h = biquad.freq_response(nfft)
@@ -69,6 +204,9 @@ class cascaded_biquads_8(dspg.dsp_block):
         return f, h_all
 
     def reset_state(self):
+        """
+        Reset the biquad saved states to zero.
+        """
         for biquad in self.biquads:
             biquad.reset_state()
 
@@ -76,18 +214,55 @@ class cascaded_biquads_8(dspg.dsp_block):
 
 
 class butterworth_lowpass(cascaded_biquads_8):
+    """A Butterworth lowpass filter implementation using cascaded
+    biquads.
+
+    Parameters
+    ----------
+    N : int
+        The order of the Butterworth filter.
+    fc : float
+        The cutoff frequency of the filter.
+    """
+
     def __init__(self, fs, n_chans, N, fc):
         coeffs_list = make_butterworth_lowpass(N, fc, fs)
         super().__init__(coeffs_list, fs, n_chans)
 
 
 class butterworth_highpass(cascaded_biquads_8):
+    """A Butterworth highpass filter implementation using cascaded
+    biquads.
+
+    Parameters
+    ----------
+    N : int
+        The order of the Butterworth filter.
+    fc : float
+        The cutoff frequency of the filter.
+    """
+
     def __init__(self, fs, n_chans, N, fc):
         coeffs_list = make_butterworth_highpass(N, fc, fs)
         super().__init__(coeffs_list, fs, n_chans)
 
 
 class parametric_eq_8band(cascaded_biquads_8):
+    """A parametric equalizer with 8 bands.
+
+    This class extends the `cascaded_biquads_8` class to implement a
+    parametric equalizer with 8 bands. It applies a series of cascaded
+    biquad filters to the audio signal.
+
+    Parameters
+    ----------
+    filter_spec : list
+        A list of tuples specifying the filter parameters for each band.
+        Each tuple should contain the filter type as a string (e.g.,
+        'lowpass', 'highpass', 'peaking'), followed by the filter
+        parameters specific to that type.
+    """
+
     def __init__(self, fs, n_chans, filter_spec):
         coeffs_list = []
         for spec in filter_spec:
@@ -99,15 +274,40 @@ class parametric_eq_8band(cascaded_biquads_8):
 
 
 def make_butterworth_lowpass(N, fc, fs):
-    # N = filter order (must be even)
-    # fc = -3 dB frequency in Hz
-    # fs = sample frequency in Hz
-    # The function will return N/2 sets of biquad coefficients
-    #
-    # translated from Neil Robertson's https://www.dsprelated.com/showarticle/1137.php
-    #
-    # see also https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html
+    """
+    Generate N/2 sets of biquad coefficients for a Butterworth low-pass
+    filter.
 
+    The function implements the algorithm described in Neil Robertson's
+    article:
+    "Designing Cascaded Biquad Filters Using the Pole-Zero Method"
+    (https://www.dsprelated.com/showarticle/1137.php)
+
+    It uses the bilinear transform to convert the analog filter poles to
+    the z-plane.
+
+    See also https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html
+
+    Parameters
+    ----------
+    N : int
+        Filter order (must be even).
+    fc : float
+        -3 dB frequency in Hz.
+    fs : float
+        Sample frequency in Hz.
+
+    Returns
+    -------
+    list
+        A list of N/2 sets of biquad coefficients, where each set contains the
+        coefficients (b0, b1, b2, a0, a1, a2) for a biquad filter.
+
+    Raises
+    ------
+    AssertionError
+        If fc is greater than fs/2 or if N is not even.
+    """
     assert fc <= fs / 2, "fc must be less than fs/2"
     assert N % 2 == 0, "N must be even"
 
@@ -146,15 +346,42 @@ def make_butterworth_lowpass(N, fc, fs):
 
 
 def make_butterworth_highpass(N, fc, fs):
-    # N = filter order (must be even)
-    # fc = -3 dB frequency in Hz
-    # fs = sample frequency in Hz
-    # The function will return N/2 sets of biquad coefficients
-    #
-    # translated from from Neil Robertson's https://www.dsprelated.com/showarticle/1137.php and
-    # https://www.dsprelated.com/showarticle/1135.php
-    #
-    # see also https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html
+    """
+    Generate N/2 sets of biquad coefficients for a Butterworth high-pass
+    filter.
+
+    The function implements the algorithm described in Neil Robertson's
+    article:
+    "Designing Cascaded Biquad Filters Using the Pole-Zero Method"
+    (https://www.dsprelated.com/showarticle/1137.php) and
+    "Design IIR Highpass Filters"
+    https://www.dsprelated.com/showarticle/1135.php
+
+    It uses the bilinear transform to convert the analog filter poles to
+    the z-plane.
+
+    See also https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html
+
+    Parameters
+    ----------
+    N : int
+        Filter order (must be even).
+    fc : float
+        -3 dB frequency in Hz.
+    fs : float
+        Sample frequency in Hz.
+
+    Returns
+    -------
+    list
+        A list of N/2 sets of biquad coefficients, where each set contains the
+        coefficients (b0, b1, b2, a0, a1, a2) for a biquad filter.
+
+    Raises
+    ------
+    AssertionError
+        If fc is greater than fs/2 or if N is not even.
+    """
 
     assert fc <= fs / 2, "fc must be less than fs/2"
     assert N % 2 == 0, "N must be even"
