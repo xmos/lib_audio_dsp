@@ -37,7 +37,7 @@ class mixer(dspg.dsp_block):
         self.gain = utils.db2gain(gain_db)
         self.gain_int = utils.int32(self.gain * 2**self.Q_sig)
 
-    def process(self, sample_list: list[float], channel: int = 0) -> float: # type: ignore
+    def process(self, sample_list: list[float], channel: int = 0) -> float:  # type: ignore
         """
         Process a single sample. Apply the gain to all the input samples
         then sum them using floating point maths.
@@ -60,7 +60,7 @@ class mixer(dspg.dsp_block):
 
         return y
 
-    def process_xcore(self, sample_list: list[float], channel: int = 0) -> float: # type: ignore
+    def process_xcore(self, sample_list: list[float], channel: int = 0) -> float:  # type: ignore
         """
         Process a single sample. Apply the gain to all the input samples
         then sum them using int32 fixed point maths.
@@ -199,7 +199,7 @@ class subtractor(dspg.dsp_block):
         # always has 2 channels
         super().__init__(fs, 2, Q_sig)
 
-    def process(self, sample_list: list[float], channel: int = 0) -> float: # type: ignore
+    def process(self, sample_list: list[float], channel: int = 0) -> float:  # type: ignore
         """
         Subtract the second input sample from the first using floating
         point maths.
@@ -219,7 +219,7 @@ class subtractor(dspg.dsp_block):
         y = sample_list[0] - sample_list[1]
         return y
 
-    def process_xcore(self, sample_list: list[float], channel: int = 0) -> float: # type: ignore
+    def process_xcore(self, sample_list: list[float], channel: int = 0) -> float:  # type: ignore
         """
         Subtract the second input sample from the first using int32
         fixed point maths.
@@ -437,7 +437,7 @@ class switch(dspg.dsp_block):
         self.switch_position = 0
         return
 
-    def process(self, sample_list: list[float], channel: int = 0) -> float: # type: ignore
+    def process(self, sample_list: list[float], channel: int = 0) -> float:  # type: ignore
         """Return the sample at the current switch position.
 
         This method takes a list of samples and returns the sample at
@@ -458,7 +458,7 @@ class switch(dspg.dsp_block):
         y = sample_list[self.switch_position]
         return y
 
-    def process_xcore(self, sample_list: list[float], channel: int = 0) -> float: # type: ignore
+    def process_xcore(self, sample_list: list[float], channel: int = 0) -> float:  # type: ignore
         """Return the sample at the current switch position.
 
         As there is no DSP, this just calls self.process.
