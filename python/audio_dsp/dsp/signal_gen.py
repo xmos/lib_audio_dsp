@@ -130,9 +130,6 @@ def log_chirp(
     return signal
 
 
-import numpy as np
-
-
 def white_noise(
     fs: int, length: float, amplitude: float, normal: bool = True, precision: int = 24
 ) -> np.ndarray:

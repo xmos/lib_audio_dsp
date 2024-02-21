@@ -1,5 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
 import warnings
 from copy import deepcopy
 
@@ -21,7 +22,7 @@ class biquad(dspg.dsp_block):
 
     This implements a direct form 1 biquad filter, using the
     coefficients provided at initialisation:
-    a0*y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]
+    `a0*y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]`
 
     For efficiency the biquad coefficients are normalised by a0 and the
     output coefficients multiplied by -1.
@@ -464,7 +465,7 @@ def normalise_biquad(coeffs: list[float]) -> list[float]:
     negative
 
     Expected input format: [b0, b1, b2, a0, a1, a2]
-    Output format: [b0, b1, b2, -a1, -a2]
+    Expected output format: [b0, b1, b2, -a1, -a2]
 
     """
     assert len(coeffs) == 6
@@ -502,7 +503,7 @@ def make_biquad_bypass(fs: int) -> list[float]:
     """
     Creates a bypass biquad filter. Only the b0 coefficient is set
 
-    Parameters:
+    Parameters
     ----------
     fs : int
         The sample rate of the audio signal.
@@ -521,12 +522,12 @@ def make_biquad_mute(fs: int) -> list[float]:
     Creates a biquad filter coefficients list that represents a mute
     filter. All the coefficients are 0
 
-    Parameters:
+    Parameters
     ----------
     fs : int
         The sampling frequency in Hz.
 
-    Returns:
+    Returns
     -------
     list[float]
         The biquad filter coefficients list representing a mute filter.
@@ -1012,8 +1013,8 @@ def make_biquad_linkwitz(fs: int, f0: float, q0: float, fp: float, qp: float) ->
     References
     ----------
     - Linkwitz Transform: https://www.linkwitzlab.com/filters.htm#9
-    - Linkwitz Transform in MiniDSP:
-    https://www.minidsp.com/applications/advanced-tools/linkwitz-transform
+    - Linkwitz Transform in MiniDSP: https://www.minidsp.com/applications/advanced-tools/linkwitz-transform
+
     """
     assert max(f0, fp) <= fs / 2, "f0 and fp must be less than fs/2"
 
