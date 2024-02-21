@@ -103,7 +103,8 @@ pipeline {
                         runPytest("test_drc_c.py --dist worksteal")
                       }
                       dir("test/utils") {
-                        runPytest("--dist worksteal")
+                        runPytest("test_signal_chain_python.py --dist worksteal")
+                        runPytest("test_signal_chain_c.py --dist worksteal")
                       }
                       dir("python") {
                         sh "pyright audio_dsp --skipunannotated --level warning"

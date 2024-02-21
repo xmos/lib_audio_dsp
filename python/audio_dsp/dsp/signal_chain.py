@@ -83,7 +83,10 @@ class subtractor(dspg.dsp_block):
         sample_int_0 = utils.int32(round(sample_list[0] * 2**self.Q_sig))
         sample_int_1 = utils.int32(round(sample_list[1] * 2**self.Q_sig))
 
-        y = utils.int32(sample_int_0 - sample_int_1)
+        acc = int(0)
+        acc += sample_int_0 *  2
+        acc += sample_int_1 * -2
+        y = utils.int32_mult_sat_extract(acc, 1, 1)
 
         y_flt = (float(y)*2**-self.Q_sig)
 
@@ -112,7 +115,7 @@ class fixed_gain(dspg.dsp_block):
     """
     Multiply every sample by a fixed gain value
 
-    In the current implementation, the maximum boost is 6dB.
+    In the current implementation, the maximum boost is +24dB.
 
     """
     def __init__(self, fs, n_chans, gain_db, Q_sig=dspg.Q_SIG):
@@ -128,7 +131,10 @@ class fixed_gain(dspg.dsp_block):
 
     def process_xcore(self, sample, channel=0):
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
-        y = utils.int32_mult_sat_extract(sample_int, self.gain_int, self.Q_sig)
+        # for rounding
+        acc = 1 << (self.Q_sig - 1)
+        acc += sample_int * self.gain_int
+        y = utils.int32_mult_sat_extract(acc, 1, self.Q_sig)
 
         y_flt = (float(y)*2**-self.Q_sig)
 
