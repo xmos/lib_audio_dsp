@@ -64,7 +64,6 @@ class biquad(dspg.dsp_block):
 
         # coeffs should be in the form [b0 b1 b2 -a1 -a2], and
         # normalized by a0
-        assert len(coeffs) == 5, "coeffs should be in the form [b0 b1 b2 -a1 -a2]"
         self.coeffs, self.int_coeffs = round_and_check(coeffs, self.b_shift)
 
         self.check_gain()
@@ -77,7 +76,17 @@ class biquad(dspg.dsp_block):
         self._y2 = [0.0] * n_chans
 
     def update_coeffs(self, new_coeffs: list[float]):
-        """Update the saved coefficients to the input values"""
+        """Update the saved coefficients to the input values.
+
+        Parameters
+        ----------
+        new_coeffs : list[float]
+            The new coefficients to be updated.
+
+        Returns
+        -------
+        None
+        """
         self.coeffs, self.int_coeffs = round_and_check(new_coeffs, self.b_shift)
 
     def process(self, sample: float, channel: int = 0) -> float:
@@ -183,6 +192,15 @@ class biquad(dspg.dsp_block):
         number of arrays is equal to the number of channels, and the
         length of the arrays is equal to the frame size.
 
+        Parameters
+        ----------
+        frame : list
+            List of frames, where each frame is a 1-D numpy array.
+
+        Returns
+        -------
+        list
+            List of processed frames, with the same structure as the input frame.
         """
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
@@ -198,11 +216,23 @@ class biquad(dspg.dsp_block):
         self, nfft: int = 512
     ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         """
-        Calculate the frequency response of the biquad filter
+        Calculate the frequency response of the biquad filter.
 
-        The biquad filter coeffieints are scaled and returned to
-        numerator and demonimator coeffieicnts, before being passed to
+        The biquad filter coefficients are scaled and returned to
+        numerator and denominator coefficients, before being passed to
         `scipy.signal.freqz` to calculate the frequency response.
+
+        Parameters
+        ----------
+        nfft : int, optional
+            The number of points to compute in the frequency response,
+            by default 512.
+
+        Returns
+        -------
+        tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]
+            A tuple containing the frequency vector and the complex
+            frequency response.
 
         """
         b = [self.coeffs[0], self.coeffs[1], self.coeffs[2]]
@@ -457,6 +487,7 @@ def round_and_check(coeffs: list[float], b_shift: int = 0) -> tuple[list[float],
 
     """
     # round to int32 precision
+    assert len(coeffs) == 5, "coeffs should be in the form [b0 b1 b2 -a1 -a2]"
     coeffs = apply_biquad_bshift(coeffs, b_shift)
     coeffs, int_coeffs = round_to_q30(coeffs)
 
