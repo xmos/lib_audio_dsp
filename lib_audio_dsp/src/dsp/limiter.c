@@ -4,12 +4,14 @@
 #include "dsp/adsp.h"
 #include <math.h>
 
-static inline int32_t f32_to_fixed(float x, exponent_t output_exp){
-  float_s32_t v = f32_to_float_s32(x);
-  right_shift_t shr = output_exp - v.exp;
-  asm("ashr %0, %1, %2" : "=r" (v.mant) : "r" (v.mant), "r" (shr));
-  return v.mant;
-}
+#define MUL32(X, Y)     ((int32_t)(((((int64_t)(X)) * (Y)) + (1<<29)) >> 30))
+
+// static inline int32_t f32_to_fixed(float x, exponent_t output_exp){
+//   float_s32_t v = f32_to_float_s32(x);
+//   right_shift_t shr = output_exp - v.exp;
+//   asm("ashr %0, %1, %2" : "=r" (v.mant) : "r" (v.mant), "r" (shr));
+//   return v.mant;
+// }
 
 limiter_t adsp_limiter_peak_init(
   float fs,
@@ -51,8 +53,9 @@ int32_t adsp_limiter_peak(
   }
 
   lim->gain = lim->gain + alpha * (new_gain - lim->gain);
-  float y = float_s32_to_float((float_s32_t){new_samp, SIG_EXP});
-  return f32_to_fixed(y * lim->gain, SIG_EXP);
+  int32_t gain = (int32_t)(lim->gain* 1073741824.0);
+  int32_t y = MUL32(new_samp, gain);
+  return y;
 }
 
 int32_t adsp_limiter_rms(
@@ -69,6 +72,7 @@ int32_t adsp_limiter_rms(
   }
 
   lim->gain = lim->gain + alpha * (new_gain - lim->gain);
-  float y = float_s32_to_float((float_s32_t){new_samp, SIG_EXP});
-  return f32_to_fixed(y * lim->gain, SIG_EXP);
+  int32_t gain = (int32_t)(lim->gain* 1073741824.0);
+  int32_t y = MUL32(new_samp, gain);
+  return y;
 }

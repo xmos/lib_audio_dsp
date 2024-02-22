@@ -83,8 +83,19 @@ def single_test(lim, lim_name, tname, sig_fl):
   out_py_fl, out_py_int = run_py(lim, sig_fl)
   out_c = get_c_wav(test_dir, lim_name)
   shutil.rmtree(test_dir)
+  print(tname)
+  if tname == "limiter_peak_-20_0.001_0.01":
+    # for some reason this particular exapmle isn't bit exact, so just
+    # check the number of unmatched samples is small, and that the
+    # max atol is small.
+    not_equal_idx = np.sum(out_py_int != out_c)
+    pct_not_equal = ((not_equal_idx) / len(out_py_int)) * 100
+    assert pct_not_equal <= 0.5, f"Output mismatch: {pct_not_equal}% of samples are not equal"
 
-  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=2e-8)
+    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=1.5e-8)
+  else:
+    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
+
 
 @pytest.fixture(scope="module")
 def in_signal():
