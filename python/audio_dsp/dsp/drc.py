@@ -3,6 +3,7 @@
 from copy import deepcopy
 from math import sqrt
 
+import scipy as sp
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -446,7 +447,7 @@ class compressor_limiter_base(dspg.dsp_block):
         y = self.gain[channel] * sample
         return y, new_gain, envelope
 
-    def process_int(self, sample, channel=0):
+    def process_int(self, sample, channel=0, return_int= False):
         """
         Update the envelope for a signal, then calculate and apply the
         required gain for compression/limiting, using int32 fixed point
@@ -478,13 +479,16 @@ class compressor_limiter_base(dspg.dsp_block):
 
         y = utils.vpu_mult(self.gain_int[channel], sample_int)
 
-        return (
-            (float(y) * 2**-self.Q_sig),
-            (float(new_gain_int) * 2**-self.Q_sig),
-            (float(envelope_int) * 2**-self.Q_sig),
-        )
+        if return_int:
+            return y, new_gain_int, envelope_int
+        else:
+            return (
+                (float(y) * 2**-self.Q_sig),
+                (float(new_gain_int) * 2**-self.Q_sig),
+                (float(envelope_int) * 2**-self.Q_sig),
+            )
 
-    def process_xcore(self, sample, channel=0):
+    def process_xcore(self, sample, channel=0, return_int= False):
         """
         Update the envelope for a signal, then calculate and apply the
         required gain for compression/limiting, using np.float32 maths.
@@ -523,10 +527,13 @@ class compressor_limiter_base(dspg.dsp_block):
         this_gain_int = utils.int32(self.gain_f32[channel] * 2**30)
         y = utils.vpu_mult(this_gain_int, sample_int)
 
-        # quantize before return
-        y = float(y) * 2**-self.Q_sig
+        if return_int:
+            return y, this_gain_int, envelope
+        else:
+            # quantize before return
+            y = float(y) * 2**-self.Q_sig
 
-        return y, float(new_gain), float(envelope)
+            return y, float(new_gain), float(envelope)
 
     def process_frame(self, frame):
         """
@@ -698,34 +705,42 @@ class limiter_rms(compressor_limiter_base):
 class hard_limiter_peak(limiter_peak):
     def process(self, sample, channel=0):
         # do peak limiting
-        y = super().process(sample, channel)
+        y, new_gain, envelope  = super().process(sample, channel)
 
         # hard clip if above threshold
         if y > self.threshold:
             y = self.threshold
         if y < -self.threshold:
             y = -self.threshold
-        return y
+        return y, new_gain, envelope
 
-    # TODO process_int, super().process_int will return float though...
-    def process_xcore(self, sample, channel=0):
-        raise NotImplementedError
+    def process_int(self, sample, channel=0):
+        y, new_gain, envelope = super().process_int(sample, channel, return_int=True)
 
+        # hard clip if above threshold
+        if y > self.threshold_int:
+            y = self.threshold_int
+        if y < -self.threshold_int:
+            y = -self.threshold_int
 
-class soft_limiter_peak(limiter_peak):
-    def __init__(
-        self, fs, threshold_db, attack_t, release_t, delay=0, nonlinear_point=0.5, Q_sig=dspg.Q_SIG
-    ):
-        super().__init__(fs, threshold_db, attack_t, release_t, delay, Q_sig)
-        self.nonlinear_point = nonlinear_point
-        raise NotImplementedError
-
-    # TODO soft clipping
-    def process(self, sample, channel=0):
-        raise NotImplementedError
+        # quantize before return
+        y = float(y) * 2**-self.Q_sig
+        
+        return y, new_gain, envelope
 
     def process_xcore(self, sample, channel=0):
-        raise NotImplementedError
+        y, new_gain, envelope = super().process_xcore(sample, channel, return_int=True)
+
+        # hard clip if above threshold
+        if y > self.threshold_int:
+            y = self.threshold_int
+        if y < -self.threshold_int:
+            y = -self.threshold_int
+
+        # quantize before return
+        y = float(y) * 2**-self.Q_sig
+
+        return y, new_gain, envelope
 
 
 class lookahead_limiter_peak(compressor_limiter_base):
@@ -892,6 +907,140 @@ class compressor_rms(compressor_limiter_base):
         # down
         new_gain = (self.threshold_f32 / envelope) ** self.slope_f32
         new_gain = new_gain if new_gain < np.float32(1) else np.float32(1)
+        return new_gain
+
+
+class compressor_rms_softknee(compressor_limiter_base):
+    """
+    A soft knee compressor based on the RMS value of the signal. When
+    the RMS envelope of the signal exceeds the threshold, the signal
+    amplitude is reduced by the compression ratio. A smoothed fit is
+    used around the knee to reduce artifacts.
+
+    The threshold sets the value above which compression occurs. The
+    ratio sets how much the signal is compressed. A ratio of 1 results
+    in no compression, while a ratio of infinity results in the same
+    behaviour as a limiter. The attack time sets how fast the comressor
+    starts compressing. The release time sets how long the signal takes
+    to ramp up to it's original level after the envelope is below the
+    threshold.
+
+    Parameters
+    ----------
+    ratio : float
+        Compression gain ratio applied when the signal is above the
+        threshold
+
+    Attributes
+    ----------
+    env_detector : envelope_detector_rms
+        Nested RMS envelope detector used to calculate the envelope of
+        the signal.
+    ratio : float
+        Compression gain ratio applied when the signal is above the
+        threshold.
+    slope : float
+        The slope factor of the compressor, defined as
+        `slope = (1 - 1/ratio)`.
+    slope_f32 : np.float32
+        The slope factor of the compressor, used for int32 to float32
+        processing.
+    threshold : float
+        Value above which compression occurs for floating point
+        processing.
+    threshold_f32 : np.float32
+        Value above which compression occurs for floating point
+        processing.
+    threshold_int : int
+        Value above which compression occurs for int32 fixed point
+        processing.
+    w : float
+        The width over which the soft knee extends.
+
+    References
+    ----------
+    [1] Giannoulis, D., Massberg, M., & Reiss, J. D. (2012). Digital
+    Dynamic Range Compressor Design—A Tutorial and Analysis. Journal of
+    Audio Engineering Society, 60(6), 399–408.
+    https://www.aes.org/e-lib/browse.cfm?elib=16354
+    """
+
+    def __init__(
+        self, fs, n_chans, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
+    ):
+        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
+
+        # note rms comes as x**2, so use db_pow
+        self.threshold_db = threshold_db
+        self.threshold = utils.db_pow2gain(threshold_db)
+        self.threshold_f32 = np.float32(self.threshold)
+        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.env_detector = envelope_detector_rms(
+            fs,
+            n_chans=n_chans,
+            attack_t=attack_t,
+            release_t=release_t,
+            Q_sig=self.Q_sig,
+        )
+
+        self.ratio = ratio
+        self.slope = (1 - 1 / self.ratio) / 2.0
+        self.slope_f32 = np.float32(self.slope)
+        self.w = 10
+        self.spline_calc()
+
+    def spline_calc(self):
+        knee_start = utils.db2gain(self.threshold_db - self.w/2)
+        knee_end = utils.db2gain(self.threshold_db + self.w/2)
+        cs = sp.interpolate.CubicSpline([knee_start, knee_end],
+                                        [self.gain_calc(knee_start**2), self.gain_calc(knee_end**2)],
+                                        bc_type=((2, 0), (2, 1/self.ratio)))
+        self.cubics = (cs.c)
+        self.cubic_start = cs.x[0]
+        return
+ 
+
+    def gain_calc(self, envelope):
+        """Calculate the float gain for the current sample
+
+        Note that as the RMS envelope detector returns x**2, we need to
+        use db_pow. The knee is exponential in the log domain, so must
+        be calculated in the log domain.
+        """
+        envelope_db = utils.db_pow(envelope)
+        if envelope_db < (self.threshold_db - self.w / 2):
+            new_gain = 1
+        elif envelope_db > (self.threshold_db + self.w / 2):
+            # regular RMS compressor
+            new_gain = (self.threshold / envelope) ** self.slope
+        else:
+            # soft knee
+            new_gain_db = ((-self.slope/(self.w))*
+                (envelope_db - self.threshold_db + self.w/2)**2)
+            new_gain = utils.db2gain(new_gain_db)
+
+        new_gain = min(1, new_gain)
+        return new_gain
+
+
+    def gain_calc_spline(self, envelope):
+        """Calculate the float gain for the current sample
+
+        Note that as the RMS envelope detector returns x**2, we need to
+        use db_pow. The knee is exponential in the log domain, so must
+        be calculated in the log domain.
+        """
+        envelope_db = utils.db_pow(envelope)
+        if envelope_db < (self.threshold_db - self.w / 2):
+            new_gain = 1
+        elif envelope_db > (self.threshold_db + self.w / 2):
+            # regular RMS compressor
+            new_gain = (self.threshold / envelope) ** self.slope
+        else:
+            # soft knee
+            new_gain = np.polyval(self.cubics, np.sqrt(envelope)-self.cubic_start)
+
+        new_gain = min(1, new_gain)
         return new_gain
 
 
