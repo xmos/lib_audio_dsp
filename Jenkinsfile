@@ -88,9 +88,11 @@ pipeline {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      dir("test/biquad") {
-                        runPytest("test_biquad_python.py --dist worksteal")
-                        runPytest("test_biquad_c.py --dist worksteal")
+                      catchError(stageResult: 'FAILURE'){
+                        dir("test/biquad") {
+                          runPytest("test_biquad_python.py --dist worksteal")
+                          runPytest("test_biquad_c.py --dist worksteal")
+                        }
                       }
                     }
                   }
@@ -102,9 +104,11 @@ pipeline {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      dir("test/cascaded_biquads") {
-                        runPytest("test_cascaded_biquads_python.py --dist worksteal")
-                        runPytest("test_cascaded_biquads_c.py --dist worksteal")
+                      catchError(stageResult: 'FAILURE'){
+                        dir("test/cascaded_biquads") {
+                          runPytest("test_cascaded_biquads_python.py --dist worksteal")
+                          runPytest("test_cascaded_biquads_c.py --dist worksteal")
+                        }
                       }
                     }
                   }
@@ -116,9 +120,11 @@ pipeline {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      dir("test/drc") {
-                        runPytest("test_drc_python.py --dist worksteal")
-                        runPytest("test_drc_c.py --dist worksteal")
+                      catchError(stageResult: 'FAILURE'){
+                        dir("test/drc") {
+                          runPytest("test_drc_python.py --dist worksteal")
+                          runPytest("test_drc_c.py --dist worksteal")
+                        }
                       }
                     }
                   }
@@ -130,8 +136,10 @@ pipeline {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      dir("test/utils") {
-                        runPytest("--dist worksteal")
+                      catchError(stageResult: 'FAILURE'){
+                        dir("test/utils") {
+                          runPytest("--dist worksteal")
+                        }
                       }
                     }
                   }
@@ -143,8 +151,10 @@ pipeline {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      dir("python") {
-                        sh "make check"
+                      catchError(stageResult: 'FAILURE'){
+                        dir("python") {
+                          sh "make check"
+                        }
                       }
                     }
                   }

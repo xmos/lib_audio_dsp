@@ -33,7 +33,7 @@ def cos(fs, length, freq, amplitude, precision=24):
 
 
 def log_chirp(fs, length, amplitude, start=20, stop=20000, precision=24):
-    t = np.arange(fs * length) / fs
+    t = np.arange(int(fs * length)) / fs
     signal = amplitude * spsig.chirp(t, start, length, stop, "log", phi=-90)
     signal = quantize_signal(signal, precision)
 

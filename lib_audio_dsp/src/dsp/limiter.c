@@ -2,6 +2,7 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include "dsp/adsp.h"
+#include <math.h>
 
 static inline int32_t f32_to_fixed(float x, exponent_t output_exp){
   float_s32_t v = f32_to_float_s32(x);
@@ -60,7 +61,7 @@ int32_t adsp_limiter_rms(
 ) {
   adsp_env_detector_rms(&lim->env_det, new_samp);
   float env = (lim->env_det.envelope == 0) ? 1e-20 : lim->env_det.envelope;
-  float new_gain = (lim->threshold > env) ? 1 : lim->threshold / env;
+  float new_gain = (lim->threshold > env) ? 1 : sqrtf(lim->threshold / env);
 
   float alpha = lim->env_det.release_alpha;
   if( lim->gain > new_gain ) {
