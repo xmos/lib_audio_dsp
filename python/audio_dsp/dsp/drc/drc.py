@@ -2,6 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 from copy import deepcopy
 
+import scipy as sp
 import numpy as np
 
 from audio_dsp.dsp import utils as utils
@@ -511,34 +512,42 @@ class limiter_rms(compressor_limiter_base):
 class hard_limiter_peak(limiter_peak):
     def process(self, sample, channel=0):
         # do peak limiting
-        y = super().process(sample, channel)
+        y, new_gain, envelope  = super().process(sample, channel)
 
         # hard clip if above threshold
         if y > self.threshold:
             y = self.threshold
         if y < -self.threshold:
             y = -self.threshold
-        return y
+        return y, new_gain, envelope
 
-    # TODO process_int, super().process_int will return float though...
-    def process_xcore(self, sample, channel=0):
-        raise NotImplementedError
+    def process_int(self, sample, channel=0):
+        y, new_gain, envelope = super().process_int(sample, channel, return_int=True)
 
+        # hard clip if above threshold
+        if y > self.threshold_int:
+            y = self.threshold_int
+        if y < -self.threshold_int:
+            y = -self.threshold_int
 
-class soft_limiter_peak(limiter_peak):
-    def __init__(
-        self, fs, threshold_db, attack_t, release_t, delay=0, nonlinear_point=0.5, Q_sig=dspg.Q_SIG
-    ):
-        super().__init__(fs, threshold_db, attack_t, release_t, delay, Q_sig)
-        self.nonlinear_point = nonlinear_point
-        raise NotImplementedError
-
-    # TODO soft clipping
-    def process(self, sample, channel=0):
-        raise NotImplementedError
+        # quantize before return
+        y = float(y) * 2**-self.Q_sig
+        
+        return y, new_gain, envelope
 
     def process_xcore(self, sample, channel=0):
-        raise NotImplementedError
+        y, new_gain, envelope = super().process_xcore(sample, channel, return_int=True)
+
+        # hard clip if above threshold
+        if y > self.threshold_int:
+            y = self.threshold_int
+        if y < -self.threshold_int:
+            y = -self.threshold_int
+
+        # quantize before return
+        y = float(y) * 2**-self.Q_sig
+
+        return y, new_gain, envelope
 
 
 class lookahead_limiter_peak(compressor_limiter_base):
