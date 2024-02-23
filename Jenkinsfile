@@ -146,21 +146,6 @@ pipeline {
                 }
               }
             } // test utils
-            stage('Test Code Style') {
-              steps {
-                dir("lib_audio_dsp") {
-                  withVenv {
-                    withTools(params.TOOLS_VERSION) {
-                      catchError(stageResult: 'FAILURE'){
-                        dir("python") {
-                          sh "make check"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            } // test style
           }
           post {
             cleanup {
@@ -168,6 +153,35 @@ pipeline {
             }
           }
         } // Build and test
+
+        stage('Style and package') {
+          agent {
+            label 'linux&&x86_64'
+          }
+            steps {
+              dir("lib_audio_dsp") {
+                checkout scm
+              }
+              createVenv("lib_audio_dsp/requirements.txt")
+              dir("lib_audio_dsp") {
+                withVenv {
+                  withTools(params.TOOLS_VERSION) {
+                    dir("python") {
+                      sh "pip install ."
+                      sh "pip install pyright"
+                      sh "pip install ruff"
+                      sh "make check"
+                    }
+                  }
+                }
+              }
+            }
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
+        } // Style and package
 
         stage('docs') {
 
