@@ -1044,6 +1044,39 @@ class compressor_rms_softknee(compressor_limiter_base):
         return new_gain
 
 
+    def gain_calc_piecewise(self, envelope):
+        knee_mid_db = ((-self.slope/(self.w))*
+                    (self.threshold_db - self.threshold_db + self.w/2)**2)
+        knee_mid = utils.db2gain(knee_mid_db)
+
+        w_lin_2 = utils.db2gain(-self.w)
+
+        if envelope < (self.threshold*w_lin_2):
+            new_gain = 1
+        elif envelope < self.threshold:
+            x1 = (self.threshold*utils.db_pow2gain(-self.w/2))
+            y1 = 1
+            x2 = self.threshold
+            y2 = knee_mid
+            a = (y2 - y1)/(x2 - (x1))
+            b = (y1) - a*(x1)
+            new_gain = a*envelope + b
+        elif envelope < self.threshold/w_lin_2:
+            x2 = self.threshold**0.125
+            y2 = knee_mid
+            x3 = (self.threshold*utils.db_pow2gain(self.w/2))**0.125
+            y3 = (self.threshold / (self.threshold*utils.db_pow2gain(self.w/2))) ** self.slope
+            a = (y3 - y2)/(x3 - x2)
+            b = (y2) - a*(x2)
+            # a = (y3 - y1)/(x3 - (x1))
+            # b = (y1) - a*(x1)
+            new_gain = a*(envelope**0.125) + b
+        else:
+            # regular RMS compressor
+            new_gain = (self.threshold / envelope) ** self.slope
+        
+        return new_gain
+
 if __name__ == "__main__":
     # import audio_dsp.dsp.signal_gen as gen
 
