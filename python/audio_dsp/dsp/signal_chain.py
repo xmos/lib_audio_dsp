@@ -23,13 +23,15 @@ class mixer(dspg.dsp_block):
         return y
 
     def process_xcore(self, sample_list, channel=0):  # type:ignore
-        y = 0
+        y = int(0)
         for sample in sample_list:
             sample_int = utils.int32(round(sample * 2**self.Q_sig))
-            scaled_sample = utils.int32_mult_sat_extract(sample_int, self.gain_int, self.Q_sig)
-            y = utils.int40(y + scaled_sample)
+            acc = 1 << (self.Q_sig - 1)
+            acc += sample_int * self.gain_int
+            scaled_sample = utils.int32_mult_sat_extract(acc, 1, self.Q_sig)
+            y += scaled_sample
 
-        y = utils.int32(y)
+        y = utils.int32_mult_sat_extract(y, 2, 1)
         y_flt = float(y) * 2**-self.Q_sig
 
         return y_flt

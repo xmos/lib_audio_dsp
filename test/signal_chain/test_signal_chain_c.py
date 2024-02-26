@@ -29,8 +29,8 @@ def qxx_to_float(arr_int, q = Q_SIG):
 
 def get_sig(len=0.05):
   sig_fl = []
-  sig_fl.append(gen.sin(fs, len, 997, 0.8))
-  sig_fl.append(gen.sin(fs, len, 100, 0.8))
+  sig_fl.append(gen.sin(fs, len, 997, 0.7))
+  sig_fl.append(gen.sin(fs, len, 100, 0.7))
   sig_fl = np.stack(sig_fl, axis=0)
   sig_int = float_to_qxx(sig_fl)
 
@@ -58,39 +58,23 @@ def get_c_wav(dir_name, comp_name, sim = True):
   sf.write(gen_dir / "sig_c.wav", sig_fl, fs, "PCM_24")
   return sig_fl
 
-
-def run_py(filt, sig_fl):
-  out_int = np.zeros(sig_fl.size)
-  out_fl = np.zeros(sig_fl.size)
-  
-  for n in range(sig_fl.size):
-    out_int[n] = filt.process_xcore(sig_fl[n])
-
-  sf.write(gen_dir / "sig_py_int.wav", out_int, fs, "PCM_24")
-
-  for n in range(sig_fl.size):
-    out_fl[n] = filt.process(sig_fl[n])
-
-  sf.write(gen_dir / "sig_py_flt.wav", out_fl, fs, "PCM_24")
-
-  return out_fl, out_int
-
 def write_gain(test_dir, gain):
   all_filt_info = np.empty(0, dtype=np.int32)
   all_filt_info = np.append(all_filt_info, gain)
   all_filt_info.tofile(test_dir / "gain.bin")
 
-def single_test(filt, tname, sig_fl):
-  test_dir = bin_dir / tname
-  test_dir.mkdir(exist_ok = True, parents = True)
+def single_test(filt, test_dir, fname, sig_fl):
+  out_py = np.zeros(sig_fl.shape[1])
 
-  write_gain(test_dir, filt.gain_int)
+  for n in range(sig_fl.shape[1]):
+    out_py[n] = filt.process_xcore(sig_fl[:, n])
+  
+  sf.write(gen_dir / "sig_py_int.wav", out_py, fs, "PCM_24")
 
-  out_py_fl, out_py_int = run_py(filt, sig_fl)
-  out_c = get_c_wav(test_dir, "fixed_gain")
+  out_c = get_c_wav(test_dir, fname)
   shutil.rmtree(test_dir)
 
-  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
+  np.testing.assert_allclose(out_c, out_py, rtol=0, atol=0)
 
 @pytest.fixture(scope="module")
 def in_signal():
@@ -101,27 +85,44 @@ def in_signal():
 @pytest.mark.parametrize("gain_dB", [-10, 0, 24])
 def test_gains_c(in_signal, gain_dB):
   filt = sc.fixed_gain(fs, 1, gain_dB)
-  filter_name = f"fixed_gain_{gain_dB}"
+  test_dir = bin_dir / f"fixed_gain_{gain_dB}"
+  test_dir.mkdir(exist_ok = True, parents = True)
+  write_gain(test_dir, filt.gain_int)
 
-  single_test(filt, filter_name, in_signal[0])
+  out_py = np.zeros(in_signal.shape[1])
+  
+  for n in range(in_signal.shape[1]):
+    out_py[n] = filt.process_xcore(in_signal[0][n])
+
+  sf.write(gen_dir / "sig_py_int.wav", out_py, fs, "PCM_24")
+
+  out_c = get_c_wav(test_dir, "fixed_gain")
+  shutil.rmtree(test_dir)
+
+  np.testing.assert_allclose(out_c, out_py, rtol=0, atol=0)
 
 def test_subtractor_c(in_signal):
   filt = sc.subtractor(fs)
   test_dir = bin_dir / "subtractor"
   test_dir.mkdir(exist_ok = True, parents = True)
 
-  out_py = np.zeros(in_signal.shape[1])
+  single_test(filt, test_dir, "subtractor", in_signal)
 
-  for n in range(in_signal.shape[1]):
-    out_py[n] = filt.process_xcore(in_signal[:, n])
-  
-  sf.write(gen_dir / "sig_py_int.wav", out_py, fs, "PCM_24")
+def test_adder_c(in_signal):
+  filt = sc.adder(fs, 2)
+  test_dir = bin_dir / "adder"
+  test_dir.mkdir(exist_ok = True, parents = True)
 
-  out_c = get_c_wav(test_dir, "subtractor")
-  shutil.rmtree(test_dir)
+  single_test(filt, test_dir, "adder", in_signal)
 
-  np.testing.assert_allclose(out_c, out_py, rtol=0, atol=0)
+@pytest.mark.parametrize("gain_dB", [-12, -6, 0])
+def test_mixer_c(in_signal, gain_dB):
+  filt = sc.mixer(fs, 2, gain_dB)
+  test_dir = bin_dir / f"mixer_{gain_dB}"
+  test_dir.mkdir(exist_ok = True, parents = True)
+  write_gain(test_dir, filt.gain_int)
 
+  single_test(filt, test_dir, "mixer", in_signal)
 
 if __name__ =="__main__":
   bin_dir.mkdir(exist_ok=True, parents=True)
@@ -130,3 +131,5 @@ if __name__ =="__main__":
   
   #test_gains_c(sig_fl, -6)
   test_subtractor_c(sig_fl)
+  test_adder_c(sig_fl)
+  test_mixer_c(sig_fl, -3)
