@@ -117,6 +117,67 @@ def test_comp_ratio(fs, at, rt, ratio, threshold):
     np.testing.assert_allclose(output_flt, output_xcore, atol=6e-8, rtol=0)
 
 
+def compressor_slope(component):
+
+    fs = 48000
+    ratio = 200
+    threshold = -20
+    at = 0.0001
+    rt = 0.1
+
+    component_handle = getattr(drc, component)
+    drcut = component_handle(fs, 1, ratio, threshold, at, rt)
+
+    gains_db = np.linspace(-60, 20, 1000)
+    gains_lin = utils.db2gain(gains_db)
+
+    out_gains = np.zeros_like(gains_lin)
+
+    for n in range(len(out_gains)):
+        out_gains[n] = drcut.gain_calc(gains_lin[n]**2)
+    
+    out_gains_db_1 = utils.db(out_gains)
+
+    out_gains_2 = np.zeros_like(gains_lin)
+    
+    w = 10
+    w_lin = utils.db2gain(w)
+    threshold_lin = utils.db_pow2gain(threshold)
+
+    for n in range(len(out_gains)):
+        out_gains_2[n] = drcut.gain_calc_spline(gains_lin[n]**2)
+
+
+        # envelope = gains_lin[n]**2
+
+        # if envelope < threshold_lin/w_lin:
+        #     out_gains_2[n] = 1
+        # # elif threshold_lin/(w_lin) < envelope < threshold_lin:
+        # #     out_gains_2[n] = ((threshold_lin/(w_lin))/envelope)**(drcut.slope/w_lin)
+        # # elif threshold_lin < envelope < threshold_lin*w_lin:
+        # #     out_gains_2[n] = (1/(w_lin))**(drcut.slope/w_lin)*(threshold_lin/envelope)**(2*drcut.slope/w_lin)
+        # else:
+        #     out_gains_2[n] = (threshold_lin/envelope)**drcut.slope
+
+    out_gains_db_2 = utils.db(out_gains_2)
+
+
+    pass
+
+    knee_idx = np.logical_and(gains_db > (threshold - w/2),(gains_db < (threshold + w/2)))
+    for n in range(len(out_gains)):
+        envelope = gains_lin[n]**2
+
+        if envelope < threshold_lin:
+            out_gains_2[n] = 1
+        else:
+            out_gains_2[n] = (threshold_lin/envelope)**drcut.slope
+    import scipy as sp
+    pf = sp.interpolate.CubicSpline(gains_lin[np.where(knee_idx)[0][[0, -1]]], out_gains_2[np.where(knee_idx)[0][[0, -1]]], bc_type=((2, 0), (2, 1/ratio)))
+    out_gains_2[knee_idx] = pf(gains_lin[knee_idx])
+    out_gains_db_2 = utils.db(out_gains_2)
+    pass
+
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
 @pytest.mark.parametrize("threshold", [-20, -10, -6, 0])
@@ -398,4 +459,5 @@ if __name__ == "__main__":
     # test_drc_component(48000, "limiter_peak", 1, 1, 1)
     # test_limiter_peak_attack(48000, 0.1, -10)
     # comp_vs_limiter(48000, 0.001, 0)
-    test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)
+    # test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)
+    compressor_slope("compressor_rms_softknee")
