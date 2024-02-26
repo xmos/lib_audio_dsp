@@ -20,6 +20,7 @@ ${"="*len(module)}
 .. automodule:: ${module}
    :members:
    :show-inheritance:
+   :inherited-members:
 
 
 %endfor
@@ -30,7 +31,7 @@ ${"="*len(module)}
 def c_doc(dir):
     api_dir = ROOT_DIR/"lib_audio_dsp"/"api"
     c_api_files = sorted(dir.glob("*.h"))
-    c_design_modules = [str(p.relative_to(api_dir)) for p in c_api_files if not p.name.startswith("_")]
+    c_design_modules = [str(p.relative_to(api_dir).as_posix()) for p in c_api_files if not p.name.startswith("_")]
     gen = Template("""
 % for module in modules:
 ${module}
