@@ -992,11 +992,22 @@ class compressor_rms_softknee(compressor_limiter_base):
     def spline_calc(self):
         knee_start = utils.db2gain(self.threshold_db - self.w/2)
         knee_end = utils.db2gain(self.threshold_db + self.w/2)
-        cs = sp.interpolate.CubicSpline([knee_start, knee_end],
-                                        [self.gain_calc(knee_start**2), self.gain_calc(knee_end**2)],
-                                        bc_type=((2, 0), (2, 1/self.ratio)))
-        self.cubics = (cs.c)
-        self.cubic_start = cs.x[0]
+        cs = sp.interpolate.CubicSpline([knee_start/2, knee_start, knee_end, knee_end*2],
+                                        [self.gain_calc((knee_start/2)**2),
+                                        self.gain_calc(knee_start**2),
+                                        self.gain_calc(knee_end**2),
+                                        self.gain_calc((knee_end*2)**2)])
+        mid = (knee_start + knee_end) / 2
+        mid_val = (self.gain_calc(knee_start**2) + self.gain_calc(knee_end**2))/2
+
+        # mid = self.threshold
+        # mid_val = self.gain_calc(self.threshold**2)
+
+        cs = np.polyfit([knee_start, mid, knee_end],
+                        [self.gain_calc(knee_start**2), mid_val,
+                        self.gain_calc(knee_end**2)], 3)
+        self.cubics = (cs)
+        self.cubic_start = 0
         return
  
 
