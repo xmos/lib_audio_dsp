@@ -281,7 +281,7 @@ def make_butterworth_lowpass(N, fc, fs):
     The function implements the algorithm described in Neil Robertson's
     article:
     `"Designing Cascaded Biquad Filters Using the Pole-Zero Method"
-    <https://www.dsprelated.com/showarticle/1137.php>`_ and
+    <https://www.dsprelated.com/showarticle/1137.php>`_.
 
     It uses the bilinear transform to convert the analog filter poles to
     the z-plane.
@@ -339,7 +339,7 @@ def make_butterworth_lowpass(N, fc, fs):
         b2 = K
 
         coeffs = (b0, b1, b2, a0, a1, a2)
-        coeffs = bq.normalise_biquad(coeffs)
+        coeffs = bq._normalise_biquad(coeffs)
         coeffs_list.append(coeffs)
 
     return coeffs_list
@@ -355,7 +355,7 @@ def make_butterworth_highpass(N, fc, fs):
     `"Designing Cascaded Biquad Filters Using the Pole-Zero Method"
     <https://www.dsprelated.com/showarticle/1137.php>`_ and
     `"Design IIR Highpass Filters"
-    <https://www.dsprelated.com/showarticle/1135.php>`_
+    <https://www.dsprelated.com/showarticle/1135.php>`_.
 
     It uses the bilinear transform to convert the analog filter poles to
     the z-plane.
@@ -415,7 +415,7 @@ def make_butterworth_highpass(N, fc, fs):
         b2 = K
 
         coeffs = (b0, b1, b2, a0, a1, a2)
-        coeffs = bq.normalise_biquad(coeffs)
+        coeffs = bq._normalise_biquad(coeffs)
         coeffs_list.append(coeffs)
 
     return coeffs_list
@@ -442,9 +442,9 @@ if __name__ == "__main__":
 
     a = make_butterworth_highpass(6, fc, fs)
 
-    bq0 = bq.biquad(bq.normalise_biquad(a[0]), fs, 1)
-    bq1 = bq.biquad(bq.normalise_biquad(a[1]), fs, 1)
-    bq2 = bq.biquad(bq.normalise_biquad(a[2]), fs, 1)
+    bq0 = bq.biquad(bq._normalise_biquad(a[0]), fs, 1)
+    bq1 = bq.biquad(bq._normalise_biquad(a[1]), fs, 1)
+    bq2 = bq.biquad(bq._normalise_biquad(a[2]), fs, 1)
 
     w, response0 = bq0.freq_response()
     w, response1 = bq1.freq_response()
