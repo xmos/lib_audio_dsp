@@ -79,3 +79,17 @@ int32_t adsp_mixer(int32_t * input, unsigned n_ch, int32_t gain) {
   asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (one));
   return ah;
 }
+
+int32_t adsp_saturate_32b(int64_t acc) {
+  // there is a bug in lsats, so it doesn't work if we give it 0,
+  // so we'll have to use lsats with 1 twice so we can accomodate the whole int64 range
+  int32_t ah, al, mask = 0xffffffff, one = 1;
+  al = (int32_t)(acc & mask);
+  ah = (int32_t)((int64_t)(acc >> 32) & mask);
+  asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (one), "0" (ah), "1" (al));
+  ah <<= one;
+  asm("linsert %0, %1, %2, %3, 32": "=r" (ah), "=r" (al): "r" (al), "r" (one), "0" (ah), "1" (al));
+  asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (one), "0" (ah), "1" (al));
+  asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (one));
+  return ah;
+}
