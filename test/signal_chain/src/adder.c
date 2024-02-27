@@ -36,7 +36,7 @@ int main()
     //printf("%ld ", samp);
     acc += samp;
     acc += samp1;
-    samp_out = adsp_saturate_q31(acc);
+    samp_out = adsp_saturate_32b(acc);
     //printf("%ld ", samp_out);
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }

@@ -15,4 +15,4 @@ int32_t adsp_fixed_gain(int32_t input, int32_t gain);
 
 int32_t adsp_mixer(int32_t * input, unsigned n_ch, int32_t gain);
 
-int32_t adsp_saturate_q31(int64_t acc);
+int32_t adsp_saturate_32b(int64_t acc);

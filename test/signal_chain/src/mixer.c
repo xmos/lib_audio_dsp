@@ -41,7 +41,7 @@ int main()
     //printf("%ld ", samp);
     acc += adsp_fixed_gain(samp, fixed_gain);
     acc += adsp_fixed_gain(samp1, fixed_gain);
-    samp_out = adsp_saturate_q31(acc);
+    samp_out = adsp_saturate_32b(acc);
     //printf("%ld ", samp_out);
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }
