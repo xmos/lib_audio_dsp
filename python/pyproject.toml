@@ -23,7 +23,8 @@ dependencies = [
     "IPython",
     "pyyaml",
     "mako",
-    "tabulate"
+    "tabulate",
+    "docstring-inheritance"
 ]
 
 [tool.ruff]

@@ -161,10 +161,10 @@ def white_noise(
         # normally distributed white noise is unbounded, bound to 6 sigma and
         # scale the variance accordingly by scaling the amplitude
         sigma = 6
-        signal = 2 / sigma * amplitude * np.random.randn(int(length * fs))
+        signal = 2 / sigma * amplitude * np.random.randn(round(length * fs))
         signal = np.clip(signal, -1, 1)
     else:
-        signal = amplitude * (2 * np.random.rand(int(length * fs)) - 1)
+        signal = amplitude * (2 * np.random.rand(round(length * fs)) - 1)
 
     signal = quantize_signal(signal, precision)
     return signal
