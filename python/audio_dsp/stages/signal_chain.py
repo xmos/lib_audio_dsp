@@ -37,8 +37,11 @@ class Fork(Stage):
     def __init__(self, count=2, **kwargs):
         super().__init__(config=find_config("fork"), **kwargs)
         self.create_outputs(self.n_in * count)
+
         fork_indices = [list(range(i, self.n_in * count, count)) for i in range(count)]
-        self.forks: list[list[StageOutput]] = [list(itemgetter(*i)(self.o)) for i in fork_indices]
+        self.forks = []
+        for indices in fork_indices:
+            self.forks.append([self.o[i] for i in indices])
 
     def get_frequency_response(self, nfft=512):
         # not sure what this looks like!
@@ -60,7 +63,7 @@ class Mixer(Stage):
         super().__init__(config=find_config("mixer"), **kwargs)
         self.fs = int(self.fs)
         self.gain_db = gain_db
-        self.create_outputs(self.n_in)
+        self.create_outputs(1)
         self.dsp_block = sc.mixer(self.fs, self.n_in, gain_db)
         self.set_control_field_cb(
             "gain", lambda: [i for i in self.get_fixed_point_coeffs()]
@@ -77,7 +80,7 @@ class Adder(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=find_config("adder"), **kwargs)
         self.fs = int(self.fs)
-        self.create_outputs(self.n_in)
+        self.create_outputs(1)
         self.dsp_block = sc.adder(self.fs, self.n_in)
 
 
@@ -95,7 +98,7 @@ class Subtractor(Stage):
         self.dsp_block = sc.subtractor(self.fs, self.n_in)
 
 
-class Fixed_gain(Stage):
+class FixedGain(Stage):
     """
     Multiply the input by a fixed gain. The gain is set at the time of
     construction and cannot be changed.
@@ -110,7 +113,7 @@ class Fixed_gain(Stage):
         self.dsp_block = sc.fixed_gain(self.fs, self.n_in, gain_db)
 
 
-class Volume_control(Stage):
+class VolumeControl(Stage):
     """
     Multiply the input by a gain. The gain can be changed at runtime.
 
