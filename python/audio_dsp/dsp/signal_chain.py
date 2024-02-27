@@ -14,7 +14,7 @@ class mixer(dspg.dsp_block):
 
     Parameters
     ----------
-    gain_db : float, optional
+    gain_db : float
         Gain in decibels (default is -6 dB).
 
     Attributes
@@ -46,7 +46,7 @@ class mixer(dspg.dsp_block):
         ----------
         sample_list : list
             List of input samples
-        channel : int, optional
+        channel : int
             Channel index, not used by this module.
 
         Returns
@@ -72,7 +72,7 @@ class mixer(dspg.dsp_block):
         ----------
         sample_list : list
             List of input samples
-        channel : int, optional
+        channel : int
             Channel index, not used by this module.
 
         Returns
@@ -161,8 +161,8 @@ class mixer(dspg.dsp_block):
 
         Parameters
         ----------
-        nfft : int, optional
-            Number of FFT points (default is 512).
+        nfft : int
+            Number of FFT points.
 
         Returns
         -------
@@ -208,7 +208,7 @@ class subtractor(dspg.dsp_block):
         ----------
         sample_list : list[float]
             List of input samples.
-        channel : int, optional
+        channel : int
             Channel index, unused by this module.
 
         Returns
@@ -231,7 +231,7 @@ class subtractor(dspg.dsp_block):
         ----------
         sample_list : list[float]
             List of input samples.
-        channel : int, optional
+        channel : int
             Channel index, unused by this module.
 
         Returns
@@ -259,8 +259,8 @@ class subtractor(dspg.dsp_block):
         ----------
         frame : list[np.ndarray]
             List of frames, where each frame is a 1-D numpy array.
-        channel : int, optional
-            Channel index (default is 0).
+        channel : int
+            Channel index.
 
         Returns
         -------
@@ -287,8 +287,8 @@ class subtractor(dspg.dsp_block):
         ----------
         frame : list[np.ndarray]
             List of frames, where each frame is a 1-D numpy array.
-        channel : int, optional
-            Channel index (default is 0).
+        channel : int
+            Channel index.
 
         Returns
         -------
@@ -333,7 +333,7 @@ class fixed_gain(dspg.dsp_block):
         ----------
         sample : float
             The input sample to be processed.
-        channel : int, optional
+        channel : int
             The channel index to process the sample on, not used by this
             module.
 
@@ -356,7 +356,7 @@ class fixed_gain(dspg.dsp_block):
         ----------
         sample : float
             The input sample to be processed.
-        channel : int, optional
+        channel : int
             The channel index to process the sample on, not used by this
             module.
 
@@ -379,8 +379,8 @@ class fixed_gain(dspg.dsp_block):
 
         Parameters
         ----------
-        nfft : int, optional
-            Number of FFT points (default is 512).
+        nfft : int
+            Number of FFT points.
 
         Returns
         -------
@@ -447,7 +447,7 @@ class switch(dspg.dsp_block):
         ----------
         sample_list : list
             A list of samples for each of the switch inputs.
-        channel : int, optional
+        channel : int
             Not used by this DSP module.
 
         Returns
@@ -467,7 +467,7 @@ class switch(dspg.dsp_block):
         ----------
         sample_list : list
             A list of samples for each of the switch inputs.
-        channel : int, optional
+        channel : int
             Not used by this DSP module.
 
         Returns

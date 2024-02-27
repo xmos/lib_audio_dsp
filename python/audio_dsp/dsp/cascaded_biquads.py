@@ -46,14 +46,14 @@ class cascaded_biquads_8(dspg.dsp_block):
 
         Parameters
         ----------
-        sample : _type_
+        sample : float
             The input sample to be processed.
-        channel : int, optional
-            The channel index to process the sample on. Default is 0.
+        channel : int
+            The channel index to process the sample on.
 
         Returns
         -------
-        _type_
+        float
             The processed output sample.
         """
         y = sample
@@ -185,7 +185,7 @@ class cascaded_biquads_8(dspg.dsp_block):
 
         Parameters
         ----------
-        nfft : int, optional
+        nfft : int
             The number of points to compute in the frequency response,
             by default 512.
 
@@ -281,12 +281,12 @@ def make_butterworth_lowpass(N, fc, fs):
     The function implements the algorithm described in Neil Robertson's
     article:
     "Designing Cascaded Biquad Filters Using the Pole-Zero Method"
-    (https://www.dsprelated.com/showarticle/1137.php)
+    `https://www.dsprelated.com/showarticle/1137.php`_
 
     It uses the bilinear transform to convert the analog filter poles to
     the z-plane.
 
-    See also https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html
+    See also `https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html`_
 
     Parameters
     ----------
@@ -353,14 +353,14 @@ def make_butterworth_highpass(N, fc, fs):
     The function implements the algorithm described in Neil Robertson's
     article:
     "Designing Cascaded Biquad Filters Using the Pole-Zero Method"
-    (https://www.dsprelated.com/showarticle/1137.php) and
+    (`https://www.dsprelated.com/showarticle/1137.php`_) and
     "Design IIR Highpass Filters"
-    https://www.dsprelated.com/showarticle/1135.php
+    `https://www.dsprelated.com/showarticle/1135.php`_
 
     It uses the bilinear transform to convert the analog filter poles to
     the z-plane.
 
-    See also https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html
+    See also `https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html`_
 
     Parameters
     ----------
