@@ -521,7 +521,9 @@ class compressor_limiter_base(dspg.dsp_block):
 
         # apply gain in int32
         this_gain_int = utils.int32(self.gain_f32[channel] * 2**30)
-        y = utils.vpu_mult(this_gain_int, sample_int)
+        acc = int(1 << 29)
+        acc += this_gain_int * sample_int
+        y = utils.int32_mult_sat_extract(acc, 1, 30)
 
         # quantize before return
         y = float(y) * 2**-self.Q_sig
