@@ -71,7 +71,8 @@ pipeline {
                           [
                           "test/biquad",
                           "test/cascaded_biquads",
-                          "test/drc"
+                          "test/drc",
+                          "test/signal_chain"
                           ].each {
                             sh "cmake -S ${it} -B ${it}/build"
                             sh "xmake -C ${it}/build -j"

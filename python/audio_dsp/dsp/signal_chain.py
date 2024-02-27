@@ -85,7 +85,7 @@ class subtractor(dspg.dsp_block):
         sample_int_1 = utils.int32(round(sample_list[1] * 2**self.Q_sig))
 
         acc = int(0)
-        acc += sample_int_0 *  2
+        acc += sample_int_0 * 2
         acc += sample_int_1 * -2
         y = utils.int32_mult_sat_extract(acc, 1, 1)
 
