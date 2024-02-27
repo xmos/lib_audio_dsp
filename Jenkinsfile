@@ -71,7 +71,8 @@ pipeline {
                           [
                           "test/biquad",
                           "test/cascaded_biquads",
-                          "test/drc"
+                          "test/drc",
+                          "test/signal_chain"
                           ].each {
                             sh "cmake -S ${it} -B ${it}/build"
                             sh "xmake -C ${it}/build -j"
@@ -131,6 +132,22 @@ pipeline {
                 }
               }
             } // test drc
+            stage('Test SC') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE'){
+                        dir("test/signal_chain") {
+                          runPytest("test_signal_chain_python.py --dist worksteal")
+                          runPytest("test_signal_chain_c.py --dist worksteal")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test SC
             stage('Test Utils') {
               steps {
                 dir("lib_audio_dsp") {
