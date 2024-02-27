@@ -418,8 +418,10 @@ def _round_to_q30(coeffs: list[float]) -> tuple[list[float], list[int]]:
         # scale to Q30 ints
         rounded_coeffs[n] = round(coeffs[n] * 2**Q)
         # check for overflow
-        if not (-2**31 <= rounded_coeffs[n] <= 2**31 - 1):
-            raise ValueError("Filter coefficient will overflow (%.4f, %d), reduce gain" % (coeffs[n], n))
+        if not (-(2**31) <= rounded_coeffs[n] <= 2**31 - 1):
+            raise ValueError(
+                "Filter coefficient will overflow (%.4f, %d), reduce gain" % (coeffs[n], n)
+            )
 
         int_coeffs[n] = utils.int32(rounded_coeffs[n])
         # rescale to floats
@@ -874,7 +876,7 @@ def make_biquad_constant_q(
 
     if filter_freq > fs / 2:
         raise ValueError("filter_freq must be less than fs/2")
-        
+
     V = 10 ** (boost_db / 20)
     w0 = 2.0 * np.pi * filter_freq / fs
     K = np.tan(w0 / 2)

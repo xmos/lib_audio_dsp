@@ -280,13 +280,13 @@ def make_butterworth_lowpass(N, fc, fs):
 
     The function implements the algorithm described in Neil Robertson's
     article:
-    "Designing Cascaded Biquad Filters Using the Pole-Zero Method"
-    `https://www.dsprelated.com/showarticle/1137.php`_
+    `"Designing Cascaded Biquad Filters Using the Pole-Zero Method"
+    <https://www.dsprelated.com/showarticle/1137.php>`_ and
 
     It uses the bilinear transform to convert the analog filter poles to
     the z-plane.
 
-    See also `https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html`_
+    See also `scipy.signal.zpk2sos <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html>`_
 
     Parameters
     ----------
@@ -352,15 +352,15 @@ def make_butterworth_highpass(N, fc, fs):
 
     The function implements the algorithm described in Neil Robertson's
     article:
-    "Designing Cascaded Biquad Filters Using the Pole-Zero Method"
-    (`https://www.dsprelated.com/showarticle/1137.php`_) and
-    "Design IIR Highpass Filters"
-    `https://www.dsprelated.com/showarticle/1135.php`_
+    `"Designing Cascaded Biquad Filters Using the Pole-Zero Method"
+    <https://www.dsprelated.com/showarticle/1137.php>`_ and
+    `"Design IIR Highpass Filters"
+    <https://www.dsprelated.com/showarticle/1135.php>`_
 
     It uses the bilinear transform to convert the analog filter poles to
     the z-plane.
 
-    See also `https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html`_
+    See also `scipy.signal.zpk2sos <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html>`_
 
     Parameters
     ----------
