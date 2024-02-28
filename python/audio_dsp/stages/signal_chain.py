@@ -94,7 +94,8 @@ class Subtractor(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=find_config("subtractor"), **kwargs)
         self.fs = int(self.fs)
-        self.create_outputs(self.n_in)
+        self.create_outputs(1)
+        assert self.n_in == 2, "Subtractor requires 2 inputs"
         self.dsp_block = sc.subtractor(self.fs, self.n_in)
 
 

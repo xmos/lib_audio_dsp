@@ -5,7 +5,7 @@ Tests for audio_dsp.stages.signal_chain.Fork
 """
 import pytest
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
-from audio_dsp.stages.signal_chain import Adder
+from audio_dsp.stages.signal_chain import Adder, Subtractor
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
 
 from pathlib import Path
@@ -16,7 +16,7 @@ PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
 
-def do_test(p, in_ch, out_ch):
+def do_test(p, in_ch, out_ch, math_op):
     """
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
@@ -40,7 +40,10 @@ def do_test(p, in_ch, out_ch):
     run_pipeline_xcoreai.run(xe, infile, outfile, 1, 1)
 
     _, out_data = audio_helpers.read_wav(outfile)
-    np.testing.assert_equal(np.sum(sig, axis=1), out_data)
+    if math_op == "add":
+        np.testing.assert_equal(np.sum(sig, axis=1), out_data)
+    elif math_op == "subtract": 
+        np.testing.assert_equal(np.subtract(sig[:, 0], sig[:, 1]), out_data)
 
 @pytest.mark.parametrize("fork_output", ([0]))
 def test_adder(fork_output):
@@ -53,7 +56,22 @@ def test_adder(fork_output):
         adder = t.stage(Adder, p.i)
     p.set_outputs(adder.o)
 
-    do_test(p, (0, 1), (0, 1))
+    do_test(p, (0, 1), (0, 1), "add")
+
+
+@pytest.mark.parametrize("fork_output", ([0]))
+def test_subtractor(fork_output):
+    """
+    Basic check that the for stage correctly copies data to the expected outputs.
+    """
+    channels = 2
+    p = Pipeline(channels)
+    with p.add_thread() as t:
+        adder = t.stage(Subtractor, p.i)
+    p.set_outputs(adder.o)
+
+    do_test(p, (0, 1), (0, 1), "subtract")
+
 
 if __name__ == "__main__":
     test_adder(0)
