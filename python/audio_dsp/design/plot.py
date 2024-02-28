@@ -2,7 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """
 Helper functions for displaying plots in the jupyter notebook pipeline
-design
+design.
 """
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,7 +12,7 @@ import audio_dsp.dsp.utils as utils
 
 def plot_frequency_response(f, h, name="", range=50):
     """
-    Plot the frequency response
+    Plot the frequency response.
 
     Parameters
     ----------
