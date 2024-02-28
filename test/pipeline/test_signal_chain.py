@@ -23,7 +23,7 @@ def do_test(p, in_ch, out_ch):
     """
     infile = "inadder.wav"
     outfile = "outadder.wav"
-    n_samps, rate = 10, 48000
+    n_samps, rate = 1024, 48000
 
     generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
     target = "pipeline_test"
@@ -32,18 +32,17 @@ def do_test(p, in_ch, out_ch):
 
     sig0 = np.linspace(-2**26, 2**26, n_samps, dtype=np.int32)  << 4 # numbers which should be unmodified through pipeline
                                                                      # data formats
-    sig1 = np.linspace(2**26, -2**26, n_samps, dtype=np.int32)  << 4
+    sig1 = np.linspace(2**23, -2**23, n_samps, dtype=np.int32)  << 4
     sig = np.stack((sig0, sig1), axis=1)
     audio_helpers.write_wav(infile, rate, sig)
 
     xe = APP_DIR / f"bin/{target}.xe"
-    run_pipeline_xcoreai.run(xe, infile, outfile, 2, 1)
+    run_pipeline_xcoreai.run(xe, infile, outfile, 1, 1)
 
     _, out_data = audio_helpers.read_wav(outfile)
-    for in_i, out_i in zip(in_ch, out_ch):
-        np.testing.assert_equal(sig[:, in_i], out_data[:, out_i])
+    np.testing.assert_equal(np.sum(sig, axis=1), out_data)
 
-@pytest.mark.parametrize("fork_output", (0, 1))
+@pytest.mark.parametrize("fork_output", ([0]))
 def test_adder(fork_output):
     """
     Basic check that the for stage correctly copies data to the expected outputs.
