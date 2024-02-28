@@ -15,6 +15,13 @@ typedef struct{
   float gain;
 }limiter_t;
 
+typedef struct{
+  env_detector_t env_det;
+  float threshold;
+  float gain;
+  float slope;
+}compressor_t;
+
 env_detector_t adsp_env_detector_init(
   float fs,
   float attack_t,
@@ -47,4 +54,15 @@ int32_t adsp_limiter_peak(
 
 int32_t adsp_limiter_rms(
   limiter_t * lim,
+  int32_t new_samp);
+
+compressor_t adsp_compressor_rms_init(
+  float fs,
+  float threshold_db,
+  float atack_t,
+  float release_t,
+  float ratio);
+
+int32_t adsp_compressor_rms(
+  compressor_t * comp,
   int32_t new_samp);

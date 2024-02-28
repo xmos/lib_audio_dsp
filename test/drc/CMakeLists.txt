@@ -14,7 +14,7 @@ set(APP_COMPILER_FLAGS
     -fxscope)
 
 set(APP_DEPENDENT_MODULES lib_audio_dsp)
-set(APP_C_SRCS src/main_peak.c)
+set(APP_C_SRCS src/limiter_peak.c)
 
 set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
 
@@ -33,7 +33,26 @@ set(APP_COMPILER_FLAGS
     -fxscope)
 
 set(APP_DEPENDENT_MODULES lib_audio_dsp)
-set(APP_C_SRCS src/main_rms.c)
+set(APP_C_SRCS src/limiter_rms.c)
+
+set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
+
+XMOS_REGISTER_APP()
+
+project(compressor_rms_test)
+
+set(APP_HW_TARGET XCORE-AI-EXPLORER)
+
+set(APP_COMPILER_FLAGS
+    -O3
+    -g
+    -report
+    -Wall
+    -Werror
+    -fxscope)
+
+set(APP_DEPENDENT_MODULES lib_audio_dsp)
+set(APP_C_SRCS src/compressor_rms.c)
 
 set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
 
