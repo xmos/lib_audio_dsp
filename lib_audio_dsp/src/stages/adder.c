@@ -12,7 +12,6 @@ void adder_process(int32_t **input, int32_t **output, void *app_data_state)
 {
     adder_state_t *state = app_data_state;
 
-    // we have to shuffle the data from [chans, samples] to [samples, chans]
     for(int sample_index = 0; sample_index < state->frame_size; ++sample_index) {
         int32_t *out = &output[0][sample_index];
         int64_t acc = 0;

@@ -59,15 +59,26 @@ class Mixer(Stage):
         The gain of the mixer in dB.
     """
 
-    def __init__(self, gain_db=-6, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(config=find_config("mixer"), **kwargs)
         self.fs = int(self.fs)
-        self.gain_db = gain_db
         self.create_outputs(1)
-        self.dsp_block = sc.mixer(self.fs, self.n_in, gain_db)
+        self.dsp_block = sc.mixer(self.fs, self.n_in)
         self.set_control_field_cb(
-            "gain", lambda: [i for i in self.get_fixed_point_coeffs()]
+            "gain", lambda: self.dsp_block.gain_int
         )
+
+    def set_gain(self, gain_db):
+        """
+        Set the gain of the mixer in dB.
+
+        Parameters
+        ----------
+        gain_db : float
+            The gain of the mixer in dB.
+        """
+        self.dsp_block = sc.mixer(self.fs, self.n_in, gain_db)
+        return self
 
 
 class Adder(Stage):
