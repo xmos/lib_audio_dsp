@@ -25,7 +25,7 @@ class envelope_detector_peak(dspg.dsp_block):
         Release time of the envelope detector in seconds.
     detect_t : float, optional
         Attack and relase time of the envelope detector in seconds. Sets
-        attack_t == release_t Cannot be used with attack_t or release_t
+        attack_t == release_t. Cannot be used with attack_t or release_t
         inputs.
 
     Attributes
@@ -65,7 +65,7 @@ class envelope_detector_peak(dspg.dsp_block):
             attack_t = detect_t
             release_t = detect_t
 
-        # attack times simplified from McNally, seem pretty close.
+        # Attack times simplified from McNally, seem pretty close.
         # Assumes the time constant of a digital filter is the -3 dB
         # point where abs(H(z))**2 = 0.5.
         T = 1 / fs
@@ -131,6 +131,7 @@ class envelope_detector_peak(dspg.dsp_block):
         Take 1 new sample and return the updated envelope. If the input
         is np.float32, return a np.float32, otherwise expect float input
         and return float output.
+
         """
         if isinstance(sample, float):
             sample_int = utils.int32(round(sample * 2**self.Q_sig))
@@ -162,6 +163,7 @@ class envelope_detector_peak(dspg.dsp_block):
         Take 1 new sample and return the updated envelope. If the input
         is np.float32, return a np.float32, otherwise expect float input
         and return float output.
+
         """
         if isinstance(sample, np.float32):
             # don't do anything if we got np.float32, this function was
@@ -278,6 +280,7 @@ class envelope_detector_rms(envelope_detector_peak):
         Note this returns the mean**2 value, there is no need to do the
         sqrt() as if the output is converted to dB, 10log10() can be
         taken instead of 20log10().
+
         """
         if isinstance(sample, np.float32):
             # don't do anything if we got np.float32, this function was
@@ -423,6 +426,7 @@ class compressor_limiter_base(dspg.dsp_block):
 
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.
+
         """
         # get envelope from envelope detector
         envelope = self.env_detector.process(sample, channel)
@@ -454,6 +458,7 @@ class compressor_limiter_base(dspg.dsp_block):
 
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.
+
         """
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
         # get envelope from envelope detector
@@ -491,6 +496,7 @@ class compressor_limiter_base(dspg.dsp_block):
 
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.
+
         """
         # quantize
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
@@ -539,6 +545,7 @@ class compressor_limiter_base(dspg.dsp_block):
         length of the arrays is equal to the frame size.
 
         When calling self.process only take the first output.
+
         """
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
@@ -559,6 +566,7 @@ class compressor_limiter_base(dspg.dsp_block):
         length of the arrays is equal to the frame size.
 
         When calling self.process_xcore only take the first output.
+
         """
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
@@ -668,6 +676,7 @@ class limiter_rms(compressor_limiter_base):
 
         Note that as the RMS envelope detector returns x**2, we need to
         sqrt the gain.
+
         """
         new_gain = sqrt(self.threshold / envelope)
         new_gain = min(1, new_gain)
@@ -678,6 +687,7 @@ class limiter_rms(compressor_limiter_base):
 
         Note that as the RMS envelope detector returns x**2, we need to
         sqrt the gain.
+
         """
         new_gain = sqrt(float(self.threshold_int) / float(envelope_int))
         new_gain = min(1.0, new_gain)
@@ -689,6 +699,7 @@ class limiter_rms(compressor_limiter_base):
 
         Note that as the RMS envelope detector returns x**2, we need to
         sqrt the gain.
+
         """
         # note use np.sqrt to ensure we stay in f32, using math.sqrt
         # will return float!
@@ -862,6 +873,7 @@ class compressor_rms(compressor_limiter_base):
         Note that as the RMS envelope detector returns x**2, we need to
         sqrt the gain. Slope is used instead of ratio to allow the gain
         calculation to avoid the log domain.
+
         """
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
@@ -875,6 +887,7 @@ class compressor_rms(compressor_limiter_base):
         Note that as the RMS envelope detector returns x**2, we need to
         sqrt the gain. Slope is used instead of ratio to allow the gain
         calculation to avoid the log domain.
+
         """
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
@@ -889,6 +902,7 @@ class compressor_rms(compressor_limiter_base):
         Note that as the RMS envelope detector returns x**2, we need to
         sqrt the gain. Slope is used instead of ratio to allow the gain
         calculation to avoid the log domain.
+
         """
         # if envelope below threshold, apply unity gain, otherwise scale
         # down

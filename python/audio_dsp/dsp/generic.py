@@ -6,7 +6,11 @@ import numpy as np
 from audio_dsp.dsp import utils as utils
 from docstring_inheritance import NumpyDocstringInheritanceInitMeta
 
+# default Q format for the signal
 Q_SIG = 27
+
+# number of bits for the headroom, this will set the maximum gain that
+# can be applied to the signal without overflowing.
 HEADROOM_BITS = 31 - Q_SIG
 HEADROOM_DB = utils.db(2**HEADROOM_BITS)
 
@@ -49,15 +53,38 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
         """
         Take one new sample and give it back. Do no processing for the
         generic block.
+
+        Parameters
+        ----------
+        sample : float
+            The input sample to be processed.
+        channel : int, optional
+            The channel index to process the sample on. Default is 0.
+
+        Returns
+        -------
+        float
+            The processed sample.
         """
         return sample
 
     def process_xcore(self, sample: float, channel=0):
-        """
-        Take one new sample and return 1 processed sample.
+        """Take one new sample and return 1 processed sample.
 
         For the generic implementation, scale and quantize the input,
         call the float implementation, then scale back to 1.0 = 0 dB.
+
+        Parameters
+        ----------
+        sample : float
+            The input sample to be processed.
+        channel : int, optional
+            The channel index to process the sample on. Default is 0.
+
+        Returns
+        -------
+        float
+            The processed output sample.
         """
         sample_int = utils.int32(sample * 2**self.Q_sig)
         y = self.process(float(sample_int))
@@ -75,6 +102,17 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
 
         For the generic implementation, just call process for each
         sample for each channel.
+
+        Parameters
+        ----------
+        frame : list
+            List of frames, where each frame is a 1-D numpy array.
+
+        Returns
+        -------
+        list
+            List of processed frames, with the same structure as the
+            input frame.
         """
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
@@ -97,6 +135,17 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
 
         For the generic implementation, just call process for each
         sample for each channel.
+
+        Parameters
+        ----------
+        frame : list
+            List of frames, where each frame is a 1-D numpy array.
+
+        Returns
+        -------
+        list
+            List of processed frames, with the same structure as the
+            input frame.
         """
         n_outputs = len(frame)
         frame_size = frame[0].shape[0]
@@ -110,9 +159,22 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
 
     def freq_response(self, nfft=512):
         """
-        The frequency response of the module for a nominal input.
+        Calculate the frequency response of the module for a nominal
+        input.
 
         The generic module has a flat frequency response.
+
+        Parameters
+        ----------
+        nfft : int, optional
+            The number of points to use for the FFT, by default 512
+
+        Returns
+        -------
+        tuple
+            A tuple containing the frequency values and the
+            corresponding complex response.
+
         """
         f = np.fft.rfftfreq(nfft) * self.fs
         h = np.ones_like(f)
