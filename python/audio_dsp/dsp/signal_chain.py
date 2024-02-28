@@ -272,8 +272,16 @@ class subtractor(dspg.dsp_block):
         -------
         list[np.ndarray]
             Length 1 list of processed frames.
+
+        Raises
+        ------
+        ValueError
+            If the length of the input frame is not 2.
+
         """
-        assert len(frame) == 2, "Subtractor requires 2 channels"
+        if len(frame) != 2:
+            raise ValueError("Subtractor requires 2 channels")
+
         frame_size = frame[0].shape[0]
         output = np.zeros(frame_size)
         for sample in range(frame_size):

@@ -305,11 +305,13 @@ def make_butterworth_lowpass(N, fc, fs):
 
     Raises
     ------
-    AssertionError
+    ValueError
         If fc is greater than fs/2 or if N is not even.
     """
-    assert fc <= fs / 2, "fc must be less than fs/2"
-    assert N % 2 == 0, "N must be even"
+    if N % 2 != 0:
+        raise ValueError("N must be even")
+    if fc > fs / 2:
+        raise ValueError("fc must be less than fs/2")
 
     # Find analog filter poles above the real axis for the low-pass
     ks = np.arange(1, N // 2 + 1)
@@ -379,12 +381,13 @@ def make_butterworth_highpass(N, fc, fs):
 
     Raises
     ------
-    AssertionError
+    ValueError
         If fc is greater than fs/2 or if N is not even.
     """
-
-    assert fc <= fs / 2, "fc must be less than fs/2"
-    assert N % 2 == 0, "N must be even"
+    if N % 2 != 0:
+        raise ValueError("N must be even")
+    if fc > fs / 2:
+        raise ValueError("fc must be less than fs/2")
 
     # Find analog filter poles above the real axis for the low-pass
     ks = np.arange(1, N // 2 + 1)

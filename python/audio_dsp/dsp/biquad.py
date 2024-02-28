@@ -25,7 +25,7 @@ class biquad(dspg.dsp_block):
     `a0*y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]`
 
     For efficiency the biquad coefficients are normalised by a0 and the
-    output coefficients multiplied by -1.
+    output `a` coefficients multiplied by -1.
 
     Parameters
     ----------
@@ -710,6 +710,12 @@ def make_biquad_bandstop(fs: int, filter_freq: float, BW: float) -> list[float]:
     -------
     list[float]
         The coefficients of the biquad bandstop filter.
+
+    Raises
+    ------
+    ValueError
+        If the filter frequency is greater than half of the sample rate.
+
     """
     if filter_freq > fs / 2:
         raise ValueError("filter_freq must be less than fs/2")
@@ -745,6 +751,12 @@ def make_biquad_notch(fs: int, filter_freq: float, q_factor: float) -> list[floa
     -------
     list[float]
         The coefficients of the biquad notch filter.
+
+    Raises
+    ------
+    ValueError
+        If the filter frequency is greater than half of the sample rate.
+
     """
     if filter_freq > fs / 2:
         raise ValueError("filter_freq must be less than fs/2")
@@ -827,6 +839,11 @@ def make_biquad_peaking(
     list[float]
         The coefficients of the biquad filter in the order
         [b0, b1, b2, a0, a1, a2].
+
+    Raises
+    ------
+    ValueError
+        If the filter frequency is greater than half of the sample rate.
     """
     if filter_freq > fs / 2:
         raise ValueError("filter_freq must be less than fs/2")
@@ -871,8 +888,18 @@ def make_biquad_constant_q(
     list[float]
         The coefficients of the biquad filter in the order
         [b0, b1, b2, a0, a1, a2].
+
+    Raises
+    ------
+    ValueError
+        If the filter frequency is greater than half of the sample rate.
+
+    References
+    ----------
+    - Zoelzer, U. (2011). DAFX: Digital Audio Effects. John Wiley & Sons, Table 2.4
+    - https://www.musicdsp.org/en/latest/Filters/37-zoelzer-biquad-filters.html
+
     """
-    # https://www.musicdsp.org/en/latest/Filters/37-zoelzer-biquad-filters.html
 
     if filter_freq > fs / 2:
         raise ValueError("filter_freq must be less than fs/2")
@@ -928,6 +955,12 @@ def make_biquad_lowshelf(
     list[float]
         A list of six coefficients [b0, b1, b2, a0, a1, a2] for the
         biquad filter.
+
+    Raises
+    ------
+    ValueError
+        If the filter frequency is greater than half of the sample rate.
+
     """
     if filter_freq > fs / 2:
         raise ValueError("filter_freq must be less than fs/2")
@@ -973,6 +1006,12 @@ def make_biquad_highshelf(
     -------
     list[float]
         The coefficients of the highshelf biquad filter.
+
+    Raises
+    ------
+    ValueError
+        If the filter frequency is greater than half of the sample rate.
+
     """
     if filter_freq > fs / 2:
         raise ValueError("filter_freq must be less than fs/2")
