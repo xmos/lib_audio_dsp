@@ -4,7 +4,7 @@ from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
 from ..dsp import generic as dspg
 
-class LimiterRMS(Stage):
+class CompressorRMS(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=find_config("compressor_rms"), **kwargs)
         self.create_outputs(self.n_in)
