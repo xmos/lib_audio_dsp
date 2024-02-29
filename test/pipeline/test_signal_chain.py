@@ -22,7 +22,7 @@ BUILD_DIR = APP_DIR / "build"
 
 fs = 48000
 
-def do_test(p, in_ch, out_ch, ref_module: dsp_block, gain=0):
+def do_test(p):
     """
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
@@ -30,6 +30,9 @@ def do_test(p, in_ch, out_ch, ref_module: dsp_block, gain=0):
     infile = "inadder.wav"
     outfile = "outadder.wav"
     n_samps, rate = 1024, 48000
+
+    # use the python dsp_block as a reference implementation
+    ref_module = p.stages[1].dsp_block
 
     generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
     target = "pipeline_test"
@@ -39,9 +42,9 @@ def do_test(p, in_ch, out_ch, ref_module: dsp_block, gain=0):
     sig0 = np.linspace(-2**26, 2**26, n_samps, dtype=np.int32)  << 4 # numbers which should be unmodified through pipeline
                                                                      # data formats
 
-    ref_module = p.stages[1].dsp_block
     if type(ref_module) == sc.subtractor:
-            sig1 = np.linspace(-2**23, 2**23, n_samps, dtype=np.int32)  << 4
+        # don't overflow output by doing -1 - 0.125
+        sig1 = np.linspace(-2**23, 2**23, n_samps, dtype=np.int32)  << 4
     else:
         sig1 = np.linspace(2**23, -2**23, n_samps, dtype=np.int32)  << 4
     sig = np.stack((sig0, sig1), axis=1)
@@ -54,7 +57,7 @@ def do_test(p, in_ch, out_ch, ref_module: dsp_block, gain=0):
 
     # convert to float scaling and make frames
     frame_size = 1
-    sig_flt = np.float64(sig.T) * 2**-27
+    sig_flt = np.float64(sig.T) * 2**-31
     signal_frames = utils.frame_signal(sig_flt, frame_size, frame_size)
     out_py = np.zeros((1, sig.shape[0]))
     
@@ -63,15 +66,14 @@ def do_test(p, in_ch, out_ch, ref_module: dsp_block, gain=0):
         out_py[:, n:n+frame_size] = ref_module.process_frame_xcore(signal_frames[n])
 
     # back to int scaling
-    out_py_int = out_py * 2**27
+    out_py_int = out_py * 2**31
 
     np.testing.assert_equal(out_py_int[0], out_data)
 
 
-@pytest.mark.parametrize("fork_output", ([0]))
-def test_adder(fork_output):
+def test_adder():
     """
-    Basic check that the for stage correctly copies data to the expected outputs.
+    Test the adder stage adds the same in python and C
     """
     channels = 2
     p = Pipeline(channels)
@@ -79,18 +81,13 @@ def test_adder(fork_output):
         adder = t.stage(Adder, p.i)
     p.set_outputs(adder.o)
 
-    ref_module = sc.adder(fs, channels)
-
-
-    do_test(p, (0, 1), (0, 1), ref_module)
+    do_test(p)
 
 
 
-
-@pytest.mark.parametrize("fork_output", ([0]))
-def test_subtractor(fork_output):
+def test_subtractor():
     """
-    Basic check that the for stage correctly copies data to the expected outputs.
+    Test the subtractor stage adds the same in python and C
     """
     channels = 2
     p = Pipeline(channels)
@@ -98,16 +95,13 @@ def test_subtractor(fork_output):
         adder = t.stage(Subtractor, p.i)
     p.set_outputs(adder.o)
 
-    ref_module = sc.subtractor(fs, channels)
-
-    do_test(p, (0, 1), (0, 1), ref_module)
+    do_test(p)
 
 
-@pytest.mark.parametrize("fork_output", ([0]))
 @pytest.mark.parametrize("gain", ([-6, 0]))
-def test_mixer(fork_output, gain):
+def test_mixer(gain):
     """
-    Basic check that the for stage correctly copies data to the expected outputs.
+    Test the mixer stage adds the same in python and C
     """
     channels = 2
     p = Pipeline(channels)
@@ -115,9 +109,8 @@ def test_mixer(fork_output, gain):
         adder = t.stage(Mixer, p.i).set_gain(gain)
     p.set_outputs(adder.o)
 
-    ref_module = sc.mixer(fs, channels, gain)
+    do_test(p)
 
-    do_test(p, (0, 1), (0, 1), ref_module)
 
 if __name__ == "__main__":
-    test_adder(0)
+    test_subtractor(0)
