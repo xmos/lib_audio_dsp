@@ -1,6 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
+from typing import Iterable
 from .graph import Edge, Node
 import yaml
 from pathlib import Path
@@ -158,7 +159,7 @@ class Stage(Node):
         This will point to a dsp block class (e.g. biquad etc), to be set by the child class
     """
 
-    def __init__(self, config: Path | str, inputs: list[StageOutput]):
+    def __init__(self, config: Path | str, inputs: Iterable[StageOutput]):
         super().__init__()
         self.i = [i for i in inputs]
         for i, input in enumerate(self.i):
