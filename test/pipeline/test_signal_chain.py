@@ -52,14 +52,17 @@ def do_test(p, in_ch, out_ch, ref_module: dsp_block, gain=0):
 
     _, out_data = audio_helpers.read_wav(outfile)
 
+    # convert to float scaling and make frames
     frame_size = 1
     sig_flt = np.float64(sig.T) * 2**-27
     signal_frames = utils.frame_signal(sig_flt, frame_size, frame_size)
     out_py = np.zeros((1, sig.shape[0]))
     
+    # run through python bit exact implementation
     for n in range(len(signal_frames)):
         out_py[:, n:n+frame_size] = ref_module.process_frame_xcore(signal_frames[n])
 
+    # back to int scaling
     out_py_int = out_py * 2**27
 
     np.testing.assert_equal(out_py_int[0], out_data)

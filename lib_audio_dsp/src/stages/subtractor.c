@@ -16,10 +16,7 @@ void subtractor_process(int32_t **input, int32_t **output, void *app_data_state)
     for(int sample_index = 0; sample_index < state->frame_size; ++sample_index) {
         int32_t *out = &output[0][sample_index];
 
-        state->inputs_rearranged[0] = input[0][sample_index];
-        state->inputs_rearranged[1] = input[1][sample_index];
-
-        *out = adsp_subtractor(state->inputs_rearranged[0], state->inputs_rearranged[1]);
+        *out = adsp_subtractor(input[0][sample_index], input[1][sample_index]);
     }
 }
 

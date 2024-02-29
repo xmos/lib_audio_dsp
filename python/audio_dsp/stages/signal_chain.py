@@ -107,7 +107,7 @@ class Subtractor(Stage):
         self.fs = int(self.fs)
         self.create_outputs(1)
         assert self.n_in == 2, "Subtractor requires 2 inputs"
-        self.dsp_block = sc.subtractor(self.fs, self.n_in)
+        self.dsp_block = sc.subtractor(self.fs)
 
 
 class FixedGain(Stage):
