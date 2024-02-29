@@ -16,7 +16,7 @@ static inline void compressor_copy_config_to_state(compressor_t *comp_state, int
         comp_state[i].env_det.attack_alpha = comp_config->attack_alpha;
         comp_state[i].env_det.release_alpha = comp_config->release_alpha;
         comp_state[i].threshold = comp_config->threshold;
-	comp_state[i].slope = comp_config->slope;
+	      comp_state[i].slope = comp_config->slope;
     }
 }
 
