@@ -5,6 +5,7 @@ Script for us at build time to generate header files. Use as:
 
     python -m audio_dsp.design.parse_config -c CONFIG_DIR -o OUTPUT_DIR
 """
+
 import yaml
 import glob
 from mako.template import Template
