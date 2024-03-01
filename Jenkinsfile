@@ -185,8 +185,8 @@ pipeline {
                   withTools(params.TOOLS_VERSION) {
                     dir("python") {
                       sh "pip install ."
-                      sh "pip install pyright"
-                      sh "pip install ruff"
+                      sh 'pip install "pyright < 2.0"'
+                      sh 'pip install "ruff < 0.4"'
                       sh "make check"
                     }
                   }

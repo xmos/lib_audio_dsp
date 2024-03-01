@@ -2,6 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 """Basic data structures for managing the pipeline graph."""
+
 from uuid import uuid4
 import graphlib
 

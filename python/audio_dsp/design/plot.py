@@ -4,6 +4,7 @@
 Helper functions for displaying plots in the jupyter notebook pipeline
 design.
 """
+
 import matplotlib.pyplot as plt
 import numpy as np
 
