@@ -1,9 +1,9 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
-from ..design.stage import Stage, find_config, StageOutput
-from operator import itemgetter
+from ..design.stage import Stage, find_config
 import audio_dsp.dsp.signal_chain as sc
+
 
 class Bypass(Stage):
     """
@@ -64,9 +64,7 @@ class Mixer(Stage):
         self.fs = int(self.fs)
         self.create_outputs(1)
         self.dsp_block = sc.mixer(self.fs, self.n_in)
-        self.set_control_field_cb(
-            "gain", lambda: self.dsp_block.gain_int
-        )
+        self.set_control_field_cb("gain", lambda: self.dsp_block.gain_int)
 
     def set_gain(self, gain_db):
         """
@@ -123,9 +121,7 @@ class FixedGain(Stage):
         self.gain_db = gain_db
         self.create_outputs(self.n_in)
         self.dsp_block = sc.fixed_gain(self.fs, self.n_in, gain_db)
-        self.set_control_field_cb(
-            "gain", lambda: self.dsp_block.gain_int
-        )
+        self.set_control_field_cb("gain", lambda: self.dsp_block.gain_int)
 
     def set_gain(self, gain_db):
         """
@@ -152,9 +148,7 @@ class VolumeControl(Stage):
         self.gain_db = gain_db
         self.create_outputs(self.n_in)
         self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_db)
-        self.set_control_field_cb(
-            "gain", lambda: self.dsp_block.gain_int
-        )
+        self.set_control_field_cb("gain", lambda: self.dsp_block.gain_int)
 
     def set_gain(self, gain_db):
         """
@@ -182,6 +176,4 @@ class Switch(Stage):
         self.index = index
         self.create_outputs(self.n_in)
         self.dsp_block = sc.switch(self.fs, self.n_in)
-        self.set_control_field_cb(
-            "position", lambda: self.dsp_block.move_switch
-        )
+        self.set_control_field_cb("position", lambda: self.dsp_block.move_switch)
