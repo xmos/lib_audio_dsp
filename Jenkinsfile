@@ -89,7 +89,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      catchError(stageResult: 'FAILURE'){
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/biquad") {
                           runPytest("test_biquad_python.py --dist worksteal")
                           runPytest("test_biquad_c.py --dist worksteal")
@@ -105,7 +105,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      catchError(stageResult: 'FAILURE'){
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/cascaded_biquads") {
                           runPytest("test_cascaded_biquads_python.py --dist worksteal")
                           runPytest("test_cascaded_biquads_c.py --dist worksteal")
@@ -121,7 +121,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      catchError(stageResult: 'FAILURE'){
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/drc") {
                           runPytest("test_drc_python.py --dist worksteal")
                           runPytest("test_drc_c.py --dist worksteal")
@@ -137,7 +137,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      catchError(stageResult: 'FAILURE'){
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/signal_chain") {
                           runPytest("test_signal_chain_python.py --dist worksteal")
                           runPytest("test_signal_chain_c.py --dist worksteal")
@@ -153,7 +153,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      catchError(stageResult: 'FAILURE'){
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/utils") {
                           runPytest("--dist worksteal")
                         }
