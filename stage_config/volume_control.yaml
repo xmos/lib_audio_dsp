@@ -1,0 +1,8 @@
+module:
+  volume_control:
+    gain:
+      type: int32_t
+    _reserved:
+      type: int
+includes:
+  - "stdint.h"

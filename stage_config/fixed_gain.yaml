@@ -1,0 +1,8 @@
+module:
+  fixed_gain:
+    gain:
+      type: int32_t
+    _reserved:
+      type: int
+includes:
+  - "stdint.h"

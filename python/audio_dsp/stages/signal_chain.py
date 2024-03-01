@@ -123,6 +123,21 @@ class FixedGain(Stage):
         self.gain_db = gain_db
         self.create_outputs(self.n_in)
         self.dsp_block = sc.fixed_gain(self.fs, self.n_in, gain_db)
+        self.set_control_field_cb(
+            "gain", lambda: self.dsp_block.gain_int
+        )
+
+    def set_gain(self, gain_db):
+        """
+        Set the gain of the fixed gain in dB.
+
+        Parameters
+        ----------
+        gain_db : float
+            The gain of the fixed gain in dB.
+        """
+        self.dsp_block = sc.fixed_gain(self.fs, self.n_in, gain_db)
+        return self
 
 
 class VolumeControl(Stage):
@@ -138,8 +153,21 @@ class VolumeControl(Stage):
         self.create_outputs(self.n_in)
         self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_db)
         self.set_control_field_cb(
-            "gain", lambda: self.dsp_block.set_gain
+            "gain", lambda: self.dsp_block.gain_int
         )
+
+    def set_gain(self, gain_db):
+        """
+        Set the gain of the volume control in dB.
+
+        Parameters
+        ----------
+        gain_db : float
+            The gain of the volume control in dB.
+        """
+        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_db)
+        return self
+
 
 class Switch(Stage):
     """

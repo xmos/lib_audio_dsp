@@ -8,6 +8,8 @@ from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 from audio_dsp.stages.biquad import Biquad
 from audio_dsp.stages.cascaded_biquads import CascadedBiquads
 from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak
+from audio_dsp.stages.signal_chain import VolumeControl, FixedGain
+
 import audio_dsp.dsp.utils as utils
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
 
@@ -152,6 +154,34 @@ def test_limiter_peak():
     p.set_outputs(lim.o)
 
     lim.make_limiter_peak(-6, 0.001, 0.1)
+
+    do_test(p)
+
+
+def test_volume():
+    """
+    Test the volume stage amplifies the same in python and C
+    """
+    p = Pipeline(channels)
+    with p.add_thread() as t:
+        vol = t.stage(VolumeControl, p.i)
+    p.set_outputs(vol.o)
+
+    vol.set_gain(-6)
+
+    do_test(p)
+
+
+def test_fixed_gain():
+    """
+    Test the volume stage amplifies the same in python and C
+    """
+    p = Pipeline(channels)
+    with p.add_thread() as t:
+        vol = t.stage(FixedGain, p.i)
+    p.set_outputs(vol.o)
+
+    vol.set_gain(-6)
 
     do_test(p)
 
