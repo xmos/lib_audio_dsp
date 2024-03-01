@@ -7,7 +7,6 @@ import pytest
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 from audio_dsp.stages.signal_chain import Adder, Subtractor, Mixer
 
-from audio_dsp.dsp.generic import dsp_block
 import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.signal_chain as sc
 from python import build_utils, run_pipeline_xcoreai, audio_helpers

@@ -34,6 +34,7 @@ class cascaded_biquads_8(dspg.dsp_block):
     def __init__(self, coeffs_list, fs, n_chans, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
         self.biquads = [None] * 8
+        assert len(coeffs_list) <= 8, "Too many biquads in coeffs_list"
         for n in range(8):
             if n < len(coeffs_list):
                 self.biquads[n] = bq.biquad(coeffs_list[n], fs, n_chans)
