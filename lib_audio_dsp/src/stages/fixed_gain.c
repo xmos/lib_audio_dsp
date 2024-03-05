@@ -39,7 +39,6 @@ void fixed_gain_init(module_instance_t* instance, adsp_bump_allocator_t* allocat
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
-    state->gain = config->gain;
     xassert(n_outputs == n_inputs);
 
     memcpy(&state->config, config, sizeof(fixed_gain_config_t));

@@ -33,7 +33,6 @@ void mixer_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, u
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
-    state->gain = config->gain;
     xassert(n_outputs == 1); // should only have 1 output
 
     memcpy(&state->config, config, sizeof(mixer_config_t));

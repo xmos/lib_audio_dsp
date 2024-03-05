@@ -1,7 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """
-Tests for audio_dsp.stages.signal_chain.Fork
+Tests for audio_dsp.stages with 2 inputs and 2 ouputs
 """
 import pytest
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main

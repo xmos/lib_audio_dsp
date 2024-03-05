@@ -12,7 +12,6 @@ typedef struct
     int n_inputs;
     int n_outputs;
     int frame_size;
-    int32_t gain;
 }volume_control_state_t;
 
 #define VOLUME_CONTROL_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (0)

@@ -61,7 +61,6 @@ class Mixer(Stage):
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("mixer"), **kwargs)
-        self.fs = int(self.fs)
         self.create_outputs(1)
         self.dsp_block = sc.mixer(self.fs, self.n_in)
         self.set_control_field_cb("gain", lambda: self.dsp_block.gain_int)
@@ -88,7 +87,6 @@ class Adder(Stage):
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("adder"), **kwargs)
-        self.fs = int(self.fs)
         self.create_outputs(1)
         self.dsp_block = sc.adder(self.fs, self.n_in)
 
@@ -96,15 +94,15 @@ class Adder(Stage):
 class Subtractor(Stage):
     """
     Subtract the second input from the first. The subtractor can be used to
-    subtract signals from each other.
+    subtract signals from each other. It must only have 2 inputs
 
     """
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("subtractor"), **kwargs)
-        self.fs = int(self.fs)
         self.create_outputs(1)
-        assert self.n_in == 2, "Subtractor requires 2 inputs"
+        if self.n_in != 2:
+            raise ValueError(f"Subtractor requires 2 inputs, got {self.n_in}")
         self.dsp_block = sc.subtractor(self.fs)
 
 
@@ -117,8 +115,6 @@ class FixedGain(Stage):
 
     def __init__(self, gain_db=-6, **kwargs):
         super().__init__(config=find_config("fixed_gain"), **kwargs)
-        self.fs = int(self.fs)
-        self.gain_db = gain_db
         self.create_outputs(self.n_in)
         self.dsp_block = sc.fixed_gain(self.fs, self.n_in, gain_db)
         self.set_control_field_cb("gain", lambda: self.dsp_block.gain_int)
@@ -144,8 +140,6 @@ class VolumeControl(Stage):
 
     def __init__(self, gain_db=-6, **kwargs):
         super().__init__(config=find_config("volume_control"), **kwargs)
-        self.fs = int(self.fs)
-        self.gain_db = gain_db
         self.create_outputs(self.n_in)
         self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_db)
         self.set_control_field_cb("gain", lambda: self.dsp_block.gain_int)
@@ -162,6 +156,17 @@ class VolumeControl(Stage):
         self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_db)
         return self
 
+    def get_gain(self):
+        """
+        Get the gain of the volume control in dB.
+
+        Returns
+        -------
+        gain_db : float
+            The gain of the volume control in dB.
+        """
+        return self.dsp_block.gain_db
+
 
 class Switch(Stage):
     """
@@ -172,7 +177,6 @@ class Switch(Stage):
 
     def __init__(self, index=0, **kwargs):
         super().__init__(config=find_config("switch"), **kwargs)
-        self.fs = int(self.fs)
         self.index = index
         self.create_outputs(self.n_in)
         self.dsp_block = sc.switch(self.fs, self.n_in)

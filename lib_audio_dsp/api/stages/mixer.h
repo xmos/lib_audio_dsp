@@ -12,7 +12,6 @@ typedef struct
     int n_inputs;
     int n_outputs;
     int frame_size;
-    int32_t gain;
 }mixer_state_t;
 
 #define MIXER_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (0)

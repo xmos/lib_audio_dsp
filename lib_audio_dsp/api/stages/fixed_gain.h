@@ -12,7 +12,6 @@ typedef struct
     int n_inputs;
     int n_outputs;
     int frame_size;
-    int32_t gain;
 }fixed_gain_state_t;
 
 #define FIXED_GAIN_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (0)

@@ -39,7 +39,6 @@ void volume_control_init(module_instance_t* instance, adsp_bump_allocator_t* all
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
-    state->gain = config->gain;
     xassert(n_outputs == n_inputs);
 
     memcpy(&state->config, config, sizeof(volume_control_config_t));
