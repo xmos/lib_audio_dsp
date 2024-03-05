@@ -178,6 +178,18 @@ class Switch(Stage):
     def __init__(self, index=0, **kwargs):
         super().__init__(config=find_config("switch"), **kwargs)
         self.index = index
-        self.create_outputs(self.n_in)
+        self.create_outputs(1)
         self.dsp_block = sc.switch(self.fs, self.n_in)
-        self.set_control_field_cb("position", lambda: self.dsp_block.move_switch)
+        self.set_control_field_cb("position", lambda: self.dsp_block.switch_position)
+
+    def move_switch(self, position):
+        """
+        Move the switch to the specified position
+
+        Parameters
+        ----------
+        position : int
+            The position to move the switch to.
+        """
+        self.dsp_block.move_switch(position)
+        return self

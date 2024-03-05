@@ -6,7 +6,7 @@ number of inputs and outputs
 """
 import pytest
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
-from audio_dsp.stages.signal_chain import Adder, Subtractor, Mixer
+from audio_dsp.stages.signal_chain import Adder, Subtractor, Mixer, Switch
 
 import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.signal_chain as sc
@@ -108,6 +108,20 @@ def test_mixer(gain):
     with p.add_thread() as t:
         adder = t.stage(Mixer, p.i).set_gain(gain)
     p.set_outputs(adder.o)
+
+    do_test(p)
+
+
+@pytest.mark.parametrize("position", ([0, 1]))
+def test_switch(position):
+    """
+    Test the mixer stage adds the same in python and C
+    """
+    channels = 2
+    p = Pipeline(channels)
+    with p.add_thread() as t:
+        switch_dsp = t.stage(Switch, p.i).move_switch(position)
+    p.set_outputs(switch_dsp.o)
 
     do_test(p)
 

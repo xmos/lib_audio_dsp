@@ -494,6 +494,68 @@ class switch(dspg.dsp_block):
         """
         return self.process(sample_list)
 
+    def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
+        """
+        Take a list frames of samples and return the processed frames,
+        using floating point maths.
+
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When switching, the input channels are combined into a single
+        output channel. This means the output frame will be a list of
+        length 1.
+
+        Parameters
+        ----------
+        frame : list
+            List of frames, where each frame is a 1-D numpy array.
+
+        Returns
+        -------
+        list
+            Length 1 list of processed frames.
+        """
+        frame_np = np.array(frame)
+        frame_size = frame[0].shape[0]
+        output = np.zeros(frame_size)
+        for sample in range(frame_size):
+            output[sample] = self.process(frame_np[:, sample].tolist())
+
+        return [output]
+
+    def process_frame_xcore(self, frame: list[np.ndarray]) -> list[np.ndarray]:
+        """
+        Take a list frames of samples and return the processed frames,
+        using int32 fixed point maths.
+
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When switching, the input channels are combined into a single
+        output channel. This means the output frame will be a list of
+        length 1.
+
+        Parameters
+        ----------
+        frame : list
+            List of frames, where each frame is a 1-D numpy array.
+
+        Returns
+        -------
+        list
+            Length 1 list of processed frames.
+        """
+        frame_np = np.array(frame)
+        frame_size = frame[0].shape[0]
+        output = np.zeros(frame_size)
+        for sample in range(frame_size):
+            output[sample] = self.process_xcore(frame_np[:, sample].tolist())
+
+        return [output]
+
     def move_switch(self, position: int) -> None:
         """Move the switch to the specified position. This will cause
         the channel in sample_list[position] to be output.
