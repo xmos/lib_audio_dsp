@@ -4,6 +4,7 @@
 from .composite_stage import CompositeStage
 from .stage import Stage, find_config
 
+
 class DSPThreadStage(Stage):
     """
     Stage for the DSP thread. Does not support processing of data through it. Only

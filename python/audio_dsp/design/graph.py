@@ -67,17 +67,13 @@ class Graph:
     def add_node(self, node: Node) -> None:
         assert isinstance(node, Node)
         if self._locked:
-            raise RuntimeError(
-                    "Cannot add nodes to a locked graph"
-                )
+            raise RuntimeError("Cannot add nodes to a locked graph")
         node.index = len(self.nodes)
         self.nodes.append(node)
 
     def add_edge(self, edge) -> None:
         if self._locked:
-            raise RuntimeError(
-                    "Cannot add edges to a locked graph"
-                )
+            raise RuntimeError("Cannot add edges to a locked graph")
         self.edges.append(edge)
 
     def sort(self):

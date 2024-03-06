@@ -19,18 +19,22 @@ from ._draw import new_record_digraph
 from .host_app import get_host_app, InvalidHostAppError
 from functools import wraps
 
+
 def callonce(f):
     """
     Decorator function for ensuring a function executes only once despite being
     called multiple times.
     """
+
     @wraps(f)
     def wrapper(*args, **kwargs):
         if not wrapper.called:
             wrapper.called = True
             return f(*args, **kwargs)
+
     wrapper.called = False
     return wrapper
+
 
 class PipelineStage(Stage):
     """
@@ -55,6 +59,7 @@ class PipelineStage(Stage):
 
     def add_to_dot(self, dot):  # Override this to not add the stage to the diagram
         return
+
 
 class Pipeline:
     """
@@ -122,7 +127,6 @@ class Pipeline:
         self.threads.append(ret)
         return ret
 
-
     @callonce
     def add_pipeline_stage(self, thread):
         """
@@ -145,7 +149,7 @@ class Pipeline:
             if edge is not None:
                 edge.dest_index = i
         self._n_out = i + 1
-        self.resolve_pipeline() # Call it here to generate the pipeline hash
+        self.resolve_pipeline()  # Call it here to generate the pipeline hash
 
     def validate(self):
         """
@@ -195,6 +199,7 @@ class Pipeline:
         "threads": list of [[(stage index, stage type name), ...], ...] for all threads in the pipeline
         "edges": list of [[[source stage, source index], [dest stage, dest index]], ...] for all edges in the pipeline
         """
+
         def to_tuple(lst):
             return tuple(to_tuple(i) if isinstance(i, list) else i for i in lst)
 
@@ -209,12 +214,11 @@ class Pipeline:
 
         hash_values = [i for i in bytearray(hash_a)]
 
-        assert(self.pipeline_stage is not None) # To stop ruff from complaining
+        assert self.pipeline_stage is not None  # To stop ruff from complaining
 
-        self.pipeline_stage['checksum'] = hash_values
+        self.pipeline_stage["checksum"] = hash_values
         # lock the graph now that the hash is generated
         self._graph.lock()
-
 
     def resolve_pipeline(self):
         """
@@ -268,6 +272,7 @@ class Pipeline:
             "modules": module_definitions,
         }
 
+
 def validate_pipeline_checksum(pipeline: Pipeline):
     """
     Check if python and device pipeline checksums match. Raise a runtime error if the checksums are not equal.
@@ -282,7 +287,7 @@ def validate_pipeline_checksum(pipeline: Pipeline):
         print(*e.args)
         return
 
-    assert(pipeline.pipeline_stage is not None) # To stop ruff from complaining
+    assert pipeline.pipeline_stage is not None  # To stop ruff from complaining
 
     ret = subprocess.run(
         [
@@ -291,16 +296,20 @@ def validate_pipeline_checksum(pipeline: Pipeline):
             protocol,
             "--instance-id",
             str(pipeline.pipeline_stage.index),
-            "pipeline_checksum"
+            "pipeline_checksum",
         ],
-        stdout=subprocess.PIPE
+        stdout=subprocess.PIPE,
     )
     stdout = ret.stdout.decode().splitlines()
     device_pipeline_checksum = [int(x) for x in stdout]
-    equal = np.array_equal(np.array(device_pipeline_checksum), np.array(pipeline.pipeline_stage['checksum']))
+    equal = np.array_equal(
+        np.array(device_pipeline_checksum), np.array(pipeline.pipeline_stage["checksum"])
+    )
 
     if equal is False:
-        raise RuntimeError(f"Python pipeline checksum {pipeline.pipeline_stage['checksum']} does not match device pipeline checksum {device_pipeline_checksum}")
+        raise RuntimeError(
+            f"Python pipeline checksum {pipeline.pipeline_stage['checksum']} does not match device pipeline checksum {device_pipeline_checksum}"
+        )
 
 
 def send_config_to_device(pipeline: Pipeline):
@@ -488,7 +497,7 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
             func += f"\tint32_t edge{i}[{block_size}] = {{0}};\n"
 
         # get the dsp_thread stage index in the thread
-        dsp_thread_index = [i for i,(_,name) in enumerate(thread) if name == "dsp_thread"][0]
+        dsp_thread_index = [i for i, (_, name) in enumerate(thread) if name == "dsp_thread"][0]
 
         for stage_thread_index, stage in enumerate(thread):
             # thread stages are already ordered during pipeline resolution
