@@ -124,25 +124,25 @@ def test_saturation(filter_spec, fs):
 
 def test_volume_change():
     fs = 48000
-    filter = sc.volume_control(fs, 1, -10)
+    start_gain = -60
+    filter = sc.volume_control(fs, 1, start_gain)
     length = 5
     signal = gen.sin(fs, length, 997/2, 0.5)
     signal += gen.sin(fs, length, 997, 0.5)
 
-    # signal = gen.pink_noise(fs, length, 1.0)
-
     output_flt = np.zeros(len(signal))
     output_xcore = np.zeros(len(signal))
 
-    steps = 11
+    steps = 12
     for step in range(steps):
-        filter.set_gain(-60 + 6*step)
         start = step*len(signal)//steps
         for n in range(len(signal)//steps):
             output_flt[start + n] = filter.process(signal[start + n])
         for n in range(len(signal)//steps):
             output_xcore[start + n] = filter.process_xcore(signal[start + n])
+        filter.set_gain(start_gain + 6*step)
 
+    # this is a very useful signal to listen to for clicks
     sf.write("vol_test_output_flt_slew.wav", output_flt, fs)
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half

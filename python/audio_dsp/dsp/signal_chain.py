@@ -423,29 +423,29 @@ class volume_control(dspg.dsp_block):
 
     A table of the first 10 slew shifts is shown below:
 
-    +--------------+-------------------+
-    | Slew_shift   | Time constant (ms)|
-    +==============+===================+
-    | 1            | 0.03              |
-    +--------------+-------------------+
-    | 2            | 0.07              |
-    +--------------+-------------------+
-    | 3            | 0.16              |
-    +--------------+-------------------+
-    | 4            | 0.32              |
-    +--------------+-------------------+
-    | 5            | 0.66              |
-    +--------------+-------------------+
-    | 6            | 1.32              |
-    +--------------+-------------------+
-    | 7            | 2.66              |
-    +--------------+-------------------+
-    | 8            | 5.32              |
-    +--------------+-------------------+
-    | 9            | 10.66             |
-    +--------------+-------------------+
-    | 10           | 21.32             |
-    +--------------+-------------------+
+    +------------+--------------------+
+    | slew_shift | Time constant (ms) |
+    +============+====================+
+    |      1     |        0.03        |
+    +------------+--------------------+
+    |      2     |        0.07        |
+    +------------+--------------------+
+    |      3     |        0.16        |
+    +------------+--------------------+
+    |      4     |        0.32        |
+    +------------+--------------------+
+    |      5     |        0.66        |
+    +------------+--------------------+
+    |      6     |        1.32        |
+    +------------+--------------------+
+    |      7     |        2.66        |
+    +------------+--------------------+
+    |      8     |        5.32        |
+    +------------+--------------------+
+    |      9     |       10.66        |
+    +------------+--------------------+
+    |     10     |       21.32        |
+    +------------+--------------------+
 
     Parameters
     ----------
@@ -473,12 +473,19 @@ class volume_control(dspg.dsp_block):
 
     Raises
     ------
-    AssertionError
+    ValueError
         If the gain_db parameter is greater than 24 dB.
 
     """
 
-    def __init__(self, fs: float, n_chans: int, gain_db: float = -6, slew_shift: int = 11, Q_sig: int = dspg.Q_SIG) -> None:
+    def __init__(
+        self,
+        fs: float,
+        n_chans: int,
+        gain_db: float = -6,
+        slew_shift: int = 7,
+        Q_sig: int = dspg.Q_SIG,
+    ) -> None:
         super().__init__(fs, n_chans, Q_sig)
 
         # set the initial target gains
@@ -493,7 +500,8 @@ class volume_control(dspg.dsp_block):
 
     def process(self, sample: float, channel: int = 0) -> float:
         """
-        Multiply the input sample by the gain, using floating point maths.
+        Update the current gain, then multiply the input sample by
+        it, using floating point maths.
 
         Parameters
         ----------
@@ -507,9 +515,46 @@ class volume_control(dspg.dsp_block):
         float
             The processed output sample.
         """
-        self.gain += (self.target_gain - self.gain) * 2 ** -self.slew_shift
+        # do the exponential slew
+        self.gain += (self.target_gain - self.gain) * 2**-self.slew_shift
+
         y = sample * self.gain
         return y
+
+    def process_xcore(self, sample: float, channel: int = 0) -> float:
+        """
+        Update the current gain, then multiply the input sample by
+        it, using int32 fixed point maths.
+
+        The float input sample is quantized to int32, and returned to
+        float before outputting
+
+        Parameters
+        ----------
+        sample : float
+            The input sample to be processed.
+        channel : int
+            The channel index to process the sample on, not used by this
+            module.
+
+        Returns
+        -------
+        float
+            The processed output sample.
+        """
+        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+
+        # do the exponential slew
+        self.gain_int += (self.target_gain_int - self.gain_int) >> self.slew_shift
+
+        # for rounding
+        acc = 1 << (self.Q_sig - 1)
+        acc += sample_int * self.gain_int
+        y = utils.int32_mult_sat_extract(acc, 1, self.Q_sig)
+
+        y_flt = float(y) * 2**-self.Q_sig
+
+        return y_flt
 
     def set_gain(self, gain_db: float) -> None:
         """
@@ -522,7 +567,7 @@ class volume_control(dspg.dsp_block):
 
         Raises
         ------
-        AssertionError
+        ValueError
             If the gain_db parameter is greater than 24 dB.
 
         """
@@ -530,7 +575,7 @@ class volume_control(dspg.dsp_block):
             raise ValueError("Maximum volume control gain is +24dB")
         self.target_gain_db = gain_db
         self.target_gain = utils.db2gain(gain_db)
-        self.target_gain_int = utils.int32(self.target_gain * 2 ** 30)
+        self.target_gain_int = utils.int32(self.target_gain * 2**self.Q_sig)
 
 
 class switch(dspg.dsp_block):
