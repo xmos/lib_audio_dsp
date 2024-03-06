@@ -10,6 +10,9 @@ from audio_dsp.dsp import utils as utils
 from audio_dsp.dsp import generic as dspg
 
 
+FLT_MIN = np.finfo(float).tiny
+
+
 class envelope_detector_peak(dspg.dsp_block):
     """
     Envelope detector that follows the absolute peak value of a signal.
@@ -71,8 +74,8 @@ class envelope_detector_peak(dspg.dsp_block):
         T = 1 / fs
         # attack/release time can't be faster than the length of 2
         # samples.
-        self.attack_alpha = min(2 * T / attack_t, 1.0)
-        self.release_alpha = min(2 * T / release_t, 1.0)
+        self.attack_alpha = min(2 * T / (attack_t + FLT_MIN), 1.0)
+        self.release_alpha = min(2 * T / (release_t + FLT_MIN), 1.0)
 
         # very long times might quantize to zero, maybe just limit a
         # better way
@@ -381,8 +384,8 @@ class compressor_limiter_base(dspg.dsp_block):
         T = 1 / fs
         # attack/release time can't be faster than the length of 2
         # samples.
-        self.attack_alpha = min(2 * T / attack_t, 1.0)
-        self.release_alpha = min(2 * T / release_t, 1.0)
+        self.attack_alpha = min(2 * T / (attack_t + FLT_MIN), 1.0)
+        self.release_alpha = min(2 * T / (release_t + FLT_MIN), 1.0)
         self.gain = [1] * n_chans
 
         # These are defined differently for peak and RMS limiters
@@ -908,6 +911,50 @@ class compressor_rms(compressor_limiter_base):
         # down
         new_gain = (self.threshold_f32 / envelope) ** self.slope_f32
         new_gain = new_gain if new_gain < np.float32(1) else np.float32(1)
+        return new_gain
+
+
+class noise_gate(compressor_limiter_base):
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
+
+        tmp = self.attack_alpha
+        self.attack_alpha = self.release_alpha
+        self.release_alpha = tmp
+
+        self.threshold = utils.db2gain(threshold_db)
+        self.threshold_f32 = np.float32(self.threshold)
+        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.env_detector = envelope_detector_peak(
+            fs,
+            n_chans=n_chans,
+            attack_t=attack_t,
+            release_t=release_t,
+            Q_sig=self.Q_sig,
+        )
+
+    def gain_calc(self, envelope):
+        """Calculate the float gain for the current sample"""
+        if envelope < self.threshold:
+            new_gain = 0
+        else:
+            new_gain = 1
+        return new_gain
+
+    def gain_calc_int(self, envelope_int):
+        """Calculate the int gain for the current sample"""
+        if envelope_int < self.threshold_int:
+            new_gain_int = utils.int32(0)
+        else:
+            new_gain_int = utils.int32(2**30)
+        return new_gain_int
+
+    def gain_calc_xcore(self, envelope):
+        """Calculate the np.float32 gain for the current sample"""
+        if envelope < self.threshold_f32:
+            new_gain = np.float32(0)
+        else:
+            new_gain = np.float32(1)
         return new_gain
 
 

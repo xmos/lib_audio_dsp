@@ -2,6 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import numpy as np
 import pytest
+import soundfile as sf
 
 import audio_dsp.dsp.drc as drc
 import audio_dsp.dsp.utils as utils
@@ -201,6 +202,35 @@ def peak_vs_rms(fs, at, threshold):
                                atol=0.002)
 
 
+def test_noise_gate():
+    signal, fs = sf.read("noise_gate_test.wav")
+    drcut = drc.noise_gate(fs, 1, -30, 0, 0.2)
+
+    output_xcore = np.zeros(len(signal))
+    output_flt = np.zeros(len(signal))
+    output_int = np.zeros(len(signal))
+
+    # # limiter and compressor have 3 outputs
+    # for n in np.arange(len(signal)):
+    #     output_xcore[n], _, _ = drcut.process_xcore(signal[n])
+    # drcut.reset_state()
+    for n in np.arange(len(signal)):
+        output_flt[n], _, _ = drcut.process(signal[n])
+    # drcut.reset_state()
+    # for n in np.arange(len(signal)):
+    #     output_int[n], _, _ = drcut.process_int(signal[n])
+
+    sf.write("noise_gate_test_out.wav", output_flt, fs)
+
+    # # lazy limiter
+    # ref_signal = np.copy(signal)
+    # over_thresh = utils.db(ref_signal) > threshold
+    # ref_signal[over_thresh] *= utils.db2gain((1 - 1/ratio)*(threshold - utils.db(ref_signal[over_thresh])))
+
+    # np.testing.assert_allclose(ref_signal, output_flt, atol=3e-16, rtol=0)
+    # np.testing.assert_allclose(output_flt, output_int, atol=6e-8, rtol=0)
+    # np.testing.assert_allclose(output_flt, output_xcore, atol=6e-8, rtol=0)
+
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("component, threshold, ratio", [("limiter_peak", 0, None),
                                                          ("limiter_rms", 0, None),
@@ -388,4 +418,5 @@ if __name__ == "__main__":
     # test_drc_component(48000, "limiter_peak", 1, 1, 1)
     # test_limiter_peak_attack(48000, 0.1, -10)
     # comp_vs_limiter(48000, 0.001, 0)
-    test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)
+    # test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)
+    test_noise_gate()
