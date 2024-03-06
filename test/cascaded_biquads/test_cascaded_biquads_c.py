@@ -113,6 +113,7 @@ def test_peq_c(in_signal, n_filters, seed):
                    ['bypass'],
                    ['gain', -2]]
   random.Random(seed**n_filters*int(fs/1000)).shuffle(filter_spec)
+  filter_spec = filter_spec[:n_filters]
   peq = casc_bq.parametric_eq_8band(fs, 1, filter_spec)
 
   filter_name = f"peq_{n_filters}_{seed}"

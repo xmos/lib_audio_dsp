@@ -1,0 +1,6 @@
+module:
+  mixer:
+    gain:
+      type: int32_t
+includes:
+  - "stdint.h"
