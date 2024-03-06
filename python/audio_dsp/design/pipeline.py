@@ -19,6 +19,18 @@ from ._draw import new_record_digraph
 from .host_app import get_host_app, InvalidHostAppError
 from functools import wraps
 
+def callonce(f):
+    """
+    Decorator function for ensuring a function executes only once despite being
+    called multiple times.
+    """
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not wrapper.called:
+            wrapper.called = True
+            return f(*args, **kwargs)
+    wrapper.called = False
+    return wrapper
 
 class PipelineStage(Stage):
     """
@@ -110,18 +122,6 @@ class Pipeline:
         self.threads.append(ret)
         return ret
 
-    def callonce(f):
-        """
-        Decorator function for ensuring a function executes only once despite being
-        called multiple times.
-        """
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            if not wrapper.called:
-                wrapper.called = True
-                return f(*args, **kwargs)
-        wrapper.called = False
-        return wrapper
 
     @callonce
     def add_pipeline_stage(self, thread):
@@ -208,7 +208,10 @@ class Pipeline:
         hash_a = m.digest()
 
         hash_values = [i for i in bytearray(hash_a)]
-        self.pipeline_stage._control_fields['checksum'].value = hash_values
+
+        assert(self.pipeline_stage is not None) # To stop ruff from complaining
+
+        self.pipeline_stage['checksum'] = hash_values
         # lock the graph now that the hash is generated
         self._graph.lock()
 
@@ -279,6 +282,8 @@ def validate_pipeline_checksum(pipeline: Pipeline):
         print(*e.args)
         return
 
+    assert(pipeline.pipeline_stage is not None) # To stop ruff from complaining
+
     ret = subprocess.run(
         [
             host_app,
@@ -292,10 +297,10 @@ def validate_pipeline_checksum(pipeline: Pipeline):
     )
     stdout = ret.stdout.decode().splitlines()
     device_pipeline_checksum = [int(x) for x in stdout]
-    equal = np.array_equal(np.array(device_pipeline_checksum), np.array(pipeline.pipeline_stage._control_fields['checksum'].value))
+    equal = np.array_equal(np.array(device_pipeline_checksum), np.array(pipeline.pipeline_stage['checksum']))
 
-    if equal == False:
-        raise RuntimeError(f"Python pipeline checksum {pipeline.pipeline_stage._control_fields['checksum'].value} does not match device pipeline checksum {device_pipeline_checksum}")
+    if equal is False:
+        raise RuntimeError(f"Python pipeline checksum {pipeline.pipeline_stage['checksum']} does not match device pipeline checksum {device_pipeline_checksum}")
 
 
 def send_config_to_device(pipeline: Pipeline):
