@@ -423,33 +423,29 @@ class volume_control(dspg.dsp_block):
 
     A table of the first 10 slew shifts is shown below:
 
-    .. list-table:: Slew shift vs time constant
-        :widths: 50 50
-        :header-rows: 1
-        :align: left
-
-        * - Slew_shift
-          - Time constant (ms)
-        * - 1
-          - 0.03
-        * - 2
-          - 0.07
-        * - 3
-          - 0.16
-        * - 4
-          - 0.32
-        * - 5
-          - 0.66
-        * - 6
-          - 1.32
-        * - 7
-          - 2.66
-        * - 8
-          - 5.32
-        * - 9
-          - 10.66
-        * - 10
-          - 21.32
+    +--------------+-------------------+
+    | Slew_shift   | Time constant (ms)|
+    +==============+===================+
+    | 1            | 0.03              |
+    +--------------+-------------------+
+    | 2            | 0.07              |
+    +--------------+-------------------+
+    | 3            | 0.16              |
+    +--------------+-------------------+
+    | 4            | 0.32              |
+    +--------------+-------------------+
+    | 5            | 0.66              |
+    +--------------+-------------------+
+    | 6            | 1.32              |
+    +--------------+-------------------+
+    | 7            | 2.66              |
+    +--------------+-------------------+
+    | 8            | 5.32              |
+    +--------------+-------------------+
+    | 9            | 10.66             |
+    +--------------+-------------------+
+    | 10           | 21.32             |
+    +--------------+-------------------+
 
     Parameters
     ----------
@@ -484,11 +480,9 @@ class volume_control(dspg.dsp_block):
 
     def __init__(self, fs: float, n_chans: int, gain_db: float = -6, slew_shift: int = 11, Q_sig: int = dspg.Q_SIG) -> None:
         super().__init__(fs, n_chans, Q_sig)
-        assert gain_db <= 24, "Maximum volume control gain is +24dB"
 
-        self.target_gain_db = gain_db
-        self.target_gain = utils.db2gain(gain_db)
-        self.target_gain_int = utils.int32(self.target_gain * 2 ** self.Q_sig)
+        # set the initial target gains
+        self.set_gain(gain_db)
 
         # initial applied gain can be equal to target until target changes
         self.gain_db = self.target_gain_db
@@ -532,7 +526,8 @@ class volume_control(dspg.dsp_block):
             If the gain_db parameter is greater than 24 dB.
 
         """
-        assert gain_db <= 24, "Maximum volume control gain is +24dB"
+        if gain_db > 24:
+            raise ValueError("Maximum volume control gain is +24dB")
         self.target_gain_db = gain_db
         self.target_gain = utils.db2gain(gain_db)
         self.target_gain_int = utils.int32(self.target_gain * 2 ** 30)
