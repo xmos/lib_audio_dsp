@@ -2,7 +2,5 @@ module:
   mixer:
     gain:
       type: int32_t
-    _reserved:
-      type: int
 includes:
   - "stdint.h"
