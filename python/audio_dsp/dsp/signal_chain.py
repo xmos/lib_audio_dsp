@@ -411,16 +411,115 @@ class fixed_gain(dspg.dsp_block):
         return w, h
 
 
-class volume_control(fixed_gain):
+class volume_control(dspg.dsp_block):
     """
     A volume control class that allows setting the gain in decibels.
+    When the gain is updated, an exponential slew is applied to reduce
+    artifacts.
 
-    Inherits from the `fixed_gain` class.
+    The slew is implemented as a shift operation. The slew rate can be
+    converted to a time constant using the formula:
+    `time_constant = -1/ln(1 - 2^-slew_shift) * (1/fs)`
+
+    A table of the first 10 slew shifts is shown below:
+
+    .. list-table:: Slew shift vs time constant
+        :widths: 50 50
+        :header-rows: 1
+        :align: left
+
+        * - Slew_shift
+          - Time constant (ms)
+        * - 1
+          - 0.03
+        * - 2
+          - 0.07
+        * - 3
+          - 0.16
+        * - 4
+          - 0.32
+        * - 5
+          - 0.66
+        * - 6
+          - 1.32
+        * - 7
+          - 2.66
+        * - 8
+          - 5.32
+        * - 9
+          - 10.66
+        * - 10
+          - 21.32
+
+    Parameters
+    ----------
+    gain_db : float, optional
+        The initial gain in decibels
+    slew_shift : int, optional
+        The shift value used in the exponential slew.
+
+    Attributes
+    ----------
+    target_gain_db : float
+        The target gain in decibels.
+    target_gain : float
+        The target gain as a linear value.
+    target_gain_int : int
+        The target gain as a fixed-point integer value.
+    gain_db : float
+        The current gain in decibels.
+    gain : float
+        The current gain as a linear value.
+    gain_int : int
+        The current gain as a fixed-point integer value.
+    slew_shift : int
+        The shift value used in the exponential slew.
+
+    Raises
+    ------
+    AssertionError
+        If the gain_db parameter is greater than 24 dB.
 
     """
 
+    def __init__(self, fs: float, n_chans: int, gain_db: float = -6, slew_shift: int = 11, Q_sig: int = dspg.Q_SIG) -> None:
+        super().__init__(fs, n_chans, Q_sig)
+        assert gain_db <= 24, "Maximum volume control gain is +24dB"
+
+        self.target_gain_db = gain_db
+        self.target_gain = utils.db2gain(gain_db)
+        self.target_gain_int = utils.int32(self.target_gain * 2 ** self.Q_sig)
+
+        # initial applied gain can be equal to target until target changes
+        self.gain_db = self.target_gain_db
+        self.gain = self.target_gain
+        self.gain_int = self.target_gain_int
+
+        self.slew_shift = slew_shift
+
+    def process(self, sample: float, channel: int = 0) -> float:
+        """
+        Multiply the input sample by the gain, using floating point maths.
+
+        Parameters
+        ----------
+        sample : float
+            The input sample to be processed.
+        channel : int, optional
+            The channel index to process the sample on. Not used by this module.
+
+        Returns
+        -------
+        float
+            The processed output sample.
+        """
+        self.gain += (self.target_gain - self.gain) * 2 ** -self.slew_shift
+        y = sample * self.gain
+        return y
+
     def set_gain(self, gain_db: float) -> None:
-        """Set the gain of the volume control.
+        """
+        Set the gain of the volume control.
 
         Parameters
         ----------
@@ -434,9 +533,9 @@ class volume_control(fixed_gain):
 
         """
         assert gain_db <= 24, "Maximum volume control gain is +24dB"
-        self.gain_db = gain_db
-        self.gain = utils.db2gain(gain_db)
-        self.gain_int = utils.int32(self.gain * 2**30)
+        self.target_gain_db = gain_db
+        self.target_gain = utils.db2gain(gain_db)
+        self.target_gain_int = utils.int32(self.target_gain * 2 ** 30)
 
 
 class switch(dspg.dsp_block):

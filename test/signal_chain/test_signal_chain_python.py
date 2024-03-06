@@ -5,6 +5,8 @@ import audio_dsp.dsp.signal_gen as gen
 import audio_dsp.dsp.utils as utils
 from audio_dsp.dsp.generic import HEADROOM_DB
 
+import soundfile as sf
+
 
 def chirp_filter_test(filter, fs):
     length = 0.05
@@ -120,6 +122,37 @@ def test_saturation(filter_spec, fs):
     assert np.all(utils.db(output_xcore) <= HEADROOM_DB)
 
 
+def test_volume_change():
+    fs = 48000
+    filter = sc.volume_control(fs, 1, -10)
+    length = 5
+    signal = gen.sin(fs, length, 997/2, 0.5)
+    signal += gen.sin(fs, length, 997, 0.5)
+
+    # signal = gen.pink_noise(fs, length, 1.0)
+
+    output_flt = np.zeros(len(signal))
+    output_xcore = np.zeros(len(signal))
+
+    steps = 11
+    for step in range(steps):
+        filter.set_gain(-60 + 6*step)
+        start = step*len(signal)//steps
+        for n in range(len(signal)//steps):
+            output_flt[start + n] = filter.process(signal[start + n])
+        for n in range(len(signal)//steps):
+            output_xcore[start + n] = filter.process_xcore(signal[start + n])
+
+    sf.write("vol_test_output_flt_slew.wav", output_flt, fs)
+
+    # small signals are always going to be ropey due to quantizing, so just check average error of top half
+    top_half = utils.db(output_flt) > -50
+    if np.any(top_half):
+        error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
+        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        assert mean_error_flt < 0.055
+
+
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("filter_spec", [['mixer', 2, 0],
                                          ['mixer', 3, -9],
@@ -203,4 +236,4 @@ def test_combiners_frames(filter_spec, fs):
 
 if __name__ == "__main__":
     # test_combiners(["subtractor", 2], 48000)
-    test_gains(1, 48000, 1)
+    test_volume_change()
