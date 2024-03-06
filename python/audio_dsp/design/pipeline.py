@@ -102,7 +102,7 @@ class Pipeline:
         self._n_in = n_in
         self._n_out = 0
         self._id = identifier
-        self.pipeline_stage = None
+        self.pipeline_stage: None | PipelineStage
 
         self.i = [StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)]
         for i, input in enumerate(self.i):
