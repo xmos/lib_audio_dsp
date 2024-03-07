@@ -93,3 +93,24 @@ int32_t adsp_saturate_32b(int64_t acc) {
   asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (one));
   return ah;
 }
+
+volume_control_t adsp_volume_control_init(
+  float gain_dB,
+  int32_t slew_shift
+) {
+  volume_control_t vol_ctl;
+  vol_ctl.target_gain = adsp_dB_to_gain(gain_dB);
+  vol_ctl.gain = vol_ctl.target_gain;
+  vol_ctl.slew_shift = slew_shift;
+  return vol_ctl;
+}
+
+int32_t adsp_volume_control(
+  volume_control_t * vol_ctl,
+  int32_t samp
+) {
+  // do the exponential slew
+  vol_ctl->gain += (vol_ctl->target_gain - vol_ctl->gain) >> vol_ctl->slew_shift;
+  // apply gain
+  return adsp_fixed_gain(samp, vol_ctl->gain);
+}

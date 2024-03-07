@@ -48,7 +48,7 @@ def get_c_wav(dir_name, comp_name, sim = True):
   app = "xsim" if sim else "xrun --io"
   run_cmd = app + " " + str(bin_dir / f"{comp_name}_test.xe")
   stdout = subprocess.check_output(run_cmd, cwd = dir_name, shell = True)
-  #print("run msg:\n", stdout)
+  print("run msg:\n", stdout)
 
   sig_bin = dir_name / "sig_out.bin"
   assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
@@ -124,12 +124,55 @@ def test_mixer_c(in_signal, gain_dB):
 
   single_test(filt, test_dir, "mixer", in_signal)
 
+@pytest.mark.parametrize("gains_dB", [[0, -6, 6], [-10, 3, 0]])
+@pytest.mark.parametrize("slew", [1, 10])
+def test_volume_control_c(in_signal, gains_dB, slew):
+  filt = sc.volume_control(fs, 1, gains_dB[0], slew)
+  test_dir = bin_dir / f"volume_control_{gains_dB[0]}_{gains_dB[1]}_{gains_dB[2]}_{slew}"
+  test_dir.mkdir(exist_ok = True, parents = True)
+  
+  gains_info = [0] * 4
+  gains_info[0] = filt.slew_shift
+  gains_info[1] = filt.target_gain_int
+
+  out_py = np.zeros(in_signal.shape[1])
+  intervals = [0] * 4
+  intervals[1] = in_signal.shape[1] // 3
+  intervals[2] = intervals[1] * 2
+  intervals[3] = in_signal.shape[1]
+  
+  for n in range(intervals[0], intervals[1]):
+    out_py[n] = filt.process_xcore(in_signal[0][n])
+
+  filt.set_gain(gains_dB[1])
+  gains_info[2] = filt.target_gain_int
+
+  for n in range(intervals[1], intervals[2]):
+    out_py[n] = filt.process_xcore(in_signal[0][n])
+
+  filt.set_gain(gains_dB[2])
+  gains_info[3] = filt.target_gain_int
+  
+  for n in range(intervals[2], intervals[3]):
+    out_py[n] = filt.process_xcore(in_signal[0][n])
+
+  sf.write(gen_dir / "sig_py_int.wav", out_py, fs, "PCM_24")
+
+  gains_info = np.array(gains_info, dtype=np.int32)
+  gains_info.tofile(test_dir / "gain.bin")
+
+  out_c = get_c_wav(test_dir, "volume_control")
+  shutil.rmtree(test_dir)
+
+  np.testing.assert_allclose(out_c, out_py, rtol=0, atol=0)
+
 if __name__ =="__main__":
   bin_dir.mkdir(exist_ok=True, parents=True)
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
   
   #test_gains_c(sig_fl, -6)
-  test_subtractor_c(sig_fl)
-  test_adder_c(sig_fl)
-  test_mixer_c(sig_fl, -3)
+  #test_subtractor_c(sig_fl)
+  #test_adder_c(sig_fl)
+  #test_mixer_c(sig_fl, -3)
+  test_volume_control_c(sig_fl, [0, -6, 6], 7)
