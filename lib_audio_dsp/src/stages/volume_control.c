@@ -32,7 +32,7 @@ void volume_control_process(int32_t **input, int32_t **output, void *app_data_st
 void volume_control_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
     volume_control_state_t *state = instance->state;
-    //volume_control_config_t *config = instance->control.config;
+    volume_control_config_t *config = instance->control.config;
 
     memset(state, 0, sizeof(volume_control_state_t));
     state->n_inputs = n_inputs;
@@ -44,9 +44,9 @@ void volume_control_init(module_instance_t* instance, adsp_bump_allocator_t* all
 
     for(int i=0; i<state->n_inputs; i++)
     {
-        state->vol_ctl[i].gain = 1 << -SIG_EXP;
-        state->vol_ctl[i].target_gain = 1 << -SIG_EXP;
-        state->vol_ctl[i].slew_shift = 7;
+        state->vol_ctl[i].gain = config->gain;
+        state->vol_ctl[i].target_gain = config->target_gain;
+        state->vol_ctl[i].slew_shift = config->slew_shift;
     }
 }
 
