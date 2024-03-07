@@ -159,7 +159,7 @@ class Stage(Node):
         This will point to a dsp block class (e.g. biquad etc), to be set by the child class
     """
 
-    def __init__(self, config: Path | str, inputs: Iterable[StageOutput]):
+    def __init__(self, inputs: Iterable[StageOutput], config: Path | str = None, name: str = None):
         super().__init__()
         self.i = [i for i in inputs]
         for i, input in enumerate(self.i):
@@ -175,12 +175,20 @@ class Stage(Node):
         self.n_in = len(self.i)
         self.n_out = 0
         self._o = None
-        self.yaml_dict = yaml.load(Path(config).read_text(), Loader=yaml.Loader)
-        # module dict contains 1 entry with the name of the module as its key
-        self.name = next(iter(self.yaml_dict["module"].keys()))
-        self._control_fields = {
-            name: ValueControlField() for name in self.yaml_dict["module"][self.name].keys()
-        }
+        if (config is None and name is None) or (config is not None and name is not None):
+            raise RuntimeError("Provide either config or name, not both or none.")
+        if config is not None:
+            self.yaml_dict = yaml.load(Path(config).read_text(), Loader=yaml.Loader)
+            # module dict contains 1 entry with the name of the module as its key
+            self.name = next(iter(self.yaml_dict["module"].keys()))
+            self._control_fields = {
+                name: ValueControlField() for name in self.yaml_dict["module"][self.name].keys()
+            }
+        elif name is not None:
+            self.name = name
+            self._control_fields = {}
+            self.yaml_dict = None
+
         self.details = {}
         self.dsp_block = None
 

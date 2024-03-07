@@ -26,17 +26,9 @@ void bypass_process(int32_t **input, int32_t **output, void *app_data_state)
 void bypass_init(module_instance_t* module_instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
     bypass_state_t *state =module_instance->state;
-    bypass_config_t *config = module_instance->control.config;
 
     memset(state, 0, sizeof(bypass_state_t));
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
-
-    memcpy(&state->config, config, sizeof(bypass_config_t));
-}
-
-void bypass_control(void *module_state, module_control_t *control)
-{
-    // nothing to do
 }

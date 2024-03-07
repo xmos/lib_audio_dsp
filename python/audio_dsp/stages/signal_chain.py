@@ -12,7 +12,7 @@ class Bypass(Stage):
     """
 
     def __init__(self, **kwargs):
-        super().__init__(config=find_config("bypass"), **kwargs)
+        super().__init__(name="bypass", **kwargs)
         self.create_outputs(self.n_in)
 
 
