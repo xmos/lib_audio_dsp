@@ -35,7 +35,7 @@ class Fork(Stage):
     """
 
     def __init__(self, count=2, **kwargs):
-        super().__init__(config=find_config("fork"), **kwargs)
+        super().__init__(name="fork", **kwargs)
         self.create_outputs(self.n_in * count)
 
         fork_indices = [list(range(i, self.n_in * count, count)) for i in range(count)]
@@ -86,7 +86,7 @@ class Adder(Stage):
     """
 
     def __init__(self, **kwargs):
-        super().__init__(config=find_config("adder"), **kwargs)
+        super().__init__(name="adder", **kwargs)
         self.create_outputs(1)
         self.dsp_block = sc.adder(self.fs, self.n_in)
 
@@ -99,7 +99,7 @@ class Subtractor(Stage):
     """
 
     def __init__(self, **kwargs):
-        super().__init__(config=find_config("subtractor"), **kwargs)
+        super().__init__(name="subtractor", **kwargs)
         self.create_outputs(1)
         if self.n_in != 2:
             raise ValueError(f"Subtractor requires 2 inputs, got {self.n_in}")
