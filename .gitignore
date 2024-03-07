@@ -28,3 +28,4 @@
 
 # macOS 
 .DS_Store
+.venv

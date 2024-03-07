@@ -3,6 +3,7 @@
 
 from ..design.stage import Stage, find_config
 import audio_dsp.dsp.signal_chain as sc
+import numpy as np
 
 
 class Bypass(Stage):
@@ -14,6 +15,9 @@ class Bypass(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=find_config("bypass"), **kwargs)
         self.create_outputs(self.n_in)
+
+    def process(self, in_channels):
+        return [np.copy(i) for i in in_channels]
 
 
 class Fork(Stage):
@@ -46,6 +50,15 @@ class Fork(Stage):
     def get_frequency_response(self, nfft=512):
         # not sure what this looks like!
         raise NotImplementedError
+
+    def process(self, in_channels):
+        n_forks = self.n_out // self.n_in
+        ret = []
+        for input in in_channels:
+            for _ in range(n_forks):
+                ret.append(np.copy(input))
+
+        return ret
 
 
 class Mixer(Stage):

@@ -5,6 +5,8 @@
 
 from pathlib import Path
 from tabulate import tabulate
+
+from audio_dsp.design.pipeline_executor import PipelineExecutor, PipelineView
 from .graph import Graph
 from .stage import StageOutput
 from .thread import Thread
@@ -56,6 +58,7 @@ class Pipeline:
         self._id = identifier
 
         self.i = [StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)]
+        self.o: list[StageOutput] | None = None
         for i, input in enumerate(self.i):
             self._graph.add_edge(input)
             input.source_index = i
@@ -74,7 +77,7 @@ class Pipeline:
         self.threads.append(ret)
         return ret
 
-    def set_outputs(self, output_edges):
+    def set_outputs(self, output_edges: list[StageOutput]):
         """
         Set the pipeline outputs, configures the output channel index.
 
@@ -85,10 +88,27 @@ class Pipeline:
             will be in the same indices as the input to this function. To have an empty
             output index, pass in None.
         """
+        if not output_edges:
+            raise RuntimeError("Pipeline must have at least 1 output")
         for i, edge in enumerate(output_edges):
             if edge is not None:
                 edge.dest_index = i
+        self.o = output_edges
         self._n_out = i + 1
+
+    def executor(self) -> PipelineExecutor:
+        """
+        Create an executor instance which can be used to simulate the pipeline
+        """
+
+        def view():
+            if self.o is None:
+                raise RuntimeError(
+                    "Pipeline outputs must be set with `set_outputs` before simulating"
+                )
+            return PipelineView(self._graph.nodes, self.i, self.o)
+
+        return PipelineExecutor(self._graph, view)
 
     def validate(self):
         """

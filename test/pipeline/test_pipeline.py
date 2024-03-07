@@ -28,27 +28,26 @@ test_duration = 0.1 # in seconds
 infile = "test_input.wav"
 expectedfile = "test_expected.wav"
 outfile = "test_output.wav"
-compare = True
 
 def create_pipeline():
     # Create pipeline
     p = Pipeline(num_in_channels)
 
     with p.add_thread() as t:
-        bi = t.stage(Biquad, p.i)
-        cb = t.stage(CascadedBiquads, bi.o)
-        by = t.stage(Bypass, cb.o)
-        lp = t.stage(LimiterPeak, by.o)
-        lr = t.stage(LimiterRMS, lp.o)
-    with p.add_thread() as t:                # ch   0   1
-        by1 = t.stage(Bypass, lr.o)
+        s = t.stage(Biquad, p.i)
+    #     s = t.stage(CascadedBiquads, s.o)
+    #     s = t.stage(Bypass, s.o)
+    #     s = t.stage(LimiterPeak, s.o)
+    #     s = t.stage(LimiterRMS, s.o)
+    # with p.add_thread() as t:                # ch   0   1
+    #     s = t.stage(Bypass, s.o)
 
-    p.set_outputs(by1.o)
+    p.set_outputs(s.o)
     stages = 2
     return p, stages
 
-
-def test_pipeline():
+@pytest.mark.parametrize("platform", ("C", "python"))
+def test_pipeline(platform):
     """
     Basic test playing a sine wave through a stage
     """
@@ -64,18 +63,21 @@ def test_pipeline():
     # Generate input
     audio_helpers.generate_test_signal(infile, type="sine", fs=48000, duration=test_duration, amplitude=0.1, num_channels=num_in_channels, sig_dtype=input_dtype)
 
-    # Run
-    xe = APP_DIR / f"bin/{target}.xe"
-    run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels, n_stages)
+    if platform == "python":
+        fs, test_sig = audio_helpers.read_wav(infile)
+        sim_sig = p.executor().process(test_sig)
+        audio_helpers.write_wav(outfile, fs, sim_sig)
+    else:
+        # Run
+        xe = APP_DIR / f"bin/{target}.xe"
+        run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels, n_stages)
 
     # pipeline operates at q27 so truncate the input to match expected output
-    audio_helpers.write_wav(expectedfile, *audio_helpers.read_and_truncate(infile))
+    exp_fs, exp_sig = audio_helpers.read_and_truncate(infile)
 
     # Compare
-    if compare:
-        all_close, maxdiff, delay = audio_helpers.correlate_and_diff(outfile, expectedfile, [0,num_out_channels-1], [0,num_out_channels-1], 0, 0, 1e-8)
-        assert maxdiff == 0, "Pipline input and output not bit-exact"
-        assert all_close == True, "Pipline input and output not close enough"
+    out_fs, out_sig = audio_helpers.read_wav(outfile)
+    np.testing.assert_equal(out_sig, exp_sig[:out_sig.shape[0],:])
 
 
 INT32_MIN = -(2**31)

@@ -99,6 +99,9 @@ def correlate_and_diff(output_file, input_file, out_ch_start_end, in_ch_start_en
     data_size -= skip_samples_end
 
     print(f"compare {data_size - skip_samples_start} samples")
+    print(data_in.shape)
+    print(data_out.shape)
+    print(delay)
 
     num_channels = out_ch_start_end[1]-out_ch_start_end[0]+1
     all_close = True
