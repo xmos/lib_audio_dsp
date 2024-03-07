@@ -160,7 +160,12 @@ class Stage(Node):
         This will point to a dsp block class (e.g. biquad etc), to be set by the child class
     """
 
-    def __init__(self, inputs: Iterable[StageOutput], config: Optional[Path | str] = None, name: Optional[str] = None):
+    def __init__(
+        self,
+        inputs: Iterable[StageOutput],
+        config: Optional[Path | str] = None,
+        name: Optional[str] = None,
+    ):
         super().__init__()
         self.i = [i for i in inputs]
         for i, input in enumerate(self.i):
