@@ -149,18 +149,14 @@ class VolumeControl(Stage):
         self.set_control_field_cb("gain", lambda: self.dsp_block.gain_int)
         self.set_control_field_cb("slew_shift", lambda: self.dsp_block.slew_shift)
 
-    def make_volume_control(self, gain_dB, slew_shift, Q_sig=dspg.Q_sig):
-        self.details = dict(
-            target_gain=gain_dB,
-            slew_shift=slew_shift,
-            Q_sig=Q_sig
-        )
+    def make_volume_control(self, gain_dB, slew_shift, Q_sig=dspg.Q_SIG):
+        self.details = dict(target_gain=gain_dB, slew_shift=slew_shift, Q_sig=Q_sig)
         self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, Q_sig)
         return self
 
-    def change_gain(self, gain_dB):
+    def set_gain(self, gain_dB):
         """
-        Change the gain of the volume control in dB.
+        Set the gain of the volume control in dB.
 
         Parameters
         ----------
