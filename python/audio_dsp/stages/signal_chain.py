@@ -164,6 +164,7 @@ class VolumeControl(Stage):
             The gain of the volume control in dB.
         """
         self.dsp_block.set_gain(gain_dB)
+        return self
 
 
 class Switch(Stage):
