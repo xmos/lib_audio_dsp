@@ -110,6 +110,9 @@ class envelope_detector_peak(dspg.dsp_block):
         should be scaled with 0dB = 1.0.
 
         """
+        if isinstance(sample, list) or isinstance(sample, np.ndarray):
+            sample = sample[channel]
+
         sample_mag = abs(sample)
 
         # see if we're attacking or decaying
@@ -135,6 +138,8 @@ class envelope_detector_peak(dspg.dsp_block):
         """
         if isinstance(sample, float):
             sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        elif (isinstance(sample, list) or isinstance(sample, np.ndarray)) and isinstance(sample[0], int):
+            sample_int = sample[channel]
         else:
             sample_int = sample
 
@@ -169,6 +174,8 @@ class envelope_detector_peak(dspg.dsp_block):
             # don't do anything if we got np.float32, this function was
             # probably called from a limiter or compressor
             sample_f32 = sample
+        elif (isinstance(sample, list) or isinstance(sample, np.ndarray)) and isinstance(sample[0], np.float32):
+            sample_f32 = sample[channel]
         else:
             # if input isn't np.float32, convert it
             sample_f32 = np.float32(sample)
@@ -598,10 +605,10 @@ class limiter_peak(compressor_limiter_base):
 
     """
 
-    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, n_chans, threshold_dB, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
-        self.threshold = utils.db2gain(threshold_db)
+        self.threshold = utils.db2gain(threshold_dB)
         self.threshold_f32 = np.float32(self.threshold)
         self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
         self.env_detector = envelope_detector_peak(
@@ -656,11 +663,11 @@ class limiter_rms(compressor_limiter_base):
 
     """
 
-    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, n_chans, threshold_dB, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         # note rms comes as x**2, so use db_pow
-        self.threshold = utils.db_pow2gain(threshold_db)
+        self.threshold = utils.db_pow2gain(threshold_dB)
         self.threshold_f32 = np.float32(self.threshold)
         self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
         self.env_detector = envelope_detector_rms(
@@ -907,6 +914,269 @@ class compressor_rms(compressor_limiter_base):
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
         new_gain = (self.threshold_f32 / envelope) ** self.slope_f32
+        new_gain = new_gain if new_gain < np.float32(1) else np.float32(1)
+        return new_gain
+
+
+class compressor_limiter_st_base(dspg.dsp_block):
+    def __init__(self, fs, n_chans, attack_t, release_t, delay=0,  Q_sig=dspg.Q_SIG):
+        assert n_chans == 2, "has to be stereo"
+        super().__init__(fs, n_chans, Q_sig)
+    
+        # attack times simplified from McNally, seem pretty close.
+        # Assumes the time constant of a digital filter is the -3 dB
+        # point where abs(H(z))**2 = 0.5.
+        T = 1 / fs
+        # attack/release time can't be faster than the length of 2
+        # samples.
+        self.attack_alpha = min(2 * T / attack_t, 1.0)
+        self.release_alpha = min(2 * T / release_t, 1.0)
+        self.gain = 1
+
+        # These are defined differently for peak and RMS limiters
+        self.threshold = None
+        self.env_detector = None
+
+        self.attack_alpha_f32 = np.float32(self.attack_alpha)
+        self.release_alpha_f32 = np.float32(self.release_alpha)
+        self.threshold_f32 = None
+        self.gain_f32 = np.float32(1)
+
+        self.attack_alpha_int = utils.int32(round(self.attack_alpha * 2**30))
+        self.release_alpha_int = utils.int32(round(self.release_alpha * 2**30))
+        self.threshold_int = None
+        self.gain_int = 2**30
+
+    def reset_state(self):
+        """Reset the envelope detectors to 0 and the gain to 1."""
+        self.env_detector.reset_state()
+        self.gain = 1
+        self.gain_f32 = np.float32(1)
+        self.gain_int = 2**30
+    
+    def gain_calc(self, envelope):
+        """Calculate the float gain for the current sample"""
+        raise NotImplementedError
+
+    def gain_calc_int(self, envelope_int):
+        """Calculate the int gain for the current sample"""
+        raise NotImplementedError
+
+    def gain_calc_xcore(self, envelope):
+        """Calculate the np.float32 gain for the current sample"""
+        raise NotImplementedError
+    
+    def process(self, sample):
+        """
+        Update the envelopes for a signal, then calculate and apply the
+        required gain for compression/limiting, using floating point
+        maths.
+
+        Take one new sample and return the compressed/limited sample.
+        Input should be scaled with 0dB = 1.0.
+
+        """
+        # get envelope from envelope detector
+        env0 = self.env_detector.process(sample, 0)
+        env1 = self.env_detector.process(sample, 1)
+        envelope = np.maximum(env0, env1)
+        # avoid /0
+        envelope = np.maximum(envelope, np.finfo(float).tiny)
+
+        # calculate the gain, this function should be defined by the
+        # child class
+        new_gain = self.gain_calc(envelope)
+
+        # see if we're attacking or decaying
+        if new_gain < self.gain:
+            alpha = self.attack_alpha
+        else:
+            alpha = self.release_alpha
+
+        # do exponential moving average
+        self.gain = ((1 - alpha) * self.gain) + (alpha * new_gain)
+
+        # apply gain to input
+        y = self.gain * sample
+        return y, new_gain, envelope
+    
+    def process_int(self, samples):
+        """
+        Update the envelopes for a signal, then calculate and apply the
+        required gain for compression/limiting, using int32 fixed point
+        maths.
+
+        Take one new sample and return the compressed/limited sample.
+        Input should be scaled with 0dB = 1.0.
+
+        """
+        samples_int = [int(0)] * len(samples)
+        for i in range(len(samples)): samples_int[i] = utils.int32(round(samples[i] * 2**self.Q_sig))
+
+        # get envelope from envelope detector
+        env0_int = self.env_detector.process_int(samples_int, 0)
+        env1_int = self.env_detector.process_int(samples_int, 1)
+        envelope_int = max(env0_int, env1_int)
+        # avoid /0
+        envelope_int = max(envelope_int, 1)
+
+        # if envelope below threshold, apply unity gain, otherwise scale
+        # down
+        new_gain_int = self.gain_calc_int(envelope_int)
+
+        # see if we're attacking or decaying
+        if new_gain_int < self.gain_int:
+            alpha = self.attack_alpha_int
+        else:
+            alpha = self.release_alpha_int
+
+        # do exponential moving average, VPU mult uses 2**30, otherwise
+        # could use 2**31
+        self.gain_int = utils.vpu_mult(2**30 - alpha, self.gain_int)
+        self.gain_int += utils.vpu_mult(alpha, new_gain_int)
+
+        y = []
+        for sample_int in samples_int:
+            y_uq = utils.vpu_mult(self.gain_int, sample_int)
+            y.append(float(y_uq) * 2 **-self.Q_sig)
+
+        return (
+            #(float(y) * 2**-self.Q_sig),
+            y,
+            (float(new_gain_int) * 2**-self.Q_sig),
+            (float(envelope_int) * 2**-self.Q_sig),
+        )
+
+    def process_xcore(self, samples):
+        """
+        Update the envelopes for a signal, then calculate and apply the
+        required gain for compression/limiting, using np.float32 maths.
+
+        Take one new sample and return the compressed/limited sample.
+        Input should be scaled with 0dB = 1.0.
+
+        """
+        # quantize
+        samples_int = [int(0)] * len(samples)
+        for i in range(len(samples)):
+            samples_int[i] = utils.int32(round(samples[i] * 2**self.Q_sig))
+            sample_q = utils.float_s32(samples[i])
+            sample_q = utils.float_s32_use_exp(sample_q, -27)
+            samples[i] = np.float32(float(sample_q))
+
+        # get envelope from envelope detector
+        env0 = self.env_detector.process_xcore(samples, 0)
+        env1 = self.env_detector.process_xcore(samples, 1)
+        envelope = np.maximum(env0, env1)
+        # avoid /0
+        if envelope == np.float32(0):
+            envelope = np.float32(1e-20)
+
+        # if envelope below threshold, apply unity gain, otherwise scale
+        # down
+        new_gain = self.gain_calc_xcore(envelope)
+
+        # see if we're attacking or decaying
+        if new_gain < self.gain_f32:
+            alpha = self.attack_alpha_f32
+        else:
+            alpha = self.release_alpha_f32
+
+        # do exponential moving average
+        self.gain_f32 = self.gain_f32 + alpha * (
+            new_gain - self.gain_f32
+        )
+
+        # apply gain in int32
+        y = [0] * len(samples)
+        this_gain_int = utils.int32(self.gain_f32 * 2**30)
+        for i in range(len(samples_int)):
+            acc = int(1 << 29)
+            acc += this_gain_int * samples_int[i]
+            y_uq = utils.int32_mult_sat_extract(acc, 1, 30)
+
+            # quantize before return
+            y[i] = float(y_uq) * 2**-self.Q_sig
+
+        return y, float(new_gain), float(envelope)
+
+    def process_frame(self, frame):
+        """
+        Take a list frames of samples and return the processed frames.
+
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When calling self.process only take the first output.
+
+        """
+        n_outputs = len(frame)
+        assert n_outputs == 2, "has to be stereo"
+        frame_size = frame[0].shape[0]
+        output = deepcopy(frame)
+        for chan in range(n_outputs):
+            this_chan = output[chan]
+            for sample in range(frame_size):
+                this_chan[sample] = self.process(this_chan[sample])[0]
+
+        return output
+    
+    def process_frame_xcore(self, frame):
+        """
+        Take a list frames of samples and return the processed frames,
+        using a bit exact xcore implementation.
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When calling self.process_xcore only take the first output.
+
+        """
+        n_outputs = len(frame)
+        assert n_outputs == 2, "has to be stereo"
+        frame_size = frame[0].shape[0]
+        output = deepcopy(frame)
+        for chan in range(n_outputs):
+            this_chan = output[chan]
+            for sample in range(frame_size):
+                this_chan[sample] = self.process_xcore(this_chan[sample])[0]
+
+        return output
+
+
+class limiter_peak_st(compressor_limiter_st_base):
+    def __init__(self, fs, threshold_dB, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+        n_chans = 2
+        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
+
+        self.threshold = utils.db2gain(threshold_dB)
+        self.threshold_f32 = np.float32(self.threshold)
+        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.env_detector = envelope_detector_peak(
+            fs,
+            n_chans=n_chans,
+            attack_t=attack_t,
+            release_t=release_t,
+            Q_sig=self.Q_sig,
+        )
+
+    def gain_calc(self, envelope):
+        """Calculate the float gain for the current sample"""
+        new_gain = self.threshold / envelope
+        new_gain = min(1, new_gain)
+        return new_gain
+
+    def gain_calc_int(self, envelope_int):
+        """Calculate the int gain for the current sample"""
+        new_gain = float(self.threshold_int) / float(envelope_int)
+        new_gain = min(1.0, new_gain)
+        new_gain_int = utils.int32(new_gain * 2**30)
+        return new_gain_int
+
+    def gain_calc_xcore(self, envelope):
+        """Calculate the np.float32 gain for the current sample"""
+        new_gain = self.threshold_f32 / envelope
         new_gain = new_gain if new_gain < np.float32(1) else np.float32(1)
         return new_gain
 

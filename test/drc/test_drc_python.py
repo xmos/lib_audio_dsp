@@ -378,6 +378,43 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
     assert np.all(output_flt[0, :] == output_flt)
 
 
+@pytest.mark.parametrize("fs", [48000])
+@pytest.mark.parametrize("component, threshold", [("limiter_peak_st", -20, None),
+                                                 ("limiter_peak_st", -6, None)])
+@pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
+@pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
+def test_stereo_components(fs, component, at, rt, threshold):
+    component_handle = getattr(drc, component)
+    drcut = component_handle(fs, threshold, at, rt)
+
+    signal = []
+    lenght = 0.1 + (rt + at) * 2
+    f = 997
+    signal.append(gen.sin(fs, lenght, f, 1))
+    signal.append(gen.sin(fs, lenght, f, 0.5))
+    signal = np.stack(signal, axis=0).astype(np.float32)
+
+    output_xcore = np.zeros(signal.shape, dtype=np.float32)
+    output_flt = np.zeros(signal.shape, dtype=np.float32)
+    output_int = np.zeros(signal.shape, dtype=np.float32)
+
+    for n in np.arange(signal.shape[1]):
+        output_xcore[:, n], _, _ = drcut.process_xcore(signal[:, n])
+    drcut.reset_state()
+    for n in np.arange(signal.shape[1]):
+        output_flt[:, n], _, _ = drcut.process(signal[:, n])
+    drcut.reset_state()
+    for n in np.arange(signal.shape[1]):
+        output_int[:, n], _, _ = drcut.process_int(signal[:, n])
+    
+    error_flt = np.abs(utils.db(output_xcore)-utils.db(output_flt))
+    mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+    assert mean_error_flt < 0.055
+
+    error_int = np.abs(utils.db(output_int)-utils.db(output_flt))
+    mean_error_int = utils.db(np.nanmean(utils.db2gain(error_int)))
+    assert mean_error_int < 0.055
+
 
 # TODO more RMS limiter tests
 # TODO hard limiter test
@@ -388,4 +425,5 @@ if __name__ == "__main__":
     # test_drc_component(48000, "limiter_peak", 1, 1, 1)
     # test_limiter_peak_attack(48000, 0.1, -10)
     # comp_vs_limiter(48000, 0.001, 0)
-    test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)
+    # test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)
+    test_stereo_components(48000, "limiter_peak_st", 0.001, 0.01, -6)
