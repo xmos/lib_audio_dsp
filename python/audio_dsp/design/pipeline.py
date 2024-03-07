@@ -261,7 +261,10 @@ class Pipeline:
 
         node_configs = {node.index: node.get_config() for node in self._graph.nodes}
 
-        module_definitions = {node.name: node.yaml_dict for node in self._graph.nodes}
+        module_definitions = {
+            node.index: {"name": node.name, "yaml_dict": node.yaml_dict}
+            for node in self._graph.nodes
+        }
 
         return {
             "identifier": self._id,
@@ -522,8 +525,9 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
         # It will be done once before select to ensure it happens, then in the default
         # case of the select so that control will be processed if no audio is playing.
         control = ""
-        for i, (_, name) in enumerate(thread):
-            control += f"\t\t{name}_control(modules[{i}]->state, &modules[{i}]->control);\n"
+        for i, (stage_index, name) in enumerate(thread):
+            if resolved_pipeline["modules"][stage_index]["yaml_dict"]:
+                control += f"\t\t{name}_control(modules[{i}]->state, &modules[{i}]->control);\n"
 
         read = f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
         # the same channel being read twice
@@ -708,8 +712,12 @@ def _generate_dsp_init(resolved_pipeline):
                     defaults[config_field] = str(value)
             struct_val = ", ".join(f".{field} = {value}" for field, value in defaults.items())
             # default_str = f"&({stage_name}_config_t){{{struct_val}}}"
+            if resolved_pipeline["modules"][stage_index]["yaml_dict"]:
+                ret += (
+                    f"\tstatic {stage_name}_config_t config{stage_index} = {{ {struct_val} }};\n"
+                )
+
             ret += f"""
-            static {stage_name}_config_t config{stage_index} = {{ {struct_val} }};
             static {stage_name}_state_t state{stage_index};
             static uint8_t memory{stage_index}[_ADSP_MAX(1, {stage_name.upper()}_REQUIRED_MEMORY({stage_n_in}, {stage_n_out}, {stage_frame_size}))];
             static adsp_bump_allocator_t allocator{stage_index} = ADSP_BUMP_ALLOCATOR_INITIALISER(memory{stage_index});
@@ -717,13 +725,22 @@ def _generate_dsp_init(resolved_pipeline):
             {adsp}.modules[{stage_index}].state = (void*)&state{stage_index};
 
             // Control stuff
-            {adsp}.modules[{stage_index}].control.config = (void*)&config{stage_index};
             {adsp}.modules[{stage_index}].control.id = {stage_index};
-            {adsp}.modules[{stage_index}].control.module_type = e_dsp_stage_{stage_name};
-            {adsp}.modules[{stage_index}].control.num_control_commands = NUM_CMDS_{stage_name.upper()};
             {adsp}.modules[{stage_index}].control.config_rw_state = config_none_pending;
             """
-            ret += f"\t{stage_name}_init(&{adsp}.modules[{stage_index}], &allocator{stage_index}, {stage_index}, {stage_n_in}, {stage_n_out}, {stage_frame_size});\n"
+            if resolved_pipeline["modules"][stage_index]["yaml_dict"]:
+                ret += f"""
+                {adsp}.modules[{stage_index}].control.config = (void*)&config{stage_index};
+                {adsp}.modules[{stage_index}].control.module_type = e_dsp_stage_{stage_name};
+                {adsp}.modules[{stage_index}].control.num_control_commands = NUM_CMDS_{stage_name.upper()};
+                """
+            else:
+                ret += f"""
+                {adsp}.modules[{stage_index}].control.config = NULL;
+                {adsp}.modules[{stage_index}].control.num_control_commands = 0;
+                """
+
+            ret += f"{stage_name}_init(&{adsp}.modules[{stage_index}], &allocator{stage_index}, {stage_index}, {stage_n_in}, {stage_n_out}, {stage_frame_size});\n"
     ret += f"\treturn &{adsp};\n"
     ret += "}\n\n"
     return ret
@@ -818,10 +835,13 @@ def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
 """
     # add includes for each stage type in the pipeline
     dsp_main += "".join(
-        f"#include <stages/{name}.h>\n" for name in resolved_pipe["modules"].keys()
+        f"#include <stages/{resolved_pipe['modules'][node_index]['name']}.h>\n"
+        for node_index in resolved_pipe["modules"].keys()
     )
     dsp_main += "".join(
-        f"#include <{name}_config.h>\n" for name in resolved_pipe["modules"].keys()
+        f"#include <{resolved_pipe['modules'][node_index]['name']}_config.h>\n"
+        for node_index in resolved_pipe["modules"].keys()
+        if resolved_pipe["modules"][node_index]["yaml_dict"] is not None
     )
     dsp_main += _generate_dsp_threads(resolved_pipe)
     dsp_main += _generate_dsp_init(resolved_pipe)
