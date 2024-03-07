@@ -43,18 +43,28 @@ def do_test(p, in_ch, out_ch):
     for in_i, out_i in zip(in_ch, out_ch):
         np.testing.assert_equal(sig[:, in_i], out_data[:, out_i])
 
-@pytest.mark.parametrize("fork_output", (0, 1))
-def test_fork(fork_output):
+@pytest.mark.parametrize("inputs, fork_output", [(2, 0),
+                                                 (2, 1),
+                                                 (1, 0)])
+def test_fork(fork_output, inputs):
     """
     Basic check that the for stage correctly copies data to the expected outputs.
     """
-    channels = 2
+    channels = inputs
     p = Pipeline(channels)
     with p.add_thread() as t:
-        fork = t.stage(Fork, p.i, count = 2)
-    p.set_outputs(fork.forks[fork_output])
+        count = 2
+        fork = t.stage(Fork, p.i, count = count)
+        assert len(fork.forks) == count
+        for f in fork.forks:
+            assert len(f) == channels
 
-    do_test(p, (0, 1), (0, 1))
+        p.set_outputs(fork.forks[fork_output])
+
+    if inputs == 1:
+        do_test(p, [0], (0, 1))
+    else:
+        do_test(p, (0, 1), (0, 1))
 
 def test_fork_copies():
     """

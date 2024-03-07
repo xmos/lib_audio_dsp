@@ -13,7 +13,7 @@ void pipeline_init(module_instance_t* instance, adsp_bump_allocator_t* allocator
     pipeline_state_t *state = instance->state;
     pipeline_config_t *config = instance->control.config;
 
-    memcpy(state->checksum, config->checksum, 16*sizeof(uint8_t));
+    memcpy(state->checksum, config->checksum, sizeof(state->checksum));
 }
 
 void pipeline_control(void *module_state, module_control_t *control)

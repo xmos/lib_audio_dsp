@@ -53,7 +53,7 @@ class Thread(CompositeStage):
     def __init__(self, id: int, **kwargs):
         super().__init__(name=f"Thread {id}", **kwargs)
         self.id = id
-        self.thread_stage = None | DSPThreadStage
+        self.thread_stage = None
 
     def __enter__(self):
         """Support for context manager."""

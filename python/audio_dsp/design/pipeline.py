@@ -47,17 +47,16 @@ class PipelineStage(Stage):
         super().__init__(config=find_config("pipeline"), **kwargs)
         self.create_outputs(0)
 
-    """
-    Override the CompositeStage.add_to_dot() function to ensure PipelineStage
-    type stages are not added to the dot diagram
-
-    Parameters
-    ----------
-    dot : graphviz.Diagraph
-        dot instance to add edges to.
-    """
-
     def add_to_dot(self, dot):  # Override this to not add the stage to the diagram
+        """
+        Override the CompositeStage.add_to_dot() function to ensure PipelineStage
+        type stages are not added to the dot diagram
+
+        Parameters
+        ----------
+        dot : graphviz.Diagraph
+        dot instance to add edges to.
+        """
         return
 
 
@@ -102,7 +101,7 @@ class Pipeline:
         self._n_in = n_in
         self._n_out = 0
         self._id = identifier
-        self.pipeline_stage: None | PipelineStage
+        self.pipeline_stage: None
 
         self.i = [StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)]
         for i, input in enumerate(self.i):
