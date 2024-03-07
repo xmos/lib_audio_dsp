@@ -47,7 +47,7 @@ def envelope(x, N=None):
 
 
 def int32(val: float) -> int:
-    if -(2**31) <= val < (2**31 - 1):
+    if -(2**31) <= val <= (2**31 - 1):
         return int(val)
     raise OverflowError
 
@@ -82,10 +82,10 @@ def vpu_mult(x1: int, x2: int):
 
 def int32_mult_sat_extract(x1: int, x2: int, Q: int):
     y = int64(x1 * x2)
-    if y > 2 ** (32 + Q):
-        y = 2 ** (32 + Q)
-    elif y < -(2 ** (32 + Q)):
-        y = -(2 ** (32 + Q))
+    if y > (2 ** (31 + Q) - 1):
+        y = 2 ** (31 + Q) - 1
+    elif y < -(2 ** (31 + Q)):
+        y = -(2 ** (31 + Q))
     y = int32(y >> Q)
 
     return y
