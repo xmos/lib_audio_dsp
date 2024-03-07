@@ -577,6 +577,20 @@ class volume_control(dspg.dsp_block):
         self.target_gain = utils.db2gain(gain_db)
         self.target_gain_int = utils.int32(self.target_gain * 2**self.Q_sig)
 
+    def mute(self):
+        if not self.mute_state:
+            self.mute_state = True
+            self.saved_gain_db = self.target_gain_db
+            # avoid messy dB conversion for -inf
+            self.target_gain_db = -np.inf
+            self.target_gain = 0
+            self.target_gain_int = utils.int32(0)
+    
+    def unmute(self):
+        if self.mute_state:
+            self.mute_state = False
+            self.set_gain(self.saved_gain_db)
+
 
 class switch(dspg.dsp_block):
     """A class representing a switch in a signal chain.
