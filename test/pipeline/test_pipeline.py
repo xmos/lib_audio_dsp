@@ -6,6 +6,7 @@ import scipy.io.wavfile
 import numpy as np
 import subprocess
 import pytest
+from copy import deepcopy
 
 from audio_dsp.design.pipeline import Pipeline
 from audio_dsp.stages.biquad import Biquad
@@ -13,6 +14,7 @@ from audio_dsp.stages.cascaded_biquads import CascadedBiquads
 from audio_dsp.stages.signal_chain import Bypass
 from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak
 from audio_dsp.design.pipeline import generate_dsp_main
+import audio_dsp.dsp.signal_gen as gen
 
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
 from stages.add_n import AddN
@@ -26,28 +28,27 @@ num_out_channels = 2
 input_dtype = np.int32
 test_duration = 0.1 # in seconds
 infile = "test_input.wav"
-expectedfile = "test_expected.wav"
 outfile = "test_output.wav"
+Fs = 48000
 
 def create_pipeline():
     # Create pipeline
     p = Pipeline(num_in_channels)
 
     with p.add_thread() as t:
-        s = t.stage(Biquad, p.i)
-    #     s = t.stage(CascadedBiquads, s.o)
-    #     s = t.stage(Bypass, s.o)
-    #     s = t.stage(LimiterPeak, s.o)
-    #     s = t.stage(LimiterRMS, s.o)
-    # with p.add_thread() as t:                # ch   0   1
-    #     s = t.stage(Bypass, s.o)
+        bi = t.stage(Biquad, p.i)
+        cb = t.stage(CascadedBiquads, bi.o)
+        by = t.stage(Bypass, cb.o)
+        lp = t.stage(LimiterPeak, by.o)
+        lr = t.stage(LimiterRMS, lp.o)
+    with p.add_thread() as t:                # ch   0   1
+        by1 = t.stage(Bypass, lr.o)
 
-    p.set_outputs(s.o)
+    p.set_outputs(by1.o)
     stages = 2
     return p, stages
 
-@pytest.mark.parametrize("platform", ("C", "python"))
-def test_pipeline(platform):
+def test_pipeline():
     """
     Basic test playing a sine wave through a stage
     """
@@ -60,24 +61,39 @@ def test_pipeline(platform):
     # Build pipeline test executable. This will download xscope_fileio if not present
     build_utils.build(APP_DIR, BUILD_DIR, target)
 
-    # Generate input
-    audio_helpers.generate_test_signal(infile, type="sine", fs=48000, duration=test_duration, amplitude=0.1, num_channels=num_in_channels, sig_dtype=input_dtype)
+    outfile_py = Path(outfile).parent / (str(Path(outfile).stem) + '_py.wav')
+    outfile_c = Path(outfile).parent / (str(Path(outfile).stem) + '_c.wav')
 
-    if platform == "python":
-        fs, test_sig = audio_helpers.read_wav(infile)
-        sim_sig = p.executor().process(test_sig)
-        audio_helpers.write_wav(outfile, fs, sim_sig)
+    # Generate input
+    input_sig_py = np.empty((int(Fs*test_duration), num_in_channels), dtype=np.float64)
+    for i in range(num_in_channels):
+        input_sig_py[:, i] = (gen.sin(fs=Fs, length=test_duration, freq=1000, amplitude=0.1, precision=27)).T
+
+    if (input_dtype == np.int32) or (input_dtype == np.int16):
+        input_sig_c = np.array(input_sig_py * np.iinfo(input_dtype).max, dtype=input_dtype)
     else:
-        # Run
-        xe = APP_DIR / f"bin/{target}.xe"
-        run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels, n_stages)
+        input_sig_c = deepcopy(input_sig_py)
+
+    scipy.io.wavfile.write(infile, Fs, input_sig_c)
+
+    # Run python
+    sim_sig = p.executor().process(input_sig_py)
+    np.testing.assert_equal(sim_sig, input_sig_py)
+    sim_sig = np.array(sim_sig * np.iinfo(np.int32).max, dtype=np.int32)
+    audio_helpers.write_wav(outfile_py, Fs, sim_sig)
+
+    # Run C
+    xe = APP_DIR / f"bin/{target}.xe"
+    run_pipeline_xcoreai.run(xe, infile, outfile_c, num_out_channels, n_stages)
 
     # pipeline operates at q27 so truncate the input to match expected output
     exp_fs, exp_sig = audio_helpers.read_and_truncate(infile)
 
     # Compare
-    out_fs, out_sig = audio_helpers.read_wav(outfile)
-    np.testing.assert_equal(out_sig, exp_sig[:out_sig.shape[0],:])
+    out_fs, out_sig_py = audio_helpers.read_and_truncate(outfile_py)
+    out_fs, out_sig_c = audio_helpers.read_and_truncate(outfile_c) # For C this should do nothing since the Q27 -> Q31 at the output ensures that the lower 4 bits are 0
+    np.testing.assert_equal(out_sig_py, exp_sig[:out_sig_py.shape[0],:]) # Compare python with input
+    np.testing.assert_equal(out_sig_c, exp_sig[:out_sig_c.shape[0],:]) # Compare C with input
 
 
 INT32_MIN = -(2**31)

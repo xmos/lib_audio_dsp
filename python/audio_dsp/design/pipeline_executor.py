@@ -90,7 +90,4 @@ class PipelineExecutor:
             outputs = self._process_frame(inputs, graph, i_edges, o_edges)
             for i, val in enumerate(outputs):
                 ret[index : index + frame_size, i] = val
-
-        ret = ret.astype(numpy.int32)  # TODO maybe not needed...
-
         return ret
