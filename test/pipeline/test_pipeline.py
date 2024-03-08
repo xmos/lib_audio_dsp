@@ -70,28 +70,35 @@ def test_pipeline():
         input_sig_py[:, i] = (gen.sin(fs=Fs, length=test_duration, freq=1000, amplitude=0.1, precision=27)).T
 
     if (input_dtype == np.int32) or (input_dtype == np.int16):
-        input_sig_c = np.array(input_sig_py * np.iinfo(input_dtype).max, dtype=input_dtype)
+        if input_dtype == np.int32:
+            qformat = 31
+        else:
+            qformat = 15
+        input_sig_c = np.clip((np.array(input_sig_py) * (2**qformat)), np.iinfo(input_dtype).min, np.iinfo(input_dtype).max).astype(input_dtype)
     else:
         input_sig_c = deepcopy(input_sig_py)
+
+    print(input_sig_py)
+    print(input_sig_c)
 
     scipy.io.wavfile.write(infile, Fs, input_sig_c)
 
     # Run python
     sim_sig = p.executor().process(input_sig_py)
     np.testing.assert_equal(sim_sig, input_sig_py)
-    sim_sig = np.array(sim_sig * np.iinfo(np.int32).max, dtype=np.int32)
+    sim_sig = np.clip((np.array(sim_sig) * (2**qformat)), np.iinfo(input_dtype).min, np.iinfo(input_dtype).max).astype(input_dtype)
     audio_helpers.write_wav(outfile_py, Fs, sim_sig)
 
     # Run C
     xe = APP_DIR / f"bin/{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile_c, num_out_channels, n_stages)
 
-    # pipeline operates at q27 so truncate the input to match expected output
-    exp_fs, exp_sig = audio_helpers.read_and_truncate(infile)
+    # since gen.sin already generates a quantised input, no need to truncate
+    exp_fs, exp_sig = audio_helpers.read_wav(infile)
 
     # Compare
-    out_fs, out_sig_py = audio_helpers.read_and_truncate(outfile_py)
-    out_fs, out_sig_c = audio_helpers.read_and_truncate(outfile_c) # For C this should do nothing since the Q27 -> Q31 at the output ensures that the lower 4 bits are 0
+    out_fs, out_sig_py = audio_helpers.read_wav(outfile_py)
+    out_fs, out_sig_c = audio_helpers.read_wav(outfile_c)
     np.testing.assert_equal(out_sig_py, exp_sig[:out_sig_py.shape[0],:]) # Compare python with input
     np.testing.assert_equal(out_sig_c, exp_sig[:out_sig_c.shape[0],:]) # Compare C with input
 
