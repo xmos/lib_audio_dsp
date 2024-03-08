@@ -12,22 +12,6 @@ from pathlib import Path
 
 from audio_dsp.dsp import generic
 
-def generate_test_signal(wav_file_name, type="sine", fs=48000, duration=10, num_channels=2, amplitude=0.8, sig_dtype=np.int32):
-    if type == "sine":
-        f = 1000
-        sig = np.empty((int(fs*duration), num_channels))
-        sample_space = np.linspace(0, duration, int(fs*duration))
-
-        for i in range(num_channels):
-            f_sig = f * (i+1) # Generate harmonics of 1 KHz
-            sig[:,i] = (amplitude * np.sin(2 * np.pi * f_sig * sample_space)).T
-
-        if (sig_dtype == np.int32) or (sig_dtype == np.int16):
-            sig = np.array(sig * np.iinfo(sig_dtype).max, dtype=sig_dtype)
-        scipy.io.wavfile.write(wav_file_name, fs, sig)
-    else:
-        assert False, f"ERROR: Generating {type} signal not supported"
-
 def read_wav(path):
     rate, data = scipy.io.wavfile.read(path)
     return rate, data
