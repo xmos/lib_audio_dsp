@@ -494,7 +494,7 @@ class volume_control(dspg.dsp_block):
         # initial applied gain can be equal to target until target changes
         self.gain_db = self.target_gain_db
         self.gain = [self.target_gain] * self.n_chans
-        self.gain_int = [self.target_gain_int] *self.n_chans
+        self.gain_int = [self.target_gain_int] * self.n_chans
 
         self.slew_shift = slew_shift
 
@@ -545,7 +545,9 @@ class volume_control(dspg.dsp_block):
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
 
         # do the exponential slew
-        self.gain_int[channel] += (self.target_gain_int - self.gain_int[channel]) >> self.slew_shift
+        self.gain_int[channel] += (
+            self.target_gain_int - self.gain_int[channel]
+        ) >> self.slew_shift
 
         # for rounding
         acc = 1 << (self.Q_sig - 1)

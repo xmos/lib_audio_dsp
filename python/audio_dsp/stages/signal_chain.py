@@ -114,7 +114,7 @@ class FixedGain(Stage):
 
     """
 
-    def __init__(self, gain_db=-6, **kwargs):
+    def __init__(self, gain_db=0, **kwargs):
         super().__init__(config=find_config("fixed_gain"), **kwargs)
         self.create_outputs(self.n_in)
         self.dsp_block = sc.fixed_gain(self.fs, self.n_in, gain_db)
@@ -139,10 +139,9 @@ class VolumeControl(Stage):
 
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, gain_dB=0, **kwargs):
         super().__init__(config=find_config("volume_control"), **kwargs)
         self.create_outputs(self.n_in)
-        gain_dB = 0
         slew_shift = 7
         self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift)
         self.set_control_field_cb("target_gain", lambda: self.dsp_block.target_gain_int)
