@@ -107,9 +107,9 @@ class FixedGain(Stage):
     Multiply the input by a fixed gain. The gain is set at the time of
     construction and cannot be changed.
 
-    Attributes
+    Parameters
     ----------
-    gain_db : float
+    gain_db : float, optional
         The gain of the mixer in dB.
 
     """
@@ -137,9 +137,9 @@ class VolumeControl(Stage):
     """
     Multiply the input by a gain. The gain can be changed at runtime.
 
-    Attributes
+    Parameters
     ----------
-    gain_db : float
+    gain_db : float, optional
         The gain of the mixer in dB.
 
     """
