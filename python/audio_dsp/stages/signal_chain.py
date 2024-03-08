@@ -2,6 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 from ..design.stage import Stage, find_config
+from ..dsp import generic as dspg
 import audio_dsp.dsp.signal_chain as sc
 import numpy as np
 
@@ -65,11 +66,6 @@ class Mixer(Stage):
     """
     Mixes the input signals together. The mixer can be used to add signals
     together, or to attenuate the input signals.
-
-    Attributes
-    ----------
-    gain_db : float
-        The gain of the mixer in dB.
     """
 
     def __init__(self, **kwargs):
@@ -124,9 +120,14 @@ class FixedGain(Stage):
     Multiply the input by a fixed gain. The gain is set at the time of
     construction and cannot be changed.
 
+    Parameters
+    ----------
+    gain_db : float, optional
+        The gain of the mixer in dB.
+
     """
 
-    def __init__(self, gain_db=-6, **kwargs):
+    def __init__(self, gain_db=0, **kwargs):
         super().__init__(config=find_config("fixed_gain"), **kwargs)
         self.create_outputs(self.n_in)
         self.dsp_block = sc.fixed_gain(self.fs, self.n_in, gain_db)
@@ -149,15 +150,27 @@ class VolumeControl(Stage):
     """
     Multiply the input by a gain. The gain can be changed at runtime.
 
+    Parameters
+    ----------
+    gain_db : float, optional
+        The gain of the mixer in dB.
+
     """
 
-    def __init__(self, gain_db=-6, **kwargs):
+    def __init__(self, gain_dB=0, **kwargs):
         super().__init__(config=find_config("volume_control"), **kwargs)
         self.create_outputs(self.n_in)
-        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_db)
-        self.set_control_field_cb("gain", lambda: self.dsp_block.gain_int)
+        slew_shift = 7
+        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift)
+        self.set_control_field_cb("target_gain", lambda: self.dsp_block.target_gain_int)
+        self.set_control_field_cb("slew_shift", lambda: self.dsp_block.slew_shift)
 
-    def set_gain(self, gain_db):
+    def make_volume_control(self, gain_dB, slew_shift, Q_sig=dspg.Q_SIG):
+        self.details = dict(target_gain=gain_dB, slew_shift=slew_shift, Q_sig=Q_sig)
+        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, Q_sig)
+        return self
+
+    def set_gain(self, gain_dB):
         """
         Set the gain of the volume control in dB.
 
@@ -166,19 +179,8 @@ class VolumeControl(Stage):
         gain_db : float
             The gain of the volume control in dB.
         """
-        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_db)
+        self.dsp_block.set_gain(gain_dB)
         return self
-
-    def get_gain(self):
-        """
-        Get the gain of the volume control in dB.
-
-        Returns
-        -------
-        gain_db : float
-            The gain of the volume control in dB.
-        """
-        return self.dsp_block.gain_db
 
 
 class Switch(Stage):
