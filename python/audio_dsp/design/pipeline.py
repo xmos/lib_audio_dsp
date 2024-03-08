@@ -8,14 +8,58 @@ from tabulate import tabulate
 
 from audio_dsp.design.pipeline_executor import PipelineExecutor, PipelineView
 from .graph import Graph
-from .stage import StageOutput
+from .stage import Stage, StageOutput, find_config
 from .thread import Thread
 from IPython import display
 import yaml
 import subprocess
+import hashlib
+import json
+import numpy as np
 from uuid import uuid4
 from ._draw import new_record_digraph
 from .host_app import get_host_app, InvalidHostAppError
+from functools import wraps
+
+
+def callonce(f):
+    """
+    Decorator function for ensuring a function executes only once despite being
+    called multiple times.
+    """
+
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not wrapper.called:
+            wrapper.called = True
+            return f(*args, **kwargs)
+
+    wrapper.called = False
+    return wrapper
+
+
+class PipelineStage(Stage):
+    """
+    Stage for the pipelne. Does not support processing of data through it. Only
+    used for pipeline level control commands, for example, querying the pipeline
+    checksum.
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(config=find_config("pipeline"), **kwargs)
+        self.create_outputs(0)
+
+    def add_to_dot(self, dot):  # Override this to not add the stage to the diagram
+        """
+        Override the CompositeStage.add_to_dot() function to ensure PipelineStage
+        type stages are not added to the dot diagram
+
+        Parameters
+        ----------
+        dot : graphviz.Diagraph
+        dot instance to add edges to.
+        """
+        return
 
 
 class Pipeline:
@@ -48,6 +92,9 @@ class Pipeline:
         Flattened list of all the stages in the pipeline
     threads : list(Thread)
         List of all the threads in the pipeline
+    pipeline_stage : PipelineStage | None
+        Stage corresponding to the pipeline. Needed for handling
+        pipeline level control commands
     """
 
     def __init__(self, n_in, identifier="auto", frame_size=1, fs=48000):
@@ -56,6 +103,7 @@ class Pipeline:
         self._n_in = n_in
         self._n_out = 0
         self._id = identifier
+        self.pipeline_stage: None
 
         self.i = [StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)]
         self.o: list[StageOutput] | None = None
@@ -74,8 +122,19 @@ class Pipeline:
             a new thread instance.
         """
         ret = Thread(id=len(self.threads), graph=self._graph)
+
+        self.add_pipeline_stage(ret)
+
+        ret.add_thread_stage()
         self.threads.append(ret)
         return ret
+
+    @callonce
+    def add_pipeline_stage(self, thread):
+        """
+        Add a PipelineStage stage for the pipeline
+        """
+        self.pipeline_stage = thread.stage(PipelineStage, [])
 
     def set_outputs(self, output_edges: list[StageOutput]):
         """
@@ -95,6 +154,7 @@ class Pipeline:
                 edge.dest_index = i
         self.o = output_edges
         self._n_out = i + 1
+        self.resolve_pipeline()  # Call it here to generate the pipeline hash
 
     def executor(self) -> PipelineExecutor:
         """
@@ -147,6 +207,38 @@ class Pipeline:
     def stages(self):
         return self._graph.nodes[:]
 
+    @callonce
+    def generate_pipeline_hash(self, threads: list, edges: list):
+        """
+        Generate a hash unique to the pipeline and save it in the 'chaecksum' control field of the
+        pipeline stage.
+
+        Parameters
+        ----------
+        "threads": list of [[(stage index, stage type name), ...], ...] for all threads in the pipeline
+        "edges": list of [[[source stage, source index], [dest stage, dest index]], ...] for all edges in the pipeline
+        """
+
+        def to_tuple(lst):
+            return tuple(to_tuple(i) if isinstance(i, list) else i for i in lst)
+
+        tuple_threads = to_tuple(threads)
+        tuple_edges = to_tuple(edges)
+        tuple_thread_edges = (tuple_threads, tuple_edges)
+        a = (json.dumps(tuple_thread_edges)).encode()
+
+        m = hashlib.md5()
+        m.update(a)
+        hash_a = m.digest()
+
+        hash_values = [i for i in bytearray(hash_a)]
+
+        assert self.pipeline_stage is not None  # To stop ruff from complaining
+
+        self.pipeline_stage["checksum"] = hash_values
+        # lock the graph now that the hash is generated
+        self._graph.lock()
+
     def resolve_pipeline(self):
         """
         Generate a dictionary with all of the information about the thread.
@@ -185,9 +277,14 @@ class Pipeline:
             )
             edges.append([source, dest])
 
+        self.generate_pipeline_hash(threads, edges)
+
         node_configs = {node.index: node.get_config() for node in self._graph.nodes}
 
-        module_definitions = {node.name: node.yaml_dict for node in self._graph.nodes}
+        module_definitions = {
+            node.index: {"name": node.name, "yaml_dict": node.yaml_dict}
+            for node in self._graph.nodes
+        }
 
         return {
             "identifier": self._id,
@@ -196,6 +293,45 @@ class Pipeline:
             "configs": node_configs,
             "modules": module_definitions,
         }
+
+
+def validate_pipeline_checksum(pipeline: Pipeline):
+    """
+    Check if python and device pipeline checksums match. Raise a runtime error if the checksums are not equal.
+
+    Parameters
+    ----------
+    pipeline : Python pipeline for which to validate checksum against the device pipeline
+    """
+    try:
+        host_app, protocol = get_host_app()
+    except InvalidHostAppError as e:
+        print(*e.args)
+        return
+
+    assert pipeline.pipeline_stage is not None  # To stop ruff from complaining
+
+    ret = subprocess.run(
+        [
+            host_app,
+            "--use",
+            protocol,
+            "--instance-id",
+            str(pipeline.pipeline_stage.index),
+            "pipeline_checksum",
+        ],
+        stdout=subprocess.PIPE,
+    )
+    stdout = ret.stdout.decode().splitlines()
+    device_pipeline_checksum = [int(x) for x in stdout]
+    equal = np.array_equal(
+        np.array(device_pipeline_checksum), np.array(pipeline.pipeline_stage["checksum"])
+    )
+
+    if equal is False:
+        raise RuntimeError(
+            f"Python pipeline checksum {pipeline.pipeline_stage['checksum']} does not match device pipeline checksum {device_pipeline_checksum}"
+        )
 
 
 def send_config_to_device(pipeline: Pipeline):
@@ -208,6 +344,8 @@ def send_config_to_device(pipeline: Pipeline):
     pipeline : Pipeline
         A designed and optionally tuned pipeline
     """
+    validate_pipeline_checksum(pipeline)
+
     for stage in pipeline.stages:
         for command, value in stage.get_config().items():
             command = f"{stage.name}_{command}"
@@ -380,6 +518,9 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
         for i in range(len(all_edges)):
             func += f"\tint32_t edge{i}[{block_size}] = {{0}};\n"
 
+        # get the dsp_thread stage index in the thread
+        dsp_thread_index = [i for i, (_, name) in enumerate(thread) if name == "dsp_thread"][0]
+
         for stage_thread_index, stage in enumerate(thread):
             # thread stages are already ordered during pipeline resolution
             input_edges = [edge for edge in all_edges if edge[1][0] == stage[0]]
@@ -404,8 +545,9 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
         # It will be done once before select to ensure it happens, then in the default
         # case of the select so that control will be processed if no audio is playing.
         control = ""
-        for i, (_, name) in enumerate(thread):
-            control += f"\t\t{name}_control(modules[{i}]->state, &modules[{i}]->control);\n"
+        for i, (stage_index, name) in enumerate(thread):
+            if resolved_pipeline["modules"][stage_index]["yaml_dict"]:
+                control += f"\t\t{name}_control(modules[{i}]->state, &modules[{i}]->control);\n"
 
         read = f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
         # the same channel being read twice
@@ -460,9 +602,9 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
         process += "\n\tend_ts = get_reference_time();\n"
 
         profile = "\tuint32_t process_plus_control_ticks = (end_ts - start_ts) + control_ticks;\n"
-        profile += "\tif(process_plus_control_ticks > ((dsp_thread_state_t*)(modules[0]->state))->max_cycles)\n"
+        profile += f"\tif(process_plus_control_ticks > ((dsp_thread_state_t*)(modules[{dsp_thread_index}]->state))->max_cycles)\n"
         profile += "\t{\n"
-        profile += "\t\t((dsp_thread_state_t*)(modules[0]->state))->max_cycles = process_plus_control_ticks;\n"
+        profile += f"\t\t((dsp_thread_state_t*)(modules[{dsp_thread_index}]->state))->max_cycles = process_plus_control_ticks;\n"
         profile += "\t}\n"
 
         out = ""
@@ -590,8 +732,12 @@ def _generate_dsp_init(resolved_pipeline):
                     defaults[config_field] = str(value)
             struct_val = ", ".join(f".{field} = {value}" for field, value in defaults.items())
             # default_str = f"&({stage_name}_config_t){{{struct_val}}}"
+            if resolved_pipeline["modules"][stage_index]["yaml_dict"]:
+                ret += (
+                    f"\tstatic {stage_name}_config_t config{stage_index} = {{ {struct_val} }};\n"
+                )
+
             ret += f"""
-            static {stage_name}_config_t config{stage_index} = {{ {struct_val} }};
             static {stage_name}_state_t state{stage_index};
             static uint8_t memory{stage_index}[_ADSP_MAX(1, {stage_name.upper()}_REQUIRED_MEMORY({stage_n_in}, {stage_n_out}, {stage_frame_size}))];
             static adsp_bump_allocator_t allocator{stage_index} = ADSP_BUMP_ALLOCATOR_INITIALISER(memory{stage_index});
@@ -599,13 +745,22 @@ def _generate_dsp_init(resolved_pipeline):
             {adsp}.modules[{stage_index}].state = (void*)&state{stage_index};
 
             // Control stuff
-            {adsp}.modules[{stage_index}].control.config = (void*)&config{stage_index};
             {adsp}.modules[{stage_index}].control.id = {stage_index};
-            {adsp}.modules[{stage_index}].control.module_type = e_dsp_stage_{stage_name};
-            {adsp}.modules[{stage_index}].control.num_control_commands = NUM_CMDS_{stage_name.upper()};
             {adsp}.modules[{stage_index}].control.config_rw_state = config_none_pending;
             """
-            ret += f"\t{stage_name}_init(&{adsp}.modules[{stage_index}], &allocator{stage_index}, {stage_index}, {stage_n_in}, {stage_n_out}, {stage_frame_size});\n"
+            if resolved_pipeline["modules"][stage_index]["yaml_dict"]:
+                ret += f"""
+                {adsp}.modules[{stage_index}].control.config = (void*)&config{stage_index};
+                {adsp}.modules[{stage_index}].control.module_type = e_dsp_stage_{stage_name};
+                {adsp}.modules[{stage_index}].control.num_control_commands = NUM_CMDS_{stage_name.upper()};
+                """
+            else:
+                ret += f"""
+                {adsp}.modules[{stage_index}].control.config = NULL;
+                {adsp}.modules[{stage_index}].control.num_control_commands = 0;
+                """
+
+            ret += f"{stage_name}_init(&{adsp}.modules[{stage_index}], &allocator{stage_index}, {stage_index}, {stage_n_in}, {stage_n_out}, {stage_frame_size});\n"
     ret += f"\treturn &{adsp};\n"
     ret += "}\n\n"
     return ret
@@ -700,10 +855,13 @@ def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
 """
     # add includes for each stage type in the pipeline
     dsp_main += "".join(
-        f"#include <stages/{name}.h>\n" for name in resolved_pipe["modules"].keys()
+        f"#include <stages/{resolved_pipe['modules'][node_index]['name']}.h>\n"
+        for node_index in resolved_pipe["modules"].keys()
     )
     dsp_main += "".join(
-        f"#include <{name}_config.h>\n" for name in resolved_pipe["modules"].keys()
+        f"#include <{resolved_pipe['modules'][node_index]['name']}_config.h>\n"
+        for node_index in resolved_pipe["modules"].keys()
+        if resolved_pipe["modules"][node_index]["yaml_dict"] is not None
     )
     dsp_main += _generate_dsp_threads(resolved_pipe)
     dsp_main += _generate_dsp_init(resolved_pipe)
@@ -798,6 +956,8 @@ def profile_pipeline(pipeline: Pipeline):
     pipeline : Pipeline
         A designed and optionally tuned pipeline
     """
+    validate_pipeline_checksum(pipeline)
+
     try:
         host_app, protocol = get_host_app()
     except InvalidHostAppError as e:

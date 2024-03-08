@@ -23,7 +23,6 @@ void subtractor_process(int32_t **input, int32_t **output, void *app_data_state)
 void subtractor_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
     subtractor_state_t *state = instance->state;
-    subtractor_config_t *config = instance->control.config;
 
     memset(state, 0, sizeof(subtractor_state_t));
     state->n_inputs = n_inputs;
@@ -31,12 +30,6 @@ void subtractor_init(module_instance_t* instance, adsp_bump_allocator_t* allocat
     state->frame_size = frame_size;
     xassert(n_outputs == 1); // should only have 1 output
     xassert(n_inputs == 2); // should only have 2 inputs
-
-    memcpy(&state->config, config, sizeof(subtractor_config_t));
 }
 
-void subtractor_control(void *module_state, module_control_t *control)
-{
-    // nothing to do
-}
 

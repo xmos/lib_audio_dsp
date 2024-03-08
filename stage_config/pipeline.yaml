@@ -1,0 +1,7 @@
+module:
+  pipeline:
+    checksum:
+      type: uint8_t
+      size: 16
+includes:
+  - "stdint.h"

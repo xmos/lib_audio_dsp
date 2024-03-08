@@ -66,13 +66,18 @@ class Graph(Generic[NodeSubClass]):
     def __init__(self):
         self.nodes: list[NodeSubClass] = []
         self.edges: list[Edge] = []
+        self._locked = False
 
     def add_node(self, node: NodeSubClass) -> None:
         assert isinstance(node, Node)
+        if self._locked:
+            raise RuntimeError("Cannot add nodes to a locked graph")
         node.index = len(self.nodes)
         self.nodes.append(node)
 
     def add_edge(self, edge) -> None:
+        if self._locked:
+            raise RuntimeError("Cannot add edges to a locked graph")
         self.edges.append(edge)
 
     def get_view(self, nodes: list[NodeSubClass]) -> "Graph[NodeSubClass]":
@@ -110,5 +115,12 @@ class Graph(Generic[NodeSubClass]):
         tuple[Node]
             Ordered list of nodes
         """
-
         return tuple(graphlib.TopologicalSorter(self.get_dependency_dict()).static_order())
+
+
+    def lock(self):
+        """
+        Lock the graph. Adding nodes or edges to a locked graph will cause a runtime exception.
+        The graph is locked once the pipeline checksum is computed.
+        """
+        self._locked = True

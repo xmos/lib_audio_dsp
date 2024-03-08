@@ -25,19 +25,12 @@ void adder_process(int32_t **input, int32_t **output, void *app_data_state)
 void adder_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
     adder_state_t *state = instance->state;
-    adder_config_t *config = instance->control.config;
 
     memset(state, 0, sizeof(adder_state_t));
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
     xassert(n_outputs == 1); // should only have 1 output
-
-    memcpy(&state->config, config, sizeof(adder_config_t));
 }
 
-void adder_control(void *module_state, module_control_t *control)
-{
-    // nothing to do
-}
 
