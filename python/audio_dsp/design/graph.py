@@ -117,7 +117,6 @@ class Graph(Generic[NodeSubClass]):
         """
         return tuple(graphlib.TopologicalSorter(self.get_dependency_dict()).static_order())
 
-
     def lock(self):
         """
         Lock the graph. Adding nodes or edges to a locked graph will cause a runtime exception.

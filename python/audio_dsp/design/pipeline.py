@@ -149,6 +149,7 @@ class Pipeline:
         """
         if not output_edges:
             raise RuntimeError("Pipeline must have at least 1 output")
+        i = -1
         for i, edge in enumerate(output_edges):
             if edge is not None:
                 edge.dest_index = i
