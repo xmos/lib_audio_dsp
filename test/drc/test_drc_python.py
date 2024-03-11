@@ -12,8 +12,9 @@ import audio_dsp.dsp.signal_gen as gen
 
 
 def make_noisy_speech():
-    hydra_audio_path = Path(os.environ.get('hydra_audio_PATH', '~/hydra_audio'))
-    filepath = hydra_audio_path / 'acoustic_team_test_audio' / 'speech' / "010_male_female_single-talk_seq.wav"
+    hydra_audio_path = os.environ['hydra_audio_PATH']
+    filepath = Path(hydra_audio_path, 'acoustic_team_test_audio',
+                    'speech', "010_male_female_single-talk_seq.wav")
     sig, fs = sf.read(filepath)
     amp = utils.db2gain(-30)
     noise_sig = gen.pink_noise(fs, len(sig)/fs, amp)
