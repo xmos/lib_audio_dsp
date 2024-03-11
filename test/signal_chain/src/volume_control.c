@@ -30,6 +30,7 @@ static inline void run_interval(FILE * in, FILE * out, unsigned bgn, unsigned en
 
 int main()
 {
+  int32_t mute_test = 0;
   int32_t slew_shift = 0;
   int32_t gains[3] = {0};
   unsigned intervals[4] = {0};
@@ -45,6 +46,7 @@ int main()
   intervals[2] = intervals[1] * 2;
   intervals[3] = in_len;
 
+  fread(&mute_test, sizeof(int32_t), 1, conf);
   fread(&slew_shift, sizeof(int32_t), 1, conf);
   fread(gains, sizeof(int32_t), 3, conf);
   fclose(conf);
@@ -55,11 +57,13 @@ int main()
 
   run_interval(in, out, intervals[0], intervals[1], &vol_ctl);
 
-  vol_ctl.target_gain = gains[1];
+  adsp_volume_control_set_gain(&vol_ctl, gains[1]);
+  if (mute_test) {adsp_volume_control_mute(&vol_ctl);}
 
   run_interval(in, out, intervals[1], intervals[2], &vol_ctl);
 
-  vol_ctl.target_gain = gains[2];
+  adsp_volume_control_set_gain(&vol_ctl, gains[2]);
+  if (mute_test) {adsp_volume_control_unmute(&vol_ctl);}
 
   run_interval(in, out, intervals[2], intervals[3], &vol_ctl);
 

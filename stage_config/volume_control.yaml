@@ -6,6 +6,8 @@ module:
       type: int32_t
     slew_shift:
       type: int32_t
+    mute:
+      type: uint8_t
 includes:
   - "stdint.h"
   - "stages/adsp_module.h"
