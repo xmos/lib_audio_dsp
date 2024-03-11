@@ -153,6 +153,46 @@ def test_volume_change():
         assert mean_error_flt < 0.055
 
 
+def test_mute():
+    fs = 48000
+    start_gain = -10
+    filter = sc.volume_control(fs, 1, start_gain)
+    length = 5
+    signal = gen.sin(fs, length, 997/2, 0.5)
+    signal += gen.sin(fs, length, 997, 0.5)
+
+    output_flt = np.zeros(len(signal))
+    output_xcore = np.zeros(len(signal))
+
+    # check muting while muted, unmuting while unmuted, gain change while muted
+    step_states = ["gain", "mute", "unmute", "mute", "mute", "unmute", "unmute", "mute", "gain", "unmute"]
+    steps = len(step_states)
+    for step in range(len(step_states)):
+        if step_states[step] == "gain":
+            start_gain += 3
+            filter.set_gain(start_gain)
+        elif step_states[step] == "mute":
+            filter.mute()
+        elif step_states[step] == "unmute":
+            filter.unmute()
+
+        start = step*len(signal)//steps
+        for n in range(len(signal)//steps):
+            output_flt[start + n] = filter.process(signal[start + n])
+        for n in range(len(signal)//steps):
+            output_xcore[start + n] = filter.process_xcore(signal[start + n])
+
+
+    sf.write("mute_test_output_flt_slew.wav", output_flt, fs)
+
+    # small signals are always going to be ropey due to quantizing, so just check average error of top half
+    top_half = utils.db(output_flt) > -50
+    if np.any(top_half):
+        error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
+        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        assert mean_error_flt < 0.055
+
+
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("filter_spec", [['mixer', 2, 0],
                                          ['mixer', 3, -9],
