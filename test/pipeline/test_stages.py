@@ -186,3 +186,4 @@ def test_fixed_gain():
 
 if __name__ == "__main__":
     test_biquad("make_lowpass", [1000, 0.707])
+    test_biquad("make_lowpass", [1000, 0.707])

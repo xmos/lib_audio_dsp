@@ -129,7 +129,7 @@ class Pipeline:
         self.threads.append(ret)
         return ret
 
-    @callonce
+    # @callonce
     def add_pipeline_stage(self, thread):
         """
         Add a PipelineStage stage for the pipeline
@@ -208,7 +208,7 @@ class Pipeline:
     def stages(self):
         return self._graph.nodes[:]
 
-    @callonce
+    # @callonce
     def generate_pipeline_hash(self, threads: list, edges: list):
         """
         Generate a hash unique to the pipeline and save it in the 'chaecksum' control field of the
