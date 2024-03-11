@@ -34,7 +34,7 @@ def do_test(p):
     outfile = "outstage.wav"
     n_samps, rate = 1024, 48000
     # use the python dsp_block as a reference implementation
-    ref_module = p.stages[1].dsp_block
+    ref_module = p.stages[2].dsp_block
 
     generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
     target = "pipeline_test"

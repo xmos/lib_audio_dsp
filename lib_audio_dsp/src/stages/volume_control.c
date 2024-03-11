@@ -47,6 +47,8 @@ void volume_control_init(module_instance_t* instance, adsp_bump_allocator_t* all
         state->vol_ctl[i].gain = config->target_gain;
         state->vol_ctl[i].target_gain = config->target_gain;
         state->vol_ctl[i].slew_shift = config->slew_shift;
+        state->vol_ctl[i].saved_gain = 0;
+        state->vol_ctl[i].mute = 0;
     }
 }
 
