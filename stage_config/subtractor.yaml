@@ -1,6 +1,0 @@
-module:
-  subtractor:
-    _reserved:
-      type: int
-includes:
-  - "stdint.h"

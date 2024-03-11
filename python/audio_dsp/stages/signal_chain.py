@@ -4,6 +4,7 @@
 from ..design.stage import Stage, find_config
 from ..dsp import generic as dspg
 import audio_dsp.dsp.signal_chain as sc
+import numpy as np
 
 
 class Bypass(Stage):
@@ -13,8 +14,11 @@ class Bypass(Stage):
     """
 
     def __init__(self, **kwargs):
-        super().__init__(config=find_config("bypass"), **kwargs)
+        super().__init__(name="bypass", **kwargs)
         self.create_outputs(self.n_in)
+
+    def process(self, in_channels):
+        return [np.copy(i) for i in in_channels]
 
 
 class Fork(Stage):
@@ -36,7 +40,7 @@ class Fork(Stage):
     """
 
     def __init__(self, count=2, **kwargs):
-        super().__init__(config=find_config("fork"), **kwargs)
+        super().__init__(name="fork", **kwargs)
         self.create_outputs(self.n_in * count)
 
         fork_indices = [list(range(i, self.n_in * count, count)) for i in range(count)]
@@ -48,16 +52,20 @@ class Fork(Stage):
         # not sure what this looks like!
         raise NotImplementedError
 
+    def process(self, in_channels):
+        n_forks = self.n_out // self.n_in
+        ret = []
+        for input in in_channels:
+            for _ in range(n_forks):
+                ret.append(np.copy(input))
+
+        return ret
+
 
 class Mixer(Stage):
     """
     Mixes the input signals together. The mixer can be used to add signals
     together, or to attenuate the input signals.
-
-    Attributes
-    ----------
-    gain_db : float
-        The gain of the mixer in dB.
     """
 
     def __init__(self, **kwargs):
@@ -87,7 +95,7 @@ class Adder(Stage):
     """
 
     def __init__(self, **kwargs):
-        super().__init__(config=find_config("adder"), **kwargs)
+        super().__init__(name="adder", **kwargs)
         self.create_outputs(1)
         self.dsp_block = sc.adder(self.fs, self.n_in)
 
@@ -100,7 +108,7 @@ class Subtractor(Stage):
     """
 
     def __init__(self, **kwargs):
-        super().__init__(config=find_config("subtractor"), **kwargs)
+        super().__init__(name="subtractor", **kwargs)
         self.create_outputs(1)
         if self.n_in != 2:
             raise ValueError(f"Subtractor requires 2 inputs, got {self.n_in}")
@@ -112,9 +120,14 @@ class FixedGain(Stage):
     Multiply the input by a fixed gain. The gain is set at the time of
     construction and cannot be changed.
 
+    Parameters
+    ----------
+    gain_db : float, optional
+        The gain of the mixer in dB.
+
     """
 
-    def __init__(self, gain_db=-6, **kwargs):
+    def __init__(self, gain_db=0, **kwargs):
         super().__init__(config=find_config("fixed_gain"), **kwargs)
         self.create_outputs(self.n_in)
         self.dsp_block = sc.fixed_gain(self.fs, self.n_in, gain_db)
@@ -137,16 +150,19 @@ class VolumeControl(Stage):
     """
     Multiply the input by a gain. The gain can be changed at runtime.
 
+    Parameters
+    ----------
+    gain_db : float, optional
+        The gain of the mixer in dB.
+
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, gain_dB=0, **kwargs):
         super().__init__(config=find_config("volume_control"), **kwargs)
         self.create_outputs(self.n_in)
-        gain_dB = 0
         slew_shift = 7
         self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift)
         self.set_control_field_cb("target_gain", lambda: self.dsp_block.target_gain_int)
-        self.set_control_field_cb("gain", lambda: self.dsp_block.gain_int)
         self.set_control_field_cb("slew_shift", lambda: self.dsp_block.slew_shift)
 
     def make_volume_control(self, gain_dB, slew_shift, Q_sig=dspg.Q_SIG):
@@ -164,6 +180,7 @@ class VolumeControl(Stage):
             The gain of the volume control in dB.
         """
         self.dsp_block.set_gain(gain_dB)
+        return self
 
 
 class Switch(Stage):

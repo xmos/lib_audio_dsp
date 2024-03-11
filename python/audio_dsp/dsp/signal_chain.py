@@ -493,8 +493,8 @@ class volume_control(dspg.dsp_block):
 
         # initial applied gain can be equal to target until target changes
         self.gain_db = self.target_gain_db
-        self.gain = self.target_gain
-        self.gain_int = self.target_gain_int
+        self.gain = [self.target_gain] * self.n_chans
+        self.gain_int = [self.target_gain_int] * self.n_chans
 
         self.slew_shift = slew_shift
 
@@ -516,9 +516,9 @@ class volume_control(dspg.dsp_block):
             The processed output sample.
         """
         # do the exponential slew
-        self.gain += (self.target_gain - self.gain) * 2**-self.slew_shift
+        self.gain[channel] += (self.target_gain - self.gain[channel]) * 2**-self.slew_shift
 
-        y = sample * self.gain
+        y = sample * self.gain[channel]
         return y
 
     def process_xcore(self, sample: float, channel: int = 0) -> float:
@@ -545,11 +545,13 @@ class volume_control(dspg.dsp_block):
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
 
         # do the exponential slew
-        self.gain_int += (self.target_gain_int - self.gain_int) >> self.slew_shift
+        self.gain_int[channel] += (
+            self.target_gain_int - self.gain_int[channel]
+        ) >> self.slew_shift
 
         # for rounding
         acc = 1 << (self.Q_sig - 1)
-        acc += sample_int * self.gain_int
+        acc += sample_int * self.gain_int[channel]
         y = utils.int32_mult_sat_extract(acc, 1, self.Q_sig)
 
         y_flt = float(y) * 2**-self.Q_sig

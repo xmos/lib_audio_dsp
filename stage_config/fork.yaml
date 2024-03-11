@@ -1,6 +1,0 @@
-module:
-  fork:
-    _reserved:
-      type: int
-includes:
-  - "stdint.h"

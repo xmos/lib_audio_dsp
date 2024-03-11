@@ -164,10 +164,8 @@ def test_volume():
     """
     p = Pipeline(channels)
     with p.add_thread() as t:
-        vol = t.stage(VolumeControl, p.i)
+        vol = t.stage(VolumeControl, p.i, gain_dB=-6)
     p.set_outputs(vol.o)
-
-    vol.set_gain(-6)
 
     do_test(p)
 

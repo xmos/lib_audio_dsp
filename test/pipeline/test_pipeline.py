@@ -6,6 +6,7 @@ import scipy.io.wavfile
 import numpy as np
 import subprocess
 import pytest
+from copy import deepcopy
 
 from audio_dsp.design.pipeline import Pipeline
 from audio_dsp.stages.biquad import Biquad
@@ -13,6 +14,7 @@ from audio_dsp.stages.cascaded_biquads import CascadedBiquads
 from audio_dsp.stages.signal_chain import Bypass
 from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak
 from audio_dsp.design.pipeline import generate_dsp_main
+import audio_dsp.dsp.signal_gen as gen
 
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
 from stages.add_n import AddN
@@ -26,9 +28,8 @@ num_out_channels = 2
 input_dtype = np.int32
 test_duration = 0.1 # in seconds
 infile = "test_input.wav"
-expectedfile = "test_expected.wav"
 outfile = "test_output.wav"
-compare = True
+Fs = 48000
 
 def create_pipeline():
     # Create pipeline
@@ -47,7 +48,6 @@ def create_pipeline():
     stages = 2
     return p, stages
 
-
 def test_pipeline():
     """
     Basic test playing a sine wave through a stage
@@ -61,21 +61,46 @@ def test_pipeline():
     # Build pipeline test executable. This will download xscope_fileio if not present
     build_utils.build(APP_DIR, BUILD_DIR, target)
 
+    outfile_py = Path(outfile).parent / (str(Path(outfile).stem) + '_py.wav')
+    outfile_c = Path(outfile).parent / (str(Path(outfile).stem) + '_c.wav')
+
     # Generate input
-    audio_helpers.generate_test_signal(infile, type="sine", fs=48000, duration=test_duration, amplitude=0.1, num_channels=num_in_channels, sig_dtype=input_dtype)
+    input_sig_py = np.empty((int(Fs*test_duration), num_in_channels), dtype=np.float64)
+    for i in range(num_in_channels):
+        input_sig_py[:, i] = (gen.sin(fs=Fs, length=test_duration, freq=1000, amplitude=0.1, precision=27)).T
 
-    # Run
+    if (input_dtype == np.int32) or (input_dtype == np.int16):
+        if input_dtype == np.int32:
+            qformat = 31
+        else:
+            qformat = 15
+        input_sig_c = np.clip((np.array(input_sig_py) * (2**qformat)), np.iinfo(input_dtype).min, np.iinfo(input_dtype).max).astype(input_dtype)
+    else:
+        input_sig_c = deepcopy(input_sig_py)
+
+    print(input_sig_py)
+    print(input_sig_c)
+
+    scipy.io.wavfile.write(infile, Fs, input_sig_c)
+
+    # Run python
+    sim_sig = p.executor().process(input_sig_py)
+    np.testing.assert_equal(sim_sig, input_sig_py)
+    sim_sig = np.clip((np.array(sim_sig) * (2**qformat)), np.iinfo(input_dtype).min, np.iinfo(input_dtype).max).astype(input_dtype)
+    audio_helpers.write_wav(outfile_py, Fs, sim_sig)
+
+    # Run C
     xe = APP_DIR / f"bin/{target}.xe"
-    run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels, n_stages)
+    run_pipeline_xcoreai.run(xe, infile, outfile_c, num_out_channels, n_stages)
 
-    # pipeline operates at q27 so truncate the input to match expected output
-    audio_helpers.write_wav(expectedfile, *audio_helpers.read_and_truncate(infile))
+    # since gen.sin already generates a quantised input, no need to truncate
+    exp_fs, exp_sig = audio_helpers.read_wav(infile)
 
     # Compare
-    if compare:
-        all_close, maxdiff, delay = audio_helpers.correlate_and_diff(outfile, expectedfile, [0,num_out_channels-1], [0,num_out_channels-1], 0, 0, 1e-8)
-        assert maxdiff == 0, "Pipline input and output not bit-exact"
-        assert all_close == True, "Pipline input and output not close enough"
+    out_fs, out_sig_py = audio_helpers.read_wav(outfile_py)
+    out_fs, out_sig_c = audio_helpers.read_wav(outfile_c)
+    np.testing.assert_equal(out_sig_py, exp_sig[:out_sig_py.shape[0],:]) # Compare python with input
+    np.testing.assert_equal(out_sig_c, exp_sig[:out_sig_c.shape[0],:]) # Compare C with input
 
 
 INT32_MIN = -(2**31)
