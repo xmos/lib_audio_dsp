@@ -119,12 +119,14 @@ pipeline {
             stage('Test DRC') {
               steps {
                 dir("lib_audio_dsp") {
-                  withVenv {
-                    withTools(params.TOOLS_VERSION) {
-                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        dir("test/drc") {
-                          runPytest("test_drc_python.py --dist worksteal")
-                          runPytest("test_drc_c.py --dist worksteal")
+                  withEnv(["hydra_audio_PATH=/projects/hydra_audio"]){
+                    withVenv {
+                      withTools(params.TOOLS_VERSION) {
+                        catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                          dir("test/drc") {
+                            runPytest("test_drc_python.py --dist worksteal")
+                            runPytest("test_drc_c.py --dist worksteal")
+                          }
                         }
                       }
                     }

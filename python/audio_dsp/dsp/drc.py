@@ -13,6 +13,24 @@ from audio_dsp.dsp import generic as dspg
 FLT_MIN = np.finfo(float).tiny
 
 
+def alpha_from_time(attack_or_release_time, fs):
+
+    # Attack times simplified from McNally, seem pretty close.
+    # Assumes the time constant of a digital filter is the -3 dB
+    # point where abs(H(z))**2 = 0.5.
+
+    # This is also approximately the time constant of a first order
+    # system, `alpha = 1 - exp(-T/tau)`, where `T` is the sample period
+    # and `tau` is the time constant.
+
+    # attack/release time can't be faster than the length of 2
+    # samples, and alpha can't be greater than 1
+
+    T = 1 / fs
+    alpha = min(2 * T / (attack_or_release_time + FLT_MIN), 1.0)
+    return alpha
+
+
 class envelope_detector_peak(dspg.dsp_block):
     """
     Envelope detector that follows the absolute peak value of a signal.
@@ -68,14 +86,9 @@ class envelope_detector_peak(dspg.dsp_block):
             attack_t = detect_t
             release_t = detect_t
 
-        # Attack times simplified from McNally, seem pretty close.
-        # Assumes the time constant of a digital filter is the -3 dB
-        # point where abs(H(z))**2 = 0.5.
-        T = 1 / fs
-        # attack/release time can't be faster than the length of 2
-        # samples.
-        self.attack_alpha = min(2 * T / (attack_t + FLT_MIN), 1.0)
-        self.release_alpha = min(2 * T / (release_t + FLT_MIN), 1.0)
+        # calculate EWM alpha from time constant
+        self.attack_alpha = alpha_from_time(attack_t, fs)
+        self.release_alpha = alpha_from_time(release_t, fs)
 
         # very long times might quantize to zero, maybe just limit a
         # better way
@@ -378,14 +391,9 @@ class compressor_limiter_base(dspg.dsp_block):
     def __init__(self, fs, n_chans, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
-        # attack times simplified from McNally, seem pretty close.
-        # Assumes the time constant of a digital filter is the -3 dB
-        # point where abs(H(z))**2 = 0.5.
-        T = 1 / fs
-        # attack/release time can't be faster than the length of 2
-        # samples.
-        self.attack_alpha = min(2 * T / (attack_t + FLT_MIN), 1.0)
-        self.release_alpha = min(2 * T / (release_t + FLT_MIN), 1.0)
+        # calculate EWM alpha from time constant
+        self.attack_alpha = alpha_from_time(attack_t, fs)
+        self.release_alpha = alpha_from_time(release_t, fs)
         self.gain = [1] * n_chans
 
         # These are defined differently for peak and RMS limiters
@@ -918,9 +926,14 @@ class noise_gate(compressor_limiter_base):
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
-        tmp = self.attack_alpha
-        self.attack_alpha = self.release_alpha
-        self.release_alpha = tmp
+        # for the noise gate, the attack and release times are swapped
+        # i.e. attack time is after going under threshold instead of over
+        self.attack_alpha = alpha_from_time(release_t, fs)
+        self.release_alpha = alpha_from_time(attack_t, fs)
+        self.attack_alpha_f32 = np.float32(self.attack_alpha)
+        self.release_alpha_f32 = np.float32(self.release_alpha)
+        self.attack_alpha_int = utils.int32(round(self.attack_alpha * 2**30))
+        self.release_alpha_int = utils.int32(round(self.release_alpha * 2**30))
 
         self.threshold = utils.db2gain(threshold_db)
         self.threshold_f32 = np.float32(self.threshold)
