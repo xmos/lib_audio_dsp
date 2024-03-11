@@ -119,9 +119,9 @@ pipeline {
             stage('Test DRC') {
               steps {
                 dir("lib_audio_dsp") {
-                  withEnv(["hydra_audio_PATH=/projects/hydra_audio"]){
-                    withVenv {
-                      withTools(params.TOOLS_VERSION) {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      withEnv(["hydra_audio_PATH=/projects/hydra_audio"]){
                         catchError(stageResult: 'FAILURE', catchInterruptions: false){
                           dir("test/drc") {
                             runPytest("test_drc_python.py --dist worksteal")
