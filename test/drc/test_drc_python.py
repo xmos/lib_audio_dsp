@@ -379,8 +379,8 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
 
 
 @pytest.mark.parametrize("fs", [48000])
-@pytest.mark.parametrize("component, threshold", [("limiter_peak_st", -20, None),
-                                                 ("limiter_peak_st", -6, None)])
+@pytest.mark.parametrize("component, threshold", [("limiter_peak_st", -20),
+                                                 ("limiter_peak_st", -6)])
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 def test_stereo_components(fs, component, at, rt, threshold):
