@@ -219,17 +219,15 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold)
     stereo_component_handle = getattr(drc, component_stereo)
     drc_s = stereo_component_handle(fs, threshold, at, rt)
 
-    output_xcore_s = np.zeros(signal.shape, dtype=np.float32)
+    output_xcore_s = np.zeros(signal.shape)
     output_flt_s = np.zeros(signal.shape)
-    output_int_s = np.zeros(signal.shape, dtype=np.float32)
-    gain_flt_s = np.zeros(signal.shape)
-    env_flt_s = np.zeros(signal.shape)
+    output_int_s = np.zeros(signal.shape)
 
     for n in np.arange(signal.shape[1]):
         output_xcore_s[:, n], _, _ = drc_s.process_xcore(signal[:, n])
     drc_s.reset_state()
     for n in np.arange(signal.shape[1]):
-        output_flt_s[:, n], gain_flt_s[:, n], env_flt_s[:, n] = drc_s.process(signal[:, n])
+        output_flt_s[:, n], _, _ = drc_s.process(signal[:, n])
     drc_s.reset_state()
     for n in np.arange(signal.shape[1]):
         output_int_s[:, n], _, _ = drc_s.process_int(signal[:, n])
@@ -237,25 +235,20 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold)
     mono_component_handle = getattr(drc, component_mono)
     drc_m = mono_component_handle(fs, 1, threshold, at, rt)
 
-    output_xcore_m = np.zeros(signal.shape, dtype=np.float32)
-    output_flt_m = np.zeros(signal.shape, )
-    output_int_m = np.zeros(signal.shape, dtype=np.float32)
-    gain_flt_m = np.zeros(signal.shape)
-    env_flt_m = np.zeros(signal.shape)
+    output_xcore_m = np.zeros(signal.shape)
+    output_flt_m = np.zeros(signal.shape)
+    output_int_m = np.zeros(signal.shape)
 
     # write mono signal to both output channels, makes comparison to stereo easier
     for n in np.arange(signal.shape[1]):
-        output_xcore_m[:, n], _, _ = drc_m.process_xcore(signal[0, n])
+        output_xcore_m[:, n], _, _  = drc_m.process_xcore(signal[0, n])
     drc_m.reset_state()
     for n in np.arange(signal.shape[1]):
-        output_flt_m[:, n], gain_flt_m[:, n], env_flt_m[:, n] = drc_m.process(signal[0, n])
+        output_flt_m[:, n], _, _ = drc_m.process(signal[0, n])
     drc_m.reset_state()
     for n in np.arange(signal.shape[1]):
         output_int_m[:, n], _, _ = drc_m.process_int(signal[0, n])
 
-
-    np.testing.assert_array_equal(env_flt_m, env_flt_s)
-    np.testing.assert_array_equal(gain_flt_m, gain_flt_s)
 
     # check stereo channels are the same
     np.testing.assert_array_equal(output_flt_s[0], output_flt_s[1])

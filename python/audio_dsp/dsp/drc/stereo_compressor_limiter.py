@@ -146,15 +146,16 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         """
         # quantize
         samples_int = [int(0)] * len(samples)
+        samples_f32 = [np.float32(0)] * len(samples)
         for i in range(len(samples)):
             samples_int[i] = utils.int32(round(samples[i] * 2**self.Q_sig))
             sample_q = utils.float_s32(samples[i])
             sample_q = utils.float_s32_use_exp(sample_q, -27)
-            samples[i] = np.float32(float(sample_q))
+            samples_f32[i] = np.float32(float(sample_q))
 
         # get envelope from envelope detector
-        env0 = self.env_detector.process_xcore(samples[0], 0)
-        env1 = self.env_detector.process_xcore(samples[1], 1)
+        env0 = self.env_detector.process_xcore(samples_f32[0], 0)
+        env1 = self.env_detector.process_xcore(samples_f32[1], 1)
         envelope = np.maximum(env0, env1)
         # avoid /0
         if envelope == np.float32(0):
