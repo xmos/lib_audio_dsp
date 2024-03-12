@@ -147,7 +147,7 @@ def comp_vs_limiter(fs, at, threshold):
 
     y_r = np.zeros_like(x)
     f_r = np.zeros_like(x)
-    env_r = np.zeros_like(x)
+    env_r = np.zeros_like(x) 
 
     # do the processing
     for n in range(len(y_r)):
@@ -162,7 +162,7 @@ def comp_vs_limiter(fs, at, threshold):
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
 @pytest.mark.parametrize("threshold", [-20, -10, -6, 0])
-def peak_vs_rms(fs, at, threshold):
+def test_peak_vs_rms(fs, at, threshold):
     # check peak and rms converge to same value
 
     # Make a constant signal at 6dB above the threshold, make 2* length of
@@ -199,6 +199,73 @@ def peak_vs_rms(fs, at, threshold):
     np.testing.assert_allclose(utils.db(y_p[int(fs*at*5):]),
                                utils.db(y_r[int(fs*at*5):]),
                                atol=0.002)
+
+
+@pytest.mark.parametrize("fs", [48000])
+@pytest.mark.parametrize("component_mono, component_stereo, threshold", [("limiter_peak", "limiter_peak_stereo", -20),
+                                                                         ("limiter_peak", "limiter_peak_stereo", -6)])
+@pytest.mark.parametrize("rt", [0.2])
+@pytest.mark.parametrize("at", [0.001])
+def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold):
+
+
+    signal = []
+    lenght = 0.1 + (rt + at) * 2
+    f = 997
+    signal.append(gen.sin(fs, lenght, f, 1))
+    signal.append(gen.sin(fs, lenght, f, 1))
+    signal = np.stack(signal, axis=0)
+
+    stereo_component_handle = getattr(drc, component_stereo)
+    drc_s = stereo_component_handle(fs, threshold, at, rt)
+
+    output_xcore_s = np.zeros(signal.shape, dtype=np.float32)
+    output_flt_s = np.zeros(signal.shape)
+    output_int_s = np.zeros(signal.shape, dtype=np.float32)
+    gain_flt_s = np.zeros(signal.shape)
+    env_flt_s = np.zeros(signal.shape)
+
+    for n in np.arange(signal.shape[1]):
+        output_xcore_s[:, n], _, _ = drc_s.process_xcore(signal[:, n])
+    drc_s.reset_state()
+    for n in np.arange(signal.shape[1]):
+        output_flt_s[:, n], gain_flt_s[:, n], env_flt_s[:, n] = drc_s.process(signal[:, n])
+    drc_s.reset_state()
+    for n in np.arange(signal.shape[1]):
+        output_int_s[:, n], _, _ = drc_s.process_int(signal[:, n])
+    
+    mono_component_handle = getattr(drc, component_mono)
+    drc_m = mono_component_handle(fs, 1, threshold, at, rt)
+
+    output_xcore_m = np.zeros(signal.shape, dtype=np.float32)
+    output_flt_m = np.zeros(signal.shape, )
+    output_int_m = np.zeros(signal.shape, dtype=np.float32)
+    gain_flt_m = np.zeros(signal.shape)
+    env_flt_m = np.zeros(signal.shape)
+
+    # write mono signal to both output channels, makes comparison to stereo easier
+    for n in np.arange(signal.shape[1]):
+        output_xcore_m[:, n], _, _ = drc_m.process_xcore(signal[0, n])
+    drc_m.reset_state()
+    for n in np.arange(signal.shape[1]):
+        output_flt_m[:, n], gain_flt_m[:, n], env_flt_m[:, n] = drc_m.process(signal[0, n])
+    drc_m.reset_state()
+    for n in np.arange(signal.shape[1]):
+        output_int_m[:, n], _, _ = drc_m.process_int(signal[0, n])
+
+
+    np.testing.assert_array_equal(env_flt_m, env_flt_s)
+    np.testing.assert_array_equal(gain_flt_m, gain_flt_s)
+
+    # check stereo channels are the same
+    np.testing.assert_array_equal(output_flt_s[0], output_flt_s[1])
+    np.testing.assert_array_equal(output_int_s[0], output_int_s[1])
+    np.testing.assert_array_equal(output_xcore_s[0], output_xcore_s[1])
+
+    # check stereo equals mono
+    np.testing.assert_array_equal(output_flt_s, output_flt_m)
+    np.testing.assert_array_equal(output_int_s, output_int_m)
+    np.testing.assert_array_equal(output_xcore_s, output_xcore_m)
 
 
 @pytest.mark.parametrize("fs", [48000])
@@ -379,8 +446,8 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
 
 
 @pytest.mark.parametrize("fs", [48000])
-@pytest.mark.parametrize("component, threshold", [("limiter_peak_st", -20),
-                                                 ("limiter_peak_st", -6)])
+@pytest.mark.parametrize("component, threshold", [("limiter_peak_stereo", -20),
+                                                 ("limiter_peak_stereo", -6)])
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 def test_stereo_components(fs, component, at, rt, threshold):
@@ -426,4 +493,4 @@ if __name__ == "__main__":
     # test_limiter_peak_attack(48000, 0.1, -10)
     # comp_vs_limiter(48000, 0.001, 0)
     # test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)
-    test_stereo_components(48000, "limiter_peak_st", 0.001, 0.01, -6)
+    test_mono_vs_stereo(48000, "limiter_peak", "limiter_peak_stereo", 0.001, 0.01, -6)

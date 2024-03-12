@@ -6,4 +6,4 @@ from audio_dsp.dsp.drc.drc import (
     limiter_rms,
     compressor_rms,
 )
-from audio_dsp.dsp.drc.drc import limiter_peak_st
+from audio_dsp.dsp.drc.stereo_compressor_limiter import limiter_peak_stereo
