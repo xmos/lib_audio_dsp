@@ -594,7 +594,7 @@ class volume_control(dspg.dsp_block):
             self.target_gain_db = -np.inf
             self.target_gain = 0
             self.target_gain_int = utils.int32(0)
-    
+
     def unmute(self) -> None:
         """
         Unmute the instance of the volume control
