@@ -102,6 +102,8 @@ volume_control_t adsp_volume_control_init(
   vol_ctl.target_gain = adsp_dB_to_gain(gain_dB);
   vol_ctl.gain = vol_ctl.target_gain;
   vol_ctl.slew_shift = slew_shift;
+  vol_ctl.saved_gain = 0;
+  vol_ctl.mute = 0;
   return vol_ctl;
 }
 
@@ -113,4 +115,34 @@ int32_t adsp_volume_control(
   vol_ctl->gain += (vol_ctl->target_gain - vol_ctl->gain) >> vol_ctl->slew_shift;
   // apply gain
   return adsp_fixed_gain(samp, vol_ctl->gain);
+}
+
+void adsp_volume_control_set_gain(
+  volume_control_t * vol_ctl,
+  int32_t new_gain
+) {
+  if(!vol_ctl->mute) {
+    vol_ctl->target_gain = new_gain;
+  } else {
+    vol_ctl->saved_gain = new_gain;
+  }
+}
+
+void adsp_volume_control_mute(
+  volume_control_t * vol_ctl
+) {
+  if (!vol_ctl->mute) {
+    vol_ctl->mute = 1;
+    vol_ctl->saved_gain = vol_ctl->target_gain;
+    vol_ctl->target_gain = 0;
+  }
+}
+
+void adsp_volume_control_unmute(
+  volume_control_t * vol_ctl
+) {
+  if (vol_ctl->mute) {
+    vol_ctl->mute = 0;
+    vol_ctl->target_gain = vol_ctl->saved_gain;
+  }
 }

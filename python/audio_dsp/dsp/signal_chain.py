@@ -489,6 +489,7 @@ class volume_control(dspg.dsp_block):
         super().__init__(fs, n_chans, Q_sig)
 
         # set the initial target gains
+        self.mute_state = False
         self.set_gain(gain_db)
 
         # initial applied gain can be equal to target until target changes
@@ -575,9 +576,32 @@ class volume_control(dspg.dsp_block):
         """
         if gain_db > 24:
             raise ValueError("Maximum volume control gain is +24dB")
-        self.target_gain_db = gain_db
-        self.target_gain = utils.db2gain(gain_db)
-        self.target_gain_int = utils.int32(self.target_gain * 2**self.Q_sig)
+        if not self.mute_state:
+            self.target_gain_db = gain_db
+            self.target_gain = utils.db2gain(gain_db)
+            self.target_gain_int = utils.int32(self.target_gain * 2**self.Q_sig)
+        else:
+            self.saved_gain_db = gain_db
+
+    def mute(self) -> None:
+        """
+        Mute the instance of the volume control
+        """
+        if not self.mute_state:
+            self.mute_state = True
+            self.saved_gain_db = self.target_gain_db
+            # avoid messy dB conversion for -inf
+            self.target_gain_db = -np.inf
+            self.target_gain = 0
+            self.target_gain_int = utils.int32(0)
+
+    def unmute(self) -> None:
+        """
+        Unmute the instance of the volume control
+        """
+        if self.mute_state:
+            self.mute_state = False
+            self.set_gain(self.saved_gain_db)
 
 
 class switch(dspg.dsp_block):

@@ -5,6 +5,8 @@ typedef struct{
   int32_t target_gain;
   int32_t gain;
   int32_t slew_shift;
+  int32_t saved_gain;
+  uint8_t mute;
 }volume_control_t;
 
 int32_t adsp_dB_to_gain(float dB_gain);
@@ -30,3 +32,13 @@ volume_control_t adsp_volume_control_init(
 int32_t adsp_volume_control(
   volume_control_t * vol_ctl,
   int32_t samp);
+
+void adsp_volume_control_set_gain(
+  volume_control_t * vol_ctl,
+  int32_t new_gain);
+
+void adsp_volume_control_mute(
+  volume_control_t * vol_ctl);
+
+void adsp_volume_control_unmute(
+  volume_control_t * vol_ctl);
