@@ -10,9 +10,9 @@ class NoiseGate(Stage):
         super().__init__(config=find_config("noise_gate"), **kwargs)
         self.create_outputs(self.n_in)
 
-        threshold = 0
-        at = 0.01
-        rt = 0.2
+        threshold = -35
+        at = 0.005
+        rt = 0.12
         self.dsp_block = drc.noise_gate(self.fs, self.n_in, threshold, at, rt)
 
         # Swapping alphas as they are the other way around in python
