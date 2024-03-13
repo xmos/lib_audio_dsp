@@ -14,7 +14,6 @@ FLT_MIN = np.finfo(float).tiny
 
 
 def alpha_from_time(attack_or_release_time, fs):
-
     # Attack times simplified from McNally, seem pretty close.
     # Assumes the time constant of a digital filter is the -3 dB
     # point where abs(H(z))**2 = 0.5.
