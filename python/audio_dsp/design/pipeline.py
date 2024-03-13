@@ -27,14 +27,24 @@ def callonce(f):
     Decorator function for ensuring a function executes only once despite being
     called multiple times.
     """
+    attr_name = "_called_funcs"
+
+    def called_funcs_of_instance(instance) -> set:
+        called_funcs = getattr(instance, attr_name, set())
+        if not called_funcs:
+            setattr(instance, attr_name, called_funcs)
+        return called_funcs
 
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if not wrapper.called:
+        self = args[0]
+        called_funcs = called_funcs_of_instance(self)
+
+        if f not in called_funcs:
+            called_funcs.add(f)
             wrapper.called = True
             return f(*args, **kwargs)
 
-    wrapper.called = False
     return wrapper
 
 
