@@ -11,6 +11,7 @@ from audio_dsp.dsp import generic as dspg
 from audio_dsp.dsp.drc import envelope_detector_peak
 
 import audio_dsp.dsp.drc.drc_utils as drcu
+from audio_dsp.dsp.types import float32
 
 class compressor_limiter_stereo_base(dspg.dsp_block):
     def __init__(self, fs, n_chans, attack_t, release_t,  Q_sig=dspg.Q_SIG):
@@ -25,10 +26,10 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         self.threshold = None
         self.env_detector = None
 
-        self.attack_alpha_f32 = np.float32(self.attack_alpha)
-        self.release_alpha_f32 = np.float32(self.release_alpha)
+        self.attack_alpha_f32 = float32(self.attack_alpha)
+        self.release_alpha_f32 = float32(self.release_alpha)
         self.threshold_f32 = None
-        self.gain_f32 = np.float32(1)
+        self.gain_f32 = float32(1)
 
         self.attack_alpha_int = utils.int32(round(self.attack_alpha * 2**30))
         self.release_alpha_int = utils.int32(round(self.release_alpha * 2**30))
@@ -39,7 +40,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         """Reset the envelope detectors to 0 and the gain to 1."""
         self.env_detector.reset_state()
         self.gain = 1
-        self.gain_f32 = np.float32(1)
+        self.gain_f32 = float32(1)
         self.gain_int = 2**30
     
     def gain_calc(self, envelope):
@@ -51,7 +52,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         raise NotImplementedError
 
     def gain_calc_xcore(self, envelope):
-        """Calculate the np.float32 gain for the current sample"""
+        """Calculate the float32 gain for the current sample"""
         raise NotImplementedError
     
     def process(self, sample):
@@ -138,7 +139,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
     def process_xcore(self, samples):
         """
         Update the envelopes for a signal, then calculate and apply the
-        required gain for compression/limiting, using np.float32 maths.
+        required gain for compression/limiting, using float32 maths.
 
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.
@@ -146,20 +147,20 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         """
         # quantize
         samples_int = [int(0)] * len(samples)
-        samples_f32 = [np.float32(0)] * len(samples)
+        samples_f32 = [float32(0)] * len(samples)
         for i in range(len(samples)):
             samples_int[i] = utils.int32(round(samples[i] * 2**self.Q_sig))
             sample_q = utils.float_s32(samples[i])
             sample_q = utils.float_s32_use_exp(sample_q, -27)
-            samples_f32[i] = np.float32(float(sample_q))
+            samples_f32[i] = float32(float(sample_q))
 
         # get envelope from envelope detector
         env0 = self.env_detector.process_xcore(samples_f32[0], 0)
         env1 = self.env_detector.process_xcore(samples_f32[1], 1)
         envelope = np.maximum(env0, env1)
         # avoid /0
-        if envelope == np.float32(0):
-            envelope = np.float32(1e-20)
+        if envelope == float32(0):
+            envelope = float32(1e-20)
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
@@ -178,7 +179,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
         # apply gain in int32
         y = [0] * len(samples)
-        this_gain_int = utils.int32(self.gain_f32 * 2**30)
+        this_gain_int = (self.gain_f32 * float32(2**30)).as_int32()
         for i in range(len(samples_int)):
             acc = int(1 << 29)
             acc += this_gain_int * samples_int[i]
@@ -240,7 +241,7 @@ class limiter_peak_stereo(compressor_limiter_stereo_base):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         self.threshold = utils.db2gain(threshold_dB)
-        self.threshold_f32 = np.float32(self.threshold)
+        self.threshold_f32 = float32(self.threshold)
         self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
         self.env_detector = envelope_detector_peak(
             fs,

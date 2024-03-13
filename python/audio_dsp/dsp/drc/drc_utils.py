@@ -4,6 +4,8 @@ from audio_dsp.dsp import utils as utils
 import numpy as np
 from math import sqrt
 
+from audio_dsp.dsp.types import float32
+
 
 FLT_MIN = np.finfo(float).tiny
 
@@ -42,9 +44,9 @@ def limiter_peak_gain_calc_int(envelope_int, threshold_int):
 
 
 def limiter_peak_gain_calc_xcore(envelope, threshold_f32):
-    """Calculate the np.float32 gain for the current sample"""
+    """Calculate the float32 gain for the current sample"""
     new_gain = threshold_f32 / envelope
-    new_gain = new_gain if new_gain < np.float32(1) else np.float32(1)
+    new_gain = new_gain if new_gain < float32(1) else float32(1)
     return new_gain
 
 
@@ -74,7 +76,7 @@ def limiter_rms_gain_calc_int(envelope_int, threshold_int):
 
 
 def limiter_rms_gain_calc_xcore(envelope, threshold_f32):
-    """Calculate the np.float32 gain for the current sample
+    """Calculate the float32 gain for the current sample
 
     Note that as the RMS envelope detector returns x**2, we need to
     sqrt the gain.
@@ -82,8 +84,8 @@ def limiter_rms_gain_calc_xcore(envelope, threshold_f32):
     """
     # note use np.sqrt to ensure we stay in f32, using math.sqrt
     # will return float!
-    new_gain = np.sqrt(threshold_f32 / envelope)
-    new_gain = new_gain if new_gain < np.float32(1) else np.float32(1)
+    new_gain = (threshold_f32 / envelope)**float32(0.5)
+    new_gain = new_gain if new_gain < float32(1) else float32(1)
     return new_gain
 
 
@@ -112,14 +114,14 @@ def compressor_rms_gain_calc_int(envelope_int, threshold_int, slope_f32):
     """
     # if envelope below threshold, apply unity gain, otherwise scale
     # down
-    new_gain = (np.float32(threshold_int) / np.float32(envelope_int)) ** slope_f32
-    new_gain = min(1.0, new_gain)
-    new_gain_int = utils.int32(new_gain * 2**30)
+    new_gain = (float32(threshold_int) / float32(envelope_int)) ** slope_f32
+    new_gain = min(float32(1.0), new_gain)
+    new_gain_int = (new_gain * float32(2**30)).as_int32()
     return new_gain_int
 
 
 def compressor_rms_gain_calc_xcore(envelope, threshold_f32, slope_f32):
-    """Calculate the np.float32 gain for the current sample
+    """Calculate the float32 gain for the current sample
 
     Note that as the RMS envelope detector returns x**2, we need to
     sqrt the gain. Slope is used instead of ratio to allow the gain
@@ -129,5 +131,5 @@ def compressor_rms_gain_calc_xcore(envelope, threshold_f32, slope_f32):
     # if envelope below threshold, apply unity gain, otherwise scale
     # down
     new_gain = (threshold_f32 / envelope) ** slope_f32
-    new_gain = new_gain if new_gain < np.float32(1) else np.float32(1)
+    new_gain = new_gain if new_gain < float32(1) else float32(1)
     return new_gain

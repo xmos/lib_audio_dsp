@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from audio_dsp.dsp import utils as utils
 from audio_dsp.dsp import generic as dspg
 import audio_dsp.dsp.drc.drc_utils as drcu
+from audio_dsp.dsp.types import float32
 
 
 class envelope_detector_peak(dspg.dsp_block):
@@ -40,11 +41,11 @@ class envelope_detector_peak(dspg.dsp_block):
     envelope : list[float]
         Current envelope value for each channel for floating point
         processing.
-    attack_alpha_f32 : np.float32
+    attack_alpha_f32 : float32
         attack_alpha in 32-bit float format.
-    release_alpha_f32 : np.float32
+    release_alpha_f32 : float32
         release_alpha in 32-bit float format.
-    envelope_f32 : list[np.float32]
+    envelope_f32 : list[float32]
         current envelope value for each channel in 32-bit float format.
     attack_alpha_int : int
         attack_alpha in 32-bit int format.
@@ -86,12 +87,12 @@ class envelope_detector_peak(dspg.dsp_block):
         assert self.attack_alpha_int > 0
         assert self.release_alpha_int > 0
 
-        self.attack_alpha_f32 = np.float32(self.attack_alpha)
-        self.release_alpha_f32 = np.float32(self.release_alpha)
+        self.attack_alpha_f32 = float32(self.attack_alpha)
+        self.release_alpha_f32 = float32(self.release_alpha)
 
         # very long times might quantize to zero
-        assert self.attack_alpha_f32 > np.float32(0)
-        assert self.release_alpha_f32 > np.float32(0)
+        assert self.attack_alpha_f32 > float32(0)
+        assert self.release_alpha_f32 > float32(0)
 
         # initalise envelope state
         self.reset_state()
@@ -99,7 +100,7 @@ class envelope_detector_peak(dspg.dsp_block):
     def reset_state(self):
         """Reset the envelope to zero."""
         self.envelope = [0] * self.n_chans
-        self.envelope_f32 = [np.float32(0)] * self.n_chans
+        self.envelope_f32 = [float32(0)] * self.n_chans
         self.envelope_int = [utils.int32(0)] * self.n_chans
 
     def process(self, sample, channel=0):
@@ -133,7 +134,7 @@ class envelope_detector_peak(dspg.dsp_block):
         maths.
 
         Take 1 new sample and return the updated envelope. If the input
-        is np.float32, return a np.float32, otherwise expect float input
+        is float32, return a float32, otherwise expect float input
         and return float output.
 
         """
@@ -164,22 +165,22 @@ class envelope_detector_peak(dspg.dsp_block):
 
     def process_xcore(self, sample, channel=0):
         """
-        Update the peak envelope for a signal, using np.float32 maths.
+        Update the peak envelope for a signal, using float32 maths.
 
         Take 1 new sample and return the updated envelope. If the input
-        is np.float32, return a np.float32, otherwise expect float input
+        is float32, return a float32, otherwise expect float input
         and return float output.
 
         """
-        if isinstance(sample, np.float32):
-            # don't do anything if we got np.float32, this function was
+        if isinstance(sample, float32):
+            # don't do anything if we got float32, this function was
             # probably called from a limiter or compressor
             sample_f32 = sample
-        elif (isinstance(sample, list) or isinstance(sample, np.ndarray)) and isinstance(sample[0], np.float32):
+        elif (isinstance(sample, list) or isinstance(sample, np.ndarray)) and isinstance(sample[0], float32):
             sample_f32 = sample[channel]
         else:
-            # if input isn't np.float32, convert it
-            sample_f32 = np.float32(sample)
+            # if input isn't float32, convert it
+            sample_f32 = float32(sample)
 
         sample_mag = abs(sample_f32)
 
@@ -194,8 +195,8 @@ class envelope_detector_peak(dspg.dsp_block):
             sample_mag - self.envelope_f32[channel]
         )
 
-        # if we got floats, return floats, otherwise return np.float32
-        if isinstance(sample, np.float32):
+        # if we got floats, return floats, otherwise return float32
+        if isinstance(sample, float32):
             return self.envelope_f32[channel]
         else:
             return float(self.envelope_f32[channel])
@@ -280,7 +281,7 @@ class envelope_detector_rms(envelope_detector_peak):
 
     def process_xcore(self, sample, channel=0):
         """
-        Update the RMS envelope for a signal, using np.float32 maths.
+        Update the RMS envelope for a signal, using float32 maths.
 
         Take 1 new sample and return the updated envelope. Input should
         be scaled with 0dB = 1.0.
@@ -290,13 +291,13 @@ class envelope_detector_rms(envelope_detector_peak):
         taken instead of 20log10().
 
         """
-        if isinstance(sample, np.float32):
-            # don't do anything if we got np.float32, this function was
+        if isinstance(sample, float32):
+            # don't do anything if we got float32, this function was
             # probably called from a limiter or compressor
             sample_f32 = sample
         else:
-            # if input isn't np.float32, convert it
-            sample_f32 = np.float32(sample)
+            # if input isn't float32, convert it
+            sample_f32 = float32(sample)
 
         # for rms use power (sample**2)
         sample_mag = sample_f32 * sample_f32
@@ -312,8 +313,8 @@ class envelope_detector_rms(envelope_detector_peak):
             sample_mag - self.envelope_f32[channel]
         )
 
-        # if we got floats, return floats, otherwise return np.float32
-        if isinstance(sample, np.float32):
+        # if we got floats, return floats, otherwise return float32
+        if isinstance(sample, float32):
             return self.envelope_f32[channel]
         else:
             return float(self.envelope_f32[channel])
@@ -355,15 +356,15 @@ class compressor_limiter_base(dspg.dsp_block):
     release_alpha : float
         Release time parameter used for exponential moving average in
         floating point processing.
-    threshold_f32 : np.float32
+    threshold_f32 : float32
         Value above which comression/limiting occurs for floating point
         processing.
-    gain_f32 : list[np.float32]
+    gain_f32 : list[float32]
         Current gain to be applied to the signal for each channel for
         floating point processing.
-    attack_alpha_f32 : np.float32
+    attack_alpha_f32 : float32
         attack_alpha in 32-bit float format.
-    release_alpha_f32 : np.float32
+    release_alpha_f32 : float32
         release_alpha in 32-bit float format.
     threshold_int : int
         Value above which comression/limiting occurs for int32 fixed
@@ -397,10 +398,10 @@ class compressor_limiter_base(dspg.dsp_block):
         self.threshold = None
         self.env_detector = None
 
-        self.attack_alpha_f32 = np.float32(self.attack_alpha)
-        self.release_alpha_f32 = np.float32(self.release_alpha)
+        self.attack_alpha_f32 = float32(self.attack_alpha)
+        self.release_alpha_f32 = float32(self.release_alpha)
         self.threshold_f32 = None
-        self.gain_f32 = [np.float32(1)] * n_chans
+        self.gain_f32 = [float32(1)] * n_chans
 
         self.attack_alpha_int = utils.int32(round(self.attack_alpha * 2**30))
         self.release_alpha_int = utils.int32(round(self.release_alpha * 2**30))
@@ -411,7 +412,7 @@ class compressor_limiter_base(dspg.dsp_block):
         """Reset the envelope detector to 0 and the gain to 1."""
         self.env_detector.reset_state()
         self.gain = [1] * self.n_chans
-        self.gain_f32 = [np.float32(1)] * self.n_chans
+        self.gain_f32 = [float32(1)] * self.n_chans
         self.gain_int = [2**30] * self.n_chans
 
     def gain_calc(self, envelope):
@@ -423,7 +424,7 @@ class compressor_limiter_base(dspg.dsp_block):
         raise NotImplementedError
 
     def gain_calc_xcore(self, envelope):
-        """Calculate the np.float32 gain for the current sample"""
+        """Calculate the float32 gain for the current sample"""
         raise NotImplementedError
 
     def process(self, sample, channel=0):
@@ -500,7 +501,7 @@ class compressor_limiter_base(dspg.dsp_block):
     def process_xcore(self, sample, channel=0):
         """
         Update the envelope for a signal, then calculate and apply the
-        required gain for compression/limiting, using np.float32 maths.
+        required gain for compression/limiting, using float32 maths.
 
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.
@@ -510,13 +511,13 @@ class compressor_limiter_base(dspg.dsp_block):
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
         sample = utils.float_s32(sample)
         sample = utils.float_s32_use_exp(sample, -27)
-        sample = np.float32(float(sample))
+        sample = float32(float(sample))
 
         # get envelope from envelope detector
         envelope = self.env_detector.process_xcore(sample, channel)
         # avoid /0
-        if envelope == np.float32(0):
-            envelope = np.float32(1e-20)
+        if envelope == float32(0):
+            envelope = float32(1e-20)
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
@@ -534,7 +535,7 @@ class compressor_limiter_base(dspg.dsp_block):
         )
 
         # apply gain in int32
-        this_gain_int = utils.int32(self.gain_f32[channel] * 2**30)
+        this_gain_int = (self.gain_f32[channel] * float32(2**30)).as_int32()
         acc = int(1 << 29)
         acc += this_gain_int * sample_int
         y = utils.int32_mult_sat_extract(acc, 1, 30)
@@ -610,7 +611,7 @@ class limiter_peak(compressor_limiter_base):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         self.threshold = utils.db2gain(threshold_dB)
-        self.threshold_f32 = np.float32(self.threshold)
+        self.threshold_f32 = float32(self.threshold)
         self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
         self.env_detector = envelope_detector_peak(
             fs,
@@ -659,7 +660,7 @@ class limiter_rms(compressor_limiter_base):
 
         # note rms comes as x**2, so use db_pow
         self.threshold = utils.db_pow2gain(threshold_dB)
-        self.threshold_f32 = np.float32(self.threshold)
+        self.threshold_f32 = float32(self.threshold)
         self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
         self.env_detector = envelope_detector_rms(
             fs,
@@ -688,7 +689,7 @@ class limiter_rms(compressor_limiter_base):
         return drcu.limiter_rms_gain_calc_int(envelope_int, self.threshold_int)
 
     def gain_calc_xcore(self, envelope):
-        """Calculate the np.float32 gain for the current sample
+        """Calculate the float32 gain for the current sample
 
         Note that as the RMS envelope detector returns x**2, we need to
         sqrt the gain.
@@ -736,7 +737,7 @@ class lookahead_limiter_peak(compressor_limiter_base):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         self.threshold = utils.db2gain(threshold_db)
-        self.threshold_f32 = np.float32(self.threshold)
+        self.threshold_f32 = float32(self.threshold)
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,
@@ -762,7 +763,7 @@ class lookahead_limiter_rms(compressor_limiter_base):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         self.threshold = utils.db_pow2gain(threshold_db)
-        self.threshold_f32 = np.float32(self.threshold)
+        self.threshold_f32 = float32(self.threshold)
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=n_chans,
@@ -820,13 +821,13 @@ class compressor_rms(compressor_limiter_base):
     slope : float
         The slope factor of the compressor, defined as
         `slope = (1 - 1/ratio)`.
-    slope : np.float32
+    slope : float32
         The slope factor of the compressor, used for int32 to float32
         processing.
     threshold : float
         Value above which compression occurs for floating point
         processing.
-    threshold_f32 : np.float32
+    threshold_f32 : float32
         Value above which compression occurs for floating point
         processing.
     threshold_int : int
@@ -842,7 +843,7 @@ class compressor_rms(compressor_limiter_base):
 
         # note rms comes as x**2, so use db_pow
         self.threshold = utils.db_pow2gain(threshold_db)
-        self.threshold_f32 = np.float32(self.threshold)
+        self.threshold_f32 = float32(self.threshold)
         self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
         self.env_detector = envelope_detector_rms(
             fs,
@@ -854,7 +855,7 @@ class compressor_rms(compressor_limiter_base):
 
         self.ratio = ratio
         self.slope = (1 - 1 / self.ratio) / 2.0
-        self.slope_f32 = np.float32(self.slope)
+        self.slope_f32 = float32(self.slope)
 
     def gain_calc(self, envelope):
         """Calculate the float gain for the current sample
@@ -877,7 +878,7 @@ class compressor_rms(compressor_limiter_base):
         return drcu.compressor_rms_gain_calc_int(envelope_int, self.threshold_int, self.slope_f32)
 
     def gain_calc_xcore(self, envelope):
-        """Calculate the np.float32 gain for the current sample
+        """Calculate the float32 gain for the current sample
 
         Note that as the RMS envelope detector returns x**2, we need to
         sqrt the gain. Slope is used instead of ratio to allow the gain

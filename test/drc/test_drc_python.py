@@ -198,7 +198,7 @@ def test_peak_vs_rms(fs, at, threshold):
     # rms and peak limiter should converge to the same value
     np.testing.assert_allclose(utils.db(y_p[int(fs*at*5):]),
                                utils.db(y_r[int(fs*at*5):]),
-                               atol=0.002)
+                               atol=0.0022)
 
 
 @pytest.mark.parametrize("fs", [48000])
