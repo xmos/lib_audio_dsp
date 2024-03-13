@@ -647,7 +647,7 @@ class switch(dspg.dsp_block):
         y : float
             The sample at the current switch position.
         """
-        return self.process(sample_list)
+        return self.process_channels(sample_list)
 
     def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
         """
