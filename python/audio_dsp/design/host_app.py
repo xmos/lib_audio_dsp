@@ -4,10 +4,12 @@
 
 from pathlib import Path
 import platform
+import subprocess
 
 
 HOST_APP = Path("xvf_host")
 PROTOCOL = "usb"
+PORT = None
 
 
 class InvalidHostAppError(Exception):
@@ -40,27 +42,51 @@ def set_host_app(host_app, protocol="usb"):
     if not HOST_APP.is_file():
         raise InvalidHostAppError(f"Host App file {str(HOST_APP)} doesn't exist")
     PROTOCOL = protocol
-    if PROTOCOL != "usb":
+    if PROTOCOL != "usb" and protocol != "xscope":
         raise InvalidHostAppError(
-            f"Host control over {PROTOCOL} protocol not supported. Only usb protocol supported"
+            f"Host control over {PROTOCOL} protocol not supported. Only usb or xscope protocol supported"
         )
 
 
-def get_host_app():
-    """
-    Get the host_app and the protocol to use for control.
-
-    Raises
-    ------
-    InvalidHostAppError
-        If executable for binary not set
-
-    Returns
-    -------
-    host_app and control protocol to use
-    """
+def set_host_app_xscope_port(port_num):
+    global PORT
     if not HOST_APP.is_file():
         raise InvalidHostAppError(f"Invalid Host App file {HOST_APP}. Call set_host_app() to set")
-    if PROTOCOL != "usb":
+    if PROTOCOL != "xscope":
+        raise InvalidHostAppError("Port is set only for xscope protocol")
+    PORT = port_num
+
+
+def send_host_cmd(instance_id, *args, verbose=False):
+    if not HOST_APP.is_file():
+        raise InvalidHostAppError(f"Invalid Host App file {HOST_APP}. Call set_host_app() to set")
+    if PROTOCOL != "usb" and PROTOCOL != "xscope":
         raise InvalidHostAppError("Invalid host control protocol. Call set_host_app() to set")
-    return HOST_APP, PROTOCOL
+    if PROTOCOL == "xscope" and PORT is None:
+        raise InvalidHostAppError("Port not set when using xscope protocol")
+
+    if PROTOCOL != "xscope":
+        ret = subprocess.run(
+            [HOST_APP, "--use", PROTOCOL, "--instance-id", str(instance_id), *[i for i in args]],
+            stdout=subprocess.PIPE,
+        )
+    else:
+        ret = subprocess.run(
+            [
+                HOST_APP,
+                "--use",
+                PROTOCOL,
+                "--instance-id",
+                str(instance_id),
+                "--port",
+                str(PORT),
+                *[i for i in args],
+            ],
+            stdout=subprocess.PIPE,
+        )
+    if ret.returncode:
+        print(f"Unable to connect to device using {HOST_APP}")
+        return ret
+    if verbose:
+        print(HOST_APP, "--use", PROTOCOL, "--instance-id", str(instance_id), *[i for i in args])
+    return ret
