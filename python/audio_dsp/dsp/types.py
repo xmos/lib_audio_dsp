@@ -8,6 +8,16 @@ import audio_dsp.dsp.utils as utils
 class float32:
     def __init__(self, value):
         self.value = np.float32(value)
+        return
+
+    def __call__(self):
+        return self.value
+
+    def __str__(self):
+        return str(self.value)
+
+    def __repr__(self):
+        return self.__str__()
 
     def __abs__(self):
         return float32(np.abs(self.value))
