@@ -67,14 +67,9 @@ class envelope_detector_peak(dspg.dsp_block):
             attack_t = detect_t
             release_t = detect_t
 
-        # Attack times simplified from McNally, seem pretty close.
-        # Assumes the time constant of a digital filter is the -3 dB
-        # point where abs(H(z))**2 = 0.5.
-        T = 1 / fs
-        # attack/release time can't be faster than the length of 2
-        # samples.
-        self.attack_alpha = min(2 * T / attack_t, 1.0)
-        self.release_alpha = min(2 * T / release_t, 1.0)
+        # calculate EWM alpha from time constant
+        self.attack_alpha = drcu.alpha_from_time(attack_t, fs)
+        self.release_alpha = drcu.alpha_from_time(release_t, fs)
 
         # very long times might quantize to zero, maybe just limit a
         # better way

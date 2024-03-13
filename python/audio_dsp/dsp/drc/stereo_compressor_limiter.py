@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from audio_dsp.dsp import utils as utils
 from audio_dsp.dsp import generic as dspg
-from audio_dsp.dsp.drc import envelope_detector_peak
+from audio_dsp.dsp.drc import envelope_detector_peak, envelope_detector_rms
 
 import audio_dsp.dsp.drc.drc_utils as drcu
 from audio_dsp.dsp.types import float32
@@ -258,3 +258,55 @@ class limiter_peak_stereo(compressor_limiter_stereo_base):
 
     def gain_calc_xcore(self, envelope):
         return drcu.limiter_peak_gain_calc_xcore(envelope, self.threshold_f32)
+
+
+class compressor_rms_stereo(compressor_limiter_stereo_base):
+    def __init__(self, fs, ratio, threshold_dB, attack_t, release_t, Q_sig=dspg.Q_SIG):
+        n_chans = 2
+        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
+
+        self.threshold = utils.db_pow2gain(threshold_dB)
+        self.threshold_f32 = float32(self.threshold)
+        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.env_detector = envelope_detector_rms(
+            fs,
+            n_chans=n_chans,
+            attack_t=attack_t,
+            release_t=release_t,
+            Q_sig=self.Q_sig,
+        )
+
+        self.ratio = ratio
+        self.slope = (1 - 1 / self.ratio) / 2.0
+        self.slope_f32 = float32(self.slope)
+
+    def gain_calc(self, envelope):
+        """Calculate the float gain for the current sample
+
+        Note that as the RMS envelope detector returns x**2, we need to
+        sqrt the gain. Slope is used instead of ratio to allow the gain
+        calculation to avoid the log domain.
+
+        """
+        return drcu.compressor_rms_gain_calc(envelope, self.threshold, self.slope)
+
+    def gain_calc_int(self, envelope_int):
+        """Calculate the int gain for the current sample
+
+        Note that as the RMS envelope detector returns x**2, we need to
+        sqrt the gain. Slope is used instead of ratio to allow the gain
+        calculation to avoid the log domain.
+
+        """
+        return drcu.compressor_rms_gain_calc_int(envelope_int, self.threshold_int, self.slope_f32)
+
+    def gain_calc_xcore(self, envelope):
+        """Calculate the float32 gain for the current sample
+
+        Note that as the RMS envelope detector returns x**2, we need to
+        sqrt the gain. Slope is used instead of ratio to allow the gain
+        calculation to avoid the log domain.
+
+        """
+        return drcu.compressor_rms_gain_calc_xcore(envelope, self.threshold_f32, self.slope_f32)
+

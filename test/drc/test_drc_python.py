@@ -202,11 +202,13 @@ def test_peak_vs_rms(fs, at, threshold):
 
 
 @pytest.mark.parametrize("fs", [48000])
-@pytest.mark.parametrize("component_mono, component_stereo, threshold", [("limiter_peak", "limiter_peak_stereo", -20),
-                                                                         ("limiter_peak", "limiter_peak_stereo", -6)])
+@pytest.mark.parametrize("component_mono, component_stereo, threshold, ratio", [("limiter_peak", "limiter_peak_stereo", -20, None),
+                                                                                ("limiter_peak", "limiter_peak_stereo", -6, None),
+                                                                                ("compressor_rms", "compressor_rms_stereo", 0, 6),
+                                                                                ("compressor_rms", "compressor_rms_stereo", 0, 2)])
 @pytest.mark.parametrize("rt", [0.2])
 @pytest.mark.parametrize("at", [0.001])
-def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold):
+def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold, ratio):
 
 
     signal = []
@@ -217,7 +219,15 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold)
     signal = np.stack(signal, axis=0)
 
     stereo_component_handle = getattr(drc, component_stereo)
-    drc_s = stereo_component_handle(fs, threshold, at, rt)
+    mono_component_handle = getattr(drc, component_mono)
+    if ratio is not None:
+        drc_s = stereo_component_handle(fs, ratio, threshold, at, rt)
+        drc_m = mono_component_handle(fs, 1, ratio, threshold, at, rt)
+
+    else:
+        drc_s = stereo_component_handle(fs, threshold, at, rt)
+        drc_m = mono_component_handle(fs, 1, threshold, at, rt)
+
 
     output_xcore_s = np.zeros(signal.shape)
     output_flt_s = np.zeros(signal.shape)
@@ -232,8 +242,7 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold)
     for n in np.arange(signal.shape[1]):
         output_int_s[:, n], _, _ = drc_s.process_channels_int(signal[:, n])
     
-    mono_component_handle = getattr(drc, component_mono)
-    drc_m = mono_component_handle(fs, 1, threshold, at, rt)
+
 
     output_xcore_m = np.zeros(signal.shape)
     output_flt_m = np.zeros(signal.shape)
@@ -439,13 +448,18 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
 
 
 @pytest.mark.parametrize("fs", [48000])
-@pytest.mark.parametrize("component, threshold", [("limiter_peak_stereo", -20),
-                                                 ("limiter_peak_stereo", -6)])
+@pytest.mark.parametrize("component, threshold, ratio", [("limiter_peak_stereo", -20, None),
+                                                         ("limiter_peak_stereo", -6, None),
+                                                         ("compressor_rms_stereo", 0, 6),
+                                                         ("compressor_rms_stereo", 0, 2)])
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
-def test_stereo_components(fs, component, at, rt, threshold):
+def test_stereo_components(fs, component, at, rt, threshold, ratio):
     component_handle = getattr(drc, component)
-    drcut = component_handle(fs, threshold, at, rt)
+    if ratio is not None:
+        drcut = component_handle(fs, ratio, threshold, at, rt)
+    else:
+        drcut = component_handle(fs, threshold, at, rt)
 
     signal = []
     lenght = 0.1 + (rt + at) * 2
