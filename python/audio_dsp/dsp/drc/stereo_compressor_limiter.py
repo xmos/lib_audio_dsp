@@ -55,7 +55,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         """Calculate the float32 gain for the current sample"""
         raise NotImplementedError
     
-    def process(self, sample):
+    def process_channels(self, sample):
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using floating point
@@ -89,7 +89,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         y = self.gain * sample
         return y, new_gain, envelope
     
-    def process_int(self, samples):
+    def process_channels_int(self, samples):
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using int32 fixed point
@@ -136,7 +136,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
             (float(envelope_int) * 2**-self.Q_sig),
         )
 
-    def process_xcore(self, samples):
+    def process_channels_xcore(self, samples):
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using float32 maths.
@@ -205,11 +205,10 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         assert n_outputs == 2, "has to be stereo"
         frame_size = frame[0].shape[0]
         output = deepcopy(frame)
-        for chan in range(n_outputs):
-            this_chan = output[chan]
-            for sample in range(frame_size):
-                this_chan[sample] = self.process(this_chan[sample])[0]
-
+        for sample in range(frame_size):
+            out_samples = self.process_channels([frame[0][sample], frame[1][sample]])
+            output[0][sample] = out_samples[0]
+            output[1][sample] = out_samples[1]
         return output
     
     def process_frame_xcore(self, frame):
@@ -227,10 +226,10 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         assert n_outputs == 2, "has to be stereo"
         frame_size = frame[0].shape[0]
         output = deepcopy(frame)
-        for chan in range(n_outputs):
-            this_chan = output[chan]
-            for sample in range(frame_size):
-                this_chan[sample] = self.process_xcore(this_chan[sample])[0]
+        for sample in range(frame_size):
+            out_samples = self.process_channels_xcore([frame[0][sample], frame[1][sample]])
+            output[0][sample] = out_samples[0]
+            output[1][sample] = out_samples[1]
 
         return output
 

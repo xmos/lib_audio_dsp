@@ -224,13 +224,13 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold)
     output_int_s = np.zeros(signal.shape)
 
     for n in np.arange(signal.shape[1]):
-        output_xcore_s[:, n], _, _ = drc_s.process_xcore(signal[:, n])
+        output_xcore_s[:, n], _, _ = drc_s.process_channels_xcore(signal[:, n])
     drc_s.reset_state()
     for n in np.arange(signal.shape[1]):
-        output_flt_s[:, n], _, _ = drc_s.process(signal[:, n])
+        output_flt_s[:, n], _, _ = drc_s.process_channels(signal[:, n])
     drc_s.reset_state()
     for n in np.arange(signal.shape[1]):
-        output_int_s[:, n], _, _ = drc_s.process_int(signal[:, n])
+        output_int_s[:, n], _, _ = drc_s.process_channels_int(signal[:, n])
     
     mono_component_handle = getattr(drc, component_mono)
     drc_m = mono_component_handle(fs, 1, threshold, at, rt)
@@ -459,13 +459,13 @@ def test_stereo_components(fs, component, at, rt, threshold):
     output_int = np.zeros(signal.shape, dtype=np.float32)
 
     for n in np.arange(signal.shape[1]):
-        output_xcore[:, n], _, _ = drcut.process_xcore(signal[:, n])
+        output_xcore[:, n], _, _ = drcut.process_channels_xcore(signal[:, n])
     drcut.reset_state()
     for n in np.arange(signal.shape[1]):
-        output_flt[:, n], _, _ = drcut.process(signal[:, n])
+        output_flt[:, n], _, _ = drcut.process_channels(signal[:, n])
     drcut.reset_state()
     for n in np.arange(signal.shape[1]):
-        output_int[:, n], _, _ = drcut.process_int(signal[:, n])
+        output_int[:, n], _, _ = drcut.process_channels_int(signal[:, n])
     
     error_flt = np.abs(utils.db(output_xcore)-utils.db(output_flt))
     mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
