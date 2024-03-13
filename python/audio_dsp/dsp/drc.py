@@ -927,6 +927,7 @@ class noise_gate(compressor_limiter_base):
 
         # for the noise gate, the attack and release times are swapped
         # i.e. attack time is after going under threshold instead of over
+        # the device will expect these swapped back when doing control
         self.attack_alpha = alpha_from_time(release_t, fs)
         self.release_alpha = alpha_from_time(attack_t, fs)
         self.attack_alpha_f32 = np.float32(self.attack_alpha)
