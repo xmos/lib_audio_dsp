@@ -20,7 +20,7 @@ int main()
 {
   FILE * in = _fopen("../sig_48k.bin", "rb");
   FILE * out = _fopen("sig_out.bin", "wb");
-  FILE * lim_info = _fopen("info.bin", "rb");
+  FILE * ng_info = _fopen("info.bin", "rb");
 
   fseek(in, 0, SEEK_END);
   int in_len = ftell(in) / sizeof(int32_t);
@@ -28,20 +28,20 @@ int main()
 
   float th, at_al, re_al;
 
-  fread(&th, sizeof(float), 1, lim_info);
-  fread(&at_al, sizeof(float), 1, lim_info);
-  fread(&re_al, sizeof(float), 1, lim_info);
-  fclose(lim_info);
+  fread(&th, sizeof(float), 1, ng_info);
+  fread(&at_al, sizeof(float), 1, ng_info);
+  fread(&re_al, sizeof(float), 1, ng_info);
+  fclose(ng_info);
 
-  limiter_t lim = (limiter_t){
-              (env_detector_t){at_al, re_al, 0}, th, 1};
+  noise_gate_t ng = (noise_gate_t){
+              (env_detector_t){re_al, at_al, 0}, th, 1};
 
   for (unsigned i = 0; i < in_len; i++)
   {
     int32_t samp = 0, samp_out = 0;
     fread(&samp, sizeof(int32_t), 1, in);
     //printf("%ld ", samp);
-    samp_out = adsp_limiter_rms(&lim, samp);
+    samp_out = adsp_noise_gate(&ng, samp);
     //printf("%ld ", samp_out);
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }
