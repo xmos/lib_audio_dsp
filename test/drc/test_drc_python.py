@@ -256,10 +256,14 @@ def test_noise_gate():
 @pytest.mark.parametrize("component, threshold, ratio", [("limiter_peak", 0, None),
                                                          ("limiter_rms", 0, None),
                                                          ("compressor_rms", 0, 6),
-                                                         ("compressor_rms", 0, 2)])
+                                                         ("compressor_rms", 0, 2),
+                                                         ("noise_gate", -1000, None)])
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
+    if component == "noise_gate":
+        #TODO fixme
+        pytest.xfail("suspected float32 issue for noise gate")
     # check that a 24b quantized chirp is bit exact if it's below the threshold
     component_handle = getattr(drc, component)
 
@@ -313,7 +317,8 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
                                                          ("compressor_rms", -20, 6),
                                                          ("compressor_rms", -20, 2),
                                                          ("compressor_rms", 6, 6),
-                                                         ("compressor_rms", 6, 2)])
+                                                         ("compressor_rms", 6, 2),
+                                                         ("noise_gate", -20, None)])
 @pytest.mark.parametrize("rt", [0.05, 0.1, 0.2, 0.5, 3.0])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.5])
 def test_drc_component(fs, component, at, rt, threshold, ratio):
@@ -388,7 +393,8 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
                                                          ("compressor_rms", -20, 6),
                                                          ("compressor_rms", -20, 2),
                                                          ("compressor_rms", 6, 6),
-                                                         ("compressor_rms", 6, 2)])
+                                                         ("compressor_rms", 6, 2),
+                                                         ("noise_gate", -20, None)])
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 @pytest.mark.parametrize("n_chans", [1, 2, 4])

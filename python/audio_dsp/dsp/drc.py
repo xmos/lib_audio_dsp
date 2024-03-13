@@ -922,6 +922,45 @@ class compressor_rms(compressor_limiter_base):
 
 
 class noise_gate(compressor_limiter_base):
+    """A noise gate that reduces the level of an audio signal when it
+    falls below a the threshold.
+    
+    When the signal envelope falls below the threshold, the gain applied
+    to the signal is reduced to 0 (based on the release time). When the
+    envelope returns above the threshold, the gain applied to the signal
+    is increased to 1 over the attack time.
+
+    Parameters
+    ----------
+    threshold_db : float
+        The threshold level in decibels below which the audio signal is
+        attenuated.
+
+    Attributes
+    ----------
+    attack_alpha : float
+        The attack coefficient calculated from the release time and sample rate.
+    release_alpha : float
+        The release coefficient calculated from the attack time and sample rate.
+    attack_alpha_f32 : np.float32
+        The attack coefficient as a 32-bit floating-point number.
+    release_alpha_f32 : np.float32
+        The release coefficient as a 32-bit floating-point number.
+    attack_alpha_int : int
+        The attack coefficient as a 32-bit signed integer.
+    release_alpha_int : int
+        The release coefficient as a 32-bit signed integer.
+    threshold : float
+        The threshold below which the signal is gated.
+    threshold_f32 : np.float32
+        The threshold level as a 32-bit floating-point number.
+    threshold_int : int
+        The threshold level as a 32-bit signed integer.
+    env_detector : envelope_detector_peak
+        An instance of the envelope_detector_peak class used for envelope detection.
+
+    """
+
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
@@ -947,7 +986,18 @@ class noise_gate(compressor_limiter_base):
         )
 
     def gain_calc(self, envelope):
-        """Calculate the float gain for the current sample"""
+        """Calculate the float gain for the current sample.
+
+        Parameters
+        ----------
+        envelope : float
+            The envelope value of the audio signal.
+
+        Returns
+        -------
+        float
+            The calculated gain for the current sample.
+        """
         if envelope < self.threshold:
             new_gain = 0
         else:
@@ -955,7 +1005,20 @@ class noise_gate(compressor_limiter_base):
         return new_gain
 
     def gain_calc_int(self, envelope_int):
-        """Calculate the int gain for the current sample"""
+        """Calculate the int gain for the current sample.
+
+        Parameters
+        ----------
+        envelope_int : int
+            The envelope value of the audio signal as a 32-bit signed
+            integer.
+
+        Returns
+        -------
+        int
+            The calculated gain for the current sample as a 32-bit
+            signed integer.
+        """
         if envelope_int < self.threshold_int:
             new_gain_int = utils.int32(0)
         else:
@@ -963,7 +1026,19 @@ class noise_gate(compressor_limiter_base):
         return new_gain_int
 
     def gain_calc_xcore(self, envelope):
-        """Calculate the np.float32 gain for the current sample"""
+        """Calculate the np.float32 gain for the current sample.
+
+        Parameters
+        ----------
+        envelope : float
+            The envelope value of the audio signal.
+
+        Returns
+        -------
+        np.float32
+            The calculated gain for the current sample as a 32-bit
+            floating-point number.
+        """
         if envelope < self.threshold_f32:
             new_gain = np.float32(0)
         else:
