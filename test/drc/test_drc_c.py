@@ -87,7 +87,7 @@ def test_limiter_c(in_signal, component_name, at, rt, threshold):
   # there is a difference between C and PY now which shows up in this test case
   # nothing too critical, should be fixed soon
   if component_name == "noise_gate" and threshold == 0:
-    return
+    pytest.xfail("Noise gate with threshold 0 is not bit exact")
   component_handle = getattr(drc, component_name)
   comp = component_handle(fs, 1, threshold, at, rt)
   test_name = f"{component_name}_{threshold}_{at}_{rt}"
