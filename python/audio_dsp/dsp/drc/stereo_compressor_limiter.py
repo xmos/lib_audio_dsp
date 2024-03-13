@@ -55,7 +55,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         """Calculate the float32 gain for the current sample"""
         raise NotImplementedError
     
-    def process_channels(self, sample):
+    def process_channels(self, input_samples, detect_samples):
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using floating point
@@ -66,8 +66,8 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
         """
         # get envelope from envelope detector
-        env0 = self.env_detector.process(sample[0], 0)
-        env1 = self.env_detector.process(sample[1], 1)
+        env0 = self.env_detector.process(detect_samples[0], 0)
+        env1 = self.env_detector.process(detect_samples[1], 1)
         envelope = np.maximum(env0, env1)
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
@@ -86,10 +86,10 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         self.gain = ((1 - alpha) * self.gain) + (alpha * new_gain)
 
         # apply gain to input
-        y = self.gain * sample
+        y = self.gain * input_samples
         return y, new_gain, envelope
     
-    def process_channels_int(self, samples):
+    def process_channels_int(self, input_samples, detect_samples):
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using int32 fixed point
@@ -99,8 +99,8 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         Input should be scaled with 0dB = 1.0.
 
         """
-        samples_int = [int(0)] * len(samples)
-        for i in range(len(samples)): samples_int[i] = utils.int32(round(samples[i] * 2**self.Q_sig))
+        samples_int = [int(0)] * len(detect_samples)
+        for i in range(len(detect_samples)): samples_int[i] = utils.int32(round(detect_samples[i] * 2**self.Q_sig))
 
         # get envelope from envelope detector
         env0_int = self.env_detector.process_int(samples_int[0], 0)
@@ -125,6 +125,8 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         self.gain_int += utils.vpu_mult(alpha, new_gain_int)
 
         y = []
+        for i in range(len(input_samples)): samples_int[i] = utils.int32(round(input_samples[i] * 2**self.Q_sig))
+
         for sample_int in samples_int:
             y_uq = utils.vpu_mult(self.gain_int, sample_int)
             y.append(float(y_uq) * 2 **-self.Q_sig)
@@ -136,7 +138,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
             (float(envelope_int) * 2**-self.Q_sig),
         )
 
-    def process_channels_xcore(self, samples):
+    def process_channels_xcore(self, input_samples, detect_samples):
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using float32 maths.
@@ -146,11 +148,11 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
         """
         # quantize
-        samples_int = [int(0)] * len(samples)
-        samples_f32 = [float32(0)] * len(samples)
-        for i in range(len(samples)):
-            samples_int[i] = utils.int32(round(samples[i] * 2**self.Q_sig))
-            sample_q = utils.float_s32(samples[i])
+        samples_int = [int(0)] * len(input_samples)
+        samples_f32 = [float32(0)] * len(input_samples)
+        for i in range(len(input_samples)):
+            samples_int[i] = utils.int32(round(input_samples[i] * 2**self.Q_sig))
+            sample_q = utils.float_s32(detect_samples[i])
             sample_q = utils.float_s32_use_exp(sample_q, -27)
             samples_f32[i] = float32(float(sample_q))
 
@@ -178,7 +180,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         )
 
         # apply gain in int32
-        y = [0] * len(samples)
+        y = [0] * len(samples_int)
         this_gain_int = (self.gain_f32 * float32(2**30)).as_int32()
         for i in range(len(samples_int)):
             acc = int(1 << 29)
@@ -250,6 +252,15 @@ class limiter_peak_stereo(compressor_limiter_stereo_base):
             Q_sig=self.Q_sig,
         )
 
+    def process_channels(self, samples):
+        return super().process_channels(samples, samples)
+
+    def process_channels_int(self, samples):
+        return super().process_channels_int(samples, samples)
+
+    def process_channels_xcore(self, samples):
+        return super().process_channels_xcore(samples, samples)
+
     def gain_calc(self, envelope):
         return drcu.limiter_peak_gain_calc(envelope, self.threshold)
 
@@ -279,6 +290,111 @@ class compressor_rms_stereo(compressor_limiter_stereo_base):
         self.ratio = ratio
         self.slope = (1 - 1 / self.ratio) / 2.0
         self.slope_f32 = float32(self.slope)
+
+    def process_channels(self, samples):
+        return super().process_channels(samples, samples)
+
+    def process_channels_int(self, samples):
+        return super().process_channels_int(samples, samples)
+
+    def process_channels_xcore(self, samples):
+        return super().process_channels_xcore(samples, samples)
+
+    def gain_calc(self, envelope):
+        """Calculate the float gain for the current sample
+
+        Note that as the RMS envelope detector returns x**2, we need to
+        sqrt the gain. Slope is used instead of ratio to allow the gain
+        calculation to avoid the log domain.
+
+        """
+        return drcu.compressor_rms_gain_calc(envelope, self.threshold, self.slope)
+
+    def gain_calc_int(self, envelope_int):
+        """Calculate the int gain for the current sample
+
+        Note that as the RMS envelope detector returns x**2, we need to
+        sqrt the gain. Slope is used instead of ratio to allow the gain
+        calculation to avoid the log domain.
+
+        """
+        return drcu.compressor_rms_gain_calc_int(envelope_int, self.threshold_int, self.slope_f32)
+
+    def gain_calc_xcore(self, envelope):
+        """Calculate the float32 gain for the current sample
+
+        Note that as the RMS envelope detector returns x**2, we need to
+        sqrt the gain. Slope is used instead of ratio to allow the gain
+        calculation to avoid the log domain.
+
+        """
+        return drcu.compressor_rms_gain_calc_xcore(envelope, self.threshold_f32, self.slope_f32)
+
+
+class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
+    def __init__(self, fs, ratio, threshold_dB, attack_t, release_t, Q_sig=dspg.Q_SIG):
+        n_chans = 2
+        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
+
+        self.threshold = utils.db_pow2gain(threshold_dB)
+        self.threshold_f32 = float32(self.threshold)
+        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.env_detector = envelope_detector_rms(
+            fs,
+            n_chans=n_chans,
+            attack_t=attack_t,
+            release_t=release_t,
+            Q_sig=self.Q_sig,
+        )
+
+        self.ratio = ratio
+        self.slope = (1 - 1 / self.ratio) / 2.0
+        self.slope_f32 = float32(self.slope)
+
+    def process_frame(self, frame):
+        """
+        Take a list frames of samples and return the processed frames.
+
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When calling self.process only take the first output.
+
+        """
+        n_outputs = len(frame)
+        assert n_outputs == 2, "has to be stereo"
+        frame_size = frame[0].shape[0]
+        output = deepcopy(frame)
+        for sample in range(frame_size):
+            out_samples = self.process_channels([frame[0][sample], frame[1][sample]],
+                                                      [frame[2][sample], frame[3][sample]])
+            output[0][sample] = out_samples[0]
+            output[1][sample] = out_samples[1]
+        return output
+    
+    def process_frame_xcore(self, frame):
+        """
+        Take a list frames of samples and return the processed frames,
+        using a bit exact xcore implementation.
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When calling self.process_xcore only take the first output.
+
+        """
+        n_outputs = len(frame)
+        assert n_outputs == 2, "has to be stereo"
+        frame_size = frame[0].shape[0]
+        output = deepcopy(frame)
+        for sample in range(frame_size):
+            out_samples = self.process_channels_xcore([frame[0][sample], frame[1][sample]],
+                                                      [frame[2][sample], frame[3][sample]])
+            output[0][sample] = out_samples[0]
+            output[1][sample] = out_samples[1]
+
+        return output
 
     def gain_calc(self, envelope):
         """Calculate the float gain for the current sample
