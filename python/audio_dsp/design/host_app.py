@@ -103,13 +103,13 @@ def send_control_cmd(instance_id, *args, verbose=False):
         raise InvalidHostAppError("Port not set when using xscope transport protocol")
 
     cmd_list = [
-            HOST_APP,
-            "--use",
-            PROTOCOL,
-            "--instance-id",
-            str(instance_id),
-            *[i for i in args],
-        ]
+        HOST_APP,
+        "--use",
+        PROTOCOL,
+        "--instance-id",
+        str(instance_id),
+        *[i for i in args],
+    ]
     if PROTOCOL == "xscope":
         cmd_list.extend(["--port", str(PORT)])
 
