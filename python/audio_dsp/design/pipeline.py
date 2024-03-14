@@ -814,7 +814,6 @@ def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
 
     dsp_main = """
 #include <stages/adsp_pipeline.h>
-#include "dspt_main.h"
 #include <xcore/select.h>
 #include <xcore/channel.h>
 #include <xcore/hwtimer.h>
