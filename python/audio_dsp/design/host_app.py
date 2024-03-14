@@ -44,7 +44,7 @@ def set_host_app(host_app, transport_protocol="usb"):
     PROTOCOL = transport_protocol
     if PROTOCOL != "usb" and transport_protocol != "xscope":
         raise InvalidHostAppError(
-            f"Host control over {PROTOCOL} transport protocol not supported. Only usb or xscope protocols are supported."
+            f"Host control over {PROTOCOL} transport protocol is not supported. Only usb or xscope protocols are supported."
         )
 
 
@@ -102,8 +102,7 @@ def send_control_cmd(instance_id, *args, verbose=False):
     if PROTOCOL == "xscope" and PORT is None:
         raise InvalidHostAppError("Port not set when using xscope transport protocol")
 
-    if PROTOCOL != "xscope":
-        cmd_list = [
+    cmd_list = [
             HOST_APP,
             "--use",
             PROTOCOL,
@@ -111,17 +110,8 @@ def send_control_cmd(instance_id, *args, verbose=False):
             str(instance_id),
             *[i for i in args],
         ]
-    else:
-        cmd_list = [
-            HOST_APP,
-            "--use",
-            PROTOCOL,
-            "--instance-id",
-            str(instance_id),
-            "--port",
-            str(PORT),
-            *[i for i in args],
-        ]
+    if PROTOCOL == "xscope":
+        cmd_list.extend(["--port", str(PORT)])
 
     ret = subprocess.run(
         cmd_list,
