@@ -924,7 +924,7 @@ class compressor_rms(compressor_limiter_base):
 class noise_gate(compressor_limiter_base):
     """A noise gate that reduces the level of an audio signal when it
     falls below a the threshold.
-    
+
     When the signal envelope falls below the threshold, the gain applied
     to the signal is reduced to 0 (based on the release time). When the
     envelope returns above the threshold, the gain applied to the signal
