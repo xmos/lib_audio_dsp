@@ -102,6 +102,8 @@ def test_limiter_peak_release(fs, rt, threshold):
 @pytest.mark.parametrize("rt", [0.00000001])
 @pytest.mark.parametrize("at", [0.00000001])
 def test_comp_ratio(fs, at, rt, ratio, threshold):
+    # make sure a fast compressor has the same perforance as a limiter
+    # over a variety of ratios
 
     drcut = drc.compressor_rms(fs, 1, ratio, threshold, at, rt)
 
@@ -219,12 +221,11 @@ def test_peak_vs_rms(fs, at, threshold):
 @pytest.mark.parametrize("at", [0.01])
 @pytest.mark.parametrize("threshold", [-10])
 def test_sidechain_mono_vs_comp(fs, at, threshold):
-    # check peak and rms converge to same value
+    # test a sidechain compressor is the same as a normal compressor
+    # when the sidechain signal is the same as the input signal
 
     ratio = 5
 
-    # Make a constant signal at 6dB above the threshold, make 2* length of
-    # attack time to keep the test quick
     x = gen.sin(fs, 1, 1, 1)
     t = np.arange(len(x))/fs
 
@@ -304,7 +305,8 @@ def test_sidechain_stereo(fs, at, threshold):
 @pytest.mark.parametrize("rt", [0.2])
 @pytest.mark.parametrize("at", [0.001])
 def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold, ratio):
-
+    # test the mono and stereo components have the same perforamnce when
+    # fed a dual mono signal
 
     signal = []
     lenght = 0.1 + (rt + at) * 2
@@ -366,7 +368,7 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold,
 
 
 def test_noise_gate():
-
+    # test the noise gate performance on noisy speech
     signal, fs = make_noisy_speech()
 
     test_len = int(6*fs)
@@ -411,6 +413,8 @@ def test_noise_gate():
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
+    # test that a drc component is bit exact when the signal is below
+    # the threshold (or above in the case of a noise gate).
     if component == "noise_gate":
         #TODO fixme
         pytest.xfail("suspected float32 issue for noise gate")
@@ -472,6 +476,7 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
 @pytest.mark.parametrize("rt", [0.05, 0.1, 0.2, 0.5, 3.0])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.5])
 def test_drc_component(fs, component, at, rt, threshold, ratio):
+    # test the process_ functions of the drc components
     component_handle = getattr(drc, component)
 
     if threshold is not None:
@@ -549,6 +554,8 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 @pytest.mark.parametrize("n_chans", [1, 2, 4])
 def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
+    # test the process_frame functions of the drc components
+
     component_handle = getattr(drc, component)
 
     if threshold is not None:
@@ -593,6 +600,8 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 def test_stereo_components(fs, component, at, rt, threshold, ratio):
+    # test the process_channels functions of the stereo drc components
+
     component_handle = getattr(drc, component)
     if ratio is not None:
         drcut = component_handle(fs, ratio, threshold, at, rt)
