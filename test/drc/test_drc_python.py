@@ -218,6 +218,47 @@ def test_peak_vs_rms(fs, at, threshold):
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("at", [0.01])
 @pytest.mark.parametrize("threshold", [-10])
+def test_sidechain_mono_vs_comp(fs, at, threshold):
+    # check peak and rms converge to same value
+
+    ratio = 5
+
+    # Make a constant signal at 6dB above the threshold, make 2* length of
+    # attack time to keep the test quick
+    x = gen.sin(fs, 1, 1, 1)
+    t = np.arange(len(x))/fs
+
+    rt = 0.5
+    comp_type = "compressor_rms"
+    reg_handle = getattr(drc, "%s" % comp_type)
+    side_handle = getattr(drc, "%s_sidechain_mono" % comp_type)
+
+    reg_thing = reg_handle(fs, 1, ratio, threshold, at, rt)
+    side_thing = side_handle(fs, ratio, threshold, at, rt)
+
+    y_p = np.zeros_like(x)
+    f_p = np.zeros_like(x)
+    env_p = np.zeros_like(x)
+
+    # do the processing
+    for n in range(len(y_p)):
+        y_p[n], f_p[n], env_p[n] = reg_thing.process(x[n])
+
+    y_r = np.zeros_like(x)
+    f_r = np.zeros_like(x)
+    env_r = np.zeros_like(x)
+
+    # do the processing
+    for n in range(len(y_r)):
+        y_r[n], f_r[n], env_r[n] = side_thing.process(x[n], x[n])
+
+    # rms and peak limiter should converge to the same value
+    np.testing.assert_array_equal(y_p, y_r)
+
+
+@pytest.mark.parametrize("fs", [48000])
+@pytest.mark.parametrize("at", [0.01])
+@pytest.mark.parametrize("threshold", [-10])
 def test_sidechain_stereo(fs, at, threshold):
     # check peak and rms converge to same value
 
