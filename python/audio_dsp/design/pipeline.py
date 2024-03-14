@@ -17,7 +17,7 @@ import json
 import numpy as np
 from uuid import uuid4
 from ._draw import new_record_digraph
-from .host_app import send_host_cmd
+from .host_app import send_control_cmd
 from functools import wraps
 
 
@@ -315,7 +315,7 @@ def validate_pipeline_checksum(pipeline: Pipeline):
     """
     assert pipeline.pipeline_stage is not None  # To stop ruff from complaining
 
-    ret = send_host_cmd(pipeline.pipeline_stage.index, "pipeline_checksum")
+    ret = send_control_cmd(pipeline.pipeline_stage.index, "pipeline_checksum")
 
     if ret.returncode:
         raise RuntimeError("Unable to connect to device using host app")
@@ -352,7 +352,7 @@ def send_config_to_device(pipeline: Pipeline):
             else:
                 value = str(value)
 
-            ret = send_host_cmd(stage.index, command, *value.split(), verbose=True)
+            ret = send_control_cmd(stage.index, command, *value.split(), verbose=True)
 
             if ret.returncode:
                 return
@@ -960,7 +960,7 @@ def profile_pipeline(pipeline: Pipeline):
 
         # TODO Implement a generic way of reading all config from the stage
         command = "dsp_thread_max_cycles"
-        ret = send_host_cmd(thread.thread_stage.index, command)
+        ret = send_control_cmd(thread.thread_stage.index, command)
 
         if ret.returncode:
             return

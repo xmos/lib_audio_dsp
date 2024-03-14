@@ -49,6 +49,23 @@ def set_host_app(host_app, protocol="usb"):
 
 
 def set_host_app_xscope_port(port_num):
+    """
+    Set the port number on which to communicate with the device when doing control over xscope
+
+    Raises
+    ------
+    InvalidHostAppError
+        If the port is set before calling set_host_app() or if the port is set when protocol is not xscope
+
+    Parameters
+    ----------
+    host_app : int
+        Port number
+
+    Returns
+    -------
+    The return value from the subprocess.run(). The caller can use this to check the returncode, stdout etc.
+    """
     global PORT
     if not HOST_APP.is_file():
         raise InvalidHostAppError(f"Invalid Host App file {HOST_APP}. Call set_host_app() to set")
@@ -57,7 +74,25 @@ def set_host_app_xscope_port(port_num):
     PORT = port_num
 
 
-def send_host_cmd(instance_id, *args, verbose=False):
+def send_control_cmd(instance_id, *args, verbose=False):
+    """
+    Send a control command from the host to the device
+
+    Raises
+    ------
+    InvalidHostAppError
+        If set_host_app() hasn't been called to set the host app and protocol before calling this function.
+        If, when protocol is 'xscope', port num has not been set by calling set_host_app_xscope_port() before calling this function
+
+    Parameters
+    ----------
+    instance_id : int | str
+        Instance id of the stage to which this command is sent
+    *args : list[str]
+        Command + arguments for this control command
+    verbose : bool
+        When set to true, print the full command that gets issued
+    """
     if not HOST_APP.is_file():
         raise InvalidHostAppError(f"Invalid Host App file {HOST_APP}. Call set_host_app() to set")
     if PROTOCOL != "usb" and PROTOCOL != "xscope":
