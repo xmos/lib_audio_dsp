@@ -24,7 +24,15 @@ def alpha_from_time(attack_or_release_time, fs):
     # samples, and alpha can't be greater than 1
 
     T = 1 / fs
-    alpha = min(2 * T / (attack_or_release_time + FLT_MIN), 1.0)
+    alpha = 2 * T / (attack_or_release_time + FLT_MIN)
+
+    if alpha > 1:
+        alpha = 1
+        Warning("Attack or release time too fast for sample rate, setting as fast as possible.")
+
+    # I don't think this is possible, but let's make sure!
+    assert alpha > 0
+
     return alpha
 
 
@@ -132,4 +140,31 @@ def compressor_rms_gain_calc_xcore(envelope, threshold_f32, slope_f32):
     # down
     new_gain = (threshold_f32 / envelope) ** slope_f32
     new_gain = new_gain if new_gain < float32(1) else float32(1)
+    return new_gain
+
+def noise_gate_gain_calc(envelope, threshold):
+    """Calculate the float gain for the current sample.
+    """
+    if envelope < threshold:
+        new_gain = 0
+    else:
+        new_gain = 1
+    return new_gain
+
+def noise_gate_gain_calc_int(envelope_int, threshold_int):
+    """Calculate the int gain for the current sample.
+    """
+    if envelope_int < threshold_int:
+        new_gain_int = utils.int32(0)
+    else:
+        new_gain_int = utils.int32(2**30)
+    return new_gain_int
+
+def noise_gate_gain_calc_xcore(envelope, threshold_f32):
+    """Calculate the float32 gain for the current sample.
+    """
+    if envelope < threshold_f32:
+        new_gain = float32(0)
+    else:
+        new_gain = float32(1)
     return new_gain
