@@ -20,7 +20,7 @@ int main()
 {
   FILE * in = _fopen("../sig_48k.bin", "rb");
   FILE * out = _fopen("sig_out.bin", "wb");
-  FILE * lim_info = _fopen("lim_info.bin", "rb");
+  FILE * lim_info = _fopen("info.bin", "rb");
 
   fseek(in, 0, SEEK_END);
   int in_len = ftell(in) / sizeof(int32_t);
@@ -35,8 +35,6 @@ int main()
 
   limiter_t lim = (limiter_t){
               (env_detector_t){at_al, re_al, 0}, th, 1};
-
-  //printf("%ld %d %ld %ld\n", th.mant, th.exp, at_al, re_al);
 
   for (unsigned i = 0; i < in_len; i++)
   {
