@@ -18,21 +18,21 @@ class InvalidHostAppError(Exception):
     pass
 
 
-def set_host_app(host_app, protocol="usb"):
+def set_host_app(host_app, transport_protocol="usb"):
     """
-    Set the host_app and the protocol to use for control.
+    Set the host_app and the transport protocol to use for control.
 
     Raises
     ------
     InvalidHostAppError
-        If an invalid host app or protocol is selected.
+        If an invalid host app or transport protocol is selected.
 
     Parameters
     ----------
     host_app : str
         Host app file
-    protocol : str
-        Protocol to use for control. Only supported protocol is 'usb'
+    transport_protocol : str
+        Protocol to use for control. Supported transport protocols are usb and xscope
     """
     global HOST_APP
     global PROTOCOL
@@ -41,10 +41,10 @@ def set_host_app(host_app, protocol="usb"):
         HOST_APP = HOST_APP.with_suffix(".exe")
     if not HOST_APP.is_file():
         raise InvalidHostAppError(f"Host App file {str(HOST_APP)} doesn't exist")
-    PROTOCOL = protocol
-    if PROTOCOL != "usb" and protocol != "xscope":
+    PROTOCOL = transport_protocol
+    if PROTOCOL != "usb" and transport_protocol != "xscope":
         raise InvalidHostAppError(
-            f"Host control over {PROTOCOL} protocol not supported. Only usb or xscope protocol supported"
+            f"Host control over {PROTOCOL} transport protocol not supported. Only usb or xscope protocols are supported."
         )
 
 
@@ -55,7 +55,7 @@ def set_host_app_xscope_port(port_num):
     Raises
     ------
     InvalidHostAppError
-        If the port is set before calling set_host_app() or if the port is set when protocol is not xscope
+        If the port is set before calling set_host_app() or if the port is set when transport protocol is not xscope
 
     Parameters
     ----------
@@ -70,7 +70,7 @@ def set_host_app_xscope_port(port_num):
     if not HOST_APP.is_file():
         raise InvalidHostAppError(f"Invalid Host App file {HOST_APP}. Call set_host_app() to set")
     if PROTOCOL != "xscope":
-        raise InvalidHostAppError("Port is set only for xscope protocol")
+        raise InvalidHostAppError("Port is set only for xscope transport protocol")
     PORT = port_num
 
 
@@ -81,8 +81,8 @@ def send_control_cmd(instance_id, *args, verbose=False):
     Raises
     ------
     InvalidHostAppError
-        If set_host_app() hasn't been called to set the host app and protocol before calling this function.
-        If, when protocol is 'xscope', port num has not been set by calling set_host_app_xscope_port() before calling this function
+        If set_host_app() hasn't been called to set the host app and transport protocol before calling this function.
+        If the transport protocol is 'xscope', and port num has not been set by calling set_host_app_xscope_port() before calling this function
 
     Parameters
     ----------
@@ -96,9 +96,11 @@ def send_control_cmd(instance_id, *args, verbose=False):
     if not HOST_APP.is_file():
         raise InvalidHostAppError(f"Invalid Host App file {HOST_APP}. Call set_host_app() to set")
     if PROTOCOL != "usb" and PROTOCOL != "xscope":
-        raise InvalidHostAppError("Invalid host control protocol. Call set_host_app() to set")
+        raise InvalidHostAppError(
+            "Invalid host control transport protocol. Call set_host_app() to set"
+        )
     if PROTOCOL == "xscope" and PORT is None:
-        raise InvalidHostAppError("Port not set when using xscope protocol")
+        raise InvalidHostAppError("Port not set when using xscope transport protocol")
 
     if PROTOCOL != "xscope":
         ret = subprocess.run(
