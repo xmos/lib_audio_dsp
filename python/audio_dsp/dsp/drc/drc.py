@@ -899,9 +899,9 @@ class noise_gate(compressor_limiter_base):
         The attack coefficient calculated from the release time and sample rate.
     release_alpha : float
         The release coefficient calculated from the attack time and sample rate.
-    attack_alpha_f32 : np.float32
+    attack_alpha_f32 : float32
         The attack coefficient as a 32-bit floating-point number.
-    release_alpha_f32 : np.float32
+    release_alpha_f32 : float32
         The release coefficient as a 32-bit floating-point number.
     attack_alpha_int : int
         The attack coefficient as a 32-bit signed integer.
@@ -909,7 +909,7 @@ class noise_gate(compressor_limiter_base):
         The release coefficient as a 32-bit signed integer.
     threshold : float
         The threshold below which the signal is gated.
-    threshold_f32 : np.float32
+    threshold_f32 : float32
         The threshold level as a 32-bit floating-point number.
     threshold_int : int
         The threshold level as a 32-bit signed integer.
