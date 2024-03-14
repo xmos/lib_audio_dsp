@@ -12,13 +12,12 @@ from .stage import Stage, StageOutput, find_config
 from .thread import Thread
 from IPython import display
 import yaml
-import subprocess
 import hashlib
 import json
 import numpy as np
 from uuid import uuid4
 from ._draw import new_record_digraph
-from .host_app import get_host_app, InvalidHostAppError
+from .host_app import send_control_cmd
 from functools import wraps
 
 
@@ -314,25 +313,13 @@ def validate_pipeline_checksum(pipeline: Pipeline):
     ----------
     pipeline : Python pipeline for which to validate checksum against the device pipeline
     """
-    try:
-        host_app, protocol = get_host_app()
-    except InvalidHostAppError as e:
-        print(*e.args)
-        return
-
     assert pipeline.pipeline_stage is not None  # To stop ruff from complaining
 
-    ret = subprocess.run(
-        [
-            host_app,
-            "--use",
-            protocol,
-            "--instance-id",
-            str(pipeline.pipeline_stage.index),
-            "pipeline_checksum",
-        ],
-        stdout=subprocess.PIPE,
-    )
+    ret = send_control_cmd(pipeline.pipeline_stage.index, "pipeline_checksum")
+
+    if ret.returncode:
+        raise RuntimeError("Unable to connect to device using host app")
+
     stdout = ret.stdout.decode().splitlines()
     device_pipeline_checksum = [int(x) for x in stdout]
     equal = np.array_equal(
@@ -364,34 +351,11 @@ def send_config_to_device(pipeline: Pipeline):
                 value = " ".join(str(v) for v in value)
             else:
                 value = str(value)
-            try:
-                host_app, protocol = get_host_app()
-            except InvalidHostAppError as e:
-                print(*e.args)
-                return
-            ret = subprocess.run(
-                [
-                    host_app,
-                    "--use",
-                    protocol,
-                    "--instance-id",
-                    str(stage.index),
-                    command,
-                    *value.split(),
-                ]
-            )
+
+            ret = send_control_cmd(stage.index, command, *value.split(), verbose=True)
+
             if ret.returncode:
-                print(f"Unable to connect to device using {host_app}")
                 return
-            print(
-                host_app,
-                "--use",
-                protocol,
-                "--instance-id",
-                str(stage.index),
-                command,
-                *value.split(),
-            )
 
 
 def _filter_edges_by_thread(resolved_pipeline):
@@ -850,7 +814,6 @@ def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
 
     dsp_main = """
 #include <stages/adsp_pipeline.h>
-#include "dspt_main.h"
 #include <xcore/select.h>
 #include <xcore/channel.h>
 #include <xcore/hwtimer.h>
@@ -969,11 +932,6 @@ def profile_pipeline(pipeline: Pipeline):
     """
     validate_pipeline_checksum(pipeline)
 
-    try:
-        host_app, protocol = get_host_app()
-    except InvalidHostAppError as e:
-        print(*e.args)
-        return
     # print("Thread Index     Max Cycles")
     profile_info = []
     for thread in pipeline.threads:
@@ -1001,20 +959,11 @@ def profile_pipeline(pipeline: Pipeline):
 
         # TODO Implement a generic way of reading all config from the stage
         command = "dsp_thread_max_cycles"
-        ret = subprocess.run(
-            [
-                host_app,
-                "--use",
-                protocol,
-                "--instance-id",
-                str(thread.thread_stage.index),
-                command,
-            ],
-            stdout=subprocess.PIPE,
-        )
+        ret = send_control_cmd(thread.thread_stage.index, command)
+
         if ret.returncode:
-            print(f"Unable to connect to device using {host_app}")
             return
+
         cycles = int(ret.stdout.splitlines()[0].decode("utf-8"))
         percentage_used = (cycles / ticks_per_sample_time_s) * 100
         profile_info.append(
