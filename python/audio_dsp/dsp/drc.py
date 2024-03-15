@@ -79,18 +79,11 @@ class envelope_detector_peak(dspg.dsp_block):
         assert self.attack_alpha > 0
         assert self.release_alpha > 0
 
-        self.attack_alpha_int = utils.int32(round(self.attack_alpha * 2**30))
-        self.release_alpha_int = utils.int32(round(self.release_alpha * 2**30))
+        self.attack_alpha_int = utils.int32(round(self.attack_alpha * 2**31))
+        self.release_alpha_int = utils.int32(round(self.release_alpha * 2**31))
 
         assert self.attack_alpha_int > 0
         assert self.release_alpha_int > 0
-
-        self.attack_alpha_f32 = np.float32(self.attack_alpha)
-        self.release_alpha_f32 = np.float32(self.release_alpha)
-
-        # very long times might quantize to zero
-        assert self.attack_alpha_f32 > np.float32(0)
-        assert self.release_alpha_f32 > np.float32(0)
 
         # initalise envelope state
         self.reset_state()
@@ -98,7 +91,6 @@ class envelope_detector_peak(dspg.dsp_block):
     def reset_state(self):
         """Reset the envelope to zero."""
         self.envelope = [0] * self.n_chans
-        self.envelope_f32 = [np.float32(0)] * self.n_chans
         self.envelope_int = [utils.int32(0)] * self.n_chans
 
     def process(self, sample, channel=0):
@@ -123,7 +115,7 @@ class envelope_detector_peak(dspg.dsp_block):
 
         return self.envelope[channel]
 
-    def process_int(self, sample, channel=0):
+    def process_xcore(self, sample, channel=0):
         """
         Update the peak envelope for a signal, using int32 fixed point
         maths.
@@ -146,51 +138,17 @@ class envelope_detector_peak(dspg.dsp_block):
         else:
             alpha = self.release_alpha_int
 
-        # do exponential moving average, VPU mult uses 2**30, otherwise
-        # could use 2**31
-        self.envelope_int[channel] = utils.vpu_mult(2**30 - alpha, self.envelope_int[channel])
-        self.envelope_int[channel] += utils.vpu_mult(alpha, sample_mag)
+        # do exponential moving average
+        acc = int(self.envelope_int[channel]) << 31
+        mul = utils.int32(sample_mag - self.envelope_int[channel])
+        acc += mul * alpha
+        self.envelope_int[channel] = utils.int32_mult_sat_extract(acc, 1, 31)
+
 
         if isinstance(sample, float):
             return float(self.envelope_int[channel]) * 2**-self.Q_sig
         else:
             return self.envelope_int[channel]
-
-    def process_xcore(self, sample, channel=0):
-        """
-        Update the peak envelope for a signal, using np.float32 maths.
-
-        Take 1 new sample and return the updated envelope. If the input
-        is np.float32, return a np.float32, otherwise expect float input
-        and return float output.
-
-        """
-        if isinstance(sample, np.float32):
-            # don't do anything if we got np.float32, this function was
-            # probably called from a limiter or compressor
-            sample_f32 = sample
-        else:
-            # if input isn't np.float32, convert it
-            sample_f32 = np.float32(sample)
-
-        sample_mag = abs(sample_f32)
-
-        # see if we're attacking or decaying
-        if sample_mag > self.envelope_f32[channel]:
-            alpha = self.attack_alpha_f32
-        else:
-            alpha = self.release_alpha_f32
-
-        # do exponential moving average
-        self.envelope_f32[channel] = self.envelope_f32[channel] + alpha * (
-            sample_mag - self.envelope_f32[channel]
-        )
-
-        # if we got floats, return floats, otherwise return np.float32
-        if isinstance(sample, np.float32):
-            return self.envelope_f32[channel]
-        else:
-            return float(self.envelope_f32[channel])
 
 
 class envelope_detector_rms(envelope_detector_peak):
@@ -233,7 +191,7 @@ class envelope_detector_rms(envelope_detector_peak):
 
         return self.envelope[channel]
 
-    def process_int(self, sample, channel=0):
+    def process_xcore(self, sample, channel=0):
         """
         Update the RMS envelope for a signal, using int32 fixed point
         maths.
@@ -251,7 +209,9 @@ class envelope_detector_rms(envelope_detector_peak):
         else:
             sample_int = sample
 
-        sample_mag = utils.int32(utils.int64(sample_int * sample_int) >> self.Q_sig)
+        acc = int(1 << (self.Q_sig - 1))
+        acc += sample_int * sample_int
+        sample_mag = utils.int32_mult_sat_extract(acc, 1, self.Q_sig)
 
         # see if we're attacking or decaying
         if sample_mag > self.envelope_int[channel]:
@@ -259,56 +219,17 @@ class envelope_detector_rms(envelope_detector_peak):
         else:
             alpha = self.release_alpha_int
 
-        # do exponential moving average, VPU mult uses 2**30, otherwise
-        # could use 2**31
-        self.envelope_int[channel] = utils.vpu_mult(2**30 - alpha, self.envelope_int[channel])
-        self.envelope_int[channel] += utils.vpu_mult(alpha, sample_mag)
+        # do exponential moving average
+        acc = int(self.envelope_int[channel]) << 31
+        mul = utils.int32(sample_mag - self.envelope_int[channel])
+        acc += mul * alpha
+        self.envelope_int[channel] = utils.int32_mult_sat_extract(acc, 1, 31)
 
         # if we got floats, return floats, otherwise return ints
         if isinstance(sample, float):
             return float(self.envelope_int[channel]) * 2**-self.Q_sig
         else:
             return self.envelope_int[channel]
-
-    def process_xcore(self, sample, channel=0):
-        """
-        Update the RMS envelope for a signal, using np.float32 maths.
-
-        Take 1 new sample and return the updated envelope. Input should
-        be scaled with 0dB = 1.0.
-
-        Note this returns the mean**2 value, there is no need to do the
-        sqrt() as if the output is converted to dB, 10log10() can be
-        taken instead of 20log10().
-
-        """
-        if isinstance(sample, np.float32):
-            # don't do anything if we got np.float32, this function was
-            # probably called from a limiter or compressor
-            sample_f32 = sample
-        else:
-            # if input isn't np.float32, convert it
-            sample_f32 = np.float32(sample)
-
-        # for rms use power (sample**2)
-        sample_mag = sample_f32 * sample_f32
-
-        # see if we're attacking or decaying
-        if sample_mag > self.envelope_f32[channel]:
-            alpha = self.attack_alpha_f32
-        else:
-            alpha = self.release_alpha_f32
-
-        # do exponential moving average
-        self.envelope_f32[channel] = self.envelope_f32[channel] + alpha * (
-            sample_mag - self.envelope_f32[channel]
-        )
-
-        # if we got floats, return floats, otherwise return np.float32
-        if isinstance(sample, np.float32):
-            return self.envelope_f32[channel]
-        else:
-            return float(self.envelope_f32[channel])
 
 
 class compressor_limiter_base(dspg.dsp_block):

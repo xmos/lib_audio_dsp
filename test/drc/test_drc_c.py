@@ -54,7 +54,7 @@ def get_c_wav(dir_name, lim_name, sim = True):
   return sig_fl
 
 
-def run_py(filt: drc.compressor_limiter_base, sig_fl):
+def run_py(filt, sig_fl):
   out_f32 = np.zeros(sig_fl.size)
   out_f64 = np.zeros(sig_fl.size)
   
@@ -67,7 +67,7 @@ def run_py(filt: drc.compressor_limiter_base, sig_fl):
   for n in range(sig_fl.size):
     out_f64[n], _, _ = filt.process(sig_fl[n])
 
-  sf.write(gen_dir / "sig_py_flt.wav", out_f64, fs, "PCM_24")
+  #sf.write(gen_dir / "sig_py_flt.wav", out_f64, fs, "PCM_24")
 
   return out_f64, out_f32
 
@@ -76,6 +76,32 @@ def in_signal():
   bin_dir.mkdir(exist_ok=True, parents=True)
   gen_dir.mkdir(exist_ok=True, parents=True)
   return get_sig()
+
+@pytest.mark.parametrize("env_name", ["envelope_detector_peak",
+                                      "envelope_detector_rms"])
+@pytest.mark.parametrize("at", [0.001, 0.1])
+@pytest.mark.parametrize("rt", [0.01, 0.2])
+def test_env_det_c(in_signal, env_name, at, rt):
+  env_handle = getattr(drc, env_name)
+  env = env_handle(fs, 1, at, rt)
+  test_name = f"{env_name}_{at}_{rt}"
+
+  test_dir = bin_dir / test_name
+  test_dir.mkdir(exist_ok = True, parents = True)
+
+  env_info = [env.attack_alpha_int, env.release_alpha_int]
+  env_info = np.array(env_info, dtype = np.int32)
+  env_info.tofile(test_dir / "env_info.bin")
+
+  out_py_int = np.zeros(in_signal.size)
+  for n in range(in_signal.size):
+    out_py_int[n] = env.process_xcore(in_signal[n])
+
+  sf.write(gen_dir / "sig_py_int.wav", out_py_int, fs, "PCM_24")
+  out_c = get_c_wav(test_dir, env_name)
+  shutil.rmtree(test_dir)
+
+  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
 @pytest.mark.parametrize("lim_name", ["limiter_peak",
                                       "limiter_rms"])
@@ -90,8 +116,8 @@ def test_limiter_c(in_signal, lim_name, at, rt, threshold):
   test_dir = bin_dir / test_name
   test_dir.mkdir(exist_ok = True, parents = True)
 
-  lim_info = [lim.threshold_f32, lim.attack_alpha_f32, lim.release_alpha_f32]
-  lim_info = np.array(lim_info, dtype = np.float32)
+  lim_info = [lim.threshold_int, lim.attack_alpha_int, lim.release_alpha_int]
+  lim_info = np.array(lim_info, dtype = np.int32)
   lim_info.tofile(test_dir / "lim_info.bin")
 
   _, out_py_int = run_py(lim, in_signal)
@@ -142,6 +168,7 @@ if __name__ == "__main__":
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
 
+  test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
   #test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -20)
-  #test_limiter_c(sig_fl, "limiter_peak", 0.001, 0.01, -20)
-  test_compressor_c(sig_fl, "compressor_rms", 0.001, 0.01, -6, 4)
+  #test_limiter_c(sig_fl, "limiter_peak", 0.0001, 0.1, -10)
+  #test_compressor_c(sig_fl, "compressor_rms", 0.001, 0.01, -6, 4)

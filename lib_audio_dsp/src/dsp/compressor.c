@@ -4,7 +4,8 @@
 #include "dsp/adsp.h"
 #include <math.h>
 
-static inline int32_t apply_gain(int32_t samp, float gain) {
+/*static inline int32_t apply_gain(int32_t samp, float gain) {
+  // this assumes that gain is positive
   int32_t mant, exp, zero;
   asm("fsexp %0, %1, %2": "=r" (zero), "=r" (exp): "r" (gain));
   asm("fmant %0, %1": "=r" (mant): "r" (gain));
@@ -16,7 +17,7 @@ static inline int32_t apply_gain(int32_t samp, float gain) {
   asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (q));
 
   return ah;
-}
+}*/
 
 compressor_t adsp_compressor_rms_init(
   float fs,
@@ -37,7 +38,7 @@ int32_t adsp_compressor_rms(
   compressor_t * comp,
   int32_t new_samp
 ) {
-  adsp_env_detector_rms(&comp->env_det, new_samp);
+  /*adsp_env_detector_rms(&comp->env_det, new_samp);
   float env = comp->env_det.envelope;
   float th = comp->threshold;
   env = (env == 0) ? 1e-20 : env;
@@ -54,4 +55,6 @@ int32_t adsp_compressor_rms(
 
   comp->gain = comp->gain + alpha * (new_gain - comp->gain);
   return apply_gain(new_samp, comp->gain);
+  */
+ return new_samp;
 }

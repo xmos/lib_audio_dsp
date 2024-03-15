@@ -20,32 +20,26 @@ int main()
 {
   FILE * in = _fopen("../sig_48k.bin", "rb");
   FILE * out = _fopen("sig_out.bin", "wb");
-  FILE * lim_info = _fopen("lim_info.bin", "rb");
+  FILE * env_info = _fopen("env_info.bin", "rb");
 
   fseek(in, 0, SEEK_END);
   int in_len = ftell(in) / sizeof(int32_t);
   fseek(in, 0, SEEK_SET);
 
-  int32_t th, at_al, re_al;
+  int32_t at_al, re_al;
 
-  fread(&th, sizeof(int32_t), 1, lim_info);
-  fread(&at_al, sizeof(int32_t), 1, lim_info);
-  fread(&re_al, sizeof(int32_t), 1, lim_info);
-  fclose(lim_info);
+  fread(&at_al, sizeof(int32_t), 1, env_info);
+  fread(&re_al, sizeof(int32_t), 1, env_info);
+  fclose(env_info);
 
-  limiter_t lim = (limiter_t){
-              (env_detector_t){at_al, re_al, 0}, th, 1};
-
-  printf("%ld %ld %ld\n", th, at_al, re_al);
+  env_detector_t env_det = (env_detector_t){at_al, re_al, 0};
 
   for (unsigned i = 0; i < in_len; i++)
   {
-    int32_t samp = 0, samp_out = 0;
+    int32_t samp = 0;
     fread(&samp, sizeof(int32_t), 1, in);
-    //printf("%ld ", samp);
-    samp_out = adsp_limiter_peak(&lim, samp);
-    //printf("%ld ", samp_out);
-    fwrite(&samp_out, sizeof(int32_t), 1, out);
+    adsp_env_detector_peak(&env_det, samp);
+    fwrite(&env_det.envelope, sizeof(int32_t), 1, out);
   }
 
   fclose(in);
