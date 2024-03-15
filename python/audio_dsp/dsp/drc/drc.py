@@ -395,6 +395,10 @@ class compressor_limiter_base(dspg.dsp_block):
         self.threshold_int = None
         self.gain_int = [2**30] * self.n_chans
 
+        # slope is used for compressors, not limiters
+        self.slope = None
+        self.slope_f32 = None
+
         # very long times might quantize to zero, maybe just limit a
         # better way
         assert self.attack_alpha_int > 0
@@ -436,7 +440,7 @@ class compressor_limiter_base(dspg.dsp_block):
 
         # calculate the gain, this function should be defined by the
         # child class
-        new_gain = self.gain_calc(envelope)
+        new_gain = self.gain_calc(envelope, self.threshold, self.slope)
 
         # see if we're attacking or decaying
         if new_gain < self.gain[channel]:
@@ -469,7 +473,7 @@ class compressor_limiter_base(dspg.dsp_block):
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain_int = self.gain_calc_int(envelope_int)
+        new_gain_int = self.gain_calc_int(envelope_int, self.threshold_int, self.slope_f32)
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int[channel]:
@@ -513,7 +517,7 @@ class compressor_limiter_base(dspg.dsp_block):
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain = self.gain_calc_xcore(envelope)
+        new_gain = self.gain_calc_xcore(envelope, self.threshold_f32, self.slope_f32)
 
         # see if we're attacking or decaying
         if new_gain < self.gain_f32[channel]:
@@ -613,20 +617,10 @@ class limiter_peak(compressor_limiter_base):
             Q_sig=self.Q_sig,
         )
 
-    def gain_calc(self, envelope):
-        """Calculate the float gain for the current sample
-        """
-        return drcu.limiter_peak_gain_calc(envelope, self.threshold)
-
-    def gain_calc_int(self, envelope_int):
-        """Calculate the int32 gain for the current sample
-        """
-        return drcu.limiter_peak_gain_calc_int(envelope_int, self.threshold_int)
-
-    def gain_calc_xcore(self, envelope):
-        """Calculate the float32 gain for the current sample
-        """
-        return drcu.limiter_peak_gain_calc_xcore(envelope, self.threshold_f32)
+        # set the gain calculation function handles
+        self.gain_calc = drcu.limiter_peak_gain_calc
+        self.gain_calc_int = drcu.limiter_peak_gain_calc_int
+        self.gain_calc_xcore = drcu.limiter_peak_gain_calc_xcore
 
 
 class limiter_rms(compressor_limiter_base):
@@ -668,32 +662,10 @@ class limiter_rms(compressor_limiter_base):
             Q_sig=self.Q_sig,
         )
 
-    def gain_calc(self, envelope):
-        """Calculate the float gain for the current sample
-
-        Note that as the RMS envelope detector returns x**2, we need to
-        sqrt the gain.
-
-        """
-        return drcu.limiter_rms_gain_calc(envelope, self.threshold)
-
-    def gain_calc_int(self, envelope_int):
-        """Calculate the int gain for the current sample
-
-        Note that as the RMS envelope detector returns x**2, we need to
-        sqrt the gain.
-
-        """
-        return drcu.limiter_rms_gain_calc_int(envelope_int, self.threshold_int)
-
-    def gain_calc_xcore(self, envelope):
-        """Calculate the float32 gain for the current sample
-
-        Note that as the RMS envelope detector returns x**2, we need to
-        sqrt the gain.
-
-        """
-        return drcu.limiter_rms_gain_calc_xcore(envelope, self.threshold_f32)
+        # set the gain calculation function handles
+        self.gain_calc = drcu.limiter_rms_gain_calc
+        self.gain_calc_int = drcu.limiter_rms_gain_calc_int
+        self.gain_calc_xcore = drcu.limiter_rms_gain_calc_xcore
 
 
 class hard_limiter_peak(limiter_peak):
@@ -854,20 +826,10 @@ class compressor_rms(compressor_limiter_base):
         self.slope = (1 - 1 / self.ratio) / 2.0
         self.slope_f32 = float32(self.slope)
 
-    def gain_calc(self, envelope):
-        """Calculate the float gain for the current sample
-        """
-        return drcu.compressor_rms_gain_calc(envelope, self.threshold, self.slope)
-
-    def gain_calc_int(self, envelope_int):
-        """Calculate the int gain for the current sample
-        """
-        return drcu.compressor_rms_gain_calc_int(envelope_int, self.threshold_int, self.slope_f32)
-
-    def gain_calc_xcore(self, envelope):
-        """Calculate the float32 gain for the current sample
-        """
-        return drcu.compressor_rms_gain_calc_xcore(envelope, self.threshold_f32, self.slope_f32)
+        # set the gain calculation function handles
+        self.gain_calc = drcu.compressor_rms_gain_calc
+        self.gain_calc_int = drcu.compressor_rms_gain_calc_int
+        self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
 
 
 class compressor_rms_sidechain_mono(compressor_limiter_base):
@@ -937,6 +899,11 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         self.slope = (1 - 1 / self.ratio) / 2.0
         self.slope_f32 = float32(self.slope)
 
+        # set the gain calculation function handles
+        self.gain_calc = drcu.compressor_rms_gain_calc
+        self.gain_calc_int = drcu.compressor_rms_gain_calc_int
+        self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
+
     def process(self, input_sample, detect_sample, channel=0):
         """
         Update the envelope for the detection signal, then calculate and
@@ -954,7 +921,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
         # calculate the gain, this function should be defined by the
         # child class
-        new_gain = self.gain_calc(envelope)
+        new_gain = self.gain_calc(envelope, self.threshold, self.slope)
 
         # see if we're attacking or decaying
         if new_gain < self.gain[channel]:
@@ -996,7 +963,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain = self.gain_calc_xcore(envelope)
+        new_gain = self.gain_calc_xcore(envelope, self.threshold_f32, self.slope_f32)
 
         # see if we're attacking or decaying
         if new_gain < self.gain_f32[channel]:
@@ -1058,22 +1025,6 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
             output[sample] = self.process_xcore(frame[0][sample], frame[1][sample])[0]
 
         return [output]
-
-
-    def gain_calc(self, envelope):
-        """Calculate the float gain for the current sample
-        """
-        return drcu.compressor_rms_gain_calc(envelope, self.threshold, self.slope)
-
-    def gain_calc_int(self, envelope_int):
-        """Calculate the int gain for the current sample
-        """
-        return drcu.compressor_rms_gain_calc_int(envelope_int, self.threshold_int, self.slope_f32)
-
-    def gain_calc_xcore(self, envelope):
-        """Calculate the float32 gain for the current sample
-        """
-        return drcu.compressor_rms_gain_calc_xcore(envelope, self.threshold_f32, self.slope_f32)
 
 
 class noise_gate(compressor_limiter_base):
@@ -1140,20 +1091,10 @@ class noise_gate(compressor_limiter_base):
             Q_sig=self.Q_sig,
         )
 
-    def gain_calc(self, envelope):
-        """Calculate the float gain for the current sample.
-        """
-        return drcu.noise_gate_gain_calc(envelope, self.threshold)
-
-    def gain_calc_int(self, envelope_int):
-        """Calculate the int gain for the current sample.
-        """
-        return drcu.noise_gate_gain_calc_int(envelope_int, self.threshold_int)
-
-    def gain_calc_xcore(self, envelope):
-        """Calculate the float32 gain for the current sample.
-        """
-        return drcu.noise_gate_gain_calc_xcore(envelope, self.threshold_f32)
+        # set the gain calculation function handles
+        self.gain_calc = drcu.noise_gate_gain_calc
+        self.gain_calc_int = drcu.noise_gate_gain_calc_int
+        self.gain_calc_xcore = drcu.noise_gate_gain_calc_xcore
 
 
 if __name__ == "__main__":

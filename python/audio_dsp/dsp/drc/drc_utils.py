@@ -36,14 +36,14 @@ def alpha_from_time(attack_or_release_time, fs):
     return alpha
 
 
-def limiter_peak_gain_calc(envelope, threshold):
+def limiter_peak_gain_calc(envelope, threshold, slope=None):
     """Calculate the float gain for the current sample"""
     new_gain = threshold / envelope
     new_gain = min(1, new_gain)
     return new_gain
 
 
-def limiter_peak_gain_calc_int(envelope_int, threshold_int):
+def limiter_peak_gain_calc_int(envelope_int, threshold_int, slope=None):
     """Calculate the int gain for the current sample"""
     new_gain = float(threshold_int) / float(envelope_int)
     new_gain = min(1.0, new_gain)
@@ -51,14 +51,14 @@ def limiter_peak_gain_calc_int(envelope_int, threshold_int):
     return new_gain_int
 
 
-def limiter_peak_gain_calc_xcore(envelope, threshold_f32):
+def limiter_peak_gain_calc_xcore(envelope, threshold_f32, slope=None):
     """Calculate the float32 gain for the current sample"""
     new_gain = threshold_f32 / envelope
     new_gain = new_gain if new_gain < float32(1) else float32(1)
     return new_gain
 
 
-def limiter_rms_gain_calc(envelope, threshold):
+def limiter_rms_gain_calc(envelope, threshold, slope=None):
     """Calculate the float gain for the current sample
 
     Note that as the RMS envelope detector returns x**2, we need to
@@ -70,7 +70,7 @@ def limiter_rms_gain_calc(envelope, threshold):
     return new_gain
 
 
-def limiter_rms_gain_calc_int(envelope_int, threshold_int):
+def limiter_rms_gain_calc_int(envelope_int, threshold_int, slope=None):
     """Calculate the int gain for the current sample
 
     Note that as the RMS envelope detector returns x**2, we need to
@@ -83,7 +83,7 @@ def limiter_rms_gain_calc_int(envelope_int, threshold_int):
     return new_gain_int
 
 
-def limiter_rms_gain_calc_xcore(envelope, threshold_f32):
+def limiter_rms_gain_calc_xcore(envelope, threshold_f32, slope=None):
     """Calculate the float32 gain for the current sample
 
     Note that as the RMS envelope detector returns x**2, we need to
@@ -97,7 +97,7 @@ def limiter_rms_gain_calc_xcore(envelope, threshold_f32):
     return new_gain
 
 
-def compressor_rms_gain_calc(envelope, threshold, slope):
+def compressor_rms_gain_calc(envelope, threshold, slope=None):
     """Calculate the float gain for the current sample
 
     Note that as the RMS envelope detector returns x**2, we need to
@@ -112,7 +112,7 @@ def compressor_rms_gain_calc(envelope, threshold, slope):
     return new_gain
 
 
-def compressor_rms_gain_calc_int(envelope_int, threshold_int, slope_f32):
+def compressor_rms_gain_calc_int(envelope_int, threshold_int, slope_f32=None):
     """Calculate the int gain for the current sample
 
     Note that as the RMS envelope detector returns x**2, we need to
@@ -128,7 +128,7 @@ def compressor_rms_gain_calc_int(envelope_int, threshold_int, slope_f32):
     return new_gain_int
 
 
-def compressor_rms_gain_calc_xcore(envelope, threshold_f32, slope_f32):
+def compressor_rms_gain_calc_xcore(envelope, threshold_f32, slope_f32=None):
     """Calculate the float32 gain for the current sample
 
     Note that as the RMS envelope detector returns x**2, we need to
@@ -142,7 +142,7 @@ def compressor_rms_gain_calc_xcore(envelope, threshold_f32, slope_f32):
     new_gain = new_gain if new_gain < float32(1) else float32(1)
     return new_gain
 
-def noise_gate_gain_calc(envelope, threshold):
+def noise_gate_gain_calc(envelope, threshold, slope=None):
     """Calculate the float gain for the current sample.
     """
     if envelope < threshold:
@@ -151,7 +151,7 @@ def noise_gate_gain_calc(envelope, threshold):
         new_gain = 1
     return new_gain
 
-def noise_gate_gain_calc_int(envelope_int, threshold_int):
+def noise_gate_gain_calc_int(envelope_int, threshold_int, slope_int=None):
     """Calculate the int gain for the current sample.
     """
     if envelope_int < threshold_int:
@@ -160,7 +160,7 @@ def noise_gate_gain_calc_int(envelope_int, threshold_int):
         new_gain_int = utils.int32(2**30)
     return new_gain_int
 
-def noise_gate_gain_calc_xcore(envelope, threshold_f32):
+def noise_gate_gain_calc_xcore(envelope, threshold_f32, slope_f32=None):
     """Calculate the float32 gain for the current sample.
     """
     if envelope < threshold_f32:
