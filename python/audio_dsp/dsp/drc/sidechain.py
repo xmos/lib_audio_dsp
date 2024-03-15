@@ -230,11 +230,12 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         self.gain_calc_int = drcu.compressor_rms_gain_calc_int
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
 
-    def process_channels(self, input_samples: [float, float], detect_samples: [float, float]):  # type: ignore
+    def process_channels(self, input_samples: list[float], detect_samples: list[float]):  # type: ignore
         """
-        Update the envelopes for a signal, then calculate and apply the
-        required gain for compression/limiting, using floating point
-        maths.
+        Update the envelopes for a detection signal, then calculate and
+        apply the required gain for compression/limiting to the input,
+        using floating point maths. The same gain is applied to both
+        stereo channels.
 
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.
@@ -264,11 +265,12 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         y = self.gain * input_samples
         return y, new_gain, envelope
 
-    def process_channels_int(self, input_samples: [float, float], detect_samples: [float, float]):  # type: ignore
+    def process_channels_int(self, input_samples: list[float], detect_samples: list[float]):  # type: ignore
         """
-        Update the envelopes for a signal, then calculate and apply the
-        required gain for compression/limiting, using int32 fixed point
-        maths.
+        Update the envelopes for a detection signal, then calculate and
+        apply the required gain for compression/limiting to the input,
+        using int32 fixed point maths. The same gain is applied to both
+        stereo channels.
 
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.
@@ -314,12 +316,14 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
             (float(envelope_int) * 2**-self.Q_sig),
         )
 
-    def process_channels_xcore(
-        self, input_samples: [float, float], detect_samples: [float, float]
-    ):  # type: ignore
+    def process_channels_xcore(  # type: ignore
+        self, input_samples: list[float], detect_samples: list[float]
+    ):
         """
-        Update the envelopes for a signal, then calculate and apply the
-        required gain for compression/limiting, using float32 maths.
+        Update the envelopes for a detection signal, then calculate and
+        apply the required gain for compression/limiting to the input,
+        using float32 maths. The same gain is applied to both
+        stereo channels.
 
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.

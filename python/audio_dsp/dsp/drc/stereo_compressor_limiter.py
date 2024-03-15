@@ -15,6 +15,12 @@ from audio_dsp.dsp.types import float32
 
 
 class compressor_limiter_stereo_base(dspg.dsp_block):
+    """
+    Stereo compressors and limiters work in a similar way to normal
+    compressor_limiter_base objects, but they process two channels and
+    apply the same gain to both channels.
+    """
+
     def __init__(self, fs, n_chans, attack_t, release_t, Q_sig=dspg.Q_SIG):
         assert n_chans == 2, "has to be stereo"
         super().__init__(fs, n_chans, Q_sig)
@@ -54,25 +60,19 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         self.gain_f32 = float32(1)
         self.gain_int = 2**30
 
-    def gain_calc(self, envelope):
-        """Calculate the float gain for the current sample"""
-        raise NotImplementedError
-
-    def gain_calc_int(self, envelope_int):
-        """Calculate the int gain for the current sample"""
-        raise NotImplementedError
-
-    def gain_calc_xcore(self, envelope):
-        """Calculate the float32 gain for the current sample"""
-        raise NotImplementedError
+        # set the gain calculation function handles
+        self.gain_calc = None
+        self.gain_calc_int = None
+        self.gain_calc_xcore = None
 
     def process_channels(self, input_samples):
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using floating point
-        maths.
+        maths. The same gain is applied to both stereo channels.
 
-        Take one new sample and return the compressed/limited sample.
+        Take one new pair of samples and return the compressed/limited
+        samples.
         Input should be scaled with 0dB = 1.0.
 
         """
@@ -104,9 +104,10 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using int32 fixed point
-        maths.
+        maths. The same gain is applied to both stereo channels.
 
-        Take one new sample and return the compressed/limited sample.
+        Take one new pair of samples and return the compressed/limited
+        samples.
         Input should be scaled with 0dB = 1.0.
 
         """
@@ -154,8 +155,10 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using float32 maths.
+        The same gain is applied to both stereo channels.
 
-        Take one new sample and return the compressed/limited sample.
+        Take one new pair of samples and return the compressed/limited
+        samples.
         Input should be scaled with 0dB = 1.0.
 
         """
@@ -210,7 +213,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         number of arrays is equal to the number of channels, and the
         length of the arrays is equal to the frame size.
 
-        When calling self.process only take the first output.
+        When calling self.process_channels only take the first output.
 
         """
         n_outputs = len(frame)
@@ -218,7 +221,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         frame_size = frame[0].shape[0]
         output = deepcopy(frame)
         for sample in range(frame_size):
-            out_samples = self.process_channels([frame[0][sample], frame[1][sample]])
+            out_samples = self.process_channels([frame[0][sample], frame[1][sample]])[0]
             output[0][sample] = out_samples[0]
             output[1][sample] = out_samples[1]
         return output
@@ -231,7 +234,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         number of arrays is equal to the number of channels, and the
         length of the arrays is equal to the frame size.
 
-        When calling self.process_xcore only take the first output.
+        When calling self.process_channel_xcore only take the first output.
 
         """
         n_outputs = len(frame)
@@ -239,7 +242,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         frame_size = frame[0].shape[0]
         output = deepcopy(frame)
         for sample in range(frame_size):
-            out_samples = self.process_channels_xcore([frame[0][sample], frame[1][sample]])
+            out_samples = self.process_channels_xcore([frame[0][sample], frame[1][sample]])[0]
             output[0][sample] = out_samples[0]
             output[1][sample] = out_samples[1]
 
@@ -247,6 +250,17 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
 
 class limiter_peak_stereo(compressor_limiter_stereo_base):
+    """
+    A stereo limiter based on the peak value of the signal. When the
+    peak envelope of either signal channel, exceeds the threshold, the
+    amplitudes of both channels are reduced.
+
+    The threshold set the value above which limiting occurs. The attack
+    time sets how fast the limiter starts limiting. The release time
+    sets how long the signal takes to ramp up to it's original level
+    after the envelope is below the threshold.
+    """
+
     def __init__(self, fs, threshold_dB, attack_t, release_t, Q_sig=dspg.Q_SIG):
         n_chans = 2
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
@@ -269,6 +283,20 @@ class limiter_peak_stereo(compressor_limiter_stereo_base):
 
 
 class compressor_rms_stereo(compressor_limiter_stereo_base):
+    """
+    A stereo compressor based on the RMS value of the signal. When the
+    RMS envelope of the either signal channel exceeds the threshold, the
+    amplitudes of both channels are reduced by the compression ratio.
+
+    The threshold sets the value above which compression occurs. The
+    ratio sets how much the signal is compressed. A ratio of 1 results
+    in no compression, while a ratio of infinity results in the same
+    behaviour as a limiter. The attack time sets how fast the comressor
+    starts compressing. The release time sets how long the signal takes
+    to ramp up to it's original level after the envelope is below the
+    threshold.
+    """
+
     def __init__(self, fs, ratio, threshold_dB, attack_t, release_t, Q_sig=dspg.Q_SIG):
         n_chans = 2
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
