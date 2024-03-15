@@ -71,8 +71,6 @@ class envelope_detector_peak(dspg.dsp_block):
         self.attack_alpha = drcu.alpha_from_time(attack_t, fs)
         self.release_alpha = drcu.alpha_from_time(release_t, fs)
 
-
-
         self.attack_alpha_int = utils.int32(round(self.attack_alpha * 2**30))
         self.release_alpha_int = utils.int32(round(self.release_alpha * 2**30))
 
@@ -421,7 +419,7 @@ class compressor_limiter_base(dspg.dsp_block):
         """Calculate the float32 gain for the current sample"""
         raise NotImplementedError
 
-    def process(self, input_sample, detect_sample, channel=0):
+    def process(self, sample, channel=0):
         """
         Update the envelope for a signal, then calculate and apply the
         required gain for compression/limiting, using floating point
@@ -432,7 +430,7 @@ class compressor_limiter_base(dspg.dsp_block):
 
         """
         # get envelope from envelope detector
-        envelope = self.env_detector.process(detect_sample, channel)
+        envelope = self.env_detector.process(sample, channel)
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
@@ -450,10 +448,10 @@ class compressor_limiter_base(dspg.dsp_block):
         self.gain[channel] = ((1 - alpha) * self.gain[channel]) + (alpha * new_gain)
 
         # apply gain to input
-        y = self.gain[channel] * input_sample
+        y = self.gain[channel] * sample
         return y, new_gain, envelope
 
-    def process_int(self, input_sample, detect_sample, channel=0):
+    def process_int(self, sample, channel=0):
         """
         Update the envelope for a signal, then calculate and apply the
         required gain for compression/limiting, using int32 fixed point
@@ -463,10 +461,9 @@ class compressor_limiter_base(dspg.dsp_block):
         Input should be scaled with 0dB = 1.0.
 
         """
-        sample_int = utils.int32(round(input_sample * 2**self.Q_sig))
-        detect_sample_int = utils.int32(round(detect_sample * 2**self.Q_sig))
+        sample_int = utils.int32(round(sample * 2**self.Q_sig))
         # get envelope from envelope detector
-        envelope_int = self.env_detector.process_int(detect_sample_int, channel)
+        envelope_int = self.env_detector.process_int(sample_int, channel)
         # avoid /0
         envelope_int = max(envelope_int, 1)
 
@@ -493,7 +490,7 @@ class compressor_limiter_base(dspg.dsp_block):
             (float(envelope_int) * 2**-self.Q_sig),
         )
 
-    def process_xcore(self, input_sample, detect_sample, channel=0):
+    def process_xcore(self, sample, channel=0):
         """
         Update the envelope for a signal, then calculate and apply the
         required gain for compression/limiting, using float32 maths.
@@ -503,13 +500,13 @@ class compressor_limiter_base(dspg.dsp_block):
 
         """
         # quantize
-        sample_int = utils.int32(round(input_sample * 2**self.Q_sig))
-        detect_sample = utils.float_s32(detect_sample)
-        detect_sample = utils.float_s32_use_exp(detect_sample, -27)
-        detect_sample = float32(float(detect_sample))
+        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        sample = utils.float_s32(sample)
+        sample = utils.float_s32_use_exp(sample, -27)
+        sample = float32(float(sample))
 
         # get envelope from envelope detector
-        envelope = self.env_detector.process_xcore(detect_sample, channel)
+        envelope = self.env_detector.process_xcore(sample, channel)
         # avoid /0
         if envelope == float32(0):
             envelope = float32(1e-20)
@@ -616,22 +613,19 @@ class limiter_peak(compressor_limiter_base):
             Q_sig=self.Q_sig,
         )
 
-    def process(self, sample, channel=0):
-        return super().process(sample, sample, channel)
-
-    def process_int(self, sample, channel=0):
-        return super().process_int(sample, sample, channel)
-
-    def process_xcore(self, sample, channel=0):
-        return super().process_xcore(sample, sample, channel)
-
     def gain_calc(self, envelope):
+        """Calculate the float gain for the current sample
+        """
         return drcu.limiter_peak_gain_calc(envelope, self.threshold)
 
     def gain_calc_int(self, envelope_int):
+        """Calculate the int32 gain for the current sample
+        """
         return drcu.limiter_peak_gain_calc_int(envelope_int, self.threshold_int)
 
     def gain_calc_xcore(self, envelope):
+        """Calculate the float32 gain for the current sample
+        """
         return drcu.limiter_peak_gain_calc_xcore(envelope, self.threshold_f32)
 
 
@@ -673,15 +667,6 @@ class limiter_rms(compressor_limiter_base):
             release_t=release_t,
             Q_sig=self.Q_sig,
         )
-
-    def process(self, sample, channel=0):
-        return super().process(sample, sample, channel)
-
-    def process_int(self, sample, channel=0):
-        return super().process_int(sample, sample, channel)
-
-    def process_xcore(self, sample, channel=0):
-        return super().process_xcore(sample, sample, channel)
 
     def gain_calc(self, envelope):
         """Calculate the float gain for the current sample
@@ -869,15 +854,6 @@ class compressor_rms(compressor_limiter_base):
         self.slope = (1 - 1 / self.ratio) / 2.0
         self.slope_f32 = float32(self.slope)
 
-    def process(self, sample, channel=0):
-        return super().process(sample, sample, channel)
-
-    def process_int(self, sample, channel=0):
-        return super().process_int(sample, sample, channel)
-
-    def process_xcore(self, sample, channel=0):
-        return super().process_xcore(sample, sample, channel)
-
     def gain_calc(self, envelope):
         """Calculate the float gain for the current sample
         """
@@ -960,6 +936,86 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         self.ratio = ratio
         self.slope = (1 - 1 / self.ratio) / 2.0
         self.slope_f32 = float32(self.slope)
+
+    def process(self, input_sample, detect_sample, channel=0):
+        """
+        Update the envelope for the detection signal, then calculate and
+        apply the required gain for compression/limiting, and apply to
+        the input signal using floating point maths.
+
+        Take one new sample and return the compressed/limited sample.
+        Input should be scaled with 0dB = 1.0.
+
+        """
+        # get envelope from envelope detector
+        envelope = self.env_detector.process(detect_sample, channel)
+        # avoid /0
+        envelope = np.maximum(envelope, np.finfo(float).tiny)
+
+        # calculate the gain, this function should be defined by the
+        # child class
+        new_gain = self.gain_calc(envelope)
+
+        # see if we're attacking or decaying
+        if new_gain < self.gain[channel]:
+            alpha = self.attack_alpha
+        else:
+            alpha = self.release_alpha
+
+        # do exponential moving average
+        self.gain[channel] = ((1 - alpha) * self.gain[channel]) + (alpha * new_gain)
+
+        # apply gain to input
+        y = self.gain[channel] * input_sample
+        return y, new_gain, envelope
+
+    def process_xcore(self, input_sample, detect_sample, channel=0):
+        """
+        Update the envelope for the detection signal, then calculate and
+        apply the required gain for compression/limiting, and apply to
+        the input signal using float32 maths.
+
+        Take one new sample and return the compressed/limited sample.
+        Input should be scaled with 0dB = 1.0.
+
+        """
+        # quantize
+        sample_int = utils.int32(round(input_sample * 2**self.Q_sig))
+        detect_sample = utils.float_s32(detect_sample)
+        detect_sample = utils.float_s32_use_exp(detect_sample, -27)
+        detect_sample = float32(float(detect_sample))
+
+        # get envelope from envelope detector
+        envelope = self.env_detector.process_xcore(detect_sample, channel)
+        # avoid /0
+        if envelope == float32(0):
+            envelope = float32(1e-20)
+
+        # if envelope below threshold, apply unity gain, otherwise scale
+        # down
+        new_gain = self.gain_calc_xcore(envelope)
+
+        # see if we're attacking or decaying
+        if new_gain < self.gain_f32[channel]:
+            alpha = self.attack_alpha_f32
+        else:
+            alpha = self.release_alpha_f32
+
+        # do exponential moving average
+        self.gain_f32[channel] = self.gain_f32[channel] + alpha * (
+            new_gain - self.gain_f32[channel]
+        )
+
+        # apply gain in int32
+        this_gain_int = (self.gain_f32[channel] * float32(2**30)).as_int32()
+        acc = int(1 << 29)
+        acc += this_gain_int * sample_int
+        y = utils.int32_mult_sat_extract(acc, 1, 30)
+
+        # quantize before return
+        y = float(y) * 2**-self.Q_sig
+
+        return y, float(new_gain), float(envelope)
 
     def process_frame(self, frame):
         """
@@ -1080,15 +1136,6 @@ class noise_gate(compressor_limiter_base):
             release_t=release_t,
             Q_sig=self.Q_sig,
         )
-
-    def process(self, sample, channel=0):
-        return super().process(sample, sample, channel)
-
-    def process_int(self, sample, channel=0):
-        return super().process_int(sample, sample, channel)
-
-    def process_xcore(self, sample, channel=0):
-        return super().process_xcore(sample, sample, channel)
 
     def gain_calc(self, envelope):
         """Calculate the float gain for the current sample.
