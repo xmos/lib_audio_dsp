@@ -379,7 +379,6 @@ class compressor_limiter_base(dspg.dsp_block):
         # calculate EWM alpha from time constant
         self.attack_alpha = drcu.alpha_from_time(attack_t, fs)
         self.release_alpha = drcu.alpha_from_time(release_t, fs)
-        self.gain = [1] * n_chans
 
         # These are defined differently for peak and RMS limiters
         self.threshold = None
@@ -388,12 +387,10 @@ class compressor_limiter_base(dspg.dsp_block):
         self.attack_alpha_f32 = float32(self.attack_alpha)
         self.release_alpha_f32 = float32(self.release_alpha)
         self.threshold_f32 = None
-        self.gain_f32 = [float32(1)] * n_chans
 
         self.attack_alpha_int = utils.int32(round(self.attack_alpha * 2**30))
         self.release_alpha_int = utils.int32(round(self.release_alpha * 2**30))
         self.threshold_int = None
-        self.gain_int = [2**30] * self.n_chans
 
         # slope is used for compressors, not limiters
         self.slope = None
@@ -404,9 +401,13 @@ class compressor_limiter_base(dspg.dsp_block):
         assert self.attack_alpha_int > 0
         assert self.release_alpha_int > 0
 
+        # initialise gain states
+        self.reset_state()
+
     def reset_state(self):
         """Reset the envelope detector to 0 and the gain to 1."""
-        self.env_detector.reset_state()
+        if self.env_detector:
+            self.env_detector.reset_state()
         self.gain = [1] * self.n_chans
         self.gain_f32 = [float32(1)] * self.n_chans
         self.gain_int = [2**30] * self.n_chans
@@ -1068,7 +1069,9 @@ class noise_gate(compressor_limiter_base):
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
+        # don't use super(), as the attack and release times are swapped
+        # but still init the block
+        dspg.dsp_block.__init__(self, fs, n_chans, Q_sig)
 
         # for the noise gate, the attack and release times are swapped
         # i.e. attack time is after going under threshold instead of over
@@ -1091,10 +1094,16 @@ class noise_gate(compressor_limiter_base):
             Q_sig=self.Q_sig,
         )
 
+        # slope is not used, but must be present
+        self.slope = None
+        self.slope_f32 = None
+
         # set the gain calculation function handles
         self.gain_calc = drcu.noise_gate_gain_calc
         self.gain_calc_int = drcu.noise_gate_gain_calc_int
         self.gain_calc_xcore = drcu.noise_gate_gain_calc_xcore
+
+        self.reset_state()
 
 
 if __name__ == "__main__":
