@@ -11,7 +11,6 @@ FLT_MIN = np.finfo(float).tiny
 
 
 def alpha_from_time(attack_or_release_time, fs):
-
     # Attack times simplified from McNally, seem pretty close.
     # Assumes the time constant of a digital filter is the -3 dB
     # point where abs(H(z))**2 = 0.5.
@@ -92,7 +91,7 @@ def limiter_rms_gain_calc_xcore(envelope, threshold_f32, slope=None):
     """
     # note use np.sqrt to ensure we stay in f32, using math.sqrt
     # will return float!
-    new_gain = (threshold_f32 / envelope)**float32(0.5)
+    new_gain = (threshold_f32 / envelope) ** float32(0.5)
     new_gain = new_gain if new_gain < float32(1) else float32(1)
     return new_gain
 
@@ -142,27 +141,27 @@ def compressor_rms_gain_calc_xcore(envelope, threshold_f32, slope_f32=None):
     new_gain = new_gain if new_gain < float32(1) else float32(1)
     return new_gain
 
+
 def noise_gate_gain_calc(envelope, threshold, slope=None):
-    """Calculate the float gain for the current sample.
-    """
+    """Calculate the float gain for the current sample."""
     if envelope < threshold:
         new_gain = 0
     else:
         new_gain = 1
     return new_gain
 
+
 def noise_gate_gain_calc_int(envelope_int, threshold_int, slope_int=None):
-    """Calculate the int gain for the current sample.
-    """
+    """Calculate the int gain for the current sample."""
     if envelope_int < threshold_int:
         new_gain_int = utils.int32(0)
     else:
         new_gain_int = utils.int32(2**30)
     return new_gain_int
 
+
 def noise_gate_gain_calc_xcore(envelope, threshold_f32, slope_f32=None):
-    """Calculate the float32 gain for the current sample.
-    """
+    """Calculate the float32 gain for the current sample."""
     if envelope < threshold_f32:
         new_gain = float32(0)
     else:

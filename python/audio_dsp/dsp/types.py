@@ -19,12 +19,21 @@ class float32:
     def __repr__(self):
         return self.__str__()
 
+    def __iter__(self):
+        yield self.value
+
     def __abs__(self):
         return float32(np.abs(self.value))
 
     def __gt__(self, other_f32):
         if isinstance(other_f32, float32):
             return self.value > other_f32.value
+        else:
+            raise TypeError("float32 can only be compared against float32")
+
+    def __lt__(self, other_f32):
+        if isinstance(other_f32, float32):
+            return self.value < other_f32.value
         else:
             raise TypeError("float32 can only be compared against float32")
 
@@ -48,13 +57,13 @@ class float32:
 
     def __mul__(self, other_f32):
         if isinstance(other_f32, float32):
-            return float32(self.value*other_f32.value)
+            return float32(self.value * other_f32.value)
         else:
             raise TypeError("float32 can only be multiplied with float32")
 
     def __truediv__(self, other_f32):
         if isinstance(other_f32, float32):
-            return float32(self.value/other_f32.value)
+            return float32(self.value / other_f32.value)
         else:
             raise TypeError("float32 can only be multiplied with float32")
 

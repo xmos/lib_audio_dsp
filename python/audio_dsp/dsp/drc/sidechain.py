@@ -61,9 +61,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
     """
 
-    def __init__(
-        self, fs, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
-    ):
+    def __init__(self, fs, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, 1, attack_t, release_t, delay, Q_sig)
 
         # note rms comes as x**2, so use db_pow
@@ -87,7 +85,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         self.gain_calc_int = drcu.compressor_rms_gain_calc_int
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
 
-    def process(self, input_sample, detect_sample, channel=0):
+    def process(self, input_sample: float, detect_sample: float):  # type: ignore
         """
         Update the envelope for the detection signal, then calculate and
         apply the required gain for compression/limiting, and apply to
@@ -98,7 +96,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
         """
         # get envelope from envelope detector
-        envelope = self.env_detector.process(detect_sample, channel)
+        envelope = self.env_detector.process(detect_sample)
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
@@ -107,22 +105,22 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         new_gain = self.gain_calc(envelope, self.threshold, self.slope)
 
         # see if we're attacking or decaying
-        if new_gain < self.gain[channel]:
+        if new_gain < self.gain[0]:
             alpha = self.attack_alpha
         else:
             alpha = self.release_alpha
 
         # do exponential moving average
-        self.gain[channel] = ((1 - alpha) * self.gain[channel]) + (alpha * new_gain)
+        self.gain[0] = ((1 - alpha) * self.gain[0]) + (alpha * new_gain)
 
         # apply gain to input
-        y = self.gain[channel] * input_sample
+        y = self.gain[0] * input_sample
         return y, new_gain, envelope
 
-    def process_int(self, input_sample, detect_sample, channel=0):
+    def process_int(self, input_sample: float, detect_sample: float):  # type: ignore
         raise NotImplementedError
 
-    def process_xcore(self, input_sample, detect_sample, channel=0):
+    def process_xcore(self, input_sample: float, detect_sample: float):  # type: ignore
         """
         Update the envelope for the detection signal, then calculate and
         apply the required gain for compression/limiting, and apply to
@@ -134,12 +132,12 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         """
         # quantize
         sample_int = utils.int32(round(input_sample * 2**self.Q_sig))
-        detect_sample = utils.float_s32(detect_sample)
-        detect_sample = utils.float_s32_use_exp(detect_sample, -27)
-        detect_sample = float32(float(detect_sample))
+        detect_sample_f32 = utils.float_s32(detect_sample)
+        detect_sample_f32 = utils.float_s32_use_exp(detect_sample_f32, -27)
+        detect_sample_f32 = float32(float(detect_sample_f32))
 
         # get envelope from envelope detector
-        envelope = self.env_detector.process_xcore(detect_sample, channel)
+        envelope = self.env_detector.process_xcore(detect_sample_f32)
         # avoid /0
         if envelope == float32(0):
             envelope = float32(1e-20)
@@ -149,18 +147,16 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         new_gain = self.gain_calc_xcore(envelope, self.threshold_f32, self.slope_f32)
 
         # see if we're attacking or decaying
-        if new_gain < self.gain_f32[channel]:
+        if new_gain < self.gain_f32[0]:
             alpha = self.attack_alpha_f32
         else:
             alpha = self.release_alpha_f32
 
         # do exponential moving average
-        self.gain_f32[channel] = self.gain_f32[channel] + alpha * (
-            new_gain - self.gain_f32[channel]
-        )
+        self.gain_f32[0] = self.gain_f32[0] + alpha * (new_gain - self.gain_f32[0])
 
         # apply gain in int32
-        this_gain_int = (self.gain_f32[channel] * float32(2**30)).as_int32()
+        this_gain_int = (self.gain_f32[0] * float32(2**30)).as_int32()
         acc = int(1 << 29)
         acc += this_gain_int * sample_int
         y = utils.int32_mult_sat_extract(acc, 1, 30)
@@ -187,7 +183,6 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         for sample in range(frame_size):
             output[sample] = self.process(frame[0][sample], frame[1][sample])[0]
 
-
         return [output]
 
     def process_frame_xcore(self, frame):
@@ -210,9 +205,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         return [output]
 
 
-
 class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
-
     def __init__(self, fs, ratio, threshold_dB, attack_t, release_t, Q_sig=dspg.Q_SIG):
         n_chans = 2
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
@@ -237,7 +230,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         self.gain_calc_int = drcu.compressor_rms_gain_calc_int
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
 
-    def process_channels(self, input_samples, detect_samples):
+    def process_channels(self, input_samples: [float, float], detect_samples: [float, float]):  # type: ignore
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using floating point
@@ -256,7 +249,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
         # calculate the gain, this function should be defined by the
         # child class
-        new_gain = self.gain_calc(envelope, self.threshold, self.slope)
+        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # type: ignore
 
         # see if we're attacking or decaying
         if new_gain < self.gain:
@@ -270,8 +263,8 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         # apply gain to input
         y = self.gain * input_samples
         return y, new_gain, envelope
-    
-    def process_channels_int(self, input_samples, detect_samples):
+
+    def process_channels_int(self, input_samples: [float, float], detect_samples: [float, float]):  # type: ignore
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using int32 fixed point
@@ -282,7 +275,8 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
         """
         samples_int = [int(0)] * len(detect_samples)
-        for i in range(len(detect_samples)): samples_int[i] = utils.int32(round(detect_samples[i] * 2**self.Q_sig))
+        for i in range(len(detect_samples)):
+            samples_int[i] = utils.int32(round(detect_samples[i] * 2**self.Q_sig))
 
         # get envelope from envelope detector
         env0_int = self.env_detector.process_int(samples_int[0], 0)
@@ -293,7 +287,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain_int = self.gain_calc_int(envelope_int, self.threshold_int, self.slope_f32)
+        new_gain_int = self.gain_calc_int(envelope_int, self.threshold_int, self.slope_f32)  # type: ignore
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int:
@@ -307,11 +301,12 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         self.gain_int += utils.vpu_mult(alpha, new_gain_int)
 
         y = []
-        for i in range(len(input_samples)): samples_int[i] = utils.int32(round(input_samples[i] * 2**self.Q_sig))
+        for i in range(len(input_samples)):
+            samples_int[i] = utils.int32(round(input_samples[i] * 2**self.Q_sig))
 
         for sample_int in samples_int:
             y_uq = utils.vpu_mult(self.gain_int, sample_int)
-            y.append(float(y_uq) * 2 **-self.Q_sig)
+            y.append(float(y_uq) * 2**-self.Q_sig)
 
         return (
             y,
@@ -319,7 +314,9 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
             (float(envelope_int) * 2**-self.Q_sig),
         )
 
-    def process_channels_xcore(self, input_samples, detect_samples):
+    def process_channels_xcore(
+        self, input_samples: [float, float], detect_samples: [float, float]
+    ):  # type: ignore
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using float32 maths.
@@ -347,7 +344,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain = self.gain_calc_xcore(envelope, self.threshold_f32, self.slope_f32)
+        new_gain = self.gain_calc_xcore(envelope, self.threshold_f32, self.slope_f32)  # type: ignore
 
         # see if we're attacking or decaying
         if new_gain < self.gain_f32:
@@ -356,9 +353,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
             alpha = self.release_alpha_f32
 
         # do exponential moving average
-        self.gain_f32 = self.gain_f32 + alpha * (
-            new_gain - self.gain_f32
-        )
+        self.gain_f32 = self.gain_f32 + alpha * (new_gain - self.gain_f32)
 
         # apply gain in int32
         y = [0] * len(samples_int)
@@ -388,12 +383,13 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         frame_size = frame[0].shape[0]
         output = deepcopy(frame[0:2])
         for sample in range(frame_size):
-            out_samples = self.process_channels([frame[0][sample], frame[1][sample]],
-                                                      [frame[2][sample], frame[3][sample]])[0]
+            out_samples = self.process_channels(
+                [frame[0][sample], frame[1][sample]], [frame[2][sample], frame[3][sample]]
+            )[0]
             output[0][sample] = out_samples[0]
             output[1][sample] = out_samples[1]
         return output
-    
+
     def process_frame_xcore(self, frame):
         """
         Take a list frames of samples and return the processed frames,
@@ -409,8 +405,9 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         frame_size = frame[0].shape[0]
         output = deepcopy(frame[0:2])
         for sample in range(frame_size):
-            out_samples = self.process_channels_xcore([frame[0][sample], frame[1][sample]],
-                                                      [frame[2][sample], frame[3][sample]])[0]
+            out_samples = self.process_channels_xcore(
+                [frame[0][sample], frame[1][sample]], [frame[2][sample], frame[3][sample]]
+            )[0]
             output[0][sample] = out_samples[0]
             output[1][sample] = out_samples[1]
 

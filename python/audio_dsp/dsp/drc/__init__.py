@@ -7,11 +7,12 @@ from audio_dsp.dsp.drc.drc import (
     compressor_rms,
     noise_gate,
 )
-from audio_dsp.dsp.drc.stereo_compressor_limiter import (limiter_peak_stereo,
-compressor_rms_stereo,
+from audio_dsp.dsp.drc.stereo_compressor_limiter import (
+    limiter_peak_stereo,
+    compressor_rms_stereo,
 )
 
 from audio_dsp.dsp.drc.sidechain import (
     compressor_rms_sidechain_mono,
-    compressor_rms_sidechain_stereo
+    compressor_rms_sidechain_stereo,
 )

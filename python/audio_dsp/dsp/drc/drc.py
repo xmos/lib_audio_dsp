@@ -91,7 +91,7 @@ class envelope_detector_peak(dspg.dsp_block):
 
     def reset_state(self):
         """Reset the envelope to zero."""
-        self.envelope = [0] * self.n_chans
+        self.envelope = [0.0] * self.n_chans
         self.envelope_f32 = [float32(0)] * self.n_chans
         self.envelope_int = [utils.int32(0)] * self.n_chans
 
@@ -132,10 +132,14 @@ class envelope_detector_peak(dspg.dsp_block):
         """
         if isinstance(sample, float):
             sample_int = utils.int32(round(sample * 2**self.Q_sig))
-        elif (isinstance(sample, list) or isinstance(sample, np.ndarray)) and isinstance(sample[0], int):
+        elif (isinstance(sample, list) or isinstance(sample, np.ndarray)) and isinstance(
+            sample[0], int
+        ):
             sample_int = sample[channel]
-        else:
+        elif isinstance(sample, int):
             sample_int = sample
+        else:
+            raise TypeError("input must be float or int")
 
         sample_mag = abs(sample_int)
 
@@ -168,13 +172,15 @@ class envelope_detector_peak(dspg.dsp_block):
             # don't do anything if we got float32, this function was
             # probably called from a limiter or compressor
             sample_f32 = sample
-        elif (isinstance(sample, list) or isinstance(sample, np.ndarray)) and isinstance(sample[0], float32):
+        elif (isinstance(sample, list) or isinstance(sample, np.ndarray)) and isinstance(
+            sample[channel], float32
+        ):
             sample_f32 = sample[channel]
         else:
             # if input isn't float32, convert it
             sample_f32 = float32(sample)
 
-        sample_mag = abs(sample_f32)
+        sample_mag = float32(abs(sample_f32))
 
         # see if we're attacking or decaying
         if sample_mag > self.envelope_f32[channel]:
@@ -404,6 +410,11 @@ class compressor_limiter_base(dspg.dsp_block):
         # initialise gain states
         self.reset_state()
 
+        # set the gain calculation function handles
+        self.gain_calc = None
+        self.gain_calc_int = None
+        self.gain_calc_xcore = None
+
     def reset_state(self):
         """Reset the envelope detector to 0 and the gain to 1."""
         if self.env_detector:
@@ -411,18 +422,6 @@ class compressor_limiter_base(dspg.dsp_block):
         self.gain = [1] * self.n_chans
         self.gain_f32 = [float32(1)] * self.n_chans
         self.gain_int = [2**30] * self.n_chans
-
-    def gain_calc(self, envelope):
-        """Calculate the float gain for the current sample"""
-        raise NotImplementedError
-
-    def gain_calc_int(self, envelope_int):
-        """Calculate the int gain for the current sample"""
-        raise NotImplementedError
-
-    def gain_calc_xcore(self, envelope):
-        """Calculate the float32 gain for the current sample"""
-        raise NotImplementedError
 
     def process(self, sample, channel=0):
         """
@@ -435,13 +434,13 @@ class compressor_limiter_base(dspg.dsp_block):
 
         """
         # get envelope from envelope detector
-        envelope = self.env_detector.process(sample, channel)
+        envelope = self.env_detector.process(sample, channel)  # type: ignore
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
         # calculate the gain, this function should be defined by the
         # child class
-        new_gain = self.gain_calc(envelope, self.threshold, self.slope)
+        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # type: ignore
 
         # see if we're attacking or decaying
         if new_gain < self.gain[channel]:
@@ -468,13 +467,13 @@ class compressor_limiter_base(dspg.dsp_block):
         """
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
         # get envelope from envelope detector
-        envelope_int = self.env_detector.process_int(sample_int, channel)
+        envelope_int = self.env_detector.process_int(sample_int, channel)  # type: ignore
         # avoid /0
         envelope_int = max(envelope_int, 1)
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain_int = self.gain_calc_int(envelope_int, self.threshold_int, self.slope_f32)
+        new_gain_int = self.gain_calc_int(envelope_int, self.threshold_int, self.slope_f32)  # type: ignore
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int[channel]:
@@ -511,14 +510,14 @@ class compressor_limiter_base(dspg.dsp_block):
         sample = float32(float(sample))
 
         # get envelope from envelope detector
-        envelope = self.env_detector.process_xcore(sample, channel)
+        envelope = self.env_detector.process_xcore(sample, channel)  # type: ignore
         # avoid /0
         if envelope == float32(0):
             envelope = float32(1e-20)
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain = self.gain_calc_xcore(envelope, self.threshold_f32, self.slope_f32)
+        new_gain = self.gain_calc_xcore(envelope, self.threshold_f32, self.slope_f32)  # type: ignore
 
         # see if we're attacking or decaying
         if new_gain < self.gain_f32[channel]:
@@ -718,7 +717,7 @@ class lookahead_limiter_peak(compressor_limiter_base):
         )
 
         self.delay = np.ceil(attack_t * fs)
-        self.delay_line = np.zeros(self.delay_line)
+        self.delay_line = np.zeros(self.delay)
         raise NotImplementedError
 
     def process(self, sample, channel=0):
@@ -743,7 +742,7 @@ class lookahead_limiter_rms(compressor_limiter_base):
             Q_sig=self.Q_sig,
         )
         self.delay = np.ceil(attack_t * fs)
-        self.delay_line = np.zeros(self.delay_line)
+        self.delay_line = np.zeros(self.delay)
         raise NotImplementedError
 
     def process(self, sample, channel=0):

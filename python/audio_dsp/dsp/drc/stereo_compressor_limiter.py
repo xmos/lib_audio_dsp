@@ -15,10 +15,10 @@ from audio_dsp.dsp.types import float32
 
 
 class compressor_limiter_stereo_base(dspg.dsp_block):
-    def __init__(self, fs, n_chans, attack_t, release_t,  Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, n_chans, attack_t, release_t, Q_sig=dspg.Q_SIG):
         assert n_chans == 2, "has to be stereo"
         super().__init__(fs, n_chans, Q_sig)
-    
+
         self.attack_alpha = drcu.alpha_from_time(attack_t, fs)
         self.release_alpha = drcu.alpha_from_time(release_t, fs)
 
@@ -53,7 +53,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         self.gain = 1
         self.gain_f32 = float32(1)
         self.gain_int = 2**30
-    
+
     def gain_calc(self, envelope):
         """Calculate the float gain for the current sample"""
         raise NotImplementedError
@@ -65,7 +65,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
     def gain_calc_xcore(self, envelope):
         """Calculate the float32 gain for the current sample"""
         raise NotImplementedError
-    
+
     def process_channels(self, input_samples):
         """
         Update the envelopes for a signal, then calculate and apply the
@@ -99,7 +99,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         # apply gain to input
         y = self.gain * input_samples
         return y, new_gain, envelope
-    
+
     def process_channels_int(self, input_samples):
         """
         Update the envelopes for a signal, then calculate and apply the
@@ -111,7 +111,8 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
         """
         samples_int = [int(0)] * len(input_samples)
-        for i in range(len(input_samples)): samples_int[i] = utils.int32(round(input_samples[i] * 2**self.Q_sig))
+        for i in range(len(input_samples)):
+            samples_int[i] = utils.int32(round(input_samples[i] * 2**self.Q_sig))
 
         # get envelope from envelope detector
         env0_int = self.env_detector.process_int(samples_int[0], 0)
@@ -136,11 +137,12 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         self.gain_int += utils.vpu_mult(alpha, new_gain_int)
 
         y = []
-        for i in range(len(input_samples)): samples_int[i] = utils.int32(round(input_samples[i] * 2**self.Q_sig))
+        for i in range(len(input_samples)):
+            samples_int[i] = utils.int32(round(input_samples[i] * 2**self.Q_sig))
 
         for sample_int in samples_int:
             y_uq = utils.vpu_mult(self.gain_int, sample_int)
-            y.append(float(y_uq) * 2 **-self.Q_sig)
+            y.append(float(y_uq) * 2**-self.Q_sig)
 
         return (
             y,
@@ -185,9 +187,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
             alpha = self.release_alpha_f32
 
         # do exponential moving average
-        self.gain_f32 = self.gain_f32 + alpha * (
-            new_gain - self.gain_f32
-        )
+        self.gain_f32 = self.gain_f32 + alpha * (new_gain - self.gain_f32)
 
         # apply gain in int32
         y = [0] * len(samples_int)
@@ -222,7 +222,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
             output[0][sample] = out_samples[0]
             output[1][sample] = out_samples[1]
         return output
-    
+
     def process_frame_xcore(self, frame):
         """
         Take a list frames of samples and return the processed frames,
@@ -266,6 +266,7 @@ class limiter_peak_stereo(compressor_limiter_stereo_base):
         self.gain_calc = drcu.limiter_peak_gain_calc
         self.gain_calc_int = drcu.limiter_peak_gain_calc_int
         self.gain_calc_xcore = drcu.limiter_peak_gain_calc_xcore
+
 
 class compressor_rms_stereo(compressor_limiter_stereo_base):
     def __init__(self, fs, ratio, threshold_dB, attack_t, release_t, Q_sig=dspg.Q_SIG):
