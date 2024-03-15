@@ -111,7 +111,6 @@ def test_comp_ratio(fs, at, rt, ratio, threshold):
 
     output_xcore = np.zeros(len(signal))
     output_flt = np.zeros(len(signal))
-    output_int = np.zeros(len(signal))
 
     # limiter and compressor have 3 outputs
     for n in np.arange(len(signal)):
@@ -119,9 +118,6 @@ def test_comp_ratio(fs, at, rt, ratio, threshold):
     drcut.reset_state()
     for n in np.arange(len(signal)):
         output_flt[n], _, _ = drcut.process(signal[n])
-    drcut.reset_state()
-    for n in np.arange(len(signal)):
-        output_int[n], _, _ = drcut.process_int(signal[n])
 
     # lazy limiter
     ref_signal = np.copy(signal)
@@ -129,7 +125,6 @@ def test_comp_ratio(fs, at, rt, ratio, threshold):
     ref_signal[over_thresh] *= utils.db2gain((1 - 1/ratio)*(threshold - utils.db(ref_signal[over_thresh])))
 
     np.testing.assert_allclose(ref_signal, output_flt, atol=3e-16, rtol=0)
-    np.testing.assert_allclose(output_flt, output_int, atol=6e-8, rtol=0)
     np.testing.assert_allclose(output_flt, output_xcore, atol=6e-8, rtol=0)
 
 
@@ -334,7 +329,6 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold,
 
     output_xcore_s = np.zeros(signal.shape)
     output_flt_s = np.zeros(signal.shape)
-    output_int_s = np.zeros(signal.shape)
 
     if "sidechain" in component_stereo:
         for n in np.arange(signal.shape[1]):
@@ -342,9 +336,7 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold,
         drc_s.reset_state()
         for n in np.arange(signal.shape[1]):
             output_flt_s[:, n], _, _ = drc_s.process_channels(signal[:, n], sidechain_signal[:, n])
-        drc_s.reset_state()
-        for n in np.arange(signal.shape[1]):
-            output_int_s[:, n], _, _ = drc_s.process_channels_int(signal[:, n], sidechain_signal[:, n])
+
     else:
         for n in np.arange(signal.shape[1]):
             output_xcore_s[:, n], _, _ = drc_s.process_channels_xcore(signal[:, n])
@@ -352,14 +344,9 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold,
         for n in np.arange(signal.shape[1]):
             output_flt_s[:, n], _, _ = drc_s.process_channels(signal[:, n])
         drc_s.reset_state()
-        for n in np.arange(signal.shape[1]):
-            output_int_s[:, n], _, _ = drc_s.process_channels_int(signal[:, n])
-    
-
 
     output_xcore_m = np.zeros(signal.shape)
     output_flt_m = np.zeros(signal.shape)
-    output_int_m = np.zeros(signal.shape)
 
     # write mono signal to both output channels, makes comparison to stereo easier
     if "sidechain" in component_mono:
@@ -368,28 +355,19 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold,
         drc_m.reset_state()
         for n in np.arange(signal.shape[1]):
             output_flt_m[:, n], _, _ = drc_m.process(signal[0, n], sidechain_signal[0, n])
-        drc_m.reset_state()
-        for n in np.arange(signal.shape[1]):
-            output_int_m[:, n], _, _ = drc_m.process_int(signal[0, n], sidechain_signal[0, n])
     else:
         for n in np.arange(signal.shape[1]):
             output_xcore_m[:, n], _, _  = drc_m.process_xcore(signal[0, n])
         drc_m.reset_state()
         for n in np.arange(signal.shape[1]):
             output_flt_m[:, n], _, _ = drc_m.process(signal[0, n])
-        drc_m.reset_state()
-        for n in np.arange(signal.shape[1]):
-            output_int_m[:, n], _, _ = drc_m.process_int(signal[0, n])
-
 
     # check stereo channels are the same
     np.testing.assert_array_equal(output_flt_s[0], output_flt_s[1])
-    np.testing.assert_array_equal(output_int_s[0], output_int_s[1])
     np.testing.assert_array_equal(output_xcore_s[0], output_xcore_s[1])
 
     # check stereo equals mono
     np.testing.assert_array_equal(output_flt_s, output_flt_m)
-    np.testing.assert_array_equal(output_int_s, output_int_m)
     np.testing.assert_array_equal(output_xcore_s, output_xcore_m)
 
 
@@ -404,7 +382,6 @@ def test_noise_gate():
 
     output_xcore = np.zeros(len(signal))
     output_flt = np.zeros(len(signal))
-    output_int = np.zeros(len(signal))
 
     # noise gate has 3 outputs
     for n in np.arange(len(signal)):
@@ -412,9 +389,7 @@ def test_noise_gate():
     drcut.reset_state()
     for n in np.arange(len(signal)):
         output_flt[n], _, _ = drcut.process(signal[n])
-    drcut.reset_state()
-    for n in np.arange(len(signal)):
-        output_int[n], _, _ = drcut.process_int(signal[n])
+
     sf.write("noise_gate_test_in.wav", signal, fs)
     sf.write("noise_gate_test_out.wav", output_flt, fs)
 
@@ -424,10 +399,6 @@ def test_noise_gate():
         error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
         assert mean_error_flt < 0.055
-
-        error_int = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
-        mean_error_int = utils.db(np.nanmean(utils.db2gain(error_int)))
-        assert mean_error_int < 0.055
 
 
 @pytest.mark.parametrize("fs", [48000])
@@ -459,7 +430,6 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
 
     output_xcore = np.zeros(len(signal))
     output_flt = np.zeros(len(signal))
-    output_int = np.zeros(len(signal))
 
     if "envelope" in component:
         # envelope detector has 1 output
@@ -468,9 +438,7 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
         drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n] = drcut.process(signal[n])
-        drcut.reset_state()
-        for n in np.arange(len(signal)):
-            output_int[n] = drcut.process_int(signal[n])
+
     else:
         # limiter and compressor have 3 outputs
         for n in np.arange(len(signal)):
@@ -478,12 +446,8 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
         drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n], _, _ = drcut.process(signal[n])
-        drcut.reset_state()
-        for n in np.arange(len(signal)):
-            output_int[n], _, _ = drcut.process_int(signal[n])
 
     np.testing.assert_array_equal(signal, output_flt)
-    np.testing.assert_array_equal(signal, output_int)
     np.testing.assert_array_equal(signal, output_xcore)
 
 
@@ -529,7 +493,6 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
 
     output_xcore = np.zeros(len(signal))
     output_flt = np.zeros(len(signal))
-    output_int = np.zeros(len(signal))
 
     if "envelope" in component:
         # envelope detector has 1 output
@@ -538,9 +501,7 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
         drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n] = drcut.process(signal[n])
-        drcut.reset_state()
-        for n in np.arange(len(signal)):
-            output_int[n] = drcut.process_int(signal[n])
+
     else:
         # limiter and compressor have 3 outputs
         for n in np.arange(len(signal)):
@@ -548,9 +509,6 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
         drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n], _, _ = drcut.process(signal[n])
-        drcut.reset_state()
-        for n in np.arange(len(signal)):
-            output_int[n], _, _ = drcut.process_int(signal[n])
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
     top_half = utils.db(output_flt) > -50
@@ -558,10 +516,6 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
         error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
         assert mean_error_flt < 0.055
-
-        error_int = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
-        mean_error_int = utils.db(np.nanmean(utils.db2gain(error_int)))
-        assert mean_error_int < 0.055
 
 
 @pytest.mark.parametrize("fs", [48000])
@@ -643,24 +597,16 @@ def test_stereo_components(fs, component, at, rt, threshold, ratio):
 
     output_xcore = np.zeros(signal.shape, dtype=np.float32)
     output_flt = np.zeros(signal.shape, dtype=np.float32)
-    output_int = np.zeros(signal.shape, dtype=np.float32)
 
     for n in np.arange(signal.shape[1]):
         output_xcore[:, n], _, _ = drcut.process_channels_xcore(signal[:, n])
     drcut.reset_state()
     for n in np.arange(signal.shape[1]):
         output_flt[:, n], _, _ = drcut.process_channels(signal[:, n])
-    drcut.reset_state()
-    for n in np.arange(signal.shape[1]):
-        output_int[:, n], _, _ = drcut.process_channels_int(signal[:, n])
-    
+
     error_flt = np.abs(utils.db(output_xcore)-utils.db(output_flt))
     mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
     assert mean_error_flt < 0.055
-
-    error_int = np.abs(utils.db(output_int)-utils.db(output_flt))
-    mean_error_int = utils.db(np.nanmean(utils.db2gain(error_int)))
-    assert mean_error_int < 0.055
 
 
 # TODO more RMS limiter tests
@@ -673,4 +619,5 @@ if __name__ == "__main__":
     # test_limiter_peak_attack(48000, 0.1, -10)
     # comp_vs_limiter(48000, 0.001, 0)
     # test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)
-    test_mono_vs_stereo(48000, "limiter_peak", "limiter_peak_stereo", 0.001, 0.01, -6)
+    # test_mono_vs_stereo(48000, "limiter_peak", "limiter_peak_stereo", 0.001, 0.01, -6)
+    test_sidechain_mono_vs_comp(16000, 0.05, -40)

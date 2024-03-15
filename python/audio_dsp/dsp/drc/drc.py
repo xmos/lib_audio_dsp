@@ -969,6 +969,9 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         y = self.gain[channel] * input_sample
         return y, new_gain, envelope
 
+    def process_int(self, input_sample, detect_sample, channel=0):
+        raise NotImplementedError
+
     def process_xcore(self, input_sample, detect_sample, channel=0):
         """
         Update the envelope for the detection signal, then calculate and
