@@ -301,7 +301,9 @@ def test_sidechain_stereo(fs, at, threshold):
 @pytest.mark.parametrize("component_mono, component_stereo, threshold, ratio", [("limiter_peak", "limiter_peak_stereo", -20, None),
                                                                                 ("limiter_peak", "limiter_peak_stereo", -6, None),
                                                                                 ("compressor_rms", "compressor_rms_stereo", 0, 6),
-                                                                                ("compressor_rms", "compressor_rms_stereo", 0, 2)])
+                                                                                ("compressor_rms", "compressor_rms_stereo", 0, 2),
+                                                                                ("compressor_rms_sidechain_mono", "compressor_rms_sidechain_stereo", 0, 6),
+                                                                                ("compressor_rms_sidechain_mono", "compressor_rms_sidechain_stereo", 0, 2)])
 @pytest.mark.parametrize("rt", [0.2])
 @pytest.mark.parametrize("at", [0.001])
 def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold, ratio):
@@ -314,6 +316,10 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold,
     signal.append(gen.sin(fs, lenght, f, 1))
     signal.append(gen.sin(fs, lenght, f, 1))
     signal = np.stack(signal, axis=0)
+
+    if "sidechain" in component_stereo:
+        sidechain_signal = np.zeros_like(signal)
+        sidechain_signal[:, len(signal)//2:] = 1
 
     stereo_component_handle = getattr(drc, component_stereo)
     mono_component_handle = getattr(drc, component_mono)
@@ -330,14 +336,24 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold,
     output_flt_s = np.zeros(signal.shape)
     output_int_s = np.zeros(signal.shape)
 
-    for n in np.arange(signal.shape[1]):
-        output_xcore_s[:, n], _, _ = drc_s.process_channels_xcore(signal[:, n])
-    drc_s.reset_state()
-    for n in np.arange(signal.shape[1]):
-        output_flt_s[:, n], _, _ = drc_s.process_channels(signal[:, n])
-    drc_s.reset_state()
-    for n in np.arange(signal.shape[1]):
-        output_int_s[:, n], _, _ = drc_s.process_channels_int(signal[:, n])
+    if "sidechain" in component_stereo:
+        for n in np.arange(signal.shape[1]):
+            output_xcore_s[:, n], _, _ = drc_s.process_channels_xcore(signal[:, n], sidechain_signal[:, n])
+        drc_s.reset_state()
+        for n in np.arange(signal.shape[1]):
+            output_flt_s[:, n], _, _ = drc_s.process_channels(signal[:, n], sidechain_signal[:, n])
+        drc_s.reset_state()
+        for n in np.arange(signal.shape[1]):
+            output_int_s[:, n], _, _ = drc_s.process_channels_int(signal[:, n], sidechain_signal[:, n])
+    else:
+        for n in np.arange(signal.shape[1]):
+            output_xcore_s[:, n], _, _ = drc_s.process_channels_xcore(signal[:, n])
+        drc_s.reset_state()
+        for n in np.arange(signal.shape[1]):
+            output_flt_s[:, n], _, _ = drc_s.process_channels(signal[:, n])
+        drc_s.reset_state()
+        for n in np.arange(signal.shape[1]):
+            output_int_s[:, n], _, _ = drc_s.process_channels_int(signal[:, n])
     
 
 
@@ -346,14 +362,24 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold,
     output_int_m = np.zeros(signal.shape)
 
     # write mono signal to both output channels, makes comparison to stereo easier
-    for n in np.arange(signal.shape[1]):
-        output_xcore_m[:, n], _, _  = drc_m.process_xcore(signal[0, n])
-    drc_m.reset_state()
-    for n in np.arange(signal.shape[1]):
-        output_flt_m[:, n], _, _ = drc_m.process(signal[0, n])
-    drc_m.reset_state()
-    for n in np.arange(signal.shape[1]):
-        output_int_m[:, n], _, _ = drc_m.process_int(signal[0, n])
+    if "sidechain" in component_mono:
+        for n in np.arange(signal.shape[1]):
+            output_xcore_m[:, n], _, _  = drc_m.process_xcore(signal[0, n], sidechain_signal[0, n])
+        drc_m.reset_state()
+        for n in np.arange(signal.shape[1]):
+            output_flt_m[:, n], _, _ = drc_m.process(signal[0, n], sidechain_signal[0, n])
+        drc_m.reset_state()
+        for n in np.arange(signal.shape[1]):
+            output_int_m[:, n], _, _ = drc_m.process_int(signal[0, n], sidechain_signal[0, n])
+    else:
+        for n in np.arange(signal.shape[1]):
+            output_xcore_m[:, n], _, _  = drc_m.process_xcore(signal[0, n])
+        drc_m.reset_state()
+        for n in np.arange(signal.shape[1]):
+            output_flt_m[:, n], _, _ = drc_m.process(signal[0, n])
+        drc_m.reset_state()
+        for n in np.arange(signal.shape[1]):
+            output_int_m[:, n], _, _ = drc_m.process_int(signal[0, n])
 
 
     # check stereo channels are the same
