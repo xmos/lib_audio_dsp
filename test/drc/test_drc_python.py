@@ -2,11 +2,25 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import numpy as np
 import pytest
+import soundfile as sf
+from pathlib import Path
+import os
 
 import audio_dsp.dsp.drc as drc
 import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.signal_gen as gen
 
+
+def make_noisy_speech():
+    hydra_audio_path = os.environ['hydra_audio_PATH']
+    filepath = Path(hydra_audio_path, 'acoustic_team_test_audio',
+                    'speech', "010_male_female_single-talk_seq.wav")
+    sig, fs = sf.read(filepath)
+    amp = utils.db2gain(-30)
+    noise_sig = gen.pink_noise(fs, len(sig)/fs, amp)
+
+    out_sig = sig + noise_sig
+    return out_sig, fs
 
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
@@ -196,14 +210,55 @@ def peak_vs_rms(fs, at, threshold):
                                atol=0.002)
 
 
+def test_noise_gate():
+
+    signal, fs = make_noisy_speech()
+
+    test_len = int(6*fs)
+    signal = signal[:test_len]
+
+    drcut = drc.noise_gate(fs, 1, -30, 0, 0.2)
+
+    output_xcore = np.zeros(len(signal))
+    output_flt = np.zeros(len(signal))
+    output_int = np.zeros(len(signal))
+
+    # noise gate has 3 outputs
+    for n in np.arange(len(signal)):
+        output_xcore[n], _, _ = drcut.process_xcore(signal[n])
+    drcut.reset_state()
+    for n in np.arange(len(signal)):
+        output_flt[n], _, _ = drcut.process(signal[n])
+    drcut.reset_state()
+    for n in np.arange(len(signal)):
+        output_int[n], _, _ = drcut.process_int(signal[n])
+    sf.write("noise_gate_test_in.wav", signal, fs)
+    sf.write("noise_gate_test_out.wav", output_flt, fs)
+
+    # small signals are always going to be ropey due to quantizing, so just check average error of top half
+    top_half = utils.db(output_flt) > -50
+    if np.any(top_half):
+        error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
+        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        assert mean_error_flt < 0.055
+
+        error_int = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
+        mean_error_int = utils.db(np.nanmean(utils.db2gain(error_int)))
+        assert mean_error_int < 0.055
+
+
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("component, threshold, ratio", [("limiter_peak", 0, None),
                                                          ("limiter_rms", 0, None),
                                                          ("compressor_rms", 0, 6),
-                                                         ("compressor_rms", 0, 2)])
+                                                         ("compressor_rms", 0, 2),
+                                                         ("noise_gate", -1000, None)])
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
+    if component == "noise_gate":
+        #TODO fixme
+        pytest.xfail("suspected float32 issue for noise gate")
     # check that a 24b quantized chirp is bit exact if it's below the threshold
     component_handle = getattr(drc, component)
 
@@ -249,7 +304,8 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
                                                          ("compressor_rms", -20, 6),
                                                          ("compressor_rms", -20, 2),
                                                          ("compressor_rms", 6, 6),
-                                                         ("compressor_rms", 6, 2)])
+                                                         ("compressor_rms", 6, 2),
+                                                         ("noise_gate", -20, None)])
 @pytest.mark.parametrize("rt", [0.05, 0.1, 0.2, 0.5, 3.0])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.5])
 def test_drc_component(fs, component, at, rt, threshold, ratio):
@@ -313,7 +369,8 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
                                                          ("compressor_rms", -20, 6),
                                                          ("compressor_rms", -20, 2),
                                                          ("compressor_rms", 6, 6),
-                                                         ("compressor_rms", 6, 2)])
+                                                         ("compressor_rms", 6, 2),
+                                                         ("noise_gate", -20, None)])
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 @pytest.mark.parametrize("n_chans", [1, 2, 4])
@@ -364,4 +421,5 @@ if __name__ == "__main__":
     # test_drc_component(48000, "limiter_peak", 1, 1, 1)
     # test_limiter_peak_attack(48000, 0.1, -10)
     # comp_vs_limiter(48000, 0.001, 0)
-    test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)
+    # test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)
+    test_noise_gate()

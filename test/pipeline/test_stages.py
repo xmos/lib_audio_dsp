@@ -8,6 +8,7 @@ from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 from audio_dsp.stages.biquad import Biquad
 from audio_dsp.stages.cascaded_biquads import CascadedBiquads
 from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak
+from audio_dsp.stages.noise_gate import NoiseGate
 from audio_dsp.stages.signal_chain import VolumeControl, FixedGain
 
 import audio_dsp.dsp.utils as utils
@@ -157,6 +158,18 @@ def test_limiter_peak():
 
     do_test(p)
 
+def test_noise_gate():
+    """
+    Test the noise gate noise gates the same in python and C
+    """
+    p = Pipeline(channels)
+    with p.add_thread() as t:
+        ng = t.stage(NoiseGate, p.i)
+    p.set_outputs(ng.o)
+
+    ng.make_noise_gate(-6, 0.001, 0.1)
+
+    do_test(p)
 
 def test_volume():
     """

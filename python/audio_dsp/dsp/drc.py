@@ -10,6 +10,26 @@ from audio_dsp.dsp import utils as utils
 from audio_dsp.dsp import generic as dspg
 
 
+FLT_MIN = np.finfo(float).tiny
+
+
+def alpha_from_time(attack_or_release_time, fs):
+    # Attack times simplified from McNally, seem pretty close.
+    # Assumes the time constant of a digital filter is the -3 dB
+    # point where abs(H(z))**2 = 0.5.
+
+    # This is also approximately the time constant of a first order
+    # system, `alpha = 1 - exp(-T/tau)`, where `T` is the sample period
+    # and `tau` is the time constant.
+
+    # attack/release time can't be faster than the length of 2
+    # samples, and alpha can't be greater than 1
+
+    T = 1 / fs
+    alpha = min(2 * T / (attack_or_release_time + FLT_MIN), 1.0)
+    return alpha
+
+
 class envelope_detector_peak(dspg.dsp_block):
     """
     Envelope detector that follows the absolute peak value of a signal.
@@ -65,14 +85,9 @@ class envelope_detector_peak(dspg.dsp_block):
             attack_t = detect_t
             release_t = detect_t
 
-        # Attack times simplified from McNally, seem pretty close.
-        # Assumes the time constant of a digital filter is the -3 dB
-        # point where abs(H(z))**2 = 0.5.
-        T = 1 / fs
-        # attack/release time can't be faster than the length of 2
-        # samples.
-        self.attack_alpha = min(2 * T / attack_t, 1.0)
-        self.release_alpha = min(2 * T / release_t, 1.0)
+        # calculate EWM alpha from time constant
+        self.attack_alpha = alpha_from_time(attack_t, fs)
+        self.release_alpha = alpha_from_time(release_t, fs)
 
         # very long times might quantize to zero, maybe just limit a
         # better way
@@ -742,6 +757,131 @@ class compressor_rms(compressor_limiter_base):
             new_gain_int = utils.int32(0x7fffffff)
 
         return new_gain_int
+
+
+class noise_gate(compressor_limiter_base):
+    """A noise gate that reduces the level of an audio signal when it
+    falls below a threshold.
+
+    When the signal envelope falls below the threshold, the gain applied
+    to the signal is reduced to 0 (based on the release time). When the
+    envelope returns above the threshold, the gain applied to the signal
+    is increased to 1 over the attack time.
+
+    Parameters
+    ----------
+    threshold_db : float
+        The threshold level in decibels below which the audio signal is
+        attenuated.
+
+    Attributes
+    ----------
+    attack_alpha : float
+        The attack coefficient calculated from the release time and sample rate.
+    release_alpha : float
+        The release coefficient calculated from the attack time and sample rate.
+    attack_alpha_f32 : np.float32
+        The attack coefficient as a 32-bit floating-point number.
+    release_alpha_f32 : np.float32
+        The release coefficient as a 32-bit floating-point number.
+    attack_alpha_int : int
+        The attack coefficient as a 32-bit signed integer.
+    release_alpha_int : int
+        The release coefficient as a 32-bit signed integer.
+    threshold : float
+        The threshold below which the signal is gated.
+    threshold_f32 : np.float32
+        The threshold level as a 32-bit floating-point number.
+    threshold_int : int
+        The threshold level as a 32-bit signed integer.
+    env_detector : envelope_detector_peak
+        An instance of the envelope_detector_peak class used for envelope detection.
+
+    """
+
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
+
+        # for the noise gate, the attack and release times are swapped
+        # i.e. attack time is after going under threshold instead of over
+        # the device will expect these swapped back when doing control
+        self.attack_alpha = alpha_from_time(release_t, fs)
+        self.release_alpha = alpha_from_time(attack_t, fs)
+        self.attack_alpha_f32 = np.float32(self.attack_alpha)
+        self.release_alpha_f32 = np.float32(self.release_alpha)
+        self.attack_alpha_int = utils.int32(round(self.attack_alpha * 2**30))
+        self.release_alpha_int = utils.int32(round(self.release_alpha * 2**30))
+
+        self.threshold = utils.db2gain(threshold_db)
+        self.threshold_f32 = np.float32(self.threshold)
+        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.env_detector = envelope_detector_peak(
+            fs,
+            n_chans=n_chans,
+            attack_t=attack_t,
+            release_t=release_t,
+            Q_sig=self.Q_sig,
+        )
+
+    def gain_calc(self, envelope):
+        """Calculate the float gain for the current sample.
+
+        Parameters
+        ----------
+        envelope : float
+            The envelope value of the audio signal.
+
+        Returns
+        -------
+        float
+            The calculated gain for the current sample.
+        """
+        if envelope < self.threshold:
+            new_gain = 0
+        else:
+            new_gain = 1
+        return new_gain
+
+    def gain_calc_int(self, envelope_int):
+        """Calculate the int gain for the current sample.
+
+        Parameters
+        ----------
+        envelope_int : int
+            The envelope value of the audio signal as a 32-bit signed
+            integer.
+
+        Returns
+        -------
+        int
+            The calculated gain for the current sample as a 32-bit
+            signed integer.
+        """
+        if envelope_int < self.threshold_int:
+            new_gain_int = utils.int32(0)
+        else:
+            new_gain_int = utils.int32(2**30)
+        return new_gain_int
+
+    def gain_calc_xcore(self, envelope):
+        """Calculate the np.float32 gain for the current sample.
+
+        Parameters
+        ----------
+        envelope : float
+            The envelope value of the audio signal.
+
+        Returns
+        -------
+        np.float32
+            The calculated gain for the current sample as a 32-bit
+            floating-point number.
+        """
+        if envelope < self.threshold_f32:
+            new_gain = np.float32(0)
+        else:
+            new_gain = np.float32(1)
+        return new_gain
 
 
 if __name__ == "__main__":
