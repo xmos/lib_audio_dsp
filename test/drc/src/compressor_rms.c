@@ -26,16 +26,17 @@ int main()
   int in_len = ftell(in) / sizeof(int32_t);
   fseek(in, 0, SEEK_SET);
 
-  float th, sl, at_al, re_al;
+  int32_t th, at_al, re_al;
+  float sl;
 
-  fread(&th, sizeof(float), 1, comp_info);
+  fread(&th, sizeof(int32_t), 1, comp_info);
+  fread(&at_al, sizeof(int32_t), 1, comp_info);
+  fread(&re_al, sizeof(int32_t), 1, comp_info);
   fread(&sl, sizeof(float), 1, comp_info);
-  fread(&at_al, sizeof(float), 1, comp_info);
-  fread(&re_al, sizeof(float), 1, comp_info);
   fclose(comp_info);
 
   compressor_t comp = (compressor_t){
-              (env_detector_t){at_al, re_al, 0}, th, 1, sl};
+              (env_detector_t){at_al, re_al, 0}, th, INT32_MAX, sl};
 
   for (unsigned i = 0; i < in_len; i++)
   {

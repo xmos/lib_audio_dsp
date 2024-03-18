@@ -6,13 +6,12 @@
 #include <xcore/assert.h>
 
 static inline q1_31 get_alpha(float fs, float time) {
+  xassert(time > 0 && "time has to be positive");
   time = 2 / (fs * time);
   int32_t sign, exp, mant;
   asm("fsexp %0, %1, %2": "=r" (sign), "=r" (exp): "r" (time));
   asm("fmant %0, %1": "=r" (mant): "r" (time));
-  if (sign) {
-    mant = - mant;
-  }
+
   // mant to q31
   right_shift_t shr = -31 - exp + 23;
   mant >>= shr;
@@ -80,7 +79,7 @@ void adsp_env_detector_rms(
   int32_t ah, al;
   asm("maccs %0,%1,%2,%3":"=r"(ah),"=r"(al):"r"(new_sample),"r"(new_sample), "0" (0), "1" (1 << (-SIG_EXP - 1)));
   asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (-SIG_EXP), "0" (ah), "1" (al));
-  asm("lextract %0,%1,%2,%3,32":"=r"(ah):"r"(ah),"r"(al),"r"(-SIG_EXP));
+  asm("lextract %0,%1,%2,%3,32":"=r"(new_sample):"r"(ah),"r"(al),"r"(-SIG_EXP));
 
   int32_t alpha = env_det->release_alpha;
   if (new_sample > env_det->envelope) {

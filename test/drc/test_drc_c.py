@@ -43,7 +43,7 @@ def get_c_wav(dir_name, lim_name, sim = True):
   app = "xsim" if sim else "xrun --io"
   run_cmd = app + " " + str(bin_dir / lim_name) + "_test.xe"
   stdout = subprocess.check_output(run_cmd, cwd = dir_name, shell = True)
-  #print("run msg:\n", stdout)
+  print("run msg:\n", stdout)
 
   sig_bin = dir_name / "sig_out.bin"
   assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
@@ -67,7 +67,7 @@ def run_py(filt, sig_fl):
   for n in range(sig_fl.size):
     out_f64[n], _, _ = filt.process(sig_fl[n])
 
-  #sf.write(gen_dir / "sig_py_flt.wav", out_f64, fs, "PCM_24")
+  sf.write(gen_dir / "sig_py_flt.wav", out_f64, fs, "PCM_24")
 
   return out_f64, out_f32
 
@@ -95,7 +95,7 @@ def test_env_det_c(in_signal, env_name, at, rt):
 
   out_py_int = np.zeros(in_signal.size)
   for n in range(in_signal.size):
-    out_py_int[n] = env.process_xcore(in_signal[n])
+    out_py_int[n] = env.process(in_signal[n])
 
   sf.write(gen_dir / "sig_py_int.wav", out_py_int, fs, "PCM_24")
   out_c = get_c_wav(test_dir, env_name)
@@ -116,7 +116,7 @@ def test_limiter_c(in_signal, lim_name, at, rt, threshold):
   test_dir = bin_dir / test_name
   test_dir.mkdir(exist_ok = True, parents = True)
 
-  lim_info = [lim.threshold_int, lim.attack_alpha_int, lim.release_alpha_int]
+  lim_info = [lim.threshold_int, lim.env_detector.attack_alpha_int, lim.env_detector.release_alpha_int]
   lim_info = np.array(lim_info, dtype = np.int32)
   lim_info.tofile(test_dir / "lim_info.bin")
 
@@ -124,15 +124,9 @@ def test_limiter_c(in_signal, lim_name, at, rt, threshold):
   out_c = get_c_wav(test_dir, lim_name)
   shutil.rmtree(test_dir)
 
-  if test_name == "limiter_peak_-20_0.001_0.01":
-    # for some reason this particular exapmle isn't bit exact, so just
-    # check the number of unmatched samples is small, and that the
-    # max atol is small.
-    not_equal_idx = np.sum(out_py_int != out_c)
-    pct_not_equal = ((not_equal_idx) / len(out_py_int)) * 100
-    assert pct_not_equal <= 0.5, f"Output mismatch: {pct_not_equal}% of samples are not equal"
-
-    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=1.5e-8)
+  if lim_name == "limiter_rms" and threshold != 0:
+    # python uses float sqrt when C uses the fixed point one, so expect some diff
+    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=1e-8)
   else:
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
@@ -149,8 +143,14 @@ def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
   test_dir = bin_dir / test_name
   test_dir.mkdir(exist_ok = True, parents = True)
 
-  comp_info = [comp.threshold_f32, comp.slope_f32, comp.attack_alpha_f32, comp.release_alpha_f32]
-  comp_info = np.array(comp_info, dtype = np.float32)
+  # numpy doesn't like to have an array with different types
+  # so create separate arrays, cast to bytes, append, write
+  comp_info = [comp.threshold_int, comp.env_detector.attack_alpha_int, comp.env_detector.release_alpha_int]
+  comp_info = np.array(comp_info, dtype=np.int32)
+  comp_info1 = np.array(comp.slope_f32, dtype=np.float32)
+  comp_info = comp_info.tobytes()
+  comp_info1 = comp_info1.tobytes()
+  comp_info = np.append(comp_info, comp_info1)
   comp_info.tofile(test_dir / "comp_info.bin")
 
   _, out_py_int = run_py(comp, in_signal)
@@ -161,14 +161,14 @@ def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
   if ratio == 1 or threshold == 0:
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
   else:
-    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=4.5e-8)
+    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=1e-8)
 
 if __name__ == "__main__":
   bin_dir.mkdir(exist_ok=True, parents=True)
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
 
-  test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
-  #test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -20)
-  #test_limiter_c(sig_fl, "limiter_peak", 0.0001, 0.1, -10)
-  #test_compressor_c(sig_fl, "compressor_rms", 0.001, 0.01, -6, 4)
+  #test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
+  #test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -10)
+  #test_limiter_c(sig_fl, "limiter_peak", 0.001, 0.1, -10)
+  test_compressor_c(sig_fl, "compressor_rms", 0.001, 0.01, -12, 1)

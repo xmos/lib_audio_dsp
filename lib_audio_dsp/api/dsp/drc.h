@@ -17,8 +17,8 @@ typedef struct{
 
 typedef struct{
   env_detector_t env_det;
-  float threshold;
-  float gain;
+  int32_t threshold;
+  int32_t gain;
   float slope;
 }compressor_t;
 
