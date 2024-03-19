@@ -384,7 +384,7 @@ class compressor_limiter_base(dspg.dsp_block):
 
         return (
             (float(y) * 2**-self.Q_sig),
-            (float(new_gain_int) * 2**-self.Q_sig),
+            (float(new_gain_int) * 2**-31),
             (float(envelope_int) * 2**-self.Q_sig),
         )
 
@@ -785,6 +785,18 @@ class noise_gate(compressor_limiter_base):
             release_t=release_t,
             Q_sig=self.Q_sig,
         )
+
+        self.reset_state()
+
+    def reset_state(self):
+        """Reset the envelope detector to 0 and the gain to 1."""
+        self.env_detector.envelope = [1] * self.n_chans
+        self.env_detector.envelope_f32 = [np.float32(1)] * self.n_chans
+        self.env_detector.envelope_int = [utils.int32(2**self.Q_sig)] * self.n_chans
+        self.gain = [1] * self.n_chans
+        self.gain_f32 = [np.float32(1)] * self.n_chans
+        self.gain_int = [2**31 - 1] * self.n_chans
+
 
     def gain_calc(self, envelope):
         """Calculate the float gain for the current sample.
