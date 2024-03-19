@@ -797,7 +797,6 @@ class noise_gate(compressor_limiter_base):
         self.gain_f32 = [np.float32(1)] * self.n_chans
         self.gain_int = [2**31 - 1] * self.n_chans
 
-
     def gain_calc(self, envelope):
         """Calculate the float gain for the current sample.
 
