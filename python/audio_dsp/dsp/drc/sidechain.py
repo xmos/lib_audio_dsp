@@ -66,7 +66,6 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
         # note rms comes as x**2, so use db_pow
         self.threshold = utils.db_pow2gain(threshold_db)
-        self.threshold_f32 = float32(self.threshold)
         self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
         self.env_detector = envelope_detector_rms(
             fs,
@@ -82,7 +81,6 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
         # set the gain calculation function handles
         self.gain_calc = drcu.compressor_rms_gain_calc
-        self.gain_calc_int = drcu.compressor_rms_gain_calc_int
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
 
     def process(self, input_sample: float, detect_sample: float):  # type: ignore
@@ -117,14 +115,11 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         y = self.gain[0] * input_sample
         return y, new_gain, envelope
 
-    def process_int(self, input_sample: float, detect_sample: float):  # type: ignore
-        raise NotImplementedError
-
-    def process_xcore(self, input_sample: float, detect_sample: float):  # type: ignore
+    def process_xcore(self, input_sample: float, detect_sample: float, channel=0):  # type: ignore
         """
         Update the envelope for the detection signal, then calculate and
         apply the required gain for compression/limiting, and apply to
-        the input signal using float32 maths.
+        the input signal using int32 maths.
 
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.
@@ -132,39 +127,38 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         """
         # quantize
         sample_int = utils.int32(round(input_sample * 2**self.Q_sig))
-        detect_sample_f32 = utils.float_s32(detect_sample)
-        detect_sample_f32 = utils.float_s32_use_exp(detect_sample_f32, -27)
-        detect_sample_f32 = float32(float(detect_sample_f32))
+        detect_sample_int = utils.int32(round(detect_sample * 2**self.Q_sig))
 
         # get envelope from envelope detector
-        envelope = self.env_detector.process_xcore(detect_sample_f32)
+        envelope_int = self.env_detector.process_xcore(detect_sample_int)
         # avoid /0
-        if envelope == float32(0):
-            envelope = float32(1e-20)
+        envelope_int = max(envelope_int, 1)
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain = self.gain_calc_xcore(envelope, self.threshold_f32, self.slope_f32)
+        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)
 
         # see if we're attacking or decaying
-        if new_gain < self.gain_f32[0]:
-            alpha = self.attack_alpha_f32
+        if new_gain_int < self.gain_int[channel]:
+            alpha = self.attack_alpha_int
         else:
-            alpha = self.release_alpha_f32
+            alpha = self.release_alpha_int
 
         # do exponential moving average
-        self.gain_f32[0] = self.gain_f32[0] + alpha * (new_gain - self.gain_f32[0])
+        acc = int(self.gain_int[channel]) << 31
+        mul = utils.int32(new_gain_int - self.gain_int[channel])
+        acc += mul * alpha
+        self.gain_int[channel] = utils.int32_mult_sat_extract(acc, 1, 31)
 
-        # apply gain in int32
-        this_gain_int = (self.gain_f32[0] * float32(2**30)).as_int32()
-        acc = int(1 << 29)
-        acc += this_gain_int * sample_int
-        y = utils.int32_mult_sat_extract(acc, 1, 30)
+        acc = 1 << 30
+        acc += sample_int * self.gain_int[channel]
+        y = utils.int32_mult_sat_extract(acc, 1, 31)
 
-        # quantize before return
-        y = float(y) * 2**-self.Q_sig
-
-        return y, float(new_gain), float(envelope)
+        return (
+            (float(y) * 2**-self.Q_sig),
+            (float(new_gain_int) * 2**-31),
+            (float(envelope_int) * 2**-self.Q_sig),
+        )
 
     def process_frame(self, frame):
         """
@@ -211,7 +205,6 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         self.threshold = utils.db_pow2gain(threshold_dB)
-        self.threshold_f32 = float32(self.threshold)
         self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
         self.env_detector = envelope_detector_rms(
             fs,
@@ -227,7 +220,6 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
         # set the gain calculation function handles
         self.gain_calc = drcu.compressor_rms_gain_calc
-        self.gain_calc_int = drcu.compressor_rms_gain_calc_int
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
 
     def process_channels(self, input_samples: list[float], detect_samples: list[float]):  # type: ignore
@@ -265,7 +257,9 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         y = self.gain * input_samples
         return y, new_gain, envelope
 
-    def process_channels_int(self, input_samples: list[float], detect_samples: list[float]):  # type: ignore
+    def process_channels_xcore(  # type: ignore
+        self, input_samples: list[float], detect_samples: list[float]
+    ):
         """
         Update the envelopes for a detection signal, then calculate and
         apply the required gain for compression/limiting to the input,
@@ -276,20 +270,22 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         Input should be scaled with 0dB = 1.0.
 
         """
-        samples_int = [int(0)] * len(detect_samples)
-        for i in range(len(detect_samples)):
-            samples_int[i] = utils.int32(round(detect_samples[i] * 2**self.Q_sig))
+        # quantize
+        samples_int = [int(0)] * len(input_samples)
+        for i in range(len(input_samples)):
+            samples_int[i] = utils.int32(round(input_samples[i] * 2**self.Q_sig))
 
         # get envelope from envelope detector
-        env0_int = self.env_detector.process_int(samples_int[0], 0)
-        env1_int = self.env_detector.process_int(samples_int[1], 1)
-        envelope_int = max(env0_int, env1_int)
+        env0 = self.env_detector.process_xcore(samples_int[0], 0)
+        env1 = self.env_detector.process_xcore(samples_int[1], 1)
+        envelope_int = np.maximum(env0, env1)
         # avoid /0
         envelope_int = max(envelope_int, 1)
 
+
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain_int = self.gain_calc_int(envelope_int, self.threshold_int, self.slope_f32)  # type: ignore
+        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)  # type: ignore
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int:
@@ -297,80 +293,25 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         else:
             alpha = self.release_alpha_int
 
-        # do exponential moving average, VPU mult uses 2**30, otherwise
-        # could use 2**31
-        self.gain_int = utils.vpu_mult(2**30 - alpha, self.gain_int)
-        self.gain_int += utils.vpu_mult(alpha, new_gain_int)
+        # do exponential moving average
+        acc = int(self.gain_int) << 31
+        mul = utils.int32(new_gain_int - self.gain_int)
+        acc += mul * alpha
+        self.gain_int = utils.int32_mult_sat_extract(acc, 1, 31)
 
-        y = []
-        for i in range(len(input_samples)):
-            samples_int[i] = utils.int32(round(input_samples[i] * 2**self.Q_sig))
-
+        y = [0] * self.n_chans
+        # apply gain in int32
         for sample_int in samples_int:
-            y_uq = utils.vpu_mult(self.gain_int, sample_int)
-            y.append(float(y_uq) * 2**-self.Q_sig)
+            acc = 1 << 30
+            acc += sample_int * self.gain_int
+            y_uq = utils.int32_mult_sat_extract(acc, 1, 31)
+            y[i] = (float(y_uq) * 2**-self.Q_sig)
 
         return (
             y,
             (float(new_gain_int) * 2**-self.Q_sig),
             (float(envelope_int) * 2**-self.Q_sig),
         )
-
-    def process_channels_xcore(  # type: ignore
-        self, input_samples: list[float], detect_samples: list[float]
-    ):
-        """
-        Update the envelopes for a detection signal, then calculate and
-        apply the required gain for compression/limiting to the input,
-        using float32 maths. The same gain is applied to both
-        stereo channels.
-
-        Take one new sample and return the compressed/limited sample.
-        Input should be scaled with 0dB = 1.0.
-
-        """
-        # quantize
-        samples_int = [int(0)] * len(input_samples)
-        samples_f32 = [float32(0)] * len(input_samples)
-        for i in range(len(input_samples)):
-            samples_int[i] = utils.int32(round(input_samples[i] * 2**self.Q_sig))
-            sample_q = utils.float_s32(detect_samples[i])
-            sample_q = utils.float_s32_use_exp(sample_q, -27)
-            samples_f32[i] = float32(float(sample_q))
-
-        # get envelope from envelope detector
-        env0 = self.env_detector.process_xcore(samples_f32[0], 0)
-        env1 = self.env_detector.process_xcore(samples_f32[1], 1)
-        envelope = np.maximum(env0, env1)
-        # avoid /0
-        if envelope == float32(0):
-            envelope = float32(1e-20)
-
-        # if envelope below threshold, apply unity gain, otherwise scale
-        # down
-        new_gain = self.gain_calc_xcore(envelope, self.threshold_f32, self.slope_f32)  # type: ignore
-
-        # see if we're attacking or decaying
-        if new_gain < self.gain_f32:
-            alpha = self.attack_alpha_f32
-        else:
-            alpha = self.release_alpha_f32
-
-        # do exponential moving average
-        self.gain_f32 = self.gain_f32 + alpha * (new_gain - self.gain_f32)
-
-        # apply gain in int32
-        y = [0] * len(samples_int)
-        this_gain_int = (self.gain_f32 * float32(2**30)).as_int32()
-        for i in range(len(samples_int)):
-            acc = int(1 << 29)
-            acc += this_gain_int * samples_int[i]
-            y_uq = utils.int32_mult_sat_extract(acc, 1, 30)
-
-            # quantize before return
-            y[i] = float(y_uq) * 2**-self.Q_sig
-
-        return y, float(new_gain), float(envelope)
 
     def process_frame(self, frame):
         """

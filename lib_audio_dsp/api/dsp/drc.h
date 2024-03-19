@@ -4,23 +4,23 @@
 #pragma once
 
 typedef struct{
-  float attack_alpha;
-  float release_alpha;
-  float envelope;
+  q1_31 attack_alpha;
+  q1_31 release_alpha;
+  int32_t envelope;
 }env_detector_t;
 
 typedef struct{
   env_detector_t env_det;
-  float threshold;
-  float gain;
+  int32_t threshold;
+  int32_t gain;
 }limiter_t;
 
 typedef limiter_t noise_gate_t;
 
 typedef struct{
   env_detector_t env_det;
-  float threshold;
-  float gain;
+  int32_t threshold;
+  int32_t gain;
   float slope;
 }compressor_t;
 

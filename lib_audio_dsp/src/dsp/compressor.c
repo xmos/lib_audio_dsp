@@ -4,18 +4,42 @@
 #include "dsp/adsp.h"
 #include <math.h>
 
-static inline int32_t apply_gain(int32_t samp, float gain) {
-  int32_t mant, exp, zero;
-  asm("fsexp %0, %1, %2": "=r" (zero), "=r" (exp): "r" (gain));
-  asm("fmant %0, %1": "=r" (mant): "r" (gain));
-
-  int32_t q = -(exp - 23);
+static inline int32_t apply_gain_q31(int32_t samp, q1_31 gain) {
+  int32_t q = 31;
   int32_t ah = 0, al = 1 << (q - 1);
-  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (samp), "r" (mant), "0" (ah), "1" (al));
+  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (samp), "r" (gain), "0" (ah), "1" (al));
   asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (q), "0" (ah), "1" (al));
   asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (q));
 
   return ah;
+}
+
+static inline int32_t q31_ema(int32_t x, int32_t samp, q1_31 alpha) {
+  // this assumes that x and samp are positive and alpha is q31
+  // x and samp have to have the same exponent
+  int32_t ah, al;
+  int32_t mul = samp - x;
+
+  // preload the acc with x at position of 31 
+  // (essentially giving it exponent of -31 + x.exp)
+  asm("linsert %0, %1, %2, %3, 32":"=r" (ah), "=r" (al): "r"(x), "r"(31), "0"(0), "1" (0));
+  // x + alpha * (samp - x) with exponent -31 + x.exp
+  asm("maccs %0,%1,%2,%3":"=r"(ah),"=r"(al):"r"(alpha),"r"(mul), "0" (ah), "1" (al));
+  // saturate and extract from 63rd bit
+  asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (31), "0" (ah), "1" (al));
+  asm("lextract %0,%1,%2,%3,32":"=r"(x):"r"(ah),"r"(al),"r"(31));
+  return x;
+}
+
+static inline int32_t from_float_pos(float val) {
+  // assimes that val is positive
+  int32_t sign, exp, mant;
+  asm("fsexp %0, %1, %2": "=r" (sign), "=r" (exp): "r" (val));
+  asm("fmant %0, %1": "=r" (mant): "r" (val));
+  // mant to SIG_EXP
+  right_shift_t shr = SIG_EXP - exp + 23;
+  mant >>= shr;
+  return mant;
 }
 
 compressor_t adsp_compressor_rms_init(
@@ -27,8 +51,9 @@ compressor_t adsp_compressor_rms_init(
 ) {
   compressor_t comp;
   comp.env_det = adsp_env_detector_init(fs, atack_t, release_t, 0);
-  comp.threshold = powf(10, threshold_db / 10);
-  comp.gain = 1;
+  float th = powf(10, threshold_db / 10);
+  comp.threshold = from_float_pos(th);
+  comp.gain = INT32_MAX;
   comp.slope = (1 - 1 / ratio) / 2;
   return comp;
 }
@@ -38,20 +63,31 @@ int32_t adsp_compressor_rms(
   int32_t new_samp
 ) {
   adsp_env_detector_rms(&comp->env_det, new_samp);
-  float env = comp->env_det.envelope;
-  float th = comp->threshold;
-  env = (env == 0) ? 1e-20 : env;
+  int32_t env = (comp->env_det.envelope == 0) ? 1 : comp->env_det.envelope;
   // this assumes that both th and env > 0 and that the slope is [0, 1/2]
   // basically (th/env)^slope > 1 is th^slope > env^slope
   // so if th and env both positive we can try to drop the slope
   // if slope == 0 expression fails, if slope is positive and th > env - passes
-  float new_gain = ((comp->slope > 0) && (th < env)) ? powf((th / env), comp->slope) : 1;
+  int32_t new_gain = INT32_MAX;
+  if ((comp->slope > 0) && (comp->threshold < env)) {
+    int32_t ah = 0, al = 0, r = 0;
+    float ng_fl = 0;
+    asm("linsert %0, %1, %2, %3, 32": "=r" (ah), "=r" (al): "r" (comp->threshold), "r" (31), "0" (ah), "1" (al));
+    asm("ldivu %0, %1, %2, %3, %4": "=r" (new_gain), "=r" (r): "r" (ah), "r" (al), "r" (env));
+    r = -31 + 23;
+    asm("fmake %0, %1, %2, %3, %4": "=r" (ng_fl): "r" (0), "r" (r), "r" (0), "r" (new_gain));
+    ng_fl = powf(ng_fl, comp->slope);
+    asm("fsexp %0, %1, %2": "=r" (al), "=r" (r): "r" (ng_fl));
+    asm("fmant %0, %1": "=r" (new_gain): "r" (ng_fl));
+    r = -31 - r + 23;
+    new_gain >>= r;
+  }
 
-  float alpha = comp->env_det.release_alpha;
+  int32_t alpha = comp->env_det.release_alpha;
   if( comp->gain > new_gain ) {
     alpha = comp->env_det.attack_alpha;
   }
 
-  comp->gain = comp->gain + alpha * (new_gain - comp->gain);
-  return apply_gain(new_samp, comp->gain);
+  comp->gain = q31_ema(comp->gain, new_gain, alpha);
+  return apply_gain_q31(new_samp, comp->gain);
 }

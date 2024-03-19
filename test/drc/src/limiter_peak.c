@@ -26,15 +26,15 @@ int main()
   int in_len = ftell(in) / sizeof(int32_t);
   fseek(in, 0, SEEK_SET);
 
-  float th, at_al, re_al;
+  int32_t th, at_al, re_al;
 
-  fread(&th, sizeof(float), 1, lim_info);
-  fread(&at_al, sizeof(float), 1, lim_info);
-  fread(&re_al, sizeof(float), 1, lim_info);
+  fread(&th, sizeof(int32_t), 1, lim_info);
+  fread(&at_al, sizeof(int32_t), 1, lim_info);
+  fread(&re_al, sizeof(int32_t), 1, lim_info);
   fclose(lim_info);
 
   limiter_t lim = (limiter_t){
-              (env_detector_t){at_al, re_al, 0}, th, 1};
+              (env_detector_t){at_al, re_al, 0}, th, INT32_MAX};
 
   for (unsigned i = 0; i < in_len; i++)
   {

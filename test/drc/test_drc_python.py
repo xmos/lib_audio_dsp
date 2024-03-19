@@ -412,10 +412,7 @@ def test_noise_gate():
 def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
     # test that a drc component is bit exact when the signal is below
     # the threshold (or above in the case of a noise gate).
-    if component == "noise_gate":
-        #TODO fixme
-        pytest.xfail("suspected float32 issue for noise gate")
-    # check that a 24b quantized chirp is bit exact if it's below the threshold
+
     component_handle = getattr(drc, component)
 
     if threshold is not None:
@@ -438,7 +435,6 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
         drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n] = drcut.process(signal[n])
-
     else:
         # limiter and compressor have 3 outputs
         for n in np.arange(len(signal)):
@@ -493,6 +489,10 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
 
     output_xcore = np.zeros(len(signal))
     output_flt = np.zeros(len(signal))
+    gain_xcore = np.zeros(len(signal))
+    gain_flt = np.zeros(len(signal))
+    env_xcore = np.zeros(len(signal))
+    env_flt = np.zeros(len(signal))
 
     if "envelope" in component:
         # envelope detector has 1 output
@@ -501,14 +501,13 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
         drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n] = drcut.process(signal[n])
-
     else:
         # limiter and compressor have 3 outputs
         for n in np.arange(len(signal)):
-            output_xcore[n], _, _ = drcut.process_xcore(signal[n])
+            output_xcore[n], gain_xcore[n], env_xcore[n] = drcut.process_xcore(signal[n])
         drcut.reset_state()
         for n in np.arange(len(signal)):
-            output_flt[n], _, _ = drcut.process(signal[n])
+            output_flt[n], gain_flt[n], env_flt[n] = drcut.process(signal[n])
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
     top_half = utils.db(output_flt) > -50
@@ -615,9 +614,9 @@ def test_stereo_components(fs, component, at, rt, threshold, ratio):
 # TODO compressor tests
 
 if __name__ == "__main__":
-    # test_drc_component(48000, "limiter_peak", 1, 1, 1)
+    # test_drc_component(48000, "limiter_peak", 0.1, 0.5, -6, None)
     # test_limiter_peak_attack(48000, 0.1, -10)
     # comp_vs_limiter(48000, 0.001, 0)
     # test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)
-    # test_mono_vs_stereo(48000, "limiter_peak", "limiter_peak_stereo", 0.001, 0.01, -6)
-    test_sidechain_mono_vs_comp(16000, 0.05, -40)
+    test_mono_vs_stereo(48000, "limiter_peak", "limiter_peak_stereo", 0.001, 0.01, -6, None)
+    # test_sidechain_mono_vs_comp(16000, 0.05, -40)

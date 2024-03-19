@@ -16,9 +16,9 @@ class CompressorRMS(Stage):
         rt = 0.2
         self.dsp_block = drc.compressor_rms(self.fs, self.n_in, ratio, threshold, at, rt)
 
-        self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_f32)
-        self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_f32)
-        self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_f32)
+        self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
+        self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
+        self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)
         self.set_control_field_cb("slope", lambda: self.dsp_block.slope_f32)
 
     def make_compressor_rms(

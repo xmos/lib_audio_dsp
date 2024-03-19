@@ -16,7 +16,7 @@ static inline void compressor_copy_config_to_state(compressor_t *comp_state, int
         comp_state[i].env_det.attack_alpha = comp_config->attack_alpha;
         comp_state[i].env_det.release_alpha = comp_config->release_alpha;
         comp_state[i].threshold = comp_config->threshold;
-	      comp_state[i].slope = comp_config->slope;
+	    comp_state[i].slope = comp_config->slope;
     }
 }
 
@@ -67,7 +67,7 @@ void compressor_rms_init(module_instance_t* instance, adsp_bump_allocator_t* all
 
     for(int i=0; i<state->n_inputs; i++)
     {
-        state->comp[i].gain = 1;
+        state->comp[i].gain = INT32_MAX;
         state->comp[i].env_det.envelope = 0;
     }
 
