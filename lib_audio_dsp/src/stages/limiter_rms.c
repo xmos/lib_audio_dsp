@@ -65,7 +65,7 @@ void limiter_rms_init(module_instance_t* instance, adsp_bump_allocator_t* alloca
 
     for(int i=0; i<state->n_inputs; i++)
     {
-        state->lim[i].gain = 1;
+        state->lim[i].gain = INT32_MAX;
         state->lim[i].env_det.envelope = 0;
     }
 

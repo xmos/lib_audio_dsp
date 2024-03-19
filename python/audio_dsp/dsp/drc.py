@@ -27,7 +27,13 @@ def alpha_from_time(attack_or_release_time, fs):
 
     T = 1 / fs
     alpha = min(2 * T / (attack_or_release_time + FLT_MIN), 1.0)
-    return alpha
+    # very long times might quantize to zero, maybe just limit a
+    # better way
+    assert alpha > 0
+
+    alpha_int = utils.int32(round(alpha * 2**31)) if alpha != 1.0 else utils.int32(2**31 - 1)
+    assert alpha_int > 0
+    return alpha, alpha_int
 
 
 class envelope_detector_peak(dspg.dsp_block):
@@ -86,20 +92,8 @@ class envelope_detector_peak(dspg.dsp_block):
             release_t = detect_t
 
         # calculate EWM alpha from time constant
-        self.attack_alpha = alpha_from_time(attack_t, fs)
-        self.release_alpha = alpha_from_time(release_t, fs)
-
-        # very long times might quantize to zero, maybe just limit a
-        # better way
-        assert self.attack_alpha > 0
-        assert self.release_alpha > 0
-
-        print(self.attack_alpha)
-        self.attack_alpha_int = utils.int32(round(self.attack_alpha * 2**31)) if self.attack_alpha != 1.0 else utils.int32(2**31 - 1)
-        self.release_alpha_int = utils.int32(round(self.release_alpha * 2**31)) if self.release_alpha != 1.0 else utils.int32(2**31 - 1)
-
-        assert self.attack_alpha_int > 0
-        assert self.release_alpha_int > 0
+        self.attack_alpha, self.attack_alpha_int = alpha_from_time(attack_t, fs)
+        self.release_alpha, self.release_alpha_int = alpha_from_time(release_t, fs)
 
         # initalise envelope state
         self.reset_state()
@@ -312,6 +306,8 @@ class compressor_limiter_base(dspg.dsp_block):
     def __init__(self, fs, n_chans, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
+        self.attack_alpha, self.attack_alpha_int = alpha_from_time(attack_t, fs)
+        self.release_alpha, self.release_alpha_int = alpha_from_time(release_t, fs)
         self.gain = [1] * n_chans
         self.gain_int = [2**31 - 1] * self.n_chans
 
@@ -357,9 +353,9 @@ class compressor_limiter_base(dspg.dsp_block):
 
         # see if we're attacking or decaying
         if new_gain < self.gain[channel]:
-            alpha = self.env_detector.attack_alpha
+            alpha = self.attack_alpha
         else:
-            alpha = self.env_detector.release_alpha
+            alpha = self.release_alpha
 
         # do exponential moving average
         self.gain[channel] = ((1 - alpha) * self.gain[channel]) + (alpha * new_gain)
@@ -390,9 +386,9 @@ class compressor_limiter_base(dspg.dsp_block):
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int[channel]:
-            alpha = self.env_detector.attack_alpha_int
+            alpha = self.attack_alpha_int
         else:
-            alpha = self.env_detector.release_alpha_int
+            alpha = self.release_alpha_int
 
         # do exponential moving average
         acc = int(self.gain_int[channel]) << 31
@@ -805,15 +801,10 @@ class noise_gate(compressor_limiter_base):
         # for the noise gate, the attack and release times are swapped
         # i.e. attack time is after going under threshold instead of over
         # the device will expect these swapped back when doing control
-        self.attack_alpha = alpha_from_time(release_t, fs)
-        self.release_alpha = alpha_from_time(attack_t, fs)
-        self.attack_alpha_f32 = np.float32(self.attack_alpha)
-        self.release_alpha_f32 = np.float32(self.release_alpha)
-        self.attack_alpha_int = utils.int32(round(self.attack_alpha * 2**30))
-        self.release_alpha_int = utils.int32(round(self.release_alpha * 2**30))
+        self.release_alpha, self.release_alpha_int = alpha_from_time(attack_t, fs)
+        self.attack_alpha, self.attack_alpha_int = alpha_from_time(release_t, fs)
 
         self.threshold = utils.db2gain(threshold_db)
-        self.threshold_f32 = np.float32(self.threshold)
         self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
         self.env_detector = envelope_detector_peak(
             fs,
@@ -842,7 +833,7 @@ class noise_gate(compressor_limiter_base):
             new_gain = 1
         return new_gain
 
-    def gain_calc_int(self, envelope_int):
+    def gain_calc_xcore(self, envelope_int):
         """Calculate the int gain for the current sample.
 
         Parameters
@@ -860,28 +851,8 @@ class noise_gate(compressor_limiter_base):
         if envelope_int < self.threshold_int:
             new_gain_int = utils.int32(0)
         else:
-            new_gain_int = utils.int32(2**30)
+            new_gain_int = utils.int32(2**31 - 1)
         return new_gain_int
-
-    def gain_calc_xcore(self, envelope):
-        """Calculate the np.float32 gain for the current sample.
-
-        Parameters
-        ----------
-        envelope : float
-            The envelope value of the audio signal.
-
-        Returns
-        -------
-        np.float32
-            The calculated gain for the current sample as a 32-bit
-            floating-point number.
-        """
-        if envelope < self.threshold_f32:
-            new_gain = np.float32(0)
-        else:
-            new_gain = np.float32(1)
-        return new_gain
 
 
 if __name__ == "__main__":

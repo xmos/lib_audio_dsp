@@ -67,7 +67,7 @@ def run_py(filt, sig_fl):
   for n in range(sig_fl.size):
     out_f64[n], _, _ = filt.process(sig_fl[n])
 
-  #sf.write(gen_dir / "sig_py_flt.wav", out_f64, fs, "PCM_24")
+  sf.write(gen_dir / "sig_py_flt.wav", out_f64, fs, "PCM_24")
 
   return out_f64, out_f32
 
@@ -95,7 +95,7 @@ def test_env_det_c(in_signal, env_name, at, rt):
 
   out_py_int = np.zeros(in_signal.size)
   for n in range(in_signal.size):
-    out_py_int[n] = env.process(in_signal[n])
+    out_py_int[n] = env.process_xcore(in_signal[n])
 
   sf.write(gen_dir / "sig_py_int.wav", out_py_int, fs, "PCM_24")
   out_c = get_c_wav(test_dir, env_name)
@@ -112,8 +112,8 @@ def test_env_det_c(in_signal, env_name, at, rt):
 def test_limiter_c(in_signal, component_name, at, rt, threshold):
   # there is a difference between C and PY now which shows up in this test case
   # nothing too critical, should be fixed soon
-  if component_name == "noise_gate" and threshold == 0:
-    pytest.xfail("Noise gate with threshold 0 is not bit exact")
+  #if component_name == "noise_gate" and threshold == 0:
+  #  pytest.xfail("Noise gate with threshold 0 is not bit exact")
   component_handle = getattr(drc, component_name)
   comp = component_handle(fs, 1, threshold, at, rt)
   test_name = f"{component_name}_{threshold}_{at}_{rt}"
@@ -121,9 +121,9 @@ def test_limiter_c(in_signal, component_name, at, rt, threshold):
   test_dir = bin_dir / test_name
   test_dir.mkdir(exist_ok = True, parents = True)
 
-  info = [comp.threshold_int, comp.env_detector.attack_alpha_int, comp.env_detector.release_alpha_int]
+  info = [comp.threshold_int, comp.attack_alpha_int, comp.release_alpha_int]
   info = np.array(info, dtype = np.int32)
-  info.tofile(test_dir / "lim_info.bin")
+  info.tofile(test_dir / "info.bin")
 
 
   _, out_py_int = run_py(comp, in_signal)
@@ -151,7 +151,7 @@ def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
 
   # numpy doesn't like to have an array with different types
   # so create separate arrays, cast to bytes, append, write
-  comp_info = [comp.threshold_int, comp.env_detector.attack_alpha_int, comp.env_detector.release_alpha_int]
+  comp_info = [comp.threshold_int, comp.attack_alpha_int, comp.release_alpha_int]
   comp_info = np.array(comp_info, dtype=np.int32)
   comp_info1 = np.array(comp.slope_f32, dtype=np.float32)
   comp_info = comp_info.tobytes()
@@ -174,8 +174,8 @@ if __name__ == "__main__":
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
 
-  #test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
+  test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
   #test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -10)
   #test_limiter_c(sig_fl, "limiter_peak", 0.001, 0.1, -10)
   #test_compressor_c(sig_fl, "compressor_rms", 0.001, 0.01, -12, 1)
-  test_limiter_c(sig_fl, "noise_gate", 0.001, 0.01, 0)
+  #test_limiter_c(sig_fl, "noise_gate", 0.001, 0.01, 0)

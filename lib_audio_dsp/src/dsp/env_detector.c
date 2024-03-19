@@ -40,20 +40,21 @@ env_detector_t adsp_env_detector_init(
   return env_det;
 }
 
-static inline int32_t weird_ema(int32_t samp, int32_t env, int32_t alpha) {
-  // this assumes that env and samp are positive and alpha is q31
+static inline int32_t q31_ema(int32_t x, int32_t samp, q1_31 alpha) {
+  // this assumes that x and samp are positive and alpha is q31
+  // x and samp have to have the same exponent
   int32_t ah, al;
-  int32_t mul = samp - env;
+  int32_t mul = samp - x;
 
-  // preload the acc with env at position of 31 
-  // (essentially giving it exponent of -58, rather then -27)
-  asm("linsert %0, %1, %2, %3, 32":"=r" (ah), "=r" (al): "r"(env), "r"(31), "0"(0), "1" (0));
-  // env + alpha * (samp - env) with exponent -58
+  // preload the acc with x at position of 31 
+  // (essentially giving it exponent of -31 + x.exp)
+  asm("linsert %0, %1, %2, %3, 32":"=r" (ah), "=r" (al): "r"(x), "r"(31), "0"(0), "1" (0));
+  // x + alpha * (samp - x) with exponent -31 + x.exp
   asm("maccs %0,%1,%2,%3":"=r"(ah),"=r"(al):"r"(alpha),"r"(mul), "0" (ah), "1" (al));
   // saturate and extract from 63rd bit
   asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (31), "0" (ah), "1" (al));
-  asm("lextract %0,%1,%2,%3,32":"=r"(env):"r"(ah),"r"(al),"r"(31));
-  return env;
+  asm("lextract %0,%1,%2,%3,32":"=r"(x):"r"(ah),"r"(al),"r"(31));
+  return x;
 }
 
 void adsp_env_detector_peak(
@@ -69,7 +70,7 @@ void adsp_env_detector_peak(
     alpha = env_det->attack_alpha;
   }
 
-  env_det->envelope = weird_ema(new_sample, env_det->envelope, alpha);
+  env_det->envelope = q31_ema(env_det->envelope, new_sample, alpha);
 }
 
 void adsp_env_detector_rms(
@@ -86,5 +87,5 @@ void adsp_env_detector_rms(
     alpha = env_det->attack_alpha;
   }
 
-  env_det->envelope = weird_ema(new_sample, env_det->envelope, alpha);
+  env_det->envelope = q31_ema(env_det->envelope, new_sample, alpha);
 }
