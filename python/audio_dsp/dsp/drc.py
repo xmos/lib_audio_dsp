@@ -65,12 +65,6 @@ class envelope_detector_peak(dspg.dsp_block):
     envelope : list[float]
         Current envelope value for each channel for floating point
         processing.
-    attack_alpha_f32 : np.float32
-        attack_alpha in 32-bit float format.
-    release_alpha_f32 : np.float32
-        release_alpha in 32-bit float format.
-    envelope_f32 : list[np.float32]
-        current envelope value for each channel in 32-bit float format.
     attack_alpha_int : int
         attack_alpha in 32-bit int format.
     release_alpha_int : int
@@ -153,7 +147,6 @@ class envelope_detector_peak(dspg.dsp_block):
         mul = utils.int32(sample_mag - self.envelope_int[channel])
         acc += mul * alpha
         self.envelope_int[channel] = utils.int32_mult_sat_extract(acc, 1, 31)
-
 
         if isinstance(sample, float):
             return float(self.envelope_int[channel]) * 2**-self.Q_sig
@@ -278,16 +271,6 @@ class compressor_limiter_base(dspg.dsp_block):
     release_alpha : float
         Release time parameter used for exponential moving average in
         floating point processing.
-    threshold_f32 : np.float32
-        Value above which comression/limiting occurs for floating point
-        processing.
-    gain_f32 : list[np.float32]
-        Current gain to be applied to the signal for each channel for
-        floating point processing.
-    attack_alpha_f32 : np.float32
-        attack_alpha in 32-bit float format.
-    release_alpha_f32 : np.float32
-        release_alpha in 32-bit float format.
     threshold_int : int
         Value above which comression/limiting occurs for int32 fixed
         point processing.
@@ -317,7 +300,6 @@ class compressor_limiter_base(dspg.dsp_block):
         self.threshold = None
         self.threshold_int = None
 
-
     def reset_state(self):
         """Reset the envelope detector to 0 and the gain to 1."""
         self.env_detector.reset_state()
@@ -328,8 +310,8 @@ class compressor_limiter_base(dspg.dsp_block):
         """Calculate the float gain for the current sample"""
         raise NotImplementedError
 
-    def gain_calc_xcore(self, envelope):
-        """Calculate the np.float32 gain for the current sample"""
+    def gain_calc_xcore(self, envelope_int):
+        """Calculate the int32 fixed point gain for the current sample"""
         raise NotImplementedError
 
     def process(self, sample, channel=0):
@@ -396,7 +378,6 @@ class compressor_limiter_base(dspg.dsp_block):
         acc += mul * alpha
         self.gain_int[channel] = utils.int32_mult_sat_extract(acc, 1, 31)
 
-        #y = utils.vpu_mult(self.gain_int[channel], sample_int)
         acc = 1 << 30
         acc += sample_int * self.gain_int[channel]
         y = utils.int32_mult_sat_extract(acc, 1, 31)
@@ -491,7 +472,7 @@ class limiter_peak(compressor_limiter_base):
     def gain_calc_xcore(self, envelope_int):
         """Calculate the int gain for the current sample"""
         if self.threshold_int >= envelope_int:
-            new_gain_int = utils.int32(0x7fffffff)
+            new_gain_int = utils.int32(0x7FFFFFFF)
         else:
             new_gain_int = int(self.threshold_int) << 31
             new_gain_int = utils.int32(new_gain_int // envelope_int)
@@ -556,7 +537,7 @@ class limiter_rms(compressor_limiter_base):
 
         """
         if self.threshold_int >= envelope_int:
-            new_gain_int = utils.int32(0x7fffffff)
+            new_gain_int = utils.int32(0x7FFFFFFF)
         else:
             new_gain_int = int(self.threshold_int) << 31
             new_gain_int = utils.int32(new_gain_int // envelope_int)
@@ -687,13 +668,10 @@ class compressor_rms(compressor_limiter_base):
     slope : float
         The slope factor of the compressor, defined as
         `slope = (1 - 1/ratio)`.
-    slope : np.float32
+    slope_f32 : np.float32
         The slope factor of the compressor, used for int32 to float32
         processing.
     threshold : float
-        Value above which compression occurs for floating point
-        processing.
-    threshold_f32 : np.float32
         Value above which compression occurs for floating point
         processing.
     threshold_int : int
@@ -748,9 +726,9 @@ class compressor_rms(compressor_limiter_base):
         if self.slope_f32 > 0 and self.threshold_int < envelope_int:
             new_gain_int = int(self.threshold_int) << 31
             new_gain_int = utils.int32(new_gain_int // envelope_int)
-            new_gain_int = utils.int32(float(new_gain_int * 2**-31)**self.slope_f32 * 2**31)
+            new_gain_int = utils.int32(float(new_gain_int * 2**-31) ** self.slope_f32 * 2**31)
         else:
-            new_gain_int = utils.int32(0x7fffffff)
+            new_gain_int = utils.int32(0x7FFFFFFF)
 
         return new_gain_int
 
@@ -776,18 +754,12 @@ class noise_gate(compressor_limiter_base):
         The attack coefficient calculated from the release time and sample rate.
     release_alpha : float
         The release coefficient calculated from the attack time and sample rate.
-    attack_alpha_f32 : np.float32
-        The attack coefficient as a 32-bit floating-point number.
-    release_alpha_f32 : np.float32
-        The release coefficient as a 32-bit floating-point number.
     attack_alpha_int : int
         The attack coefficient as a 32-bit signed integer.
     release_alpha_int : int
         The release coefficient as a 32-bit signed integer.
     threshold : float
         The threshold below which the signal is gated.
-    threshold_f32 : np.float32
-        The threshold level as a 32-bit floating-point number.
     threshold_int : int
         The threshold level as a 32-bit signed integer.
     env_detector : envelope_detector_peak

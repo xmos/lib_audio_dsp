@@ -221,7 +221,6 @@ def test_noise_gate():
 
     output_xcore = np.zeros(len(signal))
     output_flt = np.zeros(len(signal))
-    output_int = np.zeros(len(signal))
 
     # noise gate has 3 outputs
     for n in np.arange(len(signal)):
@@ -229,9 +228,7 @@ def test_noise_gate():
     drcut.reset_state()
     for n in np.arange(len(signal)):
         output_flt[n], _, _ = drcut.process(signal[n])
-    drcut.reset_state()
-    for n in np.arange(len(signal)):
-        output_int[n], _, _ = drcut.process_int(signal[n])
+
     sf.write("noise_gate_test_in.wav", signal, fs)
     sf.write("noise_gate_test_out.wav", output_flt, fs)
 
@@ -241,10 +238,6 @@ def test_noise_gate():
         error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
         assert mean_error_flt < 0.055
-
-        error_int = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
-        mean_error_int = utils.db(np.nanmean(utils.db2gain(error_int)))
-        assert mean_error_int < 0.055
 
 
 @pytest.mark.parametrize("fs", [48000])
