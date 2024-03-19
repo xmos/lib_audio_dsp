@@ -742,6 +742,10 @@ class noise_gate(compressor_limiter_base):
     envelope returns above the threshold, the gain applied to the signal
     is increased to 1 over the attack time.
 
+    The initial state of the noise gate is with the gate open (no
+    attenuation), assuming a full scale signal has been present before
+    t = 0.
+
     Parameters
     ----------
     threshold_db : float
@@ -789,7 +793,8 @@ class noise_gate(compressor_limiter_base):
         self.reset_state()
 
     def reset_state(self):
-        """Reset the envelope detector to 0 and the gain to 1."""
+        """Reset the envelope detector to 1 and the gain to 1, so the
+        gate starts off."""
         self.env_detector.envelope = [1] * self.n_chans
         self.env_detector.envelope_f32 = [np.float32(1)] * self.n_chans
         self.env_detector.envelope_int = [utils.int32(2**self.Q_sig)] * self.n_chans
