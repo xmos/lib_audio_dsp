@@ -23,8 +23,8 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         assert n_chans == 2, "has to be stereo"
         super().__init__(fs, n_chans, Q_sig)
 
-        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(attack_t, fs)
-        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(release_t, fs)
+        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
+        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(release_t, fs)
 
         # These are defined differently for peak and RMS limiters
         self.threshold = None

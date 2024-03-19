@@ -301,9 +301,9 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
         y = [0] * self.n_chans
         # apply gain in int32
-        for sample_int in samples_int:
+        for i in range(len(input_samples)):
             acc = 1 << 30
-            acc += sample_int * self.gain_int
+            acc += samples_int[i] * self.gain_int
             y_uq = utils.int32_mult_sat_extract(acc, 1, 31)
             y[i] = (float(y_uq) * 2**-self.Q_sig)
 
