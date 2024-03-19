@@ -249,9 +249,6 @@ def test_noise_gate():
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
-    if component == "noise_gate":
-        #TODO fixme
-        pytest.xfail("suspected float32 issue for noise gate")
     # check that a 24b quantized chirp is bit exact if it's below the threshold
     component_handle = getattr(drc, component)
 

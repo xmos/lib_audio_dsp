@@ -1,7 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 from copy import deepcopy
-from math import sqrt
+from math import sqrt, isqrt
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -541,7 +541,7 @@ class limiter_rms(compressor_limiter_base):
         else:
             new_gain_int = int(self.threshold_int) << 31
             new_gain_int = utils.int32(new_gain_int // envelope_int)
-            new_gain_int = utils.int32(sqrt(float(new_gain_int * 2**-31)) * 2**31)
+            new_gain_int = utils.int32(isqrt(new_gain_int * 2**31))
         return new_gain_int
 
 

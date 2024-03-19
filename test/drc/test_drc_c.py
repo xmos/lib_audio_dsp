@@ -112,8 +112,6 @@ def test_env_det_c(in_signal, env_name, at, rt):
 def test_limiter_c(in_signal, component_name, at, rt, threshold):
   # there is a difference between C and PY now which shows up in this test case
   # nothing too critical, should be fixed soon
-  #if component_name == "noise_gate" and threshold == 0:
-  #  pytest.xfail("Noise gate with threshold 0 is not bit exact")
   component_handle = getattr(drc, component_name)
   comp = component_handle(fs, 1, threshold, at, rt)
   test_name = f"{component_name}_{threshold}_{at}_{rt}"
@@ -132,7 +130,7 @@ def test_limiter_c(in_signal, component_name, at, rt, threshold):
 
   if component_name == "limiter_rms" and threshold != 0:
     # python uses float sqrt when C uses the fixed point one, so expect some diff
-    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=1e-8)
+    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=7.5e-9)
   else:
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
