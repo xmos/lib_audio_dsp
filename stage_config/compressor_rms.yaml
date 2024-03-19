@@ -1,15 +1,15 @@
 module:
   compressor_rms:
     attack_alpha:
-      type: float
+      type: int32_t
     release_alpha:
-      type: float
+      type: int32_t
     envelope:
-      type: float
+      type: int32_t
     threshold:
-      type: float
+      type: int32_t
     gain:
-      type: float
+      type: int32_t
     slope:
       type: float
 includes:

@@ -54,7 +54,7 @@ def get_c_wav(dir_name, lim_name, sim = True):
   return sig_fl
 
 
-def run_py(filt: drc.compressor_limiter_base, sig_fl):
+def run_py(filt, sig_fl):
   out_f32 = np.zeros(sig_fl.size)
   out_f64 = np.zeros(sig_fl.size)
   
@@ -67,7 +67,7 @@ def run_py(filt: drc.compressor_limiter_base, sig_fl):
   for n in range(sig_fl.size):
     out_f64[n], _, _ = filt.process(sig_fl[n])
 
-  #sf.write(gen_dir / "sig_py_flt.wav", out_f64, fs, "PCM_24")
+  sf.write(gen_dir / "sig_py_flt.wav", out_f64, fs, "PCM_24")
 
   return out_f64, out_f32
 
@@ -76,6 +76,32 @@ def in_signal():
   bin_dir.mkdir(exist_ok=True, parents=True)
   gen_dir.mkdir(exist_ok=True, parents=True)
   return get_sig()
+
+@pytest.mark.parametrize("env_name", ["envelope_detector_peak",
+                                      "envelope_detector_rms"])
+@pytest.mark.parametrize("at", [0.001, 0.1])
+@pytest.mark.parametrize("rt", [0.01, 0.2])
+def test_env_det_c(in_signal, env_name, at, rt):
+  env_handle = getattr(drc, env_name)
+  env = env_handle(fs, 1, at, rt)
+  test_name = f"{env_name}_{at}_{rt}"
+
+  test_dir = bin_dir / test_name
+  test_dir.mkdir(exist_ok = True, parents = True)
+
+  env_info = [env.attack_alpha_int, env.release_alpha_int]
+  env_info = np.array(env_info, dtype = np.int32)
+  env_info.tofile(test_dir / "env_info.bin")
+
+  out_py_int = np.zeros(in_signal.size)
+  for n in range(in_signal.size):
+    out_py_int[n] = env.process_xcore(in_signal[n])
+
+  sf.write(gen_dir / "sig_py_int.wav", out_py_int, fs, "PCM_24")
+  out_c = get_c_wav(test_dir, env_name)
+  shutil.rmtree(test_dir)
+
+  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
 @pytest.mark.parametrize("component_name", ["limiter_peak",
                                             "limiter_rms",
@@ -86,8 +112,6 @@ def in_signal():
 def test_limiter_c(in_signal, component_name, at, rt, threshold):
   # there is a difference between C and PY now which shows up in this test case
   # nothing too critical, should be fixed soon
-  if component_name == "noise_gate" and threshold == 0:
-    pytest.xfail("Noise gate with threshold 0 is not bit exact")
   component_handle = getattr(drc, component_name)
   comp = component_handle(fs, 1, threshold, at, rt)
   test_name = f"{component_name}_{threshold}_{at}_{rt}"
@@ -95,23 +119,18 @@ def test_limiter_c(in_signal, component_name, at, rt, threshold):
   test_dir = bin_dir / test_name
   test_dir.mkdir(exist_ok = True, parents = True)
 
-  info = [comp.threshold_f32, comp.attack_alpha_f32, comp.release_alpha_f32]
-  info = np.array(info, dtype = np.float32)
+  info = [comp.threshold_int, comp.attack_alpha_int, comp.release_alpha_int]
+  info = np.array(info, dtype = np.int32)
   info.tofile(test_dir / "info.bin")
+
 
   _, out_py_int = run_py(comp, in_signal)
   out_c = get_c_wav(test_dir, component_name)
   shutil.rmtree(test_dir)
 
-  if test_name == "limiter_peak_-20_0.001_0.01":
-    # for some reason this particular exapmle isn't bit exact, so just
-    # check the number of unmatched samples is small, and that the
-    # max atol is small.
-    not_equal_idx = np.sum(out_py_int != out_c)
-    pct_not_equal = ((not_equal_idx) / len(out_py_int)) * 100
-    assert pct_not_equal <= 0.5, f"Output mismatch: {pct_not_equal}% of samples are not equal"
-
-    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=1.5e-8)
+  if component_name == "limiter_rms" and threshold != 0:
+    # python uses float sqrt when C uses the fixed point one, so expect some diff
+    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=7.5e-9)
   else:
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
@@ -128,8 +147,14 @@ def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
   test_dir = bin_dir / test_name
   test_dir.mkdir(exist_ok = True, parents = True)
 
-  comp_info = [comp.threshold_f32, comp.slope_f32, comp.attack_alpha_f32, comp.release_alpha_f32]
-  comp_info = np.array(comp_info, dtype = np.float32)
+  # numpy doesn't like to have an array with different types
+  # so create separate arrays, cast to bytes, append, write
+  comp_info = [comp.threshold_int, comp.attack_alpha_int, comp.release_alpha_int]
+  comp_info = np.array(comp_info, dtype=np.int32)
+  comp_info1 = np.array(comp.slope_f32, dtype=np.float32)
+  comp_info = comp_info.tobytes()
+  comp_info1 = comp_info1.tobytes()
+  comp_info = np.append(comp_info, comp_info1)
   comp_info.tofile(test_dir / "comp_info.bin")
 
   _, out_py_int = run_py(comp, in_signal)
@@ -140,14 +165,15 @@ def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
   if ratio == 1 or threshold == 0:
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
   else:
-    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=4.5e-8)
+    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=1e-8)
 
 if __name__ == "__main__":
   bin_dir.mkdir(exist_ok=True, parents=True)
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
 
-  #test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -20)
-  #test_limiter_c(sig_fl, "limiter_peak", 0.001, 0.01, -20)
-  test_limiter_c(sig_fl, "noise_gate", 0.001, 0.01, 0)
-  #test_compressor_c(sig_fl, "compressor_rms", 0.001, 0.01, -6, 4)
+  test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
+  #test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -10)
+  #test_limiter_c(sig_fl, "limiter_peak", 0.001, 0.1, -10)
+  #test_compressor_c(sig_fl, "compressor_rms", 0.001, 0.01, -12, 1)
+  #test_limiter_c(sig_fl, "noise_gate", 0.001, 0.01, 0)
