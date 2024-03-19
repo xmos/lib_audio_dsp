@@ -282,7 +282,6 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         # avoid /0
         envelope_int = max(envelope_int, 1)
 
-
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
         new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)  # type: ignore
@@ -305,7 +304,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
             acc = 1 << 30
             acc += samples_int[i] * self.gain_int
             y_uq = utils.int32_mult_sat_extract(acc, 1, 31)
-            y[i] = (float(y_uq) * 2**-self.Q_sig)
+            y[i] = float(y_uq) * 2**-self.Q_sig
 
         return (
             y,

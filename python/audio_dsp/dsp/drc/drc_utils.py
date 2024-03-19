@@ -133,4 +133,3 @@ def noise_gate_gain_calc_xcore(envelope_int, threshold_int, slope_int=None):
     else:
         new_gain_int = utils.int32(2**31 - 1)
     return new_gain_int
-

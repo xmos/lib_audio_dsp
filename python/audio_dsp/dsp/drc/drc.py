@@ -1,7 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 from copy import deepcopy
-from math import isqrt
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -738,6 +737,7 @@ class noise_gate(compressor_limiter_base):
         self.env_detector.envelope_int = [utils.int32(2**self.Q_sig)] * self.n_chans
         self.gain = [1] * self.n_chans
         self.gain_int = [2**31 - 1] * self.n_chans
+
 
 if __name__ == "__main__":
     # import audio_dsp.dsp.signal_gen as gen
