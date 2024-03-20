@@ -2,10 +2,11 @@ from pathlib import Path
 from typing import Optional, NamedTuple
 from collections.abc import Callable
 from scipy.io import wavfile
+from scipy import signal
 from matplotlib import pyplot as plt
 
 import numpy
-import IPython
+from IPython import display
 
 
 from .stage import Stage, StageOutput
@@ -70,6 +71,49 @@ class ExecutionResult:
         else:
             plt.show()
 
+    def plot_magnitude_spectrum(self, path: Optional[str | Path] = None):
+        """
+        Display a spectrum plot of the result. Save to file
+        if path is not None.
+
+        Parameters
+        ----------
+        path
+            If path is not none then the plot will be saved to a file
+            and not shown.
+        """
+        chans = self.data.shape[1]
+        fig, axs = plt.subplots(chans, sharex=True)
+        for i in range(chans):
+            axs[i].magnitude_spectrum(self.data[:, i], Fs=self.fs, scale="dB")
+        if path:
+            plt.savefig(path)
+        else:
+            plt.show()
+
+    def plot_spectrogram(self, path: Optional[str | Path] = None):
+        """
+        Display a spectrogram plot of the result. Save to file
+        if path is not None.
+
+        Parameters
+        ----------
+        path
+            If path is not none then the plot will be saved to a file
+            and not shown.
+        """
+        chans = self.data.shape[1]
+        fig, axs = plt.subplots(chans, sharex=True)
+        for i in range(chans):
+            f, t, sxx = signal.spectrogram(self.data[:, i], self.fs)
+            axs[i].pcolormesh(t, f, sxx, shading="gouraud")
+        fig.supylabel("Frequency [Hz]")
+        fig.supxlabel("Time [sec]")
+        if path:
+            plt.savefig(path)
+        else:
+            plt.show()
+
     def play(self, channel: int):
         """
         Create a widget in the jupyter notebook to listen to the audio.
@@ -82,7 +126,7 @@ class ExecutionResult:
         channel
             The channel to listen to.
         """
-        IPython.display.display(IPython.display.Audio(self.data[:, channel], rate=int(self.fs)))
+        display.display(display.Audio(self.data[:, channel], rate=int(self.fs)))
 
 
 class PipelineExecutor:
@@ -165,7 +209,11 @@ class PipelineExecutor:
         return ExecutionResult(ret, fs)
 
     def log_chirp(
-        self, length_s: float = 0.5, amplitude: float = 1, start: float = 20, stop: float = 20000
+        self,
+        length_s: float = 0.5,
+        amplitude: float = 1,
+        start: float = 20,
+        stop: Optional[float] = None,
     ) -> ExecutionResult:
         """
         Generate a logarithmic chirp of constant amplitude and play through
@@ -180,7 +228,7 @@ class PipelineExecutor:
         start
             Start frequency.
         stop
-            Stop frequncy.
+            Stop frequency. Nyquist if not set
 
         Returns
         -------
@@ -189,9 +237,13 @@ class PipelineExecutor:
         """
         _, i_edges, _ = self._get_view()
         fs = i_edges[0].fs
+        if fs is None:
+            raise RuntimeError(
+                "Executor makes the assumption that the pipeline edges all have fs set"
+            )
         frame_size = i_edges[0].frame_size
 
-        chirp = signal_gen.log_chirp(fs, length_s, amplitude, start=start, stop=stop)
+        chirp = signal_gen.log_chirp(fs, length_s, amplitude, start=start, stop=stop or fs / 2)
         chirp_len = len(chirp)
         desired_chirp_len = chirp_len - (chirp_len % frame_size)
         chirp = chirp[:desired_chirp_len]
