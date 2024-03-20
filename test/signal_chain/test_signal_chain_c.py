@@ -63,11 +63,11 @@ def write_gain(test_dir, gain):
   all_filt_info = np.append(all_filt_info, gain)
   all_filt_info.tofile(test_dir / "gain.bin")
 
-def single_test(filt, test_dir, fname, sig_fl):
+def single_channels_test(filt, test_dir, fname, sig_fl):
   out_py = np.zeros(sig_fl.shape[1])
 
   for n in range(sig_fl.shape[1]):
-    out_py[n] = filt.process_xcore(sig_fl[:, n])
+    out_py[n] = filt.process_channels_xcore(sig_fl[:, n])
   
   sf.write(gen_dir / "sig_py_int.wav", out_py, fs, "PCM_24")
 
@@ -106,14 +106,14 @@ def test_subtractor_c(in_signal):
   test_dir = bin_dir / "subtractor"
   test_dir.mkdir(exist_ok = True, parents = True)
 
-  single_test(filt, test_dir, "subtractor", in_signal)
+  single_channels_test(filt, test_dir, "subtractor", in_signal)
 
 def test_adder_c(in_signal):
   filt = sc.adder(fs, 2)
   test_dir = bin_dir / "adder"
   test_dir.mkdir(exist_ok = True, parents = True)
 
-  single_test(filt, test_dir, "adder", in_signal)
+  single_channels_test(filt, test_dir, "adder", in_signal)
 
 @pytest.mark.parametrize("gain_dB", [-12, -6, 0])
 def test_mixer_c(in_signal, gain_dB):
@@ -122,7 +122,7 @@ def test_mixer_c(in_signal, gain_dB):
   test_dir.mkdir(exist_ok = True, parents = True)
   write_gain(test_dir, filt.gain_int)
 
-  single_test(filt, test_dir, "mixer", in_signal)
+  single_channels_test(filt, test_dir, "mixer", in_signal)
 
 @pytest.mark.parametrize("gains_dB", [[0, -6, 6], [-10, 3, 0]])
 @pytest.mark.parametrize("slew", [1, 10])

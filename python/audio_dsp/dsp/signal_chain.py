@@ -37,7 +37,7 @@ class mixer(dspg.dsp_block):
         self.gain = utils.db2gain(gain_db)
         self.gain_int = utils.int32(self.gain * 2**self.Q_sig)
 
-    def process(self, sample_list: list[float], channel: int = 0) -> float:  # type: ignore
+    def process_channels(self, sample_list: list[float]) -> float:
         """
         Process a single sample. Apply the gain to all the input samples
         then sum them using floating point maths.
@@ -46,8 +46,6 @@ class mixer(dspg.dsp_block):
         ----------
         sample_list : list
             List of input samples
-        channel : int
-            Channel index, not used by this module.
 
         Returns
         -------
@@ -60,7 +58,7 @@ class mixer(dspg.dsp_block):
 
         return y
 
-    def process_xcore(self, sample_list: list[float], channel: int = 0) -> float:  # type: ignore
+    def process_channels_xcore(self, sample_list: list[float]) -> float:
         """
         Process a single sample. Apply the gain to all the input samples
         then sum them using int32 fixed point maths.
@@ -72,8 +70,6 @@ class mixer(dspg.dsp_block):
         ----------
         sample_list : list
             List of input samples
-        channel : int
-            Channel index, not used by this module.
 
         Returns
         -------
@@ -121,7 +117,7 @@ class mixer(dspg.dsp_block):
         frame_size = frame[0].shape[0]
         output = np.zeros(frame_size)
         for sample in range(frame_size):
-            output[sample] = self.process(frame_np[:, sample].tolist())
+            output[sample] = self.process_channels(frame_np[:, sample].tolist())
 
         return [output]
 
@@ -152,7 +148,7 @@ class mixer(dspg.dsp_block):
         frame_size = frame[0].shape[0]
         output = np.zeros(frame_size)
         for sample in range(frame_size):
-            output[sample] = self.process_xcore(frame_np[:, sample].tolist())
+            output[sample] = self.process_channels_xcore(frame_np[:, sample].tolist())
 
         return [output]
 
@@ -201,7 +197,7 @@ class subtractor(dspg.dsp_block):
         # always has 2 channels
         super().__init__(fs, 2, Q_sig)
 
-    def process(self, sample_list: list[float], channel: int = 0) -> float:  # type: ignore
+    def process_channels(self, sample_list: list[float]) -> float:
         """
         Subtract the second input sample from the first using floating
         point maths.
@@ -210,8 +206,6 @@ class subtractor(dspg.dsp_block):
         ----------
         sample_list : list[float]
             List of input samples.
-        channel : int
-            Channel index, unused by this module.
 
         Returns
         -------
@@ -221,7 +215,7 @@ class subtractor(dspg.dsp_block):
         y = sample_list[0] - sample_list[1]
         return y
 
-    def process_xcore(self, sample_list: list[float], channel: int = 0) -> float:  # type: ignore
+    def process_channels_xcore(self, sample_list: list[float]) -> float:
         """
         Subtract the second input sample from the first using int32
         fixed point maths.
@@ -233,8 +227,6 @@ class subtractor(dspg.dsp_block):
         ----------
         sample_list : list[float]
             List of input samples.
-        channel : int
-            Channel index, unused by this module.
 
         Returns
         -------
@@ -285,7 +277,7 @@ class subtractor(dspg.dsp_block):
         frame_size = frame[0].shape[0]
         output = np.zeros(frame_size)
         for sample in range(frame_size):
-            output[sample] = self.process([frame[0][sample], frame[1][sample]])
+            output[sample] = self.process_channels([frame[0][sample], frame[1][sample]])
 
         return [output]
 
@@ -312,7 +304,7 @@ class subtractor(dspg.dsp_block):
         frame_size = frame[0].shape[0]
         output = np.zeros(frame_size)
         for sample in range(frame_size):
-            output[sample] = self.process_xcore([frame[0][sample], frame[1][sample]])
+            output[sample] = self.process_channels_xcore([frame[0][sample], frame[1][sample]])
 
         return [output]
 
@@ -619,7 +611,7 @@ class switch(dspg.dsp_block):
         self.switch_position = 0
         return
 
-    def process(self, sample_list: list[float], channel: int = 0) -> float:  # type: ignore
+    def process_channels(self, sample_list: list[float]) -> float:
         """Return the sample at the current switch position.
 
         This method takes a list of samples and returns the sample at
@@ -629,8 +621,6 @@ class switch(dspg.dsp_block):
         ----------
         sample_list : list
             A list of samples for each of the switch inputs.
-        channel : int
-            Not used by this DSP module.
 
         Returns
         -------
@@ -640,7 +630,7 @@ class switch(dspg.dsp_block):
         y = sample_list[self.switch_position]
         return y
 
-    def process_xcore(self, sample_list: list[float], channel: int = 0) -> float:  # type: ignore
+    def process_channels_xcore(self, sample_list: list[float]) -> float:
         """Return the sample at the current switch position.
 
         As there is no DSP, this just calls self.process.
@@ -657,7 +647,7 @@ class switch(dspg.dsp_block):
         y : float
             The sample at the current switch position.
         """
-        return self.process(sample_list)
+        return self.process_channels(sample_list)
 
     def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
         """
@@ -686,7 +676,7 @@ class switch(dspg.dsp_block):
         frame_size = frame[0].shape[0]
         output = np.zeros(frame_size)
         for sample in range(frame_size):
-            output[sample] = self.process(frame_np[:, sample].tolist())
+            output[sample] = self.process_channels(frame_np[:, sample].tolist())
 
         return [output]
 
@@ -717,7 +707,7 @@ class switch(dspg.dsp_block):
         frame_size = frame[0].shape[0]
         output = np.zeros(frame_size)
         for sample in range(frame_size):
-            output[sample] = self.process_xcore(frame_np[:, sample].tolist())
+            output[sample] = self.process_channels_xcore(frame_np[:, sample].tolist())
 
         return [output]
 

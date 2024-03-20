@@ -66,7 +66,7 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
         float
             The processed sample.
         """
-        return sample
+        raise NotImplementedError
 
     def process_xcore(self, sample: float, channel=0):
         """Take one new sample and return 1 processed sample.
