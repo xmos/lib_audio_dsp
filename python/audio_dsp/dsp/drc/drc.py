@@ -129,7 +129,9 @@ class envelope_detector_peak(dspg.dsp_block):
             alpha = self.release_alpha_int
 
         # do exponential moving average
-        self.envelope_int[channel] = drcu.calc_ema_xcore(self.envelope_int[channel], sample_mag, alpha)
+        self.envelope_int[channel] = drcu.calc_ema_xcore(
+            self.envelope_int[channel], sample_mag, alpha
+        )
 
         if isinstance(sample, float):
             return float(self.envelope_int[channel]) * 2**-self.Q_sig
@@ -206,7 +208,9 @@ class envelope_detector_rms(envelope_detector_peak):
             alpha = self.release_alpha_int
 
         # do exponential moving average
-        self.envelope_int[channel] = drcu.calc_ema_xcore(self.envelope_int[channel], sample_mag, alpha)
+        self.envelope_int[channel] = drcu.calc_ema_xcore(
+            self.envelope_int[channel], sample_mag, alpha
+        )
 
         # if we got floats, return floats, otherwise return ints
         if isinstance(sample, float):
