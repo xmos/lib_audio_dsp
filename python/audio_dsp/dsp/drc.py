@@ -796,10 +796,8 @@ class noise_gate(compressor_limiter_base):
         """Reset the envelope detector to 1 and the gain to 1, so the
         gate starts off."""
         self.env_detector.envelope = [1] * self.n_chans
-        self.env_detector.envelope_f32 = [np.float32(1)] * self.n_chans
         self.env_detector.envelope_int = [utils.int32(2**self.Q_sig)] * self.n_chans
         self.gain = [1] * self.n_chans
-        self.gain_f32 = [np.float32(1)] * self.n_chans
         self.gain_int = [2**31 - 1] * self.n_chans
 
     def gain_calc(self, envelope):
