@@ -20,11 +20,10 @@ void envelope_detector_rms_process(int32_t **input, int32_t **output, void *app_
     int i = 0;
     do {
         int32_t *in = input[i];
-        int32_t *out = output[i];
 
         int j = 0;
         do {
-            *out++ = adsp_env_detector_rms(&state->env_det[i], *in++);
+            adsp_env_detector_rms(&state->env_det[i], *in++);
         } while(++j < state->frame_size);
     } while(++i < state->n_inputs);
 }
