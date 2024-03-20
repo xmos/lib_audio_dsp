@@ -53,8 +53,9 @@ class comb_fv(dspg.dsp_block):
 
 
 class freeverb(dspg.dsp_block):
-    def __init__(self, room_size=2, decay=0.5, damping=0.4, wet_gain_db=-1, dry_gain_db=-1):
-        """_summary_
+    def __init__(self, room_size=0.5, decay=0.5, damping=0.4, wet_gain_db=-1, dry_gain_db=-1):
+        """A room reverb effect based on Freeverb by Jezar at
+        Dreampoint.
 
         Parameters
         ----------
@@ -71,13 +72,19 @@ class freeverb(dspg.dsp_block):
             dry signal gain
         """
         self.damping = damping
-        self.feedback = decay*0.28 + 0.7
+        self.feedback = decay*0.28 + 0.7  # avoids too much or too little feedback
         self.wet = utils.db2gain(wet_gain_db)
         self.dry = utils.db2gain(dry_gain_db)
-        self.gain = 0.015
+        self.gain = 0.015  # pregain going into the reverb
         self.room_size = room_size
-        self.comb_lengths = (np.array([1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617])*self.room_size).astype(int)
-        self.ap_lengths = (np.array([556, 441, 341, 225])*self.room_size).astype(int)
+
+        # the magic freeverb delay line lengths are for 44.1kHz, so
+        # scale them with sample rate and room size
+        delay_scaling = self.fs/44100 * self.room_size
+        self.comb_lengths = np.array([1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617])
+        self.comb_lengths = (self.comb_lengths*delay_scaling).astype(int)
+        self.ap_lengths = np.array([556, 441, 341, 225])
+        self.ap_lengths = (self.ap_lengths*delay_scaling).astype(int)
 
         self.combs = [comb_fv(self.comb_lengths[0], self.feedback, self.damping),
                       comb_fv(self.comb_lengths[1], self.feedback, self.damping),
