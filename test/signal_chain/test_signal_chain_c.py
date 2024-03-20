@@ -63,20 +63,6 @@ def write_gain(test_dir, gain):
   all_filt_info = np.append(all_filt_info, gain)
   all_filt_info.tofile(test_dir / "gain.bin")
 
-def single_test(filt, test_dir, fname, sig_fl):
-  out_py = np.zeros(sig_fl.shape[1])
-
-  for n in range(sig_fl.shape[1]):
-    out_py[n] = filt.process_xcore(sig_fl[:, n])
-  
-  sf.write(gen_dir / "sig_py_int.wav", out_py, fs, "PCM_24")
-
-  out_c = get_c_wav(test_dir, fname)
-  shutil.rmtree(test_dir)
-
-  np.testing.assert_allclose(out_c, out_py, rtol=0, atol=0)
-
-
 def single_channels_test(filt, test_dir, fname, sig_fl):
   out_py = np.zeros(sig_fl.shape[1])
 

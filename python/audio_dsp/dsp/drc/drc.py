@@ -106,7 +106,7 @@ class envelope_detector_peak(dspg.dsp_block):
         maths.
 
         Take 1 new sample and return the updated envelope. If the input
-        is float32, return a float32, otherwise expect float input
+        is int, return a int, otherwise expect float input
         and return float output.
 
         """
@@ -278,8 +278,6 @@ class compressor_limiter_base(dspg.dsp_block):
 
         self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
         self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(release_t, fs)
-        self.gain = [1] * n_chans
-        self.gain_int = [2**31 - 1] * self.n_chans
 
         # These are defined differently for peak and RMS limiters
         self.env_detector = None
@@ -622,13 +620,10 @@ class compressor_rms(compressor_limiter_base):
     slope : float
         The slope factor of the compressor, defined as
         `slope = (1 - 1/ratio)`.
-    slope : float32
+    slope_f32 : float32
         The slope factor of the compressor, used for int32 to float32
         processing.
     threshold : float
-        Value above which compression occurs for floating point
-        processing.
-    threshold_f32 : float32
         Value above which compression occurs for floating point
         processing.
     threshold_int : int

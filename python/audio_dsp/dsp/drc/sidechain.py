@@ -52,9 +52,6 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
     threshold : float
         Value above which compression occurs for floating point
         processing.
-    threshold_f32 : float32
-        Value above which compression occurs for floating point
-        processing.
     threshold_int : int
         Value above which compression occurs for int32 fixed point
         processing.
@@ -75,8 +72,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
             Q_sig=self.Q_sig,
         )
 
-        self.ratio = ratio
-        self.slope = (1 - 1 / self.ratio) / 2.0
+        self.slope = (1 - 1 / ratio) / 2.0
         self.slope_f32 = float32(self.slope)
 
         # set the gain calculation function handles
@@ -115,7 +111,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         y = self.gain[0] * input_sample
         return y, new_gain, envelope
 
-    def process_xcore(self, input_sample: float, detect_sample: float, channel=0):  # type: ignore
+    def process_xcore(self, input_sample: float, detect_sample: float):  # type: ignore
         """
         Update the envelope for the detection signal, then calculate and
         apply the required gain for compression/limiting, and apply to
@@ -139,19 +135,19 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)
 
         # see if we're attacking or decaying
-        if new_gain_int < self.gain_int[channel]:
+        if new_gain_int < self.gain_int[0]:
             alpha = self.attack_alpha_int
         else:
             alpha = self.release_alpha_int
 
         # do exponential moving average
-        acc = int(self.gain_int[channel]) << 31
-        mul = utils.int32(new_gain_int - self.gain_int[channel])
+        acc = int(self.gain_int[0]) << 31
+        mul = utils.int32(new_gain_int - self.gain_int[0])
         acc += mul * alpha
-        self.gain_int[channel] = utils.int32_mult_sat_extract(acc, 1, 31)
+        self.gain_int[0] = utils.int32_mult_sat_extract(acc, 1, 31)
 
         acc = 1 << 30
-        acc += sample_int * self.gain_int[channel]
+        acc += sample_int * self.gain_int[0]
         y = utils.int32_mult_sat_extract(acc, 1, 31)
 
         return (
@@ -214,8 +210,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
             Q_sig=self.Q_sig,
         )
 
-        self.ratio = ratio
-        self.slope = (1 - 1 / self.ratio) / 2.0
+        self.slope = (1 - 1 / ratio) / 2.0
         self.slope_f32 = float32(self.slope)
 
         # set the gain calculation function handles

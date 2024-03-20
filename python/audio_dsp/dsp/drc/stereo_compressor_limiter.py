@@ -49,7 +49,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         self.gain = 1
         self.gain_int = 2**31 - 1
 
-    def process_channels(self, input_samples):
+    def process_channels(self, input_samples: list[float]):
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using floating point
@@ -84,15 +84,16 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         y = self.gain * input_samples
         return y, new_gain, envelope
 
-    def process_channels_xcore(self, input_samples):
+    def process_channels_xcore(self, input_samples: list[float]):
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using int32 fixed point
         maths. The same gain is applied to both stereo channels.
 
         Take one new pair of samples and return the compressed/limited
-        samples.
-        Input should be scaled with 0dB = 1.0.
+        samples.  The float input sample is quantized to int32, and
+        returned to float before outputting. Input should be scaled with
+        0dB = 1.0.
 
         """
         samples_int = [int(0)] * len(input_samples)
@@ -136,7 +137,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
             (float(envelope_int) * 2**-self.Q_sig),
         )
 
-    def process_frame(self, frame):
+    def process_frame(self, frame: list[np.ndarray]):
         """
         Take a list frames of samples and return the processed frames.
 
@@ -157,7 +158,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
             output[1][sample] = out_samples[1]
         return output
 
-    def process_frame_xcore(self, frame):
+    def process_frame_xcore(self, frame: list[np.ndarray]):
         """
         Take a list frames of samples and return the processed frames,
         using a bit exact xcore implementation.
@@ -240,8 +241,7 @@ class compressor_rms_stereo(compressor_limiter_stereo_base):
             Q_sig=self.Q_sig,
         )
 
-        self.ratio = ratio
-        self.slope = (1 - 1 / self.ratio) / 2.0
+        self.slope = (1 - 1 / ratio) / 2.0
         self.slope_f32 = float32(self.slope)
 
         # set the gain calculation function handles
