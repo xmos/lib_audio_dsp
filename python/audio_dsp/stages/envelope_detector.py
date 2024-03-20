@@ -4,6 +4,7 @@ from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
 from ..dsp import generic as dspg
 
+
 class EnvelopeDetectorPeak(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=find_config("envelope_detector_peak"), **kwargs)
@@ -28,6 +29,7 @@ class EnvelopeDetectorPeak(Stage):
             self.fs, self.n_in, attack_t, release_t, delay, Q_sig
         )
         return self
+
 
 class EnvelopeDetectorRMS(Stage):
     def __init__(self, **kwargs):

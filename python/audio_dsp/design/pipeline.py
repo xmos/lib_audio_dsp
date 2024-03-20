@@ -511,6 +511,7 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
                 func += f"\tint32_t* stage_{stage_thread_index}_output[] = {{{output_edges}}};\n"
             else:
                 func += f"\tint32_t** stage_{stage_thread_index}_output = NULL;\n"
+                func += f"\t(void)stage_{stage_thread_index}_output;"
 
         func += "\tuint32_t start_ts, end_ts, start_control_ts, control_ticks;\n"
         func += "\tbool control_done;\n"
