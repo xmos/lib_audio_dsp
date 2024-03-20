@@ -84,7 +84,7 @@ def test_pipeline():
     scipy.io.wavfile.write(infile, Fs, input_sig_c)
 
     # Run python
-    sim_sig = p.executor().process(input_sig_py)
+    sim_sig = p.executor().process(input_sig_py).data
     np.testing.assert_equal(sim_sig, input_sig_py)
     sim_sig = np.clip((np.array(sim_sig) * (2**qformat)), np.iinfo(input_dtype).min, np.iinfo(input_dtype).max).astype(input_dtype)
     audio_helpers.write_wav(outfile_py, Fs, sim_sig)

@@ -19,6 +19,6 @@ def test_pipeline_executor():
     executor = p.executor()
     sig = np.ones((n_samps, 4))
 
-    ret = executor.process(sig)
+    ret = executor.process(sig).data
     print(ret)
 

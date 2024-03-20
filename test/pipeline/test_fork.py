@@ -43,7 +43,7 @@ def do_test(p, in_ch, out_ch):
     run_pipeline_xcoreai.run(xe, infile, outfile, 2, 1)
 
     _, out_data = audio_helpers.read_wav(outfile)
-    sim_out = p.executor().process(sig)
+    sim_out = p.executor().process(sig).data
     for in_i, out_i in zip(in_ch, out_ch):
         np.testing.assert_equal(sig[:, in_i], out_data[:, out_i])
         np.testing.assert_equal(sig[:, in_i], sim_out[:, out_i])
