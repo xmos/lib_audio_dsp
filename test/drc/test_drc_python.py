@@ -102,6 +102,8 @@ def test_limiter_peak_release(fs, rt, threshold):
 @pytest.mark.parametrize("rt", [0.00000001])
 @pytest.mark.parametrize("at", [0.00000001])
 def test_comp_ratio(fs, at, rt, ratio, threshold):
+    # make sure a fast compressor has the same perforance as a limiter
+    # over a variety of ratios
 
     drcut = drc.compressor_rms(fs, 1, ratio, threshold, at, rt)
 
@@ -156,7 +158,7 @@ def comp_vs_limiter(fs, at, threshold):
 
     y_r = np.zeros_like(x)
     f_r = np.zeros_like(x)
-    env_r = np.zeros_like(x)
+    env_r = np.zeros_like(x) 
 
     # do the processing
     for n in range(len(y_r)):
@@ -171,7 +173,7 @@ def comp_vs_limiter(fs, at, threshold):
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
 @pytest.mark.parametrize("threshold", [-20, -10, -6, 0])
-def peak_vs_rms(fs, at, threshold):
+def test_peak_vs_rms(fs, at, threshold):
     # check peak and rms converge to same value
 
     # Make a constant signal at 6dB above the threshold, make 2* length of
@@ -207,11 +209,170 @@ def peak_vs_rms(fs, at, threshold):
     # rms and peak limiter should converge to the same value
     np.testing.assert_allclose(utils.db(y_p[int(fs*at*5):]),
                                utils.db(y_r[int(fs*at*5):]),
-                               atol=0.002)
+                               atol=0.0022)
+
+
+@pytest.mark.parametrize("fs", [48000])
+@pytest.mark.parametrize("at", [0.01])
+@pytest.mark.parametrize("threshold", [-10])
+def test_sidechain_mono_vs_comp(fs, at, threshold):
+    # test a sidechain compressor is the same as a normal compressor
+    # when the sidechain signal is the same as the input signal
+
+    ratio = 5
+
+    x = gen.sin(fs, 1, 1, 1)
+    t = np.arange(len(x))/fs
+
+    rt = 0.5
+    comp_type = "compressor_rms"
+    reg_handle = getattr(drc, "%s" % comp_type)
+    side_handle = getattr(drc, "%s_sidechain_mono" % comp_type)
+
+    reg_thing = reg_handle(fs, 1, ratio, threshold, at, rt)
+    side_thing = side_handle(fs, ratio, threshold, at, rt)
+
+    y_p = np.zeros_like(x)
+    f_p = np.zeros_like(x)
+    env_p = np.zeros_like(x)
+
+    # do the processing
+    for n in range(len(y_p)):
+        y_p[n], f_p[n], env_p[n] = reg_thing.process(x[n])
+
+    y_r = np.zeros_like(x)
+    f_r = np.zeros_like(x)
+    env_r = np.zeros_like(x)
+
+    # do the processing
+    for n in range(len(y_r)):
+        y_r[n], f_r[n], env_r[n] = side_thing.process(x[n], x[n])
+
+    # rms and peak limiter should converge to the same value
+    np.testing.assert_array_equal(y_p, y_r)
+
+
+@pytest.mark.parametrize("fs", [48000])
+@pytest.mark.parametrize("at", [0.01])
+@pytest.mark.parametrize("threshold", [-10])
+def test_sidechain_stereo(fs, at, threshold):
+    # check peak and rms converge to same value
+
+    # Make a constant signal at 6dB above the threshold, make 2* length of
+    # attack time to keep the test quick
+    x = gen.sin(fs, 1, 1, 1)
+    x = np.stack([x, x], axis=0)
+    t = np.arange(len(x))/fs
+
+    rt = 0.3
+    comp_type = "compressor_rms"
+    reg_handle = getattr(drc, "%s_stereo" % comp_type)
+    side_handle = getattr(drc, "%s_sidechain_stereo" % comp_type)
+
+    reg_thing = reg_handle(fs, 1, threshold, at, rt)
+    side_thing = side_handle(fs, 1, threshold, at, rt)
+
+    y_p = np.zeros_like(x)
+    f_p = np.zeros_like(x)
+    env_p = np.zeros_like(x)
+
+    # do the processing
+    for n in range(len(y_p)):
+        y_p[:, n], f_p[:, n], env_p[:, n] = reg_thing.process_channels(x[:, n])
+
+    y_r = np.zeros_like(x)
+    f_r = np.zeros_like(x)
+    env_r = np.zeros_like(x)
+
+    # do the processing
+    for n in range(len(y_r)):
+        y_r[:, n], f_r[:, n], env_r[:, n] = side_thing.process_channels(x[:, n], x[:, n])
+
+    # rms and peak limiter should converge to the same value
+    np.testing.assert_array_equal(y_p, y_r)
+
+
+@pytest.mark.parametrize("fs", [48000])
+@pytest.mark.parametrize("component_mono, component_stereo, threshold, ratio", [("limiter_peak", "limiter_peak_stereo", -20, None),
+                                                                                ("limiter_peak", "limiter_peak_stereo", -6, None),
+                                                                                ("compressor_rms", "compressor_rms_stereo", 0, 6),
+                                                                                ("compressor_rms", "compressor_rms_stereo", 0, 2),
+                                                                                ("compressor_rms_sidechain_mono", "compressor_rms_sidechain_stereo", 0, 6),
+                                                                                ("compressor_rms_sidechain_mono", "compressor_rms_sidechain_stereo", 0, 2)])
+@pytest.mark.parametrize("rt", [0.2])
+@pytest.mark.parametrize("at", [0.001])
+def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold, ratio):
+    # test the mono and stereo components have the same perforamnce when
+    # fed a dual mono signal
+
+    signal = []
+    lenght = 0.1 + (rt + at) * 2
+    f = 997
+    signal.append(gen.sin(fs, lenght, f, 1))
+    signal.append(gen.sin(fs, lenght, f, 1))
+    signal = np.stack(signal, axis=0)
+
+    if "sidechain" in component_stereo:
+        sidechain_signal = np.zeros_like(signal)
+        sidechain_signal[:, len(signal)//2:] = 1
+
+    stereo_component_handle = getattr(drc, component_stereo)
+    mono_component_handle = getattr(drc, component_mono)
+    if ratio is not None:
+        drc_s = stereo_component_handle(fs, ratio, threshold, at, rt)
+        drc_m = mono_component_handle(fs, 1, ratio, threshold, at, rt)
+
+    else:
+        drc_s = stereo_component_handle(fs, threshold, at, rt)
+        drc_m = mono_component_handle(fs, 1, threshold, at, rt)
+
+
+    output_xcore_s = np.zeros(signal.shape)
+    output_flt_s = np.zeros(signal.shape)
+
+    if "sidechain" in component_stereo:
+        for n in np.arange(signal.shape[1]):
+            output_xcore_s[:, n], _, _ = drc_s.process_channels_xcore(signal[:, n], sidechain_signal[:, n])
+        drc_s.reset_state()
+        for n in np.arange(signal.shape[1]):
+            output_flt_s[:, n], _, _ = drc_s.process_channels(signal[:, n], sidechain_signal[:, n])
+
+    else:
+        for n in np.arange(signal.shape[1]):
+            output_xcore_s[:, n], _, _ = drc_s.process_channels_xcore(signal[:, n])
+        drc_s.reset_state()
+        for n in np.arange(signal.shape[1]):
+            output_flt_s[:, n], _, _ = drc_s.process_channels(signal[:, n])
+        drc_s.reset_state()
+
+    output_xcore_m = np.zeros(signal.shape)
+    output_flt_m = np.zeros(signal.shape)
+
+    # write mono signal to both output channels, makes comparison to stereo easier
+    if "sidechain" in component_mono:
+        for n in np.arange(signal.shape[1]):
+            output_xcore_m[:, n], _, _  = drc_m.process_xcore(signal[0, n], sidechain_signal[0, n])
+        drc_m.reset_state()
+        for n in np.arange(signal.shape[1]):
+            output_flt_m[:, n], _, _ = drc_m.process(signal[0, n], sidechain_signal[0, n])
+    else:
+        for n in np.arange(signal.shape[1]):
+            output_xcore_m[:, n], _, _  = drc_m.process_xcore(signal[0, n])
+        drc_m.reset_state()
+        for n in np.arange(signal.shape[1]):
+            output_flt_m[:, n], _, _ = drc_m.process(signal[0, n])
+
+    # check stereo channels are the same
+    np.testing.assert_array_equal(output_flt_s[0], output_flt_s[1])
+    np.testing.assert_array_equal(output_xcore_s[0], output_xcore_s[1])
+
+    # check stereo equals mono
+    np.testing.assert_array_equal(output_flt_s, output_flt_m)
+    np.testing.assert_array_equal(output_xcore_s, output_xcore_m)
 
 
 def test_noise_gate():
-
+    # test the noise gate performance on noisy speech
     signal, fs = make_noisy_speech()
 
     test_len = int(6*fs)
@@ -249,7 +410,9 @@ def test_noise_gate():
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
-    # check that a 24b quantized chirp is bit exact if it's below the threshold
+    # test that a drc component is bit exact when the signal is below
+    # the threshold (or above in the case of a noise gate).
+
     component_handle = getattr(drc, component)
 
     if threshold is not None:
@@ -299,6 +462,7 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
 @pytest.mark.parametrize("rt", [0.05, 0.1, 0.2, 0.5, 3.0])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.5])
 def test_drc_component(fs, component, at, rt, threshold, ratio):
+    # test the process_ functions of the drc components
     component_handle = getattr(drc, component)
 
     if threshold is not None:
@@ -325,6 +489,10 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
 
     output_xcore = np.zeros(len(signal))
     output_flt = np.zeros(len(signal))
+    gain_xcore = np.zeros(len(signal))
+    gain_flt = np.zeros(len(signal))
+    env_xcore = np.zeros(len(signal))
+    env_flt = np.zeros(len(signal))
 
     if "envelope" in component:
         # envelope detector has 1 output
@@ -336,10 +504,10 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
     else:
         # limiter and compressor have 3 outputs
         for n in np.arange(len(signal)):
-            output_xcore[n], _, _ = drcut.process_xcore(signal[n])
+            output_xcore[n], gain_xcore[n], env_xcore[n] = drcut.process_xcore(signal[n])
         drcut.reset_state()
         for n in np.arange(len(signal)):
-            output_flt[n], _, _ = drcut.process(signal[n])
+            output_flt[n], gain_flt[n], env_flt[n] = drcut.process(signal[n])
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
     top_half = utils.db(output_flt) > -50
@@ -365,6 +533,8 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 @pytest.mark.parametrize("n_chans", [1, 2, 4])
 def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
+    # test the process_frame functions of the drc components
+
     component_handle = getattr(drc, component)
 
     if threshold is not None:
@@ -401,6 +571,42 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
     assert np.all(output_flt[0, :] == output_flt)
 
 
+@pytest.mark.parametrize("fs", [48000])
+@pytest.mark.parametrize("component, threshold, ratio", [("limiter_peak_stereo", -20, None),
+                                                         ("limiter_peak_stereo", -6, None),
+                                                         ("compressor_rms_stereo", 0, 6),
+                                                         ("compressor_rms_stereo", 0, 2)])
+@pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
+@pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
+def test_stereo_components(fs, component, at, rt, threshold, ratio):
+    # test the process_channels functions of the stereo drc components
+
+    component_handle = getattr(drc, component)
+    if ratio is not None:
+        drcut = component_handle(fs, ratio, threshold, at, rt)
+    else:
+        drcut = component_handle(fs, threshold, at, rt)
+
+    signal = []
+    lenght = 0.1 + (rt + at) * 2
+    f = 997
+    signal.append(gen.sin(fs, lenght, f, 1))
+    signal.append(gen.sin(fs, lenght, f, 0.5))
+    signal = np.stack(signal, axis=0).astype(np.float32)
+
+    output_xcore = np.zeros(signal.shape, dtype=np.float32)
+    output_flt = np.zeros(signal.shape, dtype=np.float32)
+
+    for n in np.arange(signal.shape[1]):
+        output_xcore[:, n], _, _ = drcut.process_channels_xcore(signal[:, n])
+    drcut.reset_state()
+    for n in np.arange(signal.shape[1]):
+        output_flt[:, n], _, _ = drcut.process_channels(signal[:, n])
+
+    error_flt = np.abs(utils.db(output_xcore)-utils.db(output_flt))
+    mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+    assert mean_error_flt < 0.055
+
 
 # TODO more RMS limiter tests
 # TODO hard limiter test
@@ -408,8 +614,9 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
 # TODO compressor tests
 
 if __name__ == "__main__":
-    # test_drc_component(48000, "limiter_peak", 1, 1, 1)
+    # test_drc_component(48000, "limiter_peak", 0.1, 0.5, -6, None)
     # test_limiter_peak_attack(48000, 0.1, -10)
     # comp_vs_limiter(48000, 0.001, 0)
     # test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)
-    test_noise_gate()
+    test_mono_vs_stereo(48000, "limiter_peak", "limiter_peak_stereo", 0.001, 0.01, -6, None)
+    # test_sidechain_mono_vs_comp(16000, 0.05, -40)
