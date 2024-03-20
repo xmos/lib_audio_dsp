@@ -3,7 +3,6 @@
 from copy import deepcopy
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from audio_dsp.dsp import utils as utils
 from audio_dsp.dsp import generic as dspg
