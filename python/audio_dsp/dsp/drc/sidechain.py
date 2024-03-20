@@ -148,18 +148,14 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
             alpha = self.release_alpha_int
 
         # do exponential moving average
-        acc = int(self.gain_int) << 31
-        mul = utils.int32(new_gain_int - self.gain_int)
-        acc += mul * alpha
-        self.gain_int = utils.int32_mult_sat_extract(acc, 1, 31)
+        self.gain_int = drcu.calc_ema_xcore(self.gain_int, new_gain_int, alpha)
 
-        acc = 1 << 30
-        acc += sample_int * self.gain_int
-        y = utils.int32_mult_sat_extract(acc, 1, 31)
+        # apply gain
+        y = drcu.apply_gain_xcore(sample_int, self.gain_int)
 
         return (
             (float(y) * 2**-self.Q_sig),
-            (float(new_gain_int) * 2**-31),
+            (float(new_gain_int) * 2**-self.Q_alpha),
             (float(envelope_int) * 2**-self.Q_sig),
         )
 
@@ -295,22 +291,17 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
             alpha = self.release_alpha_int
 
         # do exponential moving average
-        acc = int(self.gain_int) << 31
-        mul = utils.int32(new_gain_int - self.gain_int)
-        acc += mul * alpha
-        self.gain_int = utils.int32_mult_sat_extract(acc, 1, 31)
+        self.gain_int = drcu.calc_ema_xcore(self.gain_int, new_gain_int, alpha)
 
         y = [0] * self.n_chans
         # apply gain in int32
         for i in range(len(input_samples)):
-            acc = 1 << 30
-            acc += samples_int[i] * self.gain_int
-            y_uq = utils.int32_mult_sat_extract(acc, 1, 31)
+            y_uq = drcu.apply_gain_xcore(samples_int[i], self.gain_int)
             y[i] = float(y_uq) * 2**-self.Q_sig
 
         return (
             y,
-            (float(new_gain_int) * 2**-self.Q_sig),
+            (float(new_gain_int) * 2**-self.Q_alpha),
             (float(envelope_int) * 2**-self.Q_sig),
         )
 

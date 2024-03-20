@@ -130,10 +130,7 @@ class envelope_detector_peak(dspg.dsp_block):
             alpha = self.release_alpha_int
 
         # do exponential moving average
-        acc = int(self.envelope_int[channel]) << 31
-        mul = utils.int32(sample_mag - self.envelope_int[channel])
-        acc += mul * alpha
-        self.envelope_int[channel] = utils.int32_mult_sat_extract(acc, 1, 31)
+        self.envelope_int[channel] = drcu.calc_ema_xcore(self.envelope_int[channel], sample_mag, alpha)
 
         if isinstance(sample, float):
             return float(self.envelope_int[channel]) * 2**-self.Q_sig
@@ -210,10 +207,7 @@ class envelope_detector_rms(envelope_detector_peak):
             alpha = self.release_alpha_int
 
         # do exponential moving average
-        acc = int(self.envelope_int[channel]) << 31
-        mul = utils.int32(sample_mag - self.envelope_int[channel])
-        acc += mul * alpha
-        self.envelope_int[channel] = utils.int32_mult_sat_extract(acc, 1, 31)
+        self.envelope_int[channel] = drcu.calc_ema_xcore(self.envelope_int[channel], sample_mag, alpha)
 
         # if we got floats, return floats, otherwise return ints
         if isinstance(sample, float):
@@ -278,6 +272,8 @@ class compressor_limiter_base(dspg.dsp_block):
 
         self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
         self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(release_t, fs)
+        self.Q_alpha = drcu.Q_alpha
+        assert self.Q_alpha == 31, "When changing this the reset value will have to be updated"
 
         # These are defined differently for peak and RMS limiters
         self.env_detector = None
@@ -362,18 +358,14 @@ class compressor_limiter_base(dspg.dsp_block):
             alpha = self.release_alpha_int
 
         # do exponential moving average
-        acc = int(self.gain_int[channel]) << 31
-        mul = utils.int32(new_gain_int - self.gain_int[channel])
-        acc += mul * alpha
-        self.gain_int[channel] = utils.int32_mult_sat_extract(acc, 1, 31)
+        self.gain_int[channel] = drcu.calc_ema_xcore(self.gain_int[channel], new_gain_int, alpha)
 
-        acc = 1 << 30
-        acc += sample_int * self.gain_int[channel]
-        y = utils.int32_mult_sat_extract(acc, 1, 31)
+        # apply gain
+        y = drcu.apply_gain_xcore(sample_int, self.gain_int[channel])
 
         return (
             (float(y) * 2**-self.Q_sig),
-            (float(new_gain_int) * 2**-31),
+            (float(new_gain_int) * 2**-self.Q_alpha),
             (float(envelope_int) * 2**-self.Q_sig),
         )
 
@@ -704,6 +696,8 @@ class noise_gate(compressor_limiter_base):
         # the device will expect these swapped back when doing control
         self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(attack_t, fs)
         self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(release_t, fs)
+        self.Q_alpha = drcu.Q_alpha
+        assert self.Q_alpha == 31, "When changing this the reset value will have to be updated"
 
         self.threshold = utils.db2gain(threshold_db)
         self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
@@ -732,63 +726,3 @@ class noise_gate(compressor_limiter_base):
         self.env_detector.envelope_int = [utils.int32(2**self.Q_sig)] * self.n_chans
         self.gain = [1] * self.n_chans
         self.gain_int = [2**31 - 1] * self.n_chans
-
-
-if __name__ == "__main__":
-    # import audio_dsp.dsp.signal_gen as gen
-
-    fs = 48000
-    x1 = np.ones(int(fs * 0.5))
-    x2 = 0.1 * np.ones(int(fs * 0.5))
-
-    x = np.concatenate((x1, x2, x1, x2))
-    # x = gen.sin(fs, 0.2, 997*4, 1)
-
-    t = np.arange(len(x)) / fs
-
-    threshold = -6
-    at = 0.01
-
-    lt = limiter_rms(fs, 1, threshold, at, 0.3)
-
-    y = np.zeros_like(x)
-    f = np.zeros_like(x)
-    env = np.zeros_like(x)
-
-    for n in range(len(y)):
-        y[n], f[n], env[n] = lt.process(x[n])
-
-    lt.reset_state()
-
-    y_int = np.zeros_like(x)
-    f_int = np.zeros_like(x)
-    env_int = np.zeros_like(x)
-
-    # import cProfile
-
-    # with cProfile.Profile() as pr:
-    for n in range(len(y)):
-        y_int[n], f_int[n], env_int[n] = lt.process_xcore(x[n])
-        # pr.print_stats(sort='time')
-
-    thresh_passed = np.argmax(utils.db(env) > threshold)
-    sig_3dB = np.argmax(utils.db(y) < (threshold + 3))
-
-    measured_at = t[sig_3dB] - t[thresh_passed]
-    print(measured_at)
-
-    import matplotlib.pyplot as plt
-
-    # plt.plot(t, utils.db(x))
-    plt.plot(t, utils.db(y))
-    plt.plot(t, utils.db(env))
-    # plt.plot(t, utils.db(f))
-    plt.plot(t, utils.db(y_int))
-    plt.plot(t, utils.db(env_int))
-
-    # plt.legend(["x", "y", "env", "gain"])
-    plt.legend(["y", "env", "y_int", "env_int"])
-    plt.grid()
-    plt.show()
-
-    pass
