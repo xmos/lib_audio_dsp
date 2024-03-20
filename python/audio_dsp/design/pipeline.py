@@ -499,19 +499,27 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
         for stage_thread_index, stage in enumerate(thread):
             # thread stages are already ordered during pipeline resolution
             input_edges = [edge for edge in all_edges if edge[1][0] == stage[0]]
-            if len(input_edges) > 0:  # To avoid compilation warnings
-                input_edges.sort(key=lambda e: e[1][1])
-                input_edges = ", ".join(f"edge{all_edges.index(e)}" for e in input_edges)
-                func += f"\tint32_t* stage_{stage_thread_index}_input[] = {{{input_edges}}};\n"
-
             output_edges = [edge for edge in all_edges if edge[0][0] == stage[0]]
-            if len(output_edges) > 0:
-                output_edges.sort(key=lambda e: e[0][1])
-                output_edges = ", ".join(f"edge{all_edges.index(e)}" for e in output_edges)
-                func += f"\tint32_t* stage_{stage_thread_index}_output[] = {{{output_edges}}};\n"
+            if not (input_edges or output_edges):
+                # stages with no inputs and outputs also have no process method
+                # so they don't need input and output variables
+                continue
             else:
-                func += f"\tint32_t** stage_{stage_thread_index}_output = NULL;\n"
-                func += f"\t(void)stage_{stage_thread_index}_output;"
+                if len(input_edges) > 0:  # To avoid compilation warnings
+                    input_edges.sort(key=lambda e: e[1][1])
+                    input_edges = ", ".join(f"edge{all_edges.index(e)}" for e in input_edges)
+                    func += f"\tint32_t* stage_{stage_thread_index}_input[] = {{{input_edges}}};\n"
+                else:
+                    func += f"\tint32_t** stage_{stage_thread_index}_input = NULL;\n"
+
+                if len(output_edges) > 0:
+                    output_edges.sort(key=lambda e: e[0][1])
+                    output_edges = ", ".join(f"edge{all_edges.index(e)}" for e in output_edges)
+                    func += (
+                        f"\tint32_t* stage_{stage_thread_index}_output[] = {{{output_edges}}};\n"
+                    )
+                else:
+                    func += f"\tint32_t** stage_{stage_thread_index}_output = NULL;\n"
 
         func += "\tuint32_t start_ts, end_ts, start_control_ts, control_ticks;\n"
         func += "\tbool control_done;\n"
