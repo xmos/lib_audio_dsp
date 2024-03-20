@@ -79,6 +79,13 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
 
+    def reset_state(self):
+        """Reset the envelope detectors to 0 and the gain to 1."""
+        if self.env_detector:
+            self.env_detector.reset_state()
+        self.gain = 1
+        self.gain_int = 2**31 - 1
+
     def process(self, input_sample: float, detect_sample: float):  # type: ignore
         """
         Update the envelope for the detection signal, then calculate and
@@ -99,16 +106,16 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         new_gain = self.gain_calc(envelope, self.threshold, self.slope)
 
         # see if we're attacking or decaying
-        if new_gain < self.gain[0]:
+        if new_gain < self.gain:
             alpha = self.attack_alpha
         else:
             alpha = self.release_alpha
 
         # do exponential moving average
-        self.gain[0] = ((1 - alpha) * self.gain[0]) + (alpha * new_gain)
+        self.gain = ((1 - alpha) * self.gain) + (alpha * new_gain)
 
         # apply gain to input
-        y = self.gain[0] * input_sample
+        y = self.gain * input_sample
         return y, new_gain, envelope
 
     def process_xcore(self, input_sample: float, detect_sample: float):  # type: ignore
@@ -135,19 +142,19 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)
 
         # see if we're attacking or decaying
-        if new_gain_int < self.gain_int[0]:
+        if new_gain_int < self.gain_int:
             alpha = self.attack_alpha_int
         else:
             alpha = self.release_alpha_int
 
         # do exponential moving average
-        acc = int(self.gain_int[0]) << 31
-        mul = utils.int32(new_gain_int - self.gain_int[0])
+        acc = int(self.gain_int) << 31
+        mul = utils.int32(new_gain_int - self.gain_int)
         acc += mul * alpha
-        self.gain_int[0] = utils.int32_mult_sat_extract(acc, 1, 31)
+        self.gain_int = utils.int32_mult_sat_extract(acc, 1, 31)
 
         acc = 1 << 30
-        acc += sample_int * self.gain_int[0]
+        acc += sample_int * self.gain_int
         y = utils.int32_mult_sat_extract(acc, 1, 31)
 
         return (
