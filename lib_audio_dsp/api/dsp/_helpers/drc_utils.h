@@ -1,6 +1,8 @@
 // Copyright 2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
+#pragma once
+
 #define Q_alpha (31)
 
 static inline int32_t q31_ema(int32_t x, int32_t samp, q1_31 alpha) {

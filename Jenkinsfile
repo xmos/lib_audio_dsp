@@ -126,7 +126,7 @@ pipeline {
                           catchError(stageResult: 'FAILURE', catchInterruptions: false){
                             dir("test/drc") {
                               runPytest("test_drc_python.py --dist worksteal")
-                              runPytest("test_drc_c.py --dist worksteal")
+                              runPytest("*_c.py --dist worksteal")
                             }
                           }
                         }

@@ -90,6 +90,38 @@ def cos(fs: int, length: float, freq: float, amplitude: float, precision: int = 
     return signal
 
 
+def square(
+    fs: int, length: float, freq: float, amplitude: float, precision: int = 24
+) -> np.ndarray:
+    """
+    Generate a quantized square wave signal.
+
+    Parameters
+    ----------
+    fs : int
+        The sampling frequency in Hz.
+    length : float
+        The duration of the signal in seconds.
+    freq : float
+        The frequency of the cosine signal in Hz.
+    amplitude : float
+        The amplitude of the cosine signal.
+    precision : int, optional
+        The precision of the quantized signal, in number of bits.
+        Default is 24.
+
+    Returns
+    -------
+    np.ndarray
+        The generated cosine signal as a numpy array.
+    """
+    t = np.arange(int(fs * length)) / fs
+    signal = amplitude * spsig.square(2 * np.pi * freq * t)
+    signal = quantize_signal(signal, precision)
+
+    return signal
+
+
 def log_chirp(
     fs: int,
     length: float,
