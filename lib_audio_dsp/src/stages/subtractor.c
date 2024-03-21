@@ -28,8 +28,8 @@ void subtractor_init(module_instance_t* instance, adsp_bump_allocator_t* allocat
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
-    xassert(n_outputs == 1); // should only have 1 output
-    xassert(n_inputs == 2); // should only have 2 inputs
+    xassert(n_outputs == 1 && "Subtractor should only have one output");
+    xassert(n_inputs == 2 && "Subtractor should only have two inputs");
 }
 
 

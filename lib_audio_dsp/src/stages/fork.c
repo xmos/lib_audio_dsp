@@ -33,6 +33,6 @@ void fork_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, ui
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
     state->n_forks = n_outputs / n_inputs;
-    xassert(n_outputs % n_inputs == 0); // must be able to fork all the inputs
+    xassert(n_outputs % n_inputs == 0 && "Fork must be able fork all the inputs");
 }
 

@@ -38,7 +38,7 @@ void volume_control_init(module_instance_t* instance, adsp_bump_allocator_t* all
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
-    xassert(n_outputs == n_inputs);
+    xassert(n_outputs == n_inputs && "Volume control should have the same number of inputs and outputs");
 
     state->vol_ctl = adsp_bump_allocator_malloc(allocator, state->n_inputs * sizeof(volume_control_t));
 
