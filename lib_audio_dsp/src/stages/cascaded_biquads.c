@@ -33,6 +33,7 @@ void cascaded_biquads_process(int32_t **input, int32_t **output, void *app_data_
 
 void cascaded_biquads_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
+    xassert(n_inputs == n_outputs && "Cascaded biuqads should have the same number of inputs and outputs");
     cascaded_biquads_state_t *state = instance->state;
     cascaded_biquads_config_t *config = instance->control.config;
 

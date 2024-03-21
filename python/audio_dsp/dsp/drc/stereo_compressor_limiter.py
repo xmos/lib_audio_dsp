@@ -25,6 +25,8 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
         self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
         self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(release_t, fs)
+        self.Q_alpha = drcu.Q_alpha
+        assert self.Q_alpha == 31, "When changing this the reset value will have to be updated"
 
         # These are defined differently for peak and RMS limiters
         self.threshold = None
@@ -118,22 +120,17 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
             alpha = self.release_alpha_int
 
         # do exponential moving average
-        acc = int(self.gain_int) << 31
-        mul = utils.int32(new_gain_int - self.gain_int)
-        acc += mul * alpha
-        self.gain_int = utils.int32_mult_sat_extract(acc, 1, 31)
+        self.gain_int = drcu.calc_ema_xcore(self.gain_int, new_gain_int, alpha)
 
         y = []
 
         for sample_int in samples_int:
-            acc = 1 << 30
-            acc += sample_int * self.gain_int
-            y_uq = utils.int32_mult_sat_extract(acc, 1, 31)
+            y_uq = drcu.apply_gain_xcore(sample_int, self.gain_int)
             y.append(float(y_uq) * 2**-self.Q_sig)
 
         return (
             y,
-            (float(new_gain_int) * 2**-self.Q_sig),
+            (float(new_gain_int) * 2**-self.Q_alpha),
             (float(envelope_int) * 2**-self.Q_sig),
         )
 
