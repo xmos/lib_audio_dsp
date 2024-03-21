@@ -78,3 +78,8 @@ compressor_t adsp_compressor_rms_init(
 int32_t adsp_compressor_rms(
   compressor_t * comp,
   int32_t new_samp);
+
+int32_t adsp_compressor_rms_sidechain(
+  compressor_t * comp,
+  int32_t input_samp,
+  int32_t detect_samp);

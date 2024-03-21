@@ -25,7 +25,7 @@ int32_t adsp_from_q31(int32_t input) {
 int32_t adsp_to_q31(int32_t input) {
   // put input into ah so that exp = sig_exp - 32
   // and then to get -31 saturate and extract with sig_exp - 1
-  int32_t ah = input, al = 0, pos = -SIG_EXP + 1;
+  int32_t ah = input, al = 0, pos = Q_SIG + 1;
   asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (pos), "0" (ah), "1" (al));
   asm("lextract %0, %1, %2, %3, 32":"=r"(ah):"r"(ah),"r"(al),"r"(pos));
   return ah;
@@ -57,7 +57,7 @@ int32_t adsp_subtractor(int32_t x, int32_t y) {
 }
 
 int32_t adsp_fixed_gain(int32_t input, int32_t gain) {
-  int32_t q_format = -SIG_EXP;
+  int32_t q_format = Q_SIG;
   // adding 1 << (q_format - 1) for rounding
   int32_t ah = 0, al = 1 << (q_format - 1);
   asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (input), "r" (gain), "0" (ah), "1" (al));
