@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Optional, NamedTuple
 from collections.abc import Callable
 from scipy.io import wavfile
-from scipy import signal
 from matplotlib import pyplot as plt
 
 import numpy
@@ -63,9 +62,9 @@ class ExecutionResult:
         chans = self.data.shape[1]
         period = 1 / self.fs
         t = numpy.arange(0, self.data.shape[0] * period, period)
-        fig, axs = plt.subplots(chans, sharex=True)
+        fig, axs = plt.subplots(chans, sharex=True, squeeze=False)
         for i in range(chans):
-            axs[i].plot(t, self.data[:, i])
+            axs[i][0].plot(t, self.data[:, i])
         if path:
             plt.savefig(path)
         else:
@@ -83,9 +82,9 @@ class ExecutionResult:
             and not shown.
         """
         chans = self.data.shape[1]
-        fig, axs = plt.subplots(chans, sharex=True)
+        fig, axs = plt.subplots(chans, sharex=True, squeeze=False)
         for i in range(chans):
-            axs[i].magnitude_spectrum(self.data[:, i], Fs=self.fs, scale="dB")
+            axs[i][0].magnitude_spectrum(self.data[:, i], Fs=self.fs, scale="dB")
         if path:
             plt.savefig(path)
         else:
@@ -103,10 +102,19 @@ class ExecutionResult:
             and not shown.
         """
         chans = self.data.shape[1]
-        fig, axs = plt.subplots(chans, sharex=True)
+        fig, axs = plt.subplots(chans, sharex=True, squeeze=False)
         for i in range(chans):
-            f, t, sxx = signal.spectrogram(self.data[:, i], self.fs)
-            axs[i].pcolormesh(t, f, sxx, shading="gouraud")
+            Pxx, _, _, _ = axs[i][0].specgram(self.data[:, i], NFFT=1024, Fs=self.fs, noverlap=900)
+            Pxx_max_dB = 10 * numpy.log10(Pxx.max()) - 5
+            axs[i][0].specgram(
+                self.data[:, i],
+                NFFT=1024,
+                Fs=self.fs,
+                noverlap=900,
+                cmap=plt.get_cmap("cividis"),
+                vmin=Pxx_max_dB - 50,
+                vmax=Pxx_max_dB,
+            )
         fig.supylabel("Frequency [Hz]")
         fig.supxlabel("Time [sec]")
         if path:

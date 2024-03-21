@@ -21,6 +21,7 @@ dependencies = [
     "IPyWidgets",
     "graphviz",
     "IPython",
+    "ipympl",
     "pyyaml",
     "mako",
     "tabulate",
