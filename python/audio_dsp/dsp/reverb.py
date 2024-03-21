@@ -53,7 +53,7 @@ class comb_fv(dspg.dsp_block):
 
 
 class freeverb(dspg.dsp_block):
-    def __init__(self, room_size=0.5, decay=0.5, damping=0.4, wet_gain_db=-1, dry_gain_db=-1):
+    def __init__(self, fs, n_chans, room_size=0.5, decay=0.5, damping=0.4, wet_gain_db=-1, dry_gain_db=-1, Q_sig=dspg.Q_SIG,):
         """A room reverb effect based on Freeverb by Jezar at
         Dreampoint.
 
@@ -71,6 +71,7 @@ class freeverb(dspg.dsp_block):
         dry_gain_db : int, optional
             dry signal gain
         """
+        super().__init__(fs, 1, Q_sig)
         self.damping = damping
         self.feedback = decay*0.28 + 0.7  # avoids too much or too little feedback
         self.wet = utils.db2gain(wet_gain_db)
