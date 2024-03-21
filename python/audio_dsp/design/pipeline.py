@@ -509,6 +509,9 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
                 output_edges.sort(key=lambda e: e[0][1])
                 output_edges = ", ".join(f"edge{all_edges.index(e)}" for e in output_edges)
                 func += f"\tint32_t* stage_{stage_thread_index}_output[] = {{{output_edges}}};\n"
+            else:
+                func += f"\tint32_t** stage_{stage_thread_index}_output = NULL;\n"
+                func += f"\t(void)stage_{stage_thread_index}_output;"
 
         func += "\tuint32_t start_ts, end_ts, start_control_ts, control_ticks;\n"
         func += "\tbool control_done;\n"

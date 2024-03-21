@@ -52,6 +52,7 @@ void noise_gate_process(int32_t **input, int32_t **output, void *app_data_state)
 
 void noise_gate_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
+    xassert(n_inputs == n_outputs && "Noise gate should have the same number of inputs and outputs");
     noise_gate_state_t *state = instance->state;
     noise_gate_config_t *config = instance->control.config;
 

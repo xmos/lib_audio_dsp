@@ -30,7 +30,7 @@ void adder_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, u
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
-    xassert(n_outputs == 1); // should only have 1 output
+    xassert(n_outputs == 1 && "Adder should only have one output");
 }
 
 

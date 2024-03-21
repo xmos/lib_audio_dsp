@@ -9,6 +9,9 @@ from audio_dsp.dsp.types import float32
 
 FLT_MIN = np.finfo(float).tiny
 
+# Q format for the drc alphas and gains
+Q_alpha = 31
+
 
 def alpha_from_time(attack_or_release_time, fs):
     # Attack times simplified from McNally, seem pretty close.
@@ -35,6 +38,23 @@ def alpha_from_time(attack_or_release_time, fs):
     alpha_int = utils.int32(round(alpha * 2**31)) if alpha != 1.0 else utils.int32(2**31 - 1)
     assert alpha_int > 0
     return alpha, alpha_int
+
+
+def calc_ema_xcore(x, y, alpha):
+    """Calculate fixed-point exponential moving average, given that alpha is in Q_alpha format"""
+    acc = int(x) << Q_alpha
+    mul = utils.int32(y - x)
+    acc += mul * alpha
+    x = utils.int32_mult_sat_extract(acc, 1, Q_alpha)
+    return x
+
+
+def apply_gain_xcore(sample, gain):
+    """Apply the gain to a sample usign fixed-point math, assumes that gain is in Q_alpha format"""
+    acc = 1 << (Q_alpha - 1)
+    acc += sample * gain
+    y = utils.int32_mult_sat_extract(acc, 1, Q_alpha)
+    return y
 
 
 def limiter_peak_gain_calc(envelope, threshold, slope=None):

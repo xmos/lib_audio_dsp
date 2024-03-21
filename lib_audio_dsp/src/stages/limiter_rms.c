@@ -51,7 +51,7 @@ void limiter_rms_process(int32_t **input, int32_t **output, void *app_data_state
 
 void limiter_rms_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
-
+    xassert(n_inputs == n_outputs && "Limiter should have the same number of inputs and outputs");
     limiter_rms_state_t *state = instance->state;
     limiter_rms_config_t *config = instance->control.config;
 

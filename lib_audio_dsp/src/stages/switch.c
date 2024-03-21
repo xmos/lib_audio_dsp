@@ -28,7 +28,7 @@ void switch_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, 
     memset(state, 0, sizeof(switch_state_t));
     state->n_inputs = n_inputs;
     state->frame_size = frame_size;
-    xassert(n_outputs == 1); 
+    xassert(n_outputs == 1 && "Switch should only have one output");
     state->n_outputs = n_outputs;
 
     memcpy(&state->config, config, sizeof(switch_config_t));
