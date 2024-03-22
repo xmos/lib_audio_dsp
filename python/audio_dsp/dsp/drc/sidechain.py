@@ -46,7 +46,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
     slope : float
         The slope factor of the compressor, defined as
         `slope = (1 - 1/ratio)`.
-    slope : float32
+    slope_f32 : float32
         The slope factor of the compressor, used for int32 to float32
         processing.
     threshold : float

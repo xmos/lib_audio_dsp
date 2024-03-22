@@ -6,6 +6,7 @@
 #include "xmath/xmath.h"
 
 #define SIG_EXP (-27)
+#define Q_SIG   (-SIG_EXP)
 
 #include "dsp/signal_chain.h"
 #include "dsp/biquad.h"

@@ -2,6 +2,7 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include "dsp/adsp.h"
+#include "dsp/_helpers/drc_utils.h"
 
 #include <xcore/assert.h>
 
@@ -13,7 +14,7 @@ static inline q1_31 get_alpha(float fs, float time) {
   asm("fmant %0, %1": "=r" (mant): "r" (time));
 
   // mant to q31
-  right_shift_t shr = -31 - exp + 23;
+  right_shift_t shr = -Q_alpha - exp + 23;
   mant >>= shr;
   return mant;
 }
@@ -40,23 +41,6 @@ env_detector_t adsp_env_detector_init(
   return env_det;
 }
 
-static inline int32_t q31_ema(int32_t x, int32_t samp, q1_31 alpha) {
-  // this assumes that x and samp are positive and alpha is q31
-  // x and samp have to have the same exponent
-  int32_t ah, al;
-  int32_t mul = samp - x;
-
-  // preload the acc with x at position of 31 
-  // (essentially giving it exponent of -31 + x.exp)
-  asm("linsert %0, %1, %2, %3, 32":"=r" (ah), "=r" (al): "r"(x), "r"(31), "0"(0), "1" (0));
-  // x + alpha * (samp - x) with exponent -31 + x.exp
-  asm("maccs %0,%1,%2,%3":"=r"(ah),"=r"(al):"r"(alpha),"r"(mul), "0" (ah), "1" (al));
-  // saturate and extract from 63rd bit
-  asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (31), "0" (ah), "1" (al));
-  asm("lextract %0,%1,%2,%3,32":"=r"(x):"r"(ah),"r"(al),"r"(31));
-  return x;
-}
-
 void adsp_env_detector_peak(
   env_detector_t * env_det,
   int32_t new_sample
@@ -78,9 +62,9 @@ void adsp_env_detector_rms(
   int32_t new_sample
 ) {
   int32_t ah, al;
-  asm("maccs %0,%1,%2,%3":"=r"(ah),"=r"(al):"r"(new_sample),"r"(new_sample), "0" (0), "1" (1 << (-SIG_EXP - 1)));
-  asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (-SIG_EXP), "0" (ah), "1" (al));
-  asm("lextract %0,%1,%2,%3,32":"=r"(new_sample):"r"(ah),"r"(al),"r"(-SIG_EXP));
+  asm("maccs %0,%1,%2,%3":"=r"(ah),"=r"(al):"r"(new_sample),"r"(new_sample), "0" (0), "1" (1 << (Q_SIG - 1)));
+  asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (Q_SIG), "0" (ah), "1" (al));
+  asm("lextract %0,%1,%2,%3,32":"=r"(new_sample):"r"(ah),"r"(al),"r"(Q_SIG));
 
   int32_t alpha = env_det->release_alpha;
   if (new_sample > env_det->envelope) {
