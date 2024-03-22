@@ -15,37 +15,37 @@ gen_dir = Path(__file__).parent / "autogen"
 
 fs = 48000
 
-def get_sig_2ch(dir_name, len=0.05):
+def get_sig_2ch(len=0.05):
   sig_l = []
   sig_l.append(gen.sin(fs, len, 997, 0.7))
   sig_l.append(gen.square(fs, len, 50, 0.5) + 0.5)
   sig_fl = np.stack(sig_l, axis=0)
-  sig_fl_sf = np.stack(sig_l, axis=1)
-  sig_int = float_to_qxx(sig_fl)
+  sig_fl_t = np.stack(sig_l, axis=1)
 
-  name = "ch0"
-  sig_int[0].tofile(dir_name / f"{name}.bin")
-  name = "ch1"
-  sig_int[1].tofile(dir_name / f"{name}.bin")
+  sig_int = float_to_qxx(sig_fl_t)
+  sig_int.tofile(bin_dir / "sig_2ch_48k.bin")
 
-  sf.write(gen_dir / "sig_48k.wav", sig_fl_sf, int(fs), "PCM_24")
+  sf.write(gen_dir / "sig_2ch_48k.wav", sig_fl_t, int(fs), "PCM_24")
   return sig_fl
+
+@pytest.fixture(scope="module")
+def in_signal():
+  bin_dir.mkdir(exist_ok=True, parents=True)
+  gen_dir.mkdir(exist_ok=True, parents=True)
+  return get_sig_2ch()
 
 @pytest.mark.parametrize("comp_name", ["compressor_rms_sidechain_mono"])
 @pytest.mark.parametrize("at", [0.001])
 @pytest.mark.parametrize("rt", [0.01])
 @pytest.mark.parametrize("threshold", [-12, 0])
 @pytest.mark.parametrize("ratio", [1, 6])
-def test_sidechain_c(comp_name, at, rt, threshold, ratio):
-  bin_dir.mkdir(exist_ok=True, parents=True)
-  gen_dir.mkdir(exist_ok=True, parents=True)
+def test_sidechain_c(in_signal, comp_name, at, rt, threshold, ratio):
   component_handle = getattr(drc, comp_name)
   comp = component_handle(fs, ratio, threshold, at, rt)
   test_name = f"{comp_name}_{ratio}_{threshold}_{at}_{rt}"
 
   test_dir = bin_dir / test_name
   test_dir.mkdir(exist_ok = True, parents = True)
-  sig_fl = get_sig_2ch(test_dir)
 
   # numpy doesn't like to have an array with different types
   # so create separate arrays, cast to bytes, append, write
@@ -57,9 +57,9 @@ def test_sidechain_c(comp_name, at, rt, threshold, ratio):
   comp_info = np.append(comp_info, comp_info1)
   comp_info.tofile(test_dir / "comp_info.bin")
 
-  out_py = np.zeros(sig_fl.shape[1])
-  for n in range(sig_fl.shape[1]):
-    out_py[n], _, _ = comp.process_xcore(sig_fl[0][n], sig_fl[1][n])
+  out_py = np.zeros(in_signal.shape[1])
+  for n in range(in_signal.shape[1]):
+    out_py[n], _, _ = comp.process_xcore(in_signal[0][n], in_signal[1][n])
   sf.write(gen_dir / "sig_py_int.wav", out_py, fs, "PCM_24")
 
   out_c = get_c_wav(test_dir, comp_name)
@@ -72,4 +72,8 @@ def test_sidechain_c(comp_name, at, rt, threshold, ratio):
     np.testing.assert_allclose(out_c, out_py, rtol=0, atol=1.5e-8)
 
 if __name__ == "__main__":
-  test_sidechain_c("compressor_rms_sidechain_mono", 0.001, 0.01, -6, 4)
+  bin_dir.mkdir(exist_ok=True, parents=True)
+  gen_dir.mkdir(exist_ok=True, parents=True)
+  sig_fl = get_sig_2ch()
+  
+  test_sidechain_c(sig_fl, "compressor_rms_sidechain_mono", 0.001, 0.01, -6, 4)
