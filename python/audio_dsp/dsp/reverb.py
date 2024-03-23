@@ -42,7 +42,7 @@ class allpass_fv(dspg.dsp_block):
         buff_out = self._buffer[self._buffer_idx]
 
         output = -sample + buff_out
-        self._buffer[self.buffer_idx] = sample + (buff_out*self.feedback)
+        self._buffer[self._buffer_idx] = sample + (buff_out*self.feedback)
         
         self._buffer_idx += 1
         if self._buffer_idx >= self.delay:
@@ -81,7 +81,7 @@ class comb_fv(dspg.dsp_block):
         self.feedback_int = utils.int32(self.feedback * 2**Q_VERB)
 
         self._buffer_idx = 0
-        self._filterstore = 0
+        self._filterstore = 0.0
         self._filterstore_int = 0
         self.damp1 = damping
         self.damp2 = 1 - self.damp1
@@ -102,7 +102,7 @@ class comb_fv(dspg.dsp_block):
 
         self._filterstore = (output*self.damp2) + (self._filterstore*self.damp1)
 
-        self._buffer[self.buffer_idx] = sample + (self._filterstore*self._feedback)
+        self._buffer[self._buffer_idx] = sample + (self._filterstore*self.feedback)
         
         self._buffer_idx += 1
         if self._buffer_idx >= self.delay:
@@ -230,8 +230,8 @@ class freeverb(dspg.dsp_block):
 
         output = 0
         reverb_input = sample*self.gain
-        for cb in self.combs:
-            output += cb.process(reverb_input)
+
+        output = self.vpu_combs_flt(reverb_input)
 
         for ap in self.allpasses:
             output = ap.process(output)
@@ -259,6 +259,47 @@ class freeverb(dspg.dsp_block):
 
         return (float(output) * 2**-self.Q_sig)
 
+    def vpu_combs_flt(self, sample):
+        # prime vpu from buffer
+        comb_buffs_out = np.array([self.combs[0]._buffer[self.combs[0]._buffer_idx],
+                          self.combs[1]._buffer[self.combs[1]._buffer_idx],
+                          self.combs[2]._buffer[self.combs[2]._buffer_idx],
+                          self.combs[3]._buffer[self.combs[3]._buffer_idx],
+                          self.combs[4]._buffer[self.combs[4]._buffer_idx],
+                          self.combs[5]._buffer[self.combs[5]._buffer_idx],
+                          self.combs[6]._buffer[self.combs[6]._buffer_idx],
+                          self.combs[7]._buffer[self.combs[7]._buffer_idx]])
+        
+        # this could be a saved array in one place
+        combs_filterstores = np.array([self.combs[0]._filterstore,
+                              self.combs[1]._filterstore,
+                              self.combs[2]._filterstore,
+                              self.combs[3]._filterstore,
+                              self.combs[4]._filterstore,
+                              self.combs[5]._filterstore,
+                              self.combs[6]._filterstore,
+                              self.combs[7]._filterstore])
+
+        output = np.sum(comb_buffs_out)
+
+        # damps are shared across all combs
+        combs_filterstores *= self.combs[0].damp1
+        combs_filterstores += comb_buffs_out*self.combs[0].damp2
+
+        new_buffers = np.ones(8)*sample
+        new_buffers += combs_filterstores*self.feedback
+
+        for n in range(8):
+            # temp bodge
+            self.combs[n]._filterstore = combs_filterstores[n]
+            self.combs[n]._buffer[self.combs[n]._buffer_idx] = new_buffers[n]
+
+            self.combs[n]._buffer_idx += 1
+            if self.combs[n]._buffer_idx >= self.combs[n].delay:
+                self.combs[n]._buffer_idx = 0
+
+        return output
+
 
 if __name__ == "__main__":
     # hydra_audio_path = os.environ['hydra_audio_PATH']
@@ -276,7 +317,7 @@ if __name__ == "__main__":
     
     output = np.zeros_like(sig)
     for n in range(len(sig)//2):
-        output[n] = reverb.process_xcore(sig[n])
+        output[n] = reverb.process(sig[n])
 
     reverb.set_room_size(0.5)
 
