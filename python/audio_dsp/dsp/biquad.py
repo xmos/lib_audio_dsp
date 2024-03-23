@@ -13,7 +13,7 @@ from docstring_inheritance import inherit_numpy_docstring
 from audio_dsp.dsp import utils as utils
 from audio_dsp.dsp import generic as dspg
 
-BOOST_BSHIFT = 2  # limit boosts to 12 dB gain
+BOOST_BSHIFT = 0  # limit boosts to 12 dB gain
 
 
 class biquad(dspg.dsp_block):
@@ -126,9 +126,9 @@ class biquad(dspg.dsp_block):
 
         # process a single sample using direct form 1
         y = utils.int64(
-            (sample_int * self.int_coeffs[0])
-            + (self._x1[channel] * self.int_coeffs[1])
-            + (self._x2[channel] * self.int_coeffs[2])
+            (sample_int * 2*self.int_coeffs[0])
+            + (self._x1[channel] * 2*self.int_coeffs[1])
+            + (self._x2[channel] * 2*self.int_coeffs[2])
             + (int(self._y1[channel] * self.int_coeffs[3]) >> self.b_shift)
             + (int(self._y2[channel] * self.int_coeffs[4]) >> self.b_shift)
         )
@@ -167,6 +167,9 @@ class biquad(dspg.dsp_block):
                 self._x2[channel],
                 self._y1[channel],
                 self._y2[channel],
+                sample_int,
+                self._x1[channel],
+                self._x2[channel],
             ],
             self.int_coeffs,
         )
@@ -411,7 +414,7 @@ def _round_to_q30(coeffs: list[float]) -> tuple[list[float], list[int]]:
 
     """
     rounded_coeffs = [0.0] * len(coeffs)
-    int_coeffs = [0] * len(coeffs)
+    int_coeffs = [0] * 8
 
     Q = 30
     for n in range(len(coeffs)):
@@ -422,10 +425,16 @@ def _round_to_q30(coeffs: list[float]) -> tuple[list[float], list[int]]:
             raise ValueError(
                 "Filter coefficient will overflow (%.4f, %d), reduce gain" % (coeffs[n], n)
             )
-
-        int_coeffs[n] = utils.int32(rounded_coeffs[n])
+        if n < 3:
+            int_coeffs[n] = utils.int32(rounded_coeffs[n]/2)
+        else:
+            int_coeffs[n] = utils.int32(rounded_coeffs[n])
         # rescale to floats
         rounded_coeffs[n] = rounded_coeffs[n] / 2**Q
+
+    int_coeffs[5] = int_coeffs[0]
+    int_coeffs[6] = int_coeffs[1]
+    int_coeffs[7] = int_coeffs[2]
 
     return rounded_coeffs, int_coeffs
 
