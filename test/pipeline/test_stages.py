@@ -11,7 +11,6 @@ from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak
 from audio_dsp.stages.noise_gate import NoiseGate
 from audio_dsp.stages.signal_chain import VolumeControl, FixedGain
 from audio_dsp.stages.compressor import CompressorRMS
-from audio_dsp.stages.compressor_sidechain import CompressorSidechain
 
 import audio_dsp.dsp.utils as utils
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
@@ -170,19 +169,6 @@ def test_compressor():
     p.set_outputs(comp.o)
 
     comp.make_compressor_rms(2, -6, 0.001, 0.1)
-
-    do_test(p)
-
-def test_compressor_sidechain():
-    """
-    Test the compressor stage compresses the same in python and C
-    """
-    p = Pipeline(channels)
-    with p.add_thread() as t:
-        comp = t.stage(CompressorSidechain, p.i)
-    p.set_outputs(comp.o)
-
-    comp.make_compressor_sidechain(2, -6, 0.001, 0.1)
 
     do_test(p)
 

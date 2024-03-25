@@ -7,6 +7,7 @@ number of inputs and outputs
 import pytest
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 from audio_dsp.stages.signal_chain import Adder, Subtractor, Mixer, Switch
+from audio_dsp.stages.compressor_sidechain import CompressorSidechain
 
 import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.signal_chain as sc
@@ -111,6 +112,20 @@ def test_mixer(gain):
 
     do_test(p)
 
+
+def test_compressor_sidechain():
+    """
+    Test the compressor stage compresses the same in python and C
+    """
+    channels = 2
+    p = Pipeline(channels)
+    with p.add_thread() as t:
+        comp = t.stage(CompressorSidechain, p.i)
+    p.set_outputs(comp.o)
+
+    comp.make_compressor_sidechain(2, -6, 0.001, 0.1)
+
+    do_test(p)
 
 @pytest.mark.parametrize("position", ([0, 1]))
 def test_switch(position):
