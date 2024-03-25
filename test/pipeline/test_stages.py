@@ -10,6 +10,7 @@ from audio_dsp.stages.cascaded_biquads import CascadedBiquads
 from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak
 from audio_dsp.stages.noise_gate import NoiseGate
 from audio_dsp.stages.signal_chain import VolumeControl, FixedGain
+from audio_dsp.stages.compressor import CompressorRMS
 
 import audio_dsp.dsp.utils as utils
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
@@ -60,16 +61,16 @@ def do_test(p):
     frame_size = 1
     sig_flt = np.float64(sig.T) * 2**-31
     signal_frames = utils.frame_signal(sig_flt, frame_size, frame_size)
-    out_py = np.zeros((sig.shape[0], channels))
+    out_py = np.zeros((channels, sig.shape[0]))
     
     # run through python bit exact implementation
     for n in range(len(signal_frames)):
-        out_py[n:n+frame_size, :] = ref_module.process_frame_xcore(signal_frames[n]).T
+        out_py[:, n:n+frame_size] = ref_module.process_frame_xcore(signal_frames[n])
 
     # back to int scaling
     out_py_int = out_py * 2**31
 
-    np.testing.assert_equal(out_py_int, out_data)
+    np.testing.assert_equal(out_py_int.T, out_data)
 
 
 @pytest.mark.parametrize("method, args", [("make_bypass", None),
@@ -155,6 +156,19 @@ def test_limiter_peak():
     p.set_outputs(lim.o)
 
     lim.make_limiter_peak(-6, 0.001, 0.1)
+
+    do_test(p)
+
+def test_compressor():
+    """
+    Test the compressor stage compresses the same in python and C
+    """
+    p = Pipeline(channels)
+    with p.add_thread() as t:
+        comp = t.stage(CompressorRMS, p.i)
+    p.set_outputs(comp.o)
+
+    comp.make_compressor_rms(2, -6, 0.001, 0.1)
 
     do_test(p)
 
