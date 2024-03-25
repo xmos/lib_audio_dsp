@@ -62,16 +62,16 @@ def do_test(p):
     frame_size = 1
     sig_flt = np.float64(sig.T) * 2**-31
     signal_frames = utils.frame_signal(sig_flt, frame_size, frame_size)
-    out_py = np.zeros((sig.shape[0], channels))
+    out_py = np.zeros((channels, sig.shape[0]))
     
     # run through python bit exact implementation
     for n in range(len(signal_frames)):
-        out_py[n:n+frame_size, :] = ref_module.process_frame_xcore(signal_frames[n]).T
+        out_py[:, n:n+frame_size] = ref_module.process_frame_xcore(signal_frames[n])
 
     # back to int scaling
     out_py_int = out_py * 2**31
 
-    np.testing.assert_equal(out_py_int, out_data)
+    np.testing.assert_equal(out_py_int.T, out_data)
 
 
 @pytest.mark.parametrize("method, args", [("make_bypass", None),
