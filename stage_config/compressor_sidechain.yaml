@@ -1,5 +1,5 @@
 module:
-  compressor_rms:
+  compressor_sidechain:
     attack_alpha:
       type: int32_t
     release_alpha:
