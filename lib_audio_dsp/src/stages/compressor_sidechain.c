@@ -45,7 +45,7 @@ void compressor_sidechain_process(int32_t **input, int32_t **output, void *app_d
 
     int j = 0;
     do {
-        *out++ = adsp_compressor_rms_sidechain(&state->comp[i], *in++, *detect++);
+        *out++ = adsp_compressor_rms_sidechain(&state->comp[0], *in++, *detect++);
     } while(++j < state->frame_size);
 }
 
