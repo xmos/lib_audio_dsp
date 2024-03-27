@@ -194,3 +194,77 @@ class noise_gate(expander_base):
 
         self.reset_state()
 
+
+class noise_suppressor(expander_base):
+    """A noise suppressor that reduces the level of an audio signal when
+    it falls below a threshold. This is also known as an expander.
+
+    When the signal envelope falls below the threshold, the gain applied
+    to the signal is reduced relative to the expansion ratio over the 
+    release time. When the envelope returns above the threshold, the
+    gain applied to the signal is increased to 1 over the attack time.
+
+    The initial state of the noise suppressor is with the suppression
+    off, assuming a full scale signal has been present before
+    t = 0.
+
+    Parameters
+    ----------
+    ratio : float
+        The expansion ratio applied to the signal when the envelope
+        falls below the threshold.
+    threshold_db : float
+        The threshold level in decibels below which the audio signal is
+        attenuated.
+
+    Attributes
+    ----------
+    threshold : float
+        The threshold below which the signal is gated.
+    threshold_int : int
+        The threshold level as a 32-bit signed integer.
+    env_detector : envelope_detector_peak
+        An instance of the envelope_detector_peak class used for envelope detection.
+
+    """
+
+    def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
+
+        self.threshold = utils.db2gain(threshold_db)
+        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold_int = max(1, self.threshold_int)
+        # self.inv_threshold_int = utils.int32(1/self.threshold * 2**self.Q_sig)
+        self.env_detector = envelope_detector_peak(
+            fs,
+            n_chans=n_chans,
+            attack_t=attack_t,
+            release_t=release_t,
+            Q_sig=self.Q_sig,
+        )
+
+        self.slope = (1 - ratio)
+        self.slope_f32 = float32(self.slope)
+
+        # set the gain calculation function handles
+        self.gain_calc = drcu.noise_suppressor_gain_calc
+        self.gain_calc_xcore = drcu.noise_suppressor_gain_calc_xcore
+
+        self.reset_state()
+
+
+
+if __name__ == "__main__":
+
+    import matplotlib.pyplot as plt
+    ns = noise_suppressor(48000, 1, 3, -20, 0.01, 0.1)
+    ing, outg = ns.get_gain_curve()
+
+    plt.plot(ing, outg)
+    plt.axis('equal')
+    plt.xlim([ing[0], ing[-1]])
+    plt.ylim([ing[0], ing[-1]])
+    plt.grid()
+    plt.show()
+
+

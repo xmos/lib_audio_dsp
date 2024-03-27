@@ -371,27 +371,37 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold,
     np.testing.assert_array_equal(output_xcore_s, output_xcore_m)
 
 
-def test_noise_gate():
+@pytest.mark.parametrize("component, threshold, ratio", [("noise_gate", -30, None),
+                                                         ("noise_suppressor", -30, 3)])
+def test_noise_gate(component, threshold, ratio):
     # test the noise gate performance on noisy speech
     signal, fs = make_noisy_speech()
 
     test_len = int(6*fs)
     signal = signal[:test_len]
 
-    drcut = drc.noise_gate(fs, 1, -30, 0, 0.2)
+    if ratio:
+        drcut = drc.noise_suppressor(fs, 1, ratio, threshold, 0.005, 0.2)
+    else:
+        drcut = drc.noise_gate(fs, 1, threshold, 0.005, 0.2)
+
 
     output_xcore = np.zeros(len(signal))
     output_flt = np.zeros(len(signal))
+    gain_xcore = np.zeros(len(signal))
+    gain_flt = np.zeros(len(signal))
+    env_xcore = np.zeros(len(signal))
+    env_flt = np.zeros(len(signal))
 
     # noise gate has 3 outputs
     for n in np.arange(len(signal)):
-        output_xcore[n], _, _ = drcut.process_xcore(signal[n])
+        output_xcore[n], gain_xcore[n], env_xcore[n] = drcut.process_xcore(signal[n])
     drcut.reset_state()
     for n in np.arange(len(signal)):
-        output_flt[n], _, _ = drcut.process(signal[n])
+        output_flt[n], gain_flt[n], env_flt[n] = drcut.process(signal[n])
 
-    sf.write("noise_gate_test_in.wav", signal, fs)
-    sf.write("noise_gate_test_out.wav", output_flt, fs)
+    sf.write("%s_test_in.wav" % component, signal, fs)
+    sf.write("%s_test_out.wav" % component, output_flt, fs)
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
     top_half = utils.db(output_flt) > -50
@@ -406,7 +416,8 @@ def test_noise_gate():
                                                          ("limiter_rms", 0, None),
                                                          ("compressor_rms", 0, 6),
                                                          ("compressor_rms", 0, 2),
-                                                         ("noise_gate", -1000, None)])
+                                                         ("noise_gate", -1000, None),
+                                                         ("noise_suppressor", -1000, 5)])
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
@@ -458,7 +469,8 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
                                                          ("compressor_rms", -20, 2),
                                                          ("compressor_rms", 6, 6),
                                                          ("compressor_rms", 6, 2),
-                                                         ("noise_gate", -20, None)])
+                                                         ("noise_gate", -20, None),
+                                                         ("noise_suppressor", -20, 5)])
 @pytest.mark.parametrize("rt", [0.05, 0.1, 0.2, 0.5, 3.0])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.5])
 def test_drc_component(fs, component, at, rt, threshold, ratio):
@@ -528,7 +540,8 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
                                                          ("compressor_rms", -20, 2),
                                                          ("compressor_rms", 6, 6),
                                                          ("compressor_rms", 6, 2),
-                                                         ("noise_gate", -20, None)])
+                                                         ("noise_gate", -20, None),
+                                                         ("noise_suppressor", -20, 5)])
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 @pytest.mark.parametrize("n_chans", [1, 2, 4])
@@ -620,4 +633,4 @@ if __name__ == "__main__":
     # test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)
     # test_mono_vs_stereo(48000, "limiter_peak", "limiter_peak_stereo", 0.001, 0.01, -6, None)
     # test_sidechain_mono_vs_comp(16000, 0.05, -40)
-    test_noise_gate()
+    test_noise_gate("noise_suppressor", -30, 3)

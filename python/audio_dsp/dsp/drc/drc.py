@@ -302,6 +302,19 @@ class compressor_limiter_base(dspg.dsp_block):
         self.gain = [1] * self.n_chans
         self.gain_int = [2**31 - 1] * self.n_chans
 
+    def get_gain_curve(self):
+        in_gains_db = np.linspace(-60, 20, 1000)
+        gains_lin = utils.db2gain(in_gains_db)
+
+        out_gains = np.zeros_like(gains_lin)
+
+        for n in range(len(out_gains)):
+            out_gains[n] = self.gain_calc(gains_lin[n], self.threshold, self.slope)
+        
+        out_gains_db = utils.db(out_gains) + in_gains_db
+
+        return in_gains_db, out_gains_db
+
     def process(self, sample, channel=0):
         """
         Update the envelope for a signal, then calculate and apply the
