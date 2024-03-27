@@ -8,11 +8,11 @@ from audio_dsp.dsp import utils as utils
 from audio_dsp.dsp import generic as dspg
 import audio_dsp.dsp.drc.drc_utils as drcu
 from audio_dsp.dsp.types import float32
-from audio_dsp.dsp.drc import envelope_detector_rms, envelope_detector_peak
+from audio_dsp.dsp.drc import envelope_detector_rms, envelope_detector_peak, compressor_limiter_base
 
 FLT_MIN = np.finfo(float).tiny
 
-class expander_base(dspg.dsp_block):
+class expander_base(compressor_limiter_base):
     """
     A base class shared by compressor and limiter objects.
 
@@ -64,31 +64,6 @@ class expander_base(dspg.dsp_block):
     # The expander is based on the limiter, but with the attack and
     # release in the gain calulation swapped (i.e. release after going 
     # above the threshold)
-    
-    def __init__(self, fs, n_chans, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, Q_sig)
-
-        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
-        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(release_t, fs)
-        self.Q_alpha = drcu.Q_alpha
-        assert self.Q_alpha == 31, "When changing this the reset value will have to be updated"
-
-        # These are defined differently for peak and RMS limiters
-        self.env_detector = None
-
-        self.threshold = None
-        self.threshold_int = None
-
-        # slope is used for compressors, not limiters
-        self.slope = None
-        self.slope_f32 = None
-
-        # initialise gain states
-        self.reset_state()
-
-        # set the gain calculation function handles
-        self.gain_calc = None
-        self.gain_calc_xcore = None
 
     def reset_state(self):
         """Reset the envelope detector to 1 and the gain to 1, so the
@@ -168,48 +143,6 @@ class expander_base(dspg.dsp_block):
             (float(new_gain_int) * 2**-self.Q_alpha),
             (float(envelope_int) * 2**-self.Q_sig),
         )
-
-    def process_frame(self, frame):
-        """
-        Take a list frames of samples and return the processed frames.
-
-        A frame is defined as a list of 1-D numpy arrays, where the
-        number of arrays is equal to the number of channels, and the
-        length of the arrays is equal to the frame size.
-
-        When calling self.process only take the first output.
-
-        """
-        n_outputs = len(frame)
-        frame_size = frame[0].shape[0]
-        output = deepcopy(frame)
-        for chan in range(n_outputs):
-            this_chan = output[chan]
-            for sample in range(frame_size):
-                this_chan[sample] = self.process(this_chan[sample], channel=chan)[0]
-
-        return output
-
-    def process_frame_xcore(self, frame):
-        """
-        Take a list frames of samples and return the processed frames,
-        using a bit exact xcore implementation.
-        A frame is defined as a list of 1-D numpy arrays, where the
-        number of arrays is equal to the number of channels, and the
-        length of the arrays is equal to the frame size.
-
-        When calling self.process_xcore only take the first output.
-
-        """
-        n_outputs = len(frame)
-        frame_size = frame[0].shape[0]
-        output = deepcopy(frame)
-        for chan in range(n_outputs):
-            this_chan = output[chan]
-            for sample in range(frame_size):
-                this_chan[sample] = self.process_xcore(this_chan[sample], channel=chan)[0]
-
-        return output
 
 
 class noise_gate(expander_base):
