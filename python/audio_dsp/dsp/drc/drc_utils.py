@@ -179,7 +179,8 @@ def noise_suppressor_gain_calc_xcore(envelope_int, threshold_int, slope_f32):
     """
     # if envelope above threshold, apply unity gain, otherwise scale
     # down
-    # not this is rearranged to 
+    # not this is rearranged to (envelope / threshold) ** -slope in order
+    # to be similar to the compressor implementation
     if -slope_f32 > float32(0) and threshold_int > envelope_int:
         new_gain_int = int(envelope_int) << 31
         new_gain_int = utils.int32(new_gain_int // threshold_int)
