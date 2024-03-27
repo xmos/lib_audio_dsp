@@ -618,5 +618,6 @@ if __name__ == "__main__":
     # test_limiter_peak_attack(48000, 0.1, -10)
     # comp_vs_limiter(48000, 0.001, 0)
     # test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)
-    test_mono_vs_stereo(48000, "limiter_peak", "limiter_peak_stereo", 0.001, 0.01, -6, None)
+    # test_mono_vs_stereo(48000, "limiter_peak", "limiter_peak_stereo", 0.001, 0.01, -6, None)
     # test_sidechain_mono_vs_comp(16000, 0.05, -40)
+    test_noise_gate()
