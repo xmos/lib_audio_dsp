@@ -137,7 +137,7 @@ class Stage(Node):
         Name of the stage. Passed instead of config when the stage does not have
         an associated config yaml file
     label : str
-        User defined name of the stage. Used for autogenerating an enum for accessing the stage's instance id
+        User defined label for the stage. Used for autogenerating a define for accessing the stage's index
         in the device code
 
     Attributes
@@ -326,15 +326,21 @@ class Stage(Node):
         inputs = "|".join(f"<i{i}> " for i in range(self.n_in))
         outputs = "|".join(f"<o{i}> " for i in range(self.n_out))
         center = f"{self.index}: {type(self).__name__}\\n"
-        if self.details:
-            details = "\\n".join(f"{k}: {v}" for k, v in self.details.items())
-            label = f"{{ {{ {inputs} }} | {center} | {details} | {{ {outputs} }}}}"
-        else:
-            if self.label:
+
+        if self.label:
+            if self.details:
+                details = "\\n".join(f"{k}: {v}" for k, v in self.details.items())
+                label = (
+                    f"{{ {{ {inputs} }} | {center} | {self.label} | {details} | {{ {outputs} }}}}"
+                )
+            else:
                 label = f"{{ {{ {inputs} }} | {center} | {self.label} | {{ {outputs} }}}}"
+        else:
+            label = f"{{ {{ {inputs} }} | {center} | {{ {outputs} }}}}"
+            if self.details:
+                details = "\\n".join(f"{k}: {v}" for k, v in self.details.items())
+                label = f"{{ {{ {inputs} }} | {center} | {details} | {{ {outputs} }}}}"
             else:
                 label = f"{{ {{ {inputs} }} | {center} | {{ {outputs} }}}}"
-
-
 
         dot.node(self.id.hex, label)
