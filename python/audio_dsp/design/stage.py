@@ -133,6 +133,12 @@ class Stage(Node):
         parameters are derived from this config file.
     inputs : Iterable[StageOutput]
         Pipeline edges to connect to self
+    name : str
+        Name of the stage. Passed instead of config when the stage does not have
+        an associated config yaml file
+    label : str
+        User defined name of the stage. Used for autogenerating an enum for accessing the stage's instance id
+        in the device code
 
     Attributes
     ----------
@@ -146,9 +152,11 @@ class Stage(Node):
     frame_size : int | None
         Samples in frame.
     name : str
-        Module name determined from config file
+        Stage name determined from config file
     yaml_dict : dict
         config parsed from the config file
+    label : str
+        User specified label for the stage
     n_in : int
         number of inputs
     n_out : int
@@ -165,6 +173,7 @@ class Stage(Node):
         inputs: Iterable[StageOutput],
         config: Optional[Path | str] = None,
         name: Optional[str] = None,
+        label: Optional[str] = None,
     ):
         super().__init__()
         self.i = [i for i in inputs]
@@ -194,6 +203,8 @@ class Stage(Node):
             self.name = name
             self._control_fields = {}
             self.yaml_dict = None
+
+        self.label = label
 
         self.details = {}
         self.dsp_block = None
@@ -319,5 +330,11 @@ class Stage(Node):
             details = "\\n".join(f"{k}: {v}" for k, v in self.details.items())
             label = f"{{ {{ {inputs} }} | {center} | {details} | {{ {outputs} }}}}"
         else:
-            label = f"{{ {{ {inputs} }} | {center} | {{ {outputs} }}}}"
+            if self.label:
+                label = f"{{ {{ {inputs} }} | {center} | {self.label} | {{ {outputs} }}}}"
+            else:
+                label = f"{{ {{ {inputs} }} | {center} | {{ {outputs} }}}}"
+
+
+
         dot.node(self.id.hex, label)

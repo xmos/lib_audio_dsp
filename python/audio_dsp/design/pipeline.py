@@ -296,12 +296,15 @@ class Pipeline:
             for node in self._graph.nodes
         }
 
+        labels = {node.label: node.index for node in self._graph.nodes if node.label != None}
+
         return {
             "identifier": self._id,
             "threads": threads,
             "edges": edges,
             "configs": node_configs,
             "modules": module_definitions,
+            "labels": labels
         }
 
 
@@ -647,6 +650,16 @@ def _generate_dsp_header(resolved_pipeline, out_dir=Path("build/dsp_pipeline")):
 
     (out_dir / f"adsp_generated_{resolved_pipeline['identifier']}.h").write_text(header)
 
+def _generate_instance_id_defines(resolved_pipeline, out_dir=Path("build/dsp_pipeline")):
+    """Generate "adsp_instance_id.h" and save to disk."""
+    out_dir = Path(out_dir)
+    out_dir.mkdir(exist_ok=True)
+
+    header = "#pragma once\n\n"
+    for label, index in resolved_pipeline["labels"].items():
+        header += f"#define {label}_stage_index\t\t({index})\n"
+    (out_dir / f"adsp_instance_id.h").write_text(header)
+
 
 def _generate_dsp_init(resolved_pipeline):
     """Create the init function which initialised all modules and channels."""
@@ -812,6 +825,8 @@ def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
     out_dir.mkdir(exist_ok=True, parents=True)
 
     resolved_pipe = pipeline.resolve_pipeline()
+
+    _generate_instance_id_defines(resolved_pipe, out_dir)
 
     _generate_dsp_header(resolved_pipe, out_dir)
     threads = resolved_pipe["threads"]
