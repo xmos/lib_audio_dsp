@@ -328,19 +328,13 @@ class Stage(Node):
         center = f"{self.index}: {type(self).__name__}\\n"
 
         if self.label:
-            if self.details:
-                details = "\\n".join(f"{k}: {v}" for k, v in self.details.items())
-                label = (
-                    f"{{ {{ {inputs} }} | {center} | {self.label} | {details} | {{ {outputs} }}}}"
-                )
-            else:
-                label = f"{{ {{ {inputs} }} | {center} | {self.label} | {{ {outputs} }}}}"
+            center = f"{self.index}: {self.label}\\n"
+        if self.details:
+            details = "\\n".join(f"{k}: {v}" for k, v in self.details.items())
+            label = (
+                f"{{ {{ {inputs} }} | {center} | {details} | {{ {outputs} }}}}"
+            )
         else:
             label = f"{{ {{ {inputs} }} | {center} | {{ {outputs} }}}}"
-            if self.details:
-                details = "\\n".join(f"{k}: {v}" for k, v in self.details.items())
-                label = f"{{ {{ {inputs} }} | {center} | {details} | {{ {outputs} }}}}"
-            else:
-                label = f"{{ {{ {inputs} }} | {center} | {{ {outputs} }}}}"
 
         dot.node(self.id.hex, label)
