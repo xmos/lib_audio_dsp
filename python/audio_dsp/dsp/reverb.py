@@ -1,13 +1,13 @@
+# Copyright 2024 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import audio_dsp.dsp.generic as dspg
 import soundfile as sf
 from pathlib import Path
-import os
 import numpy as np
 
 import audio_dsp.dsp.utils as utils
 
 Q_VERB = 31
-
 
 def apply_gain_xcore(sample, gain):
     """Apply the gain to a sample usign fixed-point math, assumes that gain is in Q_alpha format"""
@@ -35,6 +35,11 @@ class allpass_fv(dspg.dsp_block):
         else:
             self.delay = self._max_delay
             Warning("Delay cannot be greater than max delay, setting to max delay")
+        return
+
+    def reset_state(self):
+        self._buffer = np.zeros(self._max_delay)
+        self._buffer_int = [0] * self._max_delay
         return
 
     def process(self, sample):
@@ -96,6 +101,12 @@ class comb_fv(dspg.dsp_block):
             Warning("Delay cannot be greater than max delay, setting to max delay")
         return
 
+    def reset_state(self):
+        self._buffer = np.zeros(self._max_delay)
+        self._buffer_int = [0] * self._max_delay
+        self._filterstore = 0.0
+        self._filterstore_int = 0
+
     def process(self, sample):
 
         output = self._buffer[self._buffer_idx]
@@ -129,7 +140,8 @@ class comb_fv(dspg.dsp_block):
 
         return output
 
-class freeverb(dspg.dsp_block):
+
+class reverb_room(dspg.dsp_block):
     def __init__(self, fs, n_chans, max_room_size=1, room_size=0.5, decay=0.5, damping=0.4, wet_gain_db=-1, dry_gain_db=-1, Q_sig=dspg.Q_SIG,):
         """A room reverb effect based on Freeverb by Jezar at
         Dreampoint.
@@ -162,7 +174,7 @@ class freeverb(dspg.dsp_block):
         self.dry_int = utils.int32(self.dry * 2**Q_VERB)
 
         # pregain going into the reverb
-        self.gain = 0.03125
+        self.gain = 0.015625 # 2**-6
         self.out_gain = 0.015/self.gain
         self.wet *= self.out_gain
         self.wet_int = utils.int32(self.wet * 2**Q_VERB)
@@ -201,6 +213,13 @@ class freeverb(dspg.dsp_block):
                           allpass_fv(self.ap_lengths[2], ap_delays[2], 0.5),
                           allpass_fv(self.ap_lengths[3], ap_delays[3], 0.5)]
 
+    def reset_state(self):
+        for cb in self.combs:
+            cb.reset_state()
+        for ap in self.allpasses:
+            ap.reset_state()
+        return
+
     def get_buffer_lens(self):
         total_buffers = 0
         for cb in self.combs:
@@ -225,7 +244,6 @@ class freeverb(dspg.dsp_block):
 
         return
 
-
     def process(self, sample):
 
         output = 0
@@ -249,13 +267,17 @@ class freeverb(dspg.dsp_block):
 
         for cb in self.combs:
             output += cb.process_xcore(reverb_input)
+            utils.int32(output)
 
         for ap in self.allpasses:
             output = ap.process_xcore(output)
+            utils.int32(output)
 
         output = apply_gain_xcore(output, self.wet_int)
         output += apply_gain_xcore(sample_int, self.dry_int)
-        utils.int32(output)
+        utils.int64(output)
+        output = utils.saturate_int64_to_int32(output)
+
 
         return (float(output) * 2**-self.Q_sig)
 
@@ -312,14 +334,14 @@ if __name__ == "__main__":
     sig = sig/np.max(np.abs(sig))
     sig = sig* (2**31 - 1)/(2**31)
 
-    reverb = freeverb(fs, 1, room_size=1, decay=1.0, damping=0.5, Q_sig=31)
+    reverb = reverb_room(fs, 1, max_room_size=5, room_size=1, decay=1.0, damping=0.0, Q_sig=31)
     print(reverb.get_buffer_lens())
     
     output = np.zeros_like(sig)
     for n in range(len(sig)//2):
-        output[n] = reverb.process(sig[n])
+        output[n] = reverb.process_xcore(sig[n])
 
-    reverb.set_room_size(0.5)
+    # reverb.set_room_size(0.5)
 
     for n in range(len(sig)//2):
         output[n + len(sig)//2] = reverb.process_xcore(sig[n + len(sig)//2])

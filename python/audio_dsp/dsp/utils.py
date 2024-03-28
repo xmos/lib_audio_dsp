@@ -91,6 +91,17 @@ def int32_mult_sat_extract(x1: int, x2: int, Q: int):
     return y
 
 
+def saturate_int64_to_int32(x: int):
+    if x > (2**31 - 1):
+        print("saturated output")
+        return 2**31 - 1
+    elif x < -(2**31):
+        print("saturated output")
+        return -(2**31)
+    else:
+        return x
+
+
 def vlmaccr(vect1, vect2, out=0):
     for val1, val2 in zip(vect1, vect2):
         out += vpu_mult(val1, val2)
