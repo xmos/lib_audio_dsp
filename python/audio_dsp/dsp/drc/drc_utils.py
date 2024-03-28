@@ -154,6 +154,7 @@ def noise_gate_gain_calc_xcore(envelope_int, threshold_int, slope_int=None):
         new_gain_int = utils.int32(2**31 - 1)
     return new_gain_int
 
+
 def noise_suppressor_gain_calc(envelope, threshold, slope):
     """Calculate the float gain for the current sample
 
@@ -162,7 +163,7 @@ def noise_suppressor_gain_calc(envelope, threshold, slope):
     calculation to avoid the log domain.
 
     """
-    # if envelope below threshold, apply unity gain, otherwise scale
+    # if envelope above threshold, apply unity gain, otherwise scale
     # down
     new_gain = (threshold / envelope) ** slope
     new_gain = min(1, new_gain)
@@ -179,11 +180,17 @@ def noise_suppressor_gain_calc_xcore(envelope_int, threshold_int, slope_f32):
     """
     # if envelope above threshold, apply unity gain, otherwise scale
     # down
-    # not this is rearranged to (envelope / threshold) ** -slope in order
-    # to be similar to the compressor implementation
+    # note this is rearranged to (envelope / threshold) ** -slope in order
+    # to be similar to the compressor implementation, which also allows
+    # 1/threshold to be precomputed
+    invt = utils.int64(((1 << 63) - 1) // threshold_int)
+
     if -slope_f32 > float32(0) and threshold_int > envelope_int:
-        new_gain_int = int(envelope_int) << 31
-        new_gain_int = utils.int32(new_gain_int // threshold_int)
+        # this looks a bit scary, but as long as envelope < threshold,
+        # it can't overflow
+        new_gain_int = utils.int64(envelope_int * invt)
+        new_gain_int = new_gain_int + 2**31
+        new_gain_int = utils.int32(new_gain_int >> 32)
         new_gain_int = ((float32(new_gain_int * 2**-31) ** -slope_f32) * float32(2**31)).as_int32()
     else:
         new_gain_int = utils.int32(0x7FFFFFFF)

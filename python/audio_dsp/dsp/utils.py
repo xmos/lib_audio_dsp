@@ -53,14 +53,14 @@ def int32(val: float) -> int:
 
 
 def int64(val: float):
-    if -(2**63) <= val < (2**63 - 1):
+    if -(2**63) <= val <= (2**63 - 1):
         return int(val)
     raise OverflowError
 
 
 def int40(val: int):
     # special type for VPU
-    if -(2**39) <= val < (2**39 - 1):
+    if -(2**39) <= val <= (2**39 - 1):
         return int(val)
     raise OverflowError
 
