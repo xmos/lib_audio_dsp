@@ -310,7 +310,7 @@ class compressor_limiter_base(dspg.dsp_block):
 
         for n in range(len(out_gains)):
             out_gains[n] = self.gain_calc(gains_lin[n], self.threshold, self.slope)
-        
+
         out_gains_db = utils.db(out_gains) + in_gains_db
 
         return in_gains_db, out_gains_db

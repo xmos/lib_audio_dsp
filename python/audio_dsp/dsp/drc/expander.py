@@ -10,6 +10,7 @@ from audio_dsp.dsp.drc import envelope_detector_peak, compressor_limiter_base
 
 FLT_MIN = np.finfo(float).tiny
 
+
 class expander_base(compressor_limiter_base):
     """
     A base class shared by compressor and limiter objects.
@@ -60,7 +61,7 @@ class expander_base(compressor_limiter_base):
     """
 
     # The expander is based on the limiter, but with the attack and
-    # release in the gain calulation swapped (i.e. release after going 
+    # release in the gain calulation swapped (i.e. release after going
     # above the threshold)
 
     def reset_state(self):
@@ -198,7 +199,7 @@ class noise_suppressor(expander_base):
     it falls below a threshold. This is also known as an expander.
 
     When the signal envelope falls below the threshold, the gain applied
-    to the signal is reduced relative to the expansion ratio over the 
+    to the signal is reduced relative to the expansion ratio over the
     release time. When the envelope returns above the threshold, the
     gain applied to the signal is increased to 1 over the attack time.
 
@@ -226,7 +227,9 @@ class noise_suppressor(expander_base):
 
     """
 
-    def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+    def __init__(
+        self, fs, n_chans, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
+    ):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         self.threshold = utils.db2gain(threshold_db)
@@ -241,7 +244,7 @@ class noise_suppressor(expander_base):
             Q_sig=self.Q_sig,
         )
 
-        self.slope = (1 - ratio)
+        self.slope = 1 - ratio
         self.slope_f32 = float32(self.slope)
 
         # set the gain calculation function handles
@@ -251,18 +254,15 @@ class noise_suppressor(expander_base):
         self.reset_state()
 
 
-
 if __name__ == "__main__":
-
     import matplotlib.pyplot as plt
+
     ns = noise_suppressor(48000, 1, 3, -20, 0.01, 0.1)
     ing, outg = ns.get_gain_curve()
 
     plt.plot(ing, outg)
-    plt.axis('equal')
+    plt.axis("equal")
     plt.xlim([ing[0], ing[-1]])
     plt.ylim([ing[0], ing[-1]])
     plt.grid()
     plt.show()
-
-
