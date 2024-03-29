@@ -4,7 +4,7 @@ import audio_dsp.dsp.generic as dspg
 import soundfile as sf
 from pathlib import Path
 import numpy as np
-
+import warnings
 import audio_dsp.dsp.utils as utils
 
 Q_VERB = 31
@@ -29,8 +29,10 @@ def saturate_int64_to_int32_to_zero(val):
 
     # saturate
     if val > (2 ** (31 + Q_VERB) - 1):
+        warnings.warn("saturated!")
         val = 2 ** (31 + Q_VERB) - 1
     elif val < -(2 ** (31 + Q_VERB)):
+        warnings.warn("saturated!")
         val = -(2 ** (31 + Q_VERB))
 
     # shift to int32

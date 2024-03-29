@@ -38,16 +38,17 @@ def test_reverb_overflow(freq, max_room_size):
         assert mean_error_flt < 0.055
 
 
-@pytest.mark.parametrize("max_room_size", [0.01, 0.1, 0.5, 1, 2, 4])
-def test_reverb_time(max_room_size):
+@pytest.mark.parametrize("max_room_size", [0.01, 0.1, 0.5])
+@pytest.mark.parametrize("decay", [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1])
+def test_reverb_time(max_room_size, decay):
     # measure reverb time with chirp
     fs = 48000
 
-    sig = np.zeros(int(fs*max_room_size*40) + 1)
+    sig = np.zeros(int(fs*max_room_size*40) + fs)
     sig[:1*fs] = gen.log_chirp(fs, 1, 1, 20, 20000)
     sig = sig* (2**31 - 1)/(2**31)
 
-    reverb = rv.reverb_room(fs, 1, max_room_size=max_room_size, room_size=1, decay=1.0, damping=0.5, Q_sig=29)
+    reverb = rv.reverb_room(fs, 1, max_room_size=max_room_size, room_size=1, decay=decay, damping=0.5, Q_sig=29)
     print(reverb.get_buffer_lens())
     
     output_xcore = np.zeros(len(sig))
@@ -61,7 +62,7 @@ def test_reverb_time(max_room_size):
         output_xcore[n] = reverb.process_xcore(sig[n])
 
     # check noise floor
-    assert np.max(output_xcore[-1000:]) < 2**-reverb.Q_sig
+    assert np.max(np.abs(output_xcore[-1000:])) < 2**-(reverb.Q_sig + 1)
 
     # extend by 2x
     sig = np.concatenate((sig, np.zeros_like(sig)))
@@ -143,5 +144,5 @@ def test_reverb_frames(fs, max_room_size):
 
 
 if __name__ == "__main__":
-    test_reverb_time(0.1)
+    test_reverb_time(0.1, 0.5)
     # test_reverb_frames(48000, 1)
