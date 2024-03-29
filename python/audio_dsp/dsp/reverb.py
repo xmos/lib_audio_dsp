@@ -113,8 +113,9 @@ class comb_fv(dspg.dsp_block):
         self._filterstore_int = 0
         self.damp1 = damping
         self.damp2 = 1 - self.damp1
+        # super critical these add up, but also don't overflow int32...
         self.damp1_int = utils.int32(self.damp1 * 2**Q_VERB)
-        self.damp2_int = utils.int32(2**31 - 1 - self.damp1_int)
+        self.damp2_int = utils.int32((2**31 - 1) - self.damp1_int + 1)
 
     def set_delay(self, delay):
         if delay < self._max_delay:
