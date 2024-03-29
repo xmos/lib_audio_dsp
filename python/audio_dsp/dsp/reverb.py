@@ -24,8 +24,11 @@ def saturate_int64_to_int32_to_zero(val):
     cycles can occur if you don't round to zero."""
 
     # to round to zero, we need to subtract 1 if > 0, or add 1 if < 0
+    # normally for quantization, it would be 0.5, but using 1 forces the
+    # comb filter/all pass feedback to converge to zero and avoid limit
+    # noise
     neg_sign = (val < 0) - (val > 0)
-    val += neg_sign << (Q_VERB - 1)
+    val += neg_sign << (Q_VERB)
 
     # saturate
     if val > (2 ** (31 + Q_VERB) - 1):
