@@ -9,6 +9,7 @@ import audio_dsp.dsp.utils as utils
 
 Q_VERB = 31
 
+
 def apply_gain_xcore(sample, gain):
     """Apply the gain to a sample usign fixed-point math, assumes that gain is in Q_VERB format"""
     # for reverb, use round-to-zero quantization, this prevents us
@@ -19,6 +20,27 @@ def apply_gain_xcore(sample, gain):
         acc = 1 << (Q_VERB - 1)
     acc += sample * gain
     y = utils.int32_mult_sat_extract(acc, 1, Q_VERB)
+    return y
+
+
+def saturate_int64_to_int32_to_zero(val):
+    """Quanitze an int64 to int32, saturating and quantizing to zero
+    in the process. This is useful for feedback paths, where limit
+    cycles can occur if you don't round to zero."""
+
+    # to round to zero, we need to subtract 1 if > 0, or add 1 if < 0
+    neg_sign = (val < 0) - (val > 0)
+    val += neg_sign << (Q_VERB - 1)
+
+    # saturate
+    if val > (2 ** (31 + Q_VERB) - 1):
+        val = 2 ** (31 + Q_VERB) - 1
+    elif val < -(2 ** (31 + Q_VERB)):
+        val = -(2 ** (31 + Q_VERB))
+
+    # shift to int32
+    y = utils.int32(val >> Q_VERB)
+
     return y
 
 
@@ -65,11 +87,12 @@ class allpass_fv(dspg.dsp_block):
 
         buff_out = self._buffer_int[self._buffer_idx]
 
+        # reverb pregain should be scaled so this doesn't overflow
         output = utils.int32(-sample_int + buff_out)
-        self._buffer_int[self._buffer_idx] = sample_int 
-        self._buffer_int[self._buffer_idx] += apply_gain_xcore(buff_out, self.feedback_int)
-        # check for overflow
-        utils.int32(self._buffer_int[self._buffer_idx])
+
+        # do buffer calculation in int64 accumulator so we only quantize once
+        new_buff = utils.int64((sample_int << Q_VERB) + buff_out * self.feedback_int)
+        self._buffer_int[self._buffer_idx] = saturate_int64_to_int32_to_zero(new_buff)
 
         # move buffer head
         self._buffer_idx += 1
@@ -131,14 +154,14 @@ class comb_fv(dspg.dsp_block):
 
         output = self._buffer_int[self._buffer_idx]
 
-        self._filterstore_int = apply_gain_xcore(self._filterstore_int, self.damp1_int)
-        self._filterstore_int += apply_gain_xcore(output, self.damp2_int)
-        utils.int32(self._filterstore_int)
+        # do state calculation in int64 accumulator so we only quantize once
+        filtstore_64 = utils.int64(output * self.damp2_int + self._filterstore_int * self.damp1_int)
+        self._filterstore_int = saturate_int64_to_int32_to_zero(filtstore_64)
 
-        self._buffer_int[self._buffer_idx] = sample_int 
-        self._buffer_int[self._buffer_idx] += apply_gain_xcore(self._filterstore_int, self.feedback_int)
-        utils.int32(self._buffer_int[self._buffer_idx])
-        
+        # do buffer calculation in int64 accumulator so we only quantize once
+        new_buff = utils.int64((sample_int << Q_VERB) + self._filterstore_int * self.feedback_int)
+        self._buffer_int[self._buffer_idx] = saturate_int64_to_int32_to_zero(new_buff)
+
         self._buffer_idx += 1
         if self._buffer_idx >= self.delay:
             self._buffer_idx = 0
@@ -175,8 +198,8 @@ class reverb_room(dspg.dsp_block):
         self.wet = utils.db2gain(wet_gain_db)
         self.dry = utils.db2gain(dry_gain_db)
 
-        self.wet_int = utils.int32(self.wet * 2**Q_VERB)
-        self.dry_int = utils.int32(self.dry * 2**Q_VERB)
+        self.wet_int = utils.int32(self.wet * 2**Q_VERB -1)
+        self.dry_int = utils.int32(self.dry * 2**Q_VERB -1)
 
         # pregain going into the reverb
         self.gain = 0.015625 # 2**-6
@@ -249,12 +272,13 @@ class reverb_room(dspg.dsp_block):
 
         return
 
-    def process(self, sample):
+    def process(self, sample, channel=0):
 
         output = 0
         reverb_input = sample*self.gain
 
-        output = self.vpu_combs_flt(reverb_input)
+        for cb in self.combs:
+            output += cb.process(reverb_input)
 
         for ap in self.allpasses:
             output = ap.process(output)
@@ -262,7 +286,7 @@ class reverb_room(dspg.dsp_block):
         output = output*self.wet + sample*self.dry
         return output
 
-    def process_xcore(self, sample):
+    def process_xcore(self, sample, channel=0):
 
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
 
@@ -289,47 +313,6 @@ class reverb_room(dspg.dsp_block):
 
 
         return (float(output) * 2**-self.Q_sig)
-
-    def vpu_combs_flt(self, sample):
-        # prime vpu from buffer
-        comb_buffs_out = np.array([self.combs[0]._buffer[self.combs[0]._buffer_idx],
-                          self.combs[1]._buffer[self.combs[1]._buffer_idx],
-                          self.combs[2]._buffer[self.combs[2]._buffer_idx],
-                          self.combs[3]._buffer[self.combs[3]._buffer_idx],
-                          self.combs[4]._buffer[self.combs[4]._buffer_idx],
-                          self.combs[5]._buffer[self.combs[5]._buffer_idx],
-                          self.combs[6]._buffer[self.combs[6]._buffer_idx],
-                          self.combs[7]._buffer[self.combs[7]._buffer_idx]])
-        
-        # this could be a saved array in one place
-        combs_filterstores = np.array([self.combs[0]._filterstore,
-                              self.combs[1]._filterstore,
-                              self.combs[2]._filterstore,
-                              self.combs[3]._filterstore,
-                              self.combs[4]._filterstore,
-                              self.combs[5]._filterstore,
-                              self.combs[6]._filterstore,
-                              self.combs[7]._filterstore])
-
-        output = np.sum(comb_buffs_out)
-
-        # damps are shared across all combs
-        combs_filterstores *= self.combs[0].damp1
-        combs_filterstores += comb_buffs_out*self.combs[0].damp2
-
-        new_buffers = np.ones(8)*sample
-        new_buffers += combs_filterstores*self.feedback
-
-        for n in range(8):
-            # temp bodge
-            self.combs[n]._filterstore = combs_filterstores[n]
-            self.combs[n]._buffer[self.combs[n]._buffer_idx] = new_buffers[n]
-
-            self.combs[n]._buffer_idx += 1
-            if self.combs[n]._buffer_idx >= self.combs[n].delay:
-                self.combs[n]._buffer_idx = 0
-
-        return output
 
 
 if __name__ == "__main__":
