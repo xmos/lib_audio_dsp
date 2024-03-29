@@ -12,12 +12,7 @@ Q_VERB = 31
 
 def apply_gain_xcore(sample, gain):
     """Apply the gain to a sample usign fixed-point math, assumes that gain is in Q_VERB format"""
-    # for reverb, use round-to-zero quantization, this prevents us
-    # getting stuck in weird feedback limit cycles close to zero
-    if sample > 1:
-        acc = -1 << (Q_VERB - 1)
-    else:
-        acc = 1 << (Q_VERB - 1)
+    acc = 1 << (Q_VERB - 1)
     acc += sample * gain
     y = utils.int32_mult_sat_extract(acc, 1, Q_VERB)
     return y
