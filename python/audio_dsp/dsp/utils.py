@@ -93,10 +93,8 @@ def int32_mult_sat_extract(x1: int, x2: int, Q: int):
 
 def saturate_int64_to_int32(x: int):
     if x > (2**31 - 1):
-        print("saturated output")
         return 2**31 - 1
     elif x < -(2**31):
-        print("saturated output")
         return -(2**31)
     else:
         return x

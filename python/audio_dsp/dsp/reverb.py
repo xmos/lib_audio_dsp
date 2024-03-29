@@ -10,8 +10,13 @@ import audio_dsp.dsp.utils as utils
 Q_VERB = 31
 
 def apply_gain_xcore(sample, gain):
-    """Apply the gain to a sample usign fixed-point math, assumes that gain is in Q_alpha format"""
-    acc = 1 << (Q_VERB - 1)
+    """Apply the gain to a sample usign fixed-point math, assumes that gain is in Q_VERB format"""
+    # for reverb, use round-to-zero quantization, this prevents us
+    # getting stuck in weird feedback limit cycles close to zero
+    if sample > 1:
+        acc = -1 << (Q_VERB - 1)
+    else:
+        acc = 1 << (Q_VERB - 1)
     acc += sample * gain
     y = utils.int32_mult_sat_extract(acc, 1, Q_VERB)
     return y
@@ -269,10 +274,14 @@ class reverb_room(dspg.dsp_block):
             output += cb.process_xcore(reverb_input)
             utils.int32(output)
 
+        # these buffers are at risk of overflowing, but self.gain_int 
+        # should be scaled to prevent it for nearly all signals
         for ap in self.allpasses:
             output = ap.process_xcore(output)
             utils.int32(output)
 
+        # need an extra bit in this add, if wet/dry mix is badly set
+        # output can saturate (users fault)
         output = apply_gain_xcore(output, self.wet_int)
         output += apply_gain_xcore(sample_int, self.dry_int)
         utils.int64(output)
@@ -334,7 +343,7 @@ if __name__ == "__main__":
     sig = sig/np.max(np.abs(sig))
     sig = sig* (2**31 - 1)/(2**31)
 
-    reverb = reverb_room(fs, 1, max_room_size=5, room_size=1, decay=1.0, damping=0.0, Q_sig=31)
+    reverb = reverb_room(fs, 1, max_room_size=1, room_size=1, decay=1.0, damping=0.0, Q_sig=31)
     print(reverb.get_buffer_lens())
     
     output = np.zeros_like(sig)
