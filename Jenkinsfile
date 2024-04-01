@@ -72,7 +72,6 @@ pipeline {
                           "test/biquad",
                           "test/cascaded_biquads",
                           "test/drc",
-                          "test/signal_chain"
                           ].each {
                             sh "cmake -S ${it} -B ${it}/build"
                             sh "xmake -C ${it}/build -j"
@@ -136,6 +135,55 @@ pipeline {
                 }
               }
             } // test drc
+          }
+        }
+        stage ('Build & Test 2') {
+          agent {
+            label 'linux&&x86_64'
+          }
+          stages {
+            stage ('Build') {
+              steps {
+                runningOn(env.NODE_NAME)
+                sh "git clone -b ${params.XCOMMON_CMAKE_VERSION} git@github.com:xmos/xcommon_cmake"
+                sh 'git -C xcommon_cmake rev-parse HEAD'
+                dir("lib_audio_dsp") {
+                  checkout scm
+                  // try building a simple app without venv to check
+                  // build that doesn't use design tools won't
+                  // need python
+                  withTools(params.TOOLS_VERSION) {
+                    withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
+                      dir("test/biquad") {
+                        sh "cmake -B build"
+                        sh "cmake --build build"
+                      }
+                    }
+                  }
+
+                }
+                createVenv("lib_audio_dsp/requirements.txt")
+                dir("lib_audio_dsp") {
+                  // build everything
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      sh "pip install -r requirements.txt"
+                      withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
+                        script {
+                          [
+                          // "test/reverb",
+                          "test/signal_chain"
+                          ].each {
+                            sh "cmake -S ${it} -B ${it}/build"
+                            sh "xmake -C ${it}/build -j"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // Build
             stage('Test SC') {
               steps {
                 dir("lib_audio_dsp") {
@@ -158,7 +206,7 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        dir("test/reverv") {
+                        dir("test/reverb") {
                           runPytest("test_reverb_python.py --dist worksteal")
                           // runPytest("test_reverb_c.py --dist worksteal")
                         }
