@@ -23,19 +23,19 @@ def saturate_int64_to_int32_to_zero(val):
     in the process. This is useful for feedback paths, where limit
     cycles can occur if you don't round to zero."""
 
-    # to round to zero, we need to subtract 1 if > 0, or add 1 if < 0
-    # normally for quantization, it would be 0.5, but using 1 forces the
-    # comb filter/all pass feedback to converge to zero and avoid limit
-    # noise
-    neg_sign = (val < 0) - (val > 0)
-    val += neg_sign << (Q_VERB)
+    # force the comb filter/all pass feedback to converge to zero and
+    # avoid limit noise by rounding to zero. Above 0, truncation does
+    # this, but below 0 we truncate to -inf, so add just under 1 to go
+    # up instead.
+    if (val < 0):
+        val += (2**Q_VERB) - 1
 
     # saturate
     if val > (2 ** (31 + Q_VERB) - 1):
-        warnings.warn("saturated!")
+        warnings.warn("Saturation occured", utils.OverflowWarning)
         val = 2 ** (31 + Q_VERB) - 1
     elif val < -(2 ** (31 + Q_VERB)):
-        warnings.warn("saturated!")
+        warnings.warn("Saturation occured", utils.OverflowWarning)
         val = -(2 ** (31 + Q_VERB))
 
     # shift to int32
