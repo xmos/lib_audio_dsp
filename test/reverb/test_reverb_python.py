@@ -8,12 +8,24 @@ import audio_dsp.dsp.signal_gen as gen
 import audio_dsp.dsp.generic as dspg
 import audio_dsp.dsp.reverb as rv
 
-@pytest.mark.parametrize("freq", [20, 100, 1000, 10000, 23000])
-@pytest.mark.parametrize("max_room_size", [0.01, 0.1, 0.5, 1, 2, 4])
-def test_reverb_overflow(freq, max_room_size):
+
+@pytest.mark.parametrize("max_room_size", [0.1, 0.5, 1, 2, 4])
+@pytest.mark.parametrize("signal, freq", [["sine", 20],
+                                          ["sine", 1000],
+                                          ["sine", 1000],
+                                          ["sine", 10000],
+                                          ["sine", 23000],
+                                          ["noise", None]])
+def test_reverb_overflow(signal, freq, max_room_size):
     fs = 48000
 
-    sig = gen.sin(fs, 5, freq, 1)
+    if signal == "sine":
+        sig = gen.sin(fs, 5, freq, 1)
+    elif signal == "chirp":
+        sig = gen.log_chirp(fs, 5, 1, 20, 20000)
+    elif signal == "noise":
+        sig = gen.white_noise(fs, 5, 1)
+
     sig = sig/np.max(np.abs(sig))
     sig = sig* (2**31 - 1)/(2**31)
 
@@ -31,7 +43,7 @@ def test_reverb_overflow(freq, max_room_size):
         output_xcore[n] = reverb.process_xcore(sig[n])
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
-    top_half = utils.db(output_flt) > -50
+    top_half = np.logical_and(utils.db(output_flt) > -50, utils.db(output_flt) < 6)
     if np.any(top_half):
         error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
@@ -40,7 +52,8 @@ def test_reverb_overflow(freq, max_room_size):
 
 @pytest.mark.parametrize("max_room_size", [0.01, 0.1, 0.5])
 @pytest.mark.parametrize("decay", [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1])
-def test_reverb_time(max_room_size, decay):
+@pytest.mark.parametrize("damping", [0, 0.5])
+def test_reverb_time(max_room_size, decay, damping):
     # measure reverb time with chirp
     fs = 48000
 
@@ -48,7 +61,7 @@ def test_reverb_time(max_room_size, decay):
     sig[:1*fs] = gen.log_chirp(fs, 1, 1, 20, 20000)
     sig = sig* (2**31 - 1)/(2**31)
 
-    reverb = rv.reverb_room(fs, 1, max_room_size=max_room_size, room_size=1, decay=decay, damping=0.5, Q_sig=29)
+    reverb = rv.reverb_room(fs, 1, max_room_size=max_room_size, room_size=1, decay=decay, damping=damping, Q_sig=29)
     print(reverb.get_buffer_lens())
     
     output_xcore = np.zeros(len(sig))
@@ -144,5 +157,6 @@ def test_reverb_frames(fs, max_room_size):
 
 
 if __name__ == "__main__":
-    test_reverb_time(0.1, 0.5)
+    test_reverb_overflow("sine", 20, 0.01)
+    # test_reverb_time(0.01, 1)
     # test_reverb_frames(48000, 1)

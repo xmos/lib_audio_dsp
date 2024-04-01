@@ -18,7 +18,7 @@ def apply_gain_xcore(sample, gain):
     return y
 
 
-def saturate_int64_to_int32_to_zero(val):
+def scale_sat_int64_to_int32_floor(val):
     """Quanitze an int64 to int32, saturating and quantizing to zero
     in the process. This is useful for feedback paths, where limit
     cycles can occur if you don't round to zero."""
@@ -88,11 +88,12 @@ class allpass_fv(dspg.dsp_block):
         buff_out = self._buffer_int[self._buffer_idx]
 
         # reverb pregain should be scaled so this doesn't overflow
-        output = utils.int32(-sample_int + buff_out)
+        output = utils.int64(-sample_int + buff_out)
+        output = utils.saturate_int64_to_int32(output)
 
         # do buffer calculation in int64 accumulator so we only quantize once
         new_buff = utils.int64((sample_int << Q_VERB) + buff_out * self.feedback_int)
-        self._buffer_int[self._buffer_idx] = saturate_int64_to_int32_to_zero(new_buff)
+        self._buffer_int[self._buffer_idx] = scale_sat_int64_to_int32_floor(new_buff)
 
         # move buffer head
         self._buffer_idx += 1
@@ -119,7 +120,7 @@ class comb_fv(dspg.dsp_block):
         self.damp1 = damping
         self.damp2 = 1 - self.damp1
         # super critical these add up, but also don't overflow int32...
-        self.damp1_int = utils.int32(self.damp1 * 2**Q_VERB)
+        self.damp1_int = max(utils.int32(self.damp1 * 2**Q_VERB), 1)
         self.damp2_int = utils.int32((2**31 - 1) - self.damp1_int + 1)
 
     def set_delay(self, delay):
@@ -157,11 +158,11 @@ class comb_fv(dspg.dsp_block):
 
         # do state calculation in int64 accumulator so we only quantize once
         filtstore_64 = utils.int64(output * self.damp2_int + self._filterstore_int * self.damp1_int)
-        self._filterstore_int = saturate_int64_to_int32_to_zero(filtstore_64)
+        self._filterstore_int = scale_sat_int64_to_int32_floor(filtstore_64)
 
         # do buffer calculation in int64 accumulator so we only quantize once
         new_buff = utils.int64((sample_int << Q_VERB) + self._filterstore_int * self.feedback_int)
-        self._buffer_int[self._buffer_idx] = saturate_int64_to_int32_to_zero(new_buff)
+        self._buffer_int[self._buffer_idx] = scale_sat_int64_to_int32_floor(new_buff)
 
         self._buffer_idx += 1
         if self._buffer_idx >= self.delay:
@@ -196,19 +197,19 @@ class reverb_room(dspg.dsp_block):
 
         self.damping = damping
         self.feedback = decay*0.28 + 0.7  # avoids too much or too little feedback
-        self.wet = utils.db2gain(wet_gain_db)
-        self.dry = utils.db2gain(dry_gain_db)
 
-        self.wet_int = utils.int32(self.wet * 2**Q_VERB -1)
-        self.dry_int = utils.int32(self.dry * 2**Q_VERB -1)
 
         # pregain going into the reverb
-        self.gain = 0.015625 # 2**-6
-        self.out_gain = 0.015/self.gain
-        self.wet *= self.out_gain
-        self.wet_int = utils.int32(self.wet * 2**Q_VERB)
+        self.pregain = 0.015
+        self.pregain_int = utils.int32(self.gain * 2**Q_VERB)
 
-        self.gain_int = utils.int32(self.gain * 2**Q_VERB)
+        self.wet = utils.db2gain(wet_gain_db)
+        # when pregain changes, keep wet level the same
+        self.wet *= 0.015/self.pregain
+        self.wet_int = utils.int32((self.wet * 2**Q_VERB) - 1)
+
+        self.dry = utils.db2gain(dry_gain_db)
+        self.dry_int = utils.int32((self.dry * 2**Q_VERB) - 1)
 
         if room_size > 1:
             raise ValueError("room_size must be less than 1. For larger rooms, increase max_room size")
@@ -276,7 +277,7 @@ class reverb_room(dspg.dsp_block):
     def process(self, sample, channel=0):
 
         output = 0
-        reverb_input = sample*self.gain
+        reverb_input = sample*self.pregain
 
         for cb in self.combs:
             output += cb.process(reverb_input)
@@ -293,11 +294,13 @@ class reverb_room(dspg.dsp_block):
 
         output = 0
 
-        reverb_input = apply_gain_xcore(sample_int, self.gain_int)
+        reverb_input = apply_gain_xcore(sample_int, self.pregain_int)
 
         for cb in self.combs:
             output += cb.process_xcore(reverb_input)
-            utils.int32(output)
+            utils.int64(output)
+
+        output = utils.saturate_int64_to_int32(output)
 
         # these buffers are at risk of overflowing, but self.gain_int 
         # should be scaled to prevent it for nearly all signals
