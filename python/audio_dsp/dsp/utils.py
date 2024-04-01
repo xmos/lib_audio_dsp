@@ -3,7 +3,7 @@
 import numpy as np
 import scipy.signal as spsig
 import math
-import warnings 
+import warnings
 
 FLT_MIN = np.finfo(float).tiny
 
