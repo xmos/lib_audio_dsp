@@ -152,6 +152,22 @@ pipeline {
                 }
               }
             } // test SC
+            stage('Test Reverb') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/reverv") {
+                          runPytest("test_reverb_python.py --dist worksteal")
+                          // runPytest("test_reverb_c.py --dist worksteal")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test Reverb
             stage('Test Utils') {
               steps {
                 dir("lib_audio_dsp") {
