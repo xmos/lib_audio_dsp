@@ -12,7 +12,7 @@
 #include <stages/adsp_pipeline.h>
 #include <stages/adsp_control.h>
 #include <adsp_generated_auto.h>
-#include "adsp_instance_id.h"
+#include "adsp_instance_id_auto.h"
 #include "cascaded_biquads_config.h"
 #include "cmds.h"
 

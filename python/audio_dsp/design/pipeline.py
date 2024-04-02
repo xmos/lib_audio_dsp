@@ -660,7 +660,7 @@ def _generate_instance_id_defines(resolved_pipeline, out_dir=Path("build/dsp_pip
     header = "#pragma once\n\n"
     for label, index in resolved_pipeline["labels"].items():
         header += f"#define {label}_stage_index\t\t({index})\n"
-    (out_dir / "adsp_instance_id.h").write_text(header)
+    (out_dir / f"adsp_instance_id_{resolved_pipeline['identifier']}.h").write_text(header)
 
 
 def _generate_dsp_init(resolved_pipeline):

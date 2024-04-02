@@ -207,7 +207,7 @@ def test_stage_labels():
     generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
 
     # Check if the adsp_instance_id.h file exists and the labels are present in it
-    label_defines_file = BUILD_DIR / "dsp_pipeline" / "adsp_instance_id.h"
+    label_defines_file = BUILD_DIR / "dsp_pipeline" / "adsp_instance_id_auto.h"
     assert label_defines_file.is_file(), f"{label_defines_file} not found"
 
     resolved_pipe = p.resolve_pipeline()
