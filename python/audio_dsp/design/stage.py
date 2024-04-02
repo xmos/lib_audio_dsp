@@ -331,9 +331,7 @@ class Stage(Node):
             center = f"{self.index}: {self.label}\\n"
         if self.details:
             details = "\\n".join(f"{k}: {v}" for k, v in self.details.items())
-            label = (
-                f"{{ {{ {inputs} }} | {center} | {details} | {{ {outputs} }}}}"
-            )
+            label = f"{{ {{ {inputs} }} | {center} | {details} | {{ {outputs} }}}}"
         else:
             label = f"{{ {{ {inputs} }} | {center} | {{ {outputs} }}}}"
 
