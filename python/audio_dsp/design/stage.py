@@ -133,6 +133,12 @@ class Stage(Node):
         parameters are derived from this config file.
     inputs : Iterable[StageOutput]
         Pipeline edges to connect to self
+    name : str
+        Name of the stage. Passed instead of config when the stage does not have
+        an associated config yaml file
+    label : str
+        User defined label for the stage. Used for autogenerating a define for accessing the stage's index
+        in the device code
 
     Attributes
     ----------
@@ -146,9 +152,11 @@ class Stage(Node):
     frame_size : int | None
         Samples in frame.
     name : str
-        Module name determined from config file
+        Stage name determined from config file
     yaml_dict : dict
         config parsed from the config file
+    label : str
+        User specified label for the stage
     n_in : int
         number of inputs
     n_out : int
@@ -165,6 +173,7 @@ class Stage(Node):
         inputs: Iterable[StageOutput],
         config: Optional[Path | str] = None,
         name: Optional[str] = None,
+        label: Optional[str] = None,
     ):
         super().__init__()
         self.i = [i for i in inputs]
@@ -194,6 +203,8 @@ class Stage(Node):
             self.name = name
             self._control_fields = {}
             self.yaml_dict = None
+
+        self.label = label
 
         self.details = {}
         self.dsp_block = None
@@ -315,9 +326,13 @@ class Stage(Node):
         inputs = "|".join(f"<i{i}> " for i in range(self.n_in))
         outputs = "|".join(f"<o{i}> " for i in range(self.n_out))
         center = f"{self.index}: {type(self).__name__}\\n"
+
+        if self.label:
+            center = f"{self.index}: {self.label}\\n"
         if self.details:
             details = "\\n".join(f"{k}: {v}" for k, v in self.details.items())
             label = f"{{ {{ {inputs} }} | {center} | {details} | {{ {outputs} }}}}"
         else:
             label = f"{{ {{ {inputs} }} | {center} | {{ {outputs} }}}}"
+
         dot.node(self.id.hex, label)
