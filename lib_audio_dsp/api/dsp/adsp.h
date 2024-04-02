@@ -5,7 +5,7 @@
 
 #include "xmath/xmath.h"
 
-#define SIG_EXP (-27)
+#define SIG_EXP (-31)
 #define Q_SIG   (-SIG_EXP)
 
 #include "dsp/signal_chain.h"
