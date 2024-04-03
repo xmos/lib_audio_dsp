@@ -302,6 +302,19 @@ class compressor_limiter_base(dspg.dsp_block):
         self.gain = [1] * self.n_chans
         self.gain_int = [2**31 - 1] * self.n_chans
 
+    def get_gain_curve(self):
+        in_gains_db = np.linspace(-60, 20, 1000)
+        gains_lin = utils.db2gain(in_gains_db)
+
+        out_gains = np.zeros_like(gains_lin)
+
+        for n in range(len(out_gains)):
+            out_gains[n] = self.gain_calc(gains_lin[n], self.threshold, self.slope)
+
+        out_gains_db = utils.db(out_gains) + in_gains_db
+
+        return in_gains_db, out_gains_db
+
     def process(self, sample, channel=0):
         """
         Update the envelope for a signal, then calculate and apply the
@@ -649,83 +662,3 @@ class compressor_rms(compressor_limiter_base):
         # set the gain calculation function handles
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
-
-
-class noise_gate(compressor_limiter_base):
-    """A noise gate that reduces the level of an audio signal when it
-    falls below a threshold.
-
-    When the signal envelope falls below the threshold, the gain applied
-    to the signal is reduced to 0 (based on the release time). When the
-    envelope returns above the threshold, the gain applied to the signal
-    is increased to 1 over the attack time.
-
-    The initial state of the noise gate is with the gate open (no
-    attenuation), assuming a full scale signal has been present before
-    t = 0.
-
-    Parameters
-    ----------
-    threshold_db : float
-        The threshold level in decibels below which the audio signal is
-        attenuated.
-
-    Attributes
-    ----------
-    attack_alpha : float
-        The attack coefficient calculated from the release time and sample rate.
-    release_alpha : float
-        The release coefficient calculated from the attack time and sample rate.
-    attack_alpha_int : int
-        The attack coefficient as a 32-bit signed integer.
-    release_alpha_int : int
-        The release coefficient as a 32-bit signed integer.
-    threshold : float
-        The threshold below which the signal is gated.
-    threshold_int : int
-        The threshold level as a 32-bit signed integer.
-    env_detector : envelope_detector_peak
-        An instance of the envelope_detector_peak class used for envelope detection.
-
-    """
-
-    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        # don't use super(), as the attack and release times are swapped
-        # but still init the block
-        dspg.dsp_block.__init__(self, fs, n_chans, Q_sig)
-
-        # for the noise gate, the attack and release times are swapped
-        # i.e. attack time is after going under threshold instead of over
-        # the device will expect these swapped back when doing control
-        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(attack_t, fs)
-        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(release_t, fs)
-        self.Q_alpha = drcu.Q_alpha
-        assert self.Q_alpha == 31, "When changing this the reset value will have to be updated"
-
-        self.threshold = utils.db2gain(threshold_db)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
-        self.env_detector = envelope_detector_peak(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
-
-        # set the gain calculation function handles
-        self.gain_calc = drcu.noise_gate_gain_calc
-        self.gain_calc_xcore = drcu.noise_gate_gain_calc_xcore
-
-        # slope is used for compressors, not noise gates
-        self.slope = None
-        self.slope_f32 = None
-
-        self.reset_state()
-
-    def reset_state(self):
-        """Reset the envelope detector to 1 and the gain to 1, so the
-        gate starts off."""
-        self.env_detector.envelope = [1] * self.n_chans
-        self.env_detector.envelope_int = [utils.int32(2**self.Q_sig)] * self.n_chans
-        self.gain = [1] * self.n_chans
-        self.gain_int = [2**31 - 1] * self.n_chans
