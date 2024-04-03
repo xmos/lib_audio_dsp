@@ -158,7 +158,7 @@ def comp_vs_limiter(fs, at, threshold):
 
     y_r = np.zeros_like(x)
     f_r = np.zeros_like(x)
-    env_r = np.zeros_like(x) 
+    env_r = np.zeros_like(x)
 
     # do the processing
     for n in range(len(y_r)):
@@ -371,6 +371,35 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold,
     np.testing.assert_array_equal(output_xcore_s, output_xcore_m)
 
 
+def test_noise_suppressor():
+    # test the noise suppressor performance on noisy speech
+    signal, fs = make_noisy_speech()
+
+    test_len = int(6*fs)
+    signal = signal[:test_len]
+
+    drcut = drc.noise_suppressor(fs, 1, -30, 0, 0.2, 0.1)
+
+    output_xcore = np.zeros(len(signal))
+    output_flt = np.zeros(len(signal))
+
+    # noise gate has 3 outputs
+    for n in np.arange(len(signal)):
+        output_xcore[n], _, _ = drcut.process_xcore(signal[n])
+    drcut.reset_state()
+    for n in np.arange(len(signal)):
+        output_flt[n], _, _ = drcut.process(signal[n])
+
+    sf.write("noise_suppressor_test_in.wav", signal, fs)
+    sf.write("noise_suppressor_test_out.wav", output_flt, fs)
+
+    # small signals are always going to be ropey due to quantizing, so just check average error of top half
+    top_half = utils.db(output_flt) > -50
+    if np.any(top_half):
+        error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
+        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        assert mean_error_flt < 0.055
+
 def test_noise_gate():
     # test the noise gate performance on noisy speech
     signal, fs = make_noisy_speech()
@@ -399,8 +428,6 @@ def test_noise_gate():
         error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
         assert mean_error_flt < 0.055
-
-
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("component, threshold, ratio", [("limiter_peak", 0, None),
                                                          ("limiter_rms", 0, None),

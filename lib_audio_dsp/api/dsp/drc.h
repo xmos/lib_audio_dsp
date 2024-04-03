@@ -24,6 +24,14 @@ typedef struct{
   float slope;
 }compressor_t;
 
+typedef struct{
+  env_detector_t env_det;
+  int32_t threshold;
+  int64_t threshold_inv;
+  int32_t gain;
+  float slope;
+}noise_suppressor_t;
+
 env_detector_t adsp_env_detector_init(
   float fs,
   float attack_t,
@@ -41,13 +49,13 @@ void adsp_env_detector_rms(
 limiter_t adsp_limiter_peak_init(
   float fs,
   float threshold_db,
-  float atack_t,
+  float attack_t,
   float release_t);
 
 limiter_t adsp_limiter_rms_init(
   float fs,
   float threshold_db,
-  float atack_t,
+  float attack_t,
   float release_t);
 
 int32_t adsp_limiter_peak(
@@ -61,17 +69,50 @@ int32_t adsp_limiter_rms(
 noise_gate_t adsp_noise_gate_init(
   float fs,
   float threshold_db,
-  float atack_t,
+  float attack_t,
   float release_t);
 
 int32_t adsp_noise_gate(
   noise_gate_t * ng,
   int32_t new_samp);
 
+noise_gate_t adsp_noise_compressor_init(
+  float fs,
+  float threshold_db,
+  float attack_t,
+  float release_t,
+  float ratio);
+
+noise_suppressor_t adsp_noise_suppressor_init(
+  float fs,
+  float threshold_db,
+  float attack_t,
+  float release_t,
+  float ratio);
+/*
+noise_suppressor_t adsp_suppressor_peak_init(
+  float fs,
+  float threshold_db,
+  float attack_t,
+  float release_t,
+  float ratio
+);*/
+
+int32_t adsp_noise_suppressor(
+  noise_suppressor_t * ns,
+  int32_t new_samp);
+
+compressor_t adsp_compressor_peak_init(
+  float fs,
+  float threshold_db,
+  float attack_t,
+  float release_t,
+  float ratio);
+
 compressor_t adsp_compressor_rms_init(
   float fs,
   float threshold_db,
-  float atack_t,
+  float attack_t,
   float release_t,
   float ratio);
 

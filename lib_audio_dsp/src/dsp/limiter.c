@@ -8,7 +8,7 @@
 
 
 static inline int32_t from_float_pos(float val) {
-  // assimes that val is positive
+  // assumes that val is positive
   int32_t sign, exp, mant;
   asm("fsexp %0, %1, %2": "=r" (sign), "=r" (exp): "r" (val));
   asm("fmant %0, %1": "=r" (mant): "r" (val));
@@ -21,11 +21,11 @@ static inline int32_t from_float_pos(float val) {
 limiter_t adsp_limiter_peak_init(
   float fs,
   float threshold_db,
-  float atack_t,
+  float attack_t,
   float release_t
 ) {
   limiter_t lim;
-  lim.env_det = adsp_env_detector_init(fs, atack_t, release_t, 0);
+  lim.env_det = adsp_env_detector_init(fs, attack_t, release_t, 0);
   float th = powf(10, threshold_db / 20);
   lim.threshold = from_float_pos(th);
   lim.gain = INT32_MAX;
@@ -35,11 +35,11 @@ limiter_t adsp_limiter_peak_init(
 limiter_t adsp_limiter_rms_init(
   float fs,
   float threshold_db,
-  float atack_t,
+  float attack_t,
   float release_t
 ) {
   limiter_t lim;
-  lim.env_det = adsp_env_detector_init(fs, atack_t, release_t, 0);
+  lim.env_det = adsp_env_detector_init(fs, attack_t, release_t, 0);
   float th = powf(10, threshold_db / 10);
   lim.threshold = from_float_pos(th);
   lim.gain = INT32_MAX;
