@@ -27,18 +27,17 @@ int main()
   fseek(in, 0, SEEK_SET);
 
   int32_t th, at_al, re_al;
-  float sl;
+  float slope;
 
   fread(&th, sizeof(int32_t), 1, ns_info);
   fread(&at_al, sizeof(int32_t), 1, ns_info);
   fread(&re_al, sizeof(int32_t), 1, ns_info);
-  fread(&sl, sizeof(float), 1, ns_info);
+  fread(&slope, sizeof(float), 1, ns_info);
 
   fclose(ns_info);
 
   noise_suppressor_t ns = (noise_suppressor_t){
-              (env_detector_t){at_al, re_al, 1 << (-SIG_EXP)}, th, INT32_MAX, sl};
-
+              (env_detector_t){at_al, re_al, 1 << (-SIG_EXP)}, th, (int64_t) INT64_MAX / th, INT32_MAX, slope};
   for (unsigned i = 0; i < in_len; i++)
   {
     int32_t samp = 0, samp_out = 0;

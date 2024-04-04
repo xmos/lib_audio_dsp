@@ -169,7 +169,6 @@ def noise_suppressor_gain_calc(envelope, threshold, slope):
     new_gain = min(1, new_gain)
     return new_gain
 
-
 def noise_suppressor_gain_calc_xcore(envelope_int, threshold_int, slope_f32):
     """Calculate the int gain for the current sample
 
@@ -184,7 +183,6 @@ def noise_suppressor_gain_calc_xcore(envelope_int, threshold_int, slope_f32):
     # to be similar to the compressor implementation, which also allows
     # 1/threshold to be precomputed
     invt = utils.int64(((1 << 63) - 1) // threshold_int)
-
     if -slope_f32 > float32(0) and threshold_int > envelope_int:
         # this looks a bit scary, but as long as envelope < threshold,
         # it can't overflow

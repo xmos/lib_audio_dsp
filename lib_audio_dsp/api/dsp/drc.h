@@ -76,27 +76,12 @@ int32_t adsp_noise_gate(
   noise_gate_t * ng,
   int32_t new_samp);
 
-noise_gate_t adsp_noise_compressor_init(
-  float fs,
-  float threshold_db,
-  float attack_t,
-  float release_t,
-  float ratio);
-
 noise_suppressor_t adsp_noise_suppressor_init(
   float fs,
   float threshold_db,
   float attack_t,
   float release_t,
   float ratio);
-/*
-noise_suppressor_t adsp_suppressor_peak_init(
-  float fs,
-  float threshold_db,
-  float attack_t,
-  float release_t,
-  float ratio
-);*/
 
 int32_t adsp_noise_suppressor(
   noise_suppressor_t * ns,
