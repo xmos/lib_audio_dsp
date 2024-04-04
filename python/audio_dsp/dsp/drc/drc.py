@@ -303,13 +303,14 @@ class compressor_limiter_base(dspg.dsp_block):
         self.gain = [1] * self.n_chans
         self.gain_int = [2**31 - 1] * self.n_chans
 
-    def get_gain_curve(self):
-        in_gains_db = np.linspace(-60, 20, 1000)
+    def get_gain_curve(self, max_gain=dspg.HEADROOM_DB, min_gain=-96):
+        in_gains_db = np.linspace(min_gain, max_gain, 1000)
         gains_lin = utils.db2gain(in_gains_db)
 
         out_gains = np.zeros_like(gains_lin)
 
         for n in range(len(out_gains)):
+            # NOTE, if RMS compressor, we need to use gains_lin**2
             out_gains[n] = self.gain_calc(gains_lin[n], self.threshold, self.slope)
 
         out_gains_db = utils.db(out_gains) + in_gains_db
@@ -348,7 +349,7 @@ class compressor_limiter_base(dspg.dsp_block):
         y = self.gain[channel] * sample
         return y, new_gain, envelope
 
-    def process_xcore(self, sample, channel=0):
+    def process_xcore(self, sample, channel=0, return_int=False):
         """
         Update the envelope for a signal, then calculate and apply the
         required gain for compression/limiting, using int32 fixed point
@@ -380,11 +381,14 @@ class compressor_limiter_base(dspg.dsp_block):
         # apply gain
         y = drcu.apply_gain_xcore(sample_int, self.gain_int[channel])
 
-        return (
-            (float(y) * 2**-self.Q_sig),
-            (float(new_gain_int) * 2**-self.Q_alpha),
-            (float(envelope_int) * 2**-self.Q_sig),
-        )
+        if return_int:
+            return y, new_gain_int, envelope_int
+        else:
+            return (
+                (float(y) * 2**-self.Q_sig),
+                (float(new_gain_int) * 2**-self.Q_alpha),
+                (float(envelope_int) * 2**-self.Q_sig),
+            )
 
     def process_frame(self, frame):
         """
@@ -519,20 +523,6 @@ class hard_limiter_peak(limiter_peak):
             y = self.threshold
         if y < -self.threshold:
             y = -self.threshold
-        return y, new_gain, envelope
-
-    def process_int(self, sample, channel=0):
-        y, new_gain, envelope = super().process_int(sample, channel, return_int=True)
-
-        # hard clip if above threshold
-        if y > self.threshold_int:
-            y = self.threshold_int
-        if y < -self.threshold_int:
-            y = -self.threshold_int
-
-        # quantize before return
-        y = float(y) * 2**-self.Q_sig
-        
         return y, new_gain, envelope
 
     def process_xcore(self, sample, channel=0):
@@ -671,3 +661,151 @@ class compressor_rms(compressor_limiter_base):
         # set the gain calculation function handles
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
+
+class compressor_rms_softknee(compressor_limiter_base):
+    """
+    A soft knee compressor based on the RMS value of the signal. When
+    the RMS envelope of the signal exceeds the threshold, the signal
+    amplitude is reduced by the compression ratio. A smoothed fit is
+    used around the knee to reduce artifacts.
+
+    The threshold sets the value above which compression occurs. The
+    ratio sets how much the signal is compressed. A ratio of 1 results
+    in no compression, while a ratio of infinity results in the same
+    behaviour as a limiter. The attack time sets how fast the comressor
+    starts compressing. The release time sets how long the signal takes
+    to ramp up to it's original level after the envelope is below the
+    threshold.
+
+    Parameters
+    ----------
+    ratio : float
+        Compression gain ratio applied when the signal is above the
+        threshold
+
+    Attributes
+    ----------
+    env_detector : envelope_detector_rms
+        Nested RMS envelope detector used to calculate the envelope of
+        the signal.
+    ratio : float
+        Compression gain ratio applied when the signal is above the
+        threshold.
+    slope : float
+        The slope factor of the compressor, defined as
+        `slope = (1 - 1/ratio)`.
+    slope_f32 : np.float32
+        The slope factor of the compressor, used for int32 to float32
+        processing.
+    threshold : float
+        Value above which compression occurs for floating point
+        processing.
+    threshold_f32 : np.float32
+        Value above which compression occurs for floating point
+        processing.
+    threshold_int : int
+        Value above which compression occurs for int32 fixed point
+        processing.
+    w : float
+        The width over which the soft knee extends.
+
+    References
+    ----------
+    [1] Giannoulis, D., Massberg, M., & Reiss, J. D. (2012). Digital
+    Dynamic Range Compressor Designâ€”A Tutorial and Analysis. Journal of
+    Audio Engineering Society, 60(6), 399â€“408.
+    https://www.aes.org/e-lib/browse.cfm?elib=16354
+    """
+
+    def __init__(
+        self, fs, n_chans, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
+    ):
+        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
+
+        # note rms comes as x**2, so use db_pow
+        self.threshold_db = threshold_db
+        self.threshold = utils.db_pow2gain(threshold_db)
+        self.threshold_f32 = np.float32(self.threshold)
+        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.env_detector = envelope_detector_rms(
+            fs,
+            n_chans=n_chans,
+            attack_t=attack_t,
+            release_t=release_t,
+            Q_sig=self.Q_sig,
+        )
+
+        self.ratio = ratio
+        self.slope = (1 - 1 / self.ratio) / 2.0
+        self.slope_f32 = np.float32(self.slope)
+        self.piecewise_calc()
+
+    def piecewise_calc(self):
+        # the knee is a straight line between the knee start at (x1, y1)
+        # and the knee end at (x2, y2) BUT as the envelope is RMS**2, we
+        # actually get a curve. 
+        # 
+        # x2 is modified to be halfway between the threshold and the end
+        # of the knee, trying to join closer to the true knee end than
+        # this can result in overshoot (i.e. going above the hard knee
+        # curve)
+
+        # currently only tested for w=10
+        self.w = 10
+        self.offset = 1
+
+        self.w = 15
+        self.offset = 0.5
+
+        self.w = 20
+        self.offset = 0.25
+
+        x1 = (self.threshold*utils.db_pow2gain(-self.w/2))
+        y1 = 1
+        x2 = ((self.threshold*utils.db_pow2gain(self.w/2)) + self.threshold)/2
+
+        y2 = (self.threshold / (x2)) ** self.slope
+        # y1*= self.offset
+        # y2*= self.offset
+        self.knee_start = x1
+        self.knee_end = x2
+        self.knee_a = (y2 - y1)/(x2**self.offset - (x1**self.offset))
+        self.knee_b = (y1) - self.knee_a*(x1**self.offset)
+
+    def gain_calc(self, envelope):
+        """Calculate the float gain for the current sample
+
+        Note that as the RMS envelope detector returns x**2, we need to
+        use db_pow. The knee is exponential in the log domain, so must
+        be calculated in the log domain.
+        """
+        envelope_db = utils.db_pow(envelope)
+        if envelope_db < (self.threshold_db - self.w / 2):
+            new_gain = 1
+        elif envelope_db > (self.threshold_db + self.w / 2):
+            # regular RMS compressor
+            new_gain = (self.threshold / envelope) ** self.slope
+        else:
+            # soft knee
+            new_gain_db = ((-self.slope/(self.w))*
+                (envelope_db - self.threshold_db + self.w/2)**2)
+            new_gain = utils.db2gain(new_gain_db)
+
+        new_gain = min(1, new_gain)
+        return new_gain
+
+
+    def gain_calc_piecewise(self, envelope):
+
+        if envelope < self.knee_start:
+            new_gain = 1
+
+        elif envelope < self.knee_end:
+            # straight line, but envelope is RMS**2, so actually squared
+            new_gain = (self.knee_a*(envelope**self.offset) + self.knee_b)
+        else:
+            # regular RMS compressor
+            new_gain = (self.threshold / envelope) ** self.slope
+        
+        return new_gain
+
