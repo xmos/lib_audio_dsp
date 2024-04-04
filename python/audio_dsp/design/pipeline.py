@@ -657,10 +657,16 @@ def _generate_instance_id_defines(resolved_pipeline, out_dir=Path("build/dsp_pip
     out_dir = Path(out_dir)
     out_dir.mkdir(exist_ok=True)
 
+    pipeline_id = resolved_pipeline["identifier"]
+    n_threads = len(resolved_pipeline["threads"])
+
     header = "#pragma once\n\n"
     for label, index in resolved_pipeline["labels"].items():
         header += f"#define {label}_stage_index\t\t({index})\n"
-    (out_dir / f"adsp_instance_id_{resolved_pipeline['identifier']}.h").write_text(header)
+
+    thread_stage_ids = ", ".join(f"thread{i}_stage_index" for i in range(n_threads))
+    header += f"#define {pipeline_id}_thread_stage_indices  {{ {thread_stage_ids} }}\n"
+    (out_dir / f"adsp_instance_id_{pipeline_id}.h").write_text(header)
 
 
 def _generate_dsp_init(resolved_pipeline):
