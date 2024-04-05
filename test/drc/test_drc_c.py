@@ -178,5 +178,5 @@ if __name__ == "__main__":
   #test_limiter_c(sig_fl, "limiter_peak", 0.001, 0.1, -10)
   test_compressor_c(sig_fl, "noise_suppressor", 0.001, 0.01, -12, -1)
   test_compressor_c(sig_fl, "noise_suppressor", 0.001, 0.01, 15, 2)
-
+  test_compressor_c(sig_fl, "noise_suppressor", 0.001, 0.01, 15, 5)
   #test_limiter_c(sig_fl, "noise_gate", 0.001, 0.01, 0)
