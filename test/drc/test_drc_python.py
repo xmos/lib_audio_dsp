@@ -532,7 +532,11 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
     if np.any(top_half):
         error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
-        assert mean_error_flt < 0.055
+        if "softknee" in component:
+            # different implementation of knee adds more error
+            assert mean_error_flt < 0.08
+        else:
+            assert mean_error_flt < 0.055
 
     
     if "hard" in component:

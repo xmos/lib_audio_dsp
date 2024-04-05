@@ -758,7 +758,7 @@ class compressor_rms_softknee(compressor_limiter_base):
         # this is a bit of a bodge, as the soft knee compressor needs
         # more inputs
         self.gain_calc = self.compressor_rms_softknee_gain_calc
-        self.gain_calc = self.gain_calc_piecewise
+        # self.gain_calc = self.gain_calc_piecewise
         self.gain_calc_xcore = self.gain_calc_piecewise_xcore
 
     def piecewise_calc(self):
