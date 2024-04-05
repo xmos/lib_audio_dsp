@@ -28,7 +28,7 @@ noise_suppressor_t adsp_noise_suppressor_init(
   ns.threshold = from_float_pos(th);
   // Avoid division by zero
   if (!ns.threshold) ns.threshold=1;
-  ns.inv_threshold =  (int32_t) (INT32_MAX / ns.threshold);
+  ns.inv_threshold =  INT64_MAX / ns.threshold;
   ns.gain = INT32_MAX;
   ns.slope = 1 - ratio;
   ns.env_det.envelope = 1 << (-SIG_EXP);

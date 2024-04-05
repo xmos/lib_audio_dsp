@@ -20,8 +20,7 @@ static inline void ns_copy_config_to_state(noise_suppressor_t *ns_state, int n_i
         int32_t threshold = ns_config->threshold;
         // Avoid division by zero
         if (!threshold) threshold = 1;
-        ns_state[i].inv_threshold = (int32_t) (INT32_MAX / threshold);
-        printf("threshold %ld, inv_threshold %ld\n", ns_state[i].threshold, ns_state[i].inv_threshold);
+        ns_state[i].inv_threshold = INT64_MAX / threshold;
         ns_state[i].slope = ns_config->slope;
 
     }

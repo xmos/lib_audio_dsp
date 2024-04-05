@@ -35,9 +35,9 @@ int main()
   fread(&slope, sizeof(float), 1, ns_info);
 
   fclose(ns_info);
-
+  if (!th) th = 1;
   noise_suppressor_t ns = (noise_suppressor_t){
-              (env_detector_t){at_al, re_al, 1 << (-SIG_EXP)}, th, (int32_t) (INT32_MAX / th), INT32_MAX, slope};
+              (env_detector_t){at_al, re_al, 1 << (-SIG_EXP)}, th, (INT64_MAX / th), INT32_MAX, slope};
   for (unsigned i = 0; i < in_len; i++)
   {
     int32_t samp = 0, samp_out = 0;
