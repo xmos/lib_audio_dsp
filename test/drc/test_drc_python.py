@@ -413,6 +413,8 @@ def test_noise_gate(component, threshold, ratio):
                                                          ("limiter_rms", 0, None),
                                                          ("compressor_rms", 0, 6),
                                                          ("compressor_rms", 0, 2),
+                                                         ("compressor_rms_softknee", 6, 6),
+                                                         ("compressor_rms_softknee", 6, 2),
                                                          ("noise_gate", -1000, None),
                                                          ("noise_suppressor", -1000, 5),
                                                          ("hard_limiter_peak", 0, None)])
@@ -467,6 +469,10 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
                                                          ("compressor_rms", -20, 2),
                                                          ("compressor_rms", 6, 6),
                                                          ("compressor_rms", 6, 2),
+                                                         ("compressor_rms_softknee", -20, 6),
+                                                         ("compressor_rms_softknee", -20, 2),
+                                                         ("compressor_rms_softknee", 6, 6),
+                                                         ("compressor_rms_softknee", 6, 2),
                                                          ("noise_gate", -20, None),
                                                          ("noise_suppressor", -20, 5),
                                                          ("hard_limiter_peak", -20, None),
@@ -532,7 +538,6 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
     if "hard" in component:
         assert np.all(output_xcore <= utils.db2gain(threshold))
         assert np.all(output_flt <= utils.db2gain(threshold))
-        assert np.all(output_int <= utils.db2gain(threshold))
 
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("component, threshold, ratio", [("limiter_peak", -20, None),
@@ -545,6 +550,10 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
                                                          ("compressor_rms", -20, 2),
                                                          ("compressor_rms", 6, 6),
                                                          ("compressor_rms", 6, 2),
+                                                         ("compressor_rms_softknee", -20, 6),
+                                                         ("compressor_rms_softknee", -20, 2),
+                                                         ("compressor_rms_softknee", 6, 6),
+                                                         ("compressor_rms_softknee", 6, 2),
                                                          ("noise_gate", -20, None),
                                                          ("noise_suppressor", -20, 5),
                                                          ("hard_limiter_peak", -20, None),

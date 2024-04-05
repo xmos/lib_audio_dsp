@@ -5,8 +5,10 @@ from audio_dsp.dsp.drc.drc import (
     envelope_detector_peak as envelope_detector_peak,
     envelope_detector_rms as envelope_detector_rms,
     limiter_peak as limiter_peak,
+    hard_limiter_peak as hard_limiter_peak,
     limiter_rms as limiter_rms,
     compressor_rms as compressor_rms,
+    compressor_rms_softknee as compressor_rms_softknee,
 )
 from audio_dsp.dsp.drc.stereo_compressor_limiter import (
     limiter_peak_stereo as limiter_peak_stereo,

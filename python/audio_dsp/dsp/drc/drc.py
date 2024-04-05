@@ -305,13 +305,28 @@ class compressor_limiter_base(dspg.dsp_block):
 
     def get_gain_curve(self, max_gain=dspg.HEADROOM_DB, min_gain=-96):
         in_gains_db = np.linspace(min_gain, max_gain, 1000)
-        gains_lin = utils.db2gain(in_gains_db)
+        gains_lin = utils.db2gain(in_gains_db)**2
 
         out_gains = np.zeros_like(gains_lin)
 
         for n in range(len(out_gains)):
             # NOTE, if RMS compressor, we need to use gains_lin**2
             out_gains[n] = self.gain_calc(gains_lin[n], self.threshold, self.slope)
+
+        out_gains_db = utils.db(out_gains) + in_gains_db
+
+        return in_gains_db, out_gains_db
+
+    def get_gain_curve_int(self, max_gain=dspg.HEADROOM_DB, min_gain=-96):
+        in_gains_db = np.linspace(min_gain, max_gain, 1000)
+        gains_lin = utils.db2gain(in_gains_db)**2
+
+        out_gains = np.zeros_like(gains_lin)
+
+        for n in range(len(out_gains)):
+            # NOTE, if RMS compressor, we need to use gains_lin**2
+            out_gains[n] = self.gain_calc_xcore(utils.int32(round(gains_lin[n]*2**self.Q_sig)), self.threshold_int, self.slope_f32)
+            out_gains[n] = float(out_gains[n]) * 2**-31
 
         out_gains_db = utils.db(out_gains) + in_gains_db
 
@@ -737,8 +752,14 @@ class compressor_rms_softknee(compressor_limiter_base):
 
         self.ratio = ratio
         self.slope = (1 - 1 / self.ratio) / 2.0
-        self.slope_f32 = np.float32(self.slope)
+        self.slope_f32 = float32(self.slope)
         self.piecewise_calc()
+
+        # this is a bit of a bodge, as the soft knee compressor needs
+        # more inputs
+        self.gain_calc = self.compressor_rms_softknee_gain_calc
+        self.gain_calc = self.gain_calc_piecewise
+        self.gain_calc_xcore = self.gain_calc_piecewise_xcore
 
     def piecewise_calc(self):
         # the knee is a straight line between the knee start at (x1, y1)
@@ -754,25 +775,30 @@ class compressor_rms_softknee(compressor_limiter_base):
         self.w = 10
         self.offset = 1
 
-        self.w = 15
-        self.offset = 0.5
+        # self.w = 15
+        # self.offset = 0.5
 
-        self.w = 20
-        self.offset = 0.25
+        # self.w = 20
+        # self.offset = 0.25
 
         x1 = (self.threshold*utils.db_pow2gain(-self.w/2))
         y1 = 1
         x2 = ((self.threshold*utils.db_pow2gain(self.w/2)) + self.threshold)/2
 
         y2 = (self.threshold / (x2)) ** self.slope
-        # y1*= self.offset
-        # y2*= self.offset
+
         self.knee_start = x1
         self.knee_end = x2
         self.knee_a = (y2 - y1)/(x2**self.offset - (x1**self.offset))
         self.knee_b = (y1) - self.knee_a*(x1**self.offset)
 
-    def gain_calc(self, envelope):
+        self.knee_start_int = utils.int32(min(round(self.knee_start * 2**self.Q_sig), 2**31 -1))
+        self.knee_end_int = utils.int32(min(round(self.knee_end * 2**self.Q_sig), 2**31 -1))
+        self.knee_a_f32 = float32(self.knee_a)
+        self.knee_b_f32 = float32(self.knee_b)
+        self.knee_b_int = utils.int32((self.knee_b-1) * 2**31)
+
+    def compressor_rms_softknee_gain_calc(self, envelope, threshold, slope=None):
         """Calculate the float gain for the current sample
 
         Note that as the RMS envelope detector returns x**2, we need to
@@ -794,18 +820,46 @@ class compressor_rms_softknee(compressor_limiter_base):
         new_gain = min(1, new_gain)
         return new_gain
 
-
-    def gain_calc_piecewise(self, envelope):
+    def gain_calc_piecewise(self, envelope, threshold, slope=None):
 
         if envelope < self.knee_start:
             new_gain = 1
 
         elif envelope < self.knee_end:
             # straight line, but envelope is RMS**2, so actually squared
+            # 🤯
             new_gain = (self.knee_a*(envelope**self.offset) + self.knee_b)
         else:
             # regular RMS compressor
             new_gain = (self.threshold / envelope) ** self.slope
         
         return new_gain
+
+    def gain_calc_piecewise_xcore(self, envelope_int, threshold_int, slope_f32=None):
+
+        if envelope_int < self.knee_start_int:
+            new_gain_int = utils.int32(0x7FFFFFFF)
+            return new_gain_int
+
+        elif envelope_int < self.knee_end_int:
+            # Straight line, but envelope is RMS**2, so actually squared
+            # This has to be partly done in float32 as knee_a has a
+            # really big range that can't be reliably represented in
+            # int32.
+            # knee_b varies between 1.0 and 1.055, so is represented as
+            # 1+knee_b_int (alternatively we could just keep b as f32).
+            # knee_a is always negative, so adding b should give a
+            # result < 1.
+            env_f32 = float32(envelope_int * 2**-27)
+            new_gain_f32 = env_f32*self.knee_a_f32
+            new_gain_int = (new_gain_f32 * float32(2**31)).as_int32()
+            new_gain_int = utils.int32(new_gain_int + self.knee_b_int + 2**31)
+
+        else:
+            # regular RMS compressor
+            new_gain_int = int(threshold_int) << 31
+            new_gain_int = utils.int32(new_gain_int // envelope_int)
+            new_gain_int = ((float32(new_gain_int * 2**-31) ** slope_f32) * float32(2**31)).as_int32()
+            
+        return new_gain_int
 
