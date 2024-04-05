@@ -25,9 +25,48 @@
                                                 RV_SCALE(FS, MAX_ROOM_SZ) * \
                                                 SUM_DEFAULT_BUF_LENS))
 
+#define N_COMBS 8
+#define N_APS 4
+#define MAX_CHANS 1
+#define Q_RV 31
+#define DEFAULT_PREGAIN 0.015
+
 typedef struct
 {
-    void * channel[MAX_CHANS];
+    uint32_t max_delay;
+    uint32_t delay;
+    int32_t feedback;
+    int32_t *buffer;
+    int32_t buffer_idx;
+} allpass_fv_t;
+
+typedef struct
+{
+    uint32_t max_delay;
+    uint32_t delay;
+    int32_t feedback;
+    int32_t *buffer;
+    int32_t buffer_idx;
+    int32_t filterstore;
+    int32_t damp_1;
+    int32_t damp_2;
+} comb_fv_t;
+
+typedef struct
+{
+    uint32_t room_size;
+    int32_t wet_gain;
+    int32_t dry_gain;
+    int32_t pre_gain;
+    uint32_t comb_lengths[N_COMBS];
+    uint32_t ap_lengths[N_APS];
+    comb_fv_t combs[N_COMBS];
+    allpass_fv_t allpasses[N_APS];
+} reverb_room_chan_t;
+
+typedef struct
+{
+    reverb_room_chan_t channel[MAX_CHANS];
     uint32_t n_chans;
     uint32_t buffer_length;
 } reverb_room_t;
