@@ -38,7 +38,6 @@ int32_t adsp_noise_suppressor(
   int32_t new_samp
 ) {
   adsp_env_detector_peak(&ns->env_det, new_samp);
-  ns->inv_threshold =  (int64_t) (INT64_MAX / ns->threshold);
   int32_t new_gain = INT32_MAX;
 
   if (-ns->slope > 0 && ns->threshold > ns->env_det.envelope) {
