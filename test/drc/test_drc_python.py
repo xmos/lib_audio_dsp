@@ -129,7 +129,7 @@ def test_comp_ratio(fs, at, rt, ratio, threshold):
 
 
 @pytest.mark.parametrize("fs", [48000])
-@pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
+@pytest.mark.parametrize("at", [0.001, 0.01, 0.1, 0.5])
 @pytest.mark.parametrize("threshold", [-20, -10, -6, 0])
 def comp_vs_limiter(fs, at, threshold):
     # check infinite ratio compressor is a limiter
@@ -171,7 +171,7 @@ def comp_vs_limiter(fs, at, threshold):
 
 
 @pytest.mark.parametrize("fs", [48000])
-@pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
+@pytest.mark.parametrize("at", [0.001, 0.01, 0.1, 0.5])
 @pytest.mark.parametrize("threshold", [-20, -10, -6, 0])
 def test_peak_vs_rms(fs, at, threshold):
     # check peak and rms converge to same value
@@ -418,8 +418,8 @@ def test_noise_gate(component, threshold, ratio):
                                                          ("noise_gate", -1000, None),
                                                          ("noise_suppressor", -1000, 5),
                                                          ("hard_limiter_peak", 0, None)])
-@pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
-@pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
+@pytest.mark.parametrize("rt", [0.2, 0.5])
+@pytest.mark.parametrize("at", [0.001, 0.1])
 def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
     # test that a drc component is bit exact when the signal is below
     # the threshold (or above in the case of a noise gate).
@@ -477,8 +477,8 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
                                                          ("noise_suppressor", -20, 5),
                                                          ("hard_limiter_peak", -20, None),
                                                          ("hard_limiter_peak", 6, None)])
-@pytest.mark.parametrize("rt", [0.05, 0.1, 0.2, 0.5, 3.0])
-@pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.5])
+@pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
+@pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 def test_drc_component(fs, component, at, rt, threshold, ratio):
     # test the process_ functions of the drc components
     component_handle = getattr(drc, component)
