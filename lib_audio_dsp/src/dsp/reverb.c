@@ -50,14 +50,7 @@ static inline int32_t scale_sat_int64_to_int32_floor(int32_t ah,
  *
  */
 
-typedef struct
-{
-    void *heap_start;
-    uint32_t num_bytes;
-    uint32_t allocated_bytes;
-} mem_manager_t;
-
-static inline mem_manager_t mem_manager_init(
+mem_manager_t mem_manager_init(
     void *heap_address,
     uint32_t number_of_bytes)
 {
@@ -88,7 +81,7 @@ static inline void *mem_manager_alloc(mem_manager_t *mem, size_t size)
  *
  */
 
-static inline allpass_fv_t allpass_fv_init(
+allpass_fv_t allpass_fv_init(
     uint32_t max_delay,
     uint32_t starting_delay,
     int32_t feedback_gain,
@@ -122,7 +115,7 @@ static inline void allpass_fv_reset_state(allpass_fv_t *ap)
     memset(ap->buffer, 0, ap->max_delay * sizeof(int32_t));
 }
 
-static inline int32_t allpass_fv(allpass_fv_t *ap, int32_t new_sample)
+int32_t allpass_fv(allpass_fv_t *ap, int32_t new_sample)
 {
     int32_t ah = 0, al = 0, shift = Q_RV;
     int32_t buf_out = ap->buffer[ap->buffer_idx];
@@ -156,7 +149,7 @@ static inline int32_t allpass_fv(allpass_fv_t *ap, int32_t new_sample)
  *
  */
 
-static inline comb_fv_t comb_fv_init(
+comb_fv_t comb_fv_init(
     uint32_t max_delay,
     uint32_t starting_delay,
     int32_t feedback_gain,
@@ -195,7 +188,7 @@ static inline void comb_fv_reset_state(comb_fv_t *comb)
     comb->filterstore = 0;
 }
 
-static inline int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
+int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
 {
     int32_t ah = 0, al = 0, shift = Q_RV;
     int32_t fstore = comb->filterstore, d1 = comb->damp_1, d2 = comb->damp_2;

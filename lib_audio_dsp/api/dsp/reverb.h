@@ -33,6 +33,13 @@
 
 typedef struct
 {
+    void *heap_start;
+    uint32_t num_bytes;
+    uint32_t allocated_bytes;
+} mem_manager_t;
+
+typedef struct
+{
     uint32_t max_delay;
     uint32_t delay;
     int32_t feedback;
@@ -95,3 +102,25 @@ int32_t adsp_reverb_room(
     reverb_room_t *reverb_unit,
     int32_t new_samp,
     uint32_t channel);
+
+// Definitely don't expose these once released
+allpass_fv_t allpass_fv_init(
+    uint32_t max_delay,
+    uint32_t starting_delay,
+    int32_t feedback_gain,
+    mem_manager_t *mem);
+
+int32_t allpass_fv(allpass_fv_t *ap, int32_t new_sample);
+
+comb_fv_t comb_fv_init(
+    uint32_t max_delay,
+    uint32_t starting_delay,
+    int32_t feedback_gain,
+    int32_t damping,
+    mem_manager_t *mem);
+
+int32_t comb_fv(comb_fv_t *comb, int32_t new_sample);
+
+mem_manager_t mem_manager_init(
+    void *heap_address,
+    uint32_t number_of_bytes);
