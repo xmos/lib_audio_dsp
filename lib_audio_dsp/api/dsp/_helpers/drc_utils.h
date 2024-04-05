@@ -4,7 +4,7 @@
 #pragma once
 
 #define Q_alpha (31)
-#define POW_OF_2_TO_MINUS31 (4.656612873077393e-10)
+#define TWO_TO_POWER_OF_MINUS_31 (4.656612873077393e-10)
 
 
 static inline int32_t q31_ema(int32_t x, int32_t samp, q1_31 alpha) {
