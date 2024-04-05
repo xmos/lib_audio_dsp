@@ -17,10 +17,6 @@ static inline void ns_copy_config_to_state(noise_suppressor_t *ns_state, int n_i
         ns_state[i].env_det.attack_alpha = ns_config->attack_alpha;
         ns_state[i].env_det.release_alpha = ns_config->release_alpha;
         ns_state[i].threshold = ns_config->threshold;
-        int32_t threshold = ns_config->threshold;
-        // Avoid division by zero
-        if (!threshold) threshold = 1;
-        ns_state[i].inv_threshold = INT64_MAX / threshold;
         ns_state[i].slope = ns_config->slope;
 
     }
@@ -67,7 +63,6 @@ void noise_suppressor_init(module_instance_t* instance, adsp_bump_allocator_t* a
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
-
     state->ns = adsp_bump_allocator_malloc(allocator, state->n_inputs * sizeof(noise_suppressor_t));
     memset(state->ns, 0, state->n_inputs * sizeof(noise_suppressor_t));
 
@@ -75,6 +70,11 @@ void noise_suppressor_init(module_instance_t* instance, adsp_bump_allocator_t* a
     {
         state->ns[i].gain = INT32_MAX;
         state->ns[i].env_det.envelope = 1 << (-SIG_EXP);
+        // TODO: Enable lines below
+        //int32_t threshold = state->ns[i].threshold;
+        // Avoid division by zero
+        //if (!threshold) threshold = 1;
+        //state->ns[i].inv_threshold = INT64_MAX / threshold;
     }
 
     ns_copy_config_to_state(state->ns, state->n_inputs, config);
