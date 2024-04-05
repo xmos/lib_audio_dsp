@@ -64,4 +64,4 @@ class Thread(CompositeStage):
         ...
 
     def add_thread_stage(self):
-        self.thread_stage = self.stage(DSPThreadStage, [])
+        self.thread_stage = self.stage(DSPThreadStage, [], label=f"thread{self.id}")
