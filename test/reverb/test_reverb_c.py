@@ -54,12 +54,18 @@ def get_c_wav(dir_name, app_name, sim=True):
     return sig_fl
 
 
-def run_py(uut: reverb.reverb_room, sig_fl):
+def run_py(uut: reverb.reverb_room, sig_fl, use_float_sig=True):
     out_int = np.zeros(sig_fl.size)
     out_fl = np.zeros(sig_fl.size)
+    sig_int = float_to_qxx(sig_fl)
 
-    for n in range(sig_fl.size):
-        out_int[n] = uut.process_xcore(sig_fl[n])
+    if use_float_sig:
+        for n in range(sig_fl.size):
+            out_int[n] = uut.process_xcore(sig_fl[n])
+    else:
+        for n in range(sig_fl.size):
+            out_int[n] = uut.process_xcore(sig_int[n])
+        out_int = qxx_to_float(out_int)
 
     sf.write(GEN_DIR / "sig_py_int.wav", out_int, FS, "PCM_24")
     uut.reset_state()
@@ -99,21 +105,16 @@ def test_reverb(in_signal):
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
 def test_comb(in_signal):
-    n_chans = 1
-    fs = FS
-    max_room_size = 1.0
-    room_size = 1.0
-    decay = 1.0
+    max_delay = 1760
+    starting_delay = 1760
+    feedback_gain = 0.98
     damping = 1.0
-    wet_gain_db = -1.0
-    dry_gain_db = -1.0
-    pregain = 0.015
-    uut = reverb.reverb_room(fs, n_chans, max_room_size, room_size, decay, damping, wet_gain_db, dry_gain_db, pregain)
+    uut = reverb.comb_fv(max_delay, starting_delay, feedback_gain, damping)
 
-    test_dir = BIN_DIR / "reverb_test"
+    test_dir = BIN_DIR / "comb_test"
     test_dir.mkdir(exist_ok = True, parents = True)
-    out_py_fl, out_py_int = run_py(uut, in_signal)
-    out_c = get_c_wav(test_dir, "reverb_test.xe")
+    out_py_fl, out_py_int = run_py(uut, in_signal, use_float_sig=False)
+    out_c = get_c_wav(test_dir, "comb_test.xe")
     shutil.rmtree(test_dir)
 
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
@@ -130,10 +131,10 @@ def test_ap(in_signal):
     pregain = 0.015
     uut = reverb.reverb_room(fs, n_chans, max_room_size, room_size, decay, damping, wet_gain_db, dry_gain_db, pregain)
 
-    test_dir = BIN_DIR / "reverb_test"
+    test_dir = BIN_DIR / "allpass_test"
     test_dir.mkdir(exist_ok = True, parents = True)
     out_py_fl, out_py_int = run_py(uut, in_signal)
-    out_c = get_c_wav(test_dir, "reverb_test.xe")
+    out_c = get_c_wav(test_dir, "allpass_test.xe")
     shutil.rmtree(test_dir)
 
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
