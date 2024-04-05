@@ -171,7 +171,7 @@ if __name__ == "__main__":
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
 
-  #test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
+  test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
   #test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -10)
   #test_limiter_c(sig_fl, "limiter_peak", 0.001, 0.1, -10)
   test_compressor_c(sig_fl, "noise_suppressor", 0.001, 0.01, -12, -1)

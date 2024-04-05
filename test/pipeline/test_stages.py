@@ -194,7 +194,7 @@ def test_noise_suppressor():
         ng = t.stage(NoiseSuppressor, p.i)
     p.set_outputs(ng.o)
 
-    ng.make_noise_suppressor(-6, 0.001, 0.1, 1)
+    ng.make_noise_suppressor(2, -6, 0.001, 0.1)
 
     do_test(p)
 
