@@ -63,18 +63,17 @@ void noise_suppressor_init(module_instance_t* instance, adsp_bump_allocator_t* a
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
-    state->ns = adsp_bump_allocator_malloc(allocator, state->n_inputs * sizeof(noise_suppressor_t));
+    state->ns = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, state->n_inputs * sizeof(noise_suppressor_t));
     memset(state->ns, 0, state->n_inputs * sizeof(noise_suppressor_t));
 
     for(int i=0; i<state->n_inputs; i++)
     {
         state->ns[i].gain = INT32_MAX;
         state->ns[i].env_det.envelope = 1 << (-SIG_EXP);
-        // TODO: Enable lines below
-        //int32_t threshold = state->ns[i].threshold;
+        int32_t threshold = state->ns[i].threshold;
         // Avoid division by zero
-        //if (!threshold) threshold = 1;
-        //state->ns[i].inv_threshold = INT64_MAX / threshold;
+        if (!threshold) threshold = 1;
+        state->ns[i].inv_threshold = INT64_MAX;// / threshold;
     }
 
     ns_copy_config_to_state(state->ns, state->n_inputs, config);
