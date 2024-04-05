@@ -1,0 +1,7 @@
+module:
+  reverb:
+    reserved:
+      type: int
+includes:
+  - "stdint.h"
+  - "stages/adsp_module.h"
