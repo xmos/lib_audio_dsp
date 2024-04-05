@@ -100,7 +100,7 @@ class allpass_fv(dspg.dsp_block):
         Input should be scaled with 0dB = 2**Q_SIG.
 
         """
-        assert isinstance(sample_int, int), "Input sample must be an integer"
+        #assert isinstance(sample_int, int), "Input sample must be an integer"
 
         buff_out = self._buffer_int[self._buffer_idx]
 

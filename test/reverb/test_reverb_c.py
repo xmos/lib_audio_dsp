@@ -120,20 +120,13 @@ def test_comb(in_signal):
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
 def test_ap(in_signal):
-    n_chans = 1
-    fs = FS
-    max_room_size = 1.0
-    room_size = 1.0
-    decay = 1.0
-    damping = 1.0
-    wet_gain_db = -1.0
-    dry_gain_db = -1.0
-    pregain = 0.015
-    uut = reverb.reverb_room(fs, n_chans, max_room_size, room_size, decay, damping, wet_gain_db, dry_gain_db, pregain)
+    max_delay = 605
+    starting_delay = 605
+    uut = reverb.allpass_fv(max_delay, starting_delay, 0.5)
 
     test_dir = BIN_DIR / "allpass_test"
     test_dir.mkdir(exist_ok = True, parents = True)
-    out_py_fl, out_py_int = run_py(uut, in_signal)
+    out_py_fl, out_py_int = run_py(uut, in_signal, use_float_sig=False)
     out_c = get_c_wav(test_dir, "allpass_test.xe")
     shutil.rmtree(test_dir)
 
