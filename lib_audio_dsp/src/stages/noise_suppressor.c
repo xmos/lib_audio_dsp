@@ -70,10 +70,9 @@ void noise_suppressor_init(module_instance_t* instance, adsp_bump_allocator_t* a
     {
         state->ns[i].gain = INT32_MAX;
         state->ns[i].env_det.envelope = 1 << (-SIG_EXP);
-        int32_t threshold = state->ns[i].threshold;
         // Avoid division by zero
-        if (!threshold) threshold = 1;
-        state->ns[i].inv_threshold = INT64_MAX;// / threshold;
+        if (!state->ns[i].threshold) state->ns[i].threshold = 1;
+        state->ns[i].inv_threshold = INT64_MAX / state->ns[i].threshold;
     }
 
     ns_copy_config_to_state(state->ns, state->n_inputs, config);
