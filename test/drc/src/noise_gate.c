@@ -18,7 +18,7 @@ FILE * _fopen(char * fname, char* mode) {
 
 int main()
 {
-  FILE * in = _fopen("sig_48k.bin", "rb");
+  FILE * in = _fopen("../sig_48k.bin", "rb");
   FILE * out = _fopen("sig_out.bin", "wb");
   FILE * ng_info = _fopen("info.bin", "rb");
 

@@ -38,11 +38,9 @@ def get_sig(len=0.05):
 
   return sig_fl
 
-import os
 def get_c_wav(dir_name, bin_name, verbose = False, sim = True):
   app = "xsim" if sim else "xrun --io"
   run_cmd = app + " " + str(bin_dir / bin_name) + "_test.xe"
-  stdout = ""
   stdout = subprocess.check_output(run_cmd, cwd = dir_name, shell = True)
   if verbose: print("run msg:\n", stdout)
 

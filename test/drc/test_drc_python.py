@@ -413,7 +413,8 @@ def test_noise_gate(component, threshold, ratio):
                                                          ("limiter_rms", 0, None),
                                                          ("compressor_rms", 0, 6),
                                                          ("compressor_rms", 0, 2),
-                                                         ("noise_gate", -1000, None))
+                                                         ("noise_gate", -1000, None),
+                                                         ("noise_suppressor", -1000, 5)])
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
