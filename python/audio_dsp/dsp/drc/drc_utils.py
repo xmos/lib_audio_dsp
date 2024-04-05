@@ -169,6 +169,7 @@ def noise_suppressor_gain_calc(envelope, threshold, slope):
     new_gain = min(1, new_gain)
     return new_gain
 
+
 def noise_suppressor_gain_calc_xcore(envelope_int, threshold_int, slope_f32):
     """Calculate the int gain for the current sample
 
