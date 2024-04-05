@@ -47,7 +47,7 @@ int32_t adsp_noise_suppressor(
     int64_t new_gain_i64 =  ns->env_det.envelope * ns->inv_threshold;
     new_gain_i64 += 0x80000000;
     new_gain = new_gain_i64 >> 32;
-    float ns_fl = new_gain * POW_OF_2_TO_MINUS31;
+    float ns_fl = new_gain * TWO_TO_POWER_OF_MINUS_31;
     ns_fl = (powf(ns_fl, -ns->slope));
     new_gain = (int32_t) (ns_fl * INT32_MAX);
   }
