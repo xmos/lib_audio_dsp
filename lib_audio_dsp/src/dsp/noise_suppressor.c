@@ -26,6 +26,8 @@ noise_suppressor_t adsp_noise_suppressor_init(
   ns.env_det = adsp_env_detector_init(fs, attack_t, release_t, 0);
   float th = powf(10, threshold_db / 20);
   ns.threshold = from_float_pos(th);
+  // Avoid division by zero
+  if (!ns.threshold) ns.threshold=1;
   ns.inv_threshold =  (int32_t) (INT32_MAX / ns.threshold);
   ns.gain = INT32_MAX;
   ns.slope = 1 - ratio;
