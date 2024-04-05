@@ -27,7 +27,7 @@ typedef struct{
 typedef struct{
   env_detector_t env_det;
   int32_t threshold;
-  int64_t inv_threshold;
+  int32_t inv_threshold;
   int32_t gain;
   float slope;
 }noise_suppressor_t;
