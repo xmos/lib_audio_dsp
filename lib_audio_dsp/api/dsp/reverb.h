@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <xmath/types.h>
 
+#define MAX_CHANS 1
+
 #define DEFAULT_COMB_LENS                              \
     {                                                  \
         1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617 \
@@ -23,8 +25,12 @@
                                                 RV_SCALE(FS, MAX_ROOM_SZ) * \
                                                 SUM_DEFAULT_BUF_LENS))
 
-typedef struct reverb_room_t reverb_room_t;
-typedef void reverb_heap_t;
+typedef struct
+{
+    void * channel[MAX_CHANS];
+    uint32_t n_chans;
+    uint32_t buffer_length;
+} reverb_room_t;
 
 reverb_room_t adsp_reverb_room_init(
     uint32_t n_chans,
@@ -36,7 +42,7 @@ reverb_room_t adsp_reverb_room_init(
     float wet_gain_db,
     float dry_gain_db,
     float pregain,
-    reverb_heap_t *reverb_heap);
+    void *reverb_heap);
 
 void adsp_reverb_room_reset_state(reverb_room_t *reverb_unit);
 
