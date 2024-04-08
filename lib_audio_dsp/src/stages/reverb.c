@@ -38,8 +38,8 @@ void reverb_init(module_instance_t* instance,
 
     xassert(n_inputs <= MAX_CHANS);
 
-    uint32_t sz = RV_HEAP_SZ(48000, 1.0f);
-    uint8_t *reverb_heap = malloc(sz);
+    uint32_t sz = RV_HEAP_SZ(48000, 1.0f); // TODO REVERB_REQUIRED_MEMORY in reverb.h is assumed to be defined as RV_HEAP_SZ(48000, 1.0f)
+    uint8_t *reverb_heap = adsp_bump_allocator_malloc(allocator, sz);
     memset(reverb_heap, 0, sz);
 
     state->reverb_room = adsp_reverb_room_init(n_chans, fs,
