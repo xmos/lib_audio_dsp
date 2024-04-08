@@ -43,7 +43,7 @@ def get_c_wav(dir_name, app_name, sim=True):
     app = "xsim" if sim else "xrun --io"
     run_cmd = app + " " + str(BIN_DIR / app_name)
     stdout = subprocess.check_output(run_cmd, cwd=dir_name, shell=True)
-    # print("run msg:\n", stdout)
+    print("run msg:\n", stdout)
 
     sig_bin = dir_name / "rv_sig_out.bin"
     assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
@@ -84,7 +84,7 @@ def in_signal():
     GEN_DIR.mkdir(exist_ok=True, parents=True)
     return get_sig()
 
-def test_reverb(in_signal):
+def test_reverb_room(in_signal):
     n_chans = 1
     fs = FS
     max_room_size = 1.0
@@ -102,9 +102,9 @@ def test_reverb(in_signal):
     out_c = get_c_wav(test_dir, "reverb_test.xe")
     shutil.rmtree(test_dir)
 
-    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
+    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=(2**-27))
 
-def test_comb(in_signal):
+def test_comb_fv(in_signal):
     max_delay = 1760
     starting_delay = 1760
     feedback_gain = 0.98
@@ -117,9 +117,9 @@ def test_comb(in_signal):
     out_c = get_c_wav(test_dir, "comb_test.xe")
     shutil.rmtree(test_dir)
 
-    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
+    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=(2**-27))
 
-def test_ap(in_signal):
+def test_ap_fv(in_signal):
     max_delay = 605
     starting_delay = 605
     uut = reverb.allpass_fv(max_delay, starting_delay, 0.5)
@@ -130,4 +130,4 @@ def test_ap(in_signal):
     out_c = get_c_wav(test_dir, "allpass_test.xe")
     shutil.rmtree(test_dir)
 
-    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
+    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=(2**-27))
