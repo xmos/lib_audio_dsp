@@ -22,7 +22,7 @@ int main()
   //FILE * in1 = _fopen("ch1.bin", "rb");
   FILE * in = _fopen("../sig_2ch_48k.bin", "rb");
   FILE * out = _fopen("sig_out.bin", "wb");
-  FILE * comp_info = _fopen("comp_info.bin", "rb");
+  FILE * comp_info = _fopen("info.bin", "rb");
 
   fseek(in, 0, SEEK_END);
   int in_len = ftell(in) / (sizeof(int32_t) * 2); // two channels

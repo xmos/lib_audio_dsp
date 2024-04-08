@@ -11,7 +11,7 @@ static inline int32_t q31_ema(int32_t x, int32_t samp, q1_31 alpha) {
   int32_t ah, al;
   int32_t mul = samp - x;
 
-  // preload the acc with x at position of 31 
+  // preload the acc with x at position of 31
   // (essentially giving it exponent of -31 + x.exp)
   asm("linsert %0, %1, %2, %3, 32":"=r" (ah), "=r" (al): "r"(x), "r"(Q_alpha), "0"(0), "1" (0));
   // x + alpha * (samp - x) with exponent -31 + x.exp

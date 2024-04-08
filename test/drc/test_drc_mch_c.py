@@ -55,7 +55,7 @@ def test_sidechain_c(in_signal, comp_name, at, rt, threshold, ratio):
   comp_info = comp_info.tobytes()
   comp_info1 = comp_info1.tobytes()
   comp_info = np.append(comp_info, comp_info1)
-  comp_info.tofile(test_dir / "comp_info.bin")
+  comp_info.tofile(test_dir / "info.bin")
 
   out_py = np.zeros(in_signal.shape[1])
   for n in range(in_signal.shape[1]):
