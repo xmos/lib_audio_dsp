@@ -100,7 +100,7 @@ class allpass_fv(dspg.dsp_block):
         Input should be scaled with 0dB = 2**Q_SIG.
 
         """
-        assert isinstance(sample_int, int), "Input sample must be an integer"
+        #assert isinstance(sample_int, int), "Input sample must be an integer"
 
         buff_out = self._buffer_int[self._buffer_idx]
 
@@ -140,7 +140,7 @@ class comb_fv(dspg.dsp_block):
         self.damp1 = damping
         self.damp2 = 1 - self.damp1
         # super critical these add up, but also don't overflow int32...
-        self.damp1_int = max(utils.int32(self.damp1 * 2**Q_VERB), 1)
+        self.damp1_int = max(utils.int32(self.damp1 * 2**Q_VERB - 1), 1)
         self.damp2_int = utils.int32((2**31 - 1) - self.damp1_int + 1)
 
     def set_delay(self, delay):
@@ -187,7 +187,7 @@ class comb_fv(dspg.dsp_block):
         Input should be scaled with 0dB = 2**Q_SIG.
 
         """
-        assert isinstance(sample_int, int), "Input sample must be an integer"
+        #assert isinstance(sample_int, int), "Input sample must be an integer"
 
         output = self._buffer_int[self._buffer_idx]
 
