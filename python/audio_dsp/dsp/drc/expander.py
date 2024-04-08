@@ -13,22 +13,27 @@ FLT_MIN = np.finfo(float).tiny
 
 class expander_base(compressor_limiter_base):
     """
-    A base class shared by compressor and limiter objects.
+    A base class for expanders (including noise suppressors).
 
-    The compressor and limiter have very similar structures, with
-    differences in the gain calculation. All the shared code and
-    parameters are calculated in this base class.
+    Expanders differ from compressors in that they reduce the level of a
+    signal when it falls below a threshold (instead of above). This
+    means the attack and release times are swapped in the gain
+    calculation (i.e. release after going above the threshold).
+
+    Expanders, noise gates and noise suppressors have very similar
+    structures, with differences in the gain calculation. All the shared
+    code and parameters are calculated in this base class.
 
     Parameters
     ----------
     n_chans : int
-        number of parallel channels the compressor/limiter runs on. The
-        channels are limited/compressed separately, only the constant
+        number of parallel channels the expander runs on. The
+        channels are expanded separately, only the constant
         parameters are shared.
     attack_t : float, optional
-        Attack time of the compressor/limiter in seconds.
+        Attack time of the expander in seconds.
     release_t: float, optional
-        Release time of the compressor/limiter in seconds.
+        Release time of the expander in seconds.
 
     Attributes
     ----------
@@ -36,7 +41,7 @@ class expander_base(compressor_limiter_base):
         Nested envelope detector used to calculate the envelope of the
         signal. Either a peak or RMS envelope detector can be used.
     threshold : float
-        Value above which comression/limiting occurs for floating point
+        Value below which expanding occurs for floating point
         processing.
     gain : list[float]
         Current gain to be applied to the signal for each channel for
@@ -48,7 +53,7 @@ class expander_base(compressor_limiter_base):
         Release time parameter used for exponential moving average in
         floating point processing.
     threshold_int : int
-        Value above which comression/limiting occurs for int32 fixed
+        Value below which expanding occurs for int32 fixed
         point processing.
     gain_int : list[int]
         Current gain to be applied to the signal for each channel for
@@ -59,10 +64,6 @@ class expander_base(compressor_limiter_base):
         release_alpha in 32-bit int format.
 
     """
-
-    # The expander is based on the limiter, but with the attack and
-    # release in the gain calulation swapped (i.e. release after going
-    # above the threshold)
 
     def reset_state(self):
         """Reset the envelope detector to 1 and the gain to 1, so the
@@ -76,10 +77,10 @@ class expander_base(compressor_limiter_base):
     def process(self, sample, channel=0):
         """
         Update the envelope for a signal, then calculate and apply the
-        required gain for compression/limiting, using floating point
+        required gain for expanding, using floating point
         maths.
 
-        Take one new sample and return the compressed/limited sample.
+        Take one new sample and return the expanded sample.
         Input should be scaled with 0dB = 1.0.
 
         """
@@ -108,10 +109,10 @@ class expander_base(compressor_limiter_base):
     def process_xcore(self, sample, channel=0):
         """
         Update the envelope for a signal, then calculate and apply the
-        required gain for compression/limiting, using int32 fixed point
+        required gain for expanding, using int32 fixed point
         maths.
 
-        Take one new sample and return the compressed/limited sample.
+        Take one new sample and return the expanded sample.
         Input should be scaled with 0dB = 1.0.
 
         """
