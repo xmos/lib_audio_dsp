@@ -16,9 +16,15 @@ static inline void ns_copy_config_to_state(noise_suppressor_t *ns_state, int n_i
     {
         ns_state[i].env_det.attack_alpha = ns_config->attack_alpha;
         ns_state[i].env_det.release_alpha = ns_config->release_alpha;
-        ns_state[i].threshold = ns_config->threshold;
         ns_state[i].slope = ns_config->slope;
-
+        // Avoid division by 0
+        if (!ns_config->threshold) ns_config->threshold = 1;
+        // Compute the inverse of the threshold only if the threshold has changed
+        if (ns_state[i].threshold != ns_config->threshold)
+        {
+            ns_state[i].threshold = ns_config->threshold;
+            ns_state[i].inv_threshold = INT64_MAX / ns_state[i].threshold;
+        }
     }
 }
 

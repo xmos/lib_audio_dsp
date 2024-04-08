@@ -235,7 +235,6 @@ class noise_suppressor(expander_base):
         self.threshold = utils.db2gain(threshold_db)
         self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
         self.threshold_int = max(1, self.threshold_int)
-        # self.inv_threshold_int = utils.int32(1/self.threshold * 2**self.Q_sig)
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,
