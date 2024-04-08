@@ -37,7 +37,7 @@ void reverb_init(module_instance_t* instance,
     float const dry_gain_db = state->config.dry_gain_db;
     float const pregain = state->config.pregain;
 
-    printf("max_room_size %f, room_size %f, decay %f, damping %f, wet_gain_db %f, dry_gain_db %f, pregain %f\n", max_room_size, room_size, decay, damping, wet_gain_db, dry_gain_db, pregain);
+    //printf("max_room_size %f, room_size %f, decay %f, damping %f, wet_gain_db %f, dry_gain_db %f, pregain %f\n", max_room_size, room_size, decay, damping, wet_gain_db, dry_gain_db, pregain);
 
     // Both fs and max_room_size are used in heap memory calculation, which is currently defined at compile time
     // #define REVERB_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (RV_HEAP_SZ(48000, 1.0f)), so ensure the fs and max_room_size

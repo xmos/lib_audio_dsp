@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 import warnings
 import audio_dsp.dsp.utils as utils
+from copy import deepcopy
 
 Q_VERB = 31
 
@@ -338,6 +339,31 @@ class reverb_room(dspg.dsp_block):
             self.allpasses[n].set_delay(ap_delays[n])
 
         return
+
+    def process_frame(self, frame):
+        """
+        Take a list frames of samples and return the processed frames.
+
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When calling self.process only take the first output.
+
+        """
+        n_outputs = len(frame)
+        frame_size = frame[0].shape[0]
+        output = deepcopy(frame)
+        if n_outputs == 1:
+            for sample in range(frame_size):
+                output[sample] = self.process(output[sample])[0]
+        else:
+            for chan in range(n_outputs):
+                this_chan = output[chan]
+                for sample in range(frame_size):
+                    this_chan[sample] = self.process(this_chan[sample], channel=chan)[0]
+
+        return output
 
     def process(self, sample, channel=0):
         """

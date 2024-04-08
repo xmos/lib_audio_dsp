@@ -15,12 +15,12 @@ class Reverb(Stage):
         decay = 0.5
         wet_gain_db = -1.0
         dry_gain_db = -1.0
-        self.reverb = rvrb.reverb_room(self.fs, self.n_in, max_room_size=max_room_size, decay=decay, wet_gain_db=wet_gain_db, dry_gain_db=dry_gain_db)
+        self.dsp_block = rvrb.reverb_room(self.fs, self.n_in, max_room_size=max_room_size, decay=decay, wet_gain_db=wet_gain_db, dry_gain_db=dry_gain_db)
         self["sampling_freq"] = self.fs
         self["max_room_size"] = float(max_room_size)
-        self.set_control_field_cb("room_size", lambda: self.reverb.room_size)
-        self.set_control_field_cb("damping", lambda: self.reverb.damping)
-        self.set_control_field_cb("pregain", lambda: self.reverb.pregain)
+        self.set_control_field_cb("room_size", lambda: self.dsp_block.room_size)
+        self.set_control_field_cb("damping", lambda: self.dsp_block.damping)
+        self.set_control_field_cb("pregain", lambda: self.dsp_block.pregain)
         self["decay"] = decay
         self["wet_gain_db"] = wet_gain_db
         self["dry_gain_db"] = dry_gain_db
