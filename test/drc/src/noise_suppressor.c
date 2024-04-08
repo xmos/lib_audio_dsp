@@ -37,7 +37,8 @@ int main()
   fclose(ns_info);
   if (!th) th = 1;
   noise_suppressor_t ns = (noise_suppressor_t){
-              (env_detector_t){at_al, re_al, 1 << (-SIG_EXP)}, th, (INT64_MAX / th), INT32_MAX, slope};
+              (env_detector_t){at_al, re_al, 1 << (Q_SIG)}, 0, 0, INT32_MAX, slope};
+  adsp_noise_suppressor_set_th(&ns, th);
   for (unsigned i = 0; i < in_len; i++)
   {
     int32_t samp = 0, samp_out = 0;
