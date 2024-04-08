@@ -221,6 +221,7 @@ class reverb_room(dspg.dsp_block):
         dry_gain_db=-1,
         pregain=0.015,
         Q_sig=dspg.Q_SIG,
+        **kwargs
     ):
         """A room reverb effect based on Freeverb by Jezar at
         Dreampoint.
@@ -245,6 +246,8 @@ class reverb_room(dspg.dsp_block):
             the amount of gain applied to the signal before being passed
             into the reverb.
         """
+        assert n_chans == 1, f"Reverb only supports 1 channel. {n_chans} specified"
+
         super().__init__(fs, 1, Q_sig)
 
         self.damping = damping

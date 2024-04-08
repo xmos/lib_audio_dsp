@@ -15,30 +15,41 @@ void reverb_init(module_instance_t* instance,
                  int n_outputs,
                  int frame_size)
 {
-    xassert(n_inputs == n_outputs && "Biquad should have the same number of inputs and outputs");
+    xassert(n_inputs == n_outputs && "Reverb should have the same number of inputs and outputs");
     reverb_state_t *state = instance->state;
     reverb_config_t *config = instance->control.config;
 
+    memset(state, 0, sizeof(reverb_state_t));
     memcpy(&state->config, config, sizeof(reverb_config_t));
 
-    memset(state, 0, sizeof(reverb_state_t));
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
     uint32_t n_chans = n_inputs;
-    float const fs = 48000;
-    float const max_room_size = 1.0;
-    float const room_size = 1.0;
-    float const decay = 1.0;
-    float const damping = 1.0;
-    float const wet_gain_db = -1.0;
-    float const dry_gain_db = -1.0;
-    float const pregain = 0.015;
+    float fs = state->config.sampling_freq;
+    float max_room_size = state->config.max_room_size;
 
+    float const room_size = state->config.room_size;
+    float const decay = state->config.decay;
+    float const damping = state->config.damping;
+    float const wet_gain_db = state->config.wet_gain_db;
+    float const dry_gain_db = state->config.dry_gain_db;
+    float const pregain = state->config.pregain;
+
+    printf("max_room_size %f, room_size %f, decay %f, damping %f, wet_gain_db %f, dry_gain_db %f, pregain %f\n", max_room_size, room_size, decay, damping, wet_gain_db, dry_gain_db, pregain);
+
+    // Both fs and max_room_size are used in heap memory calculation, which is currently defined at compile time
+    // #define REVERB_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (RV_HEAP_SZ(48000, 1.0f)), so ensure the fs and max_room_size
+    // we get at initialisation match.
+
+    xassert(fs == (float)48000);
+    xassert(max_room_size == (float)1);
+
+    xassert(n_inputs == 1); // Currently support only 1 channel reverb
     xassert(n_inputs <= MAX_CHANS);
 
-    uint32_t sz = RV_HEAP_SZ(48000, 1.0f); // TODO REVERB_REQUIRED_MEMORY in reverb.h is assumed to be defined as RV_HEAP_SZ(48000, 1.0f)
+    uint32_t sz = RV_HEAP_SZ(fs, max_room_size);
     uint8_t *reverb_heap = adsp_bump_allocator_malloc(allocator, sz);
     memset(reverb_heap, 0, sz);
 
@@ -64,7 +75,26 @@ void reverb_process(int32_t **input, int32_t **output, void *app_data_state)
     } while (++i < state->n_outputs);
 }
 
-void reverb_control(void *state, module_control_t *control)
+void reverb_control(void *module_state, module_control_t *control)
 {
+    xassert(module_state != NULL);
+    //reverb_state_t *state = module_state;
+    xassert(control != NULL);
+    //reverb_config_t *config = control->config;
+
+    if(control->config_rw_state == config_write_pending)
+    {
+        // Finish the write by updating the working copy with the new config
+        //ng_copy_config_to_state(state->ng, state->n_inputs, config);
+        control->config_rw_state = config_none_pending;
+    }
+    else if(control->config_rw_state == config_read_pending)
+    {
+        //ng_copy_state_to_config(config, state->ng);
+        control->config_rw_state = config_read_updated;
+    }
+    else {
+        // nothing to do
+    }
 
 }

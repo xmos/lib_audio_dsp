@@ -1,7 +1,21 @@
 module:
   reverb:
-    reserved:
-      type: int
+    sampling_freq:
+      type: uint32_t
+    max_room_size:
+      type: float
+    room_size:
+      type: float
+    decay:
+      type: float
+    damping:
+      type: float
+    wet_gain_db:
+      type: float
+    dry_gain_db:
+      type: float
+    pregain:
+      type: float
 includes:
   - "stdint.h"
   - "stages/adsp_module.h"
