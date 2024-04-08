@@ -10,10 +10,10 @@ class NoiseSuppressor(Stage):
         super().__init__(config=find_config("noise_suppressor"), **kwargs)
         self.create_outputs(self.n_in)
 
-        threshold = 10
-        ratio = 4
-        at = 0.01
-        rt = 0.2
+        threshold = -35
+        ratio = 3
+        at = 0.005
+        rt = 0.120
         self.dsp_block = drc.noise_suppressor(self.fs, self.n_in, ratio, threshold, at, rt)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)

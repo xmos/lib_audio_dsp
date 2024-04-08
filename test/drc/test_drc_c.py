@@ -134,10 +134,10 @@ def test_limiter_c(in_signal, component_name, at, rt, threshold):
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
 @pytest.mark.parametrize("comp_name", ["compressor_rms", "noise_suppressor"])
-@pytest.mark.parametrize("at", [0.001])
-@pytest.mark.parametrize("rt", [0.01])
-@pytest.mark.parametrize("threshold", [-12, 0])
-@pytest.mark.parametrize("ratio", [1, 6])
+@pytest.mark.parametrize("at", [0.001, 0.005])
+@pytest.mark.parametrize("rt", [0.01, 0.120])
+@pytest.mark.parametrize("threshold", [-12, 0, -35])
+@pytest.mark.parametrize("ratio", [1, 6, 3])
 def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
   comp_handle = getattr(drc, comp_name)
   comp = comp_handle(fs, 1, ratio, threshold, at, rt)

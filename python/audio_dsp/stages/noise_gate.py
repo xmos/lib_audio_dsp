@@ -15,7 +15,6 @@ class NoiseGate(Stage):
         rt = 0.12
         self.dsp_block = drc.noise_gate(self.fs, self.n_in, threshold, at, rt)
 
-        # Swapping alphas as they are the other way around in python
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)

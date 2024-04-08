@@ -22,7 +22,6 @@ noise_suppressor_t adsp_noise_suppressor_init(
   float ratio
 ) {
   noise_suppressor_t ns;
-  printf("threshold_db %f, attack_t %f, release_t %f, ratio %f", threshold_db, attack_t, release_t, ratio);
   ns.env_det = adsp_env_detector_init(fs, attack_t, release_t, 0);
   float th = powf(10, threshold_db / 20);
   ns.threshold = from_float_pos(th);
