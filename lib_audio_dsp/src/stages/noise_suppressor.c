@@ -11,19 +11,22 @@
 
 static inline void ns_copy_config_to_state(noise_suppressor_t *ns_state, int n_inputs, const noise_suppressor_config_t *ns_config)
 {
+    // Avoid division by 0
+    int32_t th = (!ns_config->threshold) ? 1 : ns_config->threshold;
+    int32_t condition = (ns_state[0].threshold != th); // threshold is the same in all channels
+    // Compute the inverse of the threshold only if the threshold has changed
+    int64_t inv_th = (condition) ? INT64_MAX / th : 0; // else doesn't matter here
     // Same config for all channels
     for(int i=0; i<n_inputs; i++)
     {
         ns_state[i].env_det.attack_alpha = ns_config->attack_alpha;
         ns_state[i].env_det.release_alpha = ns_config->release_alpha;
         ns_state[i].slope = ns_config->slope;
-        // Avoid division by 0
-        if (!ns_config->threshold) ns_config->threshold = 1;
-        // Compute the inverse of the threshold only if the threshold has changed
-        if (ns_state[i].threshold != ns_config->threshold)
+        // Change the inverse of the threshold only if the threshold has changed
+        if (condition)
         {
-            ns_state[i].threshold = ns_config->threshold;
-            ns_state[i].inv_threshold = INT64_MAX / ns_state[i].threshold;
+            ns_state[i].threshold = th;
+            ns_state[i].inv_threshold = inv_th;
         }
     }
 }
