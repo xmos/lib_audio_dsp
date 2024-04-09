@@ -37,8 +37,6 @@ void reverb_init(module_instance_t* instance,
     float const dry_gain_db = state->config.dry_gain_db;
     float const pregain = state->config.pregain;
 
-    //printf("max_room_size %f, room_size %f, decay %f, damping %f, wet_gain_db %f, dry_gain_db %f, pregain %f\n", max_room_size, room_size, decay, damping, wet_gain_db, dry_gain_db, pregain);
-
     // Both fs and max_room_size are used in heap memory calculation, which is currently defined at compile time
     // #define REVERB_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (RV_HEAP_SZ(48000, 1.0f)), so ensure the fs and max_room_size
     // we get at initialisation match.
@@ -78,19 +76,19 @@ void reverb_process(int32_t **input, int32_t **output, void *app_data_state)
 void reverb_control(void *module_state, module_control_t *control)
 {
     xassert(module_state != NULL);
-    //reverb_state_t *state = module_state;
+    reverb_state_t *state = module_state;
     xassert(control != NULL);
-    //reverb_config_t *config = control->config;
+    reverb_config_t *config = control->config;
 
     if(control->config_rw_state == config_write_pending)
     {
         // Finish the write by updating the working copy with the new config
-        //ng_copy_config_to_state(state->ng, state->n_inputs, config);
+        memcpy(&state->config, config, sizeof(reverb_config_t));
         control->config_rw_state = config_none_pending;
     }
     else if(control->config_rw_state == config_read_pending)
     {
-        //ng_copy_state_to_config(config, state->ng);
+        memcpy(config, &state->config, sizeof(reverb_config_t));
         control->config_rw_state = config_read_updated;
     }
     else {
