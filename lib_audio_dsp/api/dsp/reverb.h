@@ -20,7 +20,7 @@
 #define SUM_DEFAULT_AP_LENS 1593
 #define SUM_DEFAULT_BUF_LENS (SUM_DEFAULT_COMB_LENS + SUM_DEFAULT_AP_LENS)
 
-#define RV_SCALE(FS, MAX_ROOM_SZ) (((FS) / 44100.0f) * (MAX_ROOM_SZ))
+#define RV_SCALE(FS, MAX_ROOM_SZ) (((FS) / 44100.0) * (MAX_ROOM_SZ))
 #define RV_HEAP_SZ(FS, MAX_ROOM_SZ) ((uint32_t)(sizeof(int32_t) *           \
                                                 RV_SCALE(FS, MAX_ROOM_SZ) * \
                                                 SUM_DEFAULT_BUF_LENS))

@@ -34,7 +34,7 @@ def get_sig(len=0.05):
 
     name = "rv_sig_48k"
     sig_int.tofile(BIN_DIR / str(name + ".bin"))
-    sf.write(GEN_DIR / str(name + ".wav"), sig_fl, int(FS), "PCM_24")
+    sf.write(GEN_DIR / str(name + ".wav"), sig_fl, int(FS), "PCM_32")
 
     return sig_fl
 
@@ -50,7 +50,7 @@ def get_c_wav(dir_name, app_name, sim=True):
     sig_int = np.fromfile(sig_bin, dtype=np.int32)
 
     sig_fl = qxx_to_float(sig_int)
-    sf.write(GEN_DIR / "sig_c.wav", sig_fl, FS, "PCM_24")
+    sf.write(GEN_DIR / "sig_c.wav", sig_fl, FS, "PCM_32")
     return sig_fl
 
 
@@ -67,13 +67,13 @@ def run_py(uut: reverb.reverb_room, sig_fl, use_float_sig=True):
             out_int[n] = uut.process_xcore(sig_int[n])
         out_int = qxx_to_float(out_int)
 
-    sf.write(GEN_DIR / "sig_py_int.wav", out_int, FS, "PCM_24")
+    sf.write(GEN_DIR / "sig_py_int.wav", out_int, FS, "PCM_32")
     uut.reset_state()
 
     for n in range(sig_fl.size):
         out_fl[n] = uut.process(sig_fl[n])
 
-    sf.write(GEN_DIR / "sig_py_flt.wav", out_fl, FS, "PCM_24")
+    sf.write(GEN_DIR / "sig_py_flt.wav", out_fl, FS, "PCM_32")
 
     return out_fl, out_int
 
