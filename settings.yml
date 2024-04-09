@@ -1,5 +1,5 @@
 project: lib_audio_dsp
-version: 0.1.0
+version: 0.2.0
 
 ## example of overridable setting
 # watermarks is redefined in documentation and again for a specific product
