@@ -84,11 +84,13 @@ void reverb_control(void *module_state, module_control_t *control)
     {
         // Finish the write by updating the working copy with the new config
         memcpy(&state->config, config, sizeof(reverb_config_t));
+        state->reverb_room.channel[0].wet_gain = state->config.wet_gain;
         control->config_rw_state = config_none_pending;
     }
     else if(control->config_rw_state == config_read_pending)
     {
         memcpy(config, &state->config, sizeof(reverb_config_t));
+        config->wet_gain = state->reverb_room.channel[0].wet_gain;
         control->config_rw_state = config_read_updated;
     }
     else {
