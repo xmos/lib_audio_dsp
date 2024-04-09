@@ -25,6 +25,9 @@ class float32:
     def __abs__(self):
         return float32(np.abs(self.value))
 
+    def __neg__(self):
+        return float32(-self.value)
+
     def __gt__(self, other_f32):
         if isinstance(other_f32, float32):
             return self.value > other_f32.value
