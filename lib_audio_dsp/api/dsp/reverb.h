@@ -29,7 +29,7 @@
 #define N_APS 4
 #define MAX_CHANS 1
 #define Q_RV 31
-#define DEFAULT_PREGAIN 0.015
+#define DEFAULT_PREGAIN 0.015f
 
 #define MIN_WET_GAIN_DB (-186.0)
 #define MAX_WET_GAIN_DB (0)
