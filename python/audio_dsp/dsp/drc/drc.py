@@ -52,13 +52,7 @@ class envelope_detector_peak(dspg.dsp_block):
     """
 
     def __init__(
-        self,
-        fs,
-        n_chans=1,
-        attack_t=None,
-        release_t=None,
-        detect_t=None,
-        Q_sig=dspg.Q_SIG,
+        self, fs, n_chans=1, attack_t=None, release_t=None, detect_t=None, Q_sig=dspg.Q_SIG
     ):
         super().__init__(fs, n_chans, Q_sig)
 
@@ -533,14 +527,7 @@ class hard_limiter_peak(limiter_peak):
 
 class soft_limiter_peak(limiter_peak):
     def __init__(
-        self,
-        fs,
-        threshold_db,
-        attack_t,
-        release_t,
-        delay=0,
-        nonlinear_point=0.5,
-        Q_sig=dspg.Q_SIG,
+        self, fs, threshold_db, attack_t, release_t, delay=0, nonlinear_point=0.5, Q_sig=dspg.Q_SIG
     ):
         super().__init__(fs, threshold_db, attack_t, release_t, delay, Q_sig)
         self.nonlinear_point = nonlinear_point
@@ -654,15 +641,7 @@ class compressor_rms(compressor_limiter_base):
     """
 
     def __init__(
-        self,
-        fs,
-        n_chans,
-        ratio,
-        threshold_db,
-        attack_t,
-        release_t,
-        delay=0,
-        Q_sig=dspg.Q_SIG,
+        self, fs, n_chans, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
     ):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
