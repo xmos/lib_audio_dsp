@@ -12,8 +12,8 @@ module:
       type: float
     wet_gain:
       type: int32_t
-    dry_gain_db:
-      type: float
+    dry_gain:
+      type: int32_t
     pregain:
       type: float
 includes:

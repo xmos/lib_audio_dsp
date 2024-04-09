@@ -35,6 +35,7 @@ int main()
     uint32_t const channel = 0;
 
     int32_t wet_gain = adsp_reverb_calc_wet_gain(wet_gain_db, pregain);
+    int32_t dry_gain = adsp_reverb_calc_dry_gain(dry_gain_db);
 
     FILE *in = _fopen("../rv_sig_48k.bin", "rb");
     FILE *out = _fopen("rv_sig_out.bin", "wb");
@@ -47,7 +48,7 @@ int main()
     reverb_room_t reverb = adsp_reverb_room_init(n_chans, fs,
                                                  max_room_size, room_size,
                                                  decay, damping, wet_gain,
-                                                 dry_gain_db, pregain,
+                                                 dry_gain, pregain,
                                                  reverb_heap);
 
 #if (PRINT_INIT != 0)
