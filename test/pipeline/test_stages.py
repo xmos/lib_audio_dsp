@@ -9,6 +9,7 @@ from audio_dsp.stages.biquad import Biquad
 from audio_dsp.stages.cascaded_biquads import CascadedBiquads
 from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak
 from audio_dsp.stages.noise_gate import NoiseGate
+from audio_dsp.stages.noise_suppressor import NoiseSuppressor
 from audio_dsp.stages.signal_chain import VolumeControl, FixedGain
 from audio_dsp.stages.compressor import CompressorRMS
 
@@ -17,7 +18,6 @@ from python import build_utils, run_pipeline_xcoreai, audio_helpers
 
 from pathlib import Path
 import numpy as np
-
 
 PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
@@ -174,7 +174,7 @@ def test_compressor():
 
 def test_noise_gate():
     """
-    Test the noise gate noise gates the same in python and C
+    Test the noise gate stage gates the noise the same in python and C
     """
     p = Pipeline(channels)
     with p.add_thread() as t:
@@ -182,6 +182,19 @@ def test_noise_gate():
     p.set_outputs(ng.o)
 
     ng.make_noise_gate(-6, 0.001, 0.1)
+
+    do_test(p)
+
+def test_noise_suppressor():
+    """
+    Test the noise suppressor stage suppress the noise the same in python and C
+    """
+    p = Pipeline(channels)
+    with p.add_thread() as t:
+        ng = t.stage(NoiseSuppressor, p.i)
+    p.set_outputs(ng.o)
+
+    ng.make_noise_suppressor(2, -6, 0.001, 0.1)
 
     do_test(p)
 
@@ -212,5 +225,6 @@ def test_fixed_gain():
 
 
 if __name__ == "__main__":
+    test_noise_suppressor()
     test_biquad("make_lowpass", [1000, 0.707])
     test_biquad("make_lowpass", [1000, 0.707])

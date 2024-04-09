@@ -38,7 +38,6 @@ def get_sig(len=0.05):
 
   return sig_fl
 
-
 def get_c_wav(dir_name, bin_name, verbose = False, sim = True):
   app = "xsim" if sim else "xrun --io"
   run_cmd = app + " " + str(bin_dir / bin_name) + "_test.xe"
@@ -134,10 +133,11 @@ def test_limiter_c(in_signal, component_name, at, rt, threshold):
   else:
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
-@pytest.mark.parametrize("comp_name", ["compressor_rms"])
-@pytest.mark.parametrize("at", [0.001])
-@pytest.mark.parametrize("rt", [0.01])
-@pytest.mark.parametrize("threshold", [-12, 0])
+@pytest.mark.parametrize("comp_name", ["compressor_rms", 
+                                       "noise_suppressor"])
+@pytest.mark.parametrize("at", [0.005])
+@pytest.mark.parametrize("rt", [0.120])
+@pytest.mark.parametrize("threshold", [-12, 0, -35])
 @pytest.mark.parametrize("ratio", [1, 6])
 def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
   comp_handle = getattr(drc, comp_name)
@@ -149,20 +149,20 @@ def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
 
   # numpy doesn't like to have an array with different types
   # so create separate arrays, cast to bytes, append, write
-  comp_info = [comp.threshold_int, comp.attack_alpha_int, comp.release_alpha_int]
-  comp_info = np.array(comp_info, dtype=np.int32)
-  comp_info1 = np.array(comp.slope_f32, dtype=np.float32)
-  comp_info = comp_info.tobytes()
-  comp_info1 = comp_info1.tobytes()
-  comp_info = np.append(comp_info, comp_info1)
-  comp_info.tofile(test_dir / "comp_info.bin")
+  info = [comp.threshold_int, comp.attack_alpha_int, comp.release_alpha_int]
+  info = np.array(info, dtype=np.int32)
+  info1 = np.array(comp.slope_f32, dtype=np.float32)
+  info = info.tobytes()
+  info1 = info1.tobytes()
+  info = np.append(info, info1)
+  info.tofile(test_dir / "info.bin")
 
   _, out_py_int = run_py(comp, in_signal)
   out_c = get_c_wav(test_dir, comp_name)
   shutil.rmtree(test_dir)
 
   # when ratio is 1, the result should be bit-exact as we don't have to use powf
-  if ratio == 1 or threshold == 0:
+  if ratio == 1 or (threshold == 0 and comp_name != "noise_suppressor"):
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
   else:
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=1e-8)
@@ -172,8 +172,10 @@ if __name__ == "__main__":
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
 
-  test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
+  #test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
   #test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -10)
   #test_limiter_c(sig_fl, "limiter_peak", 0.001, 0.1, -10)
-  #test_compressor_c(sig_fl, "compressor_rms", 0.001, 0.01, -12, 1)
+  #test_compressor_c(sig_fl, "noise_suppressor", 0.001, 0.01, -12, -1)
+  #test_compressor_c(sig_fl, "noise_suppressor", 0.001, 0.01, 0, 5)
+  test_compressor_c(sig_fl, "noise_suppressor", 0.001, 0.01, -1, 5)
   #test_limiter_c(sig_fl, "noise_gate", 0.001, 0.01, 0)
