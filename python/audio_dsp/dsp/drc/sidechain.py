@@ -24,7 +24,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
     The threshold sets the value above which compression occurs. The
     ratio sets how much the signal is compressed. A ratio of 1 results
     in no compression, while a ratio of infinity results in the same
-    behaviour as a limiter. The attack time sets how fast the comressor
+    behaviour as a limiter. The attack time sets how fast the compressor
     starts compressing. The release time sets how long the signal takes
     to ramp up to it's original level after the envelope is below the
     threshold.
@@ -58,7 +58,9 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
     """
 
-    def __init__(self, fs, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+    def __init__(
+        self, fs, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
+    ):
         super().__init__(fs, 1, attack_t, release_t, delay, Q_sig)
 
         # note rms comes as x**2, so use db_pow
@@ -139,7 +141,9 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)
+        new_gain_int = self.gain_calc_xcore(
+            envelope_int, self.threshold_int, self.slope_f32
+        )
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int:
@@ -321,7 +325,8 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         output = deepcopy(frame[0:2])
         for sample in range(frame_size):
             out_samples = self.process_channels(
-                [frame[0][sample], frame[1][sample]], [frame[2][sample], frame[3][sample]]
+                [frame[0][sample], frame[1][sample]],
+                [frame[2][sample], frame[3][sample]],
             )[0]
             output[0][sample] = out_samples[0]
             output[1][sample] = out_samples[1]
@@ -343,7 +348,8 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         output = deepcopy(frame[0:2])
         for sample in range(frame_size):
             out_samples = self.process_channels_xcore(
-                [frame[0][sample], frame[1][sample]], [frame[2][sample], frame[3][sample]]
+                [frame[0][sample], frame[1][sample]],
+                [frame[2][sample], frame[3][sample]],
             )[0]
             output[0][sample] = out_samples[0]
             output[1][sample] = out_samples[1]

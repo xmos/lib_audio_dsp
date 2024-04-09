@@ -103,7 +103,7 @@ class Adder(Stage):
 class Subtractor(Stage):
     """
     Subtract the second input from the first. The subtractor can be used to
-    subtract signals from each other. It must only have 2 inputs
+    subtract signals from each other. It must only have 2 inputs.
 
     """
 
@@ -168,7 +168,9 @@ class VolumeControl(Stage):
 
     def make_volume_control(self, gain_dB, slew_shift, Q_sig=dspg.Q_SIG):
         self.details = dict(target_gain=gain_dB, slew_shift=slew_shift, Q_sig=Q_sig)
-        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, Q_sig)
+        self.dsp_block = sc.volume_control(
+            self.fs, self.n_in, gain_dB, slew_shift, Q_sig
+        )
         return self
 
     def set_gain(self, gain_dB):

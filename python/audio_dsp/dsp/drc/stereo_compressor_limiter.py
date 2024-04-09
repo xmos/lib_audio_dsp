@@ -26,7 +26,9 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
         self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(release_t, fs)
         self.Q_alpha = drcu.Q_alpha
-        assert self.Q_alpha == 31, "When changing this the reset value will have to be updated"
+        assert (
+            self.Q_alpha == 31
+        ), "When changing this the reset value will have to be updated"
 
         # These are defined differently for peak and RMS limiters
         self.threshold = None
@@ -171,7 +173,9 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         frame_size = frame[0].shape[0]
         output = deepcopy(frame)
         for sample in range(frame_size):
-            out_samples = self.process_channels_xcore([frame[0][sample], frame[1][sample]])[0]
+            out_samples = self.process_channels_xcore(
+                [frame[0][sample], frame[1][sample]]
+            )[0]
             output[0][sample] = out_samples[0]
             output[1][sample] = out_samples[1]
 
@@ -218,7 +222,7 @@ class compressor_rms_stereo(compressor_limiter_stereo_base):
     The threshold sets the value above which compression occurs. The
     ratio sets how much the signal is compressed. A ratio of 1 results
     in no compression, while a ratio of infinity results in the same
-    behaviour as a limiter. The attack time sets how fast the comressor
+    behaviour as a limiter. The attack time sets how fast the compressor
     starts compressing. The release time sets how long the signal takes
     to ramp up to it's original level after the envelope is below the
     threshold.

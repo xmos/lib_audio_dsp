@@ -75,7 +75,7 @@ def limiter_peak_gain_calc_xcore(envelope_int, threshold_int, slope=None):
 
 
 def limiter_rms_gain_calc(envelope, threshold, slope=None):
-    """Calculate the float gain for the current sample
+    """Calculate the float gain for the current sample.
 
     Note that as the RMS envelope detector returns x**2, we need to
     sqrt the gain.
@@ -87,7 +87,7 @@ def limiter_rms_gain_calc(envelope, threshold, slope=None):
 
 
 def limiter_rms_gain_calc_xcore(envelope_int, threshold_int, slope=None):
-    """Calculate the int gain for the current sample
+    """Calculate the int gain for the current sample.
 
     Note that as the RMS envelope detector returns x**2, we need to
     sqrt the gain.
@@ -103,7 +103,7 @@ def limiter_rms_gain_calc_xcore(envelope_int, threshold_int, slope=None):
 
 
 def compressor_rms_gain_calc(envelope, threshold, slope=None):
-    """Calculate the float gain for the current sample
+    """Calculate the float gain for the current sample.
 
     Note that as the RMS envelope detector returns x**2, we need to
     sqrt the gain. Slope is used instead of ratio to allow the gain
@@ -118,7 +118,7 @@ def compressor_rms_gain_calc(envelope, threshold, slope=None):
 
 
 def compressor_rms_gain_calc_xcore(envelope_int, threshold_int, slope_f32=None):
-    """Calculate the int gain for the current sample
+    """Calculate the int gain for the current sample.
 
     Note that as the RMS envelope detector returns x**2, we need to
     sqrt the gain. Slope is used instead of ratio to allow the gain
@@ -156,7 +156,7 @@ def noise_gate_gain_calc_xcore(envelope_int, threshold_int, slope_int=None):
 
 
 def noise_suppressor_gain_calc(envelope, threshold, slope):
-    """Calculate the float gain for the current sample
+    """Calculate the float gain for the current sample.
 
     Note that as the RMS envelope detector returns x**2, we need to
     sqrt the gain. Slope is used instead of ratio to allow the gain
@@ -171,7 +171,7 @@ def noise_suppressor_gain_calc(envelope, threshold, slope):
 
 
 def noise_suppressor_gain_calc_xcore(envelope_int, threshold_int, slope_f32):
-    """Calculate the int gain for the current sample
+    """Calculate the int gain for the current sample.
 
     Note that as the RMS envelope detector returns x**2, we need to
     sqrt the gain. Slope is used instead of ratio to allow the gain
