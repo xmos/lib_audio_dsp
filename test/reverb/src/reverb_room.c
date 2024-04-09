@@ -8,6 +8,7 @@
 
 #define FS 48000.0
 #define MAX_ROOM_SIZE 1.0
+#define PRINT_INIT 1
 
 FILE *_fopen(char *fname, char *mode)
 {
@@ -46,6 +47,41 @@ int main()
                                                  decay, damping, wet_gain_db,
                                                  dry_gain_db, pregain,
                                                  reverb_heap);
+
+#if (PRINT_INIT != 0)
+    printf("Wet (Q31): %ld\n", reverb.channel[0].wet_gain);
+    printf("Dry (Q31): %ld\n", reverb.channel[0].dry_gain);
+    printf("Pre (Q31): %ld\n", reverb.channel[0].pre_gain);
+    printf("Comb Lens: ");
+    for (int i = 0; i < N_COMBS; i++)
+    {
+        printf("%lu, ", reverb.channel[0].comb_lengths[i]);
+    }
+    printf("\n");
+    printf("AP Lens: ");
+    for (int i = 0; i < N_APS; i++)
+    {
+        printf("%lu, ", reverb.channel[0].ap_lengths[i]);
+    }
+    printf("\n");
+    for (int i = 0; i < N_COMBS; i++)
+    {
+        printf("Comb %d:\n", i);
+        printf("\tMax Delay: %lu\n", reverb.channel[0].combs[i].max_delay);
+        printf("\tDelay: %lu\n", reverb.channel[0].combs[i].delay);
+        printf("\tBuffer Idx: %lu\n", reverb.channel[0].combs[i].buffer_idx);
+        printf("\tFB (Q31): %ld\n", reverb.channel[0].combs[i].feedback);
+        printf("\tDamp 1 (Q31): %ld\n", reverb.channel[0].combs[i].damp_1);
+        printf("\tDamp 2 (Q31): %ld\n", reverb.channel[0].combs[i].damp_2);
+    }
+    for (int i = 0; i < N_APS; i++)
+    {
+        printf("AP %d:\n", i);
+        printf("\tMax Delay: %lu\n", reverb.channel[0].allpasses[i].max_delay);
+        printf("\tDelay: %lu\n", reverb.channel[0].allpasses[i].delay);
+        printf("\tFB (Q31): %ld\n", reverb.channel[0].allpasses[i].feedback);
+    }
+#endif
 
     for (int i = 0; i < in_len; i++)
     {

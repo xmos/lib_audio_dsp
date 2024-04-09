@@ -206,6 +206,9 @@ int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
     comb->filterstore = scale_sat_int64_to_int32_floor(ah, al, shift);
     fstore = comb->filterstore;
 
+    ah = 0;
+    al = 0;
+
     // Do (new_sample << Q_RV) into a 64b word ah:al
     asm volatile("linsert %0, %1, %2, %3, 32"
                  : "=r"(ah), "=r"(al)
@@ -269,7 +272,7 @@ reverb_room_t adsp_reverb_room_init(
 
     // Avoids too much or too little feedback
     const int32_t feedback_int = Q(Q_RV)((decay * 0.28) + 0.7);
-    const int32_t damping_int = MAX((int32_t)(damping * (1 << Q_RV) - 1), 1);
+    const int32_t damping_int = MAX(Q(Q_RV)(damping) - 1, 1);
 
     const int32_t dry = Q(Q_RV)(DBTOGAIN(dry_gain_db));
     // Scale the wet gain; when pregain changes, overall wet gain shouldn't
@@ -376,23 +379,23 @@ int32_t adsp_reverb_room(
 {
     // We only support mono
     xassert(channel == 0);
-    reverb_room_chan_t chan = reverb_unit->channel[0];
+    reverb_room_chan_t *chan = &(reverb_unit->channel[0]);
 
-    int32_t reverb_input = apply_gain_q31(new_samp, chan.pre_gain);
+    int32_t reverb_input = apply_gain_q31(new_samp, chan->pre_gain);
     int32_t output = 0;
     int64_t acc = 0;
     for (int comb = 0; comb < N_COMBS; comb++)
     {
-        acc += comb_fv(&chan.combs[comb], reverb_input);
+        acc += comb_fv(&(chan->combs[comb]), reverb_input);
     }
     output = adsp_saturate_32b(acc);
     for (int ap = 0; ap < N_APS; ap++)
     {
-        acc = allpass_fv(&chan.allpasses[ap], output);
-        output = adsp_saturate_32b(acc);
+        acc = allpass_fv(&(chan->allpasses[ap]), output);
+        output = (int32_t)acc; // We do not saturate here!
     }
-    acc = apply_gain_q31(output, chan.wet_gain);
-    acc += apply_gain_q31(new_samp, chan.dry_gain);
+    acc = apply_gain_q31(output, chan->wet_gain);
+    acc += apply_gain_q31(new_samp, chan->dry_gain);
     output = adsp_saturate_32b(acc);
 
     return output;
