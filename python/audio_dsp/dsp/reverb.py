@@ -331,7 +331,7 @@ class reverb_room(dspg.dsp_block):
         pre_gain : float
             pre gain value.
         """
-        self.pregain = pregain
+        self.pregain = pre_gain
         self.pregain_int = utils.int32(self.pregain * 2**Q_VERB)
         # when pregain changes, keep wet level the same
         self.wet *= 0.015 / self.pregain
