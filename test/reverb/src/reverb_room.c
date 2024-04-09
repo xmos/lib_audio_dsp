@@ -34,6 +34,8 @@ int main()
     float const pregain = 0.015;
     uint32_t const channel = 0;
 
+    int32_t wet_gain = adsp_reverb_calc_wet_gain(wet_gain_db, pregain);
+
     FILE *in = _fopen("../rv_sig_48k.bin", "rb");
     FILE *out = _fopen("rv_sig_out.bin", "wb");
 
@@ -44,7 +46,7 @@ int main()
     uint8_t reverb_heap[RV_HEAP_SZ(FS, MAX_ROOM_SIZE)] = {0};
     reverb_room_t reverb = adsp_reverb_room_init(n_chans, fs,
                                                  max_room_size, room_size,
-                                                 decay, damping, wet_gain_db,
+                                                 decay, damping, wet_gain,
                                                  dry_gain_db, pregain,
                                                  reverb_heap);
 

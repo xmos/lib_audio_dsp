@@ -12,16 +12,35 @@ class Reverb(Stage):
         self.fs = int(self.fs)
         self.create_outputs(self.n_in)
 
-        decay = 0.5
-        wet_gain_db = -1.0
-        dry_gain_db = -1.0
-        self.dsp_block = rvrb.reverb_room(self.fs, self.n_in, max_room_size=max_room_size, decay=decay, wet_gain_db=wet_gain_db, dry_gain_db=dry_gain_db)
+        self.dsp_block = rvrb.reverb_room(self.fs, self.n_in, max_room_size=max_room_size)
         self["sampling_freq"] = self.fs
         self["max_room_size"] = float(max_room_size)
         self.set_control_field_cb("room_size", lambda: self.dsp_block.room_size)
+        self.set_control_field_cb("decay", lambda: self.dsp_block.decay)
         self.set_control_field_cb("damping", lambda: self.dsp_block.damping)
+        self.set_control_field_cb("wet_gain", lambda: self.dsp_block.wet_int)
         self.set_control_field_cb("pregain", lambda: self.dsp_block.pregain)
-        self["decay"] = decay
-        self["wet_gain_db"] = wet_gain_db
-        self["dry_gain_db"] = dry_gain_db
+        self.set_control_field_cb("dry_gain_db", lambda: self.dsp_block.dry_gain_db)
+
+    def set_wet_gain(self, gain_dB):
+        """
+        Set the wet gain of the reverb stage
+
+        Parameters
+        ----------
+        gain_db : float
+            Wet gain in dB.
+        """
+        self.dsp_block.set_wet_gain(gain_dB)
+
+    def set_pre_gain(self, pre_gain):
+        """
+        Set the pre gain of the reverb stage
+
+        Parameters
+        ----------
+        preg_gain : float
+            pre gain value
+        """
+        self.dsp_block.set_pre_gain(pre_gain)
 

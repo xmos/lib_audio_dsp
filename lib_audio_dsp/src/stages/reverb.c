@@ -33,7 +33,7 @@ void reverb_init(module_instance_t* instance,
     float const room_size = state->config.room_size;
     float const decay = state->config.decay;
     float const damping = state->config.damping;
-    float const wet_gain_db = state->config.wet_gain_db;
+    float const wet_gain_db = state->config.wet_gain;
     float const dry_gain_db = state->config.dry_gain_db;
     float const pregain = state->config.pregain;
 
