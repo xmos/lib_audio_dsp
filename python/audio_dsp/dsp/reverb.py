@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 import warnings
 import audio_dsp.dsp.utils as utils
+from copy import deepcopy
 
 Q_VERB = 31
 
@@ -221,6 +222,7 @@ class reverb_room(dspg.dsp_block):
         dry_gain_db=-1,
         pregain=0.015,
         Q_sig=dspg.Q_SIG,
+        **kwargs
     ):
         """A room reverb effect based on Freeverb by Jezar at
         Dreampoint.
@@ -245,9 +247,12 @@ class reverb_room(dspg.dsp_block):
             the amount of gain applied to the signal before being passed
             into the reverb.
         """
+        assert n_chans == 1, f"Reverb only supports 1 channel. {n_chans} specified"
+
         super().__init__(fs, 1, Q_sig)
 
         self.damping = damping
+        self.decay = decay
         self.feedback = decay * 0.28 + 0.7  # avoids too much or too little feedback
 
         # pregain going into the reverb
@@ -259,6 +264,7 @@ class reverb_room(dspg.dsp_block):
         self.wet *= 0.015 / self.pregain
         self.wet_int = utils.int32((self.wet * 2**Q_VERB) - 1)
 
+        self.dry_gain_db = dry_gain_db
         self.dry = utils.db2gain(dry_gain_db)
         self.dry_int = utils.int32((self.dry * 2**Q_VERB) - 1)
 
@@ -317,6 +323,33 @@ class reverb_room(dspg.dsp_block):
             total_buffers += ap._max_delay
         return total_buffers
 
+    def set_pre_gain(self, pre_gain):
+        """
+        Set the pre gain. Also update the wet_gain value which depends on the pre_gain
+        Parameters
+        ----------
+        pre_gain : float
+            pre gain value.
+        """
+        self.pregain = pregain
+        self.pregain_int = utils.int32(self.pregain * 2**Q_VERB)
+        # when pregain changes, keep wet level the same
+        self.wet *= 0.015 / self.pregain
+        self.wet_int = utils.int32((self.wet * 2**Q_VERB) - 1)
+
+    def set_wet_gain(self, wet_gain_db):
+        """
+        Set the wet gain.
+        Parameters
+        ----------
+        wet_gain_db : float
+            Wet gain in dB.
+        """
+        self.wet = utils.db2gain(wet_gain_db)
+        # when pregain changes, keep wet level the same
+        self.wet *= 0.015 / self.pregain
+        self.wet_int = utils.int32((self.wet * 2**Q_VERB) - 1)
+
     def set_room_size(self, room_size):
         """Change the current room size, adjusting the delay line lengths accordingly."""
         if room_size > 1:
@@ -335,6 +368,31 @@ class reverb_room(dspg.dsp_block):
             self.allpasses[n].set_delay(ap_delays[n])
 
         return
+
+    def process_frame(self, frame):
+        """
+        Take a list frames of samples and return the processed frames.
+
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When calling self.process only take the first output.
+
+        """
+        n_outputs = len(frame)
+        frame_size = frame[0].shape[0]
+        output = deepcopy(frame)
+        if n_outputs == 1:
+            for sample in range(frame_size):
+                output[sample] = self.process(output[sample])[0]
+        else:
+            for chan in range(n_outputs):
+                this_chan = output[chan]
+                for sample in range(frame_size):
+                    this_chan[sample] = self.process(this_chan[sample], channel=chan)[0]
+
+        return output
 
     def process(self, sample, channel=0):
         """

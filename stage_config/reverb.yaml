@@ -1,0 +1,21 @@
+module:
+  reverb:
+    sampling_freq:
+      type: uint32_t
+    max_room_size:
+      type: float
+    room_size:
+      type: float
+    decay:
+      type: float
+    damping:
+      type: float
+    wet_gain:
+      type: int32_t
+    dry_gain_db:
+      type: float
+    pregain:
+      type: float
+includes:
+  - "stdint.h"
+  - "stages/adsp_module.h"
