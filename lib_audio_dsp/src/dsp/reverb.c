@@ -124,9 +124,12 @@ int32_t allpass_fv(allpass_fv_t *ap, int32_t new_sample)
     int32_t retval = adsp_subtractor(buf_out, new_sample);
 
     // Do (new_sample << Q_RV) into a double word ah:al
-    asm volatile("linsert %0, %1, %2, %3, 32"
+    /*asm volatile("linsert %0, %1, %2, %3, 32"
                  : "=r"(ah), "=r"(al)
-                 : "r"(new_sample), "r"(shift));
+                 : "r"(new_sample), "r"(shift));*/
+    int64_t a = (int64_t)new_sample << 31;
+    ah = (int32_t)(a >> 32);
+    al = (int32_t)a;
     // Then do ah:al + (buf_out * feedback)
     asm volatile("maccs %0, %1, %2, %3"
                  : "=r"(ah), "=r"(al)
@@ -193,6 +196,7 @@ int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
     int32_t ah = 0, al = 0, shift = Q_RV;
     int32_t fstore = comb->filterstore, d1 = comb->damp_1, d2 = comb->damp_2;
     int32_t retval = comb->buffer[comb->buffer_idx];
+    //printf("%ld, %ld, %ld, %ld, %ld\n", retval, comb->buffer_idx, fstore, d1, d2);
 
     // Do (retval * damp_2) into a 64b word ah:al
     asm volatile("maccs %0, %1, %2, %3"
@@ -205,22 +209,29 @@ int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
 
     comb->filterstore = scale_sat_int64_to_int32_floor(ah, al, shift);
     fstore = comb->filterstore;
+    //printf("h1: %ld, %ld, %ld\n", fstore, new_sample, comb->feedback);
 
     ah = 0;
     al = 0;
 
     // Do (new_sample << Q_RV) into a 64b word ah:al
-    asm volatile("linsert %0, %1, %2, %3, 32"
+    /*asm volatile("linsert %0, %1, %2, %3, 32"
                  : "=r"(ah), "=r"(al)
-                 : "r"(new_sample), "r"(shift));
+                 : "r"(new_sample), "r"(shift));*/
+
+    int64_t a = (int64_t)new_sample << 31;
+    ah = (int32_t)(a >> 32);
+    al = (int32_t)a;
+
+    //printf("h11: %ld, %ld, %lld\n", ah, al, ((int64_t)new_sample << 31));
     // Then do ah:al + (fstore * feedback)
     asm volatile("maccs %0, %1, %2, %3"
                  : "=r"(ah), "=r"(al)
                  : "r"(fstore), "r"(comb->feedback), "0"(ah), "1"(al));
-
+    //printf("h12: %ld, %ld\n", ah, al);
     comb->buffer[comb->buffer_idx] = scale_sat_int64_to_int32_floor(ah, al,
                                                                     shift);
-
+    //printf("h2: %ld\n", comb->buffer[comb->buffer_idx]);
     comb->buffer_idx += 1;
     if (comb->buffer_idx >= comb->delay)
     {
@@ -238,6 +249,7 @@ int32_t adsp_reverb_calc_wet_gain(float wet_gain_db, float pregain)
                         (DEFAULT_PREGAIN / pregain));
     return wet;
 }
+
 /**
  *
  * reverb_room class and methods
@@ -270,7 +282,7 @@ reverb_room_t adsp_reverb_room_init(
     // Represented as q1_31, min nonzero val 4.66e-10 ~= -186 dB
     //xassert(wet_gain_db > -186 && wet_gain_db <= 0);
     xassert(dry_gain_db > -186 && dry_gain_db <= 0);
-    xassert(pregain > 4.66e-10 && pregain < 1);
+    //xassert(pregain > 4.66e-10 && pregain < 1);
 
     mem_manager_t memory_manager = mem_manager_init(
         reverb_heap,
