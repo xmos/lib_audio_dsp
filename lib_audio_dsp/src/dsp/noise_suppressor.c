@@ -1,19 +1,8 @@
-// Copyright 2024 XMOS ngITED.
+// Copyright 2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include "dsp/adsp.h"
 #include "dsp/_helpers/drc_utils.h"
-
-static inline int32_t from_float_pos(float val) {
-  // assumes that val is positive
-  int32_t sign, exp, mant;
-  asm("fsexp %0, %1, %2": "=r" (sign), "=r" (exp): "r" (val));
-  asm("fmant %0, %1": "=r" (mant): "r" (val));
-  // mant to SIG_EXP
-  right_shift_t shr = SIG_EXP - exp + 23;
-  mant >>= shr;
-  return mant;
-}
 
 void adsp_noise_suppressor_set_th(
   noise_suppressor_t * ns,
@@ -52,7 +41,7 @@ int32_t adsp_noise_suppressor(
   if (-ns->slope > 0 && ns->threshold > ns->env_det.envelope) {
     // This looks a bit scary, but as long as envelope < threshold,
     // it can't overflow. The inv_th had exp of -36, when multiplied by env
-    // has exp of -63. 
+    // has exp of -63.
     int64_t new_gain_i64 =  ns->env_det.envelope * ns->inv_threshold;
     new_gain = new_gain_i64 >> 32;
     int32_t exp = -Q_alpha - 32 + 23;

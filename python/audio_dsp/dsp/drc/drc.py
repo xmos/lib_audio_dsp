@@ -27,7 +27,7 @@ class envelope_detector_peak(dspg.dsp_block):
     release_t: float, optional
         Release time of the envelope detector in seconds.
     detect_t : float, optional
-        Attack and relase time of the envelope detector in seconds. Sets
+        Attack and release time of the envelope detector in seconds. Sets
         attack_t == release_t. Cannot be used with attack_t or release_t
         inputs.
 
@@ -66,7 +66,7 @@ class envelope_detector_peak(dspg.dsp_block):
         self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
         self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(release_t, fs)
 
-        # initalise envelope state
+        # initialise envelope state
         self.reset_state()
 
     def reset_state(self):
@@ -244,7 +244,7 @@ class compressor_limiter_base(dspg.dsp_block):
         Nested envelope detector used to calculate the envelope of the
         signal. Either a peak or RMS envelope detector can be used.
     threshold : float
-        Value above which comression/limiting occurs for floating point
+        Value above which compression/limiting occurs for floating point
         processing.
     gain : list[float]
         Current gain to be applied to the signal for each channel for
@@ -256,7 +256,7 @@ class compressor_limiter_base(dspg.dsp_block):
         Release time parameter used for exponential moving average in
         floating point processing.
     threshold_int : int
-        Value above which comression/limiting occurs for int32 fixed
+        Value above which compression/limiting occurs for int32 fixed
         point processing.
     gain_int : list[int]
         Current gain to be applied to the signal for each channel for

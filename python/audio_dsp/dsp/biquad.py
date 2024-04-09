@@ -150,10 +150,10 @@ class biquad(dspg.dsp_block):
     def process_xcore(self, sample: float, channel: int = 0) -> float:
         """
         Filter a single sample using direct form 1 biquad using int32
-        fixed point maths, with use of the XS3 VPU
+        fixed point maths, with use of the XS3 VPU.
 
         The float input sample is quantized to int32, and returned to
-        float before outputting
+        float before outputting.
 
         """
         sample_int = utils.int32(round(sample * 2**self.Q_sig))
@@ -505,7 +505,7 @@ def _round_and_check(coeffs: list[float], b_shift: int = 0) -> tuple[list[float]
 
 def make_biquad_bypass(fs: int) -> list[float]:
     """
-    Creates a bypass biquad filter. Only the b0 coefficient is set
+    Creates a bypass biquad filter. Only the b0 coefficient is set.
 
     Parameters
     ----------
@@ -524,7 +524,7 @@ def make_biquad_bypass(fs: int) -> list[float]:
 def make_biquad_mute(fs: int) -> list[float]:
     """
     Creates a biquad filter coefficients list that represents a mute
-    filter. All the coefficients are 0
+    filter. All the coefficients are 0.
 
     Parameters
     ----------

@@ -26,9 +26,20 @@ static inline int32_t apply_gain_q31(int32_t samp, q1_31 gain) {
   // this assumes that alpha is q31
   int32_t q = Q_alpha;
   int32_t ah = 0, al = 1 << (q - 1);
-  // standart multiplication with rounding and saturation
+  // standard multiplication with rounding and saturation
   asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (samp), "r" (gain), "0" (ah), "1" (al));
   asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (q), "0" (ah), "1" (al));
   asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (q));
   return ah;
+}
+
+static inline int32_t from_float_pos(float val) {
+  // assumes that val is positive
+  int32_t sign, exp, mant;
+  asm("fsexp %0, %1, %2": "=r" (sign), "=r" (exp): "r" (val));
+  asm("fmant %0, %1": "=r" (mant): "r" (val));
+  // mant to SIG_EXP
+  right_shift_t shr = SIG_EXP - exp + 23;
+  mant >>= shr;
+  return mant;
 }

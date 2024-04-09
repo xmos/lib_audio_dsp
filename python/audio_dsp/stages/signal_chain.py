@@ -103,7 +103,7 @@ class Adder(Stage):
 class Subtractor(Stage):
     """
     Subtract the second input from the first. The subtractor can be used to
-    subtract signals from each other. It must only have 2 inputs
+    subtract signals from each other. It must only have 2 inputs.
 
     """
 
@@ -215,7 +215,7 @@ class Switch(Stage):
 
     def move_switch(self, position):
         """
-        Move the switch to the specified position
+        Move the switch to the specified position.
 
         Parameters
         ----------

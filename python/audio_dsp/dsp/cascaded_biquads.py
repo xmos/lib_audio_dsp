@@ -133,10 +133,10 @@ class cascaded_biquads_8(dspg.dsp_block):
 
     def process_xcore(self, sample, channel=0):
         """Process the input sample through the cascaded biquads using
-        int32 fixed point maths, with use of the XS3 VPU
+        int32 fixed point maths, with use of the XS3 VPU.
 
         The float input sample is quantized to int32, and returned to
-        float before outputting
+        float before outputting.
         """
         # in the future we could use a more efficient implementation
         y = sample
@@ -148,7 +148,7 @@ class cascaded_biquads_8(dspg.dsp_block):
     def process_frame_xcore(self, frame):
         """
         Take a list frames of samples and return the processed frames
-        using int32 fixed point maths, with use of the XS3 VPU
+        using int32 fixed point maths, with use of the XS3 VPU.
 
         A frame is defined as a list of 1-D numpy arrays, where the
         number of arrays is equal to the number of channels, and the
@@ -287,7 +287,7 @@ def make_butterworth_lowpass(N, fc, fs):
     It uses the bilinear transform to convert the analog filter poles to
     the z-plane.
 
-    See also `scipy.signal.zpk2sos <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html>`_
+    See also `scipy.signal.zpk2sos <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.zpk2sos.html>`_.
 
     Parameters
     ----------
