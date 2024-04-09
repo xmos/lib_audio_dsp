@@ -196,7 +196,6 @@ int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
     int32_t ah = 0, al = 0, shift = Q_RV;
     int32_t fstore = comb->filterstore, d1 = comb->damp_1, d2 = comb->damp_2;
     int32_t retval = comb->buffer[comb->buffer_idx];
-    //printf("%ld, %ld, %ld, %ld, %ld\n", retval, comb->buffer_idx, fstore, d1, d2);
 
     // Do (retval * damp_2) into a 64b word ah:al
     asm volatile("maccs %0, %1, %2, %3"
@@ -209,7 +208,6 @@ int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
 
     comb->filterstore = scale_sat_int64_to_int32_floor(ah, al, shift);
     fstore = comb->filterstore;
-    //printf("h1: %ld, %ld, %ld\n", fstore, new_sample, comb->feedback);
 
     ah = 0;
     al = 0;
@@ -223,15 +221,13 @@ int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
     ah = (int32_t)(a >> 32);
     al = (int32_t)a;
 
-    //printf("h11: %ld, %ld, %lld\n", ah, al, ((int64_t)new_sample << 31));
     // Then do ah:al + (fstore * feedback)
     asm volatile("maccs %0, %1, %2, %3"
                  : "=r"(ah), "=r"(al)
                  : "r"(fstore), "r"(comb->feedback), "0"(ah), "1"(al));
-    //printf("h12: %ld, %ld\n", ah, al);
+
     comb->buffer[comb->buffer_idx] = scale_sat_int64_to_int32_floor(ah, al,
                                                                     shift);
-    //printf("h2: %ld\n", comb->buffer[comb->buffer_idx]);
     comb->buffer_idx += 1;
     if (comb->buffer_idx >= comb->delay)
     {
@@ -280,9 +276,8 @@ reverb_room_t adsp_reverb_room_init(
 
     // These limits should be reconsidered if Q_RV != 31
     // Represented as q1_31, min nonzero val 4.66e-10 ~= -186 dB
-    //xassert(wet_gain_db > -186 && wet_gain_db <= 0);
     xassert(dry_gain_db > -186 && dry_gain_db <= 0);
-    //xassert(pregain > 4.66e-10 && pregain < 1);
+    xassert(pregain > 4.66e-10 && pregain < 1);
 
     mem_manager_t memory_manager = mem_manager_init(
         reverb_heap,
@@ -296,8 +291,6 @@ reverb_room_t adsp_reverb_room_init(
 
     const int32_t dry = Q(Q_RV)(DBTOGAIN(dry_gain_db));
     // Scale the wet gain; when pregain changes, overall wet gain shouldn't
-    /*const int32_t wet = Q(Q_RV)(DBTOGAIN(wet_gain_db) *
-                                (DEFAULT_PREGAIN / pregain));*/
     const float rv_scale_fac = RV_SCALE(fs, max_room_size);
 
     rv.n_chans = n_chans;
@@ -309,7 +302,6 @@ reverb_room_t adsp_reverb_room_init(
         rv.channel[ch].wet_gain = wet_gain;
         rv.channel[ch].pre_gain = Q(Q_RV)(pregain);
 
-        printf("rv.channel[ch].wet_gain = %ld\n", rv.channel[ch].wet_gain);
         SETARR_CONST(rv.channel[ch].comb_lengths, DEFAULT_COMB_LENS);
         for (int i = 0; i < N_COMBS; i++)
         {
