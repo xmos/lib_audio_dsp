@@ -9,8 +9,8 @@
 #include "dsp/reverb.h"
 #include "dsp/_helpers/generic_utils.h"
 
-#define DBTOGAIN(x) (pow(10, (x / 20.0)))
-#define GAINTODB(x) (log10(x) * 20.0)
+#define DBTOGAIN(x) (powf(10, (x / 20.0)))
+#define GAINTODB(x) (log10f(x) * 20.0)
 #define TWO_TO_32 4294967296
 #define TWO_TO_30 1073741824
 #define TWO_TO_31_MINUS_1 2147483647
