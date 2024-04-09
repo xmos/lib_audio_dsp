@@ -168,9 +168,7 @@ class VolumeControl(Stage):
 
     def make_volume_control(self, gain_dB, slew_shift, Q_sig=dspg.Q_SIG):
         self.details = dict(target_gain=gain_dB, slew_shift=slew_shift, Q_sig=Q_sig)
-        self.dsp_block = sc.volume_control(
-            self.fs, self.n_in, gain_dB, slew_shift, Q_sig
-        )
+        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, Q_sig)
         return self
 
     def set_gain(self, gain_dB):
@@ -217,7 +215,7 @@ class Switch(Stage):
 
     def move_switch(self, position):
         """
-        Move the switch to the specified position
+        Move the switch to the specified position.
 
         Parameters
         ----------
