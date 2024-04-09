@@ -31,6 +31,9 @@
 #define Q_RV 31
 #define DEFAULT_PREGAIN 0.015
 
+#define MIN_WET_GAIN_DB (-186.0)
+#define MAX_WET_GAIN_DB (0)
+
 typedef struct
 {
     void *heap_start;

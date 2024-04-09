@@ -239,7 +239,7 @@ int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
 
 int32_t adsp_reverb_calc_wet_gain(float wet_gain_db, float pregain)
 {
-    xassert(wet_gain_db > -186 && wet_gain_db <= 0);
+    xassert(wet_gain_db > MIN_WET_GAIN_DB && wet_gain_db <= MAX_WET_GAIN_DB);
     xassert(pregain > 4.66e-10 && pregain < 1);
     int32_t wet = Q(Q_RV)(DBTOGAIN(wet_gain_db) *
                         (DEFAULT_PREGAIN / pregain));
