@@ -89,7 +89,7 @@ reverb_room_t adsp_reverb_room_init(
     float decay,
     float damping,
     int32_t wet_gain,
-    float dry_gain_db,
+    int32_t dry_gain,
     float pregain,
     void *reverb_heap);
 
@@ -129,3 +129,4 @@ mem_manager_t mem_manager_init(
     uint32_t number_of_bytes);
 
 int32_t adsp_reverb_calc_wet_gain(float wet_gain_db, float pregain);
+int32_t adsp_reverb_calc_dry_gain(float dry_gain_db);

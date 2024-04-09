@@ -264,7 +264,6 @@ class reverb_room(dspg.dsp_block):
         self.wet *= 0.015 / self.pregain
         self.wet_int = utils.int32((self.wet * 2**Q_VERB) - 1)
 
-        self.dry_gain_db = dry_gain_db
         self.dry = utils.db2gain(dry_gain_db)
         self.dry_int = utils.int32((self.dry * 2**Q_VERB) - 1)
 
@@ -349,6 +348,18 @@ class reverb_room(dspg.dsp_block):
         # when pregain changes, keep wet level the same
         self.wet *= 0.015 / self.pregain
         self.wet_int = utils.int32((self.wet * 2**Q_VERB) - 1)
+
+    def set_dry_gain(self, dry_gain_db):
+        """
+        Set the dry gain.
+        Parameters
+        ----------
+        dry_gain_db : float
+            Dry gain in dB.
+        """
+        self.dry_gain_db = dry_gain_db
+        self.dry = utils.db2gain(dry_gain_db)
+        self.dry_int = utils.int32((self.dry * 2**Q_VERB) - 1)
 
     def set_room_size(self, room_size):
         """Change the current room size, adjusting the delay line lengths accordingly."""

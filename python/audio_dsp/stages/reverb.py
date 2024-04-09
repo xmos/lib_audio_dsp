@@ -20,7 +20,7 @@ class Reverb(Stage):
         self.set_control_field_cb("damping", lambda: self.dsp_block.damping)
         self.set_control_field_cb("wet_gain", lambda: self.dsp_block.wet_int)
         self.set_control_field_cb("pregain", lambda: self.dsp_block.pregain)
-        self.set_control_field_cb("dry_gain_db", lambda: self.dsp_block.dry_gain_db)
+        self.set_control_field_cb("dry_gain", lambda: self.dsp_block.dry_int)
 
     def set_wet_gain(self, gain_dB):
         """
@@ -32,6 +32,17 @@ class Reverb(Stage):
             Wet gain in dB.
         """
         self.dsp_block.set_wet_gain(gain_dB)
+
+    def set_dry_gain(self, gain_dB):
+        """
+        Set the dry gain of the reverb stage
+
+        Parameters
+        ----------
+        gain_db : float
+            Dry gain in dB.
+        """
+        self.dsp_block.set_dry_gain(gain_dB)
 
     def set_pre_gain(self, pre_gain):
         """

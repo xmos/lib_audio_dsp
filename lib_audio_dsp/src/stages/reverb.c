@@ -20,22 +20,21 @@ void reverb_init(module_instance_t* instance,
     reverb_config_t *config = instance->control.config;
 
     memset(state, 0, sizeof(reverb_state_t));
-    memcpy(&state->config, config, sizeof(reverb_config_t));
 
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
     uint32_t n_chans = n_inputs;
-    float fs = state->config.sampling_freq;
-    float max_room_size = state->config.max_room_size;
+    float fs = config->sampling_freq;
+    float max_room_size = config->max_room_size;
 
-    float const room_size = state->config.room_size;
-    float const decay = state->config.decay;
-    float const damping = state->config.damping;
-    float const wet_gain_db = state->config.wet_gain;
-    float const dry_gain_db = state->config.dry_gain_db;
-    float const pregain = state->config.pregain;
+    float const room_size = config->room_size;
+    float const decay = config->decay;
+    float const damping = config->damping;
+    float const wet_gain = config->wet_gain;
+    float const dry_gain = config->dry_gain;
+    float const pregain = config->pregain;
 
     // Both fs and max_room_size are used in heap memory calculation, which is currently defined at compile time
     // #define REVERB_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (RV_HEAP_SZ(48000, 1.0f)), so ensure the fs and max_room_size
@@ -53,8 +52,8 @@ void reverb_init(module_instance_t* instance,
 
     state->reverb_room = adsp_reverb_room_init(n_chans, fs,
                                 max_room_size, room_size,
-                                decay, damping, wet_gain_db,
-                                dry_gain_db, pregain,
+                                decay, damping, wet_gain,
+                                dry_gain, pregain,
                                 reverb_heap);
 }
 
@@ -82,15 +81,12 @@ void reverb_control(void *module_state, module_control_t *control)
 
     if(control->config_rw_state == config_write_pending)
     {
-        // Finish the write by updating the working copy with the new config
-        memcpy(&state->config, config, sizeof(reverb_config_t));
-        state->reverb_room.channel[0].wet_gain = state->config.wet_gain;
+        state->reverb_room.channel[0].wet_gain = config->wet_gain; // Only setting the wet gain supported for now
         control->config_rw_state = config_none_pending;
     }
     else if(control->config_rw_state == config_read_pending)
     {
-        memcpy(config, &state->config, sizeof(reverb_config_t));
-        config->wet_gain = state->reverb_room.channel[0].wet_gain;
+        config->wet_gain = state->reverb_room.channel[0].wet_gain; // wet_gain, being the only writable parameter is expected to change
         control->config_rw_state = config_read_updated;
     }
     else {

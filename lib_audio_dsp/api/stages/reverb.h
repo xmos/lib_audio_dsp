@@ -8,9 +8,7 @@
 
 typedef struct
 {
-    reverb_config_t config;
     reverb_room_t reverb_room;
-    //int32_t **filter_states;
     int n_inputs;
     int n_outputs;
     int frame_size;

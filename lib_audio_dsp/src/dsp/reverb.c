@@ -246,6 +246,13 @@ int32_t adsp_reverb_calc_wet_gain(float wet_gain_db, float pregain)
     return wet;
 }
 
+int32_t adsp_reverb_calc_dry_gain(float dry_gain_db)
+{
+    xassert(dry_gain_db > -186 && dry_gain_db <= 0);
+    int32_t dry = Q(Q_RV)(DBTOGAIN(dry_gain_db));
+    return dry;
+}
+
 /**
  *
  * reverb_room class and methods
@@ -260,7 +267,7 @@ reverb_room_t adsp_reverb_room_init(
     float decay,
     float damping,
     int32_t wet_gain,
-    float dry_gain_db,
+    int32_t dry_gain,
     float pregain,
     void *reverb_heap)
 {
@@ -276,7 +283,6 @@ reverb_room_t adsp_reverb_room_init(
 
     // These limits should be reconsidered if Q_RV != 31
     // Represented as q1_31, min nonzero val 4.66e-10 ~= -186 dB
-    xassert(dry_gain_db > -186 && dry_gain_db <= 0);
     xassert(pregain > 4.66e-10 && pregain < 1);
 
     mem_manager_t memory_manager = mem_manager_init(
@@ -289,7 +295,6 @@ reverb_room_t adsp_reverb_room_init(
     const int32_t feedback_int = Q(Q_RV)((decay * 0.28) + 0.7);
     const int32_t damping_int = MAX(Q(Q_RV)(damping) - 1, 1);
 
-    const int32_t dry = Q(Q_RV)(DBTOGAIN(dry_gain_db));
     // Scale the wet gain; when pregain changes, overall wet gain shouldn't
     const float rv_scale_fac = RV_SCALE(fs, max_room_size);
 
@@ -298,7 +303,7 @@ reverb_room_t adsp_reverb_room_init(
     for (int ch = 0; ch < n_chans; ch++)
     {
         rv.channel[ch].room_size = Q30(room_size);
-        rv.channel[ch].dry_gain = dry;
+        rv.channel[ch].dry_gain = dry_gain;
         rv.channel[ch].wet_gain = wet_gain;
         rv.channel[ch].pre_gain = Q(Q_RV)(pregain);
 
