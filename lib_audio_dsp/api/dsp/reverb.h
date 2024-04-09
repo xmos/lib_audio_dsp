@@ -14,7 +14,7 @@
     }
 #define DEFAULT_AP_LENS    \
     {                      \
-        556, 441, 341, 255 \
+        556, 441, 341, 225 \
     }
 #define SUM_DEFAULT_COMB_LENS 11024
 #define SUM_DEFAULT_AP_LENS 1593

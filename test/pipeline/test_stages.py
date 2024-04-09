@@ -12,6 +12,7 @@ from audio_dsp.stages.noise_gate import NoiseGate
 from audio_dsp.stages.noise_suppressor import NoiseSuppressor
 from audio_dsp.stages.signal_chain import VolumeControl, FixedGain
 from audio_dsp.stages.compressor import CompressorRMS
+from audio_dsp.stages.reverb import Reverb
 
 import audio_dsp.dsp.utils as utils
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
@@ -32,6 +33,7 @@ def do_test(p):
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
     """
+    pipeline_channels = p._n_in
     infile = "instage.wav"
     outfile = "outstage.wav"
     n_samps, rate = 1024, 48000
@@ -49,20 +51,29 @@ def do_test(p):
 
     sig1 = np.linspace(-2**23, 2**23, n_samps, dtype=np.int32)  << 4
 
-    sig = np.stack((sig0, sig1), axis=1)
+    if pipeline_channels == 2:
+        sig = np.stack((sig0, sig1), axis=1)
+    elif pipeline_channels == 1:
+        sig = sig0
+        sig = sig.reshape((len(sig), 1))
+    else:
+        assert False, f"Unsupported number of channels {pipeline_channels}"
+
     audio_helpers.write_wav(infile, rate, sig)
 
     xe = APP_DIR / f"bin/{target}.xe"
-    run_pipeline_xcoreai.run(xe, infile, outfile, channels, 1)
+    run_pipeline_xcoreai.run(xe, infile, outfile, pipeline_channels, 1)
 
     _, out_data = audio_helpers.read_wav(outfile)
+    if out_data.ndim == 1:
+        out_data = out_data.reshape(len(out_data), 1)
 
     # convert to float scaling and make frames
     frame_size = 1
     sig_flt = np.float64(sig.T) * 2**-31
     signal_frames = utils.frame_signal(sig_flt, frame_size, frame_size)
-    out_py = np.zeros((channels, sig.shape[0]))
-    
+    out_py = np.zeros((pipeline_channels, sig.shape[0]))
+
     # run through python bit exact implementation
     for n in range(len(signal_frames)):
         out_py[:, n:n+frame_size] = ref_module.process_frame_xcore(signal_frames[n])
@@ -70,7 +81,18 @@ def do_test(p):
     # back to int scaling
     out_py_int = out_py * 2**31
 
+    print(f"out_py_int.shape = {out_py_int.shape}")
+    print(f"out_data.shape = {out_data.shape}")
+
+    diff = out_py_int.T[:,0] - out_data[:, 0]
+    print("max diff = ", max(abs(diff)))
+
+    sol = (~np.equal(out_py_int.T, out_data)).astype(int)
+    print(sol)
+    indices = np.flatnonzero(sol)
+    print("mismatching indices = ", indices)
     np.testing.assert_equal(out_py_int.T, out_data)
+
 
 
 @pytest.mark.parametrize("method, args", [("make_bypass", None),
@@ -223,8 +245,22 @@ def test_fixed_gain():
 
     do_test(p)
 
+def test_reverb():
+    """
+    Test Reverb stage
+    """
+    reverb_test_channels = 1 # Reverb expects only 1 channel
+    p = Pipeline(reverb_test_channels)
+    with p.add_thread() as t:
+        rv = t.stage(Reverb, p.i)
+    p.set_outputs(rv.o)
+
+    do_test(p)
+
+
 
 if __name__ == "__main__":
-    test_noise_suppressor()
-    test_biquad("make_lowpass", [1000, 0.707])
-    test_biquad("make_lowpass", [1000, 0.707])
+    test_reverb()
+    #test_noise_suppressor()
+    #test_biquad("make_lowpass", [1000, 0.707])
+    #test_biquad("make_lowpass", [1000, 0.707])

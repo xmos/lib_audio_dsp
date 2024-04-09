@@ -136,7 +136,6 @@ int32_t allpass_fv(allpass_fv_t *ap, int32_t new_sample)
                  : "r"(buf_out), "r"(ap->feedback), "0"(ah), "1"(al));
 
     ap->buffer[ap->buffer_idx] = scale_sat_int64_to_int32_floor(ah, al, shift);
-
     ap->buffer_idx += 1;
     if (ap->buffer_idx >= ap->delay)
     {
@@ -408,6 +407,7 @@ int32_t adsp_reverb_room(
         acc += comb_fv(&(chan->combs[comb]), reverb_input);
     }
     output = adsp_saturate_32b(acc);
+
     for (int ap = 0; ap < N_APS; ap++)
     {
         acc = allpass_fv(&(chan->allpasses[ap]), output);

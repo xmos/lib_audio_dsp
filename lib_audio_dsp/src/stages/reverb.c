@@ -32,8 +32,8 @@ void reverb_init(module_instance_t* instance,
     float const room_size = config->room_size;
     float const decay = config->decay;
     float const damping = config->damping;
-    float const wet_gain = config->wet_gain;
-    float const dry_gain = config->dry_gain;
+    int32_t wet_gain = config->wet_gain;
+    int32_t dry_gain = config->dry_gain;
     float const pregain = config->pregain;
 
     // Both fs and max_room_size are used in heap memory calculation, which is currently defined at compile time
