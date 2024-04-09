@@ -58,9 +58,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
     """
 
-    def __init__(
-        self, fs, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
-    ):
+    def __init__(self, fs, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, 1, attack_t, release_t, delay, Q_sig)
 
         # note rms comes as x**2, so use db_pow
@@ -141,9 +139,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain_int = self.gain_calc_xcore(
-            envelope_int, self.threshold_int, self.slope_f32
-        )
+        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int:

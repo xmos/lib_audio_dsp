@@ -101,9 +101,7 @@ class envelope_detector_peak(dspg.dsp_block):
             alpha = self.release_alpha
 
         # do exponential moving average
-        self.envelope[channel] = ((1 - alpha) * self.envelope[channel]) + (
-            alpha * sample_mag
-        )
+        self.envelope[channel] = ((1 - alpha) * self.envelope[channel]) + (alpha * sample_mag)
 
         return self.envelope[channel]
 
@@ -119,9 +117,9 @@ class envelope_detector_peak(dspg.dsp_block):
         """
         if isinstance(sample, float):
             sample_int = utils.int32(round(sample * 2**self.Q_sig))
-        elif (
-            isinstance(sample, list) or isinstance(sample, np.ndarray)
-        ) and isinstance(sample[0], int):
+        elif (isinstance(sample, list) or isinstance(sample, np.ndarray)) and isinstance(
+            sample[0], int
+        ):
             sample_int = sample[channel]
         elif isinstance(sample, int):
             sample_int = sample
@@ -183,9 +181,7 @@ class envelope_detector_rms(envelope_detector_peak):
             alpha = self.release_alpha
 
         # do exponential moving average
-        self.envelope[channel] = ((1 - alpha) * self.envelope[channel]) + (
-            alpha * sample_mag
-        )
+        self.envelope[channel] = ((1 - alpha) * self.envelope[channel]) + (alpha * sample_mag)
 
         return self.envelope[channel]
 
@@ -286,9 +282,7 @@ class compressor_limiter_base(dspg.dsp_block):
         self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
         self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(release_t, fs)
         self.Q_alpha = drcu.Q_alpha
-        assert (
-            self.Q_alpha == 31
-        ), "When changing this the reset value will have to be updated"
+        assert self.Q_alpha == 31, "When changing this the reset value will have to be updated"
 
         # These are defined differently for peak and RMS limiters
         self.env_detector = None
@@ -377,9 +371,7 @@ class compressor_limiter_base(dspg.dsp_block):
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain_int = self.gain_calc_xcore(
-            envelope_int, self.threshold_int, self.slope_f32
-        )
+        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int[channel]:
@@ -388,9 +380,7 @@ class compressor_limiter_base(dspg.dsp_block):
             alpha = self.release_alpha_int
 
         # do exponential moving average
-        self.gain_int[channel] = drcu.calc_ema_xcore(
-            self.gain_int[channel], new_gain_int, alpha
-        )
+        self.gain_int[channel] = drcu.calc_ema_xcore(self.gain_int[channel], new_gain_int, alpha)
 
         # apply gain
         y = drcu.apply_gain_xcore(sample_int, self.gain_int[channel])
@@ -439,9 +429,7 @@ class compressor_limiter_base(dspg.dsp_block):
         for chan in range(n_outputs):
             this_chan = output[chan]
             for sample in range(frame_size):
-                this_chan[sample] = self.process_xcore(this_chan[sample], channel=chan)[
-                    0
-                ]
+                this_chan[sample] = self.process_xcore(this_chan[sample], channel=chan)[0]
 
         return output
 
@@ -465,9 +453,7 @@ class limiter_peak(compressor_limiter_base):
 
     """
 
-    def __init__(
-        self, fs, n_chans, threshold_dB, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
-    ):
+    def __init__(self, fs, n_chans, threshold_dB, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         self.threshold = utils.db2gain(threshold_dB)
@@ -509,9 +495,7 @@ class limiter_rms(compressor_limiter_base):
 
     """
 
-    def __init__(
-        self, fs, n_chans, threshold_dB, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
-    ):
+    def __init__(self, fs, n_chans, threshold_dB, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         # note rms comes as x**2, so use db_pow
@@ -572,9 +556,7 @@ class soft_limiter_peak(limiter_peak):
 
 class lookahead_limiter_peak(compressor_limiter_base):
     # peak limiter with built in delay for avoiding clipping
-    def __init__(
-        self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
-    ):
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         self.threshold = utils.db2gain(threshold_db)
@@ -599,9 +581,7 @@ class lookahead_limiter_peak(compressor_limiter_base):
 
 class lookahead_limiter_rms(compressor_limiter_base):
     # rms limiter with built in delay for avoiding clipping
-    def __init__(
-        self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
-    ):
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         self.threshold = utils.db_pow2gain(threshold_db)
