@@ -11,6 +11,8 @@
 
 #define MIN_WET_GAIN_DB (-186.0)
 #define MAX_WET_GAIN_DB (0)
+#define MIN_DRY_GAIN_DB (-186.0)
+#define MAX_DRY_GAIN_DB (0)
 
 #define RV_SCALE(FS, MAX_ROOM_SZ) (((FS) / 44100.0f) * (MAX_ROOM_SZ))
 

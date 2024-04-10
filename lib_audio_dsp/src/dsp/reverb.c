@@ -20,6 +20,7 @@
 
 #define DBTOGAIN(x) (powf(10, (x / 20.0)))
 #define GAINTODB(x) (log10f(x) * 20.0)
+#define TWO_TO_31 2147483648
 #define TWO_TO_31_MINUS_1 2147483647
 
 #define Q_RV 31
@@ -180,8 +181,9 @@ static inline comb_fv_t comb_fv_init(
     comb.feedback = feedback_gain;
     comb.buffer_idx = 0;
     comb.filterstore = 0;
+    // damping is always at least 1, because we guarantee this earlier
     comb.damp_1 = damping;
-    comb.damp_2 = ((1 << 31) - 1) - damping + 1;
+    comb.damp_2 = (uint32_t)TWO_TO_31 - damping;
     comb.buffer = mem_manager_alloc(mem, max_delay * sizeof(int32_t));
     xassert(comb.buffer != NULL);
     return comb;
@@ -210,12 +212,12 @@ static inline int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
 {
     int32_t ah = 0, al = 0, shift = Q_RV;
     int32_t fstore = comb->filterstore, d1 = comb->damp_1, d2 = comb->damp_2;
-    int32_t retval = comb->buffer[comb->buffer_idx];
+    int32_t output = comb->buffer[comb->buffer_idx];
 
-    // Do (retval * damp_2) into a 64b word ah:al
+    // Do (output * damp_2) into a 64b word ah:al
     asm volatile("maccs %0, %1, %2, %3"
                  : "=r"(ah), "=r"(al)
-                 : "r"(retval), "r"(d2), "0"(ah), "1"(al));
+                 : "r"(output), "r"(d2), "0"(ah), "1"(al));
     // Then add (filterstore * damp_1) to that
     asm volatile("maccs %0, %1, %2, %3"
                  : "=r"(ah), "=r"(al)
@@ -224,15 +226,8 @@ static inline int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
     comb->filterstore = scale_sat_int64_to_int32_floor(ah, al, shift);
     fstore = comb->filterstore;
 
-    ah = 0;
-    al = 0;
-
-    // Do (new_sample << Q_RV) into a 64b word ah:al
-    /*asm volatile("linsert %0, %1, %2, %3, 32"
-                 : "=r"(ah), "=r"(al)
-                 : "r"(new_sample), "r"(shift));*/
-
-    int64_t a = (int64_t)new_sample << 31;
+    // Do (new_sample << shift) into a 64b word ah:al
+    int64_t a = (int64_t)new_sample << shift;
     ah = (int32_t)(a >> 32);
     al = (int32_t)a;
 
@@ -249,21 +244,20 @@ static inline int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
         comb->buffer_idx = 0;
     }
 
-    return retval;
+    return output;
 }
 
 int32_t adsp_reverb_calc_wet_gain(float wet_gain_db, float pregain)
 {
     xassert(wet_gain_db > MIN_WET_GAIN_DB && wet_gain_db <= MAX_WET_GAIN_DB);
     xassert(pregain > 4.66e-10 && pregain < 1);
-    int32_t wet = Q(Q_RV)(DBTOGAIN(wet_gain_db)); // *
-                                                  //(DEFAULT_PREGAIN / pregain));
+    int32_t wet = Q(Q_RV)(DBTOGAIN(wet_gain_db) * (DEFAULT_PREGAIN / pregain));
     return wet;
 }
 
 int32_t adsp_reverb_calc_dry_gain(float dry_gain_db)
 {
-    xassert(dry_gain_db > -186 && dry_gain_db <= 0);
+    xassert(dry_gain_db > MIN_DRY_GAIN_DB && dry_gain_db <= MAX_DRY_GAIN_DB);
     int32_t dry = Q(Q_RV)(DBTOGAIN(dry_gain_db));
     return dry;
 }
@@ -366,10 +360,11 @@ void adsp_reverb_room_set_room_size(reverb_room_t *rv,
     // For larger rooms, increase max_room_size
     xassert(new_room_size > 0 && new_room_size <= 1);
     int32_t room_size_int = Q30(new_room_size);
+    
     rv->room_size = room_size_int;
     for (int comb = 0; comb < N_COMBS; comb++)
     {
-        // Do chan.comb_lengths[comb] * new_room_size in Q30
+        // Do comb length * new_room_size in Q30
         int32_t l = rv->combs[comb].max_delay;
         asm volatile("lmul %0, %1, %2, %3, %4, %5"
                      : "=r"(ah), "=r"(al)
@@ -381,7 +376,7 @@ void adsp_reverb_room_set_room_size(reverb_room_t *rv,
     }
     for (int ap = 0; ap < N_APS; ap++)
     {
-        // Do chan.ap_lengths[ap] * new_room_size in Q30
+        // Do ap length * new_room_size in Q30
         int32_t l = rv->allpasses[ap].max_delay;
         asm volatile("lmul %0, %1, %2, %3, %4, %5"
                      : "=r"(ah), "=r"(al)
