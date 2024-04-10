@@ -32,7 +32,7 @@ static inline int32_t scale_sat_int64_to_int32_floor(int32_t ah,
 {
     int32_t big_q = TWO_TO_31_MINUS_1, one = 1, shift_minus_one = shift - 1;
 
-    // If ah:al < 0, add just under 1 (represented in Q_RV)
+    // If ah:al < 0, add just under 1 (represented in Q31)
     if (ah < 0) // ah is sign extended, so this test is sufficient
     {
         asm volatile("maccs %0, %1, %2, %3"
@@ -40,15 +40,15 @@ static inline int32_t scale_sat_int64_to_int32_floor(int32_t ah,
                      : "r"(one), "r"(big_q), "0"(ah), "1"(al));
     }
     // Saturate ah:al. Implements the following:
-    // if (val > (2 ** (31 + Q_RV) - 1))
-    //     val = 2 ** (31 + Q_RV) - 1
-    // else if (val < -(2 ** (31 + Q_RV)))
-    //     val = -(2 ** (31 + Q_RV))
+    // if (val > (2 ** (31 + shift) - 1))
+    //     val = 2 ** (31 + shift) - 1
+    // else if (val < -(2 ** (31 + shift)))
+    //     val = -(2 ** (31 + shift))
     // Note the use of 31, rather than 32 - hence here we subtract 1 from shift.
     asm volatile("lsats %0, %1, %2"
                  : "=r"(ah), "=r"(al)
                  : "r"(shift_minus_one), "0"(ah), "1"(al));
-    // then we return (ah:al >> Q_RV)
+    // then we return (ah:al >> shift)
     asm volatile("lextract %0, %1, %2, %3, 32"
                  : "=r"(ah)
                  : "r"(ah), "r"(al), "r"(shift));
