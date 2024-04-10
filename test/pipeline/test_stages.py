@@ -23,6 +23,7 @@ import numpy as np
 PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
+DEBUG = False
 
 fs = 48000
 channels = 2  # if this changes need to rewrite test signals
@@ -57,7 +58,7 @@ def do_test(p):
         sig = sig0
         sig = sig.reshape((len(sig), 1))
     else:
-        assert False, f"Unsupported number of channels {pipeline_channels}"
+        assert False, f"Unsupported number of channels {pipeline_channels}. Test supports 1 or 2 channels"
 
     audio_helpers.write_wav(infile, rate, sig)
 
@@ -81,16 +82,15 @@ def do_test(p):
     # back to int scaling
     out_py_int = out_py * 2**31
 
-    print(f"out_py_int.shape = {out_py_int.shape}")
-    print(f"out_data.shape = {out_data.shape}")
+    if DEBUG:
+        for ch in range(pipeline_channels):
+            diff = out_py_int.T[:,ch] - out_data[:, ch]
+            print(f"ch {ch}: max diff {max(abs(diff))}")
+            sol = (~np.equal(out_py_int.T, out_data)).astype(int)
+            indexes = np.flatnonzero(sol)
+            print(f"ch {ch}: {len(indexes)} indexes mismatch")
+            print(f"ch {ch} mismatching indexes = {indexes}")
 
-    diff = out_py_int.T[:,0] - out_data[:, 0]
-    print("max diff = ", max(abs(diff)))
-
-    sol = (~np.equal(out_py_int.T, out_data)).astype(int)
-    print(sol)
-    indices = np.flatnonzero(sol)
-    print("mismatching indices = ", indices)
     np.testing.assert_equal(out_py_int.T, out_data)
 
 
@@ -260,7 +260,6 @@ def test_reverb():
 
 
 if __name__ == "__main__":
-    test_reverb()
-    #test_noise_suppressor()
-    #test_biquad("make_lowpass", [1000, 0.707])
-    #test_biquad("make_lowpass", [1000, 0.707])
+    test_noise_suppressor()
+    test_biquad("make_lowpass", [1000, 0.707])
+    test_biquad("make_lowpass", [1000, 0.707])

@@ -2,7 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 from ..design.stage import Stage, find_config
 import audio_dsp.dsp.reverb as rvrb
-import numpy as np
+
 
 class Reverb(Stage):
     def __init__(self, max_room_size=1, **kwargs):
@@ -54,4 +54,3 @@ class Reverb(Stage):
             pre gain value
         """
         self.dsp_block.set_pre_gain(pre_gain)
-
