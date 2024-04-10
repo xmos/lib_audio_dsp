@@ -8,6 +8,8 @@ import warnings
 import audio_dsp.dsp.utils as utils
 from copy import deepcopy
 
+from audio_dsp.dsp.types import float32
+
 Q_VERB = 31
 
 
@@ -262,10 +264,14 @@ class reverb_room(dspg.dsp_block):
         self.wet = utils.db2gain(wet_gain_db)
         # when pregain changes, keep wet level the same
         self.wet *= 0.015 / self.pregain
-        self.wet_int = utils.int32((self.wet * 2**Q_VERB) - 1)
+        self.wet_int = utils.db2gain_f32(wet_gain_db)
+        self.wet_int *= float32(0.015) / float32(self.pregain)
+        self.wet_int = (self.wet_int * float32(2**Q_VERB)).as_int32() - 1
 
         self.dry = utils.db2gain(dry_gain_db)
-        self.dry_int = utils.int32((self.dry * 2**Q_VERB) - 1)
+        # use float 32 maths to match C
+        self.dry_int = utils.db2gain_f32(dry_gain_db)
+        self.dry_int = (self.dry_int * float32(2**Q_VERB)).as_int32() - 1
 
         if room_size > 1 or room_size < 0:
             raise ValueError(

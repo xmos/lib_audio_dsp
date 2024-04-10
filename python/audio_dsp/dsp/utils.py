@@ -5,6 +5,8 @@ import scipy.signal as spsig
 import math
 import warnings
 
+from audio_dsp.dsp.types import float32
+
 FLT_MIN = np.finfo(float).tiny
 
 
@@ -24,6 +26,11 @@ def db_pow(input):
 
 def db2gain(input):
     out = 10 ** (input / 20)
+    return out
+
+
+def db2gain_f32(input):
+    out = float32(10) ** (float32(input) / float32(20))
     return out
 
 
