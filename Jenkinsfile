@@ -136,7 +136,12 @@ pipeline {
               }
             } // test drc
           }
-        }
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
+        } // Build and test
         stage ('Build & Test 2') {
           agent {
             label 'linux&&x86_64'
@@ -237,7 +242,7 @@ pipeline {
               xcoreCleanSandbox()
             }
           }
-        } // Build and test
+        } // Build and test 2
 
         stage('Style and package') {
           agent {
