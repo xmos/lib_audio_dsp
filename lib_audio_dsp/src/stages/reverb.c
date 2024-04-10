@@ -58,9 +58,8 @@ void reverb_init(module_instance_t* instance,
 void reverb_process(int32_t **input, int32_t **output, void *app_data_state)
 {
     reverb_state_t *state = app_data_state;
-    int i = 0;
-    int32_t *in = input[i];
-    int32_t *out = output[i];
+    int32_t *in = input[0];
+    int32_t *out = output[0];
     int j = 0;
     do
     {
