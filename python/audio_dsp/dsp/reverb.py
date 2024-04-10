@@ -101,7 +101,7 @@ class allpass_fv(dspg.dsp_block):
         Input should be scaled with 0dB = 2**Q_SIG.
 
         """
-        #assert isinstance(sample_int, int), "Input sample must be an integer"
+        # assert isinstance(sample_int, int), "Input sample must be an integer"
 
         buff_out = self._buffer_int[self._buffer_idx]
 
@@ -188,7 +188,7 @@ class comb_fv(dspg.dsp_block):
         Input should be scaled with 0dB = 2**Q_SIG.
 
         """
-        #assert isinstance(sample_int, int), "Input sample must be an integer"
+        # assert isinstance(sample_int, int), "Input sample must be an integer"
 
         output = self._buffer_int[self._buffer_idx]
 
@@ -222,7 +222,7 @@ class reverb_room(dspg.dsp_block):
         dry_gain_db=-1,
         pregain=0.015,
         Q_sig=dspg.Q_SIG,
-        **kwargs
+        **kwargs,
     ):
         """A room reverb effect based on Freeverb by Jezar at
         Dreampoint.
@@ -330,7 +330,7 @@ class reverb_room(dspg.dsp_block):
         pre_gain : float
             pre gain value.
         """
-        self.pregain = pregain
+        self.pregain = pre_gain
         self.pregain_int = utils.int32(self.pregain * 2**Q_VERB)
         # when pregain changes, keep wet level the same
         self.wet *= 0.015 / self.pregain
