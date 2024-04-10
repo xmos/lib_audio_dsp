@@ -25,7 +25,6 @@ void reverb_init(module_instance_t* instance,
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    uint32_t n_chans = n_inputs;
     float fs = config->sampling_freq;
     float max_room_size = config->max_room_size;
 
@@ -50,7 +49,7 @@ void reverb_init(module_instance_t* instance,
     uint8_t *reverb_heap = adsp_bump_allocator_malloc(allocator, sz);
     memset(reverb_heap, 0, sz);
 
-    state->reverb_room = adsp_reverb_room_init(n_chans, fs,
+    state->reverb_room = adsp_reverb_room_init(fs,
                                 max_room_size, room_size,
                                 decay, damping, wet_gain,
                                 dry_gain, pregain,
@@ -67,7 +66,7 @@ void reverb_process(int32_t **input, int32_t **output, void *app_data_state)
         int j = 0;
         do
         {
-            *out++ = adsp_reverb_room(&state->reverb_room, (*in++), i);
+            *out++ = adsp_reverb_room(&state->reverb_room, (*in++));
         } while (++j < state->frame_size);
     } while (++i < state->n_outputs);
 }
@@ -81,12 +80,12 @@ void reverb_control(void *module_state, module_control_t *control)
 
     if(control->config_rw_state == config_write_pending)
     {
-        state->reverb_room.channel[0].wet_gain = config->wet_gain; // Only setting the wet gain supported for now
+        state->reverb_room.wet_gain = config->wet_gain; // Only setting the wet gain supported for now
         control->config_rw_state = config_none_pending;
     }
     else if(control->config_rw_state == config_read_pending)
     {
-        config->wet_gain = state->reverb_room.channel[0].wet_gain; // wet_gain, being the only writable parameter is expected to change
+        config->wet_gain = state->reverb_room.wet_gain; // wet_gain, being the only writable parameter is expected to change
         control->config_rw_state = config_read_updated;
     }
     else {

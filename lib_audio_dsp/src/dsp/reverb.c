@@ -9,11 +9,22 @@
 #include "dsp/reverb.h"
 #include "dsp/_helpers/generic_utils.h"
 
+#define DEFAULT_COMB_LENS                              \
+    {                                                  \
+        1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617 \
+    }
+#define DEFAULT_AP_LENS    \
+    {                      \
+        556, 441, 341, 225 \
+    }
+
 #define DBTOGAIN(x) (powf(10, (x / 20.0)))
 #define GAINTODB(x) (log10f(x) * 20.0)
 #define TWO_TO_31_MINUS_1 2147483647
-// Fills the whole array at once. Please provide exactly enough literals.
-#define SETARR_CONST(arr, fill) memcpy(arr, (const int[])fill, sizeof(arr))
+
+#define Q_RV 31
+#define DEFAULT_PREGAIN 0.015f
+#define DEFAULT_AP_FEEDBACK 0.5
 
 static inline int32_t scale_sat_int64_to_int32_floor(int32_t ah,
                                                      int32_t al,
@@ -51,7 +62,14 @@ static inline int32_t scale_sat_int64_to_int32_floor(int32_t ah,
  *
  */
 
-mem_manager_t mem_manager_init(
+typedef struct
+{
+    void *heap_start;
+    uint32_t num_bytes;
+    uint32_t allocated_bytes;
+} mem_manager_t;
+
+static inline mem_manager_t mem_manager_init(
     void *heap_address,
     uint32_t number_of_bytes)
 {
@@ -82,7 +100,7 @@ static inline void *mem_manager_alloc(mem_manager_t *mem, size_t size)
  *
  */
 
-allpass_fv_t allpass_fv_init(
+static inline allpass_fv_t allpass_fv_init(
     uint32_t max_delay,
     uint32_t starting_delay,
     int32_t feedback_gain,
@@ -152,7 +170,7 @@ int32_t allpass_fv(allpass_fv_t *ap, int32_t new_sample)
  *
  */
 
-comb_fv_t comb_fv_init(
+static inline comb_fv_t comb_fv_init(
     uint32_t max_delay,
     uint32_t starting_delay,
     int32_t feedback_gain,
@@ -191,7 +209,7 @@ static inline void comb_fv_reset_state(comb_fv_t *comb)
     comb->filterstore = 0;
 }
 
-int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
+static inline int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
 {
     int32_t ah = 0, al = 0, shift = Q_RV;
     int32_t fstore = comb->filterstore, d1 = comb->damp_1, d2 = comb->damp_2;
@@ -241,8 +259,8 @@ int32_t adsp_reverb_calc_wet_gain(float wet_gain_db, float pregain)
 {
     xassert(wet_gain_db > MIN_WET_GAIN_DB && wet_gain_db <= MAX_WET_GAIN_DB);
     xassert(pregain > 4.66e-10 && pregain < 1);
-    int32_t wet = Q(Q_RV)(DBTOGAIN(wet_gain_db));// *
-                          //(DEFAULT_PREGAIN / pregain));
+    int32_t wet = Q(Q_RV)(DBTOGAIN(wet_gain_db)); // *
+                                                  //(DEFAULT_PREGAIN / pregain));
     return wet;
 }
 
@@ -260,7 +278,6 @@ int32_t adsp_reverb_calc_dry_gain(float dry_gain_db)
  */
 
 reverb_room_t adsp_reverb_room_init(
-    uint32_t n_chans,
     float fs,
     float max_room_size,
     float room_size,
@@ -271,8 +288,6 @@ reverb_room_t adsp_reverb_room_init(
     float pregain,
     void *reverb_heap)
 {
-    // Module currently only supports mono operation
-    xassert(n_chans == 1);
     // max_room_size should really be below 4 for reasons of good taste
     xassert(max_room_size > 0 && max_room_size <= MAX_ROOM_SIZE);
     // For larger rooms, increase max_room_size. Don't forget to also increase
@@ -298,124 +313,109 @@ reverb_room_t adsp_reverb_room_init(
     // Scale the wet gain; when pregain changes, overall wet gain shouldn't
     const float rv_scale_fac = RV_SCALE(fs, max_room_size);
 
-    rv.n_chans = n_chans;
-    rv.buffer_length = RV_HEAP_SZ(fs, max_room_size) / sizeof(int32_t);
-    for (int ch = 0; ch < n_chans; ch++)
-    {
-        rv.channel[ch].room_size = Q30(room_size);
-        rv.channel[ch].dry_gain = dry_gain;
-        rv.channel[ch].wet_gain = wet_gain;
-        rv.channel[ch].pre_gain = Q(Q_RV)(pregain);
+    rv.total_buffer_length = RV_HEAP_SZ(fs, max_room_size) / sizeof(int32_t);
+    rv.room_size = Q30(room_size);
+    rv.dry_gain = dry_gain;
+    rv.wet_gain = wet_gain;
+    rv.pre_gain = Q(Q_RV)(pregain);
 
-        SETARR_CONST(rv.channel[ch].comb_lengths, DEFAULT_COMB_LENS);
-        for (int i = 0; i < N_COMBS; i++)
-        {
-            // Scale maximum lengths by the scale factor (fs/44100 * max_room)
-            rv.channel[ch].comb_lengths[i] *= rv_scale_fac;
-            rv.channel[ch].combs[i] = comb_fv_init(
-                rv.channel[ch].comb_lengths[i],
-                rv.channel[ch].comb_lengths[i] * room_size, // < max_delay
-                feedback_int,
-                damping_int,
-                &memory_manager);
-        }
-        SETARR_CONST(rv.channel[ch].ap_lengths, DEFAULT_AP_LENS);
-        for (int i = 0; i < N_APS; i++)
-        {
-            // Scale maximum lengths by the scale factor (fs/44100 * max_room)
-            rv.channel[ch].ap_lengths[i] *= rv_scale_fac;
-            rv.channel[ch].allpasses[i] = allpass_fv_init(
-                rv.channel[ch].ap_lengths[i],
-                rv.channel[ch].ap_lengths[i] * room_size,
-                Q(Q_RV)(0.5),
-                &memory_manager);
-        }
+    int32_t comb_lengths[8] = DEFAULT_COMB_LENS;
+    int32_t ap_lengths[4] = DEFAULT_AP_LENS;
+    for (int i = 0; i < N_COMBS; i++)
+    {
+        // Scale maximum lengths by the scale factor (fs/44100 * max_room)
+        comb_lengths[i] *= rv_scale_fac;
+        rv.combs[i] = comb_fv_init(
+            comb_lengths[i],
+            comb_lengths[i] * room_size, // < max_delay
+            feedback_int,
+            damping_int,
+            &memory_manager);
+    }
+    for (int i = 0; i < N_APS; i++)
+    {
+        // Scale maximum lengths by the scale factor (fs/44100 * max_room)
+        ap_lengths[i] *= rv_scale_fac;
+        rv.allpasses[i] = allpass_fv_init(
+            ap_lengths[i],
+            ap_lengths[i] * room_size,
+            Q(Q_RV)(DEFAULT_AP_FEEDBACK),
+            &memory_manager);
     }
     return rv;
 }
 
-void adsp_reverb_room_reset_state(reverb_room_t *reverb_unit)
+void adsp_reverb_room_reset_state(reverb_room_t *rv)
 {
-    for (int ch = 0; ch < reverb_unit->n_chans; ch++)
+    for (int comb = 0; comb < N_COMBS; comb++)
     {
-        for (int comb = 0; comb < N_COMBS; comb++)
-        {
-            comb_fv_reset_state(&reverb_unit->channel[ch].combs[comb]);
-        }
-        for (int ap = 0; ap < N_APS; ap++)
-        {
-            allpass_fv_reset_state(&reverb_unit->channel[ch].allpasses[ap]);
-        }
+        comb_fv_reset_state(&rv->combs[comb]);
+    }
+    for (int ap = 0; ap < N_APS; ap++)
+    {
+        allpass_fv_reset_state(&rv->allpasses[ap]);
     }
 }
 
-uint32_t adsp_reverb_room_get_buffer_lens(reverb_room_t *reverb_unit)
+uint32_t adsp_reverb_room_get_buffer_lens(reverb_room_t *rv)
 {
-    return reverb_unit->buffer_length;
+    return rv->total_buffer_length;
 }
 
-void adsp_reverb_room_set_room_size(reverb_room_t *reverb_unit,
+void adsp_reverb_room_set_room_size(reverb_room_t *rv,
                                     float new_room_size)
 {
     int32_t ah = 0, al = 0, zero = 0, shift = 30;
     // For larger rooms, increase max_room_size
     xassert(new_room_size > 0 && new_room_size <= 1);
     int32_t room_size_int = Q30(new_room_size);
-    for (int ch = 0; ch < reverb_unit->n_chans; ch++)
+    rv->room_size = room_size_int;
+    for (int comb = 0; comb < N_COMBS; comb++)
     {
-        reverb_unit->channel[ch].room_size = room_size_int;
-        for (int comb = 0; comb < N_COMBS; comb++)
-        {
-            // Do chan.comb_lengths[comb] * new_room_size in Q30
-            int32_t l = reverb_unit->channel[ch].comb_lengths[comb];
-            asm volatile("lmul %0, %1, %2, %3, %4, %5"
-                         : "=r"(ah), "=r"(al)
-                         : "r"(room_size_int), "r"(l), "r"(zero), "r"(zero));
-            asm volatile("lextract %0, %1, %2, %3, 32"
-                         : "=r"(ah)
-                         : "r"(ah), "r"(al), "r"(shift));
-            comb_fv_set_delay(&reverb_unit->channel[ch].combs[comb], ah);
-        }
-        for (int ap = 0; ap < N_APS; ap++)
-        {
-            // Do chan.ap_lengths[ap] * new_room_size in Q30
-            int32_t l = reverb_unit->channel[ch].ap_lengths[ap];
-            asm volatile("lmul %0, %1, %2, %3, %4, %5"
-                         : "=r"(ah), "=r"(al)
-                         : "r"(room_size_int), "r"(l), "r"(zero), "r"(zero));
-            asm volatile("lextract %0, %1, %2, %3, 32"
-                         : "=r"(ah)
-                         : "r"(ah), "r"(al), "r"(shift));
-            allpass_fv_set_delay(&reverb_unit->channel[ch].allpasses[ap], ah);
-        }
+        // Do chan.comb_lengths[comb] * new_room_size in Q30
+        int32_t l = rv->combs[comb].max_delay;
+        asm volatile("lmul %0, %1, %2, %3, %4, %5"
+                     : "=r"(ah), "=r"(al)
+                     : "r"(room_size_int), "r"(l), "r"(zero), "r"(zero));
+        asm volatile("lextract %0, %1, %2, %3, 32"
+                     : "=r"(ah)
+                     : "r"(ah), "r"(al), "r"(shift));
+        comb_fv_set_delay(&rv->combs[comb], ah);
+    }
+    for (int ap = 0; ap < N_APS; ap++)
+    {
+        // Do chan.ap_lengths[ap] * new_room_size in Q30
+        int32_t l = rv->allpasses[ap].max_delay;
+        asm volatile("lmul %0, %1, %2, %3, %4, %5"
+                     : "=r"(ah), "=r"(al)
+                     : "r"(room_size_int), "r"(l), "r"(zero), "r"(zero));
+        asm volatile("lextract %0, %1, %2, %3, 32"
+                     : "=r"(ah)
+                     : "r"(ah), "r"(al), "r"(shift));
+        allpass_fv_set_delay(&rv->allpasses[ap], ah);
     }
 }
 
 int32_t adsp_reverb_room(
-    reverb_room_t *reverb_unit,
-    int32_t new_samp,
-    uint32_t channel)
+    reverb_room_t *rv,
+    int32_t new_samp)
 {
-    // We only support mono
-    xassert(channel == 0);
-    reverb_room_chan_t *chan = &(reverb_unit->channel[0]);
-
-    int32_t reverb_input = apply_gain_q31(new_samp, chan->pre_gain);
+    int32_t reverb_input = apply_gain_q31(new_samp, rv->pre_gain);
     int32_t output = 0;
     int64_t acc = 0;
     for (int comb = 0; comb < N_COMBS; comb++)
     {
-        acc += comb_fv(&(chan->combs[comb]), reverb_input);
+        acc += comb_fv(&(rv->combs[comb]), reverb_input);
     }
     output = adsp_saturate_32b(acc);
 
     for (int ap = 0; ap < N_APS; ap++)
     {
-        acc = allpass_fv(&(chan->allpasses[ap]), output);
+        acc = allpass_fv(&(rv->allpasses[ap]), output);
         output = (int32_t)acc; // We do not saturate here!
     }
-    acc = apply_gain_q31(output, chan->wet_gain);
-    acc += apply_gain_q31(new_samp, chan->dry_gain);
+    acc = apply_gain_q31(output, rv->wet_gain);
+    acc += apply_gain_q31(new_samp, rv->dry_gain);
     output = adsp_saturate_32b(acc);
 
     return output;
