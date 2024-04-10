@@ -171,7 +171,7 @@ pipeline {
                       withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
                         script {
                           [
-                          // "test/reverb",
+                          "test/reverb",
                           "test/signal_chain"
                           ].each {
                             sh "cmake -S ${it} -B ${it}/build"
