@@ -218,7 +218,7 @@ class compressor_rms_stereo(compressor_limiter_stereo_base):
     The threshold sets the value above which compression occurs. The
     ratio sets how much the signal is compressed. A ratio of 1 results
     in no compression, while a ratio of infinity results in the same
-    behaviour as a limiter. The attack time sets how fast the comressor
+    behaviour as a limiter. The attack time sets how fast the compressor
     starts compressing. The release time sets how long the signal takes
     to ramp up to it's original level after the envelope is below the
     threshold.

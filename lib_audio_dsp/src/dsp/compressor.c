@@ -6,17 +6,6 @@
 
 #include <math.h>
 
-static inline int32_t from_float_pos(float val) {
-  // assumes that val is positive
-  int32_t sign, exp, mant;
-  asm("fsexp %0, %1, %2": "=r" (sign), "=r" (exp): "r" (val));
-  asm("fmant %0, %1": "=r" (mant): "r" (val));
-  // mant to SIG_EXP
-  right_shift_t shr = SIG_EXP - exp + 23;
-  mant >>= shr;
-  return mant;
-}
-
 compressor_t adsp_compressor_rms_init(
   float fs,
   float threshold_db,

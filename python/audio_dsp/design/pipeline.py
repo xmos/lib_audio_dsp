@@ -220,7 +220,7 @@ class Pipeline:
     @callonce
     def generate_pipeline_hash(self, threads: list, edges: list):
         """
-        Generate a hash unique to the pipeline and save it in the 'chaecksum' control field of the
+        Generate a hash unique to the pipeline and save it in the 'checksum' control field of the
         pipeline stage.
 
         Parameters
