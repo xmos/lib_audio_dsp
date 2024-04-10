@@ -273,7 +273,7 @@ reverb_room_t adsp_reverb_room_init(
     // Module currently only supports mono operation
     xassert(n_chans == 1);
     // max_room_size should really be below 4 for reasons of good taste
-    xassert(max_room_size > 0 && max_room_size < 4);
+    xassert(max_room_size > 0 && max_room_size <= MAX_ROOM_SIZE);
     // For larger rooms, increase max_room_size. Don't forget to also increase
     // the size of reverb_heap
     xassert(room_size >= 0 && room_size <= 1);

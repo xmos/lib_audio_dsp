@@ -14,7 +14,7 @@ typedef struct
     int frame_size;
 }reverb_state_t;
 
-#define REVERB_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (RV_HEAP_SZ(48000, 1.0f))
+#define REVERB_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (RV_HEAP_SZ(MAX_SAMPLING_FREQ, MAX_ROOM_SIZE))
 
 void reverb_init(module_instance_t* instance,
                  adsp_bump_allocator_t* allocator,
