@@ -208,7 +208,7 @@ pipeline {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/reverb") {
                           runPytest("test_reverb_python.py --dist worksteal")
-                          // runPytest("test_reverb_c.py --dist worksteal")
+                          runPytest("test_reverb_c.py --dist worksteal")
                         }
                       }
                     }
