@@ -261,17 +261,24 @@ class reverb_room(dspg.dsp_block):
         self.pregain = pregain
         self.pregain_int = utils.int32(self.pregain * 2**Q_VERB)
 
+        # care needs to be taken converting values from float32 to int32
+        # as there are not enough bits to match 2**31-1 in f32, hence
+        # the float32 value must be less than int32_max_as_f32
+        int32_max_as_f32 = float32(np.nextafter(2**Q_VERB, 0, dtype=np.float32))
+
         self.wet = utils.db2gain(wet_gain_db)
         # when pregain changes, keep wet level the same
         self.wet *= 0.015 / self.pregain
         self.wet_int = utils.db2gain_f32(wet_gain_db)
         self.wet_int *= float32(0.015) / float32(self.pregain)
-        self.wet_int = (self.wet_int * float32(2**Q_VERB)).as_int32() - 1
+        self.wet_int = min(self.wet_int * float32(2**Q_VERB), int32_max_as_f32)
+        self.wet_int = (self.wet_int).as_int32()
 
         self.dry = utils.db2gain(dry_gain_db)
         # use float 32 maths to match C
         self.dry_int = utils.db2gain_f32(dry_gain_db)
-        self.dry_int = (self.dry_int * float32(2**Q_VERB)).as_int32() - 1
+        self.dry_int = min(self.dry_int * float32(2**Q_VERB), int32_max_as_f32)
+        self.dry_int = (self.dry_int).as_int32()
 
         if room_size > 1 or room_size < 0:
             raise ValueError(
