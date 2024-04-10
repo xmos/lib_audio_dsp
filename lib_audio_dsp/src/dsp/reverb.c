@@ -11,11 +11,7 @@
 
 #define DBTOGAIN(x) (powf(10, (x / 20.0)))
 #define GAINTODB(x) (log10f(x) * 20.0)
-#define TWO_TO_32 4294967296
-#define TWO_TO_30 1073741824
 #define TWO_TO_31_MINUS_1 2147483647
-#define TWO_TO_29 536870912
-#define TWO_TO_27 134217728
 // Fills the whole array at once. Please provide exactly enough literals.
 #define SETARR_CONST(arr, fill) memcpy(arr, (const int[])fill, sizeof(arr))
 
@@ -23,14 +19,14 @@ static inline int32_t scale_sat_int64_to_int32_floor(int32_t ah,
                                                      int32_t al,
                                                      int32_t shift)
 {
-    int32_t big_q = TWO_TO_31_MINUS_1, small_q = 1, shift_minus_one = shift - 1;
+    int32_t big_q = TWO_TO_31_MINUS_1, one = 1, shift_minus_one = shift - 1;
 
     // If ah:al < 0, add just under 1 (represented in Q_RV)
     if (ah < 0) // ah is sign extended, so this test is sufficient
     {
         asm volatile("maccs %0, %1, %2, %3"
                      : "=r"(ah), "=r"(al)
-                     : "r"(small_q), "r"(big_q), "0"(ah), "1"(al));
+                     : "r"(one), "r"(big_q), "0"(ah), "1"(al));
     }
     // Saturate ah:al. Implements the following:
     // if (val > (2 ** (31 + Q_RV) - 1))

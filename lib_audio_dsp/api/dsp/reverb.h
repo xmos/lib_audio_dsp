@@ -21,7 +21,7 @@
 #define SUM_DEFAULT_BUF_LENS (SUM_DEFAULT_COMB_LENS + SUM_DEFAULT_AP_LENS)
 
 #define MAX_SAMPLING_FREQ (48000.0f) // Max supported sampling freq
-#define MAX_ROOM_SIZE (4.0f) // Max allowed room size
+#define MAX_ROOM_SIZE (4.0f)         // Max allowed room size
 
 #define RV_SCALE(FS, MAX_ROOM_SZ) (((FS) / 44100.0f) * (MAX_ROOM_SZ))
 

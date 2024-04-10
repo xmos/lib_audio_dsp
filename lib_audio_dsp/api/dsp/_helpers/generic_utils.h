@@ -9,7 +9,7 @@
 #define Q_alpha (31)
 
 /**
- * @brief Saturating multiply by a Q31 gain. Adds 0.5 (in Q31) to result.
+ * @brief Saturating rounding multiply by a Q31 gain.
  * 
  * @param samp Sample to be multipled.
  * @param gain Gain to apply; assumes a Q31 gain.
