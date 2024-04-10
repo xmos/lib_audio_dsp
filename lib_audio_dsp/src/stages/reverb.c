@@ -39,13 +39,12 @@ void reverb_init(module_instance_t* instance,
     // #define REVERB_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (RV_HEAP_SZ(48000, 1.0f)), so ensure the fs and max_room_size
     // we get at initialisation match.
 
-    xassert(fs <= (float)MAX_SAMPLING_FREQ);
-    xassert(max_room_size <= (float)MAX_ROOM_SIZE);
+    xassert(fs <= (float)ADSP_RV_MAX_SAMPLING_FREQ);
+    xassert(max_room_size <= (float)ADSP_RV_MAX_ROOM_SIZE);
 
     xassert(n_inputs == 1); // Currently support only 1 channel reverb
-    xassert(n_inputs <= MAX_CHANS);
 
-    uint32_t sz = RV_HEAP_SZ(fs, max_room_size);
+    uint32_t sz = ADSP_RV_HEAP_SZ(fs, max_room_size);
     uint8_t *reverb_heap = adsp_bump_allocator_malloc(allocator, sz);
     memset(reverb_heap, 0, sz);
 

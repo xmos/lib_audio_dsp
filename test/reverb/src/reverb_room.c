@@ -42,47 +42,12 @@ int main()
     int in_len = ftell(in) / sizeof(int32_t);
     fseek(in, 0, SEEK_SET);
 
-    uint8_t reverb_heap[RV_HEAP_SZ(FS, MAX_ROOM)] = {0};
+    uint8_t reverb_heap[ADSP_RV_HEAP_SZ(FS, MAX_ROOM)] = {0};
     reverb_room_t reverb = adsp_reverb_room_init(fs,
                                                  max_room_size, room_size,
                                                  decay, damping, wet_gain,
                                                  dry_gain, pregain,
                                                  reverb_heap);
-
-#if (PRINT_INIT != 0)
-    printf("Wet (Q31): %ld\n", reverb.wet_gain);
-    printf("Dry (Q31): %ld\n", reverb.dry_gain);
-    printf("Pre (Q31): %ld\n", reverb.pre_gain);
-    printf("Comb Lens: ");
-    for (int i = 0; i < N_COMBS; i++)
-    {
-        printf("%lu, ", reverb.combs[i].max_delay);
-    }
-    printf("\n");
-    printf("AP Lens: ");
-    for (int i = 0; i < N_APS; i++)
-    {
-        printf("%lu, ", reverb.allpasses[i].max_delay);
-    }
-    printf("\n");
-    for (int i = 0; i < N_COMBS; i++)
-    {
-        printf("Comb %d:\n", i);
-        printf("\tMax Delay: %lu\n", reverb.combs[i].max_delay);
-        printf("\tDelay: %lu\n", reverb.combs[i].delay);
-        printf("\tBuffer Idx: %lu\n", reverb.combs[i].buffer_idx);
-        printf("\tFB (Q31): %ld\n", reverb.combs[i].feedback);
-        printf("\tDamp 1 (Q31): %ld\n", reverb.combs[i].damp_1);
-        printf("\tDamp 2 (Q31): %ld\n", reverb.combs[i].damp_2);
-    }
-    for (int i = 0; i < N_APS; i++)
-    {
-        printf("AP %d:\n", i);
-        printf("\tMax Delay: %lu\n", reverb.allpasses[i].max_delay);
-        printf("\tDelay: %lu\n", reverb.allpasses[i].delay);
-        printf("\tFB (Q31): %ld\n", reverb.allpasses[i].feedback);
-    }
-#endif
 
     for (int i = 0; i < in_len; i++)
     {

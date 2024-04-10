@@ -6,26 +6,26 @@
 #include <stdint.h>
 #include <xmath/types.h>
 
-#define MAX_SAMPLING_FREQ (48000.0f) // Max supported sampling freq
-#define MAX_ROOM_SIZE (4.0f)         // Max supported room size
+#define ADSP_RV_MAX_SAMPLING_FREQ (48000.0f) // Max supported sampling freq
+#define ADSP_RV_MAX_ROOM_SIZE (4.0f)         // Max supported room size
 
-#define MIN_WET_GAIN_DB (-186.0)
-#define MAX_WET_GAIN_DB (0)
-#define MIN_DRY_GAIN_DB (-186.0)
-#define MAX_DRY_GAIN_DB (0)
+#define ADSP_RV_MIN_WET_GAIN_DB (-186.0)
+#define ADSP_RV_MAX_WET_GAIN_DB (0)
+#define ADSP_RV_MIN_DRY_GAIN_DB (-186.0)
+#define ADSP_RV_MAX_DRY_GAIN_DB (0)
 
-#define RV_SCALE(FS, MAX_ROOM_SZ) (((FS) / 44100.0f) * (MAX_ROOM_SZ))
+#define ADSP_RV_SCALE(FS, MAX_ROOM_SZ) (((FS) / 44100.0f) * (MAX_ROOM_SZ))
 
-#define SUM_DEFAULT_COMB_LENS 11024
-#define SUM_DEFAULT_AP_LENS 1563
-#define SUM_DEFAULT_BUF_LENS (SUM_DEFAULT_COMB_LENS + SUM_DEFAULT_AP_LENS)
-#define RV_HEAP_SZ(FS, MAX_ROOM_SZ) ((uint32_t)(sizeof(int32_t) *           \
-                                                RV_SCALE(FS, MAX_ROOM_SZ) * \
-                                                SUM_DEFAULT_BUF_LENS))
+#define ADSP_RV_SUM_DEFAULT_COMB_LENS 11024
+#define ADSP_RV_SUM_DEFAULT_AP_LENS 1563
+#define ADSP_RV_SUM_DEFAULT_BUF_LENS (ADSP_RV_SUM_DEFAULT_COMB_LENS + \
+                                      ADSP_RV_SUM_DEFAULT_AP_LENS)
+#define ADSP_RV_HEAP_SZ(FS, ROOM_SZ) ((uint32_t)(sizeof(int32_t) *            \
+                                                 ADSP_RV_SCALE(FS, ROOM_SZ) * \
+                                                 ADSP_RV_SUM_DEFAULT_BUF_LENS))
 
-#define N_COMBS 8
-#define N_APS 4
-#define MAX_CHANS 1
+#define ADSP_RV_N_COMBS 8
+#define ADSP_RV_N_APS 4
 
 typedef struct
 {
@@ -55,8 +55,8 @@ typedef struct
     int32_t wet_gain;
     int32_t dry_gain;
     int32_t pre_gain;
-    comb_fv_t combs[N_COMBS];
-    allpass_fv_t allpasses[N_APS];
+    comb_fv_t combs[ADSP_RV_N_COMBS];
+    allpass_fv_t allpasses[ADSP_RV_N_APS];
 } reverb_room_t;
 
 reverb_room_t adsp_reverb_room_init(
