@@ -44,7 +44,7 @@ static inline int32_t scale_sat_int64_to_int32_floor(int32_t ah,
     //     val = 2 ** (31 + Q_RV) - 1
     // else if (val < -(2 ** (31 + Q_RV)))
     //     val = -(2 ** (31 + Q_RV))
-    // Note the use of 31, rather than 32 - hence here we subtract 1 from Q_RV.
+    // Note the use of 31, rather than 32 - hence here we subtract 1 from shift.
     asm volatile("lsats %0, %1, %2"
                  : "=r"(ah), "=r"(al)
                  : "r"(shift_minus_one), "0"(ah), "1"(al));
