@@ -24,6 +24,7 @@
 #define MAX_ROOM_SIZE (4.0f) // Max allowed room size
 
 #define RV_SCALE(FS, MAX_ROOM_SZ) (((FS) / 44100.0f) * (MAX_ROOM_SZ))
+
 #define RV_HEAP_SZ(FS, MAX_ROOM_SZ) ((uint32_t)(sizeof(int32_t) *           \
                                                 RV_SCALE(FS, MAX_ROOM_SZ) * \
                                                 SUM_DEFAULT_BUF_LENS))

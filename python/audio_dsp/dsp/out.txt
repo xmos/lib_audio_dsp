@@ -1,0 +1,77 @@
+Wet (Q31): 1913946859
+Dry (Q31): 1913946816
+Pre (Q31): 32212254
+Comb Lens: 1214, 1293, 1389, 1475, 1547, 1622, 1694, 1760, 
+AP Lens: 605, 480, 371, 277, 
+Comb 0:
+	Max Delay: 1214
+	Delay: 1214
+	Buffer Idx: 0
+	FB (Q31): 2104533975
+	Damp 1 (Q31): 2147483647
+	Damp 2 (Q31): 1
+Comb 1:
+	Max Delay: 1293
+	Delay: 1293
+	Buffer Idx: 0
+	FB (Q31): 2104533975
+	Damp 1 (Q31): 2147483647
+	Damp 2 (Q31): 1
+Comb 2:
+	Max Delay: 1389
+	Delay: 1389
+	Buffer Idx: 0
+	FB (Q31): 2104533975
+	Damp 1 (Q31): 2147483647
+	Damp 2 (Q31): 1
+Comb 3:
+	Max Delay: 1475
+	Delay: 1475
+	Buffer Idx: 0
+	FB (Q31): 2104533975
+	Damp 1 (Q31): 2147483647
+	Damp 2 (Q31): 1
+Comb 4:
+	Max Delay: 1547
+	Delay: 1547
+	Buffer Idx: 0
+	FB (Q31): 2104533975
+	Damp 1 (Q31): 2147483647
+	Damp 2 (Q31): 1
+Comb 5:
+	Max Delay: 1622
+	Delay: 1622
+	Buffer Idx: 0
+	FB (Q31): 2104533975
+	Damp 1 (Q31): 2147483647
+	Damp 2 (Q31): 1
+Comb 6:
+	Max Delay: 1694
+	Delay: 1694
+	Buffer Idx: 0
+	FB (Q31): 2104533975
+	Damp 1 (Q31): 2147483647
+	Damp 2 (Q31): 1
+Comb 7:
+	Max Delay: 1760
+	Delay: 1760
+	Buffer Idx: 0
+	FB (Q31): 2104533975
+	Damp 1 (Q31): 2147483647
+	Damp 2 (Q31): 1
+AP 0:
+	Max Delay: 605
+	Delay: 605
+	FB (Q31): 1073741824
+AP 1:
+	Max Delay: 480
+	Delay: 480
+	FB (Q31): 1073741824
+AP 2:
+	Max Delay: 371
+	Delay: 371
+	FB (Q31): 1073741824
+AP 3:
+	Max Delay: 277
+	Delay: 277
+	FB (Q31): 1073741824

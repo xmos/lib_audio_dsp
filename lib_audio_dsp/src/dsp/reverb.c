@@ -11,6 +11,11 @@
 
 #define DBTOGAIN(x) (pow(10, (x / 20.0)))
 #define GAINTODB(x) (log10(x) * 20.0)
+#define TWO_TO_32 4294967296
+#define TWO_TO_30 1073741824
+#define TWO_TO_31_MINUS_1 2147483647
+#define TWO_TO_29 536870912
+#define TWO_TO_27 134217728
 // Fills the whole array at once. Please provide exactly enough literals.
 #define SETARR_CONST(arr, fill) memcpy(arr, (const int[])fill, sizeof(arr))
 
@@ -18,14 +23,14 @@ static inline int32_t scale_sat_int64_to_int32_floor(int32_t ah,
                                                      int32_t al,
                                                      int32_t shift)
 {
-    int32_t shift_minus_one = shift - 1, q_max = (1 << shift) - 1, one = 1;
+    int32_t big_q = TWO_TO_31_MINUS_1, small_q = 1, shift_minus_one = shift - 1;
 
     // If ah:al < 0, add just under 1 (represented in Q_RV)
     if (ah < 0) // ah is sign extended, so this test is sufficient
     {
         asm volatile("maccs %0, %1, %2, %3"
                      : "=r"(ah), "=r"(al)
-                     : "r"(q_max), "r"(one), "0"(ah), "1"(al));
+                     : "r"(small_q), "r"(big_q), "0"(ah), "1"(al));
     }
     // Saturate ah:al. Implements the following:
     // if (val > (2 ** (31 + Q_RV) - 1))
@@ -240,8 +245,8 @@ int32_t adsp_reverb_calc_wet_gain(float wet_gain_db, float pregain)
 {
     xassert(wet_gain_db > MIN_WET_GAIN_DB && wet_gain_db <= MAX_WET_GAIN_DB);
     xassert(pregain > 4.66e-10 && pregain < 1);
-    int32_t wet = Q(Q_RV)(DBTOGAIN(wet_gain_db) *
-                        (DEFAULT_PREGAIN / pregain));
+    int32_t wet = Q(Q_RV)(DBTOGAIN(wet_gain_db));// *
+                          //(DEFAULT_PREGAIN / pregain));
     return wet;
 }
 
