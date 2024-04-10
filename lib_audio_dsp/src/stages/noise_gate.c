@@ -92,7 +92,8 @@ void noise_gate_control(void *module_state, module_control_t *control)
         ng_copy_state_to_config(config, state->ng);
         control->config_rw_state = config_read_updated;
     }
-    else {
+    else
+    {
         // nothing to do
     }
 }

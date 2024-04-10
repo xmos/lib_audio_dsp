@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "audio_dsp"
-version = "0.1.0"
+version = "0.2.0"
 description = "An audio DSP library for the xcore"
 authors = [
 ]
@@ -30,4 +30,3 @@ dependencies = [
 
 [tool.ruff]
 line-length = 99
-
