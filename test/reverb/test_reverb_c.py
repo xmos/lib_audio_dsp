@@ -102,4 +102,7 @@ def test_reverb_room(in_signal):
     out_c = get_c_wav(test_dir, "reverb_test.xe")
     shutil.rmtree(test_dir)
 
-    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=(2**-27))
+    # Tolerance here reflects that between powf in C and np.power() in Python
+    # there is a small difference, so dB conversion in Python and in C will
+    # have a subtle error (1 bit of mantissa = 8th bit from bottom of int32).
+    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=3.8e-8)

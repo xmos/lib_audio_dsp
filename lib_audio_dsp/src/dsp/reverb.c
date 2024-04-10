@@ -85,7 +85,7 @@ static inline void *mem_manager_alloc(mem_manager_t *mem, size_t size)
     // The xcore is byte aligned! But some instructions require word aligned
     // or even double-word aligned data to operate correctly. This allocator
     // has no opinions about this - caveat emptor.
-    uint32_t *ret_address = NULL;
+    void *ret_address = NULL;
     if (size <= (mem->num_bytes - mem->allocated_bytes))
     {
         ret_address = mem->heap_start + mem->allocated_bytes;
@@ -142,11 +142,8 @@ int32_t allpass_fv(allpass_fv_t *ap, int32_t new_sample)
     // Do (buf_out - new_sample) and saturate
     int32_t retval = adsp_subtractor(buf_out, new_sample);
 
-    // Do (new_sample << Q_RV) into a double word ah:al
-    /*asm volatile("linsert %0, %1, %2, %3, 32"
-                 : "=r"(ah), "=r"(al)
-                 : "r"(new_sample), "r"(shift));*/
-    int64_t a = (int64_t)new_sample << 31;
+    // Do (new_sample << shift) into a double word ah:al
+    int64_t a = (int64_t)new_sample << shift;
     ah = (int32_t)(a >> 32);
     al = (int32_t)a;
     // Then do ah:al + (buf_out * feedback)

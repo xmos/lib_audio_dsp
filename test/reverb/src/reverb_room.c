@@ -7,6 +7,8 @@
 #include "dsp/adsp.h"
 
 #define PRINT_INIT 0
+#define FS 48000
+#define MAX_ROOM 1.0
 
 FILE *_fopen(char *fname, char *mode)
 {
@@ -21,8 +23,8 @@ FILE *_fopen(char *fname, char *mode)
 
 int main()
 {
-    float const fs = MAX_SAMPLING_FREQ;
-    float const max_room_size = MAX_ROOM_SIZE;
+    float const fs = FS;
+    float const max_room_size = MAX_ROOM;
     float const room_size = 1.0;
     float const decay = 1.0;
     float const damping = 1.0;
@@ -40,7 +42,7 @@ int main()
     int in_len = ftell(in) / sizeof(int32_t);
     fseek(in, 0, SEEK_SET);
 
-    uint8_t reverb_heap[RV_HEAP_SZ(MAX_SAMPLING_FREQ, MAX_ROOM_SIZE)] = {0};
+    uint8_t reverb_heap[RV_HEAP_SZ(FS, MAX_ROOM)] = {0};
     reverb_room_t reverb = adsp_reverb_room_init(fs,
                                                  max_room_size, room_size,
                                                  decay, damping, wet_gain,
