@@ -23,7 +23,6 @@ import numpy as np
 PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
-DEBUG = False
 
 fs = 48000
 channels = 2  # if this changes need to rewrite test signals
@@ -82,14 +81,13 @@ def do_test(p):
     # back to int scaling
     out_py_int = out_py * 2**31
 
-    if DEBUG:
-        for ch in range(pipeline_channels):
-            diff = out_py_int.T[:,ch] - out_data[:, ch]
-            print(f"ch {ch}: max diff {max(abs(diff))}")
-            sol = (~np.equal(out_py_int.T, out_data)).astype(int)
-            indexes = np.flatnonzero(sol)
-            print(f"ch {ch}: {len(indexes)} indexes mismatch")
-            print(f"ch {ch} mismatching indexes = {indexes}")
+    for ch in range(pipeline_channels):
+        diff = out_py_int.T[:,ch] - out_data[:, ch]
+        print(f"ch {ch}: max diff {max(abs(diff))}")
+        sol = (~np.equal(out_py_int.T, out_data)).astype(int)
+        indexes = np.flatnonzero(sol)
+        print(f"ch {ch}: {len(indexes)} indexes mismatch")
+        print(f"ch {ch} mismatching indexes = {indexes}")
 
     np.testing.assert_equal(out_py_int.T, out_data)
 
