@@ -3,8 +3,15 @@
 import numpy as np
 import scipy.signal as spsig
 import math
+import warnings
+
+from audio_dsp.dsp.types import float32
 
 FLT_MIN = np.finfo(float).tiny
+
+
+class OverflowWarning(Warning):
+    pass
 
 
 def db(input):
@@ -19,6 +26,11 @@ def db_pow(input):
 
 def db2gain(input):
     out = 10 ** (input / 20)
+    return out
+
+
+def db2gain_f32(input):
+    out = float32(10) ** (float32(input) / float32(20))
     return out
 
 
@@ -83,12 +95,25 @@ def vpu_mult(x1: int, x2: int):
 def int32_mult_sat_extract(x1: int, x2: int, Q: int):
     y = int64(x1 * x2)
     if y > (2 ** (31 + Q) - 1):
+        warnings.warn("Saturation occured", OverflowWarning)
         y = 2 ** (31 + Q) - 1
     elif y < -(2 ** (31 + Q)):
+        warnings.warn("Saturation occured", OverflowWarning)
         y = -(2 ** (31 + Q))
     y = int32(y >> Q)
 
     return y
+
+
+def saturate_int64_to_int32(x: int):
+    if x > (2**31 - 1):
+        warnings.warn("Saturation occured", OverflowWarning)
+        return 2**31 - 1
+    elif x < -(2**31):
+        warnings.warn("Saturation occured", OverflowWarning)
+        return -(2**31)
+    else:
+        return x
 
 
 def vlmaccr(vect1, vect2, out=0):
