@@ -361,7 +361,7 @@ void adsp_reverb_room_set_room_size(reverb_room_t *rv,
 {
     int32_t ah = 0, al = 0, zero = 0, shift = 30;
     // For larger rooms, increase max_room_size
-    xassert(new_room_size > 0 && new_room_size <= 1);
+    xassert(new_room_size >= 0 && new_room_size <= 1);
     int32_t room_size_int = Q30(new_room_size);
 
     rv->room_size = room_size_int;
