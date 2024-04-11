@@ -27,7 +27,6 @@ void fixed_gain_process(int32_t **input, int32_t **output, void *app_data_state)
             *out++ = adsp_fixed_gain((*in++), state->config.gain);
         } while (++j < state->frame_size);
     } while (++i < state->n_outputs);
-
 }
 
 void fixed_gain_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
@@ -64,5 +63,5 @@ void fixed_gain_control(void *module_state, module_control_t *control)
     else
     {
         // nothing to do.
-    }}
-
+    }
+}

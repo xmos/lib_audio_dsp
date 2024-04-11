@@ -85,5 +85,6 @@ void volume_control_control(void *module_state, module_control_t *control)
     else
     {
         // nothing to do.
-    }}
+    }
+}
 

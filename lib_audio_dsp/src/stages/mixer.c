@@ -57,5 +57,5 @@ void mixer_control(void *module_state, module_control_t *control)
     else
     {
         // nothing to do.
-    }}
-
+    }
+}
