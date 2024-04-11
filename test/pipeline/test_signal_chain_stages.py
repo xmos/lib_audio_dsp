@@ -1,7 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """
-Tests for audio_dsp.stages.signal_chain stages that have a different 
+Tests for audio_dsp.stages.signal_chain stages that have a different
 number of inputs and outputs
 """
 import pytest
@@ -20,8 +20,6 @@ import numpy as np
 PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
-
-fs = 48000
 
 def do_test(p):
     """

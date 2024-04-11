@@ -133,7 +133,7 @@ def test_limiter_c(in_signal, component_name, at, rt, threshold):
   else:
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
-@pytest.mark.parametrize("comp_name", ["compressor_rms", 
+@pytest.mark.parametrize("comp_name", ["compressor_rms",
                                        "noise_suppressor"])
 @pytest.mark.parametrize("at", [0.005])
 @pytest.mark.parametrize("rt", [0.120])
@@ -172,10 +172,6 @@ if __name__ == "__main__":
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
 
-  #test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
-  #test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -10)
-  #test_limiter_c(sig_fl, "limiter_peak", 0.001, 0.1, -10)
-  #test_compressor_c(sig_fl, "noise_suppressor", 0.001, 0.01, -12, -1)
-  #test_compressor_c(sig_fl, "noise_suppressor", 0.001, 0.01, 0, 5)
+  test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
+  test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -10)
   test_compressor_c(sig_fl, "noise_suppressor", 0.001, 0.01, -1, 5)
-  #test_limiter_c(sig_fl, "noise_gate", 0.001, 0.01, 0)
