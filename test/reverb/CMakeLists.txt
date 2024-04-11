@@ -6,7 +6,7 @@ project(reverb_test)
 set(APP_HW_TARGET XCORE-AI-EXPLORER)
 
 set(APP_COMPILER_FLAGS
-    #-O3
+    -O3
     -g
     -report
     -Wall
