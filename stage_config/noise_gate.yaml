@@ -1,0 +1,14 @@
+module:
+  noise_gate:
+    attack_alpha:
+      type: int32_t
+    release_alpha:
+      type: int32_t
+    envelope:
+      type: int32_t
+    threshold:
+      type: int32_t
+    gain:
+      type: int32_t
+includes:
+  - "stages/adsp_module.h"

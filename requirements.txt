@@ -5,4 +5,5 @@ soundfile
 pytest
 pytest-xdist
 git+ssh://git@github.com/xmos/xscope_fileio@v1.2.0
-pyright
+pyright < 2.0
+ruff < 0.4

@@ -54,12 +54,12 @@ def get_c_wav(dir_name, sim = True):
   return sig_fl
 
 
-def run_py(filt, sig_fl):
+def run_py(filt: casc_bq.cascaded_biquads_8, sig_fl):
   out_int = np.zeros(sig_fl.size)
   out_fl = np.zeros(sig_fl.size)
   
   for n in range(sig_fl.size):
-    out_int[n] = filt.process_vpu(sig_fl[n])
+    out_int[n] = filt.process_xcore(sig_fl[n])
 
   sf.write(gen_dir / "sig_py_int.wav", out_int, fs, "PCM_24")
   filt.reset_state()
@@ -113,6 +113,7 @@ def test_peq_c(in_signal, n_filters, seed):
                    ['bypass'],
                    ['gain', -2]]
   random.Random(seed**n_filters*int(fs/1000)).shuffle(filter_spec)
+  filter_spec = filter_spec[:n_filters]
   peq = casc_bq.parametric_eq_8band(fs, 1, filter_spec)
 
   filter_name = f"peq_{n_filters}_{seed}"

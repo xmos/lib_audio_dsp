@@ -2,10 +2,8 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 from .composite_stage import CompositeStage
-from .stage import Stage, find_config, ValueControlField
-from .graph import Edge, Node
-import yaml
-from pathlib import Path
+from .stage import Stage, find_config
+
 
 class DSPThreadStage(Stage):
     """
@@ -13,6 +11,7 @@ class DSPThreadStage(Stage):
     used for DSP thread level control commands, for example, querying the max cycles
     consumed by the thread.
     """
+
     def __init__(self, **kwargs):
         super().__init__(config=find_config("dsp_thread"), **kwargs)
         self.create_outputs(0)
@@ -26,8 +25,10 @@ class DSPThreadStage(Stage):
     dot : graphviz.Diagraph
         dot instance to add edges to.
     """
-    def add_to_dot(self, dot): # Override this to not add the stage to the diagram
+
+    def add_to_dot(self, dot):  # Override this to not add the stage to the diagram
         return
+
 
 class Thread(CompositeStage):
     """
@@ -48,16 +49,19 @@ class Thread(CompositeStage):
     thread_stage : Stage
         DSPThreadStage stage
     """
+
     def __init__(self, id: int, **kwargs):
-        super().__init__(name = f"Thread {id}", **kwargs)
+        super().__init__(name=f"Thread {id}", **kwargs)
         self.id = id
-        self.thread_stage = self.stage(DSPThreadStage, [])
+        self.thread_stage = None
 
     def __enter__(self):
-        """Support for context manager"""
+        """Support for context manager."""
         return self
 
-    def __exit__(self ,type, value, traceback):
-        """Support for context manager"""
+    def __exit__(self, type, value, traceback):
+        """Support for context manager."""
         ...
 
+    def add_thread_stage(self):
+        self.thread_stage = self.stage(DSPThreadStage, [], label=f"thread{self.id}")

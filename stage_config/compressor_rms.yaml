@@ -1,0 +1,16 @@
+module:
+  compressor_rms:
+    attack_alpha:
+      type: int32_t
+    release_alpha:
+      type: int32_t
+    envelope:
+      type: int32_t
+    threshold:
+      type: int32_t
+    gain:
+      type: int32_t
+    slope:
+      type: float
+includes:
+  - "stages/adsp_module.h"

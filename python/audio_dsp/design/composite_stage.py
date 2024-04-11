@@ -1,8 +1,9 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-from typing import Iterable
+from typing import Iterable, Type, TypeVar
 
 from .stage import StageOutput, Stage
+from .graph import Graph
 
 from ._draw import new_record_digraph
 from IPython import display
@@ -10,11 +11,13 @@ from uuid import uuid4
 
 import itertools
 
+_StageOrComposite = TypeVar("_StageOrComposite", bound="Stage | CompositeStage")
+
 
 class CompositeStage:
     """
     This is a higher order stage, contains stages as well as other composite
-    stages. A thread will be a composite stage. Composite stages allow
+    stages. A thread will be a composite stage. Composite stages allow.
 
     - drawing the detail with graphviz
     - process
@@ -40,7 +43,7 @@ class CompositeStage:
         not currently specified.
     """
 
-    def __init__(self, graph, name=""):
+    def __init__(self, graph: Graph, name: str = ""):
         self._graph = graph
         self._stages = []
         self._composite_stages = []
@@ -48,7 +51,7 @@ class CompositeStage:
         if not self._name:
             self._name = type(self).__name__
 
-    def composite_stage(self, name=""):
+    def composite_stage(self, name: str = "") -> "CompositeStage":
         """
         Create a new composite stage that will be a
         included in the current composite. The
@@ -60,21 +63,26 @@ class CompositeStage:
         return new
 
     @property
-    def o(self):
+    def o(self) -> list[StageOutput]:
         all_stages = self.get_all_stages()
         all_edges = list(itertools.chain.from_iterable([stage.o for stage in all_stages]))
         return [edge for edge in all_edges if edge.dest not in all_stages]
 
-    def stage(self, stage_type, inputs, **kwargs):
+    def stage(
+        self,
+        stage_type: Type[_StageOrComposite],
+        inputs: StageOutput | Iterable[StageOutput],
+        **kwargs,
+    ) -> _StageOrComposite:
         """
         Create a new stage or composite stage and
-        register it with this composite stage
+        register it with this composite stage.
 
         Parameters
         ----------
-        stage_type : type
+        stage_type
             Must be a subclass of Stage or CompositeStage
-        inputs : Iterable[StageOutput]
+        inputs
             Edges of the pipeline that will be connected to the newly created stage.
         kwargs : dict
             Additional args are forwarded to the stages constructors (__init__)
@@ -84,8 +92,12 @@ class CompositeStage:
         stage_type
             Newly created stage or composite stage.
         """
+        if isinstance(inputs, StageOutput):
+            inputs = [inputs]
         if issubclass(stage_type, CompositeStage):
-            stage = stage_type(inputs=inputs, graph=self._graph, **kwargs)
+            # Subclasses of CompositeStage must have extra __init__
+            # parameters that pyright cant know.
+            stage = stage_type(inputs=inputs, graph=self._graph, **kwargs)  # type: ignore
             self._composite_stages.append(stage)
         elif issubclass(stage_type, Stage):
             stage = stage_type(inputs=inputs, **kwargs)
@@ -97,9 +109,11 @@ class CompositeStage:
             raise ValueError(f"{stage_type} is not a Stage or CompositeStage")
         return stage
 
-    def stages(self, stage_types, inputs: Iterable[StageOutput]):
+    def stages(
+        self, stage_types: list[Type[_StageOrComposite]], inputs: Iterable[StageOutput]
+    ) -> list[_StageOrComposite]:
         """
-        Same as stage but takes an array of stage type and connects them together
+        Same as stage but takes an array of stage type and connects them together.
 
         Returns a list of the created instances.
         """
@@ -110,9 +124,9 @@ class CompositeStage:
             inputs = s.o
         return ret
 
-    def contains_stage(self, stage):
+    def contains_stage(self, stage: Stage) -> bool:
         """
-        Recursively search self for the stage
+        Recursively search self for the stage.
 
         Returns
         -------
@@ -121,7 +135,7 @@ class CompositeStage:
         """
         return stage in self.get_all_stages()
 
-    def get_all_stages(self):
+    def get_all_stages(self) -> list[Stage]:
         """
         Get a flat list of all stages contained within this composite stage
         and the composite stages within.
@@ -135,18 +149,16 @@ class CompositeStage:
     def process(self, data):
         raise NotImplementedError()
 
-    def _internal_edges(self):
-        """
-        Returns list of edges whose source and dest are within this composite
-        """
+    def _internal_edges(self) -> list[StageOutput]:
+        """Returns list of edges whose source and dest are within this composite."""
         all_stages = self.get_all_stages()
         all_edges = list(itertools.chain.from_iterable([stage.o for stage in all_stages]))
-        return [edge for edge in all_edges if edge.dest in all_stages and edge.source in all_stages]
+        return [
+            edge for edge in all_edges if edge.dest in all_stages and edge.source in all_stages
+        ]
 
     def draw(self):
-        """
-        Draws the stages and edges present in this instance of a composite stage
-        """
+        """Draws the stages and edges present in this instance of a composite stage."""
         dot = new_record_digraph()
         self.add_to_dot(dot)
         output_edges = self.o
@@ -156,7 +168,9 @@ class CompositeStage:
             dest = f"{e.dest.id.hex}:i{e.dest_index}:n"
             dot.edge(source, dest)
 
-        end_label = f"{{ {{ {'|'.join(f'<i{i}> {i}' for i in range(len(output_edges)))} }} | end }}"
+        end_label = (
+            f"{{ {{ {'|'.join(f'<i{i}> {i}' for i in range(len(output_edges)))} }} | end }}"
+        )
         dot.node("end", label=end_label)
         for i, e in enumerate(output_edges):
             source = f"{e.source.id.hex}:o{e.source_index}:s"
