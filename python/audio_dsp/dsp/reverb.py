@@ -217,7 +217,7 @@ class reverb_room(dspg.dsp_block):
         fs,
         n_chans,
         max_room_size=1,
-        room_size=0.5,
+        room_size=1,
         decay=0.5,
         damping=0.4,
         wet_gain_db=-1,
