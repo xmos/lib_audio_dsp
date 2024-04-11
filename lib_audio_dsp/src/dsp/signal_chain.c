@@ -125,7 +125,8 @@ void adsp_volume_control_set_gain(
 ) {
   if(!vol_ctl->mute) {
     vol_ctl->target_gain = new_gain;
-  } else {
+  } else
+  {
     vol_ctl->saved_gain = new_gain;
   }
 }

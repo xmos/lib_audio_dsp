@@ -269,7 +269,8 @@ left_shift_t adsp_design_biquad_const_q
   if(gain_db > 0) {
     factor_b = V * factor_a;
   }
-  else {
+  else
+  {
     factor_b = factor_a;
     factor_a = factor_b / V;
   }

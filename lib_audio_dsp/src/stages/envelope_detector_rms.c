@@ -74,7 +74,8 @@ void envelope_detector_rms_control(void *module_state, module_control_t *control
         config->release_alpha = state->env_det[0].release_alpha;
         control->config_rw_state = config_read_updated;
     }
-    else {
+    else
+    {
         // nothing to do
     }
 }
