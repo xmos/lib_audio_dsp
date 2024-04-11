@@ -4,7 +4,6 @@
 #pragma once
 
 #include <stdint.h>
-#include <xmath/types.h>
 
 #define Q_alpha (31)
 
