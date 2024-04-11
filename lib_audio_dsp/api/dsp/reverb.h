@@ -16,10 +16,7 @@
 
 #define ADSP_RV_SCALE(FS, MAX_ROOM_SZ) (((FS) / 44100.0f) * (MAX_ROOM_SZ))
 
-#define ADSP_RV_SUM_DEFAULT_COMB_LENS 11024
-#define ADSP_RV_SUM_DEFAULT_AP_LENS 1563
-#define ADSP_RV_SUM_DEFAULT_BUF_LENS (ADSP_RV_SUM_DEFAULT_COMB_LENS + \
-                                      ADSP_RV_SUM_DEFAULT_AP_LENS)
+#define ADSP_RV_SUM_DEFAULT_BUF_LENS 12587
 #define ADSP_RV_HEAP_SZ(FS, ROOM_SZ) ((uint32_t)(sizeof(int32_t) *            \
                                                  ADSP_RV_SCALE(FS, ROOM_SZ) * \
                                                  ADSP_RV_SUM_DEFAULT_BUF_LENS))
