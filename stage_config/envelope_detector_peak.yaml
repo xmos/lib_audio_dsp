@@ -1,0 +1,10 @@
+module:
+  envelope_detector_peak:
+    attack_alpha:
+      type: int32_t
+    release_alpha:
+      type: int32_t
+    envelope:
+      type: int32_t
+includes:
+  - "stages/adsp_module.h"

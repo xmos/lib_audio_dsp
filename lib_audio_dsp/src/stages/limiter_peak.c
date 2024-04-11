@@ -51,6 +51,7 @@ void limiter_peak_process(int32_t **input, int32_t **output, void *app_data_stat
 
 void limiter_peak_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
+    xassert(n_inputs == n_outputs && "Limiter should have the same number of inputs and outputs");
     limiter_peak_state_t *state = instance->state;
     limiter_peak_config_t *config = instance->control.config;
 
@@ -64,7 +65,7 @@ void limiter_peak_init(module_instance_t* instance, adsp_bump_allocator_t* alloc
 
     for(int i=0; i<state->n_inputs; i++)
     {
-        state->lim[i].gain = 1;
+        state->lim[i].gain = INT32_MAX;
         state->lim[i].env_det.envelope = 0;
     }
 
@@ -90,7 +91,8 @@ void limiter_peak_control(void *module_state, module_control_t *control)
         limiter_copy_state_to_config(config, state->lim);
         control->config_rw_state = config_read_updated;
     }
-    else {
+    else
+    {
         // nothing to do
     }
 }

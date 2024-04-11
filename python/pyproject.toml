@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "audio_dsp"
+version = "0.2.0"
+description = "An audio DSP library for the xcore"
+authors = [
+]
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "soundfile",
+    "IPyWidgets",
+    "graphviz",
+    "IPython",
+    "ipympl",
+    "pyyaml",
+    "mako",
+    "tabulate",
+    "docstring-inheritance"
+]
+
+[tool.ruff]
+line-length = 99

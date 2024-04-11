@@ -5,7 +5,7 @@
 
 int file_open(file_t *fp, const char* name, const char *mode) {
 #if TEST_WAV_XSCOPE
-    fp->xscope_file = xscope_open_file(name, (char*)mode); 
+    fp->xscope_file = xscope_open_file(name, (char*)mode);
 #else
     if(!strcmp(mode, "rb")) {
         fp->file = open(name, O_RDONLY);
@@ -15,7 +15,8 @@ int file_open(file_t *fp, const char* name, const char *mode) {
         fp->file = open(name, O_WRONLY|O_CREAT, 0644);
         if(fp->file == -1) {return -1;}
     }
-    else {
+    else
+    {
         assert((0) && "invalid file open mode specified. Only 'rb' and 'wb' modes supported");
     }
 #endif
@@ -34,7 +35,7 @@ int get_current_file_offset(file_t *fp) {
 #if TEST_WAV_XSCOPE
     int current_offset = xscope_ftell(&fp->xscope_file);
 #else
-    int current_offset = lseek(fp->file, 0, SEEK_CUR); 
+    int current_offset = lseek(fp->file, 0, SEEK_CUR);
 #endif
     return current_offset;
 }

@@ -37,6 +37,7 @@ void biquad_init(module_instance_t* instance,
                  int n_outputs,
                  int frame_size)
 {
+    xassert(n_inputs == n_outputs && "Biquad should have the same number of inputs and outputs");
     biquad_state_t *state = instance->state;
     biquad_config_t *config = instance->control.config;
 
