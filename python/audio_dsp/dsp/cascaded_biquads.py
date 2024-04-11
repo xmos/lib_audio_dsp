@@ -37,9 +37,19 @@ class cascaded_biquads_8(dspg.dsp_block):
         assert len(coeffs_list) <= 8, "Too many biquads in coeffs_list"
         for n in range(8):
             if n < len(coeffs_list):
-                self.biquads[n] = bq.biquad(coeffs_list[n], fs, n_chans)
+                self.biquads[n] = bq.biquad(coeffs_list[n], fs, n_chans, Q_sig=Q_sig)
             else:
                 self.biquads[n] = bq.biquad_bypass(fs, n_chans)
+
+    def print_xcoremath_coeffs(self):
+        print("{", end="")
+        for nn in range(5):
+            print("{", end="")
+            for n in range(8):
+                this_coeff = filter.biquads[n].int_coeffs[nn]
+                print(f"{hex(this_coeff & (2**32-1))}, ", end="")
+            print("},", end="")
+        print("}")
 
     def process(self, sample, channel=0):
         """Process the input sample through the cascaded biquads using
@@ -262,15 +272,15 @@ class parametric_eq_8band(cascaded_biquads_8):
         parameters specific to that type.
     """
 
-    def __init__(self, fs, n_chans, filter_spec):
+    def __init__(self, fs, n_chans, filter_spec, Q_sig=dspg.Q_SIG):
         coeffs_list = []
         for spec in filter_spec:
             class_name = f"make_biquad_{spec[0]}"
             class_handle = getattr(bq, class_name)
             coeffs_list.append(class_handle(fs, *spec[1:]))
 
-        super().__init__(coeffs_list, fs, n_chans)
 
+        super().__init__(coeffs_list, fs, n_chans, Q_sig=Q_sig)
 
 def make_butterworth_lowpass(N, fc, fs):
     """

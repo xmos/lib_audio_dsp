@@ -59,7 +59,18 @@ def envelope(x, N=None):
 
 
 def int32(val: float) -> int:
-    if -(2**31) <= val <= (2**31 - 1):
+    if val > (2**31 - 1):
+        warnings.warn("Saturation occured", OverflowWarning)
+        return int(2**31 - 1)
+    elif val < -(2**31) + 1:
+        warnings.warn("Saturation occured", OverflowWarning)
+        return int(-(2**31) + 1)
+    else:
+        return int(val)
+
+
+def int34(val: float):
+    if -(2**33) <= val <= (2**33 - 1):
         return int(val)
     raise OverflowError
 
@@ -87,7 +98,7 @@ def uq_2_30(val: int):
 def vpu_mult(x1: int, x2: int):
     y = int64(x1 * x2)
     y = y + 2**29
-    y = int32(y >> 30)
+    y = int34(y >> 30)
 
     return y
 
