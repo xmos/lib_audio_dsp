@@ -87,10 +87,6 @@ int32_t adsp_noise_suppressor(
   noise_suppressor_t * ns,
   int32_t new_samp);
 
-void adsp_noise_suppressor_set_th(
-  noise_suppressor_t * ns,
-  int32_t new_th);
-
 compressor_t adsp_compressor_rms_init(
   float fs,
   float threshold_db,

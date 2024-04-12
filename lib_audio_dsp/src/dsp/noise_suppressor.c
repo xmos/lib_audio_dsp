@@ -4,16 +4,6 @@
 #include "dsp/adsp.h"
 #include "dsp/_helpers/drc_utils.h"
 
-void adsp_noise_suppressor_set_th(
-  noise_suppressor_t * ns,
-  int32_t new_th
-) {
-  // Avoid division by zero
-  ns->threshold = (!new_th) ? 1 : new_th;
-  // x * 2 ^ -63 / y * 2 ^ -27 = xy * 2 ^ -36
-  ns->inv_threshold =  INT64_MAX / ns->threshold;
-}
-
 noise_suppressor_t adsp_noise_suppressor_init(
   float fs,
   float threshold_db,
@@ -24,7 +14,10 @@ noise_suppressor_t adsp_noise_suppressor_init(
   noise_suppressor_t ns;
   ns.env_det = adsp_env_detector_init(fs, attack_t, release_t, 0);
   float th = powf(10, threshold_db / 20);
-  adsp_noise_suppressor_set_th(&ns, from_float_pos(th));
+  // Avoid division by zero
+  ns.threshold = (!th) ? 1 : th;
+  // x * 2 ^ -63 / y * 2 ^ -27 = xy * 2 ^ -36
+  ns.inv_threshold =  INT64_MAX / ns.threshold;
   ns.gain = INT32_MAX;
   ns.slope = 1 - ratio;
   ns.env_det.envelope = 1 << (-SIG_EXP);

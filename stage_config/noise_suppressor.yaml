@@ -8,6 +8,10 @@ module:
       type: int32_t
     threshold:
       type: int32_t
+    inv_threshold_hh:
+      type: int32_t
+    inv_threshold_lh:
+      type: int32_t
     gain:
       type: int32_t
     slope:

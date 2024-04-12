@@ -26,19 +26,21 @@ int main()
   int in_len = ftell(in) / sizeof(int32_t);
   fseek(in, 0, SEEK_SET);
 
-  int32_t th, at_al, re_al;
+  int32_t th, at_al, re_al, padding;
+  int64_t inv_th;
   float slope;
 
   fread(&th, sizeof(int32_t), 1, ns_info);
   fread(&at_al, sizeof(int32_t), 1, ns_info);
   fread(&re_al, sizeof(int32_t), 1, ns_info);
-  fread(&slope, sizeof(float), 1, ns_info);
+  fread(&padding, sizeof(int32_t), 1, ns_info);
 
+  fread(&inv_th, sizeof(int64_t), 1, ns_info);
+  fread(&slope, sizeof(float), 1, ns_info);
   fclose(ns_info);
   if (!th) th = 1;
   noise_suppressor_t ns = (noise_suppressor_t){
-              (env_detector_t){at_al, re_al, 1 << (Q_SIG)}, 0, 0, INT32_MAX, slope};
-  adsp_noise_suppressor_set_th(&ns, th);
+              (env_detector_t){at_al, re_al, 1 << (Q_SIG)}, th, inv_th, INT32_MAX, slope};
   for (unsigned i = 0; i < in_len; i++)
   {
     int32_t samp = 0, samp_out = 0;

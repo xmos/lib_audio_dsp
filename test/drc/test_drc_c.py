@@ -47,7 +47,7 @@ def get_c_wav(dir_name, bin_name, verbose = False, sim = True):
   sig_bin = dir_name / "sig_out.bin"
   assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
   sig_int = np.fromfile(sig_bin, dtype=np.int32)
-  
+
   sig_fl = qxx_to_float(sig_int)
   sf.write(gen_dir / "sig_c.wav", sig_fl, fs, "PCM_24")
   return sig_fl
@@ -56,7 +56,7 @@ def get_c_wav(dir_name, bin_name, verbose = False, sim = True):
 def run_py(filt, sig_fl):
   out_f32 = np.zeros(sig_fl.size)
   out_f64 = np.zeros(sig_fl.size)
-  
+
   for n in range(sig_fl.size):
     out_f32[n], _, _ = filt.process_xcore(sig_fl[n])
 
@@ -120,6 +120,7 @@ def test_limiter_c(in_signal, component_name, at, rt, threshold):
 
   info = [comp.threshold_int, comp.attack_alpha_int, comp.release_alpha_int]
   info = np.array(info, dtype = np.int32)
+
   info.tofile(test_dir / "info.bin")
 
 
@@ -152,9 +153,17 @@ def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
   info = [comp.threshold_int, comp.attack_alpha_int, comp.release_alpha_int]
   info = np.array(info, dtype=np.int32)
   info1 = np.array(comp.slope_f32, dtype=np.float32)
+
+  if comp_name == "noise_suppressor":
+    info2 = np.array(comp.inv_threshold_int, dtype=np.int64)
+    info1 = info1.tobytes()
+    info2 = info2.tobytes()
+    info1 = np.append(info2, info1)
+
   info = info.tobytes()
   info1 = info1.tobytes()
   info = np.append(info, info1)
+
   info.tofile(test_dir / "info.bin")
 
   _, out_py_int = run_py(comp, in_signal)
@@ -172,6 +181,6 @@ if __name__ == "__main__":
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
 
-  test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
-  test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -10)
+  #test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
+  #test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -10)
   test_compressor_c(sig_fl, "noise_suppressor", 0.001, 0.01, -1, 5)
