@@ -19,7 +19,7 @@ static inline void ns_copy_config_to_state(noise_suppressor_t *ns_state, int n_i
         ns_state[i].slope = ns_config->slope;
         ns_state[i].threshold = ns_config->threshold;
         ns_state[i].inv_threshold = ns_config->inv_threshold_hh;
-        ns_state[i].inv_threshold = (ns_state[i].inv_threshold<<32)+ns_config->inv_threshold_lh;
+        ns_state[i].inv_threshold = (ns_state[i].inv_threshold<<32) + ns_config->inv_threshold_lh;
     }
 }
 
@@ -31,8 +31,8 @@ static inline void ns_copy_state_to_config(noise_suppressor_config_t *ns_config,
     ns_config->envelope = ns_state[0].env_det.envelope;
     ns_config->gain = ns_state[0].gain;
     ns_config->threshold = ns_state[0].threshold;
-    ns_config->inv_threshold_hh = ns_state[0].inv_threshold>>32;
-    ns_config->inv_threshold_lh = ns_state[0].inv_threshold&0x00000000FFFFFFFF;
+    ns_config->inv_threshold_hh = ns_state[0].inv_threshold >> 32;
+    ns_config->inv_threshold_lh = ns_state[0].inv_threshold & 0x00000000FFFFFFFF;
     ns_config->slope = ns_state[0].slope;
 }
 

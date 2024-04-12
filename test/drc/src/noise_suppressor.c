@@ -33,6 +33,7 @@ int main()
   fread(&th, sizeof(int32_t), 1, ns_info);
   fread(&at_al, sizeof(int32_t), 1, ns_info);
   fread(&re_al, sizeof(int32_t), 1, ns_info);
+  // Read 4 bytes of padding due to the encoding in the test script
   fread(&padding, sizeof(int32_t), 1, ns_info);
 
   fread(&inv_th, sizeof(int64_t), 1, ns_info);
