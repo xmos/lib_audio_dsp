@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include <stdint.h>
-
 #define Q_alpha (31)
 
 /**
