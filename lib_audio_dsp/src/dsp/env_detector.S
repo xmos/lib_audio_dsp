@@ -36,7 +36,6 @@ adsp_env_detector_peak:
     { ldc al, 0                     ; dualentsp NSTACKWORDS         }
     std r5, r4, sp[0]
 
-
     // take |sample|
     ashr r2, sample, 32
     { add sample, sample, r2        ; ldw env, state[ED_ENV]        }
