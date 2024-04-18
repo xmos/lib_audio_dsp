@@ -305,12 +305,16 @@ class compressor_limiter_base(dspg.dsp_block):
 
     def get_gain_curve(self, max_gain=dspg.HEADROOM_DB, min_gain=-96):
         in_gains_db = np.linspace(min_gain, max_gain, 1000)
-        gains_lin = utils.db2gain(in_gains_db)**2
+        gains_lin = utils.db2gain(in_gains_db)
+
+        if isinstance(self.env_detector, envelope_detector_rms):
+            # if RMS compressor, we need to use gains_lin**2 into the
+            # gain calc
+            gains_lin = gains_lin**2
 
         out_gains = np.zeros_like(gains_lin)
 
         for n in range(len(out_gains)):
-            # NOTE, if RMS compressor, we need to use gains_lin**2
             out_gains[n] = self.gain_calc(gains_lin[n], self.threshold, self.slope)
 
         out_gains_db = utils.db(out_gains) + in_gains_db
@@ -319,7 +323,12 @@ class compressor_limiter_base(dspg.dsp_block):
 
     def get_gain_curve_int(self, max_gain=dspg.HEADROOM_DB, min_gain=-96):
         in_gains_db = np.linspace(min_gain, max_gain, 1000)
-        gains_lin = utils.db2gain(in_gains_db)**2
+        gains_lin = utils.db2gain(in_gains_db)
+
+        if isinstance(self.env_detector, envelope_detector_rms):
+            # if RMS compressor, we need to use gains_lin**2 into the
+            # gain calc
+            gains_lin = gains_lin**2
 
         out_gains = np.zeros_like(gains_lin)
 
