@@ -2,7 +2,6 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 from copy import deepcopy
 
-import scipy as sp
 import numpy as np
 
 from audio_dsp.dsp import utils as utils
@@ -220,6 +219,52 @@ class envelope_detector_rms(envelope_detector_peak):
             return self.envelope_int[channel]
 
 
+class clipper(dspg.dsp_block):
+    """
+    A simple clipper that limits the signal to a specified threshold.
+
+    Parameters
+    ----------
+    threshold_db : float
+        Threshold above which clipping occurs in dB.
+
+    Attributes
+    ----------
+    threshold : float
+        Value above which clipping occurs for floating point processing.
+    threshold_int : int
+        Value above which clipping occurs for int32 fixed point
+        processing.
+
+    """
+
+    def __init__(self, fs, n_chans, threshold_db, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, Q_sig)
+
+        self.threshold = utils.db2gain(threshold_db)
+        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+
+    def process(self, sample, channel=0):
+        if sample > self.threshold:
+            return self.threshold
+        elif sample < -self.threshold:
+            return -self.threshold
+        else:
+            return sample
+
+    def process_xcore(self, sample, channel=0):
+        # convert to int
+        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+
+        # do the clipping
+        if sample_int > self.threshold_int:
+            sample_int = self.threshold_int
+        elif sample_int < -self.threshold_int:
+            sample_int = -self.threshold_int
+
+        return float(sample_int) * 2**-self.Q_sig
+
+
 class compressor_limiter_base(dspg.dsp_block):
     """
     A base class shared by compressor and limiter objects.
@@ -334,7 +379,11 @@ class compressor_limiter_base(dspg.dsp_block):
 
         for n in range(len(out_gains)):
             # NOTE, if RMS compressor, we need to use gains_lin**2
-            out_gains[n] = self.gain_calc_xcore(utils.int32(round(gains_lin[n]*2**self.Q_sig)), self.threshold_int, self.slope_f32)
+            out_gains[n] = self.gain_calc_xcore(
+                utils.int32(round(gains_lin[n] * 2**self.Q_sig)),
+                self.threshold_int,
+                self.slope_f32,
+            )
             out_gains[n] = float(out_gains[n]) * 2**-31
 
         out_gains_db = utils.db(out_gains) + in_gains_db
@@ -538,24 +587,37 @@ class limiter_rms(compressor_limiter_base):
 
 
 class hard_limiter_peak(limiter_peak):
+    """
+    A limiter based on the peak value of the signal. When the peak
+    envelope of the signal exceeds the threshold, the signal amplitude
+    is reduced. If the signal still exceeds the threshold, it is
+    clipped.
+
+    The threshold set the value above which limiting/clipping occurs.
+    The attack time sets how fast the limiter starts limiting. The
+    release time sets how long the signal takes to ramp up to it's
+    original level after the envelope is below the threshold.
+    """
+
     def process(self, sample, channel=0):
         # do peak limiting
-        y, new_gain, envelope  = super().process(sample, channel)
+        y, new_gain, envelope = super().process(sample, channel)
 
         # hard clip if above threshold
         if y > self.threshold:
             y = self.threshold
-        if y < -self.threshold:
+        elif y < -self.threshold:
             y = -self.threshold
         return y, new_gain, envelope
 
     def process_xcore(self, sample, channel=0, return_int=False):
+        # do peak limiting
         y, new_gain_int, envelope_int = super().process_xcore(sample, channel, return_int=True)
 
         # hard clip if above threshold
         if y > self.threshold_int:
             y = self.threshold_int
-        if y < -self.threshold_int:
+        elif y < -self.threshold_int:
             y = -self.threshold_int
 
         if return_int:
@@ -690,6 +752,7 @@ class compressor_rms(compressor_limiter_base):
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
 
+
 class compressor_rms_softknee(compressor_limiter_base):
     """
     A soft knee compressor based on the RMS value of the signal. When
@@ -777,8 +840,8 @@ class compressor_rms_softknee(compressor_limiter_base):
     def piecewise_calc(self):
         # the knee is a straight line between the knee start at (x1, y1)
         # and the knee end at (x2, y2) BUT as the envelope is RMS**2, we
-        # actually get a curve. 
-        # 
+        # actually get a curve.
+        #
         # x2 is modified to be halfway between the threshold and the end
         # of the knee, trying to join closer to the true knee end than
         # this can result in overshoot (i.e. going above the hard knee
@@ -794,22 +857,22 @@ class compressor_rms_softknee(compressor_limiter_base):
         # self.w = 20
         # self.offset = 0.25
 
-        x1 = (self.threshold*utils.db_pow2gain(-self.w/2))
+        x1 = self.threshold * utils.db_pow2gain(-self.w / 2)
         y1 = 1
-        x2 = ((self.threshold*utils.db_pow2gain(self.w/2)) + self.threshold)/2
+        x2 = ((self.threshold * utils.db_pow2gain(self.w / 2)) + self.threshold) / 2
 
         y2 = (self.threshold / (x2)) ** self.slope
 
         self.knee_start = x1
         self.knee_end = x2
-        self.knee_a = (y2 - y1)/(x2**self.offset - (x1**self.offset))
-        self.knee_b = (y1) - self.knee_a*(x1**self.offset)
+        self.knee_a = (y2 - y1) / (x2**self.offset - (x1**self.offset))
+        self.knee_b = (y1) - self.knee_a * (x1**self.offset)
 
-        self.knee_start_int = utils.int32(min(round(self.knee_start * 2**self.Q_sig), 2**31 -1))
-        self.knee_end_int = utils.int32(min(round(self.knee_end * 2**self.Q_sig), 2**31 -1))
+        self.knee_start_int = utils.int32(min(round(self.knee_start * 2**self.Q_sig), 2**31 - 1))
+        self.knee_end_int = utils.int32(min(round(self.knee_end * 2**self.Q_sig), 2**31 - 1))
         self.knee_a_f32 = float32(self.knee_a)
         self.knee_b_f32 = float32(self.knee_b)
-        self.knee_b_int = utils.int32((self.knee_b-1) * 2**31)
+        self.knee_b_int = utils.int32((self.knee_b - 1) * 2**31)
 
     def compressor_rms_softknee_gain_calc(self, envelope, threshold, slope=None):
         """Calculate the float gain for the current sample
@@ -826,30 +889,29 @@ class compressor_rms_softknee(compressor_limiter_base):
             new_gain = (self.threshold / envelope) ** self.slope
         else:
             # soft knee
-            new_gain_db = ((-self.slope/(self.w))*
-                (envelope_db - self.threshold_db + self.w/2)**2)
+            new_gain_db = (-self.slope / (self.w)) * (
+                envelope_db - self.threshold_db + self.w / 2
+            ) ** 2
             new_gain = utils.db2gain(new_gain_db)
 
         new_gain = min(1, new_gain)
         return new_gain
 
     def gain_calc_piecewise(self, envelope, threshold, slope=None):
-
         if envelope < self.knee_start:
             new_gain = 1
 
         elif envelope < self.knee_end:
             # straight line, but envelope is RMS**2, so actually squared
             # 🤯
-            new_gain = (self.knee_a*(envelope**self.offset) + self.knee_b)
+            new_gain = self.knee_a * (envelope**self.offset) + self.knee_b
         else:
             # regular RMS compressor
             new_gain = (self.threshold / envelope) ** self.slope
-        
+
         return new_gain
 
     def gain_calc_piecewise_xcore(self, envelope_int, threshold_int, slope_f32=None):
-
         if envelope_int < self.knee_start_int:
             new_gain_int = utils.int32(0x7FFFFFFF)
             return new_gain_int
@@ -864,7 +926,7 @@ class compressor_rms_softknee(compressor_limiter_base):
             # knee_a is always negative, so adding b should give a
             # result < 1.
             env_f32 = float32(envelope_int * 2**-27)
-            new_gain_f32 = env_f32*self.knee_a_f32
+            new_gain_f32 = env_f32 * self.knee_a_f32
             new_gain_int = (new_gain_f32 * float32(2**31)).as_int32()
             new_gain_int = utils.int32(new_gain_int + self.knee_b_int + 2**31)
 
@@ -872,7 +934,8 @@ class compressor_rms_softknee(compressor_limiter_base):
             # regular RMS compressor
             new_gain_int = int(threshold_int) << 31
             new_gain_int = utils.int32(new_gain_int // envelope_int)
-            new_gain_int = ((float32(new_gain_int * 2**-31) ** slope_f32) * float32(2**31)).as_int32()
-            
-        return new_gain_int
+            new_gain_int = (
+                (float32(new_gain_int * 2**-31) ** slope_f32) * float32(2**31)
+            ).as_int32()
 
+        return new_gain_int

@@ -9,6 +9,7 @@ from audio_dsp.dsp.drc.drc import (
     limiter_rms as limiter_rms,
     compressor_rms as compressor_rms,
     compressor_rms_softknee as compressor_rms_softknee,
+    clipper as clipper,
 )
 from audio_dsp.dsp.drc.stereo_compressor_limiter import (
     limiter_peak_stereo as limiter_peak_stereo,

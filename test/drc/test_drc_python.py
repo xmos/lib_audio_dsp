@@ -417,7 +417,8 @@ def test_noise_gate(component, threshold, ratio):
                                                          ("compressor_rms_softknee", 6, 2),
                                                          ("noise_gate", -1000, None),
                                                          ("noise_suppressor", -1000, 5),
-                                                         ("hard_limiter_peak", 0, None)])
+                                                         ("hard_limiter_peak", 0, None),
+                                                         ("clipper", 0, None)])
 @pytest.mark.parametrize("rt", [0.2, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.1])
 def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
@@ -429,6 +430,8 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
     if threshold is not None:
         if ratio is not None:
             drcut = component_handle(fs, 1, ratio, threshold, at, rt)
+        elif "clipper" in component:
+            drcut = component_handle(fs, 1, threshold)
         else:
             drcut = component_handle(fs, 1, threshold, at, rt)
     else:
@@ -439,11 +442,13 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
     output_xcore = np.zeros(len(signal))
     output_flt = np.zeros(len(signal))
 
-    if "envelope" in component:
-        # envelope detector has 1 output
+
+    if "envelope" in component or "clipper" in component:
+        # envelope  and clipper have 1 output
         for n in np.arange(len(signal)):
             output_xcore[n] = drcut.process_xcore(signal[n])
-        drcut.reset_state()
+        if "clipper" not in component:
+            drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n] = drcut.process(signal[n])
     else:
@@ -476,7 +481,9 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
                                                          ("noise_gate", -20, None),
                                                          ("noise_suppressor", -20, 5),
                                                          ("hard_limiter_peak", -20, None),
-                                                         ("hard_limiter_peak", 6, None)])
+                                                         ("hard_limiter_peak", 6, None),
+                                                         ("clipper", -20, None),
+                                                         ("clipper", 6, None)])
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 def test_drc_component(fs, component, at, rt, threshold, ratio):
@@ -486,6 +493,8 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
     if threshold is not None:
         if ratio is not None:
             drcut = component_handle(fs, 1, ratio, threshold, at, rt)
+        elif "clipper" in component:
+            drcut = component_handle(fs, 1, threshold)
         else:
             drcut = component_handle(fs, 1, threshold, at, rt)
     else:
@@ -512,11 +521,12 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
     env_xcore = np.zeros(len(signal))
     env_flt = np.zeros(len(signal))
 
-    if "envelope" in component:
-        # envelope detector has 1 output
+    if "envelope" in component or "clipper" in component:
+        # envelope  and clipper have 1 output
         for n in np.arange(len(signal)):
             output_xcore[n] = drcut.process_xcore(signal[n])
-        drcut.reset_state()
+        if "clipper" not in component:
+            drcut.reset_state()
         for n in np.arange(len(signal)):
             output_flt[n] = drcut.process(signal[n])
     else:
@@ -539,7 +549,7 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
             assert mean_error_flt < 0.055
 
     
-    if "hard" in component:
+    if "hard" in component or "clip" in component:
         assert np.all(output_xcore <= utils.db2gain(threshold))
         assert np.all(output_flt <= utils.db2gain(threshold))
 
@@ -561,7 +571,9 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
                                                          ("noise_gate", -20, None),
                                                          ("noise_suppressor", -20, 5),
                                                          ("hard_limiter_peak", -20, None),
-                                                         ("hard_limiter_peak", 6, None)])
+                                                         ("hard_limiter_peak", 6, None),
+                                                         ("clipper", -20, None),
+                                                         ("clipper", 6, None)])
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 @pytest.mark.parametrize("n_chans", [1, 2, 4])
@@ -573,6 +585,8 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
     if threshold is not None:
         if ratio is not None:
             drcut = component_handle(fs, n_chans, ratio, threshold, at, rt)
+        elif "clipper" in component:
+            drcut = component_handle(fs, n_chans, threshold)
         else:
             drcut = component_handle(fs, n_chans, threshold, at, rt)
     else:
@@ -596,7 +610,8 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
 
     for n in range(len(signal_frames)):
         output_int[:, n:n+frame_size] = drcut.process_frame_xcore(signal_frames[n])
-    drcut.reset_state()
+    if "clipper" not in component:
+        drcut.reset_state()
     for n in range(len(signal_frames)):
         output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])
 
