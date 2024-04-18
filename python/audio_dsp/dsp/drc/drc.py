@@ -549,8 +549,8 @@ class hard_limiter_peak(limiter_peak):
             y = -self.threshold
         return y, new_gain, envelope
 
-    def process_xcore(self, sample, channel=0):
-        y, new_gain, envelope = super().process_xcore(sample, channel, return_int=True)
+    def process_xcore(self, sample, channel=0, return_int=False):
+        y, new_gain_int, envelope_int = super().process_xcore(sample, channel, return_int=True)
 
         # hard clip if above threshold
         if y > self.threshold_int:
@@ -558,10 +558,14 @@ class hard_limiter_peak(limiter_peak):
         if y < -self.threshold_int:
             y = -self.threshold_int
 
-        # quantize before return
-        y = float(y) * 2**-self.Q_sig
-
-        return y, new_gain, envelope
+        if return_int:
+            return y, new_gain_int, envelope_int
+        else:
+            return (
+                (float(y) * 2**-self.Q_sig),
+                (float(new_gain_int) * 2**-self.Q_alpha),
+                (float(envelope_int) * 2**-self.Q_sig),
+            )
 
 
 class lookahead_limiter_peak(compressor_limiter_base):
@@ -585,7 +589,7 @@ class lookahead_limiter_peak(compressor_limiter_base):
     def process(self, sample, channel=0):
         raise NotImplementedError
 
-    def process_xcore(self, sample, channel=0):
+    def process_xcore(self, sample, channel=0, return_int=False):
         raise NotImplementedError
 
 
@@ -609,7 +613,7 @@ class lookahead_limiter_rms(compressor_limiter_base):
     def process(self, sample, channel=0):
         raise NotImplementedError
 
-    def process_xcore(self, sample, channel=0):
+    def process_xcore(self, sample, channel=0, return_int=False):
         raise NotImplementedError
 
 
