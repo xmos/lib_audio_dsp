@@ -71,6 +71,31 @@ def int32(val: float) -> int:
         return int(((val + 2**31) % (2**32)) - (2**31))
 
 
+def saturate_float(val: float, Q_sig: int) -> float:
+    max_flt = (2**31 - 1)/2**Q_sig
+    min_flt = -2**(31-Q_sig)
+    if min_flt <= val <= max_flt:
+        return val
+    elif val < min_flt:
+        warnings.warn("Saturation occured", SaturationWarning)
+        return min_flt
+    else:
+        warnings.warn("Saturation occured", SaturationWarning)
+        return max_flt
+
+def saturate_float_array(val: np.ndarray, Q_sig: int) -> float:
+    max_flt = (2**31 - 1)/2**Q_sig
+    min_flt = -2**(31-Q_sig)
+
+    if np.any(val < min_flt) or np.any(val > max_flt):
+        warnings.warn("Saturation occured", SaturationWarning)
+
+    val[val > max_flt] = max_flt
+    val[val < min_flt] = min_flt
+
+    return val
+
+
 def saturate_int32(val: float) -> int:
     # saturate int32 to int32max/min
     if  -(2**31) <= val <= (2**31 - 1):
@@ -160,12 +185,12 @@ def vlmaccr(vect1, vect2, out=0):
     return int40(out)
 
 
-def float_to_int32(x):
-    return int32(round(x * (2**31 - 1)))
+def float_to_int32(x, Q_sig=31):
+    return int32(round(x * (2**Q_sig - 1)))
 
 
-def int32_to_float(x):
-    return x * 2**-31
+def int32_to_float(x, Q_sig=31):
+    return float(x)/(2**Q_sig - 1)
 
 
 class float_s32:

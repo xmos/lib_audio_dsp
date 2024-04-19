@@ -52,7 +52,7 @@ def saturation_test(filter: bq.biquad, fs):
 
 def chirp_filter_test(filter: bq.biquad, fs):
     length = 0.05
-    signal = gen.log_chirp(fs, length, 0.5)
+    signal = gen.log_chirp(fs, length, 1.0)
 
     output_int = np.zeros(len(signal))
     output_flt = np.zeros(len(signal))
@@ -90,6 +90,8 @@ def test_bypass(fs, amplitude):
     filter = bq.biquad_bypass(fs, 1)
     length = 0.05
     signal = gen.log_chirp(fs, length, amplitude)
+    signal = utils.saturate_float_array(signal, filter.Q_sig)
+
 
     output_int = np.zeros(len(signal))
     output_flt = np.zeros(len(signal))
@@ -105,8 +107,8 @@ def test_bypass(fs, amplitude):
         output_xcore[n] = filter.process_xcore(signal[n])
 
     np.testing.assert_array_equal(signal, output_flt)
-    np.testing.assert_array_equal(signal, output_int)
-    np.testing.assert_array_equal(signal, output_xcore)
+    np.testing.assert_allclose(signal, output_int, atol=2**-32)
+    np.testing.assert_allclose(signal, output_xcore, atol=2**-32)
 
 
 @pytest.mark.parametrize("filter_type", ["biquad_peaking",
@@ -119,7 +121,7 @@ def test_peaking_filters(filter_type, f, q, gain, fs):
     if f < fs*5e-4:
         f = max(fs*5e-4, f)
     filter_handle = getattr(bq, "make_%s" % filter_type)
-    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), fs, b_shift=2)
+    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), fs, b_shift=bq.BOOST_BSHIFT)
     chirp_filter_test(filter, fs)
 
 
@@ -135,7 +137,7 @@ def test_shelf_filters(filter_type, f, q, gain, fs):
         f = max(fs*5e-4, f)
 
     filter_handle = getattr(bq, "make_%s" % filter_type)
-    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), fs, b_shift=2)
+    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), fs, b_shift=bq.BOOST_BSHIFT)
     chirp_filter_test(filter, fs)
 
 
@@ -251,4 +253,6 @@ def test_frames(filter_n, fs, n_chans):
 if __name__ == "__main__":
     # test_linkwitz_filters(500, 2, 20, 0.5, 48000)
     # test_bandx_filters("biquad_bandstop", 10000, 10, 16000)
-    test_4_coeff_overflow()
+    # test_bypass(96000, 1)
+    # test_gain_filters(5, 16000)
+    test_peaking_filters("biquad_peaking", 20, 0.5, 12, 16000)
