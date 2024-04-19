@@ -3,5 +3,7 @@
 
 #pragma once
 
-#define SIG_EXP               (-27)
-#define Q_SIG                 (-SIG_EXP)
+/**  Default signal exponent */
+#define SIG_EXP (-27)
+/** Default Q format */
+#define Q_SIG   (-SIG_EXP)

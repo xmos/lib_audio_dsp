@@ -17,7 +17,7 @@ pipeline {
     )
     string(
       name: 'XCOMMON_CMAKE_VERSION',
-      defaultValue: 'v0.2.0',
+      defaultValue: 'v1.0.0',
       description: 'The xcommon cmake version'
     )
   } // parameters
