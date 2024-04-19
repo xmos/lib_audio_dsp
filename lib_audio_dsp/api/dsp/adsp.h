@@ -5,9 +5,9 @@
 
 #include "xmath/xmath.h"
 
-// Default signal exponent
+/**  Default signal exponent */
 #define SIG_EXP (-27)
-// Default Q format
+/** Default Q format */
 #define Q_SIG   (-SIG_EXP)
 
 #include "dsp/signal_chain.h"

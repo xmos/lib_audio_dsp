@@ -223,8 +223,8 @@ left_shift_t adsp_design_biquad_highshelf(
   const float gain_db);
 
 /**
- * @brief Design Linkwitz biquad filter
- * This function creates a biquad filter with a Linkwitz response.
+ * @brief Design Linkwitz transform biquad filter
+ * This function creates a biquad filter with a Linkwitz transform response.
  * 
  * The Linkwitz Transform is commonly used to change the low frequency
  * roll off slope of a loudspeaker. When applied to a loudspeaker, it

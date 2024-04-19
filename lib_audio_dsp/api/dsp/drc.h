@@ -7,11 +7,11 @@
  * @brief Envelope detector state structure
  */
 typedef struct{
-  // Attack alpha
+  /** Attack alpha */
   q1_31 attack_alpha;
-  // Release alpha
+  /** Release alpha */
   q1_31 release_alpha;
-  // Current envelope
+  /** Current envelope */
   int32_t envelope;
 }env_detector_t;
 
@@ -19,11 +19,11 @@ typedef struct{
  * @brief Limiter state structure
  */
 typedef struct{
-  // Envelope detector
+  /** Envelope detector */
   env_detector_t env_det;
-  // Linear threshold
+  /** Linear threshold */
   int32_t threshold;
-  // Linear gain
+  /** Linear gain */
   int32_t gain;
 }limiter_t;
 
@@ -36,26 +36,26 @@ typedef limiter_t noise_gate_t;
  * @brief Compressor state structure
  */
 typedef struct{
-  // Envelope detector
+  /** Envelope detector */
   env_detector_t env_det;
-  // Linear threshold
+  /** Linear threshold */
   int32_t threshold;
-  // Linear gain
+  /** Linear gain */
   int32_t gain;
-  // Slope of the compression curve
+  /** Slope of the compression curve */
   float slope;
 }compressor_t;
 
 typedef struct{
-  // Envelope detector
+  /** Envelope detector */
   env_detector_t env_det;
-  // Linear threshold
+  /** Linear threshold */
   int32_t threshold;
-  // Inverse threshold
+  /** Inverse threshold */
   int64_t inv_threshold;
-  // Linear gain
+  /** Linear gain */
   int32_t gain;
-  // Slope of the noise suppression curve
+  /** Slope of the noise suppression curve */
   float slope;
 }noise_suppressor_t;
 
@@ -129,7 +129,7 @@ limiter_t adsp_limiter_rms_init(
  * @brief Process a new sample with a peak limiter
  * 
  * @param lim                 Limiter object
- * @param new_sample          New sample
+ * @param new_samp            New sample
  * @return int32_t            Limited sample
  */
 int32_t adsp_limiter_peak(
@@ -140,7 +140,7 @@ int32_t adsp_limiter_peak(
  * @brief Process a new sample with an RMS limiter
  * 
  * @param lim                 Limiter object
- * @param new_sample          New sample
+ * @param new_samp            New sample
  * @return int32_t            Limited sample
  */
 int32_t adsp_limiter_rms(
@@ -166,7 +166,7 @@ noise_gate_t adsp_noise_gate_init(
  * @brief Process a new sample with a noise gate
  * 
  * @param ng                  Noise gate object
- * @param new_sample          New sample
+ * @param new_samp            New sample
  * @return int32_t            Gated sample
  */
 int32_t adsp_noise_gate(
@@ -194,7 +194,7 @@ noise_suppressor_t adsp_noise_suppressor_init(
  * @brief Process a new sample with a noise suppressor
  * 
  * @param ns                  Noise suppressor object
- * @param new_sample          New sample
+ * @param new_samp            New sample
  * @return int32_t            Suppressed sample
  */
 int32_t adsp_noise_suppressor(
@@ -232,7 +232,7 @@ compressor_t adsp_compressor_rms_init(
  * @brief Process a new sample with an RMS compressor
  * 
  * @param comp                Compressor object
- * @param new_sample          New sample
+ * @param new_samp            New sample
  * @return int32_t            Compressed sample
  */
 int32_t adsp_compressor_rms(
@@ -243,8 +243,8 @@ int32_t adsp_compressor_rms(
  * @brief Process a new sample with a sidechain RMS compressor
  * 
  * @param comp                Compressor object
- * @param input_sample        Input sample
- * @param detect_sample       Sidechain sample
+ * @param input_samp          Input sample
+ * @param detect_samp         Sidechain sample
  * @return int32_t            Compressed sample
  */
 int32_t adsp_compressor_rms_sidechain(

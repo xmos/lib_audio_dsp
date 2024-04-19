@@ -23,7 +23,7 @@ int32_t adsp_cascaded_biquads_8b(
   left_shift_t lsh[8]);
 
 /**
- * @brief Design 8-band Butterworth lowpass filter
+ * @brief Design Nth order Butterworth lowpass filter
  * Generate N/2 sets of biquad coefficients for a Butterworth low-pass
  * filter.
  * 
@@ -45,7 +45,7 @@ void adsp_design_butterworth_lowpass_8b(
   const float fs);
 
 /**
- * @brief Design 8-band Butterworth highpass filter
+ * @brief Design Nth order Butterworth highpass filter
  * Generate N/2 sets of biquad coefficients for a Butterworth high-pass
  * filter.
  * 

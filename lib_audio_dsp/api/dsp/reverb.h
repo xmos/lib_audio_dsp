@@ -6,33 +6,33 @@
 #include <stdint.h>
 #include <xmath/types.h>
 
-// Maximum supported sampling freq
+/** Maximum supported reverb sampling freq */
 #define ADSP_RV_MAX_SAMPLING_FREQ (48000.0f)
-// Maximum supported room size
+/** Maximum supported reverb room size */
 #define ADSP_RV_MAX_ROOM_SIZE (4.0f)
 
-// Minimum wet gain in dB
+/** Minimum reverb wet gain in dB */
 #define ADSP_RV_MIN_WET_GAIN_DB (-186.0)
-// Maximum wet gain in dB
+/** Maximum reverb wet gain in dB */
 #define ADSP_RV_MAX_WET_GAIN_DB (0)
-// Minimum dry gain in dB
+/** Minimum reverb dry gain in dB */
 #define ADSP_RV_MIN_DRY_GAIN_DB (-186.0)
-// Maximum dry gain in dB
+/** Maximum reverb dry gain in dB */
 #define ADSP_RV_MAX_DRY_GAIN_DB (0)
 
-// Scale factor for the room size
+/** Reverb scale factor for the room size */
 #define ADSP_RV_SCALE(FS, MAX_ROOM_SZ) (((FS) / 44100.0f) * (MAX_ROOM_SZ))
 
-// Default buffer length
+/** Default reverb buffer length */
 #define ADSP_RV_SUM_DEFAULT_BUF_LENS 12587
-// Heap size to allocate for the reverb
+/** Heap size to allocate for the reverb */
 #define ADSP_RV_HEAP_SZ(FS, ROOM_SZ) ((uint32_t)(sizeof(int32_t) *            \
                                                  ADSP_RV_SCALE(FS, ROOM_SZ) * \
                                                  ADSP_RV_SUM_DEFAULT_BUF_LENS))
 
-// Number of comb filters used in the reverb
+/** Number of comb filters used in the reverb */
 #define ADSP_RV_N_COMBS 8
-// Number of allpass filters used in the reverb
+/** Number of allpass filters used in the reverb */
 #define ADSP_RV_N_APS 4
 
 /**
@@ -40,15 +40,15 @@
  */
 typedef struct
 {
-    // Maximum delay
+    /** Maximum delay */
     uint32_t max_delay;
-    // Actual delay
+    /** Current delay */
     uint32_t delay;
-    // Feedback gain
+    /** Feedback gain */
     int32_t feedback;
-    // Delay buffer
+    /** Delay buffer */
     int32_t *buffer;
-    // Current buffer index
+    /** Current buffer index */
     int32_t buffer_idx;
 } allpass_fv_t;
 
@@ -57,21 +57,21 @@ typedef struct
  */
 typedef struct
 {
-    // Maximum delay
+    /** Maximum delay */
     uint32_t max_delay;
-    // Actual delay
+    /** Current delay */
     uint32_t delay;
-    // Feedback gain
+    /** Feedback gain */
     int32_t feedback;
-    // Delay buffer
+    /** Delay buffer */
     int32_t *buffer;
-    // Current buffer index
+    /** Current buffer index */
     int32_t buffer_idx;
-    // State variables for low-pass filter
+    /** State variables for low-pass filter */
     int32_t filterstore;
-    // Damping coefficient 1
+    /** Damping coefficient 1 */
     int32_t damp_1;
-    // Damping coefficient 2
+    /** Damping coefficient 2 */
     int32_t damp_2;
 } comb_fv_t;
 
@@ -80,19 +80,19 @@ typedef struct
  */
 typedef struct
 {
-    // Total buffer length
+    /** Total buffer length */
     uint32_t total_buffer_length;
-    // Room size
+    /** Room size */
     uint32_t room_size;
-    // Wet linear gain
+    /** Wet linear gain */
     int32_t wet_gain;
-    // Dry linear gain
+    /** Dry linear gain */
     int32_t dry_gain;
-    // Linear pre-gain
+    /** Linear pre-gain */
     int32_t pre_gain;
-    // Comb filters
+    /** Comb filters */
     comb_fv_t combs[ADSP_RV_N_COMBS];
-    // Allpass filters
+    /** Allpass filters */
     allpass_fv_t allpasses[ADSP_RV_N_APS];
 } reverb_room_t;
 
@@ -151,7 +151,7 @@ void adsp_reverb_room_set_room_size(
  * @brief Process a sample through a reverb room object
  * 
  * @param rv                Reverb room object
- * @param new_sample        New sample to process
+ * @param new_samp          New sample to process
  * @return int32_t          Processed sample
  */
 int32_t adsp_reverb_room(
