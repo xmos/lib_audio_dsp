@@ -14,6 +14,10 @@ class OverflowWarning(Warning):
     pass
 
 
+class SaturationWarning(Warning):
+    pass
+
+
 def db(input):
     out = 20 * np.log10(np.abs(input) + FLT_MIN)
     return out
@@ -59,14 +63,36 @@ def envelope(x, N=None):
 
 
 def int32(val: float) -> int:
-    if val > (2**31 - 1):
-        warnings.warn("Saturation occured", OverflowWarning)
-        return int(2**31 - 1)
-    elif val < -(2**31) + 1:
-        warnings.warn("Saturation occured", OverflowWarning)
-        return int(-(2**31) + 1)
-    else:
+    # overflows if val is outside the range of int32
+    if  -(2**31) <= val <= (2**31 - 1):
         return int(val)
+    else:
+        warnings.warn("Overflow occured", OverflowWarning)
+        return int(((val + 2**31) % (2**32)) - (2**31))
+
+
+def saturate_int32(val: float) -> int:
+    # saturate int32 to int32max/min
+    if  -(2**31) <= val <= (2**31 - 1):
+        return int(val)
+    elif val < -(2**31):
+        warnings.warn("Saturation occured", SaturationWarning)
+        return int(-(2**31))
+    else:
+        warnings.warn("Saturation occured", SaturationWarning)
+        return int(2**31 - 1)
+
+
+def saturate_int32_vpu(val: float) -> int:
+    # VPU has symmetrical saturation
+    if  -(2**31 - 1) <= val <= (2**31 - 1):
+        return int(val)
+    elif val < -(2**31 - 1):
+        warnings.warn("Saturation occured", SaturationWarning)
+        return int(-(2**31 - 1))
+    else:
+        warnings.warn("Saturation occured", SaturationWarning)
+        return int(2**31 - 1)
 
 
 def int34(val: float):
