@@ -27,6 +27,9 @@ BUILD_DIR = APP_DIR / "build"
 fs = 48000
 channels = 2  # if this changes need to rewrite test signals
 
+@pytest.fixture(scope="module", params=[1, 128])
+def frame_size(request):
+    return request.param
 
 def do_test(p):
     """
@@ -105,11 +108,11 @@ def do_test(p):
                                           ("make_lowshelf", [1000, 0.707, -6]),
                                           ("make_highshelf", [1000, 0.707, -6]),
                                           ("make_linkwitz", [200, 0.707, 180, 0.707])])
-def test_biquad(method, args):
+def test_biquad(method, args, frame_size):
     """
     Test the biquad stage filters the same in python and C
     """
-    p = Pipeline(channels)
+    p = Pipeline(channels, frame_size=frame_size)
     with p.add_thread() as t:
         biquad = t.stage(Biquad, p.i)
     p.set_outputs(biquad.o)
@@ -134,11 +137,11 @@ filter_spec = [['lowpass', fs*0.4, 0.707],
 @pytest.mark.parametrize("method, args", [("make_butterworth_highpass", [8, 1000]),
                                           ("make_butterworth_lowpass", [8, 1000]),
                                           ("make_parametric_eq", [filter_spec]),])
-def test_cascaded_biquad(method, args):
+def test_cascaded_biquad(method, args, frame_size):
     """
     Test the biquad stage filters the same in python and C
     """
-    p = Pipeline(channels)
+    p = Pipeline(channels, frame_size=frame_size)
     with p.add_thread() as t:
         cbiquad = t.stage(CascadedBiquads, p.i)
     p.set_outputs(cbiquad.o)
@@ -152,11 +155,11 @@ def test_cascaded_biquad(method, args):
     do_test(p)
 
 
-def test_limiter_rms():
+def test_limiter_rms(frame_size):
     """
     Test the limiter stage limits the same in python and C
     """
-    p = Pipeline(channels)
+    p = Pipeline(channels, frame_size=frame_size)
     with p.add_thread() as t:
         lim = t.stage(LimiterRMS, p.i)
     p.set_outputs(lim.o)
@@ -166,11 +169,11 @@ def test_limiter_rms():
     do_test(p)
 
 
-def test_limiter_peak():
+def test_limiter_peak(frame_size):
     """
     Test the limiter stage limits the same in python and C
     """
-    p = Pipeline(channels)
+    p = Pipeline(channels, frame_size=frame_size)
     with p.add_thread() as t:
         lim = t.stage(LimiterPeak, p.i)
     p.set_outputs(lim.o)
@@ -179,11 +182,11 @@ def test_limiter_peak():
 
     do_test(p)
 
-def test_compressor():
+def test_compressor(frame_size):
     """
     Test the compressor stage compresses the same in python and C
     """
-    p = Pipeline(channels)
+    p = Pipeline(channels, frame_size=frame_size)
     with p.add_thread() as t:
         comp = t.stage(CompressorRMS, p.i)
     p.set_outputs(comp.o)
@@ -192,11 +195,11 @@ def test_compressor():
 
     do_test(p)
 
-def test_noise_gate():
+def test_noise_gate(frame_size):
     """
     Test the noise gate stage gates the noise the same in python and C
     """
-    p = Pipeline(channels)
+    p = Pipeline(channels, frame_size=frame_size)
     with p.add_thread() as t:
         ng = t.stage(NoiseGate, p.i)
     p.set_outputs(ng.o)
@@ -205,11 +208,11 @@ def test_noise_gate():
 
     do_test(p)
 
-def test_noise_suppressor():
+def test_noise_suppressor(frame_size):
     """
     Test the noise suppressor stage suppress the noise the same in python and C
     """
-    p = Pipeline(channels)
+    p = Pipeline(channels, frame_size=frame_size)
     with p.add_thread() as t:
         ng = t.stage(NoiseSuppressor, p.i)
     p.set_outputs(ng.o)
@@ -218,11 +221,11 @@ def test_noise_suppressor():
 
     do_test(p)
 
-def test_volume():
+def test_volume(frame_size):
     """
     Test the volume stage amplifies the same in python and C
     """
-    p = Pipeline(channels)
+    p = Pipeline(channels, frame_size=frame_size)
     with p.add_thread() as t:
         vol = t.stage(VolumeControl, p.i, gain_dB=-6)
     p.set_outputs(vol.o)
@@ -230,11 +233,11 @@ def test_volume():
     do_test(p)
 
 
-def test_fixed_gain():
+def test_fixed_gain(frame_size):
     """
     Test the volume stage amplifies the same in python and C
     """
-    p = Pipeline(channels)
+    p = Pipeline(channels, frame_size=frame_size)
     with p.add_thread() as t:
         vol = t.stage(FixedGain, p.i)
     p.set_outputs(vol.o)
@@ -243,12 +246,12 @@ def test_fixed_gain():
 
     do_test(p)
 
-def test_reverb():
+def test_reverb(frame_size):
     """
     Test Reverb stage
     """
     reverb_test_channels = 1 # Reverb expects only 1 channel
-    p = Pipeline(reverb_test_channels)
+    p = Pipeline(reverb_test_channels, frame_size=frame_size)
     with p.add_thread() as t:
         rv = t.stage(Reverb, p.i)
     p.set_outputs(rv.o)
@@ -256,8 +259,3 @@ def test_reverb():
     do_test(p)
 
 
-
-if __name__ == "__main__":
-    test_noise_suppressor()
-    test_biquad("make_lowpass", [1000, 0.707])
-    test_biquad("make_lowpass", [1000, 0.707])

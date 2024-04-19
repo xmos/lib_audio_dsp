@@ -1,5 +1,6 @@
 // Copyright 2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
+#include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
 #include <xcore/assert.h>
@@ -9,6 +10,9 @@
 #include "wav_utils.h"
 #include "app_dsp.h"
 #include "fileio_task.h"
+
+
+#define FILEREAD_CHUNK_SIZE (1024)
 
 /// @brief Read a chunk of data from the input file.
 /// Takes care of different bit-depths and reads the data in left justified 32bit format.
@@ -59,11 +63,31 @@ static void read_input_frame(file_t *input_file, int32_t *input, wav_header *inp
     }
 }
 
+static void prepare_input(int32_t** dsp_input, int32_t* data, int n_ch, int frame_size) {
+    for(int f = 0; f < frame_size; ++f) {
+        for(int ch=0; ch < n_ch; ++ch) {
+            dsp_input[ch][f] = *data;
+            ++data;
+        }
+    }
+}
+
+
+static void prepare_output(int32_t* data, int32_t** dsp_input, int n_ch, int frame_size) {
+    for(int f = 0; f < frame_size; ++f) {
+        for(int ch=0; ch < n_ch; ++ch) {
+            *data = dsp_input[ch][f];
+            ++data;
+        }
+    }
+}
+
 /// @brief Task responsible for sending data read from a wav file to the pipeline and writing the output received
 /// from the pipeline to another file. File operations are done using xscope_fileio functions.
 /// @param c_control Unused for now. Will be used for control in future.
 void fileio_task(chanend_t c_control)
 {
+    printf("In test app!\n");
     test_config_t test_config = {0};
     parse_args("args.txt", &test_config);
 
@@ -96,7 +120,8 @@ void fileio_task(chanend_t c_control)
 
     unsigned frame_count = wav_get_num_frames(&input_header_struct);
     // Calculate number of frames in the wav file
-    unsigned block_count = frame_count / FILEREAD_CHUNK_SIZE;
+    unsigned block_count = frame_count / (FILEREAD_CHUNK_SIZE);
+    xassert(0 != block_count);
 
     wav_form_header(&output_header_struct,
             input_header_struct.audio_format,
@@ -114,9 +139,20 @@ void fileio_task(chanend_t c_control)
     printf("Discard frames = %d\n", test_config.num_discard_frames);
     printf("bytes_per_frame = %d\n", bytes_per_frame);
     printf("Block count = %d\n", block_count);
+    printf("Frame size = %d\n", app_dsp_frame_size());
 
     int32_t input[ FILEREAD_CHUNK_SIZE * MAX_CHANNELS] = {0}; // Array for storing interleaved input read from wav file
     int32_t output[FILEREAD_CHUNK_SIZE * MAX_CHANNELS] = {0};
+    xassert(FILEREAD_CHUNK_SIZE % app_dsp_frame_size() ==0); // frame size must be a factor of read size
+
+    int32_t** dsp_input = malloc(sizeof(int32_t*) * input_header_struct.num_channels);
+    for(int i = 0; i < input_header_struct.num_channels; ++i) {
+        dsp_input[i] = malloc(sizeof(int32_t) * app_dsp_frame_size());
+    }
+    int32_t** dsp_output = malloc(sizeof(int32_t*) * test_config.num_output_channels);
+    for(int i = 0; i < test_config.num_output_channels; ++i) {
+        dsp_output[i] = malloc(sizeof(int32_t) * app_dsp_frame_size());
+    }
 
     int discard = test_config.num_discard_frames;
     for(int i=0; i<block_count; i++)
@@ -127,33 +163,34 @@ void fileio_task(chanend_t c_control)
         int32_t* block_input = input;
         int32_t* block_output = output;
 
-        printf("1\n");
         // 1. discard initial outputs which will be 0
         for(int d = 0; d < discard; d++) {
-            app_dsp_source(block_input, input_header_struct.num_channels);
-            block_input += input_header_struct.num_channels;
+            prepare_input(dsp_input, block_input, input_header_struct.num_channels, app_dsp_frame_size());
+            app_dsp_source(dsp_input);
+            block_input += input_header_struct.num_channels * app_dsp_frame_size();
 
             // discard these outputs
-            int32_t temp_output[MAX_CHANNELS];
-            app_dsp_sink(temp_output, test_config.num_output_channels);
+            app_dsp_sink(dsp_output);
         }
 
-        printf("2\n");
         // 2. source and sink pipeline
-        int loop_n = FILEREAD_CHUNK_SIZE ;//- test_config.num_discard_frames;
+        int loop_n = FILEREAD_CHUNK_SIZE/app_dsp_frame_size();//- test_config.num_discard_frames;
         for(int j=0; j < loop_n; j++)
         {
-            app_dsp_source(block_input, input_header_struct.num_channels);
-            app_dsp_sink(block_output, test_config.num_output_channels);
-            block_input += input_header_struct.num_channels;
-            block_output += test_config.num_output_channels;
+            prepare_input(dsp_input, block_input, input_header_struct.num_channels, app_dsp_frame_size());
+            app_dsp_source(dsp_input);
+            app_dsp_sink(dsp_output);
+            prepare_output(block_output, dsp_output, test_config.num_output_channels, app_dsp_frame_size());
+
+            block_input += input_header_struct.num_channels * app_dsp_frame_size();
+            block_output += test_config.num_output_channels * app_dsp_frame_size();
         }
 
-        printf("3\n");
         // 3. read only, should empty the pipeline
         for(int d = 0; d < discard; d++) {
-            app_dsp_sink(block_output, test_config.num_output_channels);
-            block_output += test_config.num_output_channels;
+            app_dsp_sink(dsp_output);
+            prepare_output(block_output, dsp_output, test_config.num_output_channels, app_dsp_frame_size());
+            block_output += test_config.num_output_channels * app_dsp_frame_size();
         }
 
         file_write(&output_file, (uint8_t*)&output[0], test_config.num_output_channels * FILEREAD_CHUNK_SIZE * sizeof(int32_t));
