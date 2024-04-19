@@ -35,7 +35,8 @@ class mixer(dspg.dsp_block):
         assert gain_db <= 24, "Maximum mixer gain is +24dB"
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
-        self.gain_int = utils.int32(self.gain * 2**self.Q_sig)
+        self.gain = utils.saturate_float(self.gain, self.Q_sig)
+        self.gain_int = utils.float_to_int32(self.gain, self.Q_sig)
 
     def process_channels(self, sample_list: list[float]) -> float:
         """
@@ -79,7 +80,7 @@ class mixer(dspg.dsp_block):
         """
         y = int(0)
         for sample in sample_list:
-            sample_int = utils.int32(round(sample * 2**self.Q_sig))
+            sample_int = utils.float_to_int32(sample, self.Q_sig)
             acc = 1 << (self.Q_sig - 1)
             acc += sample_int * self.gain_int
             scaled_sample = utils.int32_mult_sat_extract(acc, 1, self.Q_sig)
@@ -322,7 +323,8 @@ class fixed_gain(dspg.dsp_block):
         assert gain_db <= 24, "Maximum fixed gain is +24dB"
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
-        self.gain_int = utils.int32(self.gain * 2**self.Q_sig)
+        self.gain = utils.saturate_float(self.gain, self.Q_sig)
+        self.gain_int = utils.float_to_int32(self.gain, self.Q_sig)
 
     def process(self, sample: float, channel: int = 0) -> float:
         """Multiply the input sample by the gain, using floating point
@@ -564,7 +566,8 @@ class volume_control(dspg.dsp_block):
         if not self.mute_state:
             self.target_gain_db = gain_db
             self.target_gain = utils.db2gain(gain_db)
-            self.target_gain_int = utils.int32(self.target_gain * 2**self.Q_sig)
+            self.target_gain = utils.saturate_float(self.target_gain, self.Q_sig)
+            self.target_gain_int = utils.float_to_int32(self.target_gain, self.Q_sig)
         else:
             self.saved_gain_db = gain_db
 

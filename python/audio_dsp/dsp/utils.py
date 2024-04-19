@@ -157,10 +157,10 @@ def vpu_mult(x1: int, x2: int):
 def int32_mult_sat_extract(x1: int, x2: int, Q: int):
     y = int64(x1 * x2)
     if y > (2 ** (31 + Q) - 1):
-        warnings.warn("Saturation occured", OverflowWarning)
+        warnings.warn("Saturation occured", SaturationWarning)
         y = 2 ** (31 + Q) - 1
     elif y < -(2 ** (31 + Q)):
-        warnings.warn("Saturation occured", OverflowWarning)
+        warnings.warn("Saturation occured", SaturationWarning)
         y = -(2 ** (31 + Q))
     y = int32(y >> Q)
 
@@ -169,10 +169,10 @@ def int32_mult_sat_extract(x1: int, x2: int, Q: int):
 
 def saturate_int64_to_int32(x: int):
     if x > (2**31 - 1):
-        warnings.warn("Saturation occured", OverflowWarning)
+        warnings.warn("Saturation occured", SaturationWarning)
         return 2**31 - 1
     elif x < -(2**31):
-        warnings.warn("Saturation occured", OverflowWarning)
+        warnings.warn("Saturation occured", SaturationWarning)
         return -(2**31)
     else:
         return x
