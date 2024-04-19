@@ -63,7 +63,8 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
         # note rms comes as x**2, so use db_pow
         self.threshold = utils.db_pow2gain(threshold_db)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
+        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=1,
@@ -129,8 +130,8 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
         """
         # quantize
-        sample_int = utils.int32(round(input_sample * 2**self.Q_sig))
-        detect_sample_int = utils.int32(round(detect_sample * 2**self.Q_sig))
+        sample_int = utils.float_to_int32(input_sample, self.Q_sig)
+        detect_sample_int = utils.float_to_int32(detect_sample, self.Q_sig)
 
         # get envelope from envelope detector
         envelope_int = self.env_detector.process_xcore(detect_sample_int)
@@ -154,9 +155,9 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         y = drcu.apply_gain_xcore(sample_int, self.gain_int)
 
         return (
-            (float(y) * 2**-self.Q_sig),
-            (float(new_gain_int) * 2**-self.Q_alpha),
-            (float(envelope_int) * 2**-self.Q_sig),
+            utils.int32_to_float(y, self.Q_sig),
+            utils.int32_to_float(new_gain_int, self.Q_alpha),
+            utils.int32_to_float(envelope_int, self.Q_sig),
         )
 
     def process_frame(self, frame):
@@ -204,7 +205,8 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         self.threshold = utils.db_pow2gain(threshold_dB)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
+        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=n_chans,

@@ -195,7 +195,8 @@ class limiter_peak_stereo(compressor_limiter_stereo_base):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         self.threshold = utils.db2gain(threshold_dB)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
+        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,
@@ -229,7 +230,8 @@ class compressor_rms_stereo(compressor_limiter_stereo_base):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         self.threshold = utils.db_pow2gain(threshold_dB)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
+        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=n_chans,

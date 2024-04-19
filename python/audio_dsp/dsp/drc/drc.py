@@ -420,7 +420,7 @@ class compressor_limiter_base(dspg.dsp_block):
         Input should be scaled with 0dB = 1.0.
 
         """
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        sample_int = utils.float_to_int32(sample, self.Q_sig)
         # get envelope from envelope detector
         envelope_int = self.env_detector.process_xcore(sample_int, channel)
         # avoid /0
@@ -445,10 +445,10 @@ class compressor_limiter_base(dspg.dsp_block):
         if return_int:
             return y, new_gain_int, envelope_int
         else:
-            return (
-                (float(y) * 2**-self.Q_sig),
-                (float(new_gain_int) * 2**-self.Q_alpha),
-                (float(envelope_int) * 2**-self.Q_sig),
+        	return (
+            	utils.int32_to_float(y, self.Q_sig),
+            	utils.int32_to_float(new_gain_int, self.Q_alpha),
+            	utils.int32_to_float(envelope_int, self.Q_sig),
             )
 
     def process_frame(self, frame):
@@ -517,7 +517,8 @@ class limiter_peak(compressor_limiter_base):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         self.threshold = utils.db2gain(threshold_dB)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
+        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,
@@ -560,7 +561,8 @@ class limiter_rms(compressor_limiter_base):
 
         # note rms comes as x**2, so use db_pow
         self.threshold = utils.db_pow2gain(threshold_dB)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
+        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=n_chans,
@@ -724,7 +726,8 @@ class compressor_rms(compressor_limiter_base):
 
         # note rms comes as x**2, so use db_pow
         self.threshold = utils.db_pow2gain(threshold_db)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
+        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=n_chans,
