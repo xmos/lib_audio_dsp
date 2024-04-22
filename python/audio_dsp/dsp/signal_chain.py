@@ -231,8 +231,8 @@ class subtractor(dspg.dsp_block):
         float
             Result of the subtraction.
         """
-        sample_int_0 = utils.int32(round(sample_list[0] * 2**self.Q_sig))
-        sample_int_1 = utils.int32(round(sample_list[1] * 2**self.Q_sig))
+        sample_int_0 = utils.float_to_int32(sample_list[0], self.Q_sig)
+        sample_int_1 = utils.float_to_int32(sample_list[1], self.Q_sig)
 
         acc = int(0)
         acc += sample_int_0 * 2
@@ -366,7 +366,7 @@ class fixed_gain(dspg.dsp_block):
         float
             The processed output sample.
         """
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        sample_int = utils.float_to_int32(sample, self.Q_sig)
         # for rounding
         acc = 1 << (self.Q_sig - 1)
         acc += sample_int * self.gain_int
@@ -530,7 +530,7 @@ class volume_control(dspg.dsp_block):
         float
             The processed output sample.
         """
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        sample_int = utils.float_to_int32(sample, self.Q_sig)
 
         # do the exponential slew
         self.gain_int[channel] += (

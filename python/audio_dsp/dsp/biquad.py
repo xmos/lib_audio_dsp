@@ -381,7 +381,7 @@ def _round_to_q30(coeffs: list[float]) -> tuple[list[float], list[int]]:
     Q = 30
     for n in range(len(coeffs)):
         # scale to Q30 ints
-        rounded_coeffs[n] = round(coeffs[n] * 2**Q)
+        rounded_coeffs[n] = round(coeffs[n] * (2**Q - 1))
         # check for overflow
         if not (-(2**31) <= rounded_coeffs[n] <= 2**31 - 1):
             raise ValueError(

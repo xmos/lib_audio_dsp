@@ -98,7 +98,7 @@ class envelope_detector_peak(dspg.dsp_block):
 
         """
         if isinstance(sample, float):
-            sample_int = utils.int32(round(sample * 2**self.Q_sig))
+            sample_int = utils.float_to_int32(sample, self.Q_sig)
         elif (isinstance(sample, list) or isinstance(sample, np.ndarray)) and isinstance(
             sample[0], int
         ):
@@ -122,7 +122,7 @@ class envelope_detector_peak(dspg.dsp_block):
         )
 
         if isinstance(sample, float):
-            return float(self.envelope_int[channel]) * 2**-self.Q_sig
+            return utils.int32_to_float(self.envelope_int[channel], self.Q_sig)
         else:
             return self.envelope_int[channel]
 
@@ -181,7 +181,7 @@ class envelope_detector_rms(envelope_detector_peak):
 
         """
         if isinstance(sample, float):
-            sample_int = utils.int32(round(sample * 2**self.Q_sig))
+            sample_int = utils.float_to_int32(sample, self.Q_sig)
         else:
             sample_int = sample
 
@@ -202,7 +202,7 @@ class envelope_detector_rms(envelope_detector_peak):
 
         # if we got floats, return floats, otherwise return ints
         if isinstance(sample, float):
-            return float(self.envelope_int[channel]) * 2**-self.Q_sig
+            return utils.int32_to_float(self.envelope_int[channel], self.Q_sig)
         else:
             return self.envelope_int[channel]
 

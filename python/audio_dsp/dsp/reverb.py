@@ -448,7 +448,7 @@ class reverb_room(dspg.dsp_block):
         Take one new sample and return the sample with reverb.
         Input should be scaled with 0dB = 1.0.
         """
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        sample_int = utils.float_to_int32(sample, self.Q_sig)
 
         reverb_input = apply_gain_xcore(sample_int, self.pregain_int)
 
@@ -472,7 +472,7 @@ class reverb_room(dspg.dsp_block):
         utils.int64(output)
         output = utils.saturate_int64_to_int32(output)
 
-        return float(output) * 2**-self.Q_sig
+        return utils.int32_to_float(output, self.Q_sig)
 
 
 if __name__ == "__main__":

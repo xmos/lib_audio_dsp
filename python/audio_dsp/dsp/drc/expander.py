@@ -117,7 +117,7 @@ class expander_base(compressor_limiter_base):
         Input should be scaled with 0dB = 1.0.
 
         """
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        sample_int = utils.float_to_int32(sample * 2**self.Q_sig)
         # get envelope from envelope detector
         envelope_int = self.env_detector.process_xcore(sample_int, channel)
         # avoid /0
@@ -142,10 +142,10 @@ class expander_base(compressor_limiter_base):
         if return_int:
             return y, new_gain_int, envelope_int
         else:
-            return (
-                (float(y) * 2**-self.Q_sig),
-                (float(new_gain_int) * 2**-self.Q_alpha),
-                (float(envelope_int) * 2**-self.Q_sig),
+        	return (
+            	utils.int32_to_float(y, self.Q_sig),
+            	utils.int32_to_float(new_gain_int, self.Q_alpha),
+            	utils.int32_to_float(envelope_int, self.Q_sig),
             )
 
 
