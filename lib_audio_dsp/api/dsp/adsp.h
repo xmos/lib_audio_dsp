@@ -5,11 +5,7 @@
 
 #include "xmath/xmath.h"
 
-/**  Default signal exponent */
-#define SIG_EXP (-27)
-/** Default Q format */
-#define Q_SIG   (-SIG_EXP)
-
+#include "dsp/defines.h"
 #include "dsp/signal_chain.h"
 #include "dsp/biquad.h"
 #include "dsp/cascaded_biquads.h"
