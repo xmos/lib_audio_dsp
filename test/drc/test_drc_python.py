@@ -340,6 +340,7 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold,
     if "sidechain" in component_stereo:
         sidechain_signal = np.zeros_like(signal)
         sidechain_signal[:, len(signal)//2:] = 1
+        sidechain_signal = utils.saturate_float_array(sidechain_signal, dspg.Q_SIG)
 
     stereo_component_handle = getattr(drc, component_stereo)
     mono_component_handle = getattr(drc, component_mono)
@@ -673,11 +674,11 @@ def test_stereo_components(fs, component, at, rt, threshold, ratio):
     f = 997
     signal.append(gen.sin(fs, lenght, f, 1))
     signal.append(gen.sin(fs, lenght, f, 0.5))
-    signal = np.stack(signal, axis=0).astype(np.float32)
+    signal = np.stack(signal, axis=0)
     signal = utils.saturate_float_array(signal, dspg.Q_SIG)
 
-    output_xcore = np.zeros(signal.shape, dtype=np.float32)
-    output_flt = np.zeros(signal.shape, dtype=np.float32)
+    output_xcore = np.zeros(signal.shape)
+    output_flt = np.zeros(signal.shape)
 
     for n in np.arange(signal.shape[1]):
         output_xcore[:, n], _, _ = drcut.process_channels_xcore(signal[:, n])
