@@ -35,10 +35,10 @@ def scale_sat_int64_to_int32_floor(val):
 
     # saturate
     if val > (2 ** (31 + Q_VERB) - 1):
-        warnings.warn("Saturation occured", utils.OverflowWarning)
+        warnings.warn("Saturation occured", utils.SaturationWarning)
         val = 2 ** (31 + Q_VERB) - 1
     elif val < -(2 ** (31 + Q_VERB)):
-        warnings.warn("Saturation occured", utils.OverflowWarning)
+        warnings.warn("Saturation occured", utils.SaturationWarning)
         val = -(2 ** (31 + Q_VERB))
 
     # shift to int32
