@@ -76,7 +76,7 @@ def test_fork_copies():
     Check we can duplicate a channel
     """
     channels = 2
-    p = Pipeline(channels)
+    p = Pipeline(channels, frame_size=2)
     with p.add_thread() as t:
         fork = t.stage(Fork, p.i, count = 2)
     p.set_outputs([fork.forks[0][0], fork.forks[1][0]])

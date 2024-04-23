@@ -2,7 +2,6 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #pragma once
 
-#define FILEREAD_CHUNK_SIZE (1024)
 typedef struct
 {
     char *input_filename;

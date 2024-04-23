@@ -19,6 +19,16 @@ from uuid import uuid4
 from ._draw import new_record_digraph
 from .host_app import send_control_cmd
 from functools import wraps
+from typing import NamedTuple
+
+
+class _ResolvedEdge(NamedTuple):
+    """Resolved representation of an edge, used in code gen."""
+
+    source: tuple[int, int]
+    dest: tuple[int, int]
+    fs: float
+    frame_size: int
 
 
 def callonce(f):
@@ -286,7 +296,7 @@ class Pipeline:
                 if edge.dest is not None
                 else [None, edge.dest_index]
             )
-            edges.append([source, dest])
+            edges.append(_ResolvedEdge(source, dest, frame_size=edge.frame_size, fs=edge.fs))
 
         self.generate_pipeline_hash(threads, edges)
 
@@ -426,16 +436,15 @@ def _filter_edges_by_thread(resolved_pipeline):
 
 def _gen_chan_buf_read_q31_to_q27(channel, edge, frame_size):
     """Generate the C code to read from a channel and convert from q31 to q27."""
-    return f"for(int idx = 0; idx < {frame_size}; ++idx) {edge}[idx] = adsp_from_q31((int32_t)chan_in_word({channel}));"
+    return f"chan_in_buf_word({channel}, (uint32_t*){edge}, {frame_size}); for(int idx = 0; idx < {frame_size}; ++idx) {edge}[idx] = adsp_from_q31({edge}[idx]);"
 
 
 def _gen_chan_buf_write_q27_to_q31(channel, edge, frame_size):
     """Generate the C code to write to a channel and convert from q27 to q31 and saturate."""
-    edge = f"{edge}[idx]"
-    return f"for(int idx = 0; idx < {frame_size}; ++idx) chan_out_word({channel}, adsp_to_q31({edge}));"
+    return f"for(int idx = 0; idx < {frame_size}; ++idx) {edge}[idx] = adsp_to_q31({edge}[idx]); chan_out_buf_word({channel}, (uint32_t*){edge}, {frame_size});"
 
 
-def _generate_dsp_threads(resolved_pipeline, block_size=1):
+def _generate_dsp_threads(resolved_pipeline):
     """
     Create the source string for all of the dsp threads. Output looks approximately like the below::
 
@@ -487,8 +496,8 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
         for temp_out_e in all_output_edges.values():
             all_edges.extend(temp_out_e)
         all_edges.extend(dead_edges)
-        for i in range(len(all_edges)):
-            func += f"\tint32_t edge{i}[{block_size}] = {{0}};\n"
+        for i, edge in enumerate(all_edges):
+            func += f"\tint32_t edge{i}[{edge.frame_size}] = {{0}};\n"
 
         # get the dsp_thread stage index in the thread
         dsp_thread_index = [i for i, (_, name) in enumerate(thread) if name == "dsp_thread"][0]
@@ -548,12 +557,12 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
                         read += (
                             "\t\t\t"
                             + _gen_chan_buf_read_q31_to_q27(
-                                f"c_source[{i}]", f"edge{all_edges.index(edge)}", block_size
+                                f"c_source[{i}]", f"edge{all_edges.index(edge)}", edge.frame_size
                             )
                             + "\n"
                         )
                     else:
-                        read += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
+                        read += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {edge.frame_size});\n"
                 read += "\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}\n"
             read += "\t\tdo_control: {\n"
             read += "\t\tstart_control_ts = get_reference_time();\n"
@@ -597,12 +606,12 @@ def _generate_dsp_threads(resolved_pipeline, block_size=1):
                     out += (
                         "\t"
                         + _gen_chan_buf_write_q27_to_q31(
-                            f"c_dest[{out_index}]", f"edge{all_edges.index(edge)}", block_size
+                            f"c_dest[{out_index}]", f"edge{all_edges.index(edge)}", edge.frame_size
                         )
                         + "\n"
                     )
                 else:
-                    out += f"\tchan_out_buf_word(c_dest[{out_index}], (void*)edge{all_edges.index(edge)}, {block_size});\n"
+                    out += f"\tchan_out_buf_word(c_dest[{out_index}], (void*)edge{all_edges.index(edge)}, {edge.frame_size});\n"
 
         # The pipeline start condition must be that it is already full so reads
         # can be done without worrying about synchronisation. This is done
@@ -720,9 +729,16 @@ def _generate_dsp_init(resolved_pipeline):
     # initialise the modules
     for thread in resolved_pipeline["threads"]:
         for stage_index, stage_name in thread:
-            stage_n_in = len([e for e in resolved_pipeline["edges"] if e[1][0] == stage_index])
-            stage_n_out = len([e for e in resolved_pipeline["edges"] if e[0][0] == stage_index])
-            stage_frame_size = 1  # TODO
+            in_edges = [e for e in resolved_pipeline["edges"] if e.dest[0] == stage_index]
+            out_edges = [e for e in resolved_pipeline["edges"] if e.source[0] == stage_index]
+            stage_n_in = len(in_edges)
+            stage_n_out = len(out_edges)
+            # TODO this is naive, stage could have different frame sizes on each edge
+            try:
+                stage_frame_size = max(e.frame_size for e in in_edges + out_edges)
+            except ValueError:
+                # the stage has no edges
+                stage_frame_size = 1
 
             defaults = {}
             for config_field, value in resolved_pipeline["configs"][stage_index].items():
@@ -787,8 +803,7 @@ def _generate_dsp_muxes(resolved_pipeline):
         try:
             edges = thread_input_edges["pipeline_in"]
             for edge in edges:
-                frame_size = 1  # TODO
-                ret += f"\t\t{{ .channel_idx = {input_chan_idx}, .data_idx = {edge[0][1]}, .frame_size = {frame_size}}},\n"
+                ret += f"\t\t{{ .channel_idx = {input_chan_idx}, .data_idx = {edge[0][1]}, .frame_size = {edge.frame_size}}},\n"
                 num_input_mux_cfgs += 1
             input_chan_idx += 1
         except KeyError:
@@ -802,8 +817,7 @@ def _generate_dsp_muxes(resolved_pipeline):
         try:
             edges = thread_output_edges["pipeline_out"]
             for edge in edges:
-                frame_size = 1  # TODO
-                ret += f"\t\t{{ .channel_idx = {output_chan_idx}, .data_idx = {edge[1][1]}, .frame_size = {frame_size}}},\n"
+                ret += f"\t\t{{ .channel_idx = {output_chan_idx}, .data_idx = {edge[1][1]}, .frame_size = {edge.frame_size}}},\n"
                 num_output_mux_cfgs += 1
             output_chan_idx += 1
         except KeyError:

@@ -12,14 +12,16 @@
 void app_dsp_init(void);
 
 // send data to dsp
-void app_dsp_source(REFERENCE_PARAM(int32_t, data), int num_channels);
+void app_dsp_source(int32_t** data);
 
 // read output
-void app_dsp_sink(REFERENCE_PARAM(int32_t, data), int num_channels);
+void app_dsp_sink(int32_t** data);
 
 // do dsp
 void app_dsp_main(chanend c_control);
 
+// get frame size
+int app_dsp_frame_size();
 
 // TODO control
 
