@@ -65,7 +65,6 @@ typedef struct{
  * @param fs                  Sampling frequency
  * @param attack_t            Attack time in seconds
  * @param release_t           Release time in seconds
- * @param detect_t            Detection time in seconds
  * @return env_detector_t     Initialised envelope detector object
  * @note Detect time is optional. If specified, attack and release times will be equal.
  */
