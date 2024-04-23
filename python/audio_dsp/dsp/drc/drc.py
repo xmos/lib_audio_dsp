@@ -47,7 +47,7 @@ class envelope_detector_peak(dspg.dsp_block):
 
     """
 
-    def __init__(self, fs, attack_t, release_t, n_chans=1, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, n_chans, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
         # calculate EWM alpha from time constant
