@@ -52,15 +52,9 @@ class envelope_detector_peak(dspg.dsp_block):
     """
 
     def __init__(
-        self, fs, n_chans=1, attack_t=None, release_t=None, detect_t=None, Q_sig=dspg.Q_SIG
+        self, fs, n_chans=1, attack_t=None, release_t=None, Q_sig=dspg.Q_SIG
     ):
         super().__init__(fs, n_chans, Q_sig)
-
-        if detect_t and (attack_t or release_t):
-            ValueError("either detect_t OR (attack_t AND release_t) must be specified")
-        elif detect_t:
-            attack_t = detect_t
-            release_t = detect_t
 
         # calculate EWM alpha from time constant
         self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)

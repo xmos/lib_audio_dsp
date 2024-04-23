@@ -13,7 +13,7 @@ limiter_t adsp_limiter_peak_init(
   float release_t
 ) {
   limiter_t lim;
-  lim.env_det = adsp_env_detector_init(fs, attack_t, release_t, 0);
+  lim.env_det = adsp_env_detector_init(fs, attack_t, release_t);
   float th = powf(10, threshold_db / 20);
   lim.threshold = from_float_pos(th);
   lim.gain = INT32_MAX;
@@ -27,7 +27,7 @@ limiter_t adsp_limiter_rms_init(
   float release_t
 ) {
   limiter_t lim;
-  lim.env_det = adsp_env_detector_init(fs, attack_t, release_t, 0);
+  lim.env_det = adsp_env_detector_init(fs, attack_t, release_t);
   float th = powf(10, threshold_db / 10);
   lim.threshold = from_float_pos(th);
   lim.gain = INT32_MAX;

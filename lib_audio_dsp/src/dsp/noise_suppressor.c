@@ -22,7 +22,7 @@ noise_suppressor_t adsp_noise_suppressor_init(
   float ratio
 ) {
   noise_suppressor_t ns;
-  ns.env_det = adsp_env_detector_init(fs, attack_t, release_t, 0);
+  ns.env_det = adsp_env_detector_init(fs, attack_t, release_t);
   float th = powf(10, threshold_db / 20);
   adsp_noise_suppressor_set_th(&ns, from_float_pos(th));
   ns.gain = INT32_MAX;

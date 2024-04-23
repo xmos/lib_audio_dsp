@@ -72,8 +72,7 @@ typedef struct{
 env_detector_t adsp_env_detector_init(
   float fs,
   float attack_t,
-  float release_t,
-  float detect_t);
+  float release_t);
 
 /**
  * @brief Update the envelope detector peak with a new sample
