@@ -245,7 +245,7 @@ class subtractor(dspg.dsp_block):
 
         return y_flt
 
-    def process_frame(self, frame: list[np.ndarray], channel: int = 0) -> list[np.ndarray]:
+    def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
         """
         Process a frame of samples, using floating point maths.
 
@@ -257,8 +257,6 @@ class subtractor(dspg.dsp_block):
         ----------
         frame : list[np.ndarray]
             List of frames, where each frame is a 1-D numpy array.
-        channel : int
-            Channel index.
 
         Returns
         -------
@@ -281,7 +279,7 @@ class subtractor(dspg.dsp_block):
 
         return [output]
 
-    def process_frame_xcore(self, frame: list[np.ndarray], channel: int = 0) -> list[np.ndarray]:
+    def process_frame_xcore(self, frame: list[np.ndarray]) -> list[np.ndarray]:
         """
         Process a frame of samples, using int32 fixed point maths.
 
@@ -293,8 +291,6 @@ class subtractor(dspg.dsp_block):
         ----------
         frame : list[np.ndarray]
             List of frames, where each frame is a 1-D numpy array.
-        channel : int
-            Channel index.
 
         Returns
         -------
