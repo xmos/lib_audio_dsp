@@ -842,7 +842,7 @@ class compressor_rms_softknee(compressor_limiter_base):
         The knee is approximated as a straight line between the knee
         start at (x1, y1) and the knee end at (x2, y2) BUT as the
         envelope is RMS**2, we actually get a curve.
-        
+
         x2 is modified to be halfway between the threshold and the end
         of the knee, trying to join closer to the true knee end than
         this can result in overshoot (i.e. going above the hard knee
@@ -911,7 +911,7 @@ class compressor_rms_softknee(compressor_limiter_base):
         return new_gain
 
     def compressor_rms_softknee_gain_calc_approx(self, envelope, threshold, slope=None):
-        """Calculate the float gain for the current sample, using a 
+        """Calculate the float gain for the current sample, using a
         linear approximation for the soft knee. Since the RMS envelope
         is used, and returns RMS**2, the linear approximation gives a
         quadratic fit, and so is reasonably close to the true soft knee.
@@ -933,7 +933,7 @@ class compressor_rms_softknee(compressor_limiter_base):
         return new_gain
 
     def compressor_rms_softknee_gain_calc_xcore(self, envelope_int, threshold_int, slope_f32=None):
-        """Calculate the int gain for the current sample, using a 
+        """Calculate the int gain for the current sample, using a
         linear approximation for the soft knee. Since the RMS envelope
         is used, and returns RMS**2, the linear approximation gives a
         quadratic fit, and so is reasonably close to the true soft knee.
