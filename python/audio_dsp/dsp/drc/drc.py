@@ -26,10 +26,6 @@ class envelope_detector_peak(dspg.dsp_block):
         Attack time of the envelope detector in seconds.
     release_t: float, optional
         Release time of the envelope detector in seconds.
-    detect_t : float, optional
-        Attack and release time of the envelope detector in seconds. Sets
-        attack_t == release_t. Cannot be used with attack_t or release_t
-        inputs.
 
     Attributes
     ----------
