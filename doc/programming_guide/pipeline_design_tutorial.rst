@@ -6,7 +6,7 @@ python library. This does not include adding the generated code in an applicatio
 the reader has a reference application to run their pipeline on. Such a reference design can be found in
 the xmos/sw_audio_dsp github repository.
 
-The steps in this guide should be executed in a `Jupyter Notebook<https://jupyter.org/>`_.
+The steps in this guide should be executed in a `Jupyter Notebook <https://jupyter.org/>`_.
 
 Making a simple tone control
 ============================
