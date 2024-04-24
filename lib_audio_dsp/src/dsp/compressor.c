@@ -14,7 +14,7 @@ compressor_t adsp_compressor_rms_init(
   float ratio
 ) {
   compressor_t comp;
-  comp.env_det = adsp_env_detector_init(fs, attack_t, release_t, 0);
+  comp.env_det = adsp_env_detector_init(fs, attack_t, release_t);
   float th = powf(10, threshold_db / 10);
   if (th > 1) th = 1.0;
   comp.threshold = from_float_pos(th);
