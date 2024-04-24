@@ -138,7 +138,7 @@ class biquad(dspg.dsp_block):
 
         # combine the b_shift with the >> 30
         y = y + 2 ** (29 - self.b_shift)
-        y = utils.saturate_int32(y >> (30 - self.b_shift))
+        y = utils.int32_mult_sat_extract(y, 1, 30 - self.b_shift)
 
         # save states
         self._x2[channel] = utils.int32(self._x1[channel])
@@ -220,7 +220,7 @@ class biquad(dspg.dsp_block):
         return output
 
     def freq_response(
-        self, nfft: int = 512
+        self, nfft: int = 1024
     ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         """
         Calculate the frequency response of the biquad filter.
@@ -380,8 +380,9 @@ def _round_to_q30(coeffs: list[float]) -> tuple[list[float], list[int]]:
 
     Q = 30
     for n in range(len(coeffs)):
-        # scale to Q30 ints
-        rounded_coeffs[n] = round(coeffs[n] * (2**Q - 1))
+        # scale to Q30 ints, note this is intentionally not multiplied
+        # (2**Q -1) to keep 1.0 as 1.0
+        rounded_coeffs[n] = round(coeffs[n] * (2**Q))
         # check for overflow
         if not (-(2**31) <= rounded_coeffs[n] <= 2**31 - 1):
             raise ValueError(

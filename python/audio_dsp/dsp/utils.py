@@ -141,7 +141,7 @@ def int40(val: int):
 
 def uq_2_30(val: int):
     # special type for unsigned Q2.30 format, used by EWM
-    if 0 < val < (2**32):
+    if 0 <= val < (2**32):
         return int(val)
     raise OverflowError
 
