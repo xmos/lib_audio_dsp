@@ -22,17 +22,9 @@ static inline q1_31 get_alpha(float fs, float time) {
 env_detector_t adsp_env_detector_init(
   float fs,
   float attack_t,
-  float release_t,
-  float detect_t
+  float release_t
 ) {
   env_detector_t env_det;
-
-  if (detect_t && (attack_t || release_t)) {
-    xassert(0 && "either detect_t OR (attack_t AND release_t) must be specified");
-  } else if (detect_t) {
-    attack_t = detect_t;
-    release_t = detect_t;
-  }
 
   env_det.attack_alpha = get_alpha(fs, attack_t);
   env_det.release_alpha = get_alpha(fs, release_t);

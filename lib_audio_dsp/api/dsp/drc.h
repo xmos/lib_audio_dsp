@@ -65,15 +65,13 @@ typedef struct{
  * @param fs                  Sampling frequency
  * @param attack_t            Attack time in seconds
  * @param release_t           Release time in seconds
- * @param detect_t            Detection time in seconds
  * @return env_detector_t     Initialised envelope detector object
  * @note Detect time is optional. If specified, attack and release times will be equal.
  */
 env_detector_t adsp_env_detector_init(
   float fs,
   float attack_t,
-  float release_t,
-  float detect_t);
+  float release_t);
 
 /**
  * @brief Update the envelope detector peak with a new sample
