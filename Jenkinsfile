@@ -33,6 +33,20 @@ pipeline {
   } // options
 
   stages {
+    stage('Stop previous builds') {
+      when {
+        // don't stop runs on develop or main
+        not {
+          anyOf {
+            branch "main"
+            branch "develop"
+          }
+        }
+      }
+      steps {
+        stopPreviousBuilds()
+      }
+    } // Stop previous builds
     stage('CI') {
       parallel {
         stage ('Build & Test') {
