@@ -106,7 +106,7 @@ class expander_base(compressor_limiter_base):
         y = self.gain[channel] * sample
         return y, new_gain, envelope
 
-    def process_xcore(self, sample, channel=0):
+    def process_xcore(self, sample, channel=0, return_int=False):
         """
         Update the envelope for a signal, then calculate and apply the
         required gain for expanding, using int32 fixed point
@@ -138,11 +138,14 @@ class expander_base(compressor_limiter_base):
         # apply gain
         y = drcu.apply_gain_xcore(sample_int, self.gain_int[channel])
 
-        return (
-            (float(y) * 2**-self.Q_sig),
-            (float(new_gain_int) * 2**-self.Q_alpha),
-            (float(envelope_int) * 2**-self.Q_sig),
-        )
+        if return_int:
+            return y, new_gain_int, envelope_int
+        else:
+            return (
+                (float(y) * 2**-self.Q_sig),
+                (float(new_gain_int) * 2**-self.Q_alpha),
+                (float(envelope_int) * 2**-self.Q_sig),
+            )
 
 
 class noise_gate(expander_base):
