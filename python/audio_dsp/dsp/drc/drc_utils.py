@@ -127,10 +127,12 @@ def compressor_rms_gain_calc_xcore(envelope_int, threshold_int, slope_f32=None):
     """
     # if envelope below threshold, apply unity gain, otherwise scale
     # down
+    int32_max_as_f32 = float32(np.nextafter(2**31, 0, dtype=np.float32))
+
     if slope_f32 > float32(0) and threshold_int < envelope_int:
         new_gain_int = int(threshold_int) << 31
         new_gain_int = utils.int32(new_gain_int // envelope_int)
-        new_gain_int = ((float32(new_gain_int * 2**-31) ** slope_f32) * float32(2**31)).as_int32()
+        new_gain_int = ((float32(new_gain_int * 2**-31) ** slope_f32) * int32_max_as_f32).as_int32()
     else:
         new_gain_int = utils.int32(0x7FFFFFFF)
 

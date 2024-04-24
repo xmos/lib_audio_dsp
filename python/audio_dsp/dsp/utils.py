@@ -186,11 +186,12 @@ def vlmaccr(vect1, vect2, out=0):
 
 
 def float_to_int32(x, Q_sig=31):
-    return int32(round(x * (2**Q_sig - 1)))
+    return int32(round(x * (2**Q_sig)))
 
 
 def int32_to_float(x, Q_sig=31):
-    return float(x)/(2**Q_sig - 1)
+    # Note this means the max value is 0.99999999953
+    return float(x)/(2**Q_sig)
 
 
 class float_s32:

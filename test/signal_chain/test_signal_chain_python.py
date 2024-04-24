@@ -218,6 +218,7 @@ def test_combiners(filter_spec, fs):
     for n in range(filter_spec[1]):
         signals.append(gen.pink_noise(fs, length, 1.0))
     signal = np.stack(signals, axis=0)
+    signal = utils.saturate_float_array(signal, dspg.Q_SIG)
 
     output_flt = np.zeros(signal.shape[1])
     output_xcore = np.zeros(signal.shape[1])
@@ -260,7 +261,7 @@ def test_combiners_frames(filter_spec, fs):
     for n in range(filter_spec[1]):
         signals.append(gen.pink_noise(fs, length, 1.0))
     signal = np.stack(signals, axis=0)
-
+    signal = utils.saturate_float_array(signal, dspg.Q_SIG)
     signal_frames = utils.frame_signal(signal, 1, 1)
 
     output_flt = np.zeros((1, len(signal)))

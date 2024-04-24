@@ -140,7 +140,8 @@ def test_comp_ratio(fs, at, rt, ratio, threshold):
     ref_signal[over_thresh] *= utils.db2gain((1 - 1/ratio)*(threshold - utils.db(ref_signal[over_thresh])))
 
     np.testing.assert_allclose(ref_signal, output_flt, atol=3e-16, rtol=0)
-    np.testing.assert_allclose(output_flt, output_xcore, atol=6e-8, rtol=0)
+    # threshold limited by 24b resolution in float32 mantissa
+    np.testing.assert_allclose(output_flt, output_xcore, atol=2**-23, rtol=0)
 
 
 @pytest.mark.parametrize("fs", [48000])

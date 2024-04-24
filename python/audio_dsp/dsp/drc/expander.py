@@ -71,7 +71,7 @@ class expander_base(compressor_limiter_base):
         """
         if self.env_detector is not None:
             self.env_detector.envelope = [1] * self.n_chans
-            self.env_detector.envelope_int = [utils.float_to_int32(1, self.Q_sig)] * self.n_chans
+            self.env_detector.envelope_int = [utils.int32(2**self.Q_sig - 1)] * self.n_chans
         self.gain = [1] * self.n_chans
         self.gain_int = [2**31 - 1] * self.n_chans
 
@@ -117,7 +117,7 @@ class expander_base(compressor_limiter_base):
         Input should be scaled with 0dB = 1.0.
 
         """
-        sample_int = utils.float_to_int32(sample, self.Q_sig)
+        sample_int = utils.float_to_int32(sample * 2**self.Q_sig)
         # get envelope from envelope detector
         envelope_int = self.env_detector.process_xcore(sample_int, channel)
         # avoid /0
