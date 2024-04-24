@@ -21,6 +21,6 @@ subdirectory of lib_audio_dsp. Having run cmake to download lib_audio_dsp into a
     pip install -e lib_audio_dsp/python
 
 It is important to re-run cmake after installing the python module so that the DSP design source files will be included in
-the build. Read more on generating DSP pipelines in the :ref:`Pipeline Design Api section<pipeline_design_api>`.
+the build. Read more on generating DSP pipelines in the :ref:`Pipeline Design API section<pipeline_design_api>`.
 
 
