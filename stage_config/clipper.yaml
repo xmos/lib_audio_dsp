@@ -1,0 +1,6 @@
+module:
+  clipper:
+    threshold:
+      type: int32_t
+includes:
+  - "stages/adsp_module.h"
