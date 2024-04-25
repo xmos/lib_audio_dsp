@@ -26,12 +26,9 @@ int main()
   int in_len = ftell(in) / sizeof(int32_t);
   fseek(in, 0, SEEK_SET);
 
-  int32_t th/*, tmp*/;
+  int32_t th;
 
   fread(&th, sizeof(int32_t), 1, info);
-  // ignore alphas
-  //fread(&tmp, sizeof(int32_t), 1, info);
-  //fread(&tmp, sizeof(int32_t), 1, info);
   fclose(info);
 
   clipper_t clip = th;
