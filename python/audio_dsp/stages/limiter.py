@@ -91,6 +91,7 @@ class HardLimiterPeak(Stage):
         )
         return self
 
+
 class Clipper(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=find_config("clipper"), **kwargs)
@@ -107,7 +108,5 @@ class Clipper(Stage):
             threshold_db=threshold_db,
             Q_sig=Q_sig,
         )
-        self.dsp_block = drc.clipper(
-            self.fs, self.n_in, threshold_db, Q_sig
-        )
+        self.dsp_block = drc.clipper(self.fs, self.n_in, threshold_db, Q_sig)
         return self
