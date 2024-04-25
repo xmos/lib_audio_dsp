@@ -157,7 +157,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         return (
             utils.int32_to_float(y, self.Q_sig),
             utils.int32_to_float(new_gain_int, self.Q_alpha),
-            utils.int32_to_float(envelope_int, self.Q_sig),
+            utils.int32_to_float(envelope_int, self.Q_sig)
         )
 
     def process_frame(self, frame):
@@ -302,13 +302,13 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         # apply gain in int32
         for i in range(len(input_samples)):
             y_uq = drcu.apply_gain_xcore(samples_int[i], self.gain_int)
-            y[i] = utils.int32_to_float(y_uq, self.Q_sig),
+            y[i] = utils.int32_to_float(y_uq, self.Q_sig)
 
 
         return (
             y,
             utils.int32_to_float(new_gain_int, self.Q_alpha),
-            utils.int32_to_float(envelope_int, self.Q_sig),
+            utils.int32_to_float(envelope_int, self.Q_sig)
         )
 
 

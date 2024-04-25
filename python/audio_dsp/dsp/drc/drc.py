@@ -229,8 +229,9 @@ class clipper(dspg.dsp_block):
     def __init__(self, fs, n_chans, threshold_db, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
-        self.threshold = utils.db2gain(threshold_db)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold = utils.db_pow2gain(threshold_db)
+        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
+        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
 
     def process(self, sample, channel=0):
         if sample > self.threshold:
@@ -807,8 +808,8 @@ class compressor_rms_softknee(compressor_limiter_base):
         # note rms comes as x**2, so use db_pow
         self.threshold_db = threshold_db
         self.threshold = utils.db_pow2gain(threshold_db)
-        self.threshold_f32 = np.float32(self.threshold)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
+        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=n_chans,
@@ -887,16 +888,15 @@ class compressor_rms_softknee(compressor_limiter_base):
         envelope_db = utils.db_pow(envelope)
         if envelope_db < (self.threshold_db - self.w / 2):
             new_gain = 1
-        elif envelope_db > (self.threshold_db + self.w / 2):
-            # regular RMS compressor
-            new_gain = (self.threshold / envelope) ** self.slope
-        else:
+        elif envelope_db < (self.threshold_db + self.w / 2):
             # soft knee
             new_gain_db = (-self.slope / (self.w)) * (
                 envelope_db - self.threshold_db + self.w / 2
             ) ** 2
             new_gain = utils.db2gain(new_gain_db)
-
+        else:
+            # regular RMS compressor
+            new_gain = (self.threshold / envelope) ** self.slope
         new_gain = min(1, new_gain)
         return new_gain
 
