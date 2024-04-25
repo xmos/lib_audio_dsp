@@ -56,6 +56,16 @@ int32_t adsp_limiter_peak(
   return apply_gain_q31(new_samp, lim->gain);
 }
 
+int32_t adsp_hard_limiter_peak(
+  limiter_t * lim,
+  int32_t new_samp
+) {
+  int32_t out = adsp_limiter_peak(lim, new_samp);
+  // hard clip if above threshold
+  out = (out > lim->threshold) ? lim->threshold : (out < -lim->threshold) ? -lim->threshold : out;
+  return out;
+}
+
 int32_t adsp_limiter_rms(
   limiter_t * lim,
   int32_t new_samp
@@ -80,4 +90,11 @@ int32_t adsp_limiter_rms(
   lim->gain = q31_ema(lim->gain, new_gain, alpha);
   return apply_gain_q31(new_samp, lim->gain);
   return new_samp;
+}
+
+int32_t adsp_clipper(
+  clipper_t clip,
+  int32_t new_samp
+) {
+  return (new_samp > clip) ? clip : (new_samp < -clip) ? -clip : new_samp;
 }

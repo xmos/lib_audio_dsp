@@ -28,6 +28,12 @@ typedef struct{
 }limiter_t;
 
 /**
+ * @brief Clipper state structure
+ * Should be initilised with the linear threshold
+ */
+typedef int32_t clipper_t;
+
+/**
  * @brief Noise gate state structure
  */
 typedef limiter_t noise_gate_t;
@@ -94,7 +100,7 @@ void adsp_env_detector_rms(
   int32_t new_sample);
 
 /**
- * @brief Initialise a peak limiter object
+ * @brief Initialise a (hard) limiter peak object
  * 
  * @param fs                  Sampling frequency
  * @param threshold_db        Threshold in dB
@@ -124,6 +130,17 @@ limiter_t adsp_limiter_rms_init(
   float release_t);
 
 /**
+ * @brief Process a new sample with a clipper
+ * 
+ * @param clip                Clipper object
+ * @param new_samp            New sample
+ * @return int32_t            Clipped sample
+ */
+int32_t adsp_clipper(
+  clipper_t clip,
+  int32_t new_samp);
+
+/**
  * @brief Process a new sample with a peak limiter
  * 
  * @param lim                 Limiter object
@@ -131,6 +148,17 @@ limiter_t adsp_limiter_rms_init(
  * @return int32_t            Limited sample
  */
 int32_t adsp_limiter_peak(
+  limiter_t * lim,
+  int32_t new_samp);
+
+/**
+ * @brief Process a new sample with a hard limiter peak
+ * 
+ * @param lim                 Limiter object
+ * @param new_samp            New sample
+ * @return int32_t            Limited sample
+ */
+int32_t adsp_hard_limiter_peak(
   limiter_t * lim,
   int32_t new_samp);
 
