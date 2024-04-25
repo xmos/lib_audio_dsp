@@ -7,7 +7,7 @@ import pytest
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 from audio_dsp.stages.biquad import Biquad
 from audio_dsp.stages.cascaded_biquads import CascadedBiquads
-from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak
+from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak, HardLimiterPeak, Clipper
 from audio_dsp.stages.noise_gate import NoiseGate
 from audio_dsp.stages.noise_suppressor import NoiseSuppressor
 from audio_dsp.stages.signal_chain import VolumeControl, FixedGain
@@ -208,6 +208,36 @@ def test_limiter_peak(frame_size):
         p.set_outputs(lim.o)
 
         lim.make_limiter_peak(-6, 0.001, 0.1)
+        return p
+
+    do_test(make_p, frame_size)
+
+def test_hard_limiter_peak(frame_size):
+    """
+    Test the limiter stage limits the same in python and C
+    """
+    def make_p(fr):
+        p = Pipeline(channels, frame_size=fr)
+        with p.add_thread() as t:
+            lim = t.stage(HardLimiterPeak, p.i)
+        p.set_outputs(lim.o)
+
+        lim.make_hard_limiter_peak(-6, 0.001, 0.1)
+        return p
+
+    do_test(make_p, frame_size)
+
+def test_clipper(frame_size):
+    """
+    Test the clipper stage clips the same in python and C
+    """
+    def make_p(fr):
+        p = Pipeline(channels, frame_size=fr)
+        with p.add_thread() as t:
+            clip = t.stage(Clipper, p.i)
+        p.set_outputs(clip.o)
+
+        clip.make_clipper(-6)
         return p
 
     do_test(make_p, frame_size)
