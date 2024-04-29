@@ -412,12 +412,12 @@ class reverb_room(dspg.dsp_block):
         output = deepcopy(frame)
         if n_outputs == 1:
             for sample in range(frame_size):
-                output[sample] = self.process(output[sample])[0]
+                output[0][sample] = self.process(output[0][sample])
         else:
             for chan in range(n_outputs):
                 this_chan = output[chan]
                 for sample in range(frame_size):
-                    this_chan[sample] = self.process(this_chan[sample], channel=chan)[0]
+                    this_chan[sample] = self.process(this_chan[sample], channel=chan)
 
         return output
 
