@@ -7,6 +7,8 @@ import shutil
 from test_drc_c import float_to_qxx, get_c_wav
 import audio_dsp.dsp.drc as drc
 import audio_dsp.dsp.signal_gen as gen
+import audio_dsp.dsp.utils as utils
+import audio_dsp.dsp.generic as dspg
 import pytest
 
 
@@ -21,6 +23,8 @@ def get_sig_2ch(len=0.05):
   sig_l.append(gen.square(fs, len, 50, 0.5) + 0.5)
   sig_fl = np.stack(sig_l, axis=0)
   sig_fl_t = np.stack(sig_l, axis=1)
+  sig_fl = utils.saturate_float_array(sig_fl, dspg.Q_SIG)
+  sig_fl_t = utils.saturate_float_array(sig_fl_t, dspg.Q_SIG)
 
   sig_int = float_to_qxx(sig_fl_t)
   sig_int.tofile(bin_dir / "sig_2ch_48k.bin")
