@@ -1,5 +1,12 @@
 // Copyright 2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
+/// @file
+///
+/// Generated pipeline interface. Use the source and sink functions defined here
+/// to send samples to the generated DSP and receive processed samples back.
+
+
 #pragma once
 
 #include <stdint.h>
@@ -9,36 +16,71 @@
 #include <xcore/parallel.h>
 #include <xcore/select.h>
 
-#include <stages/adsp_module.h>
+#include "adsp_module.h"
 
+/// @cond
+///
+/// Private stuff
+
+/// Mapping of input index to channel index for the source and sink configuration.
 typedef struct
 {
+    /// @privatesection
     uint32_t channel_idx;
     uint32_t data_idx;
     uint32_t frame_size;
 } adsp_mux_elem_t;
 
+/// Source and sink configuration.
 typedef struct
 {
+    /// @privatesection
     adsp_mux_elem_t *chan_cfg;
     size_t n_chan;
 } adsp_mux_t;
 
-// All fields of this structure are private. Please do not access directly.
+
+/// Check if a chanend has an event pending.
+static inline bool check_chanend(chanend_t c) {
+    SELECT_RES(CASE_THEN(c, has_data), DEFAULT_THEN(no_data)) {
+        has_data: return true;
+        no_data: return false;
+    }
+}
+
+/// @endcond
+
+/// The DSP pipeline.
+///
+/// The generated pipeline will contain an init function that returns a pointer
+/// to one of these. It can be used to send data in and out of the pipeline, and
+/// also execute control commands.
 typedef struct
 {
+    /// @privatesection
     channel_t *p_in;
     size_t n_in;
     channel_t *p_out;
     size_t n_out;
     channel_t *p_link;
     size_t n_link;
-    module_instance_t *modules;
-    size_t n_modules;
+    /// @publicsection
+    module_instance_t *modules;  ///< Array of DSP stage state, must be used when calling one of the control functions.
+    size_t n_modules;  ///< Number of modules in the modules array.
+    /// @privatesection
     adsp_mux_t input_mux;
     adsp_mux_t output_mux;
 } adsp_pipeline_t;
 
+/// Pass samples into the DSP pipeline.
+///
+/// These samples are sent by value to the other thread so the data buffer can be reused
+/// immediately after this function returns.
+///
+/// @param adsp The initialised pipeline.
+/// @param data An array of arrays of samples. The length of the array shall be the number
+///             of pipeline input channels. Each array contained within shall be contain a frame
+///             of samples large enough to pass to the stage that it is connected to.
 static inline void adsp_pipeline_source(adsp_pipeline_t *adsp, int32_t **data)
 {
     for (size_t chan_id = 0; chan_id < adsp->input_mux.n_chan; chan_id++)
@@ -50,6 +92,13 @@ static inline void adsp_pipeline_source(adsp_pipeline_t *adsp, int32_t **data)
     }
 }
 
+/// Receive samples from the DSP pipeline.
+///
+/// @param adsp The initialised pipeline.
+/// @param data An array of arrays that will be filled with processed samples from the pipeline.
+///             The length of the array shall be the number
+///             of pipeline input channels. Each array contained within shall be contain a frame
+///             of samples large enough to pass to the stage that it is connected to.
 static inline void adsp_pipeline_sink(adsp_pipeline_t *adsp, int32_t **data)
 {
     for (size_t chan_id = 0; chan_id < adsp->output_mux.n_chan; chan_id++)
@@ -61,13 +110,16 @@ static inline void adsp_pipeline_sink(adsp_pipeline_t *adsp, int32_t **data)
     }
 }
 
-static inline bool check_chanend(chanend_t c) {
-    SELECT_RES(CASE_THEN(c, has_data), DEFAULT_THEN(no_data)) {
-        has_data: return true;
-        no_data: return false;
-    }
-}
 
+
+/// Non-blocking receive from the pipeline. It is risky to use this API in an isochronous
+/// application as the sink thread can lose synchronisation with the source thread which can
+/// cause the source thread to block.
+///
+/// @param adsp The initialised pipeline.
+/// @param data See adsp_pipeline_sink for details of same named param.
+/// @retval true The data buffer has been filled with new values from the pipeline.
+/// @retval false The pipeline has not produced any more data, the data buffer was untouched.
 static inline bool adsp_pipeline_sink_nowait(adsp_pipeline_t *adsp,
                                              int32_t **data)
 {
