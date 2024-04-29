@@ -157,7 +157,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         return (
             utils.int32_to_float(y, self.Q_sig),
             utils.int32_to_float(new_gain_int, self.Q_alpha),
-            utils.int32_to_float(envelope_int, self.Q_sig)
+            utils.int32_to_float(envelope_int, self.Q_sig),
         )
 
     def process_frame(self, frame):
@@ -277,7 +277,6 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
             samples_int[i] = utils.float_to_int32(input_samples[i], self.Q_sig)
             detect_samples_int[i] = utils.float_to_int32(detect_samples[i], self.Q_sig)
 
-
         # get envelope from envelope detector
         env0 = self.env_detector.process_xcore(detect_samples_int[0], 0)
         env1 = self.env_detector.process_xcore(detect_samples_int[1], 1)
@@ -304,13 +303,11 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
             y_uq = drcu.apply_gain_xcore(samples_int[i], self.gain_int)
             y[i] = utils.int32_to_float(y_uq, self.Q_sig)
 
-
         return (
             y,
             utils.int32_to_float(new_gain_int, self.Q_alpha),
-            utils.int32_to_float(envelope_int, self.Q_sig)
+            utils.int32_to_float(envelope_int, self.Q_sig),
         )
-
 
     def process_frame(self, frame):
         """

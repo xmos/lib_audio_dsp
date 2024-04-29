@@ -64,7 +64,7 @@ def envelope(x, N=None):
 
 def int32(val: float) -> int:
     # overflows if val is outside the range of int32
-    if  -(2**31) <= val <= (2**31 - 1):
+    if -(2**31) <= val <= (2**31 - 1):
         return int(val)
     else:
         warnings.warn("Overflow occured", OverflowWarning)
@@ -72,8 +72,8 @@ def int32(val: float) -> int:
 
 
 def saturate_float(val: float, Q_sig: int) -> float:
-    max_flt = float((2**31 - 1)/2**Q_sig)
-    min_flt = float(-2**(31-Q_sig))
+    max_flt = float((2**31 - 1) / 2**Q_sig)
+    min_flt = float(-(2 ** (31 - Q_sig)))
     if min_flt <= val <= max_flt:
         return val
     elif val < min_flt:
@@ -83,9 +83,10 @@ def saturate_float(val: float, Q_sig: int) -> float:
         warnings.warn("Saturation occured", SaturationWarning)
         return max_flt
 
+
 def saturate_float_array(val: np.ndarray, Q_sig: int) -> float:
-    max_flt = (2**31 - 1)/2**Q_sig
-    min_flt = -2**(31-Q_sig)
+    max_flt = (2**31 - 1) / 2**Q_sig
+    min_flt = -(2 ** (31 - Q_sig))
 
     if np.any(val < min_flt) or np.any(val > max_flt):
         warnings.warn("Saturation occured", SaturationWarning)
@@ -98,7 +99,7 @@ def saturate_float_array(val: np.ndarray, Q_sig: int) -> float:
 
 def saturate_int32(val: float) -> int:
     # saturate int32 to int32max/min
-    if  -(2**31) <= val <= (2**31 - 1):
+    if -(2**31) <= val <= (2**31 - 1):
         return int(val)
     elif val < -(2**31):
         warnings.warn("Saturation occured", SaturationWarning)
@@ -110,7 +111,7 @@ def saturate_int32(val: float) -> int:
 
 def saturate_int32_vpu(val: float) -> int:
     # VPU has symmetrical saturation
-    if  -(2**31 - 1) <= val <= (2**31 - 1):
+    if -(2**31 - 1) <= val <= (2**31 - 1):
         return int(val)
     elif val < -(2**31 - 1):
         warnings.warn("Saturation occured", SaturationWarning)
@@ -191,7 +192,7 @@ def float_to_int32(x, Q_sig=31):
 
 def int32_to_float(x, Q_sig=31):
     # Note this means the max value is 0.99999999953
-    return float(x)/(2**Q_sig)
+    return float(x) / (2**Q_sig)
 
 
 class float_s32:

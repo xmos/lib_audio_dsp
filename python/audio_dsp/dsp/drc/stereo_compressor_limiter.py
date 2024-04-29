@@ -134,7 +134,6 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
             utils.int32_to_float(envelope_int, self.Q_sig),
         )
 
-
     def process_frame(self, frame: list[np.ndarray]):
         """
         Take a list frames of samples and return the processed frames.

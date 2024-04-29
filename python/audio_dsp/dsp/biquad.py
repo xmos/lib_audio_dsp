@@ -139,7 +139,7 @@ class biquad(dspg.dsp_block):
         # the b_shift can be combined with the >> 30, which reduces
         # quantization noise, but this results  in saturation at an
         # earlier point, and so is not used here for consistency
-        y = utils.int64(y + 2 ** 29)
+        y = utils.int64(y + 2**29)
 
         y = utils.int32_mult_sat_extract(y, 1, 30)
         # save states

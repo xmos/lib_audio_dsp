@@ -279,8 +279,8 @@ class parametric_eq_8band(cascaded_biquads_8):
             class_handle = getattr(bq, class_name)
             coeffs_list.append(class_handle(fs, *spec[1:]))
 
-
         super().__init__(coeffs_list, fs, n_chans, Q_sig=Q_sig)
+
 
 def make_butterworth_lowpass(N, fc, fs):
     """

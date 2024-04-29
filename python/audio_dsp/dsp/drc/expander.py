@@ -142,10 +142,10 @@ class expander_base(compressor_limiter_base):
         if return_int:
             return y, new_gain_int, envelope_int
         else:
-        	return (
-            	utils.int32_to_float(y, self.Q_sig),
-            	utils.int32_to_float(new_gain_int, self.Q_alpha),
-            	utils.int32_to_float(envelope_int, self.Q_sig),
+            return (
+                utils.int32_to_float(y, self.Q_sig),
+                utils.int32_to_float(new_gain_int, self.Q_alpha),
+                utils.int32_to_float(envelope_int, self.Q_sig),
             )
 
 
