@@ -14,7 +14,7 @@ typedef struct
     int frame_size;
 }envelope_detector_peak_state_t;
 
-#define ENVELOPE_DETECTOR_PEAK_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (N_IN * sizeof(env_detector_t))
+#define ENVELOPE_DETECTOR_PEAK_STAGE_REQUIRED_MEMORY(N_IN) (N_IN * sizeof(env_detector_t))
 
 void envelope_detector_peak_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 

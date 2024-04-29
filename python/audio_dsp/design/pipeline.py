@@ -67,6 +67,8 @@ class PipelineStage(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=find_config("pipeline"), **kwargs)
         self.create_outputs(0)
+        self.stage_memory_string = "pipeline"
+        self.stage_memory_parameters = None
 
     def add_to_dot(self, dot):  # Override this to not add the stage to the diagram
         """
@@ -268,7 +270,7 @@ class Pipeline:
         -------
         dict
             'identifier': string identifier for the pipeline
-            "threads": list of [[(stage index, stage type name), ...], ...] for all threads
+            "threads": list of [[(stage index, stage type name, stage memory use), ...], ...] for all threads
             "edges": list of [[[source stage, source index], [dest stage, dest index]], ...] for all edges
             "configs": list of dicts containing stage config for each stage.
             "modules": list of stage yaml configs for all types of stage that are present
@@ -282,7 +284,7 @@ class Pipeline:
         for i, thread in enumerate(self.threads):
             for node in sorted_nodes:
                 if thread.contains_stage(node):
-                    threads[i].append([node.index, node.name])
+                    threads[i].append([node.index, node.name, node.get_required_allocator_size()])
 
         edges = []
         for edge in self._graph.edges:
@@ -411,7 +413,7 @@ def _filter_edges_by_thread(resolved_pipeline):
                     # pipeline output
                     di = "pipeline_out"
                 else:
-                    for di, dthread in enumerate(resolved_pipeline["threads"]):
+                    for di, dthread, _ in enumerate(resolved_pipeline["threads"]):
                         if dest_in_thread(edge, dthread):
                             break
                 try:
@@ -423,7 +425,7 @@ def _filter_edges_by_thread(resolved_pipeline):
                     # pipeline input
                     si = "pipeline_in"
                 else:
-                    for si, sthread in enumerate(resolved_pipeline["threads"]):
+                    for si, sthread, _ in enumerate(resolved_pipeline["threads"]):
                         if source_in_thread(edge, sthread):
                             break
                 try:
@@ -500,7 +502,7 @@ def _generate_dsp_threads(resolved_pipeline):
             func += f"\tint32_t edge{i}[{edge.frame_size}] = {{0}};\n"
 
         # get the dsp_thread stage index in the thread
-        dsp_thread_index = [i for i, (_, name) in enumerate(thread) if name == "dsp_thread"][0]
+        dsp_thread_index = [i for i, (_, name, _) in enumerate(thread) if name == "dsp_thread"][0]
 
         for stage_thread_index, stage in enumerate(thread):
             # thread stages are already ordered during pipeline resolution
@@ -537,7 +539,7 @@ def _generate_dsp_threads(resolved_pipeline):
         # It will be done once before select to ensure it happens, then in the default
         # case of the select so that control will be processed if no audio is playing.
         control = ""
-        for i, (stage_index, name) in enumerate(thread):
+        for i, (stage_index, name, _) in enumerate(thread):
             if resolved_pipeline["modules"][stage_index]["yaml_dict"]:
                 control += f"\t\t{name}_control(modules[{i}]->state, &modules[{i}]->control);\n"
 
@@ -580,7 +582,7 @@ def _generate_dsp_threads(resolved_pipeline):
 
         process = "\tstart_ts = get_reference_time();\n\n"
 
-        for stage_thread_index, (stage_index, name) in enumerate(thread):
+        for stage_thread_index, (stage_index, name, _) in enumerate(thread):
             input_edges = [edge for edge in all_edges if edge[1][0] == stage_index]
             output_edges = [edge for edge in all_edges if edge[0][0] == stage_index]
 
@@ -728,7 +730,7 @@ def _generate_dsp_init(resolved_pipeline):
 
     # initialise the modules
     for thread in resolved_pipeline["threads"]:
-        for stage_index, stage_name in thread:
+        for stage_index, stage_name, stage_mem in thread:
             in_edges = [e for e in resolved_pipeline["edges"] if e.dest[0] == stage_index]
             out_edges = [e for e in resolved_pipeline["edges"] if e.source[0] == stage_index]
             stage_n_in = len(in_edges)
@@ -755,7 +757,7 @@ def _generate_dsp_init(resolved_pipeline):
 
             ret += f"""
             static {stage_name}_state_t state{stage_index};
-            static uint8_t memory{stage_index}[_ADSP_MAX(1, {stage_name.upper()}_REQUIRED_MEMORY({stage_n_in}, {stage_n_out}, {stage_frame_size}))];
+            static uint8_t memory{stage_index}[_ADSP_MAX(1, {stage_mem})];
             static adsp_bump_allocator_t allocator{stage_index} = ADSP_BUMP_ALLOCATOR_INITIALISER(memory{stage_index});
 
             {adsp}.modules[{stage_index}].state = (void*)&state{stage_index};
@@ -894,7 +896,7 @@ def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
         thread_input_edges, _, thread_output_edges, _ = thread_edges
         # thread stages
         dsp_main += f"\tmodule_instance_t* thread_{thread_idx}_modules[] = {{\n"
-        for stage_idx, _ in thread:
+        for stage_idx, _, _ in thread:
             dsp_main += f"\t\t&adsp->modules[{stage_idx}],\n"
         dsp_main += "\t};\n"
 

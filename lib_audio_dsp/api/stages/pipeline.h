@@ -11,7 +11,7 @@ typedef struct
     uint8_t checksum[16];
 }pipeline_state_t;
 
-#define PIPELINE_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (0)
+#define PIPELINE_STAGE_REQUIRED_MEMORY 0
 
 void pipeline_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 void pipeline_control(void *state, module_control_t *control);

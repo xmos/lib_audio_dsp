@@ -11,7 +11,7 @@ typedef struct
     uint32_t max_cycles;
 }dsp_thread_state_t;
 
-#define DSP_THREAD_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (0)
+#define DSP_THREAD_STAGE_REQUIRED_MEMORY 0
 
 void dsp_thread_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 void dsp_thread_control(void *state, module_control_t *control);

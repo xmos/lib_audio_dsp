@@ -22,6 +22,9 @@ class Reverb(Stage):
         self.set_control_field_cb("pregain", lambda: self.dsp_block.pregain)
         self.set_control_field_cb("dry_gain", lambda: self.dsp_block.dry_int)
 
+        self.stage_memory_string = "reverb"
+        self.stage_memory_parameters = (self["sampling_freq"], self["max_room_size"])
+
     def set_wet_gain(self, gain_dB):
         """
         Set the wet gain of the reverb stage

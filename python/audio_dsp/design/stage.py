@@ -208,6 +208,8 @@ class Stage(Node):
 
         self.details = {}
         self.dsp_block = None
+        self.stage_memory_string:str = ""
+        self.stage_memory_parameters:(tuple | None) = None
 
     @property
     def o(self):
@@ -336,3 +338,18 @@ class Stage(Node):
             label = f"{{ {{ {inputs} }} | {center} | {{ {outputs} }}}}"
 
         dot.node(self.id.hex, label)
+
+    def get_required_allocator_size(self):
+        """
+        Calculate the required statically-allocated memory in bytes for this stage.
+        Format this into a compile-time determinable expression.
+
+        Returns
+        -------
+            compile-time determinable expression of required allocator size.
+        """
+        macro_name = f"{self.stage_memory_string.upper()}_STAGE_REQUIRED_MEMORY"
+        if self.stage_memory_parameters is not None:
+            return f"{macro_name}({','.join((str(x) for x in self.stage_memory_parameters))})"
+        else:
+            return macro_name

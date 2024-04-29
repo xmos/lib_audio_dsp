@@ -6,11 +6,6 @@
 #include <stdint.h>
 #include <xmath/types.h>
 
-/** Maximum supported reverb sampling freq */
-#define ADSP_RV_MAX_SAMPLING_FREQ (48000.0f)
-/** Maximum supported reverb room size */
-#define ADSP_RV_MAX_ROOM_SIZE (4.0f)
-
 /** Minimum reverb wet gain in dB */
 #define ADSP_RV_MIN_WET_GAIN_DB (-186.0)
 /** Maximum reverb wet gain in dB */
@@ -29,6 +24,8 @@
 #define ADSP_RV_HEAP_SZ(FS, ROOM_SZ) ((uint32_t)(sizeof(int32_t) *            \
                                                  ADSP_RV_SCALE(FS, ROOM_SZ) * \
                                                  ADSP_RV_SUM_DEFAULT_BUF_LENS))
+/** External API for calculating memory to allocate for the reverb*/
+#define REVERB_DSP_REQUIRED_MEMORY(FS, ROOM_SZ) ADSP_RV_HEAP_SZ(FS, ROOM_SZ)
 
 /** Number of comb filters used in the reverb */
 #define ADSP_RV_N_COMBS 8

@@ -25,7 +25,7 @@ typedef struct
     ((N_IN) * sizeof(int32_t*))
 
 
-#define BIQUAD_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) \
+#define BIQUAD_STAGE_REQUIRED_MEMORY(N_IN) \
     _BQ_ALL_FILTER_MEMORY(N_IN) + _BQ_ARR_MEMORY(N_IN)
 
 void biquad_init(module_instance_t* instance,

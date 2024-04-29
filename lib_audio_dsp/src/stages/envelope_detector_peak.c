@@ -39,7 +39,7 @@ void envelope_detector_peak_init(module_instance_t* instance, adsp_bump_allocato
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    state->env_det = adsp_bump_allocator_malloc(allocator, state->n_inputs * sizeof(env_detector_t));
+    state->env_det = adsp_bump_allocator_malloc(allocator, ENVELOPE_DETECTOR_PEAK_STAGE_REQUIRED_MEMORY(state->n_inputs));
 
     for(int i=0; i<state->n_inputs; i++)
     {

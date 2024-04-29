@@ -61,8 +61,8 @@ void noise_gate_init(module_instance_t* instance, adsp_bump_allocator_t* allocat
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    state->ng = adsp_bump_allocator_malloc(allocator, state->n_inputs * sizeof(noise_gate_t));
-    memset(state->ng, 0, state->n_inputs * sizeof(noise_gate_t));
+    state->ng = adsp_bump_allocator_malloc(allocator, NOISE_GATE_STAGE_REQUIRED_MEMORY(state->n_inputs));
+    memset(state->ng, 0, NOISE_GATE_STAGE_REQUIRED_MEMORY(state->n_inputs));
 
     for(int i=0; i<state->n_inputs; i++)
     {
