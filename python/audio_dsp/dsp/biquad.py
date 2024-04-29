@@ -111,8 +111,8 @@ class biquad(dspg.dsp_block):
         self._y2[channel] = self._y1[channel]
         self._y1[channel] = y
 
-        # y = y * 2**self.b_shift
-        # y = utils.saturate_float(y, self.Q_sig)
+        y = y * 2**self.b_shift
+        y = utils.saturate_float(y, self.Q_sig)
 
         return y
 
@@ -129,22 +129,28 @@ class biquad(dspg.dsp_block):
 
         # process a single sample using direct form 1
         y = utils.int64(
-            (sample_int * self.int_coeffs[0])
-            + (self._x1[channel] * self.int_coeffs[1])
-            + (self._x2[channel] * self.int_coeffs[2])
-            + (int(self._y1[channel] * self.int_coeffs[3]) >> self.b_shift)
-            + (int(self._y2[channel] * self.int_coeffs[4]) >> self.b_shift)
+            sample_int * self.int_coeffs[0]
+            + self._x1[channel] * self.int_coeffs[1]
+            + self._x2[channel] * self.int_coeffs[2]
+            + self._y1[channel] * self.int_coeffs[3]
+            + self._y2[channel] * self.int_coeffs[4]
         )
 
-        # combine the b_shift with the >> 30
-        y = utils.int64(y + 2 ** (29 - self.b_shift))
+        # the b_shift can be combined with the >> 30, which reduces
+        # quantization noise, but this results  in saturation at an
+        # earlier point, and so is not used here for consistency
+        y = utils.int64(y + 2 ** 29)
 
-        y = utils.int32_mult_sat_extract(y, 1, 30 - self.b_shift)
+        y = utils.int32_mult_sat_extract(y, 1, 30)
         # save states
         self._x2[channel] = utils.int32(self._x1[channel])
         self._x1[channel] = utils.int32(sample_int)
         self._y2[channel] = utils.int32(self._y1[channel])
         self._y1[channel] = utils.int32(y)
+
+        # compensate for coefficients
+        y = utils.int64(y << self.b_shift)
+        y = utils.saturate_int32(y)
 
         y_flt = utils.int32_to_float(y, self.Q_sig)
 
