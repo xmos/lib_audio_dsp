@@ -72,8 +72,8 @@ def int32(val: float) -> int:
 
 
 def saturate_float(val: float, Q_sig: int) -> float:
-    max_flt = (2**31 - 1)/2**Q_sig
-    min_flt = -2**(31-Q_sig)
+    max_flt = float((2**31 - 1)/2**Q_sig)
+    min_flt = float(-2**(31-Q_sig))
     if min_flt <= val <= max_flt:
         return val
     elif val < min_flt:

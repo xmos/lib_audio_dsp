@@ -69,6 +69,12 @@ def chirp_filter_test(filter: bq.biquad, fs):
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
     top_half = utils.db(output_flt) > -50
+
+    # after saturation, the implementations diverge, but they should
+    # initially saturate at the same sample
+    first_sat = np.argmax(np.abs(output_flt) >= 0.9999999995343387)
+    top_half[first_sat + 1:] = False
+
     if np.any(top_half):
         error_flt = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
