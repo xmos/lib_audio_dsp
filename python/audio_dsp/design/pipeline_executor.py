@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""Utilities for processing the pipeline on the host machine."""
+
 from pathlib import Path
 from typing import Optional, NamedTuple
 from collections.abc import Callable
@@ -16,6 +18,8 @@ from ..dsp import signal_gen
 
 
 class PipelineView(NamedTuple):
+    """A view of the DSP pipeline that is used by PipelineExecutor."""
+
     stages: Optional[list[Stage]]
     inputs: list[StageOutput]
     outputs: list[StageOutput]
@@ -178,15 +182,22 @@ class PipelineExecutor:
 
         return [edges[e] for e in o_edges]
 
-    def process(self, data: numpy.ndarray):
-        #
-        # TODO
-        #  - Convert data to a float between -1 and 1, assume int inputs range from INT_MIN to INT_MAX
-        #  - the dsp_block methods all expect float
-        #  - See test_stages.py for example of how the data io should look.
-        #  - Not sure if test should be bit exact with C... maybe both are needed.
-        #
-        #
+    def process(self, data: numpy.ndarray) -> ExecutionResult:
+        """
+        Process the dsp pipeline on the host.
+
+        Parameters
+        ----------
+        data
+            Pipeline input to process through the pipeline. The shape must match the number of channels
+            that the pipeline expects as an input. If this is 1 then it may be a 1 dimensional array. Otherwise
+            it must have shape (num_samples, num_channels).
+
+        Returns
+        -------
+        ExecutionResult
+            A result object that can be used to visualise or save the output.
+        """
         graph, i_edges, o_edges = self._get_view()
         n_i_chans = len(i_edges)
         n_o_chans = len(o_edges)

@@ -1,5 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""Contains classes for adding a thread to the DSP pipeline."""
 
 from .composite_stage import CompositeStage
 from .stage import Stage, find_config
@@ -16,18 +17,18 @@ class DSPThreadStage(Stage):
         super().__init__(config=find_config("dsp_thread"), **kwargs)
         self.create_outputs(0)
 
-    """
-    Override the CompositeStage.add_to_dot() function to ensure DSPThreadStage
-    type stages are not added to the dot diagram
-
-    Parameters
-    ----------
-    dot : graphviz.Diagraph
-        dot instance to add edges to.
-    """
-
     def add_to_dot(self, dot):  # Override this to not add the stage to the diagram
-        return
+        """
+        Exclude this stage from the dot diagram.
+
+        This stage is an implementation detail of each thread that would add mess to the
+        diagram.
+
+        Parameters
+        ----------
+        dot : graphviz.Diagraph
+            dot instance to add edges to.
+        """
 
 
 class Thread(CompositeStage):
@@ -64,4 +65,5 @@ class Thread(CompositeStage):
         ...
 
     def add_thread_stage(self):
+        """Add the stage to this thread which manages thread level commands."""
         self.thread_stage = self.stage(DSPThreadStage, [], label=f"thread{self.id}")

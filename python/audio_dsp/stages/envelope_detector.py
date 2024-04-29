@@ -1,11 +1,22 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""Stages for measuring the amplitude of the signal."""
+
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
 from ..dsp import generic as dspg
 
 
 class EnvelopeDetectorPeak(Stage):
+    """
+    Adds a stage with no outputs that measure the signal envelope.
+
+    See :class:`audio_dsp.dsp.drc.envelope_detector_peak` for details.
+
+    The current envelop of the signal can be read out using this stage's
+    ``envelope`` control.
+    """
+
     def __init__(self, **kwargs):
         super().__init__(config=find_config("envelope_detector_peak"), **kwargs)
         self.create_outputs(0)
@@ -32,6 +43,15 @@ class EnvelopeDetectorPeak(Stage):
 
 
 class EnvelopeDetectorRMS(Stage):
+    """
+    Adds a stage with no outputs that measure the signal envelope.
+
+    See :class:`audio_dsp.dsp.drc.envelope_detector_rms` for details.
+
+    The current envelop of the signal can be read out using this stage's
+    ``envelope`` control.
+    """
+
     def __init__(self, **kwargs):
         super().__init__(config=find_config("envelope_detector_rms"), **kwargs)
         self.create_outputs(0)

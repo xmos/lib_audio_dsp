@@ -32,10 +32,7 @@ class _ResolvedEdge(NamedTuple):
 
 
 def callonce(f):
-    """
-    Decorator function for ensuring a function executes only once despite being
-    called multiple times.
-    """
+    """Decoratate functions to ensure it executes only once despite being called multiple times."""
     attr_name = "_called_funcs"
 
     def called_funcs_of_instance(instance) -> set:
@@ -107,8 +104,6 @@ class Pipeline:
     i : list(StageOutput)
         The inputs to the pipeline should be passed as the inputs to the
         first stages in the pipeline
-    stages : List(Stage)
-        Flattened list of all the stages in the pipeline
     threads : list(Thread)
         List of all the threads in the pipeline
     pipeline_stage : PipelineStage | None
@@ -132,7 +127,7 @@ class Pipeline:
 
     def add_thread(self):
         """
-        Creates a new instance of audio_dsp.thread.Thread and adds it to
+        Create a new instance of audio_dsp.thread.Thread and adds it to
         the pipeline. Stages can then be instantiated in the thread.
 
         Returns
@@ -221,6 +216,7 @@ class Pipeline:
 
     @property
     def stages(self):
+        """Flattened list of all the stages in the pipeline."""
         return self._graph.nodes[:]
 
     @callonce
@@ -344,7 +340,7 @@ def validate_pipeline_checksum(pipeline: Pipeline):
 
 def send_config_to_device(pipeline: Pipeline):
     """
-    Sends the current config for all stages to the device.
+    Send the current config for all stages to the device.
     Make sure set_host_app() is called before calling this to set a valid host app.
 
     Parameters
@@ -442,7 +438,9 @@ def _gen_chan_buf_write_q27_to_q31(channel, edge, frame_size):
 
 def _generate_dsp_threads(resolved_pipeline):
     """
-    Create the source string for all of the dsp threads. Output looks approximately like the below::
+    Create the source string for all of the dsp threads.
+
+    Output looks approximately like the below::
 
         void dsp_thread(chanend_t* input_c, chanend_t* output_c, module_states, module_configs) {
             int32_t edge0[BLOCK_SIZE];

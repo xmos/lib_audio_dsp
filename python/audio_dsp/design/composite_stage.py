@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""Contains the higher order stage class CompositeStage."""
+
 from typing import Iterable, Type, TypeVar
 
 from .stage import StageOutput, Stage
@@ -16,7 +18,9 @@ _StageOrComposite = TypeVar("_StageOrComposite", bound="Stage | CompositeStage")
 
 class CompositeStage:
     """
-    This is a higher order stage, contains stages as well as other composite
+    This is a higher order stage.
+
+    Contains stages as well as other composite
     stages. A thread will be a composite stage. Composite stages allow.
 
     - drawing the detail with graphviz
@@ -34,13 +38,6 @@ class CompositeStage:
         instance of graph that all stages in this composite will be added to.
     name : str
         Name of this instance to use when drawing the pipeline, defaults to class name.
-
-    Attributes
-    ----------
-    o : list[audio_dsp.stage.StageOutput]
-        Outputs of this composite, dynamically computed by search graph for edges which
-        originate in this composite and whose destination is outside this composite. Order
-        not currently specified.
     """
 
     def __init__(self, graph: Graph, name: str = ""):
@@ -64,6 +61,13 @@ class CompositeStage:
 
     @property
     def o(self) -> list[StageOutput]:
+        """
+        Outputs of this composite.
+
+        Dynamically computed by search graph for edges which
+        originate in this composite and whose destination is outside this composite. Order
+        not currently specified.
+        """
         all_stages = self.get_all_stages()
         all_edges = list(itertools.chain.from_iterable([stage.o for stage in all_stages]))
         return [edge for edge in all_edges if edge.dest not in all_stages]
@@ -113,7 +117,7 @@ class CompositeStage:
         self, stage_types: list[Type[_StageOrComposite]], inputs: Iterable[StageOutput]
     ) -> list[_StageOrComposite]:
         """
-        Same as stage but takes an array of stage type and connects them together.
+        Iterate through the provided stages and connects them linearly.
 
         Returns a list of the created instances.
         """
@@ -147,10 +151,16 @@ class CompositeStage:
         return sum([c.get_all_stages() for c in self._composite_stages], start=self._stages)
 
     def process(self, data):
+        """
+        Execute the stages in this composite on the host.
+
+        .. warning::
+            Not implemented.
+        """
         raise NotImplementedError()
 
     def _internal_edges(self) -> list[StageOutput]:
-        """Returns list of edges whose source and dest are within this composite."""
+        """Return a list of edges whose source and dest are within this composite."""
         all_stages = self.get_all_stages()
         all_edges = list(itertools.chain.from_iterable([stage.o for stage in all_stages]))
         return [

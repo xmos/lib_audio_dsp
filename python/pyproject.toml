@@ -33,7 +33,14 @@ line-length = 99
 
 [tool.ruff.lint]
 select = ["D"]
+ignore = [
+    "D404", # First word of docstring must not be "This".
+    "D205", # Requires blank line after first line of a doc string (specified by PEP 257).
+]
 fixable = ["ALL"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+"audio_dsp/dsp/*.py" = ["D"]  # Disable doc checks for dsp module as they are not done yet.
