@@ -71,7 +71,7 @@ class PipelineStage(Stage):
     def add_to_dot(self, dot):  # Override this to not add the stage to the diagram
         """
         Override the CompositeStage.add_to_dot() function to ensure PipelineStage
-        type stages are not added to the dot diagram
+        type stages are not added to the dot diagram.
 
         Parameters
         ----------
@@ -150,9 +150,7 @@ class Pipeline:
 
     @callonce
     def add_pipeline_stage(self, thread):
-        """
-        Add a PipelineStage stage for the pipeline
-        """
+        """Add a PipelineStage stage for the pipeline."""
         self.pipeline_stage = thread.stage(PipelineStage, [])
 
     def set_outputs(self, output_edges: list[StageOutput]):
@@ -177,9 +175,7 @@ class Pipeline:
         self.resolve_pipeline()  # Call it here to generate the pipeline hash
 
     def executor(self) -> PipelineExecutor:
-        """
-        Create an executor instance which can be used to simulate the pipeline
-        """
+        """Create an executor instance which can be used to simulate the pipeline."""
 
         def view():
             if self.o is None:

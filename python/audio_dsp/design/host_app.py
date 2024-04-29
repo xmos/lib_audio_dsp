@@ -50,7 +50,7 @@ def set_host_app(host_app, transport_protocol="usb"):
 
 def set_host_app_xscope_port(port_num):
     """
-    Set the port number on which to communicate with the device when doing control over xscope
+    Set the port number on which to communicate with the device when doing control over xscope.
 
     Raises
     ------
@@ -76,7 +76,7 @@ def set_host_app_xscope_port(port_num):
 
 def send_control_cmd(instance_id, *args, verbose=False):
     """
-    Send a control command from the host to the device
+    Send a control command from the host to the device.
 
     Raises
     ------

@@ -14,7 +14,7 @@ Q_VERB = 31
 
 
 def apply_gain_xcore(sample, gain):
-    """Apply the gain to a sample usign fixed-point math, assumes that gain is in Q_VERB format"""
+    """Apply the gain to a sample usign fixed-point math, assumes that gain is in Q_VERB format."""
     acc = 1 << (Q_VERB - 1)
     acc += sample * gain
     y = utils.int32_mult_sat_extract(acc, 1, Q_VERB)
@@ -24,8 +24,8 @@ def apply_gain_xcore(sample, gain):
 def scale_sat_int64_to_int32_floor(val):
     """Quanitze an int64 to int32, saturating and quantizing to zero
     in the process. This is useful for feedback paths, where limit
-    cycles can occur if you don't round to zero."""
-
+    cycles can occur if you don't round to zero.
+    """
     # force the comb filter/all pass feedback to converge to zero and
     # avoid limit noise by rounding to zero. Above 0, truncation does
     # this, but below 0 we truncate to -inf, so add just under 1 to go
@@ -48,7 +48,7 @@ def scale_sat_int64_to_int32_floor(val):
 
 
 class allpass_fv(dspg.dsp_block):
-    """A freeverb style all-pass filter, for use in the reverb_room block"""
+    """A freeverb style all-pass filter, for use in the reverb_room block."""
 
     def __init__(self, max_delay, starting_delay, feedback_gain):
         # max delay cannot be changed, or you'll overflow the buffer
@@ -62,7 +62,7 @@ class allpass_fv(dspg.dsp_block):
         self._buffer_idx = 0
 
     def set_delay(self, delay):
-        """Set the length of the delay line, must be < max_delay"""
+        """Set the length of the delay line, must be < max_delay."""
         if delay < self._max_delay:
             self.delay = delay
         else:
@@ -125,7 +125,7 @@ class allpass_fv(dspg.dsp_block):
 
 
 class comb_fv(dspg.dsp_block):
-    """A freeverb style comb filter, for use in the reverb_room block"""
+    """A freeverb style comb filter, for use in the reverb_room block."""
 
     def __init__(self, max_delay, starting_delay, feedback_gain, damping):
         # max delay cannot be changed, or you'll overflow the buffer
@@ -147,7 +147,7 @@ class comb_fv(dspg.dsp_block):
         self.damp2_int = utils.int32((2**31 - 1) - self.damp1_int + 1)
 
     def set_delay(self, delay):
-        """Set the length of the delay line, must be < max_delay"""
+        """Set the length of the delay line, must be < max_delay."""
         if delay < self._max_delay:
             self.delay = delay
         else:
@@ -327,7 +327,7 @@ class reverb_room(dspg.dsp_block):
         return
 
     def get_buffer_lens(self):
-        """Get the total length of all the buffers used in the reverb"""
+        """Get the total length of all the buffers used in the reverb."""
         total_buffers = 0
         for cb in self.combs:
             total_buffers += cb._max_delay
@@ -337,7 +337,8 @@ class reverb_room(dspg.dsp_block):
 
     def set_pre_gain(self, pre_gain):
         """
-        Set the pre gain. Also update the wet_gain value which depends on the pre_gain
+        Set the pre gain. Also update the wet_gain value which depends on the pre_gain.
+
         Parameters
         ----------
         pre_gain : float
@@ -352,6 +353,7 @@ class reverb_room(dspg.dsp_block):
     def set_wet_gain(self, wet_gain_db):
         """
         Set the wet gain.
+
         Parameters
         ----------
         wet_gain_db : float
@@ -365,6 +367,7 @@ class reverb_room(dspg.dsp_block):
     def set_dry_gain(self, dry_gain_db):
         """
         Set the dry gain.
+
         Parameters
         ----------
         dry_gain_db : float

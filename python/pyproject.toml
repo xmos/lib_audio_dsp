@@ -30,3 +30,10 @@ dependencies = [
 
 [tool.ruff]
 line-length = 99
+
+[tool.ruff.lint]
+select = ["D"]
+fixable = ["ALL"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"

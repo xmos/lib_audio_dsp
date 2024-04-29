@@ -45,9 +45,7 @@ class ExecutionResult:
         self.fs = fs
 
     def to_wav(self, path: str | Path):
-        """
-        Save output to a wav file
-        """
+        """Save output to a wav file."""
         wavfile.write(path, self.fs, self.data)
 
     def plot(self, path: Optional[str | Path] = None):
@@ -141,7 +139,7 @@ class ExecutionResult:
 
 class PipelineExecutor:
     """
-    Utility for simulating the pipeline
+    Utility for simulating the pipeline.
 
     Parameters
     ----------
@@ -165,9 +163,7 @@ class PipelineExecutor:
         i_edges: list[StageOutput],
         o_edges: list[StageOutput],
     ) -> list[numpy.ndarray]:
-        """
-        process channels through the pipeline and return the result.
-        """
+        """Process channels through the pipeline and return the result."""
         edges = {}
         for edge, data in zip(i_edges, frame):
             edges[edge] = data
@@ -227,7 +223,7 @@ class PipelineExecutor:
     ) -> ExecutionResult:
         """
         Generate a logarithmic chirp of constant amplitude and play through
-        the simulated pipeline
+        the simulated pipeline.
 
         Parameters
         ----------

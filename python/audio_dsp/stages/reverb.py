@@ -24,7 +24,7 @@ class Reverb(Stage):
 
     def set_wet_gain(self, gain_dB):
         """
-        Set the wet gain of the reverb stage
+        Set the wet gain of the reverb stage.
 
         Parameters
         ----------
@@ -35,7 +35,7 @@ class Reverb(Stage):
 
     def set_dry_gain(self, gain_dB):
         """
-        Set the dry gain of the reverb stage
+        Set the dry gain of the reverb stage.
 
         Parameters
         ----------
@@ -46,7 +46,7 @@ class Reverb(Stage):
 
     def set_pre_gain(self, pre_gain):
         """
-        Set the pre gain of the reverb stage
+        Set the pre gain of the reverb stage.
 
         Parameters
         ----------

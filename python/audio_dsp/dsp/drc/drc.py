@@ -825,7 +825,7 @@ class compressor_rms_softknee(compressor_limiter_base):
         self.gain_calc_xcore = self.compressor_rms_softknee_gain_calc_xcore
 
     def piecewise_calc(self):
-        """Calculate the piecewise linear approximation of the soft knee
+        """Calculate the piecewise linear approximation of the soft knee.
 
         The knee is approximated as a straight line between the knee
         start at (x1, y1) and the knee end at (x2, y2) BUT as the
@@ -837,7 +837,6 @@ class compressor_rms_softknee(compressor_limiter_base):
         curve)
 
         """
-
         # W is the knee width, increasing the knee width requires taking
         # an nth root of the envelope, so a width of 10dB has been used
         # to avoid needing a root
@@ -873,7 +872,7 @@ class compressor_rms_softknee(compressor_limiter_base):
         self.knee_b_int = utils.int32((self.knee_b - 1) * 2**31)
 
     def compressor_rms_softknee_gain_calc(self, envelope, threshold, slope=None):
-        """Calculate the float gain for the current sample
+        """Calculate the float gain for the current sample.
 
         Note that as the RMS envelope detector returns x**2, we need to
         use db_pow. The knee is exponential in the log domain, so must

@@ -41,7 +41,7 @@ def alpha_from_time(attack_or_release_time, fs):
 
 
 def calc_ema_xcore(x, y, alpha):
-    """Calculate fixed-point exponential moving average, given that alpha is in Q_alpha format"""
+    """Calculate fixed-point exponential moving average, given that alpha is in Q_alpha format."""
     acc = int(x) << Q_alpha
     mul = utils.int32(y - x)
     acc += mul * alpha
@@ -50,7 +50,7 @@ def calc_ema_xcore(x, y, alpha):
 
 
 def apply_gain_xcore(sample, gain):
-    """Apply the gain to a sample usign fixed-point math, assumes that gain is in Q_alpha format"""
+    """Apply the gain to a sample usign fixed-point math, assumes that gain is in Q_alpha format."""
     acc = 1 << (Q_alpha - 1)
     acc += sample * gain
     y = utils.int32_mult_sat_extract(acc, 1, Q_alpha)
@@ -58,14 +58,14 @@ def apply_gain_xcore(sample, gain):
 
 
 def limiter_peak_gain_calc(envelope, threshold, slope=None):
-    """Calculate the float gain for the current sample"""
+    """Calculate the float gain for the current sample."""
     new_gain = threshold / envelope
     new_gain = min(1, new_gain)
     return new_gain
 
 
 def limiter_peak_gain_calc_xcore(envelope_int, threshold_int, slope=None):
-    """Calculate the int gain for the current sample"""
+    """Calculate the int gain for the current sample."""
     if threshold_int >= envelope_int:
         new_gain_int = utils.int32(0x7FFFFFFF)
     else:
