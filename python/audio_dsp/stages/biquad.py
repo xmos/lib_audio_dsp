@@ -34,7 +34,6 @@ class Biquad(Stage):
         )
         self.set_control_field_cb("left_shift", lambda: self.dsp_block.b_shift)
         self.make_bypass()
-        self.stage_memory_string = "biquad"
         self.stage_memory_parameters = (self.n_in,)
 
     def get_fixed_point_coeffs(self) -> np.ndarray:

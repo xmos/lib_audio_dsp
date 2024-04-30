@@ -16,9 +16,6 @@ class DSPThreadStage(Stage):
         super().__init__(config=find_config("dsp_thread"), **kwargs)
         self.create_outputs(0)
 
-        self.stage_memory_string = "dsp_thread"
-        self.stage_memory_parameters = None
-
     """
     Override the CompositeStage.add_to_dot() function to ensure DSPThreadStage
     type stages are not added to the dot diagram

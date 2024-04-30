@@ -19,7 +19,6 @@ class NoiseGate(Stage):
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)
 
-        self.stage_memory_string = "noise_gate"
         self.stage_memory_parameters = (self.n_in,)
 
     def make_noise_gate(self, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):

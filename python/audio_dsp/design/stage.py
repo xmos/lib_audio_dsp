@@ -342,13 +342,13 @@ class Stage(Node):
     def get_required_allocator_size(self):
         """
         Calculate the required statically-allocated memory in bytes for this stage.
-        Format this into a compile-time determinable expression.
+        Formats this into a compile-time determinable expression.
 
         Returns
         -------
             compile-time determinable expression of required allocator size.
         """
-        macro_name = f"{self.stage_memory_string.upper()}_STAGE_REQUIRED_MEMORY"
+        macro_name = f"{self.name.upper()}_STAGE_REQUIRED_MEMORY"
         if self.stage_memory_parameters is not None:
             return f"{macro_name}({','.join((str(x) for x in self.stage_memory_parameters))})"
         else:

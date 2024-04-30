@@ -67,8 +67,6 @@ class PipelineStage(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=find_config("pipeline"), **kwargs)
         self.create_outputs(0)
-        self.stage_memory_string = "pipeline"
-        self.stage_memory_parameters = None
 
     def add_to_dot(self, dot):  # Override this to not add the stage to the diagram
         """

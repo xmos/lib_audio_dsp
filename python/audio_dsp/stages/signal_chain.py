@@ -16,8 +16,6 @@ class Bypass(Stage):
     def __init__(self, **kwargs):
         super().__init__(name="bypass", **kwargs)
         self.create_outputs(self.n_in)
-        self.stage_memory_string = "bypass"
-        self.stage_memory_parameters = None
 
     def process(self, in_channels):
         return [np.copy(i) for i in in_channels]
@@ -50,9 +48,6 @@ class Fork(Stage):
         for indices in fork_indices:
             self.forks.append([self.o[i] for i in indices])
 
-        self.stage_memory_string = "fork"
-        self.stage_memory_parameters = None
-
     def get_frequency_response(self, nfft=512):
         # not sure what this looks like!
         raise NotImplementedError
@@ -79,9 +74,6 @@ class Mixer(Stage):
         self.dsp_block = sc.mixer(self.fs, self.n_in)
         self.set_control_field_cb("gain", lambda: self.dsp_block.gain_int)
 
-        self.stage_memory_string = "mixer"
-        self.stage_memory_parameters = None
-
     def set_gain(self, gain_db):
         """
         Set the gain of the mixer in dB.
@@ -107,9 +99,6 @@ class Adder(Stage):
         self.create_outputs(1)
         self.dsp_block = sc.adder(self.fs, self.n_in)
 
-        self.stage_memory_string = "adder"
-        self.stage_memory_parameters = None
-
 
 class Subtractor(Stage):
     """
@@ -124,9 +113,6 @@ class Subtractor(Stage):
         if self.n_in != 2:
             raise ValueError(f"Subtractor requires 2 inputs, got {self.n_in}")
         self.dsp_block = sc.subtractor(self.fs)
-
-        self.stage_memory_string = "subtractor"
-        self.stage_memory_parameters = None
 
 
 class FixedGain(Stage):
@@ -146,9 +132,6 @@ class FixedGain(Stage):
         self.create_outputs(self.n_in)
         self.dsp_block = sc.fixed_gain(self.fs, self.n_in, gain_db)
         self.set_control_field_cb("gain", lambda: self.dsp_block.gain_int)
-
-        self.stage_memory_string = "fixed_gain"
-        self.stage_memory_parameters = None
 
     def set_gain(self, gain_db):
         """
@@ -232,9 +215,6 @@ class Switch(Stage):
         self.create_outputs(1)
         self.dsp_block = sc.switch(self.fs, self.n_in)
         self.set_control_field_cb("position", lambda: self.dsp_block.switch_position)
-
-        self.stage_memory_string = "switch"
-        self.stage_memory_parameters = None
 
     def move_switch(self, position):
         """

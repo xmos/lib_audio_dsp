@@ -21,7 +21,6 @@ class CompressorRMS(Stage):
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)
         self.set_control_field_cb("slope", lambda: self.dsp_block.slope_f32)
 
-        self.stage_memory_string = "compressor_rms"
         self.stage_memory_parameters = (self.n_in,)
 
     def make_compressor_rms(
