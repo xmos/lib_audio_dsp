@@ -848,12 +848,12 @@ class delay(dspg.dsp_block):
         """
         frame_np = np.array(frame)
         frame_size = frame[0].shape[0]
-        output = np.zeros((frame.shape[0], frame_size))
+        output = np.zeros((len(frame), frame_size))
         for sample in range(frame_size):
             output[:, sample] = self.process_channels(frame_np[:, sample].tolist())
 
         out_list = []
-        for chan in range(frame.shape[0]):
+        for chan in range(len(frame)):
             out_list.append(output[chan])
 
         return out_list
