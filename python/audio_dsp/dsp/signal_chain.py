@@ -750,7 +750,10 @@ class delay(dspg.dsp_block):
     buffer_idx : int
         The current index of the buffer.
     """
-    def __init__(self, fs, n_chans, max_delay : float, starting_delay : float, units : str = "samples") -> None:
+
+    def __init__(
+        self, fs, n_chans, max_delay: float, starting_delay: float, units: str = "samples"
+    ) -> None:
         super().__init__(fs, n_chans)
         # max delay cannot be changed, or you'll overflow the buffer
         max_delay = self._get_delay_samples(max_delay, units)
@@ -771,7 +774,7 @@ class delay(dspg.dsp_block):
         self.buffer = np.zeros((self.n_chans, self.max_delay))
         return
 
-    def _get_delay_samples(self, delay : float, units = str) -> int:
+    def _get_delay_samples(self, delay: float, units: str) -> int:
         """Get the delay in samples from the specified units"""
         if units == "ms":
             delay = int(delay * self.fs / 1000)
@@ -783,7 +786,7 @@ class delay(dspg.dsp_block):
             raise ValueError("Units must be 'samples', 'ms' or 's'")
         return delay
 
-    def set_delay(self, delay : float, units : str ="samples") -> None:
+    def set_delay(self, delay: float, units: str = "samples") -> None:
         """
         Set the length of the delay line, must be < max_delay
 
@@ -804,7 +807,7 @@ class delay(dspg.dsp_block):
             Warning("Delay cannot be greater than max delay, setting to max delay")
         return
 
-    def process_channels(self, sample : list[float]) -> list[float]:
+    def process_channels(self, sample: list[float]) -> list[float]:
         """
         Put the new sample in the buffer and return the oldest sample.
 
