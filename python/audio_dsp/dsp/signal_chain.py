@@ -723,3 +723,134 @@ class switch(dspg.dsp_block):
         else:
             self.switch_position = position
         return
+
+
+class delay(dspg.dsp_block):
+    """
+    A simple delay line class
+
+    Parameters
+    ----------
+    max_delay : float
+        The maximum delay in specified units.
+    starting_delay : float
+        The starting delay in specified units.
+    units : str, optional
+        The units of the delay, can be 'samples', 'ms' or 's'.
+        Default is 'samples'.
+
+    Attributes
+    ----------
+    max_delay : int
+        The maximum delay in samples.
+    delay : int
+        The current delay in samples.
+    buffer : np.ndarray
+        The delay line buffer.
+    buffer_idx : int
+        The current index of the buffer.
+    """
+    def __init__(self, fs, n_chans, max_delay : float, starting_delay : float, units : str = "samples") -> None:
+        super().__init__(fs, n_chans)
+        # max delay cannot be changed, or you'll overflow the buffer
+        max_delay = self._get_delay_samples(max_delay, units)
+        starting_delay = self._get_delay_samples(starting_delay, units)
+
+        if starting_delay > max_delay:
+            raise ValueError("Starting delay cannot be greater than max delay")
+
+        self.max_delay = max_delay
+        self.delay = starting_delay
+        self.buffer_idx = 0
+        self.process_channels_xcore = self.process_channels
+        self.process_frame_xcore = self.process_frame
+        self.reset_state()
+
+    def reset_state(self) -> None:
+        """Reset all the delay line values to zero."""
+        self.buffer = np.zeros((self.n_chans, self.max_delay))
+        return
+
+    def _get_delay_samples(self, delay : float, units = str) -> int:
+        """Get the delay in samples from the specified units"""
+        if units == "ms":
+            delay = int(delay * self.fs / 1000)
+        elif units == "s":
+            delay = int(delay * self.fs)
+        elif units == "samples":
+            delay = int(delay)
+        else:
+            raise ValueError("Units must be 'samples', 'ms' or 's'")
+        return delay
+
+    def set_delay(self, delay : float, units : str ="samples") -> None:
+        """
+        Set the length of the delay line, must be < max_delay
+
+        Parameters
+        ----------
+        delay : float
+            The delay length in specified units.
+        units : str, optional
+            The units of the delay, can be 'samples', 'ms' or 's'.
+            Default is 'samples'.
+        """
+        delay = self._get_delay_samples(delay, units)
+
+        if delay <= self.max_delay:
+            self.delay = delay
+        else:
+            delay = self.max_delay
+            Warning("Delay cannot be greater than max delay, setting to max delay")
+        return
+
+    def process_channels(self, sample : list[float]) -> list[float]:
+        """
+        Put the new sample in the buffer and return the oldest sample.
+
+        Parameters
+        ----------
+        sample : list
+            List of input samples
+
+        Returns
+        -------
+        float
+            List of delayed samples.
+        """
+        y = self.buffer[:, self.buffer_idx].copy()
+        self.buffer[:, self.buffer_idx] = sample.copy()
+        self.buffer_idx = (self.buffer_idx + 1) % self.delay
+        return y.tolist()
+
+    def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
+        """
+        Take a list frames of samples and return the processed frames.
+
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        After the delay the output frame will have the same format.
+
+        Parameters
+        ----------
+        frame : list
+            List of frames, where each frame is a 1-D numpy array.
+
+        Returns
+        -------
+        list
+            Length n_chans list of 1-D numpy arrays.
+        """
+        frame_np = np.array(frame)
+        frame_size = frame[0].shape[0]
+        output = np.zeros((frame.shape[0], frame_size))
+        for sample in range(frame_size):
+            output[:, sample] = self.process_channels(frame_np[:, sample].tolist())
+
+        out_list = []
+        for chan in range(frame.shape[0]):
+            out_list.append(output[chan])
+
+        return out_list
