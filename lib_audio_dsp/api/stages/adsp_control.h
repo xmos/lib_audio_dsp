@@ -13,7 +13,7 @@
 #include <stdint.h>
 #include "stages/adsp_module.h"
 
-/// The command to execute. Specified which stage, what command and contains the buffer
+/// The command to execute. Specifies which stage, what command and contains the buffer
 /// to read from or write to.
 typedef struct
 {

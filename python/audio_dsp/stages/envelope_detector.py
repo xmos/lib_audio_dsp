@@ -9,11 +9,11 @@ from ..dsp import generic as dspg
 
 class EnvelopeDetectorPeak(Stage):
     """
-    Adds a stage with no outputs that measure the signal envelope.
+    Adds a stage with no outputs that measures the signal envelope.
 
     See :class:`audio_dsp.dsp.drc.envelope_detector_peak` for details.
 
-    The current envelop of the signal can be read out using this stage's
+    The current envelope of the signal can be read out using this stage's
     ``envelope`` control.
     """
 
@@ -44,11 +44,11 @@ class EnvelopeDetectorPeak(Stage):
 
 class EnvelopeDetectorRMS(Stage):
     """
-    Adds a stage with no outputs that measure the signal envelope.
+    Adds a stage with no outputs that measures the signal envelope.
 
     See :class:`audio_dsp.dsp.drc.envelope_detector_rms` for details.
 
-    The current envelop of the signal can be read out using this stage's
+    The current envelope of the signal can be read out using this stage's
     ``envelope`` control.
     """
 

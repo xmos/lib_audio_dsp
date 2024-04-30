@@ -65,5 +65,5 @@ class Thread(CompositeStage):
         ...
 
     def add_thread_stage(self):
-        """Add the stage to this thread which manages thread level commands."""
+        """Add to this thread the stage which manages thread level commands."""
         self.thread_stage = self.stage(DSPThreadStage, [], label=f"thread{self.id}")

@@ -65,7 +65,7 @@ typedef struct
     channel_t *p_link;
     size_t n_link;
     /// @publicsection
-    module_instance_t *modules;  ///< Array of DSP stage state, must be used when calling one of the control functions.
+    module_instance_t *modules;  ///< Array of DSP stage states, must be used when calling one of the control functions.
     size_t n_modules;  ///< Number of modules in the modules array.
     /// @privatesection
     adsp_mux_t input_mux;
@@ -119,7 +119,7 @@ static inline void adsp_pipeline_sink(adsp_pipeline_t *adsp, int32_t **data)
 /// @param adsp The initialised pipeline.
 /// @param data See adsp_pipeline_sink for details of same named param.
 /// @retval true The data buffer has been filled with new values from the pipeline.
-/// @retval false The pipeline has not produced any more data, the data buffer was untouched.
+/// @retval false The pipeline has not produced any more data. The data buffer was untouched.
 static inline bool adsp_pipeline_sink_nowait(adsp_pipeline_t *adsp,
                                              int32_t **data)
 {

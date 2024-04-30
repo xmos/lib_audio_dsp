@@ -1,1 +1,1 @@
-"""Underlying dsp implementation for each stage."""
+"""Underlying DSP implementation for each stage."""

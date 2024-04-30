@@ -34,7 +34,7 @@ class NoiseSuppressor(Stage):
         """
         Update noise suppressor configuration based on new parameters.
 
-        All parameters are forwared to the constructor of :class:`audio_dsp.dsp.drc.noise_suppressor`.
+        All parameters are passed to the constructor of :class:`audio_dsp.dsp.drc.noise_suppressor`.
         """
         self.details = dict(
             ratio=ratio,

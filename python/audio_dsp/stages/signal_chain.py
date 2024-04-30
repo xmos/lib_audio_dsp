@@ -27,7 +27,7 @@ class Fork(Stage):
     """
     Fork the signal.
 
-    Use if the same data needs to go down parallel data paths::
+    Use if the same data needs to be sent to multiple data paths::
 
         a = t.stage(Example, ...)
         f = t.stage(Fork, a.o, count=2)  # count optional, default is 2
@@ -57,7 +57,7 @@ class Fork(Stage):
         raise NotImplementedError
 
     def process(self, in_channels):
-        """Duplicate the inputs to the outputs based on this forks configuration."""
+        """Duplicate the inputs to the outputs based on this fork's configuration."""
         n_forks = self.n_out // self.n_in
         ret = []
         for input in in_channels:

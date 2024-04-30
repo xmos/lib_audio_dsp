@@ -569,7 +569,7 @@ class volume_control(dspg.dsp_block):
             self.saved_gain_db = gain_db
 
     def mute(self) -> None:
-        """Mute the instance of the volume control."""
+        """Mute the volume control."""
         if not self.mute_state:
             self.mute_state = True
             self.saved_gain_db = self.target_gain_db
@@ -579,7 +579,7 @@ class volume_control(dspg.dsp_block):
             self.target_gain_int = utils.int32(0)
 
     def unmute(self) -> None:
-        """Unmute the instance of the volume control."""
+        """Unmute the volume control."""
         if self.mute_state:
             self.mute_state = False
             self.set_gain(self.saved_gain_db)

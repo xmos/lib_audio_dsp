@@ -75,11 +75,11 @@ class CascadedBiquads(Stage):
 
         This allows each of the 8 biquads to be individually designed using the designer
         methods for the biquad. This expects to receive a list of up to 8 biquad design descriptions
-        where a biquad design description looks like the following::
+        where a biquad design description is of the form::
 
             ["type", args...]
 
-        Where "type" is a string defining how the biquad should be designed, e.g. "lowpass", and args...
+        where "type" is a string defining how the biquad should be designed e.g. "lowpass", and args...
         is all the parameters to design that type of filter. All options and arguments are listed below::{generated_doc}
         """
         self.details = dict(type="parametric")

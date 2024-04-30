@@ -184,13 +184,13 @@ class PipelineExecutor:
 
     def process(self, data: numpy.ndarray) -> ExecutionResult:
         """
-        Process the dsp pipeline on the host.
+        Process the DSP pipeline on the host.
 
         Parameters
         ----------
         data
             Pipeline input to process through the pipeline. The shape must match the number of channels
-            that the pipeline expects as an input. If this is 1 then it may be a 1 dimensional array. Otherwise
+            that the pipeline expects as an input; if this is 1 then it may be a 1 dimensional array. Otherwise,
             it must have shape (num_samples, num_channels).
 
         Returns

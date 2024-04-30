@@ -59,7 +59,7 @@ class Edge:
         Parameters
         ----------
         node
-            The instance to set as the source. This edge will store it.
+            The instance to set as the source.
         """
         self.source = node
 
@@ -70,7 +70,7 @@ class Edge:
         Parameters
         ----------
         node
-            The instance to set as the dest. This edge will store it.
+            The instance to set as the dest.
         """
         self.dest = node
 
@@ -99,7 +99,7 @@ class Graph(Generic[NodeSubClass]):
         """
         Append a node to this graph.
 
-        The node's index attribute gets set and therefore the node may
+        The node's index attribute is set here and therefore the node may
         not coexist in multiple graphs.
         """
         assert isinstance(node, Node)

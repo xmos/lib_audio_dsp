@@ -32,7 +32,7 @@ class _ResolvedEdge(NamedTuple):
 
 
 def callonce(f):
-    """Decoratate functions to ensure it executes only once despite being called multiple times."""
+    """Decorate functions to ensure they only execute once despite being called multiple times."""
     attr_name = "_called_funcs"
 
     def called_funcs_of_instance(instance) -> set:
@@ -127,7 +127,7 @@ class Pipeline:
 
     def add_thread(self):
         """
-        Create a new instance of audio_dsp.thread.Thread and adds it to
+        Create a new instance of audio_dsp.thread.Thread and add it to
         the pipeline. Stages can then be instantiated in the thread.
 
         Returns

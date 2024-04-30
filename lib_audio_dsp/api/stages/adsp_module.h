@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 
-/// Control states, used to communicated between DSP and control threads
+/// Control states, used to communicate between DSP and control threads
 /// to notify when control needs processing.
 typedef enum
 {
@@ -23,11 +23,11 @@ typedef enum
 /// Control related information shared between control thread and DSP.
 typedef struct
 {
-    void *config;  ///< Pointer to a stage specific config struct which is used by the control thread.
+    void *config;  ///< Pointer to a stage-specific config struct which is used by the control thread.
     uint32_t id;  ///< Unique module identifier assigned by the host
-    uint32_t num_control_commands;  ///< This stages number of control commands.
+    uint32_t num_control_commands;  ///< The number of control commands for this stage.
     uint8_t module_type;  ///< Identifies which type of stage this is.
-    uint8_t cmd_id;  ///< Gets set to the currect command which is being processed.
+    uint8_t cmd_id;  ///< Is set to the current command being processed.
     config_rw_state_t config_rw_state;
 }module_control_t;
 
@@ -36,6 +36,6 @@ typedef struct
 typedef struct
 {
     void *state;    ///< Pointer to the module's state memory.
-    module_control_t control;  ///< Modules control state.
+    module_control_t control;  ///< Module's control state.
 }module_instance_t;
 

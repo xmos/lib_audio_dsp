@@ -73,7 +73,7 @@ class StageOutput(Edge):
 
     @property
     def dest_index(self) -> int | None:
-        """The index of the edge connection to dest."""
+        """The index of the edge connection to the dest."""
         return self._dest_index
 
     @dest_index.setter
@@ -217,7 +217,7 @@ class Stage(Node):
     @property
     def o(self) -> list[StageOutput]:
         """
-        This stages outputs, use to connect to the next stage in the pipeline.
+        This stage's outputs. Use this object to connect this stage to the next stage in the pipeline.
         Subclass must call self.create_outputs() for this to exist.
         """
         if self._o is None:
@@ -308,7 +308,7 @@ class Stage(Node):
 
     def get_frequency_response(self, nfft=512) -> tuple[numpy.ndarray, numpy.ndarray]:
         """
-        Return the frequency response of this instances dsp_block attribute.
+        Return the frequency response of this instance's dsp_block attribute.
 
         Parameters
         ----------

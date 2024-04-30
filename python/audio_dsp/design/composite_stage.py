@@ -21,7 +21,7 @@ class CompositeStage:
     This is a higher order stage.
 
     Contains stages as well as other composite
-    stages. A thread will be a composite stage. Composite stages allow.
+    stages. A thread will be a composite stage. Composite stages allow:
 
     - drawing the detail with graphviz
     - process
@@ -64,7 +64,7 @@ class CompositeStage:
         """
         Outputs of this composite.
 
-        Dynamically computed by search graph for edges which
+        Dynamically computed by searching the graph for edges which
         originate in this composite and whose destination is outside this composite. Order
         not currently specified.
         """
@@ -117,7 +117,7 @@ class CompositeStage:
         self, stage_types: list[Type[_StageOrComposite]], inputs: Iterable[StageOutput]
     ) -> list[_StageOrComposite]:
         """
-        Iterate through the provided stages and connects them linearly.
+        Iterate through the provided stages and connect them linearly.
 
         Returns a list of the created instances.
         """

@@ -62,7 +62,7 @@ class allpass_fv(dspg.dsp_block):
         self._buffer_idx = 0
 
     def set_delay(self, delay):
-        """Set the length of the delay line, must be < max_delay."""
+        """Set the length of the delay line. Must be < max_delay."""
         if delay < self._max_delay:
             self.delay = delay
         else:
@@ -125,7 +125,7 @@ class allpass_fv(dspg.dsp_block):
 
 
 class comb_fv(dspg.dsp_block):
-    """A freeverb style comb filter, for use in the reverb_room block."""
+    """A freeverb style comb filter for use in the reverb_room block."""
 
     def __init__(self, max_delay, starting_delay, feedback_gain, damping):
         # max delay cannot be changed, or you'll overflow the buffer
@@ -147,7 +147,7 @@ class comb_fv(dspg.dsp_block):
         self.damp2_int = utils.int32((2**31 - 1) - self.damp1_int + 1)
 
     def set_delay(self, delay):
-        """Set the length of the delay line, must be < max_delay."""
+        """Set the length of the delay line. Must be < max_delay."""
         if delay < self._max_delay:
             self.delay = delay
         else:
