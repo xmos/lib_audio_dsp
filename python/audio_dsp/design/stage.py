@@ -208,8 +208,8 @@ class Stage(Node):
 
         self.details = {}
         self.dsp_block = None
-        self.stage_memory_string:str = ""
-        self.stage_memory_parameters:(tuple | None) = None
+        self.stage_memory_string: str = ""
+        self.stage_memory_parameters: tuple | None = None
 
     @property
     def o(self):
