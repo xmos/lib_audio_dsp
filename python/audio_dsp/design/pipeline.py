@@ -411,7 +411,7 @@ def _filter_edges_by_thread(resolved_pipeline):
                     # pipeline output
                     di = "pipeline_out"
                 else:
-                    for di, dthread, _ in enumerate(resolved_pipeline["threads"]):
+                    for di, dthread in enumerate(resolved_pipeline["threads"]):
                         if dest_in_thread(edge, dthread):
                             break
                 try:

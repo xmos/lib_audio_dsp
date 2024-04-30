@@ -15,7 +15,7 @@ typedef struct
     int frame_size;
 }add_n_state_t;
 
-#define ADD_N_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (0)
+#define ADD_N_REQUIRED_MEMORY 0
 
 void add_n_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 
