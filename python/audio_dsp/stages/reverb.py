@@ -15,9 +15,8 @@ class Reverb(Stage):
     Parameters
     ----------
     max_room_size
-        Sets the max room size of this stage. This sets the maximum room size for this
-        reverb. The ``room_size`` parameter determins the actual room size, but this
-        command sets the maximum value for ``room_size``.
+        Sets the maximum room size for this reverb. The ``room_size`` parameter sets the
+        fraction of this value actually used at any given time.
     """
 
     def __init__(self, max_room_size=1, **kwargs):

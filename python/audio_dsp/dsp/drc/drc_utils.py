@@ -50,7 +50,7 @@ def calc_ema_xcore(x, y, alpha):
 
 
 def apply_gain_xcore(sample, gain):
-    """Apply the gain to a sample usign fixed-point math, assumes that gain is in Q_alpha format."""
+    """Apply the gain to a sample using fixed-point math. Assumes that gain is in Q_alpha format."""
     acc = 1 << (Q_alpha - 1)
     acc += sample * gain
     y = utils.int32_mult_sat_extract(acc, 1, Q_alpha)

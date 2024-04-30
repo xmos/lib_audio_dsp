@@ -16,7 +16,7 @@ typedef enum
 {
     config_read_pending,    ///< Control waiting to read the updated config from DSP.
     config_write_pending,   ///< Config written by control and waiting for DSP to update.
-    config_read_updated,    ///< Config updated with the latest in order to service a read command.
+    config_read_updated,    ///< Stage has succesfully consumed a read command.
     config_none_pending     ///< All done. Control and DSP not waiting on anything.
 } config_rw_state_t;
 
@@ -26,7 +26,7 @@ typedef struct
     void *config;  ///< Pointer to a stage-specific config struct which is used by the control thread.
     uint32_t id;  ///< Unique module identifier assigned by the host
     uint32_t num_control_commands;  ///< The number of control commands for this stage.
-    uint8_t module_type;  ///< Identifies which type of stage this is.
+    uint8_t module_type;  ///< Identifies the stage type, each type of stage has a unique identifier.
     uint8_t cmd_id;  ///< Is set to the current command being processed.
     config_rw_state_t config_rw_state;
 }module_control_t;

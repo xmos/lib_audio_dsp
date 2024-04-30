@@ -10,3 +10,4 @@ module:
 includes:
   - "stdint.h"
   - "stages/adsp_module.h"
+  - "xmath/api.h"

@@ -17,12 +17,9 @@ class DSPThreadStage(Stage):
         super().__init__(config=find_config("dsp_thread"), **kwargs)
         self.create_outputs(0)
 
-    def add_to_dot(self, dot):  # Override this to not add the stage to the diagram
+    def add_to_dot(self, dot):
         """
         Exclude this stage from the dot diagram.
-
-        This stage is an implementation detail of each thread that would add mess to the
-        diagram.
 
         Parameters
         ----------

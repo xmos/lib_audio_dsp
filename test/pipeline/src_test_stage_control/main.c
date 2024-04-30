@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <xcore/assert.h>
+#include <assert.h>
 #include <xcore/parallel.h>
 #include <xcore/channel.h>
 #include <xcore/chanend.h>

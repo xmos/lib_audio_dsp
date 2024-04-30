@@ -66,7 +66,7 @@ typedef struct
     size_t n_link;
     /// @publicsection
     module_instance_t *modules;  ///< Array of DSP stage states, must be used when calling one of the control functions.
-    size_t n_modules;  ///< Number of modules in the modules array.
+    size_t n_modules;  ///< Number of modules in the @ref adsp_pipeline_t::modules array.
     /// @privatesection
     adsp_mux_t input_mux;
     adsp_mux_t output_mux;
@@ -74,7 +74,7 @@ typedef struct
 
 /// Pass samples into the DSP pipeline.
 ///
-/// These samples are sent by value to the other thread so the data buffer can be reused
+/// These samples are sent by value to the other thread, therefore the data buffer can be reused
 /// immediately after this function returns.
 ///
 /// @param adsp The initialised pipeline.

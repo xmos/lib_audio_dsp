@@ -21,7 +21,7 @@ typedef struct
     /// definition to ensure that a usable identifier gets generated for using with control.
     uint8_t instance_id;
 
-    /// See cmds.h that will be generated for the available commands. Make sure to use a command
+    /// "See the generated cmds.h for the available commands. Make sure to use a command
     /// which is supported for the target stage.
     uint8_t cmd_id;
 
@@ -41,26 +41,26 @@ typedef enum
     ADSP_CONTROL_ERROR  ///< An error occured.
 }adsp_control_status_t;
 
-/// Initiate a read command by passing in a filled in @ref adsp_stage_control_cmd_t.
+/// Initiate a read command by passing in an intialised @ref adsp_stage_control_cmd_t.
 ///
 /// Must be called repeatedly with the same cmd until ADSP_CONTROL_SUCCESS is returned.
 ///
 /// @param modules A pointer to the array of modules contained within @ref adsp_pipeline_t.
 /// @param num_modules Size of the num_modules array.
-/// @param cmd A filled in @ref adsp_stage_control_cmd_t.
+/// @param cmd An initialised @ref adsp_stage_control_cmd_t.
 /// @return @ref adsp_control_status_t
 adsp_control_status_t adsp_read_module_config(module_instance_t* modules,
                                             size_t num_modules,
                                             adsp_stage_control_cmd_t *cmd
                                         );
 
-/// Initiate a write command by passing in a filled in @ref adsp_stage_control_cmd_t.
+/// Initiate a write command by passing in an initialised @ref adsp_stage_control_cmd_t.
 ///
 /// Must be called repeatedly with the same cmd until ADSP_CONTROL_SUCCESS is returned.
 ///
 /// @param modules A pointer to the array of modules contained within @ref adsp_pipeline_t.
-/// @param num_modules Size of the num_modules array.
-/// @param cmd A filled in @ref adsp_stage_control_cmd_t.
+/// @param num_modules Size of the @p num_modules array.
+/// @param cmd An initialised @ref adsp_stage_control_cmd_t.
 /// @return @ref adsp_control_status_t
 adsp_control_status_t adsp_write_module_config(module_instance_t* modules,
                                             size_t num_modules,

@@ -328,7 +328,7 @@ def biquad_peaking(
 def biquad_constant_q(
     fs: int, n_chans: int, filter_freq: float, q_factor: float, boost_db: float
 ) -> biquad:
-    """Return a biquad object with constant q peaking filter coefficients."""
+    """Return a biquad object with constant Q peaking filter coefficients."""
     coeffs = make_biquad_constant_q(fs, filter_freq, q_factor, boost_db)
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT)
 

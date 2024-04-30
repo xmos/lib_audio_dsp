@@ -1,1 +1,1 @@
-"""All XMOS DSP stages for adding to the DSP Pipeline."""
+"""Collection of all XMOS DSP stages for use in DSP pipeline."""

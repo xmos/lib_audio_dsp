@@ -14,7 +14,7 @@ Q_VERB = 31
 
 
 def apply_gain_xcore(sample, gain):
-    """Apply the gain to a sample usign fixed-point math, assumes that gain is in Q_VERB format."""
+    """Apply the gain to a sample using fixed-point math. Assumes that gain is in Q_VERB format."""
     acc = 1 << (Q_VERB - 1)
     acc += sample * gain
     y = utils.int32_mult_sat_extract(acc, 1, Q_VERB)
