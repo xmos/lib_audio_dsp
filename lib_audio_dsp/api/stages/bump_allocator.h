@@ -16,7 +16,7 @@ typedef struct {
 /// Initialise a bump allocator with this. Expects an array (not a pointer).
 /// lifetime of the array must be at least as long as the lifetime of the
 /// allocator.
-#define ADSP_BUMP_ALLOCATOR_INITIALISER(array) {(void*)(array), (sizeof(array) / sizeof(*(array)))}
+#define ADSP_BUMP_ALLOCATOR_INITIALISER(array) {(sizeof(array) > 0) ? (void*)(array) : NULL, (sizeof(array) / sizeof(*(array)))}
 
 /// Determine buf size required to ensure it can be DWORD_ALIGNED
 #define ADSP_BUMP_ALLOCATOR_DWORD_N_BYTES(N) ( (N) + 7)

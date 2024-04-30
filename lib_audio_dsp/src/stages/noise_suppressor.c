@@ -72,8 +72,8 @@ void noise_suppressor_init(module_instance_t* instance, adsp_bump_allocator_t* a
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
-    state->ns = adsp_bump_allocator_malloc(allocator, NOISE_SUPPRESSOR_STAGE_REQUIRED_MEMORY(state->n_inputs));
-    memset(state->ns, 0, NOISE_SUPPRESSOR_STAGE_REQUIRED_MEMORY(state->n_inputs));
+    state->ns = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, NOISE_SUPPRESSOR_STAGE_REQUIRED_MEMORY_SLIM(state->n_inputs));
+    memset(state->ns, 0, NOISE_SUPPRESSOR_STAGE_REQUIRED_MEMORY_SLIM(state->n_inputs));
 
     for(int i=0; i<state->n_inputs; i++)
     {
