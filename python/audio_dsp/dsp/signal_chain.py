@@ -6,6 +6,8 @@ import warnings
 from audio_dsp.dsp import generic as dspg
 from audio_dsp.dsp import utils
 
+# Q format for signal gains
+Q_GAIN = 27
 
 class mixer(dspg.dsp_block):
     """
@@ -35,8 +37,7 @@ class mixer(dspg.dsp_block):
         assert gain_db <= 24, "Maximum mixer gain is +24dB"
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
-        self.gain = utils.saturate_float(self.gain, self.Q_sig)
-        self.gain_int = utils.float_to_int32(self.gain, self.Q_sig)
+        self.gain_int = utils.float_to_int32(self.gain, Q_GAIN)
 
     def process_channels(self, sample_list: list[float]) -> float:
         """
@@ -81,9 +82,9 @@ class mixer(dspg.dsp_block):
         y = int(0)
         for sample in sample_list:
             sample_int = utils.float_to_int32(sample, self.Q_sig)
-            acc = 1 << (self.Q_sig - 1)
+            acc = 1 << (Q_GAIN - 1)
             acc += sample_int * self.gain_int
-            scaled_sample = utils.int32_mult_sat_extract(acc, 1, self.Q_sig)
+            scaled_sample = utils.int32_mult_sat_extract(acc, 1, Q_GAIN)
             y += scaled_sample
 
         y = utils.int32_mult_sat_extract(y, 2, 1)
@@ -323,8 +324,7 @@ class fixed_gain(dspg.dsp_block):
         assert gain_db <= 24, "Maximum fixed gain is +24dB"
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
-        self.gain = utils.saturate_float(self.gain, self.Q_sig)
-        self.gain_int = utils.float_to_int32(self.gain, self.Q_sig)
+        self.gain_int = utils.float_to_int32(self.gain, Q_GAIN)
 
     def process(self, sample: float, channel: int = 0) -> float:
         """Multiply the input sample by the gain, using floating point
@@ -344,6 +344,8 @@ class fixed_gain(dspg.dsp_block):
             The processed output sample.
         """
         y = sample * self.gain
+        y = utils.saturate_float(y, self.Q_sig)
+
         return y
 
     def process_xcore(self, sample: float, channel: int = 0) -> float:
@@ -368,9 +370,9 @@ class fixed_gain(dspg.dsp_block):
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
         # for rounding
-        acc = 1 << (self.Q_sig - 1)
+        acc = 1 << (Q_GAIN - 1)
         acc += sample_int * self.gain_int
-        y = utils.int32_mult_sat_extract(acc, 1, self.Q_sig)
+        y = utils.int32_mult_sat_extract(acc, 1, Q_GAIN)
 
         y_flt = float(y) * 2**-self.Q_sig
 
@@ -507,6 +509,7 @@ class volume_control(dspg.dsp_block):
         self.gain[channel] += (self.target_gain - self.gain[channel]) * 2**-self.slew_shift
 
         y = sample * self.gain[channel]
+        y = utils.saturate_float(y, self.Q_sig)
         return y
 
     def process_xcore(self, sample: float, channel: int = 0) -> float:
@@ -538,9 +541,9 @@ class volume_control(dspg.dsp_block):
         ) >> self.slew_shift
 
         # for rounding
-        acc = 1 << (self.Q_sig - 1)
+        acc = 1 << (Q_GAIN - 1)
         acc += sample_int * self.gain_int[channel]
-        y = utils.int32_mult_sat_extract(acc, 1, self.Q_sig)
+        y = utils.int32_mult_sat_extract(acc, 1, Q_GAIN)
 
         y_flt = float(y) * 2**-self.Q_sig
 
@@ -566,8 +569,7 @@ class volume_control(dspg.dsp_block):
         if not self.mute_state:
             self.target_gain_db = gain_db
             self.target_gain = utils.db2gain(gain_db)
-            self.target_gain = utils.saturate_float(self.target_gain, self.Q_sig)
-            self.target_gain_int = utils.float_to_int32(self.target_gain, self.Q_sig)
+            self.target_gain_int = utils.float_to_int32(self.target_gain, Q_GAIN)
         else:
             self.saved_gain_db = gain_db
 
