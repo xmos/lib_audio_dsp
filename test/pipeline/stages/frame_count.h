@@ -11,7 +11,7 @@ typedef struct
     int frame_size;
 }frame_count_state_t;
 
-#define FRAME_COUNT_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (0)
+#define FRAME_COUNT_STAGE_REQUIRED_MEMORY 0
 
 void frame_count_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size) {
     frame_count_state_t *state = instance->state;

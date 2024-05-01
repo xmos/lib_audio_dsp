@@ -32,10 +32,7 @@ class _ResolvedEdge(NamedTuple):
 
 
 def callonce(f):
-    """
-    Decorator function for ensuring a function executes only once despite being
-    called multiple times.
-    """
+    """Decorate functions to ensure they only execute once despite being called multiple times."""
     attr_name = "_called_funcs"
 
     def called_funcs_of_instance(instance) -> set:
@@ -71,7 +68,7 @@ class PipelineStage(Stage):
     def add_to_dot(self, dot):  # Override this to not add the stage to the diagram
         """
         Override the CompositeStage.add_to_dot() function to ensure PipelineStage
-        type stages are not added to the dot diagram
+        type stages are not added to the dot diagram.
 
         Parameters
         ----------
@@ -107,8 +104,6 @@ class Pipeline:
     i : list(StageOutput)
         The inputs to the pipeline should be passed as the inputs to the
         first stages in the pipeline
-    stages : List(Stage)
-        Flattened list of all the stages in the pipeline
     threads : list(Thread)
         List of all the threads in the pipeline
     pipeline_stage : PipelineStage | None
@@ -132,7 +127,7 @@ class Pipeline:
 
     def add_thread(self):
         """
-        Creates a new instance of audio_dsp.thread.Thread and adds it to
+        Create a new instance of audio_dsp.thread.Thread and add it to
         the pipeline. Stages can then be instantiated in the thread.
 
         Returns
@@ -150,9 +145,7 @@ class Pipeline:
 
     @callonce
     def add_pipeline_stage(self, thread):
-        """
-        Add a PipelineStage stage for the pipeline
-        """
+        """Add a PipelineStage stage for the pipeline."""
         self.pipeline_stage = thread.stage(PipelineStage, [])
 
     def set_outputs(self, output_edges: list[StageOutput]):
@@ -177,9 +170,7 @@ class Pipeline:
         self.resolve_pipeline()  # Call it here to generate the pipeline hash
 
     def executor(self) -> PipelineExecutor:
-        """
-        Create an executor instance which can be used to simulate the pipeline
-        """
+        """Create an executor instance which can be used to simulate the pipeline."""
 
         def view():
             if self.o is None:
@@ -225,6 +216,7 @@ class Pipeline:
 
     @property
     def stages(self):
+        """Flattened list of all the stages in the pipeline."""
         return self._graph.nodes[:]
 
     @callonce
@@ -268,7 +260,7 @@ class Pipeline:
         -------
         dict
             'identifier': string identifier for the pipeline
-            "threads": list of [[(stage index, stage type name), ...], ...] for all threads
+            "threads": list of [[(stage index, stage type name, stage memory use), ...], ...] for all threads
             "edges": list of [[[source stage, source index], [dest stage, dest index]], ...] for all edges
             "configs": list of dicts containing stage config for each stage.
             "modules": list of stage yaml configs for all types of stage that are present
@@ -282,7 +274,7 @@ class Pipeline:
         for i, thread in enumerate(self.threads):
             for node in sorted_nodes:
                 if thread.contains_stage(node):
-                    threads[i].append([node.index, node.name])
+                    threads[i].append([node.index, node.name, node.get_required_allocator_size()])
 
         edges = []
         for edge in self._graph.edges:
@@ -348,7 +340,7 @@ def validate_pipeline_checksum(pipeline: Pipeline):
 
 def send_config_to_device(pipeline: Pipeline):
     """
-    Sends the current config for all stages to the device.
+    Send the current config for all stages to the device.
     Make sure set_host_app() is called before calling this to set a valid host app.
 
     Parameters
@@ -446,7 +438,9 @@ def _gen_chan_buf_write_q27_to_q31(channel, edge, frame_size):
 
 def _generate_dsp_threads(resolved_pipeline):
     """
-    Create the source string for all of the dsp threads. Output looks approximately like the below::
+    Create the source string for all of the dsp threads.
+
+    Output looks approximately like the below::
 
         void dsp_thread(chanend_t* input_c, chanend_t* output_c, module_states, module_configs) {
             int32_t edge0[BLOCK_SIZE];
@@ -500,7 +494,7 @@ def _generate_dsp_threads(resolved_pipeline):
             func += f"\tint32_t edge{i}[{edge.frame_size}] = {{0}};\n"
 
         # get the dsp_thread stage index in the thread
-        dsp_thread_index = [i for i, (_, name) in enumerate(thread) if name == "dsp_thread"][0]
+        dsp_thread_index = [i for i, (_, name, _) in enumerate(thread) if name == "dsp_thread"][0]
 
         for stage_thread_index, stage in enumerate(thread):
             # thread stages are already ordered during pipeline resolution
@@ -537,7 +531,7 @@ def _generate_dsp_threads(resolved_pipeline):
         # It will be done once before select to ensure it happens, then in the default
         # case of the select so that control will be processed if no audio is playing.
         control = ""
-        for i, (stage_index, name) in enumerate(thread):
+        for i, (stage_index, name, _) in enumerate(thread):
             if resolved_pipeline["modules"][stage_index]["yaml_dict"]:
                 control += f"\t\t{name}_control(modules[{i}]->state, &modules[{i}]->control);\n"
 
@@ -580,7 +574,7 @@ def _generate_dsp_threads(resolved_pipeline):
 
         process = "\tstart_ts = get_reference_time();\n\n"
 
-        for stage_thread_index, (stage_index, name) in enumerate(thread):
+        for stage_thread_index, (stage_index, name, _) in enumerate(thread):
             input_edges = [edge for edge in all_edges if edge[1][0] == stage_index]
             output_edges = [edge for edge in all_edges if edge[0][0] == stage_index]
 
@@ -728,7 +722,7 @@ def _generate_dsp_init(resolved_pipeline):
 
     # initialise the modules
     for thread in resolved_pipeline["threads"]:
-        for stage_index, stage_name in thread:
+        for stage_index, stage_name, stage_mem in thread:
             in_edges = [e for e in resolved_pipeline["edges"] if e.dest[0] == stage_index]
             out_edges = [e for e in resolved_pipeline["edges"] if e.source[0] == stage_index]
             stage_n_in = len(in_edges)
@@ -755,7 +749,7 @@ def _generate_dsp_init(resolved_pipeline):
 
             ret += f"""
             static {stage_name}_state_t state{stage_index};
-            static uint8_t memory{stage_index}[_ADSP_MAX(1, {stage_name.upper()}_REQUIRED_MEMORY({stage_n_in}, {stage_n_out}, {stage_frame_size}))];
+            static uint8_t memory{stage_index}[{stage_mem}];
             static adsp_bump_allocator_t allocator{stage_index} = ADSP_BUMP_ALLOCATOR_INITIALISER(memory{stage_index});
 
             {adsp}.modules[{stage_index}].state = (void*)&state{stage_index};
@@ -865,9 +859,6 @@ def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
 #include <stages/bump_allocator.h>
 #include <dsp/signal_chain.h>
 
-// MAX macro
-#define _ADSP_MAX(A, B) (((A) > (B)) ? (A) : (B))
-
 """
     # add includes for each stage type in the pipeline
     dsp_main += "".join(
@@ -894,7 +885,7 @@ def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
         thread_input_edges, _, thread_output_edges, _ = thread_edges
         # thread stages
         dsp_main += f"\tmodule_instance_t* thread_{thread_idx}_modules[] = {{\n"
-        for stage_idx, _ in thread:
+        for stage_idx, _, _ in thread:
             dsp_main += f"\t\t&adsp->modules[{stage_idx}],\n"
         dsp_main += "\t};\n"
 

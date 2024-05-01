@@ -62,8 +62,8 @@ void compressor_rms_init(module_instance_t* instance, adsp_bump_allocator_t* all
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    state->comp = adsp_bump_allocator_malloc(allocator, state->n_inputs * sizeof(compressor_t));
-    memset(state->comp, 0, state->n_inputs * sizeof(compressor_t));
+    state->comp = adsp_bump_allocator_malloc(allocator, COMPRESSOR_RMS_STAGE_REQUIRED_MEMORY(state->n_inputs));
+    memset(state->comp, 0, COMPRESSOR_RMS_STAGE_REQUIRED_MEMORY(state->n_inputs));
 
     for(int i=0; i<state->n_inputs; i++)
     {

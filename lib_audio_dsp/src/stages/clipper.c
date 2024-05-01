@@ -39,8 +39,8 @@ void clipper_init(module_instance_t* instance, adsp_bump_allocator_t* allocator,
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    state->clip = adsp_bump_allocator_malloc(allocator, state->n_inputs * sizeof(clipper_t));
-    memset(state->clip, 0, state->n_inputs * sizeof(clipper_t));
+    state->clip = adsp_bump_allocator_malloc(allocator, CLIPPER_STAGE_REQUIRED_MEMORY(state->n_inputs));
+    memset(state->clip, 0, CLIPPER_STAGE_REQUIRED_MEMORY(state->n_inputs));
 
     for (int i = 0; i < state->n_inputs; i++) {
         state->clip[i] = config->threshold;

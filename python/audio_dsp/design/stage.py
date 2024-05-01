@@ -1,11 +1,15 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The edges and nodes for a DSP pipeline."""
 
 from typing import Iterable
+
+import numpy
 from .graph import Edge, Node
 import yaml
 from pathlib import Path
 from audio_dsp.design import plot
+from audio_dsp.dsp.generic import dsp_block
 from typing import Optional
 
 
@@ -50,8 +54,6 @@ class StageOutput(Edge):
         Inherited from Edge
     source_index : int | None
         The index of the edge connection to source.
-    dest_index : int | None
-        The index of the edge connection to dest.
     fs : int
         see fs parameter
     frame_size : int
@@ -70,7 +72,8 @@ class StageOutput(Edge):
         # self.type = q23
 
     @property
-    def dest_index(self):
+    def dest_index(self) -> int | None:
+        """The index of the edge connection to the dest."""
         return self._dest_index
 
     @dest_index.setter
@@ -80,7 +83,7 @@ class StageOutput(Edge):
         self._dest_index = value
 
     def __repr__(self) -> str:
-        """Makes print output usable."""
+        """Make print output usable."""
         dest = "-" if self.dest is None else f"{self.dest.index} {self.dest_index}"
         source = "-" if self.source is None else f"{self.source.index} {self.source_index}"
         return f"({source} -> {dest})"
@@ -97,6 +100,11 @@ class PropertyControlField:
 
     @property
     def value(self):
+        """
+        The current value of this control field.
+
+        Determined by executing the getter method.
+        """
         return self._getter()
 
     @value.setter
@@ -144,9 +152,6 @@ class Stage(Node):
     ----------
     i : list[StageOutput]
         This stages inputs.
-    o : list[StageOutput]
-        This stages outputs, use to connect to the next stage in the pipeline.
-        Subclass must call self.create_outputs() for this to exist.
     fs : int | None
         Sample rate.
     frame_size : int | None
@@ -207,10 +212,16 @@ class Stage(Node):
         self.label = label
 
         self.details = {}
-        self.dsp_block = None
+        self.dsp_block: Optional[dsp_block] = None
+        self.stage_memory_string: str = ""
+        self.stage_memory_parameters: tuple | None = None
 
     @property
-    def o(self):
+    def o(self) -> list[StageOutput]:
+        """
+        This stage's outputs. Use this object to connect this stage to the next stage in the pipeline.
+        Subclass must call self.create_outputs() for this to exist.
+        """
         if self._o is None:
             raise RuntimeError("Stage must add outputs with create_outputs in its __init__ method")
         return self._o
@@ -297,7 +308,22 @@ class Stage(Node):
         # use float implementation as it is faster
         return self.dsp_block.process_frame(in_channels)
 
-    def get_frequency_response(self, nfft=512):
+    def get_frequency_response(self, nfft=512) -> tuple[numpy.ndarray, numpy.ndarray]:
+        """
+        Return the frequency response of this instance's dsp_block attribute.
+
+        Parameters
+        ----------
+        nfft
+            The length of the FFT
+
+        Returns
+        -------
+        ndarray, ndarray
+            Frequency values, Frequency response for this stage.
+        """
+        if self.dsp_block is None:
+            raise RuntimeError("This stage has not set its dsp_block")
         return self.dsp_block.freq_response(nfft)
 
     def plot_frequency_response(self, nfft=512):
@@ -336,3 +362,18 @@ class Stage(Node):
             label = f"{{ {{ {inputs} }} | {center} | {{ {outputs} }}}}"
 
         dot.node(self.id.hex, label)
+
+    def get_required_allocator_size(self):
+        """
+        Calculate the required statically-allocated memory in bytes for this stage.
+        Formats this into a compile-time determinable expression.
+
+        Returns
+        -------
+            compile-time determinable expression of required allocator size.
+        """
+        macro_name = f"{self.name.upper()}_STAGE_REQUIRED_MEMORY"
+        if self.stage_memory_parameters is not None:
+            return f"{macro_name}({','.join((str(x) for x in self.stage_memory_parameters))})"
+        else:
+            return macro_name

@@ -205,9 +205,7 @@ class cascaded_biquads_8(dspg.dsp_block):
         return f, h_all
 
     def reset_state(self):
-        """
-        Reset the biquad saved states to zero.
-        """
+        """Reset the biquad saved states to zero."""
         for biquad in self.biquads:
             biquad.reset_state()
 
