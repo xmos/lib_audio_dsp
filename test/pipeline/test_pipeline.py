@@ -16,6 +16,7 @@ from audio_dsp.stages.signal_chain import Bypass
 from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak
 from audio_dsp.design.pipeline import generate_dsp_main
 import audio_dsp.dsp.signal_gen as gen
+from audio_dsp.dsp.generic import HEADROOM_BITS
 
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
 from stages.add_n import AddN
@@ -108,12 +109,12 @@ def test_pipeline():
 
 INT32_MIN = -(2**31)
 INT32_MAX = (-INT32_MIN) - 1
-@pytest.mark.parametrize("input,add,output", [(3, 3, 3 << 4),  # input too insignificant, output is shifted
-                                              (-3, 0, -1 << 4), # negative small numbers truncate in the negative direction
-                                              (INT32_MIN, -3, INT32_MIN),
-                                              (INT32_MAX, 3, INT32_MAX),
-                                              (INT32_MAX, -3, ((INT32_MAX >>4) - 3) << 4)])
-def test_pipeline_q27(input, add, output):
+@pytest.mark.parametrize("input, add", [(3, 3),  # input too insignificant, output is shifted
+                                        (-3, 0), # negative small numbers truncate in the negative direction
+                                        (INT32_MIN, -3),
+                                        (INT32_MAX, 3),
+                                        (INT32_MAX, -3)])
+def test_pipeline_q27(input, add):
     """
     Check that the pipeline operates at q5.27 and outputs saturated Q1.31
 
@@ -127,6 +128,10 @@ def test_pipeline_q27(input, add, output):
     infile = "inq27.wav"
     outfile = "outq27.wav"
     n_samps, channels, rate = 1024, 2, 48000
+
+    output = ((input >> HEADROOM_BITS) + add) << HEADROOM_BITS
+    output = min(output, INT32_MAX)
+    output = max(output, INT32_MIN)
 
     p = Pipeline(channels)
     with p.add_thread() as t:
@@ -184,7 +189,7 @@ def test_complex_pipeline():
 
     in_val = 1000
     # expected output is +5 on left, +6 on right, in the Q1.27 format
-    expected = (np.array([[5, 6]]*n_samps) + (in_val >> 4)) << 4
+    expected = (np.array([[5, 6]]*n_samps) + (in_val >> HEADROOM_BITS)) << HEADROOM_BITS
     sig = np.multiply(np.ones((n_samps, channels), dtype=np.int32), in_val, dtype=np.int32)
     audio_helpers.write_wav(infile, rate, sig)
 

@@ -5,6 +5,7 @@ import numpy as np
 import audio_dsp.dsp.signal_chain as sc
 import audio_dsp.dsp.signal_gen as gen
 import audio_dsp.dsp.utils as utils
+import audio_dsp.dsp.generic as dspg
 from audio_dsp.dsp.generic import HEADROOM_DB
 
 import soundfile as sf
