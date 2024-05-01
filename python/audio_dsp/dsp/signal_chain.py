@@ -9,6 +9,7 @@ from audio_dsp.dsp import utils
 # Q format for signal gains
 Q_GAIN = 27
 
+
 class mixer(dspg.dsp_block):
     """
     Mixer class for adding signals with attenuation to maintain
