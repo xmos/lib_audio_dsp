@@ -186,7 +186,9 @@ def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
   if ratio == 1 or (threshold == 0 and comp_name != "noise_suppressor"):
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
   else:
-    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=1e-8)
+    # tolerace is the 24b float32 mantissa
+    tol = 2**(np.ceil(np.log2(np.max(out_c))) - 24)
+    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=tol)
 
 if __name__ == "__main__":
   bin_dir.mkdir(exist_ok=True, parents=True)
