@@ -8,7 +8,7 @@
 
 typedef struct
 {
-    expander_t *exp;
+    expander_t *ex;
     int n_inputs;
     int n_outputs;
     int frame_size;

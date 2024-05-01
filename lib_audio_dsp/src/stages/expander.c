@@ -9,37 +9,37 @@
 #include "stages/expander.h"
 #include "dsp/adsp.h"
 
-static inline void ns_copy_config_to_state(expander_t *ns_state, int n_inputs, const expander_config_t *ns_config)
+static inline void ex_copy_config_to_state(expander_t *ex_state, int n_inputs, const expander_config_t *ex_config)
 {
     // Avoid division by 0
-    int32_t th = (!ns_config->threshold) ? 1 : ns_config->threshold;
-    int32_t condition = (ns_state[0].threshold != th); // threshold is the same in all channels
+    int32_t th = (!ex_config->threshold) ? 1 : ex_config->threshold;
+    int32_t condition = (ex_state[0].threshold != th); // threshold is the same in all channels
     // Compute the inverse of the threshold only if the threshold has changed
     int64_t inv_th = (condition) ? INT64_MAX / th : 0; // else doesn't matter here
     // Same config for all channels
     for(int i=0; i<n_inputs; i++)
     {
-        ns_state[i].env_det.attack_alpha = ns_config->attack_alpha;
-        ns_state[i].env_det.release_alpha = ns_config->release_alpha;
-        ns_state[i].slope = ns_config->slope;
+        ex_state[i].env_det.attack_alpha = ex_config->attack_alpha;
+        ex_state[i].env_det.release_alpha = ex_config->release_alpha;
+        ex_state[i].slope = ex_config->slope;
         // Change the inverse of the threshold only if the threshold has changed
         if (condition)
         {
-            ns_state[i].threshold = th;
-            ns_state[i].inv_threshold = inv_th;
+            ex_state[i].threshold = th;
+            ex_state[i].inv_threshold = inv_th;
         }
     }
 }
 
-static inline void ns_copy_state_to_config(expander_config_t *ns_config, const expander_t *ns_state)
+static inline void ex_copy_state_to_config(expander_config_t *ex_config, const expander_t *ex_state)
 {
     // Copy from channel 0 state to the config
-    ns_config->attack_alpha = ns_state[0].env_det.attack_alpha;
-    ns_config->release_alpha = ns_state[0].env_det.release_alpha;
-    ns_config->envelope = ns_state[0].env_det.envelope;
-    ns_config->gain = ns_state[0].gain;
-    ns_config->threshold = ns_state[0].threshold;
-    ns_config->slope = ns_state[0].slope;
+    ex_config->attack_alpha = ex_state[0].env_det.attack_alpha;
+    ex_config->release_alpha = ex_state[0].env_det.release_alpha;
+    ex_config->envelope = ex_state[0].env_det.envelope;
+    ex_config->gain = ex_state[0].gain;
+    ex_config->threshold = ex_state[0].threshold;
+    ex_config->slope = ex_state[0].slope;
 }
 
 void expander_process(int32_t **input, int32_t **output, void *app_data_state)
@@ -57,7 +57,7 @@ void expander_process(int32_t **input, int32_t **output, void *app_data_state)
 
         int j = 0;
         do {
-            *out++ = adsp_expander(&state->exp[i], *in++);
+            *out++ = adsp_expander(&state->ex[i], *in++);
         } while(++j < state->frame_size);
     } while(++i < state->n_outputs);
 }
@@ -72,19 +72,19 @@ void expander_init(module_instance_t* instance, adsp_bump_allocator_t* allocator
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
-    state->exp = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, EXPANDER_STAGE_REQUIRED_MEMORY_SLIM(state->n_inputs));
-    memset(state->exp, 0, EXPANDER_STAGE_REQUIRED_MEMORY_SLIM(state->n_inputs));
+    state->ex = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, EXPANDER_STAGE_REQUIRED_MEMORY_SLIM(state->n_inputs));
+    memset(state->ex, 0, EXPANDER_STAGE_REQUIRED_MEMORY_SLIM(state->n_inputs));
 
     for(int i=0; i<state->n_inputs; i++)
     {
-        state->exp[i].gain = INT32_MAX;
-        state->exp[i].env_det.envelope = 1 << (-SIG_EXP);
+        state->ex[i].gain = INT32_MAX;
+        state->ex[i].env_det.envelope = 1 << (-SIG_EXP);
         // Avoid division by zero
-        if (!state->exp[i].threshold) state->exp[i].threshold = 1;
-        state->exp[i].inv_threshold = INT64_MAX / state->exp[i].threshold;
+        if (!state->ex[i].threshold) state->ex[i].threshold = 1;
+        state->ex[i].inv_threshold = INT64_MAX / state->ex[i].threshold;
     }
 
-    ns_copy_config_to_state(state->exp, state->n_inputs, config);
+    ex_copy_config_to_state(state->ex, state->n_inputs, config);
 }
 
 void expander_control(void *module_state, module_control_t *control)
@@ -98,12 +98,12 @@ void expander_control(void *module_state, module_control_t *control)
     {
         // Finish the write by updating the working copy with the new config
         // TODO update only the fields written by the host
-        ns_copy_config_to_state(state->exp, state->n_inputs, config);
+        ex_copy_config_to_state(state->ex, state->n_inputs, config);
         control->config_rw_state = config_none_pending;
     }
     else if(control->config_rw_state == config_read_pending)
     {
-        ns_copy_state_to_config(config, state->exp);
+        ex_copy_state_to_config(config, state->ex);
         control->config_rw_state = config_read_updated;
     }
     else

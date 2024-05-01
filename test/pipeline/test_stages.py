@@ -295,10 +295,10 @@ def test_noise_suppressor(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            ex = t.stage(NoiseSuppressor, p.i)
-        p.set_outputs(ex.o)
+            ns = t.stage(NoiseSuppressor, p.i)
+        p.set_outputs(ns.o)
 
-        ex.make_noise_suppressor(2, -6, 0.001, 0.1)
+        ns.make_noise_suppressor(2, -6, 0.001, 0.1)
         return p
 
     do_test(make_p, frame_size)

@@ -6,14 +6,15 @@ from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
 from ..dsp import generic as dspg
 
+
 class NoiseSuppressor(Stage):
-    """The NoiseSuppressor stage.
+    """The Noise Suppressor stage.
 
     Alias for the Expander stage.
     Implementation details can be found at :class:`audio_dsp.dsp.drc.expander`.
     """
     def __init__(self, **kwargs):
-        super().super().__init__(config=find_config("noise_suppressor"), **kwargs)
+        super().__init__(config=find_config("noise_suppressor"), **kwargs)
         self.create_outputs(self.n_in)
 
         threshold = -35
