@@ -1,5 +1,5 @@
 module:
-  noise_suppressor:
+  expander:
     attack_alpha:
       type: int32_t
     release_alpha:

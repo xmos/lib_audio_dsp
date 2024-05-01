@@ -152,14 +152,14 @@ def test_limiter_c(in_signal, component_name, at, rt, threshold):
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
 @pytest.mark.parametrize("comp_name", ["compressor_rms",
-                                       "noise_suppressor"])
+                                       "expander"])
 @pytest.mark.parametrize("at", [0.005])
 @pytest.mark.parametrize("rt", [0.120])
 @pytest.mark.parametrize("threshold", [-12, 0])
 @pytest.mark.parametrize("ratio", [1, 6])
 def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
   # for the noise suppressor the lowest sensible threshold is -35
-  if comp_name == "noise_suppressor" and threshold == -12:
+  if comp_name == "expander" and threshold == -12:
     threshold = -35
   comp_handle = getattr(drc, comp_name)
   comp = comp_handle(fs, 1, ratio, threshold, at, rt)
@@ -183,7 +183,7 @@ def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
   shutil.rmtree(test_dir)
 
   # when ratio is 1, the result should be bit-exact as we don't have to use powf
-  if ratio == 1 or (threshold == 0 and comp_name != "noise_suppressor"):
+  if ratio == 1 or (threshold == 0 and comp_name != "expander"):
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
   else:
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=1e-8)
@@ -195,4 +195,4 @@ if __name__ == "__main__":
 
   test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
   test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -10)
-  test_compressor_c(sig_fl, "noise_suppressor", 0.001, 0.01, -1, 5)
+  test_compressor_c(sig_fl, "expander", 0.001, 0.01, -1, 5)

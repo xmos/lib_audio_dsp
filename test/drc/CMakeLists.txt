@@ -134,7 +134,7 @@ set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
 
 XMOS_REGISTER_APP()
 
-project(noise_suppressor_test)
+project(expander_test)
 
 set(APP_HW_TARGET XCORE-AI-EXPLORER)
 
@@ -147,7 +147,7 @@ set(APP_COMPILER_FLAGS
     -fxscope)
 
 set(APP_DEPENDENT_MODULES lib_audio_dsp)
-set(APP_C_SRCS src/noise_suppressor.c)
+set(APP_C_SRCS src/expander.c)
 
 set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
 

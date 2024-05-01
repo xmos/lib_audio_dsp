@@ -10,18 +10,18 @@ from ..dsp import generic as dspg
 class NoiseSuppressor(Stage):
     """The Noise Suppressor stage.
 
-    Implementation details can be found at :class:`audio_dsp.dsp.drc.noise_suppressor`.
+    Implementation details can be found at :class:`audio_dsp.dsp.drc.expander`.
     """
 
     def __init__(self, **kwargs):
-        super().__init__(config=find_config("noise_suppressor"), **kwargs)
+        super().__init__(config=find_config("expander"), **kwargs)
         self.create_outputs(self.n_in)
 
         threshold = -35
         ratio = 3
         at = 0.005
         rt = 0.120
-        self.dsp_block = drc.noise_suppressor(self.fs, self.n_in, ratio, threshold, at, rt)
+        self.dsp_block = drc.expander(self.fs, self.n_in, ratio, threshold, at, rt)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
@@ -30,13 +30,13 @@ class NoiseSuppressor(Stage):
 
         self.stage_memory_parameters = (self.n_in,)
 
-    def make_noise_suppressor(
+    def make_expander(
         self, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
     ):
         """
         Update noise suppressor configuration based on new parameters.
 
-        All parameters are passed to the constructor of :class:`audio_dsp.dsp.drc.noise_suppressor`.
+        All parameters are passed to the constructor of :class:`audio_dsp.dsp.drc.expander`.
         """
         self.details = dict(
             ratio=ratio,
@@ -46,7 +46,7 @@ class NoiseSuppressor(Stage):
             delay=delay,
             Q_sig=Q_sig,
         )
-        self.dsp_block = drc.noise_suppressor(
+        self.dsp_block = drc.expander(
             self.fs, self.n_in, ratio, threshold_db, attack_t, release_t, delay, Q_sig
         )
         return self

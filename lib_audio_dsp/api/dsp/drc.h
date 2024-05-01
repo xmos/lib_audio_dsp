@@ -65,7 +65,7 @@ typedef struct{
   int32_t gain;
   /** Slope of the noise suppression curve */
   float slope;
-}noise_suppressor_t;
+}expander_t;
 
 /**
  * @brief Initialise an envelope detector object
@@ -209,9 +209,9 @@ int32_t adsp_noise_gate(
  * @param attack_t            Attack time in seconds
  * @param release_t           Release time in seconds
  * @param ratio               Noise suppression ratio
- * @return noise_suppressor_t Initialised noise suppressor object
+ * @return expander_t Initialised noise suppressor object
  */
-noise_suppressor_t adsp_noise_suppressor_init(
+expander_t adsp_expander_init(
   float fs,
   float threshold_db,
   float attack_t,
@@ -225,8 +225,8 @@ noise_suppressor_t adsp_noise_suppressor_init(
  * @param new_samp            New sample
  * @return int32_t            Suppressed sample
  */
-int32_t adsp_noise_suppressor(
-  noise_suppressor_t * ns,
+int32_t adsp_expander(
+  expander_t * ns,
   int32_t new_samp);
 
 /**
@@ -235,8 +235,8 @@ int32_t adsp_noise_suppressor(
  * @param ns                  Noise suppressor object
  * @param new_th              New threshold
  */
-void adsp_noise_suppressor_set_th(
-  noise_suppressor_t * ns,
+void adsp_expander_set_th(
+  expander_t * ns,
   int32_t new_th);
 
 /**

@@ -371,7 +371,7 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold,
     np.testing.assert_array_equal(output_xcore_s, output_xcore_m)
 
 @pytest.mark.parametrize("component, threshold, ratio", [("noise_gate", -30, None),
-                                                         ("noise_suppressor", -30, 3)])
+                                                         ("expander", -30, 3)])
 def test_noise_gate(component, threshold, ratio):
     # test the noise gate performance on noisy speech
     signal, fs = make_noisy_speech()
@@ -380,7 +380,7 @@ def test_noise_gate(component, threshold, ratio):
     signal = signal[:test_len]
 
     if ratio:
-        drcut = drc.noise_suppressor(fs, 1, ratio, threshold, 0.005, 0.2)
+        drcut = drc.expander(fs, 1, ratio, threshold, 0.005, 0.2)
     else:
         drcut = drc.noise_gate(fs, 1, threshold, 0.005, 0.2)
 
@@ -416,7 +416,7 @@ def test_noise_gate(component, threshold, ratio):
                                                          ("compressor_rms_softknee", 6, 6),
                                                          ("compressor_rms_softknee", 6, 2),
                                                          ("noise_gate", -1000, None),
-                                                         ("noise_suppressor", -1000, 5),
+                                                         ("expander", -1000, 5),
                                                          ("hard_limiter_peak", 0, None),
                                                          ("clipper", 0, None)])
 @pytest.mark.parametrize("rt", [0.2, 0.5])
@@ -479,7 +479,7 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
                                                          ("compressor_rms_softknee", 6, 6),
                                                          ("compressor_rms_softknee", 6, 2),
                                                          ("noise_gate", -20, None),
-                                                         ("noise_suppressor", -20, 5),
+                                                         ("expander", -20, 5),
                                                          ("hard_limiter_peak", -20, None),
                                                          ("hard_limiter_peak", 6, None),
                                                          ("clipper", -20, None),
@@ -569,7 +569,7 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
                                                          ("compressor_rms_softknee", 6, 6),
                                                          ("compressor_rms_softknee", 6, 2),
                                                          ("noise_gate", -20, None),
-                                                         ("noise_suppressor", -20, 5),
+                                                         ("expander", -20, 5),
                                                          ("hard_limiter_peak", -20, None),
                                                          ("hard_limiter_peak", 6, None),
                                                          ("clipper", -20, None),
@@ -668,4 +668,4 @@ if __name__ == "__main__":
     # test_comp_ratio(48000, 0.00000001, 0.00000001, 2, -10)
     # test_mono_vs_stereo(48000, "limiter_peak", "limiter_peak_stereo", 0.001, 0.01, -6, None)
     # test_sidechain_mono_vs_comp(16000, 0.05, -40)
-    test_noise_gate("noise_suppressor", -30, 3)
+    test_noise_gate("expander", -30, 3)

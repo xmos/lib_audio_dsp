@@ -199,7 +199,7 @@ class noise_gate(expander_base):
         self.reset_state()
 
 
-class noise_suppressor(expander_base):
+class expander(expander_base):
     """A noise suppressor that reduces the level of an audio signal when
     it falls below a threshold. This is also known as an expander.
 
@@ -252,8 +252,8 @@ class noise_suppressor(expander_base):
         self.slope_f32 = float32(self.slope)
 
         # set the gain calculation function handles
-        self.gain_calc = drcu.noise_suppressor_gain_calc
-        self.gain_calc_xcore = drcu.noise_suppressor_gain_calc_xcore
+        self.gain_calc = drcu.expander_gain_calc
+        self.gain_calc_xcore = drcu.expander_gain_calc_xcore
 
         self.reset_state()
 
@@ -261,7 +261,7 @@ class noise_suppressor(expander_base):
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    ns = noise_suppressor(48000, 1, 3, -20, 0.01, 0.1)
+    ns = expander(48000, 1, 3, -20, 0.01, 0.1)
     ing, outg = ns.get_gain_curve()
 
     plt.plot(ing, outg)

@@ -155,7 +155,7 @@ def noise_gate_gain_calc_xcore(envelope_int, threshold_int, slope_int=None):
     return new_gain_int
 
 
-def noise_suppressor_gain_calc(envelope, threshold, slope):
+def expander_gain_calc(envelope, threshold, slope):
     """Calculate the float gain for the current sample.
 
     Note that as the RMS envelope detector returns x**2, we need to
@@ -170,7 +170,7 @@ def noise_suppressor_gain_calc(envelope, threshold, slope):
     return new_gain
 
 
-def noise_suppressor_gain_calc_xcore(envelope_int, threshold_int, slope_f32):
+def expander_gain_calc_xcore(envelope_int, threshold_int, slope_f32):
     """Calculate the int gain for the current sample.
 
     Note that as the RMS envelope detector returns x**2, we need to
