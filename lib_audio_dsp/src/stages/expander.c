@@ -64,7 +64,7 @@ void expander_process(int32_t **input, int32_t **output, void *app_data_state)
 
 void expander_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
-    xassert(n_inputs == n_outputs && "Noise suppressor should have the same number of inputs and outputs");
+    xassert(n_inputs == n_outputs && "Expander should have the same number of inputs and outputs");
     expander_state_t *state = instance->state;
     expander_config_t *config = instance->control.config;
 

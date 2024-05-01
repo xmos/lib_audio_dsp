@@ -63,7 +63,7 @@ typedef struct{
   int64_t inv_threshold;
   /** Linear gain */
   int32_t gain;
-  /** Slope of the noise suppression curve */
+  /** Slope of the expansion curve */
   float slope;
 }expander_t;
 
@@ -208,7 +208,7 @@ int32_t adsp_noise_gate(
  * @param threshold_db        Threshold in dB
  * @param attack_t            Attack time in seconds
  * @param release_t           Release time in seconds
- * @param ratio               Noise suppression ratio
+ * @param ratio               Expansion ratio
  * @return expander_t Initialised expander object
  */
 expander_t adsp_expander_init(

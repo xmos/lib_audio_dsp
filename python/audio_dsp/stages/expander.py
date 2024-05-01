@@ -8,7 +8,7 @@ from ..dsp import generic as dspg
 
 
 class Expander(Stage):
-    """The Noise Suppressor stage.
+    """The Expander stage.
 
     Implementation details can be found at :class:`audio_dsp.dsp.drc.expander`.
     """

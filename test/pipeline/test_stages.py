@@ -274,7 +274,7 @@ def test_noise_gate(frame_size):
 
 def test_expander(frame_size):
     """
-    Test the expander stage suppress the noise the same in python and C
+    Test the expander stage suppresses the noise the same in python and C
     """
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
