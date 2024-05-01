@@ -1,11 +1,23 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The sidechain compressor."""
+
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
 from ..dsp import generic as dspg
 
 
 class CompressorSidechain(Stage):
+    """
+    A sidechain compressor.
+
+    This stage is limited to accepting 2 channels. The first is the channel that
+    will be compressed. The second is the detect channel. The level of compression
+    depends on the envelope of the second channel.
+
+    See :class:`audio_dsp.dsp.drc.compressor_rms_sidechain_mono` for details.
+    """
+
     def __init__(self, **kwargs):
         super().__init__(config=find_config("compressor_sidechain"), **kwargs)
         self.create_outputs(1)

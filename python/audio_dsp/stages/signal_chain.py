@@ -1,5 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""Assorted stages for common signal chain operations."""
 
 from ..design.stage import Stage, find_config
 from ..dsp import generic as dspg
@@ -18,13 +19,15 @@ class Bypass(Stage):
         self.create_outputs(self.n_in)
 
     def process(self, in_channels):
+        """Return a copy of the inputs."""
         return [np.copy(i) for i in in_channels]
 
 
 class Fork(Stage):
     """
-    Fork the signal, use if the same data needs to go down parallel
-    data paths::
+    Fork the signal.
+
+    Use if the same data needs to be sent to multiple data paths::
 
         a = t.stage(Example, ...)
         f = t.stage(Fork, a.o, count=2)  # count optional, default is 2
@@ -49,10 +52,12 @@ class Fork(Stage):
             self.forks.append([self.o[i] for i in indices])
 
     def get_frequency_response(self, nfft=512):
+        """Fork has no sensible frequency response, not implemented."""
         # not sure what this looks like!
         raise NotImplementedError
 
     def process(self, in_channels):
+        """Duplicate the inputs to the outputs based on this fork's configuration."""
         n_forks = self.n_out // self.n_in
         ret = []
         for input in in_channels:
@@ -167,6 +172,16 @@ class VolumeControl(Stage):
         self.set_control_field_cb("mute", lambda: np.int32(self.dsp_block.mute_state))
 
     def make_volume_control(self, gain_dB, slew_shift, Q_sig=dspg.Q_SIG):
+        """
+        Update the settings of this volume control.
+
+        Parameters
+        ----------
+        gain_dB
+            Target gain of this volume control.
+        slew_shift
+            See :class:`audio_dsp.dsp.signal_chain.volume_control` for details on slew_shift.
+        """
         self.details = dict(target_gain=gain_dB, slew_shift=slew_shift, Q_sig=Q_sig)
         self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, Q_sig)
         return self

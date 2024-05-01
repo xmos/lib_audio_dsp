@@ -1,10 +1,24 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The reverb stage."""
+
 from ..design.stage import Stage, find_config
 import audio_dsp.dsp.reverb as rvrb
 
 
 class Reverb(Stage):
+    """
+    The reverb stage.
+
+    See :class:`audio_dsp.dsp.reverb.reverb_room` for details on implementation.
+
+    Parameters
+    ----------
+    max_room_size
+        Sets the maximum room size for this reverb. The ``room_size`` parameter sets the
+        fraction of this value actually used at any given time.
+    """
+
     def __init__(self, max_room_size=1, **kwargs):
         super().__init__(config=find_config("reverb"), **kwargs)
         if self.fs is None:
@@ -24,7 +38,7 @@ class Reverb(Stage):
 
     def set_wet_gain(self, gain_dB):
         """
-        Set the wet gain of the reverb stage
+        Set the wet gain of the reverb stage.
 
         Parameters
         ----------
@@ -35,7 +49,7 @@ class Reverb(Stage):
 
     def set_dry_gain(self, gain_dB):
         """
-        Set the dry gain of the reverb stage
+        Set the dry gain of the reverb stage.
 
         Parameters
         ----------
@@ -46,7 +60,7 @@ class Reverb(Stage):
 
     def set_pre_gain(self, pre_gain):
         """
-        Set the pre gain of the reverb stage
+        Set the pre gain of the reverb stage.
 
         Parameters
         ----------

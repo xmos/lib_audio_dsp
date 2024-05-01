@@ -67,7 +67,8 @@ class expander_base(compressor_limiter_base):
 
     def reset_state(self):
         """Reset the envelope detector to 1 and the gain to 1, so the
-        gate starts off."""
+        gate starts off.
+        """
         if self.env_detector is not None:
             self.env_detector.envelope = [1] * self.n_chans
             self.env_detector.envelope_int = [utils.int32(2**self.Q_sig)] * self.n_chans
