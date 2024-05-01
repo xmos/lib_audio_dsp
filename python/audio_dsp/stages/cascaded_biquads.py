@@ -62,6 +62,8 @@ class CascadedBiquads(Stage):
             "left_shift", lambda: [i.b_shift for i in self.dsp_block.biquads]
         )
 
+        self.stage_memory_parameters = (self.n_in,)
+
     def _get_fixed_point_coeffs(self):
         fc = []
         for bq in self.dsp_block.biquads:

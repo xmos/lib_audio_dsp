@@ -39,7 +39,7 @@ void envelope_detector_rms_init(module_instance_t* instance, adsp_bump_allocator
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    state->env_det = adsp_bump_allocator_malloc(allocator, state->n_inputs * sizeof(env_detector_t));
+    state->env_det = adsp_bump_allocator_malloc(allocator, ENVELOPE_DETECTOR_RMS_STAGE_REQUIRED_MEMORY(state->n_inputs));
 
     for(int i=0; i<state->n_inputs; i++)
     {

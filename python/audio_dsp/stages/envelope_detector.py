@@ -28,6 +28,8 @@ class EnvelopeDetectorPeak(Stage):
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
 
+        self.stage_memory_parameters = (self.n_in,)
+
     def make_env_det_peak(self, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         """Update envelope detector configuration based on new parameters."""
         self.details = dict(
@@ -62,6 +64,8 @@ class EnvelopeDetectorRMS(Stage):
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
+
+        self.stage_memory_parameters = (self.n_in,)
 
     def make_env_det_rms(self, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         """Update envelope detector configuration based on new parameters."""

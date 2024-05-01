@@ -14,7 +14,7 @@ typedef struct
     int frame_size;
 }clipper_state_t;
 
-#define CLIPPER_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (N_IN * sizeof(clipper_t))
+#define CLIPPER_STAGE_REQUIRED_MEMORY(N_IN) (N_IN * sizeof(clipper_t))
 
 void clipper_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 

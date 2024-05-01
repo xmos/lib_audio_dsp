@@ -14,7 +14,8 @@ typedef struct
     int frame_size;
 }noise_suppressor_state_t;
 
-#define NOISE_SUPPRESSOR_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (N_IN * ADSP_BUMP_ALLOCATOR_DWORD_N_BYTES(sizeof(noise_suppressor_t)))
+#define NOISE_SUPPRESSOR_STAGE_REQUIRED_MEMORY(N_IN) (N_IN * ADSP_BUMP_ALLOCATOR_DWORD_N_BYTES(sizeof(noise_suppressor_t)))
+#define NOISE_SUPPRESSOR_STAGE_REQUIRED_MEMORY_SLIM(N_IN) (N_IN * sizeof(noise_suppressor_t))
 
 void noise_suppressor_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 

@@ -14,7 +14,7 @@ typedef struct
     int frame_size;
 }hard_limiter_peak_state_t;
 
-#define HARD_LIMITER_PEAK_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (N_IN * sizeof(limiter_t))
+#define HARD_LIMITER_PEAK_STAGE_REQUIRED_MEMORY(N_IN) (N_IN * sizeof(limiter_t))
 
 void hard_limiter_peak_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 

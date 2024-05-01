@@ -60,8 +60,8 @@ void limiter_rms_init(module_instance_t* instance, adsp_bump_allocator_t* alloca
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    state->lim = adsp_bump_allocator_malloc(allocator, state->n_inputs * sizeof(limiter_t));
-    memset(state->lim, 0, state->n_inputs * sizeof(limiter_t));
+    state->lim = adsp_bump_allocator_malloc(allocator, LIMITER_RMS_STAGE_REQUIRED_MEMORY(state->n_inputs));
+    memset(state->lim, 0, LIMITER_RMS_STAGE_REQUIRED_MEMORY(state->n_inputs));
 
     for(int i=0; i<state->n_inputs; i++)
     {

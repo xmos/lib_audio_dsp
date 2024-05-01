@@ -171,6 +171,9 @@ class VolumeControl(Stage):
         self.set_control_field_cb("slew_shift", lambda: self.dsp_block.slew_shift)
         self.set_control_field_cb("mute", lambda: np.int32(self.dsp_block.mute_state))
 
+        self.stage_memory_string = "volume_control"
+        self.stage_memory_parameters = (self.n_in,)
+
     def make_volume_control(self, gain_dB, slew_shift, Q_sig=dspg.Q_SIG):
         """
         Update the settings of this volume control.

@@ -23,6 +23,8 @@ class LimiterRMS(Stage):
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)
 
+        self.stage_memory_parameters = (self.n_in,)
+
     def make_limiter_rms(self, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         """Update limiter configuration based on new parameters."""
         self.details = dict(
@@ -53,6 +55,8 @@ class LimiterPeak(Stage):
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)
+
+        self.stage_memory_parameters = (self.n_in,)
 
     def make_limiter_peak(self, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         """Update limiter configuration based on new parameters."""
@@ -85,6 +89,8 @@ class HardLimiterPeak(Stage):
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)
 
+        self.stage_memory_parameters = (self.n_in,)
+
     def make_hard_limiter_peak(self, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         """Update limiter configuration based on new parameters."""
         self.details = dict(
@@ -111,6 +117,8 @@ class Clipper(Stage):
         self.dsp_block = drc.clipper(self.fs, self.n_in, threshold)
 
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)
+
+        self.stage_memory_parameters = (self.n_in,)
 
     def make_clipper(self, threshold_db, Q_sig=dspg.Q_SIG):
         """Update clipper configuration based on new parameters."""
