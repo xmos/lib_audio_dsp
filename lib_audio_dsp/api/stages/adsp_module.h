@@ -26,7 +26,7 @@ typedef struct
     void *config;  ///< Pointer to a stage-specific config struct which is used by the control thread.
     uint32_t id;  ///< Unique module identifier assigned by the host
     uint32_t num_control_commands;  ///< The number of control commands for this stage.
-    uint8_t module_type;  ///< Identifies the stage type, each type of stage has a unique identifier.
+    uint8_t module_type;  ///< Identifies the stage type. Each type of stage has a unique identifier.
     uint8_t cmd_id;  ///< Is set to the current command being processed.
     config_rw_state_t config_rw_state;
 }module_control_t;

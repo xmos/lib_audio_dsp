@@ -59,7 +59,7 @@ adsp_control_status_t adsp_read_module_config(module_instance_t* modules,
 /// Must be called repeatedly with the same cmd until ADSP_CONTROL_SUCCESS is returned.
 ///
 /// @param modules A pointer to the array of modules contained within @ref adsp_pipeline_t.
-/// @param num_modules Size of the @p num_modules array.
+/// @param num_modules Size of the @p modules array.
 /// @param cmd An initialised @ref adsp_stage_control_cmd_t.
 /// @return @ref adsp_control_status_t
 adsp_control_status_t adsp_write_module_config(module_instance_t* modules,
