@@ -1,13 +1,13 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""Stage implementation for the noise suppressor."""
+"""Stage implementation for the expander."""
 
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
 from ..dsp import generic as dspg
 
 
-class NoiseSuppressor(Stage):
+class Expander(Stage):
     """The Noise Suppressor stage.
 
     Implementation details can be found at :class:`audio_dsp.dsp.drc.expander`.
@@ -34,7 +34,7 @@ class NoiseSuppressor(Stage):
         self, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
     ):
         """
-        Update noise suppressor configuration based on new parameters.
+        Update expander configuration based on new parameters.
 
         All parameters are passed to the constructor of :class:`audio_dsp.dsp.drc.expander`.
         """

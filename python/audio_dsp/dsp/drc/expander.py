@@ -200,15 +200,15 @@ class noise_gate(expander_base):
 
 
 class expander(expander_base):
-    """A noise suppressor that reduces the level of an audio signal when
-    it falls below a threshold. This is also known as an expander.
+    """A dynamic object that reduces the level of an audio signal when
+    it falls below a threshold.
 
     When the signal envelope falls below the threshold, the gain applied
     to the signal is reduced relative to the expansion ratio over the
     release time. When the envelope returns above the threshold, the
     gain applied to the signal is increased to 1 over the attack time.
 
-    The initial state of the noise suppressor is with the suppression
+    The initial state of the expander is with the suppression
     off, assuming a full scale signal has been present before
     t = 0.
 
@@ -261,8 +261,8 @@ class expander(expander_base):
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    ns = expander(48000, 1, 3, -20, 0.01, 0.1)
-    ing, outg = ns.get_gain_curve()
+    ex = expander(48000, 1, 3, -20, 0.01, 0.1)
+    ing, outg = ex.get_gain_curve()
 
     plt.plot(ing, outg)
     plt.axis("equal")

@@ -202,14 +202,14 @@ int32_t adsp_noise_gate(
   int32_t new_samp);
 
 /**
- * @brief Initialise a noise suppressor object
+ * @brief Initialise an expander object
  *
  * @param fs                  Sampling frequency
  * @param threshold_db        Threshold in dB
  * @param attack_t            Attack time in seconds
  * @param release_t           Release time in seconds
  * @param ratio               Noise suppression ratio
- * @return expander_t Initialised noise suppressor object
+ * @return expander_t Initialised expander object
  */
 expander_t adsp_expander_init(
   float fs,
@@ -219,24 +219,24 @@ expander_t adsp_expander_init(
   float ratio);
 
 /**
- * @brief Process a new sample with a noise suppressor
+ * @brief Process a new sample with an expander
  *
- * @param ns                  Noise suppressor object
+ * @param ex                  Expander object
  * @param new_samp            New sample
  * @return int32_t            Suppressed sample
  */
 int32_t adsp_expander(
-  expander_t * ns,
+  expander_t * ex,
   int32_t new_samp);
 
 /**
- * @brief Set the threshold of a noise suppressor
+ * @brief Set the threshold of an expander
  *
- * @param ns                  Noise suppressor object
+ * @param ex                  Expander object
  * @param new_th              New threshold
  */
 void adsp_expander_set_th(
-  expander_t * ns,
+  expander_t * ex,
   int32_t new_th);
 
 /**
