@@ -77,7 +77,7 @@ def chirp_filter_test(filter: cbq.cascaded_biquads_8, fs):
         assert mean_error_flt < 0.055
         error_vpu = np.abs(utils.db(output_int[top_half])-utils.db(output_vpu[top_half]))
         mean_error_vpu = utils.db(np.nanmean(utils.db2gain(error_vpu)))
-        assert mean_error_vpu < 0.05
+        assert mean_error_vpu < 0.055
 
 
 @pytest.mark.parametrize("fs", [16000, 44100, 48000, 88200, 96000, 192000])

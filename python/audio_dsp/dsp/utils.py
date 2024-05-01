@@ -84,7 +84,7 @@ def saturate_float(val: float, Q_sig: int) -> float:
         return max_flt
 
 
-def saturate_float_array(val: np.ndarray, Q_sig: int) -> float:
+def saturate_float_array(val: np.ndarray, Q_sig: int) -> np.ndarray:
     max_flt = (2**31 - 1) / 2**Q_sig
     min_flt = -(2 ** (31 - Q_sig))
 
