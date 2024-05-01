@@ -105,7 +105,8 @@ def test_saturation(filter_spec, fs):
     if class_name == "subtractor":
         signals[1] *= -1
     signal = np.stack(signals, axis=0)
-
+    signal = utils.saturate_float_array(signal, dspg.Q_SIG)
+    
     output_flt = np.zeros(signal.shape[1])
     output_xcore = np.zeros(signal.shape[1])
 

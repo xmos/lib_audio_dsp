@@ -57,7 +57,7 @@ class mixer(dspg.dsp_block):
         """
         scaled_samples = np.array(sample_list) * self.gain
         y = np.sum(scaled_samples)
-
+        y = utils.saturate_float(y, dspg.Q_SIG)
         return y
 
     def process_channels_xcore(self, sample_list: list[float]) -> float:
@@ -212,6 +212,7 @@ class subtractor(dspg.dsp_block):
             Result of the subtraction.
         """
         y = sample_list[0] - sample_list[1]
+        y = utils.saturate_float(y, dspg.Q_SIG)
         return y
 
     def process_channels_xcore(self, sample_list: list[float]) -> float:
