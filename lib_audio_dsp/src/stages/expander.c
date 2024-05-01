@@ -57,7 +57,7 @@ void expander_process(int32_t **input, int32_t **output, void *app_data_state)
 
         int j = 0;
         do {
-            *out++ = adsp_expander(&state->ns[i], *in++);
+            *out++ = adsp_expander(&state->exp[i], *in++);
         } while(++j < state->frame_size);
     } while(++i < state->n_outputs);
 }
@@ -72,19 +72,19 @@ void expander_init(module_instance_t* instance, adsp_bump_allocator_t* allocator
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
-    state->ns = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, EXPANDER_STAGE_REQUIRED_MEMORY_SLIM(state->n_inputs));
-    memset(state->ns, 0, EXPANDER_STAGE_REQUIRED_MEMORY_SLIM(state->n_inputs));
+    state->exp = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, EXPANDER_STAGE_REQUIRED_MEMORY_SLIM(state->n_inputs));
+    memset(state->exp, 0, EXPANDER_STAGE_REQUIRED_MEMORY_SLIM(state->n_inputs));
 
     for(int i=0; i<state->n_inputs; i++)
     {
-        state->ns[i].gain = INT32_MAX;
-        state->ns[i].env_det.envelope = 1 << (-SIG_EXP);
+        state->exp[i].gain = INT32_MAX;
+        state->exp[i].env_det.envelope = 1 << (-SIG_EXP);
         // Avoid division by zero
-        if (!state->ns[i].threshold) state->ns[i].threshold = 1;
-        state->ns[i].inv_threshold = INT64_MAX / state->ns[i].threshold;
+        if (!state->exp[i].threshold) state->exp[i].threshold = 1;
+        state->exp[i].inv_threshold = INT64_MAX / state->exp[i].threshold;
     }
 
-    ns_copy_config_to_state(state->ns, state->n_inputs, config);
+    ns_copy_config_to_state(state->exp, state->n_inputs, config);
 }
 
 void expander_control(void *module_state, module_control_t *control)
@@ -98,12 +98,12 @@ void expander_control(void *module_state, module_control_t *control)
     {
         // Finish the write by updating the working copy with the new config
         // TODO update only the fields written by the host
-        ns_copy_config_to_state(state->ns, state->n_inputs, config);
+        ns_copy_config_to_state(state->exp, state->n_inputs, config);
         control->config_rw_state = config_none_pending;
     }
     else if(control->config_rw_state == config_read_pending)
     {
-        ns_copy_state_to_config(config, state->ns);
+        ns_copy_state_to_config(config, state->exp);
         control->config_rw_state = config_read_updated;
     }
     else
