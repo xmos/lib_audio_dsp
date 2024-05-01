@@ -273,9 +273,46 @@ def test_combiners_frames(filter_spec, fs):
     for n in range(len(signal_frames)):
         output_xcore[:, n:n+frame_size] = filter.process_frame_xcore(signal_frames[n])
 
-    # TODO add a test here? flt vpu similarity already tested in test_combiners
+    # small signals are always going to be ropey due to quantizing, so just check average error of top half
+    top_half = utils.db(output_flt) > -50
+    if np.any(top_half):
+        error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
+        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        assert mean_error_flt < 0.055
+
+@pytest.mark.parametrize("fs", [48000])
+@pytest.mark.parametrize("delay_spec", [[15, 10, "samples"],
+                                        [128, 128, "samples"],
+                                        [2, 1.7, "ms"],
+                                        [1.056, 0.94, "s"]])
+@pytest.mark.parametrize("n_chans", [1, 2, 4])
+def test_delay(fs, delay_spec, n_chans):
+    filter = sc.delay(fs, n_chans, *delay_spec)
+
+    delay_samps = filter._get_delay_samples(delay_spec[1], delay_spec[2])
+
+    length = 0.005
+    sig_len = int(length * fs)
+    signal = gen.pink_noise(fs, length, 0.5)
+    signal = np.pad(signal, (0, delay_samps))
+    signal = np.tile(signal, [n_chans, 1])
+
+    signal_frames = utils.frame_signal(signal, 1, 1)
+
+    output_flt = np.zeros_like(signal)
+    output_xcore = np.zeros_like(signal)
+    frame_size = 1
+
+    for n in range(len(signal_frames)):
+        output_flt[:, n:n+frame_size] = filter.process_frame(signal_frames[n])
+    assert np.all(signal[:, : sig_len] == output_flt[:, delay_samps :])
+
+    for n in range(len(signal_frames)):
+        output_xcore[:, n:n+frame_size] = filter.process_frame_xcore(signal_frames[n])
+    assert np.all(signal[:, : sig_len] == output_xcore[:, delay_samps :])
 
 
 if __name__ == "__main__":
-    test_combiners(["subtractor", 2], 48000)
-    test_volume_change()
+    #test_combiners(["subtractor", 2], 48000)
+    #test_volume_change()
+    test_delay(48000, [1.056, 0.94, "s"], 2)
