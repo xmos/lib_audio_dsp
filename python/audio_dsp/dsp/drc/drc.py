@@ -229,7 +229,7 @@ class clipper(dspg.dsp_block):
     def __init__(self, fs, n_chans, threshold_db, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
-        self.threshold = utils.db_pow2gain(threshold_db)
+        self.threshold = utils.db2gain(threshold_db)
         self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
         self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
 
@@ -243,7 +243,7 @@ class clipper(dspg.dsp_block):
 
     def process_xcore(self, sample, channel=0):
         # convert to int
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        sample_int = utils.float_to_int32(sample, self.Q_sig)
 
         # do the clipping
         if sample_int > self.threshold_int:
@@ -251,7 +251,7 @@ class clipper(dspg.dsp_block):
         elif sample_int < -self.threshold_int:
             sample_int = -self.threshold_int
 
-        return float(sample_int) * 2**-self.Q_sig
+        return utils.int32_to_float(sample_int, self.Q_sig)
 
 
 class compressor_limiter_base(dspg.dsp_block):
@@ -615,11 +615,10 @@ class hard_limiter_peak(limiter_peak):
             return y, new_gain_int, envelope_int
         else:
             return (
-                (float(y) * 2**-self.Q_sig),
-                (float(new_gain_int) * 2**-self.Q_alpha),
-                (float(envelope_int) * 2**-self.Q_sig),
-            )
-
+                utils.int32_to_float(y, self.Q_sig),
+                utils.int32_to_float(new_gain_int, self.Q_alpha),
+                utils.int32_to_float(envelope_int, self.Q_sig),
+                )
 
 class lookahead_limiter_peak(compressor_limiter_base):
     # peak limiter with built in delay for avoiding clipping

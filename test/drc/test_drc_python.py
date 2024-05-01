@@ -590,7 +590,7 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
 
     if "hard" in component or "clip" in component:
         # roudning error can occur in threshold
-        assert np.all(output_xcore <= utils.db2gain(threshold) + 2**-32)
+        assert np.all(output_xcore <= utils.db2gain(threshold) + 2**-(drcut.Q_sig + 1))
         assert np.all(output_flt <= utils.db2gain(threshold))
 
 
