@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <xmath/types.h>
+
 /**
  * @brief Envelope detector state structure
  */
@@ -67,7 +69,7 @@ typedef struct{
 
 /**
  * @brief Initialise an envelope detector object
- * 
+ *
  * @param fs                  Sampling frequency
  * @param attack_t            Attack time in seconds
  * @param release_t           Release time in seconds
@@ -81,7 +83,7 @@ env_detector_t adsp_env_detector_init(
 
 /**
  * @brief Update the envelope detector peak with a new sample
- * 
+ *
  * @param env_det             Envelope detector object
  * @param new_sample          New sample
  */
@@ -91,7 +93,7 @@ void adsp_env_detector_peak(
 
 /**
  * @brief Update the envelope detector RMS with a new sample
- * 
+ *
  * @param env_det             Envelope detector object
  * @param new_sample          New sample
  */
@@ -101,7 +103,7 @@ void adsp_env_detector_rms(
 
 /**
  * @brief Initialise a (hard) limiter peak object
- * 
+ *
  * @param fs                  Sampling frequency
  * @param threshold_db        Threshold in dB
  * @param attack_t            Attack time in seconds
@@ -116,7 +118,7 @@ limiter_t adsp_limiter_peak_init(
 
 /**
  * @brief Initialise an RMS limiter object
- * 
+ *
  * @param fs                  Sampling frequency
  * @param threshold_db        Threshold in dB
  * @param attack_t            Attack time in seconds
@@ -131,7 +133,7 @@ limiter_t adsp_limiter_rms_init(
 
 /**
  * @brief Process a new sample with a clipper
- * 
+ *
  * @param clip                Clipper object
  * @param new_samp            New sample
  * @return int32_t            Clipped sample
@@ -142,7 +144,7 @@ int32_t adsp_clipper(
 
 /**
  * @brief Process a new sample with a peak limiter
- * 
+ *
  * @param lim                 Limiter object
  * @param new_samp            New sample
  * @return int32_t            Limited sample
@@ -153,7 +155,7 @@ int32_t adsp_limiter_peak(
 
 /**
  * @brief Process a new sample with a hard limiter peak
- * 
+ *
  * @param lim                 Limiter object
  * @param new_samp            New sample
  * @return int32_t            Limited sample
@@ -164,7 +166,7 @@ int32_t adsp_hard_limiter_peak(
 
 /**
  * @brief Process a new sample with an RMS limiter
- * 
+ *
  * @param lim                 Limiter object
  * @param new_samp            New sample
  * @return int32_t            Limited sample
@@ -175,7 +177,7 @@ int32_t adsp_limiter_rms(
 
 /**
  * @brief Initialise a noise gate object
- * 
+ *
  * @param fs                  Sampling frequency
  * @param threshold_db        Threshold in dB
  * @param attack_t            Attack time in seconds
@@ -190,7 +192,7 @@ noise_gate_t adsp_noise_gate_init(
 
 /**
  * @brief Process a new sample with a noise gate
- * 
+ *
  * @param ng                  Noise gate object
  * @param new_samp            New sample
  * @return int32_t            Gated sample
@@ -201,7 +203,7 @@ int32_t adsp_noise_gate(
 
 /**
  * @brief Initialise a noise suppressor object
- * 
+ *
  * @param fs                  Sampling frequency
  * @param threshold_db        Threshold in dB
  * @param attack_t            Attack time in seconds
@@ -218,7 +220,7 @@ noise_suppressor_t adsp_noise_suppressor_init(
 
 /**
  * @brief Process a new sample with a noise suppressor
- * 
+ *
  * @param ns                  Noise suppressor object
  * @param new_samp            New sample
  * @return int32_t            Suppressed sample
@@ -229,7 +231,7 @@ int32_t adsp_noise_suppressor(
 
 /**
  * @brief Set the threshold of a noise suppressor
- * 
+ *
  * @param ns                  Noise suppressor object
  * @param new_th              New threshold
  */
@@ -239,7 +241,7 @@ void adsp_noise_suppressor_set_th(
 
 /**
  * @brief Initialise a compressor object
- * 
+ *
  * @param fs                  Sampling frequency
  * @param threshold_db        Threshold in dB
  * @param attack_t            Attack time in seconds
@@ -256,7 +258,7 @@ compressor_t adsp_compressor_rms_init(
 
 /**
  * @brief Process a new sample with an RMS compressor
- * 
+ *
  * @param comp                Compressor object
  * @param new_samp            New sample
  * @return int32_t            Compressed sample
@@ -267,7 +269,7 @@ int32_t adsp_compressor_rms(
 
 /**
  * @brief Process a new sample with a sidechain RMS compressor
- * 
+ *
  * @param comp                Compressor object
  * @param input_samp          Input sample
  * @param detect_samp         Sidechain sample

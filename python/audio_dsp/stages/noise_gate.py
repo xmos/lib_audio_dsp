@@ -1,11 +1,15 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The Noise gate stage."""
+
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
 from ..dsp import generic as dspg
 
 
 class NoiseGate(Stage):
+    """Stage wrapper around :class:`audio_dsp.dsp.drc.noise_gate`."""
+
     def __init__(self, **kwargs):
         super().__init__(config=find_config("noise_gate"), **kwargs)
         self.create_outputs(self.n_in)

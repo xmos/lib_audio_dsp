@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The biquad stage."""
+
 from ..design.stage import Stage, find_config
 import audio_dsp.dsp.biquad as bq
 import numpy as np
@@ -23,20 +25,22 @@ def _ws(locals):
 
 
 class Biquad(Stage):
+    """The stage wrapper for :class:`audio_dsp.dsp.biquad.biquad`."""
+
     def __init__(self, **kwargs):
         super().__init__(config=find_config("biquad"), **kwargs)
         if self.fs is None:
             raise ValueError("Biquad requires inputs with a valid fs")
         self.fs = int(self.fs)
         self.create_outputs(self.n_in)
+        self.dsp_block: bq = bq.biquad_bypass(self.fs, self.n_in)
         self.set_control_field_cb(
-            "filter_coeffs", lambda: [i for i in self.get_fixed_point_coeffs()]
+            "filter_coeffs", lambda: [i for i in self._get_fixed_point_coeffs()]
         )
         self.set_control_field_cb("left_shift", lambda: self.dsp_block.b_shift)
-        self.make_bypass()
         self.stage_memory_parameters = (self.n_in,)
 
-    def get_fixed_point_coeffs(self) -> np.ndarray:
+    def _get_fixed_point_coeffs(self) -> np.ndarray:
         a = np.array(self.dsp_block.coeffs)
         return np.array(a * (2**30), dtype=np.int32)
 

@@ -1,11 +1,15 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""Assorted stages for limiting the signal."""
+
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
 from ..dsp import generic as dspg
 
 
 class LimiterRMS(Stage):
+    """Stage implementation for :class:`audio_dsp.dsp.drc.limiter_rms`."""
+
     def __init__(self, **kwargs):
         super().__init__(config=find_config("limiter_rms"), **kwargs)
         self.create_outputs(self.n_in)
@@ -37,6 +41,8 @@ class LimiterRMS(Stage):
 
 
 class LimiterPeak(Stage):
+    """Stage implementation for :class:`audio_dsp.dsp.drc.limiter_peak`."""
+
     def __init__(self, **kwargs):
         super().__init__(config=find_config("limiter_peak"), **kwargs)
         self.create_outputs(self.n_in)
@@ -68,6 +74,8 @@ class LimiterPeak(Stage):
 
 
 class HardLimiterPeak(Stage):
+    """Stage implementation for :class:`audio_dsp.dsp.drc.hard_limiter_peak`."""
+
     def __init__(self, **kwargs):
         super().__init__(config=find_config("hard_limiter_peak"), **kwargs)
         self.create_outputs(self.n_in)
@@ -99,6 +107,8 @@ class HardLimiterPeak(Stage):
 
 
 class Clipper(Stage):
+    """Stage implementation for :class:`audio_dsp.dsp.drc.clipper`."""
+
     def __init__(self, **kwargs):
         super().__init__(config=find_config("clipper"), **kwargs)
         self.create_outputs(self.n_in)

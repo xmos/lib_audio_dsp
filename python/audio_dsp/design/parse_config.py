@@ -1,7 +1,9 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """
-Script for us at build time to generate header files. Use as:
+Script for use at build time to generate header files.
+
+Use as::
 
     python -m audio_dsp.design.parse_config -c CONFIG_DIR -o OUTPUT_DIR
 """
