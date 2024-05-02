@@ -618,7 +618,8 @@ class hard_limiter_peak(limiter_peak):
                 utils.int32_to_float(y, self.Q_sig),
                 utils.int32_to_float(new_gain_int, self.Q_alpha),
                 utils.int32_to_float(envelope_int, self.Q_sig),
-                )
+            )
+
 
 class lookahead_limiter_peak(compressor_limiter_base):
     # peak limiter with built in delay for avoiding clipping
