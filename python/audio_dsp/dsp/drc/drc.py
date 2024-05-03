@@ -229,9 +229,7 @@ class clipper(dspg.dsp_block):
     def __init__(self, fs, n_chans, threshold_db, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
-        self.threshold = utils.db2gain(threshold_db)
-        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
-        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
 
     def process(self, sample, channel=0):
         if sample > self.threshold:
@@ -517,9 +515,7 @@ class limiter_peak(compressor_limiter_base):
     def __init__(self, fs, n_chans, threshold_dB, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
-        self.threshold = utils.db2gain(threshold_dB)
-        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
-        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,
@@ -561,9 +557,10 @@ class limiter_rms(compressor_limiter_base):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         # note rms comes as x**2, so use db_pow
-        self.threshold = utils.db_pow2gain(threshold_dB)
-        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
-        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(
+            threshold_db, self.Q_sig, power=True
+        )
+
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=n_chans,
@@ -726,9 +723,10 @@ class compressor_rms(compressor_limiter_base):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         # note rms comes as x**2, so use db_pow
-        self.threshold = utils.db_pow2gain(threshold_db)
-        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
-        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(
+            threshold_db, self.Q_sig, power=True
+        )
+
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=n_chans,
@@ -807,9 +805,9 @@ class compressor_rms_softknee(compressor_limiter_base):
 
         # note rms comes as x**2, so use db_pow
         self.threshold_db = threshold_db
-        self.threshold = utils.db_pow2gain(threshold_db)
-        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
-        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(
+            threshold_db, self.Q_sig, power=True
+        )
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=n_chans,

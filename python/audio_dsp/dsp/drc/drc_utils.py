@@ -13,6 +13,31 @@ FLT_MIN = np.finfo(float).tiny
 Q_alpha = 31
 
 
+def calculate_threshold(threshold_db, Q_sig, power=False):
+    if power:
+        threshold = utils.db_pow2gain(threshold_db)
+    else:
+        threshold = utils.db2gain(threshold_db)
+
+    threshold = utils.saturate_float(threshold, Q_sig)
+
+    if power:
+        new_threshold_db = utils.gain2db_pow(threshold)
+    else:
+        new_threshold_db = utils.gain2db(threshold)
+
+    if threshold_db != new_threshold_db:
+        warnings.warn(
+            "Threshold %d not repsentable in Q format Q%d, saturating to %d"
+            % (threshold_db, Q_sig, new_threshold_db),
+            UserWarning,
+        )
+
+    threshold_int = utils.float_to_int32(threshold, Q_sig)
+
+    return threshold, threshold_int
+
+
 def alpha_from_time(attack_or_release_time, fs):
     # Attack times simplified from McNally, seem pretty close.
     # Assumes the time constant of a digital filter is the -3 dB

@@ -182,9 +182,8 @@ class noise_gate(expander_base):
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
-        self.threshold = utils.db2gain(threshold_db)
-        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
-        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
+
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,
@@ -238,9 +237,7 @@ class noise_suppressor(expander_base):
     ):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
-        self.threshold = utils.db2gain(threshold_db)
-        self.threshold = utils.saturate_float(self.threshold, self.Q_sig)
-        self.threshold_int = utils.float_to_int32(self.threshold, self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
         self.threshold_int = max(1, self.threshold_int)
         self.env_detector = envelope_detector_peak(
             fs,
