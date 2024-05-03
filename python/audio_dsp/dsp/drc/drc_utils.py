@@ -3,6 +3,7 @@
 from audio_dsp.dsp import utils as utils
 import numpy as np
 from math import sqrt, isqrt
+import warnings
 
 from audio_dsp.dsp.types import float32
 
@@ -22,9 +23,9 @@ def calculate_threshold(threshold_db, Q_sig, power=False):
     threshold = utils.saturate_float(threshold, Q_sig)
 
     if power:
-        new_threshold_db = utils.gain2db_pow(threshold)
+        new_threshold_db = utils.db_pow(threshold)
     else:
-        new_threshold_db = utils.gain2db(threshold)
+        new_threshold_db = utils.db(threshold)
 
     if threshold_db != new_threshold_db:
         warnings.warn(

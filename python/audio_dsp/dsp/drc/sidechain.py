@@ -206,7 +206,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         self.threshold, self.threshold_int = drcu.calculate_threshold(
-            threshold_db, self.Q_sig, power=True
+            threshold_dB, self.Q_sig, power=True
         )
 
         self.env_detector = envelope_detector_rms(
