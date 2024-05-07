@@ -18,7 +18,6 @@ FILE * _fopen(char * fname, char* mode) {
 
 int main()
 {
-  puts("Hello, world!");
   FILE * in = _fopen("../sig_48k.bin", "rb");
   FILE * out = _fopen("sig_out.bin", "wb");
   FILE * info = _fopen("delay.bin", "rb");
@@ -31,8 +30,6 @@ int main()
   fread(&max_delay, sizeof(uint32_t), 1, info);
   fread(&start_delay, sizeof(uint32_t), 1, info);
   fclose(info);
-
-  printf("%lu %lu\n", start_delay, max_delay);
 
   int32_t * buffer = (int32_t *) malloc(DELAY_DSP_REQUIRED_MEMORY_SAMPLES(max_delay));
   if (buffer == NULL)
