@@ -291,39 +291,51 @@ def biquad_gain(fs: int, n_chans: int, gain_db: float, Q_sig=dspg.Q_SIG) -> biqu
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT, Q_sig=Q_sig)
 
 
-def biquad_lowpass(fs: int, n_chans: int, filter_freq: float, q_factor: float, Q_sig=dspg.Q_SIG) -> biquad:
+def biquad_lowpass(
+    fs: int, n_chans: int, filter_freq: float, q_factor: float, Q_sig=dspg.Q_SIG
+) -> biquad:
     """Return a biquad object with low pass filter coefficients."""
     coeffs = make_biquad_lowpass(fs, filter_freq, q_factor)
     return biquad(coeffs, fs, n_chans=n_chans, Q_sig=Q_sig)
 
 
-def biquad_highpass(fs: int, n_chans: int, filter_freq: float, q_factor: float, Q_sig=dspg.Q_SIG) -> biquad:
+def biquad_highpass(
+    fs: int, n_chans: int, filter_freq: float, q_factor: float, Q_sig=dspg.Q_SIG
+) -> biquad:
     """Return a biquad object with high pass filter coefficients."""
     coeffs = make_biquad_highpass(fs, filter_freq, q_factor)
     return biquad(coeffs, fs, n_chans=n_chans, Q_sig=Q_sig)
 
 
-def biquad_bandpass(fs: int, n_chans: int, filter_freq: float, bw: float, Q_sig=dspg.Q_SIG) -> biquad:
+def biquad_bandpass(
+    fs: int, n_chans: int, filter_freq: float, bw: float, Q_sig=dspg.Q_SIG
+) -> biquad:
     """Return a biquad object with bandpass filter coefficients."""
     # bw is bandwidth in octaves
     coeffs = make_biquad_bandpass(fs, filter_freq, bw)
     return biquad(coeffs, fs, n_chans=n_chans, Q_sig=Q_sig)
 
 
-def biquad_bandstop(fs: int, n_chans: int, filter_freq: float, bw: float, Q_sig=dspg.Q_SIG) -> biquad:
+def biquad_bandstop(
+    fs: int, n_chans: int, filter_freq: float, bw: float, Q_sig=dspg.Q_SIG
+) -> biquad:
     """Return a biquad object with bandstop filter coefficients."""
     # bw is bandwidth in octaves
     coeffs = make_biquad_bandstop(fs, filter_freq, bw)
     return biquad(coeffs, fs, n_chans=n_chans, Q_sig=Q_sig)
 
 
-def biquad_notch(fs: int, n_chans: int, filter_freq: float, q_factor: float, Q_sig=dspg.Q_SIG) -> biquad:
+def biquad_notch(
+    fs: int, n_chans: int, filter_freq: float, q_factor: float, Q_sig=dspg.Q_SIG
+) -> biquad:
     """Return a biquad object with notch filter coefficients."""
     coeffs = make_biquad_notch(fs, filter_freq, q_factor)
     return biquad(coeffs, fs, n_chans=n_chans, Q_sig=Q_sig)
 
 
-def biquad_allpass(fs: int, n_chans: int, filter_freq: float, q_factor: float, Q_sig=dspg.Q_SIG) -> biquad:
+def biquad_allpass(
+    fs: int, n_chans: int, filter_freq: float, q_factor: float, Q_sig=dspg.Q_SIG
+) -> biquad:
     """Return a biquad object with allpass filter coefficients."""
     coeffs = make_biquad_allpass(fs, filter_freq, q_factor)
     return biquad(coeffs, fs, n_chans=n_chans, Q_sig=Q_sig)
@@ -365,7 +377,9 @@ def biquad_highshelf(
     return biquad(coeffs, fs, n_chans=n_chans, b_shift=BOOST_BSHIFT, Q_sig=Q_sig)
 
 
-def biquad_linkwitz(fs: int, n_chans: int, f0: float, q0: float, fp: float, qp: float, Q_sig=dspg.Q_SIG) -> biquad:
+def biquad_linkwitz(
+    fs: int, n_chans: int, f0: float, q0: float, fp: float, qp: float, Q_sig=dspg.Q_SIG
+) -> biquad:
     """Return a biquad object with Linkwitz transform filter coefficients."""
     # used for changing one low frequency roll off slope for another,
     # e.g. in a loudspeaker
