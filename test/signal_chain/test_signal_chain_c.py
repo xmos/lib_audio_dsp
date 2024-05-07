@@ -190,7 +190,7 @@ def test_delay_c(in_signal, delay_spec):
 
   sf.write(gen_dir / "sig_py_int.wav", out_py[0], fs, "PCM_24")
 
-  out_c = get_c_wav(test_dir, "delay", verbose=True)
+  out_c = get_c_wav(test_dir, "delay")
   shutil.rmtree(test_dir)
   np.testing.assert_allclose(out_c, out_py[0], rtol=0, atol=0)
 
