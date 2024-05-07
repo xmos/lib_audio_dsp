@@ -27,7 +27,7 @@ noise_suppressor_t adsp_noise_suppressor_init(
   adsp_noise_suppressor_set_th(&ns, from_float_pos(th));
   ns.gain = INT32_MAX;
   ns.slope = 1 - ratio;
-  ns.env_det.envelope = 1 << (-SIG_EXP);
+  ns.env_det.envelope = (1 << (-SIG_EXP)) - 1;
   return ns;
 }
 

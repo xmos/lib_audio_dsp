@@ -5,6 +5,7 @@ import numpy as np
 import audio_dsp.dsp.signal_chain as sc
 import audio_dsp.dsp.signal_gen as gen
 import audio_dsp.dsp.utils as utils
+import audio_dsp.dsp.generic as dspg
 from audio_dsp.dsp.generic import HEADROOM_DB
 
 import soundfile as sf
@@ -104,7 +105,8 @@ def test_saturation(filter_spec, fs):
     if class_name == "subtractor":
         signals[1] *= -1
     signal = np.stack(signals, axis=0)
-
+    signal = utils.saturate_float_array(signal, dspg.Q_SIG)
+    
     output_flt = np.zeros(signal.shape[1])
     output_xcore = np.zeros(signal.shape[1])
 
@@ -216,8 +218,9 @@ def test_combiners(filter_spec, fs):
     length = 0.05
     signals = []
     for n in range(filter_spec[1]):
-        signals.append(gen.pink_noise(fs, length, 0.5))
+        signals.append(gen.pink_noise(fs, length, 1.0))
     signal = np.stack(signals, axis=0)
+    signal = utils.saturate_float_array(signal, dspg.Q_SIG)
 
     output_flt = np.zeros(signal.shape[1])
     output_xcore = np.zeros(signal.shape[1])
@@ -258,9 +261,9 @@ def test_combiners_frames(filter_spec, fs):
     length = 0.05
     signals = []
     for n in range(filter_spec[1]):
-        signals.append(gen.pink_noise(fs, length, 0.5))
+        signals.append(gen.pink_noise(fs, length, 1.0))
     signal = np.stack(signals, axis=0)
-
+    signal = utils.saturate_float_array(signal, dspg.Q_SIG)
     signal_frames = utils.frame_signal(signal, 1, 1)
 
     output_flt = np.zeros((1, len(signal)))
@@ -313,6 +316,6 @@ def test_delay(fs, delay_spec, n_chans):
 
 
 if __name__ == "__main__":
-    #test_combiners(["subtractor", 2], 48000)
-    #test_volume_change()
-    test_delay(48000, [1.056, 0.94, "s"], 2)
+    test_combiners(["adder", 4], 48000)
+    # test_volume_change()
+    # test_gains(1, 48000, 1)

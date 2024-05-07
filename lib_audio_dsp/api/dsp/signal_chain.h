@@ -23,8 +23,8 @@ typedef struct{
  * @brief Convert dB gain to linear gain
  * 
  * @param dB_gain           Gain in dB
- * @return int32_t          Linear gain
- * @note With the current Q_SIG format, the maximum gain is +24 dB
+ * @return int32_t          Linear gain in Q_GAIN format
+ * @note With the current Q_GAIN format, the maximum gain is +24 dB
  */
 int32_t adsp_dB_to_gain(float dB_gain);
 
@@ -70,19 +70,19 @@ int32_t adsp_subtractor(int32_t x, int32_t y);
  * @param input             Input sample
  * @param gain              Gain
  * @return int32_t          Output sample
- * @note One of the inputs has to be in Q_SIG format
+ * @note One of the inputs has to be in Q_GAIN format
  */
 int32_t adsp_fixed_gain(int32_t input, int32_t gain);
 
 /**
  * @brief Mixer
- * Will add signals with atteniation to maintain headroom
+ * Will add signals with gain applied to each signal before mixing 
  * 
  * @param input             Array of samples
  * @param n_ch              Number of channels
  * @param gain              Gain
  * @return int32_t          Mixed sample
- * @note Inputs or gain have to be in Q_SIG format
+ * @note Inputs or gain have to be in Q_GAIN format
  */
 int32_t adsp_mixer(int32_t * input, unsigned n_ch, int32_t gain);
 

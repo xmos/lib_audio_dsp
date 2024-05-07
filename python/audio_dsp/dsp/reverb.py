@@ -35,10 +35,10 @@ def scale_sat_int64_to_int32_floor(val):
 
     # saturate
     if val > (2 ** (31 + Q_VERB) - 1):
-        warnings.warn("Saturation occured", utils.OverflowWarning)
+        warnings.warn("Saturation occured", utils.SaturationWarning)
         val = 2 ** (31 + Q_VERB) - 1
     elif val < -(2 ** (31 + Q_VERB)):
-        warnings.warn("Saturation occured", utils.OverflowWarning)
+        warnings.warn("Saturation occured", utils.SaturationWarning)
         val = -(2 ** (31 + Q_VERB))
 
     # shift to int32
@@ -412,12 +412,12 @@ class reverb_room(dspg.dsp_block):
         output = deepcopy(frame)
         if n_outputs == 1:
             for sample in range(frame_size):
-                output[sample] = self.process(output[sample])[0]
+                output[0][sample] = self.process(output[0][sample])
         else:
             for chan in range(n_outputs):
                 this_chan = output[chan]
                 for sample in range(frame_size):
-                    this_chan[sample] = self.process(this_chan[sample], channel=chan)[0]
+                    this_chan[sample] = self.process(this_chan[sample], channel=chan)
 
         return output
 
@@ -448,7 +448,7 @@ class reverb_room(dspg.dsp_block):
         Take one new sample and return the sample with reverb.
         Input should be scaled with 0dB = 1.0.
         """
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        sample_int = utils.float_to_int32(sample, self.Q_sig)
 
         reverb_input = apply_gain_xcore(sample_int, self.pregain_int)
 
@@ -472,7 +472,7 @@ class reverb_room(dspg.dsp_block):
         utils.int64(output)
         output = utils.saturate_int64_to_int32(output)
 
-        return float(output) * 2**-self.Q_sig
+        return utils.int32_to_float(output, self.Q_sig)
 
 
 if __name__ == "__main__":

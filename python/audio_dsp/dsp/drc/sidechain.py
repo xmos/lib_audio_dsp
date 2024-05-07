@@ -62,8 +62,10 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         super().__init__(fs, 1, attack_t, release_t, delay, Q_sig)
 
         # note rms comes as x**2, so use db_pow
-        self.threshold = utils.db_pow2gain(threshold_db)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(
+            threshold_db, self.Q_sig, power=True
+        )
+
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=1,
@@ -129,8 +131,8 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
         """
         # quantize
-        sample_int = utils.int32(round(input_sample * 2**self.Q_sig))
-        detect_sample_int = utils.int32(round(detect_sample * 2**self.Q_sig))
+        sample_int = utils.float_to_int32(input_sample, self.Q_sig)
+        detect_sample_int = utils.float_to_int32(detect_sample, self.Q_sig)
 
         # get envelope from envelope detector
         envelope_int = self.env_detector.process_xcore(detect_sample_int)
@@ -154,9 +156,9 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         y = drcu.apply_gain_xcore(sample_int, self.gain_int)
 
         return (
-            (float(y) * 2**-self.Q_sig),
-            (float(new_gain_int) * 2**-self.Q_alpha),
-            (float(envelope_int) * 2**-self.Q_sig),
+            utils.int32_to_float(y, self.Q_sig),
+            utils.int32_to_float(new_gain_int, self.Q_alpha),
+            utils.int32_to_float(envelope_int, self.Q_sig),
         )
 
     def process_frame(self, frame):
@@ -203,8 +205,10 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         n_chans = 2
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
-        self.threshold = utils.db_pow2gain(threshold_dB)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(
+            threshold_dB, self.Q_sig, power=True
+        )
+
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=n_chans,
@@ -270,12 +274,14 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         """
         # quantize
         samples_int = [int(0)] * len(input_samples)
+        detect_samples_int = [int(0)] * len(input_samples)
         for i in range(len(input_samples)):
-            samples_int[i] = utils.int32(round(input_samples[i] * 2**self.Q_sig))
+            samples_int[i] = utils.float_to_int32(input_samples[i], self.Q_sig)
+            detect_samples_int[i] = utils.float_to_int32(detect_samples[i], self.Q_sig)
 
         # get envelope from envelope detector
-        env0 = self.env_detector.process_xcore(samples_int[0], 0)
-        env1 = self.env_detector.process_xcore(samples_int[1], 1)
+        env0 = self.env_detector.process_xcore(detect_samples_int[0], 0)
+        env1 = self.env_detector.process_xcore(detect_samples_int[1], 1)
         envelope_int = np.maximum(env0, env1)
         # avoid /0
         envelope_int = max(envelope_int, 1)
@@ -297,12 +303,12 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         # apply gain in int32
         for i in range(len(input_samples)):
             y_uq = drcu.apply_gain_xcore(samples_int[i], self.gain_int)
-            y[i] = float(y_uq) * 2**-self.Q_sig
+            y[i] = utils.int32_to_float(y_uq, self.Q_sig)
 
         return (
             y,
-            (float(new_gain_int) * 2**-self.Q_alpha),
-            (float(envelope_int) * 2**-self.Q_sig),
+            utils.int32_to_float(new_gain_int, self.Q_alpha),
+            utils.int32_to_float(envelope_int, self.Q_sig),
         )
 
     def process_frame(self, frame):

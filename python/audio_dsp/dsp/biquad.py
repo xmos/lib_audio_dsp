@@ -104,12 +104,15 @@ class biquad(dspg.dsp_block):
             + self.coeffs[4] * self._y2[channel]
         )
 
+        y = utils.saturate_float(y, self.Q_sig)
+
         self._x2[channel] = self._x1[channel]
         self._x1[channel] = sample
         self._y2[channel] = self._y1[channel]
         self._y1[channel] = y
 
         y = y * 2**self.b_shift
+        y = utils.saturate_float(y, self.Q_sig)
 
         return y
 
@@ -122,28 +125,34 @@ class biquad(dspg.dsp_block):
         float before outputting
 
         """
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        sample_int = utils.float_to_int32(sample, self.Q_sig)
 
         # process a single sample using direct form 1
         y = utils.int64(
-            (sample_int * self.int_coeffs[0])
-            + (self._x1[channel] * self.int_coeffs[1])
-            + (self._x2[channel] * self.int_coeffs[2])
-            + (int(self._y1[channel] * self.int_coeffs[3]) >> self.b_shift)
-            + (int(self._y2[channel] * self.int_coeffs[4]) >> self.b_shift)
+            sample_int * self.int_coeffs[0]
+            + self._x1[channel] * self.int_coeffs[1]
+            + self._x2[channel] * self.int_coeffs[2]
+            + self._y1[channel] * self.int_coeffs[3]
+            + self._y2[channel] * self.int_coeffs[4]
         )
 
-        # combine the b_shift with the >> 30
-        y = y + 2 ** (29 - self.b_shift)
-        y = utils.int32(y >> (30 - self.b_shift))
+        # the b_shift can be combined with the >> 30, which reduces
+        # quantization noise, but this results  in saturation at an
+        # earlier point, and so is not used here for consistency
+        y = utils.int64(y + 2**29)
 
+        y = utils.int32_mult_sat_extract(y, 1, 30)
         # save states
         self._x2[channel] = utils.int32(self._x1[channel])
         self._x1[channel] = utils.int32(sample_int)
         self._y2[channel] = utils.int32(self._y1[channel])
         self._y1[channel] = utils.int32(y)
 
-        y_flt = float(y) * 2**-self.Q_sig
+        # compensate for coefficients
+        y = utils.int64(y << self.b_shift)
+        y = utils.saturate_int32(y)
+
+        y_flt = utils.int32_to_float(y, self.Q_sig)
 
         return y_flt
 
@@ -156,7 +165,7 @@ class biquad(dspg.dsp_block):
         float before outputting.
 
         """
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        sample_int = utils.float_to_int32(sample, self.Q_sig)
 
         # process a single sample using direct form 1. In the VPU the
         # ``>> 30`` comes before accumulation
@@ -171,6 +180,8 @@ class biquad(dspg.dsp_block):
             self.int_coeffs,
         )
 
+        y = utils.saturate_int32(y)
+
         # save states
         self._x2[channel] = utils.int32(self._x1[channel])
         self._x1[channel] = utils.int32(sample_int)
@@ -178,9 +189,10 @@ class biquad(dspg.dsp_block):
         self._y1[channel] = utils.int32(y)
 
         # compensate for coefficients
-        y = utils.int32(y << self.b_shift)
+        y = utils.int64(y << self.b_shift)
+        y = utils.saturate_int32(y)
 
-        y_flt = float(y) * 2**-self.Q_sig
+        y_flt = utils.int32_to_float(y, self.Q_sig)
 
         return y_flt
 
@@ -214,7 +226,7 @@ class biquad(dspg.dsp_block):
         return output
 
     def freq_response(
-        self, nfft: int = 512
+        self, nfft: int = 1024
     ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         """
         Calculate the frequency response of the biquad filter.
@@ -374,8 +386,9 @@ def _round_to_q30(coeffs: list[float]) -> tuple[list[float], list[int]]:
 
     Q = 30
     for n in range(len(coeffs)):
-        # scale to Q30 ints
-        rounded_coeffs[n] = round(coeffs[n] * 2**Q)
+        # scale to Q30 ints, note this is intentionally not multiplied
+        # (2**Q -1) to keep 1.0 as 1.0
+        rounded_coeffs[n] = round(coeffs[n] * (2**Q))
         # check for overflow
         if not (-(2**31) <= rounded_coeffs[n] <= 2**31 - 1):
             raise ValueError(

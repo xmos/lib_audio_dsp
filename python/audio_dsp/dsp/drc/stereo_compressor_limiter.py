@@ -100,7 +100,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         """
         samples_int = [int(0)] * len(input_samples)
         for i in range(len(input_samples)):
-            samples_int[i] = utils.int32(round(input_samples[i] * 2**self.Q_sig))
+            samples_int[i] = utils.float_to_int32(input_samples[i], self.Q_sig)
 
         # get envelope from envelope detector
         env0_int = self.env_detector.process_xcore(samples_int[0], 0)  # type: ignore
@@ -126,12 +126,12 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
         for sample_int in samples_int:
             y_uq = drcu.apply_gain_xcore(sample_int, self.gain_int)
-            y.append(float(y_uq) * 2**-self.Q_sig)
+            y.append(utils.int32_to_float(y_uq, self.Q_sig))
 
         return (
             y,
-            (float(new_gain_int) * 2**-self.Q_alpha),
-            (float(envelope_int) * 2**-self.Q_sig),
+            utils.int32_to_float(new_gain_int, self.Q_alpha),
+            utils.int32_to_float(envelope_int, self.Q_sig),
         )
 
     def process_frame(self, frame: list[np.ndarray]):
@@ -194,8 +194,8 @@ class limiter_peak_stereo(compressor_limiter_stereo_base):
         n_chans = 2
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
-        self.threshold = utils.db2gain(threshold_dB)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_dB, self.Q_sig)
+
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,
@@ -228,8 +228,10 @@ class compressor_rms_stereo(compressor_limiter_stereo_base):
         n_chans = 2
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
-        self.threshold = utils.db_pow2gain(threshold_dB)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(
+            threshold_dB, self.Q_sig, power=True
+        )
+
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=n_chans,
