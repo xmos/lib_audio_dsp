@@ -618,18 +618,19 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
 @pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
 @pytest.mark.parametrize("n_chans", [1, 2, 4])
-def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
+@pytest.mark.parametrize("q_format", [27, 31])
+def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans, q_format):
     # test the process_frame functions of the drc components
 
     component_handle = getattr(drc, component)
 
     if threshold is not None:
         if ratio is not None:
-            drcut = component_handle(fs, n_chans, ratio, threshold, at, rt)
+            drcut = component_handle(fs, n_chans, ratio, threshold, at, rt, Q_sig=q_format)
         elif "clipper" in component:
-            drcut = component_handle(fs, n_chans, threshold)
+            drcut = component_handle(fs, n_chans, threshold, Q_sig=q_format)
         else:
-            drcut = component_handle(fs, n_chans, threshold, at, rt)
+            drcut = component_handle(fs, n_chans, threshold, at, rt, Q_sig=q_format)
     else:
         drcut = component_handle(fs, n_chans, at, rt)
 

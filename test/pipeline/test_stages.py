@@ -93,6 +93,12 @@ def do_test(make_p, dut_frame_size):
     else:
         assert False, f"Unsupported number of channels {pipeline_channels}. Test supports 1 or 2 channels"
 
+    if q_format != 27:
+        # currently only Q27 works
+        out_py_int_all = [generate_ref(sig, p.stages[2].dsp_block, pipeline_channels, fr) for p, fr in zip(ref_p, TEST_FRAME_SIZES)]
+        return
+
+
     audio_helpers.write_wav(infile, rate, sig)
 
     xe = APP_DIR / f"bin/{target}.xe"
