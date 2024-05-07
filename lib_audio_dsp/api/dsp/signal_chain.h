@@ -3,6 +3,13 @@
 
 #pragma once
 
+/** Heap size to allocate for the delay from samples */
+#define DELAY_DSP_REQUIRED_MEMORY_SAMPLES(SAMPLES) (sizeof(int32_t) * (SAMPLES))
+/** Heap size to allocate for the delay from milliseconds */
+#define DELAY_DSP_REQUIRED_MEMORY_MS(FS, MS) (sizeof(int32_t) * ((FS) * (MS) / 1000))
+/** Heap size to allocate for the delay from seconds */
+#define DELAY_DSP_REQUIRED_MEMORY_SEC(FS, SEC) (sizeof(int32_t) * (FS) * (SEC))
+
 /**
  * @brief Volume control state structure
  */
@@ -18,6 +25,34 @@ typedef struct{
   // Mute flag
   uint8_t mute;
 }volume_control_t;
+
+/**
+ * @brief Delay state structure
+ */
+typedef struct{
+  // Sampling frequency
+  float fs;
+  // Current delay in samples
+  uint32_t delay;
+  // Maximum delay in samples
+  uint32_t max_delay;
+  // Current buffer index
+  uint32_t buffer_idx;
+  // Buffer
+  int32_t * buffer;
+} delay_t;
+
+/**
+ * @brief Enum for different time units
+ */
+typedef enum{
+  // Time in samples
+  SAMPLES = 0,
+  // Time in milliseconds
+  MILLISECONDS = 1,
+  // Time in seconds
+  SECONDS = 2
+} time_units_t;
 
 /**
  * @brief Convert dB gain to linear gain
@@ -157,3 +192,44 @@ void adsp_volume_control_mute(
  */
 void adsp_volume_control_unmute(
   volume_control_t * vol_ctl);
+
+/**
+ * @brief Initialise a delay object
+ * 
+ * @param fs                Sampling frequency
+ * @param max_delay         Maximum delay in specified units
+ * @param starting_delay    Initial delay in specified units
+ * @param units             Time units (SAMPLES, MILLISECONDS, SECONDS)
+ * @param delay_heap        Pointer to the allocated delay memory
+ * @return delay_t          Delay state object
+ */
+delay_t adsp_delay_init(
+  float fs,
+  float max_delay,
+  float starting_delay,
+  time_units_t units,
+  void * delay_heap);
+
+/**
+ * @brief Set the delay of a delay object
+ * Will set the delay to the new value, saturating to the maximum delay
+ * 
+ * @param delay             Delay object
+ * @param delay_time        New delay time in specified units
+ * @param units             Time units (SAMPLES, MILLISECONDS, SECONDS)
+ */
+void adsp_set_delay(
+  delay_t * delay,
+  float delay_time,
+  time_units_t units);
+
+/**
+ * @brief Process a new sample through a delay object
+ * 
+ * @param delay             Delay object
+ * @param samp              New sample
+ * @return int32_t          Oldest sample
+ */
+int32_t adsp_delay(
+  delay_t * delay,
+  int32_t samp);

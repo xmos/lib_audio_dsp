@@ -781,7 +781,7 @@ class delay(dspg.dsp_block):
 
     def set_delay(self, delay: float, units: str = "samples") -> None:
         """
-        Set the length of the delay line, must be < max_delay
+        Set the length of the delay line, will saturate at max_delay
 
         Parameters
         ----------
@@ -796,7 +796,7 @@ class delay(dspg.dsp_block):
         if delay <= self.max_delay:
             self.delay = delay
         else:
-            delay = self.max_delay
+            self.delay = self.max_delay
             Warning("Delay cannot be greater than max delay, setting to max delay")
         return
 
@@ -815,7 +815,7 @@ class delay(dspg.dsp_block):
             List of delayed samples.
         """
         y = self.buffer[:, self.buffer_idx].copy()
-        self.buffer[:, self.buffer_idx] = sample.copy()
+        self.buffer[:, self.buffer_idx] = sample
         self.buffer_idx = (self.buffer_idx + 1) % self.delay
         return y.tolist()
 
