@@ -68,7 +68,7 @@ def test_limiter_peak_attack(fs, at, threshold):
 
 
 @pytest.mark.parametrize("fs", [48000])
-@pytest.mark.parametrize("at", [0.001, 0.01, 0.1, 0.5])
+@pytest.mark.parametrize("rt", [0.001, 0.01, 0.1, 0.5])
 @pytest.mark.parametrize("threshold", [-20, -10, 0])
 def test_limiter_peak_release(fs, rt, threshold):
     # Release time test bads on Figure 2 in Guy McNally's "Dynamic Range
