@@ -58,7 +58,7 @@ class mixer(dspg.dsp_block):
         """
         scaled_samples = np.array(sample_list) * self.gain
         y = np.sum(scaled_samples)
-        y = utils.saturate_float(y, dspg.Q_SIG)
+        y = utils.saturate_float(y, self.Q_sig)
         return y
 
     def process_channels_xcore(self, sample_list: list[float]) -> float:
@@ -186,8 +186,8 @@ class adder(mixer):
 
     """
 
-    def __init__(self, fs: float, num_channels: int) -> None:
-        super().__init__(fs, num_channels, gain_db=0)
+    def __init__(self, fs: float, num_channels: int, Q_sig: int = dspg.Q_SIG) -> None:
+        super().__init__(fs, num_channels, gain_db=0, Q_sig=Q_sig)
 
 
 class subtractor(dspg.dsp_block):

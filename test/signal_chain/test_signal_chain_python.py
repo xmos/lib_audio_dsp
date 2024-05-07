@@ -268,8 +268,8 @@ def test_combiners_frames(filter_spec, fs, q_format):
     signal = utils.saturate_float_array(signal, dspg.Q_SIG)
     signal_frames = utils.frame_signal(signal, 1, 1)
 
-    output_flt = np.zeros((1, len(signal)))
-    output_xcore = np.zeros((1, len(signal)))
+    output_flt = np.zeros((1, signal.shape[1]))
+    output_xcore = np.zeros_like(output_flt)
     frame_size = 1
 
     for n in range(len(signal_frames)):
