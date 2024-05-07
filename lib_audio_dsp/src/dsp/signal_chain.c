@@ -17,7 +17,7 @@ int32_t adsp_dB_to_gain(float dB_gain) {
   asm("fsexp %0, %1, %2": "=r" (zero), "=r" (exp): "r" (gain_fl));
   asm("fmant %0, %1": "=r" (mant): "r" (gain_fl));
   // mant to q27
-  right_shift_t shr = Q_GAIN - exp + 23;
+  right_shift_t shr = -Q_GAIN - exp + 23;
   mant >>= shr;
   return mant;
 }
