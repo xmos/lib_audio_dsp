@@ -234,9 +234,9 @@ class butterworth_lowpass(cascaded_biquads_8):
         The cutoff frequency of the filter.
     """
 
-    def __init__(self, fs, n_chans, N, fc):
+    def __init__(self, fs, n_chans, N, fc, Q_sig=dspg.Q_SIG):
         coeffs_list = make_butterworth_lowpass(N, fc, fs)
-        super().__init__(coeffs_list, fs, n_chans)
+        super().__init__(coeffs_list, fs, n_chans, Q_sig)
 
 
 class butterworth_highpass(cascaded_biquads_8):
@@ -251,9 +251,9 @@ class butterworth_highpass(cascaded_biquads_8):
         The cutoff frequency of the filter.
     """
 
-    def __init__(self, fs, n_chans, N, fc):
+    def __init__(self, fs, n_chans, N, fc, Q_sig=dspg.Q_SIG):
         coeffs_list = make_butterworth_highpass(N, fc, fs)
-        super().__init__(coeffs_list, fs, n_chans)
+        super().__init__(coeffs_list, fs, n_chans, Q_sig)
 
 
 class parametric_eq_8band(cascaded_biquads_8):
