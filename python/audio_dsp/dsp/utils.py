@@ -14,6 +14,10 @@ class OverflowWarning(Warning):
     pass
 
 
+class SaturationWarning(Warning):
+    pass
+
+
 def db(input):
     out = 20 * np.log10(np.abs(input) + FLT_MIN)
     return out
@@ -59,7 +63,66 @@ def envelope(x, N=None):
 
 
 def int32(val: float) -> int:
+    # overflows if val is outside the range of int32
     if -(2**31) <= val <= (2**31 - 1):
+        return int(val)
+    else:
+        warnings.warn("Overflow occured", OverflowWarning)
+        return int(((val + 2**31) % (2**32)) - (2**31))
+
+
+def saturate_float(val: float, Q_sig: int) -> float:
+    max_flt = float((2**31 - 1) / 2**Q_sig)
+    min_flt = float(-(2 ** (31 - Q_sig)))
+    if min_flt <= val <= max_flt:
+        return val
+    elif val < min_flt:
+        warnings.warn("Saturation occured", SaturationWarning)
+        return min_flt
+    else:
+        warnings.warn("Saturation occured", SaturationWarning)
+        return max_flt
+
+
+def saturate_float_array(val: np.ndarray, Q_sig: int) -> np.ndarray:
+    max_flt = (2**31 - 1) / 2**Q_sig
+    min_flt = -(2 ** (31 - Q_sig))
+
+    if np.any(val < min_flt) or np.any(val > max_flt):
+        warnings.warn("Saturation occured", SaturationWarning)
+
+    val[val > max_flt] = max_flt
+    val[val < min_flt] = min_flt
+
+    return val
+
+
+def saturate_int32(val: float) -> int:
+    # saturate int32 to int32max/min
+    if -(2**31) <= val <= (2**31 - 1):
+        return int(val)
+    elif val < -(2**31):
+        warnings.warn("Saturation occured", SaturationWarning)
+        return int(-(2**31))
+    else:
+        warnings.warn("Saturation occured", SaturationWarning)
+        return int(2**31 - 1)
+
+
+def saturate_int32_vpu(val: float) -> int:
+    # VPU has symmetrical saturation
+    if -(2**31 - 1) <= val <= (2**31 - 1):
+        return int(val)
+    elif val < -(2**31 - 1):
+        warnings.warn("Saturation occured", SaturationWarning)
+        return int(-(2**31 - 1))
+    else:
+        warnings.warn("Saturation occured", SaturationWarning)
+        return int(2**31 - 1)
+
+
+def int34(val: float):
+    if -(2**33) <= val <= (2**33 - 1):
         return int(val)
     raise OverflowError
 
@@ -79,7 +142,7 @@ def int40(val: int):
 
 def uq_2_30(val: int):
     # special type for unsigned Q2.30 format, used by EWM
-    if 0 < val < (2**32):
+    if 0 <= val < (2**32):
         return int(val)
     raise OverflowError
 
@@ -87,7 +150,7 @@ def uq_2_30(val: int):
 def vpu_mult(x1: int, x2: int):
     y = int64(x1 * x2)
     y = y + 2**29
-    y = int32(y >> 30)
+    y = int34(y >> 30)
 
     return y
 
@@ -95,10 +158,10 @@ def vpu_mult(x1: int, x2: int):
 def int32_mult_sat_extract(x1: int, x2: int, Q: int):
     y = int64(x1 * x2)
     if y > (2 ** (31 + Q) - 1):
-        warnings.warn("Saturation occured", OverflowWarning)
+        warnings.warn("Saturation occured", SaturationWarning)
         y = 2 ** (31 + Q) - 1
     elif y < -(2 ** (31 + Q)):
-        warnings.warn("Saturation occured", OverflowWarning)
+        warnings.warn("Saturation occured", SaturationWarning)
         y = -(2 ** (31 + Q))
     y = int32(y >> Q)
 
@@ -107,10 +170,10 @@ def int32_mult_sat_extract(x1: int, x2: int, Q: int):
 
 def saturate_int64_to_int32(x: int):
     if x > (2**31 - 1):
-        warnings.warn("Saturation occured", OverflowWarning)
+        warnings.warn("Saturation occured", SaturationWarning)
         return 2**31 - 1
     elif x < -(2**31):
-        warnings.warn("Saturation occured", OverflowWarning)
+        warnings.warn("Saturation occured", SaturationWarning)
         return -(2**31)
     else:
         return x
@@ -123,12 +186,13 @@ def vlmaccr(vect1, vect2, out=0):
     return int40(out)
 
 
-def float_to_int32(x):
-    return int32(round(x * (2**31 - 1)))
+def float_to_int32(x, Q_sig=31):
+    return int32(round(x * (2**Q_sig)))
 
 
-def int32_to_float(x):
-    return x * 2**-31
+def int32_to_float(x, Q_sig=31):
+    # Note this means the max value is 0.99999999953
+    return float(x) / (2**Q_sig)
 
 
 class float_s32:

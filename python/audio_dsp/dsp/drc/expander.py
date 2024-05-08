@@ -71,7 +71,7 @@ class expander_base(compressor_limiter_base):
         """
         if self.env_detector is not None:
             self.env_detector.envelope = [1] * self.n_chans
-            self.env_detector.envelope_int = [utils.int32(2**self.Q_sig)] * self.n_chans
+            self.env_detector.envelope_int = [utils.int32(2**self.Q_sig - 1)] * self.n_chans
         self.gain = [1] * self.n_chans
         self.gain_int = [2**31 - 1] * self.n_chans
 
@@ -117,7 +117,7 @@ class expander_base(compressor_limiter_base):
         Input should be scaled with 0dB = 1.0.
 
         """
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        sample_int = utils.float_to_int32(sample, self.Q_sig)
         # get envelope from envelope detector
         envelope_int = self.env_detector.process_xcore(sample_int, channel)
         # avoid /0
@@ -143,9 +143,9 @@ class expander_base(compressor_limiter_base):
             return y, new_gain_int, envelope_int
         else:
             return (
-                (float(y) * 2**-self.Q_sig),
-                (float(new_gain_int) * 2**-self.Q_alpha),
-                (float(envelope_int) * 2**-self.Q_sig),
+                utils.int32_to_float(y, self.Q_sig),
+                utils.int32_to_float(new_gain_int, self.Q_alpha),
+                utils.int32_to_float(envelope_int, self.Q_sig),
             )
 
 
@@ -182,8 +182,8 @@ class noise_gate(expander_base):
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
-        self.threshold = utils.db2gain(threshold_db)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
+
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,
@@ -237,8 +237,7 @@ class noise_suppressor(expander_base):
     ):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
-        self.threshold = utils.db2gain(threshold_db)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
         self.threshold_int = max(1, self.threshold_int)
         self.env_detector = envelope_detector_peak(
             fs,
