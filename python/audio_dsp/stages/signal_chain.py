@@ -271,7 +271,7 @@ class Delay(Stage):
 
     def set_delay(self, delay, units="samples"):
         """
-        Set the length of the delay line, will saturate at max_delay
+        Set the length of the delay line, will saturate at max_delay.
 
         Parameters
         ----------

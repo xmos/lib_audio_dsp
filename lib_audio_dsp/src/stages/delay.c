@@ -44,13 +44,14 @@ void delay_init(module_instance_t* instance,
     state->frame_size = frame_size;
 
     uint8_t *delay_heap = adsp_bump_allocator_malloc(allocator, DELAY_STAGE_REQUIRED_MEMORY(n_inputs, config->max_delay));
+    state->delay = (delay_t *)delay_heap;
 
     for(int i = 0; i < n_inputs; i++)
     {
         state->delay[i].max_delay = config->max_delay;
         state->delay[i].delay = config->delay;
         state->delay[i].buffer_idx = 0;
-        state->delay[i].buffer = (int32_t *)&delay_heap[i * DELAY_STAGE_REQUIRED_MEMORY(1, config->max_delay)];
+        state->delay[i].buffer = (int32_t *)&delay_heap[n_inputs * sizeof(delay_t) + i * DELAY_DSP_REQUIRED_MEMORY_SAMPLES(config->max_delay)];
     }
 }
 
