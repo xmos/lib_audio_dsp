@@ -207,7 +207,8 @@ def test_gain_filters(gain, fs):
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("filter_n", np.arange(9))
 @pytest.mark.parametrize("n_chans", [1, 2, 4])
-def test_frames(filter_n, fs, n_chans):
+@pytest.mark.parametrize("q_format", [27, 31])
+def test_frames(filter_n, fs, n_chans, q_format):
     filter_spec = [['lowpass', fs*0.4, 0.707],
                    ['highpass', fs*0.001, 1],
                    ['peaking', fs*1000/48000, 5, 10],
@@ -222,7 +223,7 @@ def test_frames(filter_n, fs, n_chans):
 
     class_name = f"biquad_{filter_spec[0]}"
     class_handle = getattr(bq, class_name)
-    filter = class_handle(fs, n_chans, *filter_spec[1:])
+    filter = class_handle(fs, n_chans, *filter_spec[1:], Q_sig=q_format)
 
     length = 0.05
     signal = gen.log_chirp(fs, length, 0.5)

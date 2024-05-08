@@ -52,7 +52,8 @@ def test_gains(filter_n, fs, n_chans):
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("filter_n", np.arange(4))
 @pytest.mark.parametrize("n_chans", [1, 2, 4])
-def test_gains_frames(filter_n, fs, n_chans):
+@pytest.mark.parametrize("q_format", [27, 31])
+def test_gains_frames(filter_n, fs, n_chans, q_format):
     filter_spec = [['fixed_gain', -10],
                    ['fixed_gain', 24],
                    ['volume_control', 24],
@@ -62,7 +63,7 @@ def test_gains_frames(filter_n, fs, n_chans):
 
     class_name = f"{filter_spec[0]}"
     class_handle = getattr(sc, class_name)
-    filter = class_handle(fs, n_chans, *filter_spec[1:])
+    filter = class_handle(fs, n_chans, *filter_spec[1:], Q_sig=q_format)
 
     length = 0.05
     signal = gen.log_chirp(fs, length, 0.5)
@@ -247,16 +248,17 @@ def test_combiners(filter_spec, fs):
                                          ['adder', 2],
                                          ['adder', 4],
                                          ['subtractor', 2]])
-def test_combiners_frames(filter_spec, fs):
+@pytest.mark.parametrize("q_format", [27, 31])
+def test_combiners_frames(filter_spec, fs, q_format):
 
     class_name = f"{filter_spec[0]}"
     class_handle = getattr(sc, class_name)
 
     if filter_spec[0] == "subtractor":
         # subtractor has fewer inputs
-        filter = class_handle(fs)
+        filter = class_handle(fs, Q_sig=q_format)
     else:
-        filter = class_handle(fs, *filter_spec[1:])
+        filter = class_handle(fs, *filter_spec[1:], Q_sig=q_format)
 
     length = 0.05
     signals = []
@@ -266,8 +268,8 @@ def test_combiners_frames(filter_spec, fs):
     signal = utils.saturate_float_array(signal, dspg.Q_SIG)
     signal_frames = utils.frame_signal(signal, 1, 1)
 
-    output_flt = np.zeros((1, len(signal)))
-    output_xcore = np.zeros((1, len(signal)))
+    output_flt = np.zeros((1, signal.shape[1]))
+    output_xcore = np.zeros_like(output_flt)
     frame_size = 1
 
     for n in range(len(signal_frames)):
