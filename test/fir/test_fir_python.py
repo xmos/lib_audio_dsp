@@ -21,7 +21,7 @@ def test_basic(coeff_path):
     # signal = np.zeros(1000)
     # signal[0:2] = 1
 
-    coeffs = np.loadtxt(coeff_path)
+    coeffs = np.loadtxt(Path(gen_dir, coeff_path))
     out_ref = np.convolve(signal, coeffs)[:len(signal)]
 
     out_flt = np.zeros_like(signal)
