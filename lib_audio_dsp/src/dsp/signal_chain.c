@@ -175,7 +175,9 @@ delay_t adsp_delay_init(
   delay.fs = fs;
   delay.max_delay = _time_to_samples(fs, max_delay, units);
   delay.delay = _time_to_samples(fs, starting_delay, units);
-  xassert(delay.delay <= delay.max_delay && "Starting delay must be less than max delay");
+  xassert(delay.max_delay > 0 && "Max delay must be greater than 0");
+  xassert(delay.delay <= delay.max_delay && "Starting delay must be less or equal to the max delay");
+  xassert(delay_heap != NULL && "Delay heap must be allocated");
   delay.buffer_idx = 0;
   delay.buffer = (int32_t *)delay_heap;
   return delay;
@@ -197,8 +199,8 @@ int32_t adsp_delay(
   int32_t out = delay->buffer[delay->buffer_idx];
   delay->buffer[delay->buffer_idx] = samp;
   // Could do this with a modulo operation,
-  // but didn't want to use the division unit
-  // delay->buffer_idx = (delay->buffer_idx + 1) % delay->delay;
+  // but it would break for when the delay is 0 
+  // and use the division unit
   if (++delay->buffer_idx >= delay->delay) {
     delay->buffer_idx = 0;
   }

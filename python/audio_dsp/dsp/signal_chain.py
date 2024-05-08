@@ -752,6 +752,8 @@ class delay(dspg.dsp_block):
         max_delay = self._get_delay_samples(max_delay, units)
         starting_delay = self._get_delay_samples(starting_delay, units)
 
+        if max_delay <= 0:
+            raise ValueError("Max delay must be greater than zero")
         if starting_delay > max_delay:
             raise ValueError("Starting delay cannot be greater than max delay")
 
@@ -816,7 +818,10 @@ class delay(dspg.dsp_block):
         """
         y = self.buffer[:, self.buffer_idx].copy()
         self.buffer[:, self.buffer_idx] = sample
-        self.buffer_idx = (self.buffer_idx + 1) % self.delay
+        # not using the modulo because it breaks for when delay = 0
+        self.buffer_idx += 1
+        if self.buffer_idx >= self.delay:
+            self.buffer_idx = 0
         return y.tolist()
 
     def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:

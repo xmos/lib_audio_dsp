@@ -10,7 +10,7 @@ from audio_dsp.stages.cascaded_biquads import CascadedBiquads
 from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak, HardLimiterPeak, Clipper
 from audio_dsp.stages.noise_gate import NoiseGate
 from audio_dsp.stages.noise_suppressor import NoiseSuppressor
-from audio_dsp.stages.signal_chain import VolumeControl, FixedGain
+from audio_dsp.stages.signal_chain import VolumeControl, FixedGain, Delay
 from audio_dsp.stages.compressor import CompressorRMS
 from audio_dsp.stages.reverb import Reverb
 
@@ -331,4 +331,16 @@ def test_reverb(frame_size):
 
     do_test(make_p, frame_size)
 
+def test_delay(frame_size):
+    """
+    Test Delay stage
+    """
+    pass
+    def make_p(fr):
+        p = Pipeline(channels, frame_size=fr)
+        with p.add_thread() as t:
+            delay = t.stage(Delay, p.i)
+        p.set_outputs(delay.o)
+        return p
 
+    do_test(make_p, frame_size)

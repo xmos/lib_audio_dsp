@@ -169,7 +169,7 @@ def test_volume_control_c(in_signal, gains_dB, slew, mute_test):
 
   np.testing.assert_allclose(out_c, out_py, rtol=0, atol=0)
 
-@pytest.mark.parametrize("delay_spec", [[15, 10, "samples"],
+@pytest.mark.parametrize("delay_spec", [[1, 0, "samples"],
                                         [0.5, 0.5, "ms"],
                                         [0.02, 0.01, "s"]])
 def test_delay_c(in_signal, delay_spec):
