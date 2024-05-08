@@ -130,10 +130,11 @@ def test_reverb_bypass():
 
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("max_room_size", [0.01, 0.1, 0.5, 1, 2, 4])
-def test_reverb_frames(fs, max_room_size):
+@pytest.mark.parametrize("q_format", [27, 31])
+def test_reverb_frames(fs, max_room_size, q_format):
     # test the process_frame functions of the drc components
 
-    reverb = rv.reverb_room(fs, 1, max_room_size=max_room_size)
+    reverb = rv.reverb_room(fs, 1, max_room_size=max_room_size, Q_sig=q_format)
 
     signal = gen.log_chirp(fs, 0.5, 1)
     t = np.arange(len(signal))/fs

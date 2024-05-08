@@ -159,7 +159,8 @@ def test_nth_butterworth(filter_type, f, order, fs):
 @pytest.mark.parametrize("n_filters", [1, 3, 5, 8])
 @pytest.mark.parametrize("seed", [1, 2, 3, 5, 7, 11])
 @pytest.mark.parametrize("n_chans", [1, 2, 4])
-def test_peq_frame(fs, n_filters, seed, n_chans):
+@pytest.mark.parametrize("q_format", [27, 31])
+def test_peq_frame(fs, n_filters, seed, n_chans, q_format):
     # a list of some sensible filters, use them in  random order
     filter_spec = [['lowpass', fs*0.4, 0.707],
                    ['highpass', fs*0.001, 1],
@@ -172,7 +173,7 @@ def test_peq_frame(fs, n_filters, seed, n_chans):
                    ['gain', -2]]
     random.Random(seed**n_filters*int(fs/1000)).shuffle(filter_spec)
     filter_spec = filter_spec[:n_filters]
-    peq = cbq.parametric_eq_8band(fs, n_chans, filter_spec)
+    peq = cbq.parametric_eq_8band(fs, n_chans, filter_spec, Q_sig=q_format)
 
     length = 0.05
     signal = gen.log_chirp(fs, length, 0.5)
@@ -205,21 +206,22 @@ def test_peq_frame(fs, n_filters, seed, n_chans):
 @pytest.mark.parametrize("f", [20, 1000, 20000])
 @pytest.mark.parametrize("order", [4, 16])
 @pytest.mark.parametrize("n_chans", [1, 2, 4])
-def test_nth_order_frame(filter_type, fs, f, order, n_chans):
+@pytest.mark.parametrize("q_format", [27, 31])
+def test_nth_order_frame(filter_type, fs, f, order, n_chans, q_format):
     f = np.min([f, fs/2*0.95])
     if filter_type == "lowpass":
         if f < 50:
             return
         if f <= 100 and fs > 100000 and order >= 8:
             return
-        filter = cbq.butterworth_lowpass(fs, n_chans, order, f)
+        filter = cbq.butterworth_lowpass(fs, n_chans, order, f, Q_sig=q_format)
 
     elif filter_type == "highpass":
         if f > 10000:
             return
         if f < 50 and fs > 100000:
             f = 30
-        filter = cbq.butterworth_highpass(fs, n_chans, order, f)
+        filter = cbq.butterworth_highpass(fs, n_chans, order, f, Q_sig=q_format)
 
     length = 0.05
     signal = gen.log_chirp(fs, length, 0.5)

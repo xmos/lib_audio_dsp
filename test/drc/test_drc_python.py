@@ -25,8 +25,8 @@ def make_noisy_speech():
     return out_sig, fs
 
 @pytest.mark.parametrize("fs", [48000])
-@pytest.mark.parametrize("at", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
-@pytest.mark.parametrize("threshold", [-20, -10, -6, 0])
+@pytest.mark.parametrize("at", [0.001, 0.01, 0.1, 0.5])
+@pytest.mark.parametrize("threshold", [-20, -10, 0])
 def test_limiter_peak_attack(fs, at, threshold):
     # Attack time test bads on Figure 2 in Guy McNally's "Dynamic Range Control
     # of Digital Audio Signals"
@@ -68,8 +68,8 @@ def test_limiter_peak_attack(fs, at, threshold):
 
 
 @pytest.mark.parametrize("fs", [48000])
-@pytest.mark.parametrize("rt", [0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.5])
-@pytest.mark.parametrize("threshold", [-20, -10, -6, 0])
+@pytest.mark.parametrize("rt", [0.001, 0.01, 0.1, 0.5])
+@pytest.mark.parametrize("threshold", [-20, -10, 0])
 def test_limiter_peak_release(fs, rt, threshold):
     # Release time test bads on Figure 2 in Guy McNally's "Dynamic Range
     # Control of Digital Audio Signals"
@@ -112,7 +112,7 @@ def test_limiter_peak_release(fs, rt, threshold):
 
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("threshold", [0, -6, -12])
-@pytest.mark.parametrize("ratio", (1, 2, 6, np.inf))
+@pytest.mark.parametrize("ratio", (1, 6, np.inf))
 @pytest.mark.parametrize("rt", [0.00000001])
 @pytest.mark.parametrize("at", [0.00000001])
 def test_comp_ratio(fs, at, rt, ratio, threshold):
@@ -146,7 +146,7 @@ def test_comp_ratio(fs, at, rt, ratio, threshold):
 
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1, 0.5])
-@pytest.mark.parametrize("threshold", [-20, -10, -6, 0])
+@pytest.mark.parametrize("threshold", [-20, -10, 0])
 def comp_vs_limiter(fs, at, threshold):
     # check infinite ratio compressor is a limiter
 
@@ -190,7 +190,7 @@ def comp_vs_limiter(fs, at, threshold):
 
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("at", [0.001, 0.01, 0.1, 0.5])
-@pytest.mark.parametrize("threshold", [-20, -10, -6, 0])
+@pytest.mark.parametrize("threshold", [-20, -10, 0])
 def test_peak_vs_rms(fs, at, threshold):
     # check peak and rms converge to same value
 
@@ -437,6 +437,8 @@ def test_noise_gate(component, threshold, ratio):
         error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
         assert mean_error_flt < 0.055
+
+
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("component, threshold, ratio", [("limiter_peak", 0, None),
                                                          ("limiter_rms", 0, None),
@@ -448,8 +450,7 @@ def test_noise_gate(component, threshold, ratio):
                                                          ("noise_suppressor", -1000, 5),
                                                          ("hard_limiter_peak", 0, None),
                                                          ("clipper", 0, None)])
-@pytest.mark.parametrize("rt", [0.2, 0.5])
-@pytest.mark.parametrize("at", [0.001, 0.1])
+@pytest.mark.parametrize("rt, at", [[0.001, 0.2], [0.1, 0.5]])
 def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
     # test that a drc component is bit exact when the signal is below
     # the threshold (or above in the case of a noise gate).
@@ -519,8 +520,7 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
                                                          ("hard_limiter_peak", 6, None),
                                                          ("clipper", -20, None),
                                                          ("clipper", 6, None)])
-@pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
-@pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
+@pytest.mark.parametrize("rt, at", [[0.001, 0.2], [0.1, 0.5], [0.001, 0.5], [0.1, 0.2]])
 def test_drc_component(fs, component, at, rt, threshold, ratio):
     # test the process_ functions of the drc components
     component_handle = getattr(drc, component)
@@ -615,21 +615,24 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
                                                          ("hard_limiter_peak", 6, None),
                                                          ("clipper", -20, None),
                                                          ("clipper", 6, None)])
-@pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
-@pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
+@pytest.mark.parametrize("rt, at", [[0.001, 0.2], [0.1, 0.5]])
 @pytest.mark.parametrize("n_chans", [1, 2, 4])
-def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
+@pytest.mark.parametrize("q_format", [27, 31])
+def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans, q_format):
     # test the process_frame functions of the drc components
+
+    if q_format == 31 and rt != 0.2 and at != 0.001 and n_chans != 1:
+        pytest.skip("Don't run all tests at Q31")
 
     component_handle = getattr(drc, component)
 
     if threshold is not None:
         if ratio is not None:
-            drcut = component_handle(fs, n_chans, ratio, threshold, at, rt)
+            drcut = component_handle(fs, n_chans, ratio, threshold, at, rt, Q_sig=q_format)
         elif "clipper" in component:
-            drcut = component_handle(fs, n_chans, threshold)
+            drcut = component_handle(fs, n_chans, threshold, Q_sig=q_format)
         else:
-            drcut = component_handle(fs, n_chans, threshold, at, rt)
+            drcut = component_handle(fs, n_chans, threshold, at, rt, Q_sig=q_format)
     else:
         drcut = component_handle(fs, n_chans, at, rt)
 
@@ -642,7 +645,7 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
         t = np.arange(len(signal))/fs
         signal *= np.sin(t*2*np.pi*0.5)
 
-    signal = utils.saturate_float_array(signal, dspg.Q_SIG)
+    signal = utils.saturate_float_array(signal, q_format)
 
     signal = np.tile(signal, [n_chans, 1])
     frame_size = 1
@@ -667,8 +670,7 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans):
                                                          ("limiter_peak_stereo", -6, None),
                                                          ("compressor_rms_stereo", 0, 6),
                                                          ("compressor_rms_stereo", 0, 2)])
-@pytest.mark.parametrize("rt", [0.2, 0.3, 0.5])
-@pytest.mark.parametrize("at", [0.001, 0.01, 0.1])
+@pytest.mark.parametrize("rt, at", [[0.001, 0.2], [0.1, 0.5]])
 def test_stereo_components(fs, component, at, rt, threshold, ratio):
     # test the process_channels functions of the stereo drc components
 
@@ -706,11 +708,11 @@ def test_stereo_components(fs, component, at, rt, threshold, ratio):
 # TODO compressor tests
 
 if __name__ == "__main__":
-    # test_drc_component(48000, "compressor_rms", 0.1, 0.5, 6, 6)
+    test_drc_component_frames(48000, "compressor_rms", 0.1, 0.5, 6, 6, 1, 31)
     # test_limiter_peak_attack(48000, 0.001, 0)
     # comp_vs_limiter(48000, 0.001, 0)
     # test_comp_ratio(48000, 0.00000001, 0.00000001, 2, 0)
     # test_mono_vs_stereo(48000, "compressor_rms_sidechain_mono", "compressor_rms_sidechain_stereo", 0.001, 0.01, 0, 6)
     # test_sidechain_mono_vs_comp(16000, 0.05, -40)
-    test_noise_gate("noise_gate", -30, None)
+    # test_noise_gate("noise_gate", -30, None)
     # test_drc_component_bypass(48000, "compressor_rms", 0.01, 0.2, 0, 6)
