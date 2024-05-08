@@ -339,7 +339,7 @@ def test_delay(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            delay = t.stage(Delay, p.i)
+            delay = t.stage(Delay, p.i, max_delay=15, starting_delay=10)
         p.set_outputs(delay.o)
         return p
 

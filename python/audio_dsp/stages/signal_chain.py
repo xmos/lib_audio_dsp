@@ -243,6 +243,7 @@ class Switch(Stage):
         self.dsp_block.move_switch(position)
         return self
 
+
 class Delay(Stage):
     """
     Delay the input signal by a specified amount.
@@ -257,7 +258,8 @@ class Delay(Stage):
         The units of the delay, can be 'samples', 'ms' or 's'.
         Default is 'samples'.
     """
-    def __init__(self, max_delay, starting_delay, units = "samples", **kwargs):
+
+    def __init__(self, max_delay, starting_delay, units="samples", **kwargs):
         super().__init__(config=find_config("delay"), **kwargs)
         self.create_outputs(self.n_in)
         self.dsp_block = sc.delay(self.fs, self.n_in, max_delay, starting_delay, units)
@@ -267,7 +269,7 @@ class Delay(Stage):
 
         self.stage_memory_parameters = (self.n_in, self["max_delay"])
 
-    def set_delay(self, delay, units = "samples"):
+    def set_delay(self, delay, units="samples"):
         """
         Set the length of the delay line, will saturate at max_delay
 
