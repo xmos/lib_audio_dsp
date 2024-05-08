@@ -156,6 +156,7 @@ void adsp_volume_control_unmute(
 }
 
 static inline uint32_t _time_to_samples(float fs, float time, time_units_t units) {
+  xassert(time >= 0 && "Time has to be positive");
   switch (units) {
     case MILLISECONDS:
       return (uint32_t)(time * fs / 1000);
@@ -177,9 +178,9 @@ delay_t adsp_delay_init(
 ) {
   delay_t delay;
   delay.fs = fs;
+  xassert(delay.max_delay > 0 && "Max delay must be greater than 0");
   delay.max_delay = _time_to_samples(fs, max_delay, units);
   delay.delay = _time_to_samples(fs, starting_delay, units);
-  xassert(delay.max_delay > 0 && "Max delay must be greater than 0");
   xassert(delay.delay <= delay.max_delay && "Starting delay must be less or equal to the max delay");
   xassert(delay_heap != NULL && "Delay heap must be allocated");
   delay.buffer_idx = 0;

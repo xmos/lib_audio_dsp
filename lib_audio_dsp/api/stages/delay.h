@@ -14,7 +14,7 @@ typedef struct
     int frame_size;
 }delay_state_t;
 
-#define DELAY_STAGE_REQUIRED_MEMORY(N_CH, SAMPLES) (N_CH * (DELAY_DSP_REQUIRED_MEMORY_SAMPLES(SAMPLES)) + sizeof(delay_t))
+#define DELAY_STAGE_REQUIRED_MEMORY(N_CH, SAMPLES) (N_CH * (DELAY_DSP_REQUIRED_MEMORY_SAMPLES(SAMPLES) + sizeof(delay_t)))
 
 void delay_init(module_instance_t* instance,
                  adsp_bump_allocator_t* allocator,

@@ -35,7 +35,7 @@ void delay_init(module_instance_t* instance,
                 int n_outputs,
                 int frame_size)
 {
-    xassert(n_inputs == n_outputs && "Reverb should have the same number of inputs and outputs");
+    xassert(n_inputs == n_outputs && "Delay should have the same number of inputs and outputs");
     delay_state_t *state = instance->state;
     delay_config_t *config = instance->control.config;
 
@@ -43,15 +43,14 @@ void delay_init(module_instance_t* instance,
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    uint8_t *delay_heap = adsp_bump_allocator_malloc(allocator, DELAY_STAGE_REQUIRED_MEMORY(n_inputs, config->max_delay));
-    state->delay = (delay_t *)delay_heap;
+    state->delay = adsp_bump_allocator_malloc(allocator, n_inputs * sizeof(delay_t));
 
     for(int i = 0; i < n_inputs; i++)
     {
         state->delay[i].max_delay = config->max_delay;
         state->delay[i].delay = config->delay;
         state->delay[i].buffer_idx = 0;
-        state->delay[i].buffer = (int32_t *)&delay_heap[n_inputs * sizeof(delay_t) + i * DELAY_DSP_REQUIRED_MEMORY_SAMPLES(config->max_delay)];
+        state->delay[i].buffer = (int32_t *)adsp_bump_allocator_malloc(allocator, DELAY_DSP_REQUIRED_MEMORY_SAMPLES(config->max_delay));
     }
 }
 

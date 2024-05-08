@@ -778,6 +778,9 @@ class delay(dspg.dsp_block):
 
     def _get_delay_samples(self, delay: float, units: str) -> int:
         """Get the delay in samples from the specified units"""
+        if delay < 0:
+            raise ValueError("Delay must be positive")
+
         if units == "ms":
             delay = int(delay * self.fs / 1000)
         elif units == "s":
