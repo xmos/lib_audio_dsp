@@ -154,3 +154,60 @@ void adsp_volume_control_unmute(
     vol_ctl->target_gain = vol_ctl->saved_gain;
   }
 }
+
+static inline uint32_t _time_to_samples(float fs, float time, time_units_t units) {
+  xassert(time >= 0 && "Time has to be positive");
+  switch (units) {
+    case MILLISECONDS:
+      return (uint32_t)(time * fs / 1000);
+    case SECONDS:
+      return (uint32_t)(time * fs);
+    case SAMPLES:
+      return (uint32_t)time;
+    default:
+      xassert(0 && "Invalid time units");
+  }
+}
+
+delay_t adsp_delay_init(
+  float fs,
+  float max_delay,
+  float starting_delay,
+  time_units_t units,
+  void * delay_heap
+) {
+  delay_t delay;
+  delay.fs = fs;
+  xassert(delay.max_delay > 0 && "Max delay must be greater than 0");
+  delay.max_delay = _time_to_samples(fs, max_delay, units);
+  delay.delay = _time_to_samples(fs, starting_delay, units);
+  xassert(delay.delay <= delay.max_delay && "Starting delay must be less or equal to the max delay");
+  xassert(delay_heap != NULL && "Delay heap must be allocated");
+  delay.buffer_idx = 0;
+  delay.buffer = (int32_t *)delay_heap;
+  return delay;
+}
+
+void adsp_set_delay(
+  delay_t * delay,
+  float delay_time,
+  time_units_t units
+) {
+  uint32_t new_delay = _time_to_samples(delay->fs, delay_time, units);
+  delay->delay = (new_delay <= delay->max_delay) ? new_delay : delay->max_delay;
+}
+
+int32_t adsp_delay(
+  delay_t * delay,
+  int32_t samp
+) {
+  int32_t out = delay->buffer[delay->buffer_idx];
+  delay->buffer[delay->buffer_idx] = samp;
+  // Could do this with a modulo operation,
+  // but it would break for when the delay is 0 
+  // and use the division unit
+  if (++delay->buffer_idx >= delay->delay) {
+    delay->buffer_idx = 0;
+  }
+  return out;
+}

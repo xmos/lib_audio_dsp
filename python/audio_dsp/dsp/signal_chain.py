@@ -759,6 +759,8 @@ class delay(dspg.dsp_block):
         max_delay = self._get_delay_samples(max_delay, units)
         starting_delay = self._get_delay_samples(starting_delay, units)
 
+        if max_delay <= 0:
+            raise ValueError("Max delay must be greater than zero")
         if starting_delay > max_delay:
             raise ValueError("Starting delay cannot be greater than max delay")
 
@@ -776,6 +778,9 @@ class delay(dspg.dsp_block):
 
     def _get_delay_samples(self, delay: float, units: str) -> int:
         """Get the delay in samples from the specified units"""
+        if delay < 0:
+            raise ValueError("Delay must be positive")
+
         if units == "ms":
             delay = int(delay * self.fs / 1000)
         elif units == "s":
@@ -788,7 +793,7 @@ class delay(dspg.dsp_block):
 
     def set_delay(self, delay: float, units: str = "samples") -> None:
         """
-        Set the length of the delay line, must be < max_delay
+        Set the length of the delay line, will saturate at max_delay
 
         Parameters
         ----------
@@ -803,7 +808,7 @@ class delay(dspg.dsp_block):
         if delay <= self.max_delay:
             self.delay = delay
         else:
-            delay = self.max_delay
+            self.delay = self.max_delay
             Warning("Delay cannot be greater than max delay, setting to max delay")
         return
 
@@ -822,8 +827,11 @@ class delay(dspg.dsp_block):
             List of delayed samples.
         """
         y = self.buffer[:, self.buffer_idx].copy()
-        self.buffer[:, self.buffer_idx] = sample.copy()
-        self.buffer_idx = (self.buffer_idx + 1) % self.delay
+        self.buffer[:, self.buffer_idx] = sample
+        # not using the modulo because it breaks for when delay = 0
+        self.buffer_idx += 1
+        if self.buffer_idx >= self.delay:
+            self.buffer_idx = 0
         return y.tolist()
 
     def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
