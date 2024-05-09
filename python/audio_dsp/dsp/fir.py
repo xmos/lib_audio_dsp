@@ -29,7 +29,7 @@ class fir_direct(dspg.dsp_block):
         raw_coeffs = np.loadtxt(coeffs_path)
         self.taps = len(raw_coeffs)
 
-        if coeff_scaling is None or coeff_scaling.lower() is "none":
+        if coeff_scaling is None or coeff_scaling.lower() == "none":
             pass
         elif coeff_scaling.lower() == "unity_gain":
             self.scale_coeffs_unity_gain(coeffs)
@@ -54,6 +54,7 @@ class fir_direct(dspg.dsp_block):
         coeff_sum = np.sum(np.abs(coeffs))
 
         pass
+        return
 
     def check_coeff_scaling(self, coeffs):
         headroom = 2**(31 - self.Q_sig)
@@ -61,6 +62,21 @@ class fir_direct(dspg.dsp_block):
 
         if coeff_sum > headroom:
             warnings.warn("Headroom of %d dB is not sufficient to guarentee no clipping." % utils.db(headroom))
+
+        return
+
+    def make_int_coeffs(self, coeffs):
+        # check headroom on coefficients, preparing for multiplicaiton
+        # by int32_max
+        max_coeff = np.max(coeffs)
+        max_coeff_headroom = -np.ceil(np.log2(max_coeff))
+
+
+        # we have 43 bits in the accumulator (from summing 8x 40b accs),
+        # so can be 12 bits
+        coeff_sum = np.sum(np.abs(coeffs))
+        coeff_sum_headroom = -np.ceil(np.log2(coeff_sum))
+
 
     def get_coeffs(self, coeffs_path):
         coeffs = np.loadtxt(coeffs_path)
@@ -71,8 +87,8 @@ class fir_direct(dspg.dsp_block):
         args.output_headroom = 0
         scaled_coefs_s32, shift, exponent_diff = find_filter_parameters(args)
 
-        coeffs = np.flip(coeffs)
-        int_coeffs = np.flip(scaled_coefs_s32).tolist()
+        # coeffs = (coeffs)
+        int_coeffs = (scaled_coefs_s32).tolist()
         return coeffs, int_coeffs, shift, exponent_diff, taps
 
     def reset_state(self) -> None:
@@ -99,13 +115,14 @@ class fir_direct(dspg.dsp_block):
         """
         # put new sample in buffer        
         self.buffer[channel, self.buffer_idx[channel]] = sample
-
-        # increment buffer so we point to the oldest sample
-        self.buffer_idx[channel] += 1
-        if self.buffer_idx[channel] >= self.n_taps:
-            self.buffer_idx[channel] = 0
-
         this_idx = self.buffer_idx[channel]
+
+        # decrement buffer so we point to the oldest sample
+        if self.buffer_idx[channel] == 0:
+            self.buffer_idx[channel] = self.n_taps - 1
+        else:
+            self.buffer_idx[channel] -= 1
+
 
         # do the convolution in two halves, [oldest:end] and [0:oldest]
         y = np.dot(self.buffer[channel, this_idx:], self.coeffs[:self.n_taps-this_idx])
@@ -138,13 +155,13 @@ class fir_direct(dspg.dsp_block):
 
         # put new sample in buffer
         self.buffer_int[channel][self.buffer_idx[channel]] = sample_int
-
-        # increment buffer so we point to the oldest sample
-        self.buffer_idx[channel] += 1
-        if self.buffer_idx[channel] >= self.n_taps:
-            self.buffer_idx[channel] = 0
-
         this_idx = self.buffer_idx[channel]
+
+        # decrement buffer so we point to the oldest sample
+        if self.buffer_idx[channel] == 0:
+            self.buffer_idx[channel] = self.n_taps - 1
+        else:
+            self.buffer_idx[channel] -= 1
 
         # do the convolution in two halves, [oldest:end] and [0:oldest]
         y = 0
