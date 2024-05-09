@@ -23,14 +23,44 @@ class fir_direct(dspg.dsp_block):
 
     """
 
-    def __init__(self, fs: float, n_chans: int, coeffs_path: Path, Q_sig: int = dspg.Q_SIG):
+    def __init__(self, fs: float, n_chans: int, coeffs_path: Path, coeff_scaling: str="none", Q_sig: int = dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
+
+        raw_coeffs = np.loadtxt(coeffs_path)
+        self.taps = len(raw_coeffs)
+
+        if coeff_scaling is None or coeff_scaling.lower() is "none":
+            pass
+        elif coeff_scaling.lower() == "unity_gain":
+            self.scale_coeffs_unity_gain(coeffs)
+        elif coeff_scaling.lower() == "never_clip":
+            pass
+        else:
+            raise ValueError("Unknown coeff_scaling requested")
+
 
         self.coeffs, self.coeffs_int, self.shift, self.exponent_diff, self.n_taps = self.get_coeffs(coeffs_path)
         self.buffer = np.zeros((self.n_chans, self.n_taps))
         self.buffer_int = [[0]*self.n_taps]*self.n_chans
         self.buffer_idx = [0] * self.n_chans
         self.buffer_idx_int = [0] * self.n_chans
+
+    def scale_coeffs_unity_gain(self, coeffs):
+        coeff_sum = np.sum(coeffs)
+        coeffs /= coeff_sum
+        return coeffs
+
+    def scale_coeffs_never_clip(self, coeffs):
+        coeff_sum = np.sum(np.abs(coeffs))
+
+        pass
+
+    def check_coeff_scaling(self, coeffs):
+        headroom = 2**(31 - self.Q_sig)
+        coeff_sum = np.sum(np.abs(coeffs))
+
+        if coeff_sum > headroom:
+            warnings.warn("Headroom of %d dB is not sufficient to guarentee no clipping." % utils.db(headroom))
 
     def get_coeffs(self, coeffs_path):
         coeffs = np.loadtxt(coeffs_path)
@@ -42,8 +72,14 @@ class fir_direct(dspg.dsp_block):
         scaled_coefs_s32, shift, exponent_diff = find_filter_parameters(args)
 
         coeffs = np.flip(coeffs)
-        return coeffs, scaled_coefs_s32, shift, exponent_diff, taps
-        pass
+        int_coeffs = np.flip(scaled_coefs_s32).tolist()
+        return coeffs, int_coeffs, shift, exponent_diff, taps
+
+    def reset_state(self) -> None:
+        """Reset all the delay line values to zero."""
+        self.buffer = np.zeros((self.n_chans, self.n_taps))
+        self.buffer_int = [[0]*self.n_taps]*self.n_chans
+        return
 
     def process(self, sample: float, channel: int = 0) -> float:
         """Update the buffer with the current sample and convolve with
@@ -75,6 +111,7 @@ class fir_direct(dspg.dsp_block):
         y = np.dot(self.buffer[channel, this_idx:], self.coeffs[:self.n_taps-this_idx])
         y += np.dot(self.buffer[channel, :this_idx], self.coeffs[self.n_taps-this_idx:])
 
+        y = utils.saturate_float(y, self.Q_sig)
 
         return y
 
@@ -98,12 +135,31 @@ class fir_direct(dspg.dsp_block):
             The processed output sample.
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
-        # for rounding
-        acc = 1 << (Q_GAIN - 1)
-        acc += sample_int * self.gain_int
-        y = utils.int32_mult_sat_extract(acc, 1, Q_GAIN)
 
-        y_flt = float(y) * 2**-self.Q_sig
+        # put new sample in buffer
+        self.buffer_int[channel][self.buffer_idx[channel]] = sample_int
+
+        # increment buffer so we point to the oldest sample
+        self.buffer_idx[channel] += 1
+        if self.buffer_idx[channel] >= self.n_taps:
+            self.buffer_idx[channel] = 0
+
+        this_idx = self.buffer_idx[channel]
+
+        # do the convolution in two halves, [oldest:end] and [0:oldest]
+        y = 0
+        for n in range(self.n_taps-this_idx):
+            y += utils.vpu_mult(self.buffer_int[channel][this_idx + n], self.coeffs_int[n])
+
+        for n in range(this_idx):
+            y += utils.vpu_mult(self.buffer_int[channel][n], self.coeffs_int[self.n_taps - this_idx + n])
+
+        # check accumulator hasn't overflown
+        y = utils.int40(y)
+
+        # shift accumulator
+
+        y_flt = utils.int32_to_float(y, self.Q_sig)
 
         return y_flt
 
