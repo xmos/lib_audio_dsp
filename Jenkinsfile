@@ -192,7 +192,7 @@ pipeline {
                           [
                           "test/reverb",
                           "test/signal_chain",
-                          // "test/fir"
+                          "test/fir"
                           ].each {
                             sh "cmake -S ${it} -B ${it}/build"
                             sh "xmake -C ${it}/build -j"
