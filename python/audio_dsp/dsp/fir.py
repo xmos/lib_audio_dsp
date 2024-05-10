@@ -39,31 +39,69 @@ class fir_direct(dspg.dsp_block):
             raise ValueError("Unknown coeff_scaling requested")
 
 
-        self.coeffs, self.coeffs_int, self.shift, self.exponent_diff, self.n_taps = self.get_coeffs(coeffs_path)
+        self.coeffs = np.loadtxt(coeffs_path)
+        self.n_taps = len(self.coeffs)
+        self.coeffs_int, self.shift = self.check_coeff_scaling(self.coeffs)
+
+        # self.coeffs, self.coeffs_int, self.shift, self.exponent_diff, self.n_taps = self.get_coeffs(coeffs_path)
         self.buffer = np.zeros((self.n_chans, self.n_taps))
         self.buffer_int = [[0]*self.n_taps]*self.n_chans
         self.buffer_idx = [0] * self.n_chans
         self.buffer_idx_int = [0] * self.n_chans
 
     def scale_coeffs_unity_gain(self, coeffs):
-        coeff_sum = np.sum(coeffs)
-        coeffs /= coeff_sum
+        coeff_gain = np.sum(coeffs)
+        coeffs /= coeff_gain
         return coeffs
 
     def scale_coeffs_never_clip(self, coeffs):
-        coeff_sum = np.sum(np.abs(coeffs))
+        coeff_energy = np.sum(np.abs(coeffs))
 
         pass
         return
 
     def check_coeff_scaling(self, coeffs):
-        headroom = 2**(31 - self.Q_sig)
-        coeff_sum = np.sum(np.abs(coeffs))
+        
+        int32_max = 2**31 - 1
 
-        if coeff_sum > headroom:
-            warnings.warn("Headroom of %d dB is not sufficient to guarentee no clipping." % utils.db(headroom))
+        # scale to Q30, to match VPU shift but keep as double for now
+        # until we see how many bits we have
+        scaled_coeffs = coeffs * (2**30)
 
-        return
+        # find how many bits we can (or need to) shift the coeffs by
+        max_coeff = np.max(np.abs(scaled_coeffs))
+        coeff_headroom = max_coeff/int32_max
+        coeff_headroom_bits = -np.ceil(np.log2(coeff_headroom))
+        shift = coeff_headroom_bits
+
+        # shift the scaled coeffs
+        scaled_coeffs *= 2**coeff_headroom_bits
+
+        # headroom = 2**(31 - self.Q_sig)
+        # coeff_gain = np.sum(coeffs)
+
+        # if coeff_gain > headroom:
+        #     warnings.warn("Headroom of %d dB is not sufficient to guarentee no clipping." % utils.db(headroom))
+
+        # VPU stripes the convolution across 8 40b accumulators
+        vpu_acc_max = 0
+        for n in range(8):
+            this_acc = np.sum(np.abs(scaled_coeffs[n::8]))
+            vpu_acc_max = max(vpu_acc_max, this_acc)
+
+        vpu_acc_headroom = vpu_acc_max/(2**39 - 1)
+
+        if vpu_acc_headroom > 1:
+            # accumulator can saturate, need to shift coeffs down
+            vpu_acc_headroom_bits = -np.ceil(np.log2(vpu_acc_headroom))
+            # shift the scaled coeffs
+            scaled_coeffs *= 2**vpu_acc_headroom_bits
+            shift += vpu_acc_headroom_bits
+
+        # round the coeffs
+        int_coeffs = np.round(scaled_coeffs).astype(int).tolist()
+
+        return int_coeffs, int(shift)
 
     def make_int_coeffs(self, coeffs):
         # check headroom on coefficients, preparing for multiplicaiton
@@ -175,15 +213,22 @@ class fir_direct(dspg.dsp_block):
         y = utils.int40(y)
 
         # shift accumulator
+        if self.shift > 0:
+            y += (1 << (self.shift - 1))
+            y = y >> self.shift
+        elif self.shift < 0:
+            y = y << -self.shift
+
+        # saturate
+        y = utils.saturate_int64_to_int32(y)
 
         y_flt = utils.int32_to_float(y, self.Q_sig)
 
         return y_flt
 
-    def freq_response(self, nfft: int = 512) -> tuple[np.ndarray, np.ndarray]:
+    def freq_response(self, nfft: int = 32768) -> tuple[np.ndarray, np.ndarray]:
         """
-        Calculate the frequency response of the gain, assumed to be a
-        flat response scaled by the gain.
+        Calculate the frequency response of the filter
 
         Parameters
         ----------
@@ -198,7 +243,7 @@ class fir_direct(dspg.dsp_block):
 
         """
         w = np.fft.rfftfreq(nfft)
-        h = np.ones_like(w) * self.gain
+        h = np.fft.rfft(self.coeffs, nfft)
         return w, h
 
 if __name__ == "__main__":
