@@ -20,7 +20,6 @@ gen_dir = Path(__file__).parent / "autogen"
 def test_basic(coeff_path):
     fut = fir.fir_direct(48000, 1, Path(gen_dir, coeff_path))
 
-
     signal = sg.pink_noise(48000, 0.1, 0.5)
     # signal = np.zeros(1000)
     # signal[0] = 1
@@ -40,8 +39,10 @@ def test_basic(coeff_path):
         out_int[n] = fut.process_xcore(signal[n])
 
     # difference in convolution implementations means flt and ref aren't
-    # bit exact
-    np.testing.assert_allclose(out_flt, out_ref, atol=2**-52)
+    # bit exact, especially after saturation!
+    unsaturated = ((out_ref > float(-(2 ** (31 - fut.Q_sig)))) & 
+                    (out_ref < float((2**31 - 1) / 2**fut.Q_sig)))
+    np.testing.assert_allclose(out_flt[unsaturated], out_ref[unsaturated], atol=2**-52)
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
     top_half = utils.db(out_flt) > -100
@@ -55,4 +56,5 @@ def test_basic(coeff_path):
 
 if __name__ =="__main__":
     # test_basic("simple_low_pass.txt")
-    test_basic("comb.txt")
+    for n in range(100):
+        test_basic("comb.txt")
