@@ -23,10 +23,14 @@ def build(source_dir, build_dir, target):
         print("Configuring...\r")
         if cache.exists():
             # Generator is already known by cmake
+            print(f"cmake -S {source_dir} -B {build_dir}")
             ret = subprocess.run([*(f"cmake -S {source_dir} -B {build_dir}".split())])
         else:
             # need to configure, default to Ninja because its better
+
             generator = "Ninja" if shutil.which("ninja") else "Unix Makefiles"
+            print(f"cmake -S {source_dir} -B {build_dir} -G"+generator)
+
             ret = subprocess.run([*(f"cmake -S {source_dir} -B {build_dir} -G".split()), generator])
         if ret.returncode:
             print("Configuring failed, check log for details\r")

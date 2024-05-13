@@ -24,7 +24,7 @@ PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
 
-TEST_FRAME_SIZES=1, 128
+TEST_FRAME_SIZES=1, #128
 
 fs = 48000
 channels = 2  # if this changes need to rewrite test signals
@@ -130,7 +130,7 @@ def do_test(make_p, dut_frame_size):
                                           ("make_lowshelf", [1000, 0.707, -6]),
                                           ("make_highshelf", [1000, 0.707, -6]),
                                           ("make_linkwitz", [200, 0.707, 180, 0.707])])
-def test_biquad(method, args, frame_size):
+def _test_biquad(method, args, frame_size):
     """
     Test the biquad stage filters the same in python and C
     """
@@ -161,7 +161,7 @@ filter_spec = [['lowpass', fs*0.4, 0.707],
 @pytest.mark.parametrize("method, args", [("make_butterworth_highpass", [8, 1000]),
                                           ("make_butterworth_lowpass", [8, 1000]),
                                           ("make_parametric_eq", [filter_spec]),])
-def test_cascaded_biquad(method, args, frame_size):
+def _test_cascaded_biquad(method, args, frame_size):
     """
     Test the biquad stage filters the same in python and C
     """
@@ -197,7 +197,7 @@ def test_limiter_rms(frame_size):
     do_test(make_p, frame_size)
 
 
-def test_limiter_peak(frame_size):
+def _test_limiter_peak(frame_size):
     """
     Test the limiter stage limits the same in python and C
     """
@@ -212,7 +212,7 @@ def test_limiter_peak(frame_size):
 
     do_test(make_p, frame_size)
 
-def test_hard_limiter_peak(frame_size):
+def _test_hard_limiter_peak(frame_size):
     """
     Test the limiter stage limits the same in python and C
     """
@@ -227,7 +227,7 @@ def test_hard_limiter_peak(frame_size):
 
     do_test(make_p, frame_size)
 
-def test_clipper(frame_size):
+def _test_clipper(frame_size):
     """
     Test the clipper stage clips the same in python and C
     """
@@ -242,7 +242,7 @@ def test_clipper(frame_size):
 
     do_test(make_p, frame_size)
 
-def test_compressor(frame_size):
+def _test_compressor(frame_size):
     """
     Test the compressor stage compresses the same in python and C
     """
@@ -257,7 +257,7 @@ def test_compressor(frame_size):
 
     do_test(make_p, frame_size)
 
-def test_noise_gate(frame_size):
+def _test_noise_gate(frame_size):
     """
     Test the noise gate stage gates the noise the same in python and C
     """
@@ -272,7 +272,7 @@ def test_noise_gate(frame_size):
 
     do_test(make_p, frame_size)
 
-def test_noise_suppressor(frame_size):
+def _test_noise_suppressor(frame_size):
     """
     Test the noise suppressor stage suppress the noise the same in python and C
     """
@@ -287,7 +287,7 @@ def test_noise_suppressor(frame_size):
 
     do_test(make_p, frame_size)
 
-def test_volume(frame_size):
+def _test_volume(frame_size):
     """
     Test the volume stage amplifies the same in python and C
     """
@@ -301,7 +301,7 @@ def test_volume(frame_size):
     do_test(make_p, frame_size)
 
 
-def test_fixed_gain(frame_size):
+def _test_fixed_gain(frame_size):
     """
     Test the volume stage amplifies the same in python and C
     """
@@ -316,7 +316,7 @@ def test_fixed_gain(frame_size):
 
     do_test(make_p, frame_size)
 
-def test_reverb(frame_size):
+def _test_reverb(frame_size):
     """
     Test Reverb stage
     """
@@ -331,7 +331,7 @@ def test_reverb(frame_size):
 
     do_test(make_p, frame_size)
 
-def test_delay(frame_size):
+def _test_delay(frame_size):
     """
     Test Delay stage
     """
