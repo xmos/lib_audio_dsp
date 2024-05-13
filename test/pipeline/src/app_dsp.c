@@ -102,6 +102,7 @@ void dsp_control_thread(chanend_t c_control, module_instance_t* modules, size_t 
 
 // do dsp
 void app_dsp_main(chanend_t c_control) {
+    m_dsp = adsp_auto_pipeline_init();
 
     PAR_JOBS(
         PJOB(adsp_auto_pipeline_main, (m_dsp)),
