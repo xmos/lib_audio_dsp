@@ -37,8 +37,7 @@ class fir_direct(dspg.dsp_block):
         self.coeffs_int, self.shift = self.check_coeff_scaling(self.coeffs)
 
         # self.coeffs, self.coeffs_int, self.shift, self.exponent_diff, self.n_taps = self.get_coeffs(coeffs_path)
-        self.buffer = np.zeros((self.n_chans, self.n_taps))
-        self.buffer_int = [[0]*self.n_taps]*self.n_chans
+        self.reset_state()
         self.buffer_idx = [0] * self.n_chans
         self.buffer_idx_int = [0] * self.n_chans
 
@@ -125,7 +124,7 @@ class fir_direct(dspg.dsp_block):
     def reset_state(self) -> None:
         """Reset all the delay line values to zero."""
         self.buffer = np.zeros((self.n_chans, self.n_taps))
-        self.buffer_int = [[0]*self.n_taps]*self.n_chans
+        self.buffer_int = [[0]*self.n_taps for _ in range(self.n_chans)]
         return
 
     def process(self, sample: float, channel: int = 0) -> float:
