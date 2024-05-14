@@ -355,7 +355,7 @@ def test_fir(frame_size):
     filter_path = Path(Path(__file__).parent / "autogen", "simple_low_pass.txt")
 
     def make_p(fr):
-        p = Pipeline(1, frame_size=fr)
+        p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
             fir = t.stage(Fir_Direct, p.i, coeffs_path=filter_path)
         p.set_outputs(fir.o)

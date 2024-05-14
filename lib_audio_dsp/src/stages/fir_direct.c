@@ -23,7 +23,7 @@ void fir_direct_process(int32_t ** input, int32_t ** output, void * app_data_sta
 
         int j = 0;
         do {
-            *out++ = filter_fir_s32(&state->fir_direct[i].filter, *in++);
+            *out++ = filter_fir_s32(&(state->fir_direct[i].filter), *in++);
         } while(++j < state->frame_size);
     } while(++i < state->n_outputs);
 }
@@ -51,7 +51,7 @@ void fir_direct_init(module_instance_t* instance,
     for(int i = 0; i < n_inputs; i++)
     {
         state->fir_direct[i].buffer = (int32_t *)adsp_bump_allocator_malloc(allocator, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
-        filter_fir_s32_init(&state->fir_direct[i].filter, state->fir_direct[i].buffer, state->n_taps, state->coeffs, state->shift);
+        filter_fir_s32_init(&(state->fir_direct[i].filter), state->fir_direct[i].buffer, state->n_taps, state->coeffs, state->shift);
     }
 }
 
