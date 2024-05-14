@@ -40,6 +40,7 @@ void fir_direct_init(module_instance_t* instance,
     fir_direct_state_t *state = instance->state;
     fir_direct_config_t *config = instance->control.config;
 
+    memset(state, 0, sizeof(fir_direct_state_t));
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
@@ -52,6 +53,7 @@ void fir_direct_init(module_instance_t* instance,
     for(int i = 0; i < n_inputs; i++)
     {
         state->fir_direct[i].buffer = (int32_t *)adsp_bump_allocator_malloc(allocator, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
+        memset(state->fir_direct[i].buffer, 0, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
         filter_fir_s32_init(&(state->fir_direct[i].filter), state->fir_direct[i].buffer, state->n_taps, state->coeffs, state->shift);
     }
 }
