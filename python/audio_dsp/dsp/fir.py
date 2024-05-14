@@ -11,13 +11,6 @@ from audio_dsp.dsp import generic as dspg
 from audio_dsp.dsp import utils
 
 
-# temporary mess
-this_dir = os.path.dirname(os.path.abspath((__file__)))
-sys.path.append(str(Path(this_dir, "..", "..", "..", "..", "lib_xcore_math", "lib_xcore_math", "script").resolve()))
-
-from gen_fir_filter_s32 import find_filter_parameters
-
-
 class fir_direct(dspg.dsp_block):
     """An FIR filter, implemented in direct form in the time domain
 
@@ -116,18 +109,18 @@ class fir_direct(dspg.dsp_block):
         coeff_sum_headroom = -np.ceil(np.log2(coeff_sum))
 
 
-    def get_coeffs(self, coeffs_path):
-        coeffs = np.loadtxt(coeffs_path)
-        taps = len(coeffs)
-        args = types.SimpleNamespace()
-        args.filter_coefficients = coeffs
-        args.input_headroom = 0
-        args.output_headroom = 0
-        scaled_coefs_s32, shift, exponent_diff = find_filter_parameters(args)
+    # def get_coeffs(self, coeffs_path):
+    #     coeffs = np.loadtxt(coeffs_path)
+    #     taps = len(coeffs)
+    #     args = types.SimpleNamespace()
+    #     args.filter_coefficients = coeffs
+    #     args.input_headroom = 0
+    #     args.output_headroom = 0
+    #     scaled_coefs_s32, shift, exponent_diff = find_filter_parameters(args)
 
-        # coeffs = (coeffs)
-        int_coeffs = (scaled_coefs_s32).tolist()
-        return coeffs, int_coeffs, shift, exponent_diff, taps
+    #     # coeffs = (coeffs)
+    #     int_coeffs = (scaled_coefs_s32).tolist()
+    #     return coeffs, int_coeffs, shift, exponent_diff, taps
 
     def reset_state(self) -> None:
         """Reset all the delay line values to zero."""
