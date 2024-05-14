@@ -21,7 +21,7 @@ static module_instance_t* get_module_instance(module_instance_t *modules, uint32
             return &modules[i];
         }
     }
-    debug_printf("ERROR: Cannot find a module for the instance-id %lu\n", res_id);
+    printf("ERROR: Cannot find a module for the instance-id %lu\n", res_id);
     xassert(0);
     return NULL;
 }
@@ -47,7 +47,7 @@ static void get_control_cmd_config_offset(module_instance_t *module, uint8_t cmd
             printintln(332);
 
     }
-    debug_printf("ERROR: cmd_id %d not found in module_type %d\n", cmd_id, module_type);
+    printf("ERROR: cmd_id %d not found in module_type %d\n", cmd_id, module_type);
     xassert(0);
     return;
 }
@@ -64,7 +64,7 @@ adsp_control_status_t adsp_read_module_config(module_instance_t* modules, // Arr
     get_control_cmd_config_offset(module, cmd->cmd_id, &offset, &size);
     if(size != cmd->payload_len)
     {
-        debug_printf("ERROR: payload_len mismatch. Expected %lu, but received %u\n", size, cmd->payload_len);
+        printf("ERROR: payload_len mismatch. Expected %lu, but received %u\n", size, cmd->payload_len);
         xassert(0);
     }
     config_rw_state_t config_state = module->control.config_rw_state;
@@ -89,7 +89,7 @@ adsp_control_status_t adsp_read_module_config(module_instance_t* modules, // Arr
         return ADSP_CONTROL_SUCCESS;
     }
     // Should never come here
-    debug_printf("adsp_read_module_config(): Unexpected config state %d\n", config_state);
+    printf("adsp_read_module_config(): Unexpected config state %d\n", config_state);
     xassert(0);
     return ADSP_CONTROL_ERROR;
 }
@@ -112,7 +112,7 @@ adsp_control_status_t adsp_write_module_config(module_instance_t* modules, // Ar
 
     if(size != cmd->payload_len)
     {
-        debug_printf("ERROR: payload_len mismatch. Expected %lu, but received %u\n", size, cmd->payload_len);
+        printf("ERROR: payload_len mismatch. Expected %lu, but received %u\n", size, cmd->payload_len);
         xassert(0);
     }
     printintln(222);
@@ -132,7 +132,7 @@ adsp_control_status_t adsp_write_module_config(module_instance_t* modules, // Ar
     {
         printintln(224);
 
-        debug_printf("WARNING: Previous write to the config not applied by the module!! Ignoring write command.");
+        printf("WARNING: Previous write to the config not applied by the module!! Ignoring write command.");
         return ADSP_CONTROL_BUSY;
     }
 }

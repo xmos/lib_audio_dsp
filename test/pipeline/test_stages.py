@@ -188,10 +188,11 @@ def test_limiter_rms(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            lim = t.stage(LimiterRMS, p.i)
+            lim = t.stage(LimiterRMS, p.i, label="test_xyz")
         p.set_outputs(lim.o)
 
         lim.make_limiter_rms(-6, 0.001, 0.1)
+        print(f"\n\n\npipeline in test: {p.resolve_pipeline()['configs'][2]}")
         return p
 
     do_test(make_p, frame_size)

@@ -102,6 +102,8 @@ void fileio_task(chanend_t c_control)
     assert(test_config.input_filename != NULL);
     assert(test_config.output_filename != NULL);
 
+    chan_out_word(c_control, 0x12345678);
+
     file_t input_file, output_file;
     int ret = file_open(&input_file, test_config.input_filename, "rb");
     assert((!ret) && "Failed to open file");
@@ -146,7 +148,6 @@ void fileio_task(chanend_t c_control)
     printf("bytes_per_frame = %d\n", bytes_per_frame);
     printf("Block count = %d\n", block_count);
     printf("Frame size = %d\n", app_dsp_frame_size());
-    chan_out_word(c_control, 0x12345678);
     int32_t input[ FILEREAD_CHUNK_SIZE * MAX_CHANNELS] = {0}; // Array for storing interleaved input read from wav file
     int32_t output[FILEREAD_CHUNK_SIZE * MAX_CHANNELS] = {0};
     xassert(FILEREAD_CHUNK_SIZE % app_dsp_frame_size() ==0); // frame size must be a factor of read size

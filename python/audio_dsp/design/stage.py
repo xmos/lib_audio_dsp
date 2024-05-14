@@ -204,6 +204,7 @@ class Stage(Node):
             self._control_fields = {
                 name: ValueControlField() for name in self.yaml_dict["module"][self.name].keys()
             }
+            #print(f"\n\n\n {self.yaml_dict['module'][self.name].keys()} self._control_fields {self._control_fields}")
         elif name is not None:
             self.name = name
             self._control_fields = {}
@@ -249,6 +250,7 @@ class Stage(Node):
             raise KeyError(
                 f"{key} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}"
             )
+        #print(f"\n\nkey: {key}, value: {value}")
         self._control_fields[key].value = value
 
     def __getitem__(self, key):
@@ -257,6 +259,7 @@ class Stage(Node):
             raise KeyError(
                 f"{key} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}"
             )
+        #print(f"\n\n{key} {self._control_fields[key].value}")
         return self._control_fields[key].value
 
     def set_control_field_cb(self, field, getter, setter=None):
@@ -276,7 +279,7 @@ class Stage(Node):
             raise KeyError(
                 f"{field} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}"
             )
-
+        print(f"\n\n\nfield {field}")
         self._control_fields[field] = PropertyControlField(getter, setter)
 
     def get_config(self):
@@ -289,9 +292,11 @@ class Stage(Node):
             current control fields
         """
         ret = {}
+        print(f" self._control_fields.items() { self._control_fields.items()}")
         for command_name, cf in self._control_fields.items():
             if cf.value is not None:
                 ret[command_name] = cf.value
+                print(command_name, cf.value)
         return ret
 
     def process(self, in_channels):
