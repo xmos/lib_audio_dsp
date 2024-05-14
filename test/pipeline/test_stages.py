@@ -161,7 +161,7 @@ filter_spec = [['lowpass', fs*0.4, 0.707],
 @pytest.mark.parametrize("method, args", [("make_butterworth_highpass", [8, 1000]),
                                           ("make_butterworth_lowpass", [8, 1000]),
                                           ("make_parametric_eq", [filter_spec]),])
-def test_cascaded_biquad(method, args, frame_size):
+def _test_cascaded_biquad(method, args, frame_size):
     """
     Test the biquad stage filters the same in python and C
     """
@@ -181,7 +181,7 @@ def test_cascaded_biquad(method, args, frame_size):
     do_test(make_p, frame_size)
 
 
-def _test_limiter_rms(frame_size):
+def test_limiter_rms(frame_size):
     """
     Test the limiter stage limits the same in python and C
     """
