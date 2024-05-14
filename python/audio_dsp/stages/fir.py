@@ -28,7 +28,7 @@ class Fir_Direct(Stage):
     def make_fir_direct(
         self, coeffs_path, coeff_scaling=None, Q_sig=dspg.Q_SIG
     ):
-        """Update compressor configuration based on new parameters."""
+        """Update fir configuration based on new parameters."""
         self.details = dict(
             coeffs_path-coeffs_path,
             coeff_scaling=coeff_scaling,

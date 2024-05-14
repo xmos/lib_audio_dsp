@@ -20,10 +20,11 @@ void fir_direct_process(int32_t ** input, int32_t ** output, void * app_data_sta
     do {
         int32_t *in = input[i];
         int32_t *out = output[i];
+        filter_fir_s32_t* this_filter = &(state->fir_direct[i].filter);
 
         int j = 0;
         do {
-            *out++ = filter_fir_s32(&(state->fir_direct[i].filter), *in++);
+            *out++ = filter_fir_s32(this_filter, *in++);
         } while(++j < state->frame_size);
     } while(++i < state->n_outputs);
 }
