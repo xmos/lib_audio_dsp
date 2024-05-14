@@ -1,0 +1,14 @@
+module:
+  fir_direct:
+    n_taps:
+      type: uint32_t
+    coeffs:
+      type: int32_t
+      size: 512
+      attribute: DWORD_ALIGNED
+    shift:
+      type: int32_t
+includes:
+  - "stdint.h"
+  - "stages/adsp_module.h"
+
