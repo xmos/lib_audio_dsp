@@ -30,13 +30,8 @@ static void get_control_cmd_config_offset(module_instance_t *module, uint8_t cmd
 {
     uint8_t module_type = module->control.module_type;
     module_config_offsets_t *config_offsets = ptr_module_offsets[module_type];
-    printintln(330);
-    printintln(module->control.num_control_commands);
     for(int i=0; i<module->control.num_control_commands; i++)
     {
-            printintln(331);
-            printintln(cmd_id);
-            printintln(config_offsets[i].cmd_id);
 
         if(cmd_id == (uint8_t)config_offsets[i].cmd_id)
         {
@@ -44,7 +39,6 @@ static void get_control_cmd_config_offset(module_instance_t *module, uint8_t cmd
             *size = config_offsets[i].size;
             return;
         }
-            printintln(332);
 
     }
     printf("ERROR: cmd_id %d not found in module_type %d\n", cmd_id, module_type);
@@ -101,26 +95,21 @@ adsp_control_status_t adsp_write_module_config(module_instance_t* modules, // Ar
                                             adsp_stage_control_cmd_t *cmd
                                         )
 {
-    printintln(220);
     module_instance_t *module = get_module_instance(modules, cmd->instance_id, num_modules);
-    printintln(221);
 
     uint32_t offset, size;
     // Get offset into the module's config structure for this command
     get_control_cmd_config_offset(module, cmd->cmd_id, &offset, &size);
-    printintln(222);
 
     if(size != cmd->payload_len)
     {
         printf("ERROR: payload_len mismatch. Expected %lu, but received %u\n", size, cmd->payload_len);
         xassert(0);
     }
-    printintln(222);
 
     config_rw_state_t config_state = module->control.config_rw_state;
     if(config_state == config_none_pending)
     {
-        printintln(223);
 
         // Receive write payload
         memcpy((uint8_t*)module->control.config + offset, cmd->payload, cmd->payload_len);
@@ -130,7 +119,6 @@ adsp_control_status_t adsp_write_module_config(module_instance_t* modules, // Ar
     }
     else
     {
-        printintln(224);
 
         printf("WARNING: Previous write to the config not applied by the module!! Ignoring write command.");
         return ADSP_CONTROL_BUSY;

@@ -48,11 +48,9 @@ void limiter_rms_process(int32_t **input, int32_t **output, void *app_data_state
         } while(++j < state->frame_size);
     } while(++i < state->n_outputs);
 }
-#include "print.h"
 
 void limiter_rms_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size)
 {
-    printintln(777);
     xassert(n_inputs == n_outputs && "Limiter should have the same number of inputs and outputs");
     limiter_rms_state_t *state = instance->state;
     limiter_rms_config_t *config = instance->control.config;
@@ -80,37 +78,22 @@ void limiter_rms_control(void *module_state, module_control_t *control)
     xassert(control != NULL);
     limiter_rms_config_t *config = control->config;
 
-    //printintln(440);
     if(control->config_rw_state == config_write_pending)
     {
-        printintln(config->attack_alpha);
-        printintln(state->lim->env_det.attack_alpha);
-        printintln(441);
 
         // Finish the write by updating the working copy with the new config
         // TODO update only the fields written by the host
         limiter_copy_config_to_state(state->lim, state->n_inputs, config);
         control->config_rw_state = config_none_pending;
-        printintln(config->attack_alpha);
-        printintln(state->lim->env_det.attack_alpha);
-
     }
     else if(control->config_rw_state == config_read_pending)
     {
-        printintln(config->attack_alpha);
-        printintln(state->lim->env_det.attack_alpha);
-        printintln(442);
 
         limiter_copy_state_to_config(config, state->lim);
         control->config_rw_state = config_read_updated;
-        printintln(config->attack_alpha);
-        printintln(state->lim->env_det.attack_alpha);
-
     }
     else
     {
         // nothing to do
     }
-        //printintln(445);
-
 }

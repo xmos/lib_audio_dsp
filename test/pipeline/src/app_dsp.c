@@ -35,31 +35,28 @@ void app_dsp_sink(int32_t** data) {
 }
 
 #include "print.h"
-static void send_control_cmd(adsp_pipeline_t * m_dsp, chanend_t c_control) {
+static void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
     adsp_stage_control_cmd_t cmd;
     int8_t payload_buf[256];
     cmd.instance_id = test_xyz_stage_index;
     cmd.cmd_id = limiter_rms_config_offsets[3].cmd_id;
     cmd.payload_len = limiter_rms_config_offsets[3].size;;
     cmd.payload = payload_buf;
+    //config2 = { .attack_alpha = 89478485, .release_alpha = 894785, .threshold = 33713969 };
     //int NUM_VALUES_LIMITER_RMS_ATTACK_ALPHA = cmd.payload_len / 4;
     #define NUM_VALUES_LIMITER_RMS_ATTACK_ALPHA 1
     // Write control command to the stage
     int values_write[NUM_VALUES_LIMITER_RMS_ATTACK_ALPHA] = {9876};
     memcpy(cmd.payload, values_write, cmd.payload_len);
     adsp_control_status_t ret = ADSP_CONTROL_BUSY;
-    printintln(111);
-
     do {
         ret = adsp_write_module_config(m_dsp->modules, m_dsp->n_modules, &cmd);
-        printintln(ret);
     }while(ret == ADSP_CONTROL_BUSY);
     //return;
 
     assert(ret == ADSP_CONTROL_SUCCESS);
 
     memset(cmd.payload, 0, sizeof(payload_buf));
-    printintln(113);
 
     // Read back the written data
     ret = ADSP_CONTROL_BUSY;
@@ -71,38 +68,24 @@ static void send_control_cmd(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 
     int values_read[NUM_VALUES_LIMITER_RMS_ATTACK_ALPHA];
     memcpy(values_read, cmd.payload, cmd.payload_len);
-    printintln(117);
 
     for(int i=0; i<NUM_VALUES_LIMITER_RMS_ATTACK_ALPHA; i++)
     {
         if(values_read[i] != values_write[i])
         {
-            printintln(121);
             printf("Command %d: mismatch at index %d. Expected %d, found %d\n", CMD_LIMITER_RMS_GAIN, i, values_write[i], values_read[i]);
             assert(0);
         }
     }
 }
-#include <xcore/hwtimer.h>
 
 DECLARE_JOB(adsp_auto_pipeline_main, (adsp_pipeline_t*));
 DECLARE_JOB(dsp_control_thread, (chanend_t, module_instance_t*, size_t));
 
 void dsp_control_thread(chanend_t c_control, module_instance_t* modules, size_t num_modules)
 {
-    //if (0)
-
-    /*hwtimer_t tmr = hwtimer_alloc();
-    {
-        xassert(tmr != 0);
-        hwtimer_delay(tmr, 10000000); // 1ms with 100 MHz timer tick
-    }
-    hwtimer_free(tmr);*/
-    printintln(550);
-
     chan_in_word(c_control);
-    printintln(555);
-    send_control_cmd(m_dsp, c_control);
+    send_control_cmds(m_dsp, c_control);
 }
 
 // do dsp
