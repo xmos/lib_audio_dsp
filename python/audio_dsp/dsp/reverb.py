@@ -50,13 +50,13 @@ def scale_sat_int64_to_int32_floor(val):
 class allpass_fv(dspg.dsp_block):
     """A freeverb style all-pass filter, for use in the reverb_room block."""
 
-    def __init__(self, max_delay, starting_delay, feedback_gain):
+    def __init__(self, max_delay, feedback_gain):
         # max delay cannot be changed, or you'll overflow the buffer
         self._max_delay = max_delay
         self._buffer = np.zeros(self._max_delay)
         self._buffer_int = [0] * self._max_delay
 
-        self.delay = starting_delay
+        self.delay = 0
         self.feedback = feedback_gain
         self.feedback_int = utils.int32(self.feedback * 2**Q_VERB)
         self._buffer_idx = 0
@@ -127,13 +127,13 @@ class allpass_fv(dspg.dsp_block):
 class comb_fv(dspg.dsp_block):
     """A freeverb style comb filter for use in the reverb_room block."""
 
-    def __init__(self, max_delay, starting_delay, feedback_gain, damping):
+    def __init__(self, max_delay, feedback_gain, damping):
         # max delay cannot be changed, or you'll overflow the buffer
         self._max_delay = max_delay
         self._buffer = np.zeros(self._max_delay)
         self._buffer_int = [0] * self._max_delay
 
-        self.delay = starting_delay
+        self.delay = 0
         self.feedback = feedback_gain
         self.feedback_int = utils.int32(self.feedback * 2**Q_VERB)
 
@@ -224,7 +224,6 @@ class reverb_room(dspg.dsp_block):
         dry_gain_db=-1,
         pregain=0.015,
         Q_sig=dspg.Q_SIG,
-        **kwargs,
     ):
         """A room reverb effect based on Freeverb by Jezar at
         Dreampoint.
@@ -258,33 +257,17 @@ class reverb_room(dspg.dsp_block):
         self.feedback = decay * 0.28 + 0.7  # avoids too much or too little feedback
 
         # pregain going into the reverb
+        # can't use self.set_pre_gain() as it requires self.wet to be set
         self.pregain = pregain
         self.pregain_int = utils.int32(self.pregain * 2**Q_VERB)
 
         # care needs to be taken converting values from float32 to int32
         # as there are not enough bits to match 2**31-1 in f32, hence
         # the float32 value must be less than int32_max_as_f32
-        int32_max_as_f32 = float32(np.nextafter(2**Q_VERB, 0, dtype=np.float32))
+        self.int32_max_as_f32 = float32(np.nextafter(2**Q_VERB, 0, dtype=np.float32))
 
-        self.wet = utils.db2gain(wet_gain_db)
-        # when pregain changes, keep wet level the same
-        self.wet *= 0.015 / self.pregain
-        self.wet_int = utils.db2gain_f32(wet_gain_db)
-        self.wet_int *= float32(0.015) / float32(self.pregain)
-        self.wet_int = min(self.wet_int * float32(2**Q_VERB), int32_max_as_f32)
-        self.wet_int = (self.wet_int).as_int32()
-
-        self.dry = utils.db2gain(dry_gain_db)
-        # use float 32 maths to match C
-        self.dry_int = utils.db2gain_f32(dry_gain_db)
-        self.dry_int = min(self.dry_int * float32(2**Q_VERB), int32_max_as_f32)
-        self.dry_int = (self.dry_int).as_int32()
-
-        if room_size > 1 or room_size < 0:
-            raise ValueError(
-                "room_size must be between 0 and 1. For larger rooms, increase max_room size"
-            )
-        self.room_size = room_size
+        self.set_wet_gain(wet_gain_db)
+        self.set_dry_gain(dry_gain_db)
 
         # the magic freeverb delay line lengths are for 44.1kHz, so
         # scale them with sample rate and room size
@@ -296,27 +279,25 @@ class reverb_room(dspg.dsp_block):
         self.comb_lengths = (default_comb_lengths * self.length_scaling).astype(int)
         self.ap_lengths = (default_ap_lengths * self.length_scaling).astype(int)
 
-        # buffer delays (always < buffer lengths)
-        comb_delays = (self.comb_lengths * self.room_size).astype(int)
-        ap_delays = (self.ap_lengths * self.room_size).astype(int)
-
         self.combs = [
-            comb_fv(self.comb_lengths[0], comb_delays[0], self.feedback, self.damping),
-            comb_fv(self.comb_lengths[1], comb_delays[1], self.feedback, self.damping),
-            comb_fv(self.comb_lengths[2], comb_delays[2], self.feedback, self.damping),
-            comb_fv(self.comb_lengths[3], comb_delays[3], self.feedback, self.damping),
-            comb_fv(self.comb_lengths[4], comb_delays[4], self.feedback, self.damping),
-            comb_fv(self.comb_lengths[5], comb_delays[5], self.feedback, self.damping),
-            comb_fv(self.comb_lengths[6], comb_delays[6], self.feedback, self.damping),
-            comb_fv(self.comb_lengths[7], comb_delays[7], self.feedback, self.damping),
+            comb_fv(self.comb_lengths[0], self.feedback, self.damping),
+            comb_fv(self.comb_lengths[1], self.feedback, self.damping),
+            comb_fv(self.comb_lengths[2], self.feedback, self.damping),
+            comb_fv(self.comb_lengths[3], self.feedback, self.damping),
+            comb_fv(self.comb_lengths[4], self.feedback, self.damping),
+            comb_fv(self.comb_lengths[5], self.feedback, self.damping),
+            comb_fv(self.comb_lengths[6], self.feedback, self.damping),
+            comb_fv(self.comb_lengths[7], self.feedback, self.damping),
         ]
 
         self.allpasses = [
-            allpass_fv(self.ap_lengths[0], ap_delays[0], 0.5),
-            allpass_fv(self.ap_lengths[1], ap_delays[1], 0.5),
-            allpass_fv(self.ap_lengths[2], ap_delays[2], 0.5),
-            allpass_fv(self.ap_lengths[3], ap_delays[3], 0.5),
+            allpass_fv(self.ap_lengths[0], 0.5),
+            allpass_fv(self.ap_lengths[1], 0.5),
+            allpass_fv(self.ap_lengths[2], 0.5),
+            allpass_fv(self.ap_lengths[3], 0.5),
         ]
+
+        self.set_room_size(room_size)
 
     def reset_state(self):
         """Reset all the delay line values to zero."""
@@ -346,9 +327,6 @@ class reverb_room(dspg.dsp_block):
         """
         self.pregain = pre_gain
         self.pregain_int = utils.int32(self.pregain * 2**Q_VERB)
-        # when pregain changes, keep wet level the same
-        self.wet *= 0.015 / self.pregain
-        self.wet_int = utils.int32((self.wet * 2**Q_VERB) - 1)
 
     def set_wet_gain(self, wet_gain_db):
         """
@@ -360,8 +338,7 @@ class reverb_room(dspg.dsp_block):
             Wet gain in dB.
         """
         self.wet = utils.db2gain(wet_gain_db)
-        # when pregain changes, keep wet level the same
-        self.wet *= 0.015 / self.pregain
+        self.wet = min(self.wet, self.int32_max_as_f32)
         self.wet_int = utils.int32((self.wet * 2**Q_VERB) - 1)
 
     def set_dry_gain(self, dry_gain_db):
@@ -373,15 +350,23 @@ class reverb_room(dspg.dsp_block):
         dry_gain_db : float
             Dry gain in dB.
         """
-        self.dry_gain_db = dry_gain_db
         self.dry = utils.db2gain(dry_gain_db)
+        self.dry = min(self.dry, self.int32_max_as_f32)
         self.dry_int = utils.int32((self.dry * 2**Q_VERB) - 1)
 
     def set_room_size(self, room_size):
-        """Change the current room size, adjusting the delay line lengths accordingly."""
-        if room_size > 1:
+        """
+        Set the current room size, will adjust the delay line lengths accordingly.
+
+        Parameters
+        ----------
+        room_size : float
+            How big the room is as a proportion of max_room_size. This
+            sets delay line lengths and must be between 0 and 1.
+        """
+        if room_size > 1 or room_size < 0:
             raise ValueError(
-                "room_size must be less than 1. For larger rooms, increase max_room size"
+                "room_size must be between 0 and 1. For larger rooms, increase max_room size"
             )
         self.room_size = room_size
 
@@ -473,31 +458,3 @@ class reverb_room(dspg.dsp_block):
         output = utils.saturate_int64_to_int32(output)
 
         return utils.int32_to_float(output, self.Q_sig)
-
-
-if __name__ == "__main__":
-    # hydra_audio_path = os.environ['hydra_audio_PATH']
-    # filepath = Path(hydra_audio_path, 'acoustic_team_test_audio',
-    #                 'speech', "010_male_female_single-talk_seq.wav")
-    filepath = Path(
-        r"C:\Users\allanskellett\Documents\014_ACM\T-REC-P.501-202005-I!!SOFT-ZST-E\Speech signals\Test Signals Clause 7\Test_Signals_Clause 7\Speech Test Signals Clause 7.3 & 7.4\English_FB_clause_7.3\FB_male_female_single-talk_seq.wav"
-    )
-    sig, fs = sf.read(filepath)
-
-    sig = sig[: fs * 5]
-    sig = sig / np.max(np.abs(sig))
-    sig = sig * (2**31 - 1) / (2**31)
-
-    reverb = reverb_room(fs, 1, max_room_size=1, room_size=1, decay=1.0, damping=0.0, Q_sig=31)
-    print(reverb.get_buffer_lens())
-
-    output = np.zeros_like(sig)
-    for n in range(len(sig) // 2):
-        output[n] = reverb.process_xcore(sig[n])
-
-    # reverb.set_room_size(0.5)
-
-    for n in range(len(sig) // 2):
-        output[n + len(sig) // 2] = reverb.process_xcore(sig[n + len(sig) // 2])
-
-    sf.write("reverb_out.wav", output, fs)

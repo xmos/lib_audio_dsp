@@ -39,11 +39,11 @@ def get_sig(len=0.05):
     return sig_fl
 
 
-def get_c_wav(dir_name, app_name, sim=True):
+def get_c_wav(dir_name, app_name, verbose=False, sim=True):
     app = "xsim" if sim else "xrun --io"
     run_cmd = app + " " + str(BIN_DIR / app_name)
     stdout = subprocess.check_output(run_cmd, cwd=dir_name, shell=True)
-    print("run msg:\n", stdout)
+    if verbose: print("run msg:\n", stdout)
 
     sig_bin = dir_name / "rv_sig_out.bin"
     assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
@@ -75,7 +75,7 @@ def run_py(uut: reverb.reverb_room, sig_fl, use_float_sig=True):
 
     sf.write(GEN_DIR / "sig_py_flt.wav", out_fl, FS, "PCM_32")
 
-    return out_fl, out_int
+    return out_int
 
 
 @pytest.fixture(scope="module")
@@ -84,25 +84,26 @@ def in_signal():
     GEN_DIR.mkdir(exist_ok=True, parents=True)
     return get_sig()
 
-def test_reverb_room(in_signal):
+@pytest.mark.parametrize("decay, damping", [[1.0, 1.0], [0.1, 0.5]])
+@pytest.mark.parametrize("wet, dry, pregain", [[-1.0, -1.0, 0.015]]) 
+def test_reverb_room(in_signal, decay, damping, wet, dry, pregain):
     n_chans = 1
     fs = FS
     max_room_size = 1.0
     room_size = 1.0
-    decay = 1.0
-    damping = 1.0
-    wet_gain_db = -1.0
-    dry_gain_db = -1.0
-    pregain = 0.015
-    uut = reverb.reverb_room(fs, n_chans, max_room_size, room_size, decay, damping, wet_gain_db, dry_gain_db, pregain)
 
-    test_dir = BIN_DIR / "reverb_test"
+    uut = reverb.reverb_room(fs, n_chans, max_room_size, room_size, decay, damping, wet, dry, pregain)
+    test_name = f"reverb_room_{decay}_{damping}_{wet}_{dry}_{pregain}"
+
+    test_dir = BIN_DIR / test_name
     test_dir.mkdir(exist_ok = True, parents = True)
-    out_py_fl, out_py_int = run_py(uut, in_signal)
+
+    rv_info = [uut.pregain_int, uut.wet_int, uut.dry_int, uut.combs[0].feedback_int, uut.combs[0].damp1_int]
+    rv_info = np.array(rv_info, dtype=np.int32)
+    rv_info.tofile(test_dir / "rv_info.bin")
+
+    out_py_int = run_py(uut, in_signal)
     out_c = get_c_wav(test_dir, "reverb_test.xe")
     shutil.rmtree(test_dir)
 
-    # Tolerance here reflects that between powf in C and np.power() in Python
-    # there is a small difference, so dB conversion in Python and in C will
-    # have a subtle error (1 bit of mantissa = 8th bit from bottom of int32).
-    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=3.8e-8)
+    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)

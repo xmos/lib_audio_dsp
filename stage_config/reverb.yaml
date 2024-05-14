@@ -6,16 +6,16 @@ module:
       type: float
     room_size:
       type: float
-    decay:
-      type: float
+    feedback:
+      type: int32_t
     damping:
-      type: float
+      type: int32_t
     wet_gain:
       type: int32_t
     dry_gain:
       type: int32_t
     pregain:
-      type: float
+      type: int32_t
 includes:
   - "stdint.h"
   - "stages/adsp_module.h"

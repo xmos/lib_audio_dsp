@@ -28,12 +28,9 @@ void reverb_init(module_instance_t* instance,
     float fs = config->sampling_freq;
     float max_room_size = config->max_room_size;
 
-    float const room_size = config->room_size;
-    float const decay = config->decay;
-    float const damping = config->damping;
-    int32_t wet_gain = config->wet_gain;
-    int32_t dry_gain = config->dry_gain;
-    float const pregain = config->pregain;
+    float room_size = config->room_size;
+    int32_t feedback = config->feedback;
+    int32_t damping = config->damping;
 
     // Both fs and max_room_size are used in heap memory calculation, which is currently defined at compile time
     // #define REVERB_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (RV_HEAP_SZ(48000, 1.0f)), so ensure the fs and max_room_size
@@ -44,11 +41,12 @@ void reverb_init(module_instance_t* instance,
     uint8_t *reverb_heap = adsp_bump_allocator_malloc(allocator, REVERB_STAGE_REQUIRED_MEMORY(fs, max_room_size));
     memset(reverb_heap, 0, REVERB_STAGE_REQUIRED_MEMORY(fs, max_room_size));
 
-    state->reverb_room = adsp_reverb_room_init(fs,
-                                max_room_size, room_size,
-                                decay, damping, wet_gain,
-                                dry_gain, pregain,
-                                reverb_heap);
+    state->reverb_room.pre_gain = config->pregain;
+    state->reverb_room.wet_gain = config->wet_gain;
+    state->reverb_room.dry_gain = config->dry_gain;
+
+    adsp_reverb_room_init_filters(&state->reverb_room, fs, max_room_size, feedback, damping, reverb_heap);
+    adsp_reverb_room_set_room_size(&state->reverb_room, room_size);
 }
 
 void reverb_process(int32_t **input, int32_t **output, void *app_data_state)
@@ -72,12 +70,21 @@ void reverb_control(void *module_state, module_control_t *control)
 
     if(control->config_rw_state == config_write_pending)
     {
-        state->reverb_room.wet_gain = config->wet_gain; // Only setting the wet gain supported for now
+        state->reverb_room.pre_gain = config->pregain;
+        state->reverb_room.wet_gain = config->wet_gain;
+        state->reverb_room.dry_gain = config->dry_gain;
+        if (config->room_size != state->reverb_room.room_size)
+        {
+            adsp_reverb_room_set_room_size(&state->reverb_room, config->room_size);
+        }
         control->config_rw_state = config_none_pending;
     }
     else if(control->config_rw_state == config_read_pending)
     {
-        config->wet_gain = state->reverb_room.wet_gain; // wet_gain, being the only writable parameter is expected to change
+        config->pregain = state->reverb_room.pre_gain;
+        config->wet_gain = state->reverb_room.wet_gain;
+        config->dry_gain = state->reverb_room.dry_gain;
+        config->room_size = state->reverb_room.room_size;
         control->config_rw_state = config_read_updated;
     }
     else {

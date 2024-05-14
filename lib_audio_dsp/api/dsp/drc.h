@@ -233,7 +233,7 @@ int32_t adsp_noise_suppressor(
  * @brief Set the threshold of a noise suppressor
  *
  * @param ns                  Noise suppressor object
- * @param new_th              New threshold
+ * @param new_th              New threshold in Q_SIG
  */
 void adsp_noise_suppressor_set_th(
   noise_suppressor_t * ns,

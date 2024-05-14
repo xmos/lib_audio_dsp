@@ -30,10 +30,10 @@ class Reverb(Stage):
         self["sampling_freq"] = self.fs
         self["max_room_size"] = float(max_room_size)
         self.set_control_field_cb("room_size", lambda: self.dsp_block.room_size)
-        self.set_control_field_cb("decay", lambda: self.dsp_block.decay)
-        self.set_control_field_cb("damping", lambda: self.dsp_block.damping)
+        self.set_control_field_cb("feedback", lambda: self.dsp_block.combs[0].feedback_int)
+        self.set_control_field_cb("damping", lambda: self.dsp_block.damping[0].damp1_int)
         self.set_control_field_cb("wet_gain", lambda: self.dsp_block.wet_int)
-        self.set_control_field_cb("pregain", lambda: self.dsp_block.pregain)
+        self.set_control_field_cb("pregain", lambda: self.dsp_block.pregain_int)
         self.set_control_field_cb("dry_gain", lambda: self.dsp_block.dry_int)
 
         self.stage_memory_parameters = (self["sampling_freq"], self["max_room_size"])
