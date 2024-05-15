@@ -21,7 +21,7 @@ def pytest_sessionstart():
 
 
     coeffs = np.arange(10, 0, -1)
-    coeffs /= np.sum(coeffs)
+    coeffs = coeffs/np.sum(coeffs)
     np.savetxt(Path(gen_dir, "descending_coeffs.txt"), coeffs)
 
     coeffs = spsig.firwin2(512, [0.0, 0.5, 1.0], [1.0, 1.0, 0.0])
