@@ -25,7 +25,7 @@ PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
 
-TEST_FRAME_SIZES=1, #128
+TEST_FRAME_SIZES=1, 128
 
 fs = 48000
 channels = 2  # if this changes need to rewrite test signals
@@ -52,7 +52,7 @@ def generate_ref(sig, ref_module, pipeline_channels, frame_size):
     return out_py_int
 
 
-def do_test(make_p, dut_frame_size):
+def do_test(make_p, dut_frame_size, tune_p=None):
     """
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
@@ -69,53 +69,59 @@ def do_test(make_p, dut_frame_size):
     dut_frame_size : int
         The frame size to use for the pipeline that will run on the device.
     """
-    dut_p = make_p(dut_frame_size)
-    pipeline_channels = len(dut_p.i)
-    infile = "instage.wav"
-    outfile = "outstage.wav"
-    n_samps, rate = 1024, 48000
+    for func_p in [make_p, tune_p]:
+        if not func_p:
+            continue
+        dut_p = func_p(dut_frame_size)
+        pipeline_channels = len(dut_p.i)
+        infile = "instage.wav"
+        outfile = "outstage.wav"
+        n_samps, rate = 1024, 48000
 
-    generate_dsp_main(dut_p, out_dir = BUILD_DIR / "dsp_pipeline")
-    target = "pipeline_test"
-    # Build pipeline test executable. This will download xscope_fileio if not present
-    build_utils.build(APP_DIR, BUILD_DIR, target)
+        generate_dsp_main(dut_p, out_dir = BUILD_DIR / "dsp_pipeline")
+        if func_p == make_p:
+            target = "pipeline_test"
+        else:
+            target = "pipeline_test_config_control"
+        # Build pipeline test executable. This will download xscope_fileio if not present
+        build_utils.build(APP_DIR, BUILD_DIR, target)
 
-    sig0 = np.linspace(-2**26, 2**26, n_samps, dtype=np.int32)  << 4 # numbers which should be unmodified through pipeline
+        sig0 = np.linspace(-2**26, 2**26, n_samps, dtype=np.int32)  << 4 # numbers which should be unmodified through pipeline
                                                                      # data formats
 
 
-    sig1 = np.linspace(-2**23, 2**23, n_samps, dtype=np.int32)  << 4
+        sig1 = np.linspace(-2**23, 2**23, n_samps, dtype=np.int32)  << 4
 
-    if pipeline_channels == 2:
-        sig = np.stack((sig0, sig1), axis=1)
-    elif pipeline_channels == 1:
-        sig = sig0
-        sig = sig.reshape((len(sig), 1))
-    else:
-        assert False, f"Unsupported number of channels {pipeline_channels}. Test supports 1 or 2 channels"
+        if pipeline_channels == 2:
+            sig = np.stack((sig0, sig1), axis=1)
+        elif pipeline_channels == 1:
+            sig = sig0
+            sig = sig.reshape((len(sig), 1))
+        else:
+            assert False, f"Unsupported number of channels {pipeline_channels}. Test supports 1 or 2 channels"
 
-    audio_helpers.write_wav(infile, rate, sig)
+        audio_helpers.write_wav(infile, rate, sig)
 
-    xe = APP_DIR / f"bin/{target}.xe"
-    run_pipeline_xcoreai.run(xe, infile, outfile, pipeline_channels, 1)
+        xe = APP_DIR / f"bin/{target}.xe"
+        run_pipeline_xcoreai.run(xe, infile, outfile, pipeline_channels, 1)
 
-    _, out_data = audio_helpers.read_wav(outfile)
-    if out_data.ndim == 1:
-        out_data = out_data.reshape(len(out_data), 1)
+        _, out_data = audio_helpers.read_wav(outfile)
+        if out_data.ndim == 1:
+            out_data = out_data.reshape(len(out_data), 1)
 
-    ref_p = [make_p(s) for s in TEST_FRAME_SIZES]
-    out_py_int_all = [generate_ref(sig, p.stages[2].dsp_block, pipeline_channels, fr) for p, fr in zip(ref_p, TEST_FRAME_SIZES)]
+        ref_p = [make_p(s) for s in TEST_FRAME_SIZES]
+        out_py_int_all = [generate_ref(sig, p.stages[2].dsp_block, pipeline_channels, fr) for p, fr in zip(ref_p, TEST_FRAME_SIZES)]
 
-    for out_py_int, ref_frame_size in zip(out_py_int_all, TEST_FRAME_SIZES):
-        for ch in range(pipeline_channels):
-            diff = out_py_int.T[:,ch] - out_data[:, ch]
-            print(f"ch {ch}: max diff {max(abs(diff))}")
-            sol = (~np.equal(out_py_int.T, out_data)).astype(int)
-            indexes = np.flatnonzero(sol)
-            print(f"ch {ch}: {len(indexes)} indexes mismatch")
-            print(f"ch {ch} mismatching indexes = {indexes}")
+        for out_py_int, ref_frame_size in zip(out_py_int_all, TEST_FRAME_SIZES):
+            for ch in range(pipeline_channels):
+                diff = out_py_int.T[:,ch] - out_data[:, ch]
+                print(f"ch {ch}: max diff {max(abs(diff))}")
+                sol = (~np.equal(out_py_int.T, out_data)).astype(int)
+                indexes = np.flatnonzero(sol)
+                print(f"ch {ch}: {len(indexes)} indexes mismatch")
+                print(f"ch {ch} mismatching indexes = {indexes}")
 
-        np.testing.assert_equal(out_py_int.T, out_data, err_msg=f"dut frame {dut_frame_size}, ref frame {ref_frame_size}")
+            np.testing.assert_equal(out_py_int.T, out_data, err_msg=f"dut frame {dut_frame_size}, ref frame {ref_frame_size}")
 
 def generate_test_param_file(stage_name, stage_config):
     with open(f"build\\src.autogen\\host\\control_test_params.h", "w") as f_op:
@@ -132,6 +138,8 @@ def generate_test_param_file(stage_name, stage_config):
                 cmd_payload_list = cmd_payload
             for value in cmd_payload_list:
                 payload_values = payload_values + [ "0x{:02X}".format(x&0xFF) for x in struct.unpack('4b', struct.pack('I', value&0xFFFFFFFF))]
+                #payload_values = payload_values + [ "0x00".format(x&0xFF) for x in struct.unpack('4b', struct.pack('I', value&0xFFFFFFFF))]
+
             f_op.write(f"\t\t.payload  = {{{', '.join(list(payload_values))}}},\n")
             f_op.write(f"\t}},\n")
         f_op.write(f"}};")
@@ -194,12 +202,17 @@ def test_cascaded_biquad(method, args, frame_size):
             cbq_method(*args)
         else:
             cbq_method()
+        return p
+
+    def tune_p(fr):
+        p = make_p(fr)
 
         stage_config = p.resolve_pipeline()['configs'][2]
         generate_test_param_file("CASCADED_BIQUADS", stage_config)
+
         return p
 
-    do_test(make_p, frame_size)
+    do_test(make_p, frame_size, tune_p)
 
 def test_limiter_rms(frame_size):
     """
@@ -213,11 +226,16 @@ def test_limiter_rms(frame_size):
 
         lim.make_limiter_rms(-6, 0.001, 0.1)
 
+        return p
+    def tune_p(fr):
+        p = make_p(fr)
+
         stage_config = p.resolve_pipeline()['configs'][2]
         generate_test_param_file("LIMITER_RMS", stage_config)
+
         return p
 
-    do_test(make_p, frame_size)
+    do_test(make_p, frame_size, tune_p)
 
 
 def _test_limiter_peak(frame_size):

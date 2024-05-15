@@ -52,11 +52,8 @@ typedef struct control_data_t
     uint8_t payload[1000];
 }control_data_t;
 
+#if SEND_CONTROL_COMMANDS
 #include "control_test_params.h"
-//static limiter_rms_config_t config2 = { .attack_alpha = 89478485, .release_alpha = 894785, .threshold = 33713969 };
-// hex(89478485) = '0x5555555'
-// hex(829249) = '0xca741'
-// hex(33713969) = '0x2026f31
 
 uint8_t find_config_idx(char* cmd_name) {
     uint8_t config_size = sizeof(control_config) / sizeof(control_data_t);
@@ -67,10 +64,12 @@ uint8_t find_config_idx(char* cmd_name) {
     }
     return 0xFF;
 }
+#endif
+
 //limiter_rms_config_t config2 = { .attack_alpha = 89478485, .release_alpha = 894785, .threshold = 33713969 };
 
-#include "print.h"
 static void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
+#if SEND_CONTROL_COMMANDS
     adsp_stage_control_cmd_t cmd;
     int8_t payload_buf[256];
     cmd.instance_id = stage_test_stage_index;
@@ -82,9 +81,7 @@ static void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
             cmd.payload_len = commands[cmd_idx].num_values * sizeof(int32_t);
             cmd.payload = payload_buf;
             memset(cmd.payload, 0, cmd.payload_len);
-            //config2 = { .attack_alpha = 89478485, .release_alpha = 894785, .threshold = 33713969 };
-            //int NUM_VALUES_LIMITER_RMS_ATTACK_ALPHA = cmd.payload_len / 4;
-            //#define NUM_VALUES_LIMITER_RMS_ATTACK_ALPHA 1
+
             // Write control command to the stage
             uint8_t config_idx = find_config_idx(commands[cmd_idx].cmd_name);
 
@@ -99,6 +96,7 @@ static void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
             }while(ret == ADSP_CONTROL_BUSY);
             assert(ret == ADSP_CONTROL_SUCCESS);
             memset(cmd.payload, 0, cmd.payload_len);
+
             hwtimer_t t = hwtimer_alloc(); hwtimer_delay(t, 100); //100us to allow command to be written
 
             // Read back the written data
@@ -125,4 +123,5 @@ static void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
             }
         }
     }
+#endif
 }
