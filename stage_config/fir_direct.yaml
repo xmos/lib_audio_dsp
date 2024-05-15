@@ -4,7 +4,7 @@ module:
       type: uint32_t
     coeffs:
       type: int32_t
-      size: 512
+      size: 1024
       attribute: DWORD_ALIGNED
     shift:
       type: int32_t

@@ -8,7 +8,7 @@ from ..dsp import generic as dspg
 
 
 class Fir_Direct(Stage):
-    """A FIR filter implemented in the time domain
+    """A FIR filter implemented in the time domain.
 
     See :class:`audio_dsp.dsp.fir.fir_direct` for details.
     """
@@ -26,15 +26,14 @@ class Fir_Direct(Stage):
         self.stage_memory_parameters = (self.n_in, self.dsp_block.n_taps)
 
     def make_fir_direct(
-        self, coeffs_path, coeff_scaling=None, Q_sig=dspg.Q_SIG
+        self, coeffs_path, Q_sig=dspg.Q_SIG
     ):
         """Update fir configuration based on new parameters."""
         self.details = dict(
             coeffs_path-coeffs_path,
-            coeff_scaling=coeff_scaling,
             Q_sig=Q_sig,
         )
         self.dsp_block = fir.fir_direct(
-            self.fs, self.n_in, coeffs_path, coeff_scaling, Q_sig
+            self.fs, self.n_in, coeffs_path, Q_sig
         )
         return self

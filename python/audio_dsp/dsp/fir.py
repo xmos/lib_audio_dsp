@@ -16,21 +16,11 @@ class fir_direct(dspg.dsp_block):
 
     """
 
-    def __init__(self, fs: float, n_chans: int, coeffs_path: Path, coeff_scaling: str="none", Q_sig: int = dspg.Q_SIG):
+    def __init__(self, fs: float, n_chans: int, coeffs_path: Path, Q_sig: int = dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
         raw_coeffs = np.loadtxt(coeffs_path)
         self.taps = len(raw_coeffs)
-
-        if coeff_scaling is None or coeff_scaling.lower() == "none":
-            pass
-        elif coeff_scaling.lower() == "unity_gain":
-            self.scale_coeffs_unity_gain(coeffs)
-        elif coeff_scaling.lower() == "never_clip":
-            pass
-        else:
-            raise ValueError("Unknown coeff_scaling requested")
-
 
         self.coeffs = np.loadtxt(coeffs_path)
         self.n_taps = len(self.coeffs)
@@ -40,17 +30,6 @@ class fir_direct(dspg.dsp_block):
         self.reset_state()
         self.buffer_idx = [0] * self.n_chans
         self.buffer_idx_int = [0] * self.n_chans
-
-    def scale_coeffs_unity_gain(self, coeffs):
-        coeff_gain = np.sum(coeffs)
-        coeffs /= coeff_gain
-        return coeffs
-
-    def scale_coeffs_never_clip(self, coeffs):
-        coeff_energy = np.sum(np.abs(coeffs))
-
-        pass
-        return
 
     def check_coeff_scaling(self, coeffs):
         
@@ -69,11 +48,13 @@ class fir_direct(dspg.dsp_block):
         # shift the scaled coeffs
         scaled_coeffs *= 2**coeff_headroom_bits
 
-        # headroom = 2**(31 - self.Q_sig)
-        # coeff_gain = np.sum(coeffs)
+        # check the gain of the filter will fit in the output Q format
+        headroom = utils.db(2**(31 - self.Q_sig))
+        w, h = self.freq_response()
+        coeff_max_gain = np.max(utils.db(h))
 
-        # if coeff_gain > headroom:
-        #     warnings.warn("Headroom of %d dB is not sufficient to guarentee no clipping." % utils.db(headroom))
+        if coeff_max_gain > headroom:
+            warnings.warn("Headroom of %d dB is not sufficient to guarentee no clipping." % (headroom))
 
         # VPU stripes the convolution across 8 40b accumulators
         vpu_acc_max = 0
@@ -106,20 +87,6 @@ class fir_direct(dspg.dsp_block):
         # so can be 12 bits
         coeff_sum = np.sum(np.abs(coeffs))
         coeff_sum_headroom = -np.ceil(np.log2(coeff_sum))
-
-
-    # def get_coeffs(self, coeffs_path):
-    #     coeffs = np.loadtxt(coeffs_path)
-    #     taps = len(coeffs)
-    #     args = types.SimpleNamespace()
-    #     args.filter_coefficients = coeffs
-    #     args.input_headroom = 0
-    #     args.output_headroom = 0
-    #     scaled_coefs_s32, shift, exponent_diff = find_filter_parameters(args)
-
-    #     # coeffs = (coeffs)
-    #     int_coeffs = (scaled_coefs_s32).tolist()
-    #     return coeffs, int_coeffs, shift, exponent_diff, taps
 
     def reset_state(self) -> None:
         """Reset all the delay line values to zero."""
@@ -237,6 +204,7 @@ class fir_direct(dspg.dsp_block):
         w = np.fft.rfftfreq(nfft)
         h = np.fft.rfft(self.coeffs, nfft)
         return w, h
+
 
 if __name__ == "__main__":
 

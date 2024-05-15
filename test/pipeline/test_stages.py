@@ -348,11 +348,12 @@ def test_delay(frame_size):
     do_test(make_p, frame_size)
 
 
-def test_fir(frame_size):
+@pytest.mark.parametrize("filter_name", ["descending_coeffs.txt", "simple_low_pass.txt"])
+def test_fir(frame_size, filter_name):
     """"
     Test FIR Stage
     """
-    filter_path = Path(Path(__file__).parent / "autogen", "simple_low_pass.txt")
+    filter_path = Path(Path(__file__).parent / "autogen", filter_name)
 
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
