@@ -45,7 +45,7 @@ class ReverbRoom(Stage):
         Parameters
         ----------
         gain_db : float
-            Wet gain in dB, between 0 and -186 dB.
+            Wet gain in dB, less then 0 dB.
         """
         self.dsp_block.set_wet_gain(gain_dB)
 
@@ -56,7 +56,7 @@ class ReverbRoom(Stage):
         Parameters
         ----------
         gain_db : float
-            Dry gain in dB, between 0 and -186 dB.
+            Dry gain in dB, less then 0 dB.
         """
         self.dsp_block.set_dry_gain(gain_dB)
 
@@ -67,7 +67,7 @@ class ReverbRoom(Stage):
         Parameters
         ----------
         pre_gain : float
-            Pre gain value, between 4.66e-10 and 1 (-186, 0 dB).
+            Pre gain value, less then 1.
         """
         self.dsp_block.set_pre_gain(pre_gain)
 
