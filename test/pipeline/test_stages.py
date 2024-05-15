@@ -124,8 +124,19 @@ def generate_test_param_file(stage_name, stage_config):
         for cmd_name, cmd_payload in stage_config.items():
             f_op.write(f"\t{{\n")
             f_op.write(f"\t\t.cmd_name = \"{stage_name.upper()}_{cmd_name.upper()}\",\n")
-            payload_values = [ "0x{:02X}".format(x&0xFF) for x in struct.unpack('4b', struct.pack('I', cmd_payload))]
-            f_op.write(f"\t\t.payload  = {{{', '.join(payload_values)}}},\n")
+            payload_values = []
+            cmd_payload_list = []
+            if not isinstance(cmd_payload, list):
+                cmd_payload_list.append(cmd_payload)
+            else:
+                cmd_payload_list = cmd_payload
+            for value in cmd_payload_list:
+                #print(cmd_name.upper())
+                #print(value)
+                #print(struct.unpack('4b', struct.pack('I', value&0xFFFFFFFF)))
+                payload_values = payload_values + [ "0x{:02X}".format(x&0xFF) for x in struct.unpack('4b', struct.pack('I', value&0xFFFFFFFF))]
+                #print(payload_values)
+            f_op.write(f"\t\t.payload  = {{{', '.join(list(payload_values))}}},\n")
             f_op.write(f"\t}},\n")
         f_op.write(f"}};")
 
@@ -179,7 +190,7 @@ def test_cascaded_biquad(method, args, frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            cbiquad = t.stage(CascadedBiquads, p.i)
+            cbiquad = t.stage(CascadedBiquads, p.i, label="stage_test")
         p.set_outputs(cbiquad.o)
 
         cbq_method = getattr(cbiquad, method)
@@ -190,7 +201,7 @@ def test_cascaded_biquad(method, args, frame_size):
         print(f"\n\n\npipeline in test: {p.resolve_pipeline()['configs'][2]}")
 
         stage_config = p.resolve_pipeline()['configs'][2]
-        generate_test_param_file("LIMITER_RMS", stage_config)
+        generate_test_param_file("CASCADED_BIQUADS", stage_config)
         return p
 
     do_test(make_p, frame_size)
@@ -202,7 +213,7 @@ def test_limiter_rms(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            lim = t.stage(LimiterRMS, p.i, label="test_xyz")
+            lim = t.stage(LimiterRMS, p.i, label="stage_test")
         p.set_outputs(lim.o)
 
         lim.make_limiter_rms(-6, 0.001, 0.1)
