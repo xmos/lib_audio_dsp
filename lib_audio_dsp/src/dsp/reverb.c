@@ -316,8 +316,7 @@ reverb_room_t adsp_reverb_room_init(
     xassert(damping >= 0 && damping <= 1);
 
     // These limits should be reconsidered if Q_RVR != 31
-    // Represented as q1_31, min nonzero val 4.66e-10 ~= -186 dB
-    xassert(pregain > 4.66e-10 && pregain < 1);
+    xassert(pregain >= 0 && pregain < 1);
 
     reverb_room_t rv;
 

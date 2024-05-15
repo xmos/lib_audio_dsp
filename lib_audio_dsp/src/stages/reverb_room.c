@@ -61,7 +61,7 @@ void reverb_room_process(int32_t **input, int32_t **output, void *app_data_state
     } while (++j < state->frame_size);
 }
 
-void reverb_control(void *module_state, module_control_t *control)
+void reverb_room_control(void *module_state, module_control_t *control)
 {
     xassert(module_state != NULL);
     reverb_room_state_t *state = module_state;
