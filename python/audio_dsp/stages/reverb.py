@@ -6,7 +6,7 @@ from ..design.stage import Stage, find_config
 import audio_dsp.dsp.reverb as rvrb
 
 
-class Reverb(Stage):
+class ReverbRoom(Stage):
     """
     The reverb stage.
 
@@ -20,7 +20,7 @@ class Reverb(Stage):
     """
 
     def __init__(self, max_room_size=1, **kwargs):
-        super().__init__(config=find_config("reverb"), **kwargs)
+        super().__init__(config=find_config("reverb_room"), **kwargs)
         if self.fs is None:
             raise ValueError("Reverb requires inputs with a valid fs")
         self.fs = int(self.fs)
@@ -40,7 +40,7 @@ class Reverb(Stage):
 
     def set_wet_gain(self, gain_dB):
         """
-        Set the wet gain of the reverb stage.
+        Set the wet gain of the reverb room stage.
 
         Parameters
         ----------
@@ -51,7 +51,7 @@ class Reverb(Stage):
 
     def set_dry_gain(self, gain_dB):
         """
-        Set the dry gain of the reverb stage.
+        Set the dry gain of the reverb room stage.
 
         Parameters
         ----------
@@ -62,7 +62,7 @@ class Reverb(Stage):
 
     def set_pre_gain(self, pre_gain):
         """
-        Set the pre gain of the reverb stage.
+        Set the pre gain of the reverb room stage.
 
         Parameters
         ----------
@@ -85,7 +85,7 @@ class Reverb(Stage):
 
     def set_damping(self, damping):
         """
-        Set the damping of the reverb.
+        Set the damping of the reverb room stage.
 
         Parameters
         ----------
@@ -96,7 +96,7 @@ class Reverb(Stage):
 
     def set_decay(self, decay):
         """
-        Set the decay of the reverb.
+        Set the decay of the reverb room stage.
 
         Parameters
         ----------

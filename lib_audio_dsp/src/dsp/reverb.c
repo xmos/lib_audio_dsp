@@ -23,18 +23,18 @@
 #define TWO_TO_31 2147483648
 #define TWO_TO_31_MINUS_1 2147483647
 
-#define Q_RV 31
+#define Q_RVR 31
 #define DEFAULT_AP_FEEDBACK 0x40000000 // 0.5 in Q31
 
-static inline int32_t float_to_Q_RV_pos(float val)
+static inline int32_t float_to_Q_RVR_pos(float val)
 {
     // only works for positive values
     xassert(val >= 0);
     int32_t sign, exp, mant;
     asm("fsexp %0, %1, %2": "=r"(sign), "=r"(exp): "r"(val));
     asm("fmant %0, %1": "=r"(mant): "r"(val));
-    // mant to q_rv
-    right_shift_t shr = -Q_RV - exp + 23;
+    // mant to q_rvr
+    right_shift_t shr = -Q_RVR - exp + 23;
     mant >>= shr;
     return mant;
 }
@@ -141,7 +141,7 @@ static inline void allpass_fv_reset_state(allpass_fv_t *ap)
 
 int32_t allpass_fv(allpass_fv_t *ap, int32_t new_sample)
 {
-    int32_t ah = 0, al = 0, shift = Q_RV;
+    int32_t ah = 0, al = 0, shift = Q_RVR;
     int32_t buf_out = ap->buffer[ap->buffer_idx];
 
     // Do (buf_out - new_sample) and saturate
@@ -206,7 +206,7 @@ static inline void comb_fv_reset_state(comb_fv_t *comb)
 
 static inline int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
 {
-    int32_t ah = 0, al = 0, shift = Q_RV;
+    int32_t ah = 0, al = 0, shift = Q_RVR;
     int32_t fstore = comb->filterstore, d1 = comb->damp_1, d2 = comb->damp_2;
     int32_t output = comb->buffer[comb->buffer_idx];
 
@@ -245,9 +245,9 @@ static inline int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
 
 int32_t adsp_reverb_calc_gain(float gain_db)
 {
-    xassert(gain_db > ADSP_RV_MIN_GAIN_DB &&
-            gain_db <= ADSP_RV_MAX_GAIN_DB);
-    int32_t gain = float_to_Q_RV_pos(DBTOGAIN(gain_db));
+    xassert(gain_db > ADSP_RVR_MIN_GAIN_DB &&
+            gain_db <= ADSP_RVR_MAX_GAIN_DB);
+    int32_t gain = float_to_Q_RVR_pos(DBTOGAIN(gain_db));
     return gain;
 }
 
@@ -261,17 +261,17 @@ void adsp_reverb_room_init_filters(
 {
     mem_manager_t memory_manager = mem_manager_init(
         reverb_heap,
-        ADSP_RV_HEAP_SZ(fs, max_room_size));
+        ADSP_RVR_HEAP_SZ(fs, max_room_size));
 
     // Scale the wet gain; when pregain changes, overall wet gain shouldn't
-    const float rv_scale_fac = ADSP_RV_SCALE(fs, max_room_size);
+    const float rv_scale_fac = ADSP_RVR_SCALE(fs, max_room_size);
 
     // shift 2 insted of / 4, to avoid division
-    rv->total_buffer_length = ADSP_RV_HEAP_SZ(fs, max_room_size) >> 2;
+    rv->total_buffer_length = ADSP_RVR_HEAP_SZ(fs, max_room_size) >> 2;
 
     int32_t comb_lengths[8] = DEFAULT_COMB_LENS;
     int32_t ap_lengths[4] = DEFAULT_AP_LENS;
-    for (int i = 0; i < ADSP_RV_N_COMBS; i++)
+    for (int i = 0; i < ADSP_RVR_N_COMBS; i++)
     {
         // Scale maximum lengths by the scale factor (fs/44100 * max_room)
         comb_lengths[i] *= rv_scale_fac;
@@ -281,7 +281,7 @@ void adsp_reverb_room_init_filters(
             damping,
             &memory_manager);
     }
-    for (int i = 0; i < ADSP_RV_N_APS; i++)
+    for (int i = 0; i < ADSP_RVR_N_APS; i++)
     {
         // Scale maximum lengths by the scale factor (fs/44100 * max_room)
         ap_lengths[i] *= rv_scale_fac;
@@ -315,20 +315,20 @@ reverb_room_t adsp_reverb_room_init(
     xassert(decay >= 0 && decay <= 1);
     xassert(damping >= 0 && damping <= 1);
 
-    // These limits should be reconsidered if Q_RV != 31
+    // These limits should be reconsidered if Q_RVR != 31
     // Represented as q1_31, min nonzero val 4.66e-10 ~= -186 dB
     xassert(pregain > 4.66e-10 && pregain < 1);
 
     reverb_room_t rv;
 
     // Avoids too much or too little feedback
-    const int32_t feedback_int = float_to_Q_RV_pos((decay * 0.28) + 0.7);
-    const int32_t damping_int = MAX(float_to_Q_RV_pos(damping) - 1, 1);
+    const int32_t feedback_int = float_to_Q_RVR_pos((decay * 0.28) + 0.7);
+    const int32_t damping_int = MAX(float_to_Q_RVR_pos(damping) - 1, 1);
 
     adsp_reverb_room_init_filters(&rv, fs, max_room_size, feedback_int, damping_int, reverb_heap);
     adsp_reverb_room_set_room_size(&rv, room_size);
 
-    rv.pre_gain = float_to_Q_RV_pos(pregain);
+    rv.pre_gain = float_to_Q_RVR_pos(pregain);
     rv.dry_gain = adsp_reverb_calc_gain(dry_gain);
     rv.wet_gain = adsp_reverb_calc_gain(wet_gain);
 
@@ -337,11 +337,11 @@ reverb_room_t adsp_reverb_room_init(
 
 void adsp_reverb_room_reset_state(reverb_room_t *rv)
 {
-    for (int comb = 0; comb < ADSP_RV_N_COMBS; comb++)
+    for (int comb = 0; comb < ADSP_RVR_N_COMBS; comb++)
     {
         comb_fv_reset_state(&rv->combs[comb]);
     }
-    for (int ap = 0; ap < ADSP_RV_N_APS; ap++)
+    for (int ap = 0; ap < ADSP_RVR_N_APS; ap++)
     {
         allpass_fv_reset_state(&rv->allpasses[ap]);
     }
@@ -365,7 +365,7 @@ void adsp_reverb_room_set_room_size(reverb_room_t *rv,
     room_size_int >>= shr;
 
     rv->room_size = room_size_int;
-    for (int comb = 0; comb < ADSP_RV_N_COMBS; comb++)
+    for (int comb = 0; comb < ADSP_RVR_N_COMBS; comb++)
     {
         // Do comb length * new_room_size in Q30
         int32_t l = rv->combs[comb].max_delay;
@@ -377,7 +377,7 @@ void adsp_reverb_room_set_room_size(reverb_room_t *rv,
                      : "r"(ah), "r"(al), "r"(q));
         comb_fv_set_delay(&rv->combs[comb], ah);
     }
-    for (int ap = 0; ap < ADSP_RV_N_APS; ap++)
+    for (int ap = 0; ap < ADSP_RVR_N_APS; ap++)
     {
         // Do ap length * new_room_size in Q30
         int32_t l = rv->allpasses[ap].max_delay;
@@ -398,13 +398,13 @@ int32_t adsp_reverb_room(
     int32_t reverb_input = apply_gain_q31(new_samp, rv->pre_gain);
     int32_t output = 0;
     int64_t acc = 0;
-    for (int comb = 0; comb < ADSP_RV_N_COMBS; comb++)
+    for (int comb = 0; comb < ADSP_RVR_N_COMBS; comb++)
     {
         acc += comb_fv(&(rv->combs[comb]), reverb_input);
     }
     output = adsp_saturate_32b(acc);
 
-    for (int ap = 0; ap < ADSP_RV_N_APS; ap++)
+    for (int ap = 0; ap < ADSP_RVR_N_APS; ap++)
     {
         acc = allpass_fv(&(rv->allpasses[ap]), output);
         output = (int32_t)acc; // We do not saturate here!

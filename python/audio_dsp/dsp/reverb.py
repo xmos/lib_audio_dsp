@@ -1,14 +1,10 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import audio_dsp.dsp.generic as dspg
-import soundfile as sf
-from pathlib import Path
 import numpy as np
 import warnings
 import audio_dsp.dsp.utils as utils
 from copy import deepcopy
-
-from audio_dsp.dsp.types import float32
 
 Q_VERB = 31
 
@@ -256,11 +252,7 @@ class reverb_room(dspg.dsp_block):
 
         super().__init__(fs, 1, Q_sig)
 
-        # care needs to be taken converting values from float32 to int32
-        # as there are not enough bits to match 2**31-1 in f32, hence
-        # the float32 value must be less than int32_max_as_f32
-        self.int32_max_as_f32 = float32(np.nextafter(2**Q_VERB, 0, dtype=np.float32))
-
+        # gains
         self.set_pre_gain(pregain)
         self.set_wet_gain(wet_gain_db)
         self.set_dry_gain(dry_gain_db)
@@ -320,7 +312,7 @@ class reverb_room(dspg.dsp_block):
 
     def set_pre_gain(self, pre_gain):
         """
-        Set the pre gain. Also update the wet_gain value which depends on the pre_gain.
+        Set the pre gain.
 
         Parameters
         ----------

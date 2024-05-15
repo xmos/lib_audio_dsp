@@ -44,7 +44,7 @@ int main()
     fread(&damping, sizeof(int32_t), 1, info);
     fclose(info);
 
-    uint8_t reverb_heap[ADSP_RV_HEAP_SZ(FS, MAX_ROOM)] = {0};
+    uint8_t reverb_heap[ADSP_RVR_HEAP_SZ(FS, MAX_ROOM)] = {0};
     reverb_room_t rv;
     rv.pre_gain = pregain;
     rv.wet_gain = wet;

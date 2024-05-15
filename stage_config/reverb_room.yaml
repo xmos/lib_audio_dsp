@@ -1,5 +1,5 @@
 module:
-  reverb:
+  reverb_room:
     sampling_freq:
       type: uint32_t
     max_room_size:

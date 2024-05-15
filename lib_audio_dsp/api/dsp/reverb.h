@@ -6,27 +6,27 @@
 #include <stdint.h>
 #include <xmath/types.h>
 
-/** Minimum wet/dry gain config for the reverb in dB */
-#define ADSP_RV_MIN_GAIN_DB (-186.0)
-/** Maximum wet/dry gain config for the reverb in dB */
-#define ADSP_RV_MAX_GAIN_DB (0)
+/** Minimum wet/dry gain config for the reverb room in dB */
+#define ADSP_RVR_MIN_GAIN_DB (-186.0)
+/** Maximum wet/dry gain config for the reverb room in dB */
+#define ADSP_RVR_MAX_GAIN_DB (0)
 
-/** Reverb scale factor for the room size */
-#define ADSP_RV_SCALE(FS, MAX_ROOM_SZ) (((FS) / 44100.0f) * (MAX_ROOM_SZ))
+/** Reverb room scale factor for the room size */
+#define ADSP_RVR_SCALE(FS, MAX_ROOM_SZ) (((FS) / 44100.0f) * (MAX_ROOM_SZ))
 
-/** Default reverb buffer length */
-#define ADSP_RV_SUM_DEFAULT_BUF_LENS 12587
-/** Heap size to allocate for the reverb */
-#define ADSP_RV_HEAP_SZ(FS, ROOM_SZ) ((uint32_t)(sizeof(int32_t) *            \
-                                                 ADSP_RV_SCALE(FS, ROOM_SZ) * \
-                                                 ADSP_RV_SUM_DEFAULT_BUF_LENS))
-/** External API for calculating memory to allocate for the reverb*/
-#define REVERB_DSP_REQUIRED_MEMORY(FS, ROOM_SZ) ADSP_RV_HEAP_SZ(FS, ROOM_SZ)
+/** Default reverb room buffer length */
+#define ADSP_RVR_SUM_DEFAULT_BUF_LENS 12587
+/** Heap size to allocate for the reverb room */
+#define ADSP_RVR_HEAP_SZ(FS, ROOM_SZ) ((uint32_t)(sizeof(int32_t) *            \
+                                                 ADSP_RVR_SCALE(FS, ROOM_SZ) * \
+                                                 ADSP_RVR_SUM_DEFAULT_BUF_LENS))
+/** External API for calculating memory to allocate for the reverb room */
+#define REVERB_ROOM_DSP_REQUIRED_MEMORY(FS, ROOM_SZ) ADSP_RVR_HEAP_SZ(FS, ROOM_SZ)
 
-/** Number of comb filters used in the reverb */
-#define ADSP_RV_N_COMBS 8
-/** Number of allpass filters used in the reverb */
-#define ADSP_RV_N_APS 4
+/** Number of comb filters used in the reverb room */
+#define ADSP_RVR_N_COMBS 8
+/** Number of allpass filters used in the reverb room */
+#define ADSP_RVR_N_APS 4
 
 /**
  * @brief A freeverb style all-pass filter structure
@@ -84,9 +84,9 @@ typedef struct
     /** Linear pre-gain */
     int32_t pre_gain;
     /** Comb filters */
-    comb_fv_t combs[ADSP_RV_N_COMBS];
+    comb_fv_t combs[ADSP_RVR_N_COMBS];
     /** Allpass filters */
-    allpass_fv_t allpasses[ADSP_RV_N_APS];
+    allpass_fv_t allpasses[ADSP_RVR_N_APS];
 } reverb_room_t;
 
 /**
