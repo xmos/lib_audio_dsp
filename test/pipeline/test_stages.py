@@ -138,7 +138,6 @@ def generate_test_param_file(stage_name, stage_config):
                 cmd_payload_list = cmd_payload
             for value in cmd_payload_list:
                 payload_values = payload_values + [ "0x{:02X}".format(x&0xFF) for x in struct.unpack('4b', struct.pack('I', value&0xFFFFFFFF))]
-                #payload_values = payload_values + [ "0x00".format(x&0xFF) for x in struct.unpack('4b', struct.pack('I', value&0xFFFFFFFF))]
 
             f_op.write(f"\t\t.payload  = {{{', '.join(list(payload_values))}}},\n")
             f_op.write(f"\t}},\n")
