@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdint.h>
 #include <string.h>
 #include "adsp_control.h"
 #include "adsp_instance_id_auto.h"
@@ -8,6 +6,10 @@
 #include <debug_print.h>
 
 #include "run_cmds.h"
+
+#define CMD_NAME_MAX_SIZE 256
+#define CMD_PAYLOAD_MAX_SIZE 256
+#define CMD_INFO_MAX_SIZE 1024
 
 // The structs and enums before are used by host_cmd_map.h
 enum cmd_param_type_t {TYPE_CHAR, TYPE_UINT8, TYPE_INT32, TYPE_FLOAT, TYPE_UINT32, TYPE_RADIANS};
@@ -19,7 +21,7 @@ typedef struct cmd_t
     /** Command resource ID */
     uint8_t res_id;
     /** Command name */
-    char cmd_name[1000];
+    char cmd_name[CMD_NAME_MAX_SIZE];
     /** Command value type */
     enum cmd_param_type_t type;
     /** Command ID */
@@ -29,7 +31,7 @@ typedef struct cmd_t
     /** Number of values the command reads/writes */
     unsigned num_values;
     /** Command info */
-    char info[1000];
+    char info[CMD_INFO_MAX_SIZE];
     /** Command visibility status */
     bool hidden_cmd;
 }cmd_t;
@@ -52,8 +54,8 @@ uint8_t find_cmd_idx(char* cmd_name) {
 
 typedef struct control_data_t
 {
-    char cmd_name[1000];
-    uint8_t payload[1000];
+    char cmd_name[CMD_NAME_MAX_SIZE];
+    uint8_t payload[CMD_PAYLOAD_MAX_SIZE];
 }control_data_t;
 
 uint8_t get_value_size(enum cmd_param_type_t value_type) {
@@ -88,7 +90,7 @@ uint8_t find_config_idx(char* cmd_name) {
 void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 #if SEND_CONTROL_COMMANDS
     adsp_stage_control_cmd_t cmd;
-    int8_t payload_buf[256];
+    int8_t payload_buf[CMD_PAYLOAD_MAX_SIZE];
     cmd.instance_id = stage_test_stage_index;
     for (int cmd_idx = 0; cmd_idx<get_cmds_num(); cmd_idx++)
     {
@@ -106,7 +108,7 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
             if (config_idx != 0xFF) {
                 memcpy(cmd.payload, control_config[config_idx].payload, cmd.payload_len);
             }
-            uint8_t values_write[1000];
+            uint8_t values_write[CMD_PAYLOAD_MAX_SIZE];
             memcpy(values_write, cmd.payload, cmd.payload_len);
             adsp_control_status_t ret = ADSP_CONTROL_BUSY;
             do {
@@ -125,7 +127,7 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 
             xassert(ret == ADSP_CONTROL_SUCCESS);
 
-            uint8_t values_read[1000];
+            uint8_t values_read[CMD_PAYLOAD_MAX_SIZE];
             memcpy(values_read, cmd.payload, cmd.payload_len);
             // Check that the configurable values are correct,
             // the other commands may differ as the stage can overwrite them
