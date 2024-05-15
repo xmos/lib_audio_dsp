@@ -117,7 +117,17 @@ def do_test(make_p, dut_frame_size):
 
         np.testing.assert_equal(out_py_int.T, out_data, err_msg=f"dut frame {dut_frame_size}, ref frame {ref_frame_size}")
 
-
+def generate_test_param_file(stage_name, stage_config):
+    with open(f"build\\src.autogen\\host\\control_test_params.h", "w") as f_op:
+        f_op.write(f"char * stage_name = \"{stage_name}\";\n\n")
+        f_op.write(f"control_data_t control_config[{len(stage_config)}] = {{\n")
+        for cmd_name, cmd_payload in stage_config.items():
+            f_op.write(f"\t{{\n")
+            f_op.write(f"\t\t.cmd_name = \"{stage_name.upper()}_{cmd_name.upper()}\",\n")
+            payload_values = [ "0x{:02X}".format(x&0xFF) for x in struct.unpack('4b', struct.pack('I', cmd_payload))]
+            f_op.write(f"\t\t.payload  = {{{', '.join(payload_values)}}},\n")
+            f_op.write(f"\t}},\n")
+        f_op.write(f"}};")
 
 @pytest.mark.parametrize("method, args", [("make_bypass", None),
                                           ("make_lowpass", [1000, 0.707]),
@@ -162,7 +172,7 @@ filter_spec = [['lowpass', fs*0.4, 0.707],
 @pytest.mark.parametrize("method, args", [("make_butterworth_highpass", [8, 1000]),
                                           ("make_butterworth_lowpass", [8, 1000]),
                                           ("make_parametric_eq", [filter_spec]),])
-def _test_cascaded_biquad(method, args, frame_size):
+def test_cascaded_biquad(method, args, frame_size):
     """
     Test the biquad stage filters the same in python and C
     """
@@ -177,21 +187,13 @@ def _test_cascaded_biquad(method, args, frame_size):
             cbq_method(*args)
         else:
             cbq_method()
+        print(f"\n\n\npipeline in test: {p.resolve_pipeline()['configs'][2]}")
+
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("LIMITER_RMS", stage_config)
         return p
 
     do_test(make_p, frame_size)
-
-def generate_test_param_file(stage_name, stage_config):
-    with open(f"build\\src.autogen\\host\\control_test_params.h", "w") as f_op:
-        f_op.write(f"char * stage_name = \"{stage_name}\";\n\n")
-        f_op.write(f"control_data_t control_config[{len(stage_config)}] = {{\n")
-        for cmd_name, cmd_payload in stage_config.items():
-            f_op.write(f"\t{{\n")
-            f_op.write(f"\t\t.cmd_name = \"{stage_name.upper()}_{cmd_name.upper()}\",\n")
-            payload_values = [ "0x{:02X}".format(x&0xFF) for x in struct.unpack('4b', struct.pack('I', cmd_payload))]
-            f_op.write(f"\t\t.payload  = {{{', '.join(payload_values)}}},\n")
-            f_op.write(f"\t}},\n")
-        f_op.write(f"}};")
 
 def test_limiter_rms(frame_size):
     """
@@ -207,8 +209,7 @@ def test_limiter_rms(frame_size):
         print(f"\n\n\npipeline in test: {p.resolve_pipeline()['configs'][2]}")
 
         stage_config = p.resolve_pipeline()['configs'][2]
-        stage_name = "LIMITER_RMS"
-        generate_test_param_file(stage_name, stage_config)
+        generate_test_param_file("LIMITER_RMS", stage_config)
         return p
 
     do_test(make_p, frame_size)
