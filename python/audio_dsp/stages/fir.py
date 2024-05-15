@@ -25,15 +25,11 @@ class Fir_Direct(Stage):
 
         self.stage_memory_parameters = (self.n_in, self.dsp_block.n_taps)
 
-    def make_fir_direct(
-        self, coeffs_path, Q_sig=dspg.Q_SIG
-    ):
+    def make_fir_direct(self, coeffs_path, Q_sig=dspg.Q_SIG):
         """Update fir configuration based on new parameters."""
         self.details = dict(
-            coeffs_path-coeffs_path,
+            coeffs_path - coeffs_path,
             Q_sig=Q_sig,
         )
-        self.dsp_block = fir.fir_direct(
-            self.fs, self.n_in, coeffs_path, Q_sig
-        )
+        self.dsp_block = fir.fir_direct(self.fs, self.n_in, coeffs_path, Q_sig)
         return self
