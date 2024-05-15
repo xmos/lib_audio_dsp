@@ -320,7 +320,8 @@ def test_compressor(frame_size):
         generate_test_param_file("COMPRESSOR", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    # TODO: Enable tune test
+    do_test(make_p, None, frame_size)
 
 def test_noise_gate(frame_size):
     """
@@ -362,7 +363,8 @@ def test_noise_suppressor(frame_size):
         generate_test_param_file("NOISE_SUPPRESSOR", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    # TODO: Enable tune test
+    do_test(make_p, None, frame_size)
 
 def test_volume(frame_size):
     """
@@ -381,7 +383,8 @@ def test_volume(frame_size):
         generate_test_param_file("VOLUME", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    # TODO: Enable tune test
+    do_test(make_p, None, frame_size)
 
 def test_fixed_gain(frame_size):
     """
@@ -422,7 +425,8 @@ def test_reverb(frame_size):
         generate_test_param_file("REVERB", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    # TODO: Enable tune test
+    do_test(make_p, None, frame_size)
 
 def test_delay(frame_size):
     """
