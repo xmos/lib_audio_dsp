@@ -45,7 +45,8 @@ void fir_direct_init(module_instance_t* instance,
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
     state->n_taps = config->n_taps;
-    state->coeffs = config->coeffs;
+    state->coeffs = (int32_t *)adsp_bump_allocator_malloc(allocator, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps))
+    memcpy(state->coeffs, config->coeffs, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
     state->shift = config->shift;
 
     state->fir_direct = adsp_bump_allocator_malloc(allocator, n_inputs * sizeof(fir_direct_t));
