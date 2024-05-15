@@ -45,6 +45,7 @@ void fir_direct_init(module_instance_t* instance,
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
     state->n_taps = config->n_taps;
+    state->max_taps = config->n_taps;
     state->coeffs = (int32_t *)adsp_bump_allocator_malloc(allocator, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
     memcpy(state->coeffs, config->coeffs, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
     state->shift = config->shift;
@@ -61,25 +62,36 @@ void fir_direct_init(module_instance_t* instance,
 
 void fir_direct_control(void *state, module_control_t *control)
 {
-    // xassert(state != NULL);
-    // fir_direct_state_t *fir_direct_state = state;
-    // xassert(control != NULL);
-    // fir_direct_config_t *fir_direct_config = control->config;
+    xassert(state != NULL);
+    fir_direct_state_t *fir_direct_state = state;
+    xassert(control != NULL);
+    fir_direct_config_t *fir_direct_config = control->config;
 
-    // if(control->config_rw_state == config_write_pending) {
-    //     for(int i = 0; i < fir_direct_state->n_inputs; i++)
-    //     {
-    //         fir_direct_state->fir_direct[i].fir_direct = fir_direct_config->fir_direct;
-    //     }
-    //     control->config_rw_state = config_none_pending;
-    // }
-    // else if(control->config_rw_state == config_read_pending) {
-    //     fir_direct_config->max_fir_direct = fir_direct_state->fir_direct[0].max_fir_direct;
-    //     fir_direct_config->fir_direct = fir_direct_state->fir_direct[0].fir_direct;
-    //     control->config_rw_state = config_read_updated;
-    // }
-    // else
-    // {
+    xassert(fir_direct_config->n_taps <= fir_direct_state->max_taps);
+
+    if(control->config_rw_state == config_write_pending) {
+
+        fir_direct_state->n_taps = fir_direct_config->n_taps;
+        fir_direct_state->shift = fir_direct_config->shift;
+
+        // coeffs and buffer are already allocated, so just copy data and reinit fir_s32 struct
+        memcpy(fir_direct_state->coeffs, fir_direct_config->coeffs, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(fir_direct_config->n_taps));
+
+        for(int i = 0; i < fir_direct_state->n_inputs; i++)
+        {
+            filter_fir_s32_init(&(fir_direct_state->fir_direct[i].filter), fir_direct_state->fir_direct[i].buffer, fir_direct_state->n_taps, fir_direct_state->coeffs, fir_direct_state->shift);
+        }
+        control->config_rw_state = config_none_pending;
+    }
+    else if(control->config_rw_state == config_read_pending) {
+        fir_direct_config->n_taps = fir_direct_state->n_taps;
+        fir_direct_config->shift = fir_direct_state->shift;
+        memcpy(fir_direct_config->coeffs, fir_direct_state->coeffs, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(fir_direct_state->n_taps));
+
+        control->config_rw_state = config_read_updated;
+    }
+    else
+    {
         // nothing to do
-    // }
+    }
 }

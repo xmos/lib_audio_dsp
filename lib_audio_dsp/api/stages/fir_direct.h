@@ -13,6 +13,7 @@ typedef struct
     int n_inputs;
     int n_outputs;
     int frame_size;
+    int32_t max_taps;
     int32_t n_taps;
     int32_t* coeffs;
     right_shift_t shift;
