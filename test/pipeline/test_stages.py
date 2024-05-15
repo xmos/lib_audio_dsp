@@ -110,7 +110,7 @@ def do_test(make_p, dut_frame_size, tune_p=None):
             out_data = out_data.reshape(len(out_data), 1)
 
         ref_p = [make_p(s) for s in TEST_FRAME_SIZES]
-    out_py_int_all = [generate_ref(sig, p.stages[2].dsp_block, pipeline_channels, fr) for p, fr in zip(ref_p, TEST_FRAME_SIZES)]
+        out_py_int_all = [generate_ref(sig, p.stages[2].dsp_block, pipeline_channels, fr) for p, fr in zip(ref_p, TEST_FRAME_SIZES)]
 
         for out_py_int, ref_frame_size in zip(out_py_int_all, TEST_FRAME_SIZES):
             for ch in range(pipeline_channels):
@@ -122,7 +122,7 @@ def do_test(make_p, dut_frame_size, tune_p=None):
                 print(f"ch {ch} mismatching indexes = {indexes}")
 
             np.testing.assert_equal(out_py_int.T, out_data, err_msg=f"dut frame {dut_frame_size}, ref frame {ref_frame_size}")
-run
+
 def generate_test_param_file(stage_name, stage_config):
     with open(f"build\\src.autogen\\host\\control_test_params.h", "w") as f_op:
         f_op.write(f"char * stage_name = \"{stage_name}\";\n\n")
