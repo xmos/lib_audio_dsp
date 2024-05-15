@@ -276,6 +276,7 @@ class Stage(Node):
             raise KeyError(
                 f"{field} is not a valid control field for {self.name}, try one of {', '.join(self._control_fields.keys())}"
             )
+
         self._control_fields[field] = PropertyControlField(getter, setter)
 
     def get_config(self):

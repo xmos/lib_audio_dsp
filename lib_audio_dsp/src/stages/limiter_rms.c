@@ -72,6 +72,7 @@ void limiter_rms_init(module_instance_t* instance, adsp_bump_allocator_t* alloca
     limiter_copy_config_to_state(state->lim, state->n_inputs, config);
 }
 void limiter_rms_control(void *module_state, module_control_t *control)
+
 {
     xassert(module_state != NULL);
     limiter_rms_state_t *state = module_state;
@@ -80,7 +81,6 @@ void limiter_rms_control(void *module_state, module_control_t *control)
 
     if(control->config_rw_state == config_write_pending)
     {
-
         // Finish the write by updating the working copy with the new config
         // TODO update only the fields written by the host
         limiter_copy_config_to_state(state->lim, state->n_inputs, config);
@@ -88,7 +88,6 @@ void limiter_rms_control(void *module_state, module_control_t *control)
     }
     else if(control->config_rw_state == config_read_pending)
     {
-
         limiter_copy_state_to_config(config, state->lim);
         control->config_rw_state = config_read_updated;
     }
