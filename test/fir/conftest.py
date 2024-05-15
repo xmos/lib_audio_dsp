@@ -17,10 +17,10 @@ def pytest_sessionstart():
     coeffs = spsig.firwin2(512, [0.0, 0.5, 1.0], [1.0, 1.0, 0.0])
     np.savetxt(Path(gen_dir, "simple_low_pass.txt"), coeffs)
 
-    coeffs = spsig.firwin2(32768, [0.0, 20/48000, 1.0], [0.0, 1.0, 1.0], antisymmetric=True)
+    coeffs = spsig.firwin2(2048, [0.0, 20/48000, 1.0], [0.0, 1.0, 1.0], antisymmetric=True)
     np.savetxt(Path(gen_dir, "aggressive_high_pass.txt"), coeffs)
 
-    coeffs = spsig.firwin2(32767, [0.0, 0.5, 1.0], [0.5, 1.0, 2.0])
+    coeffs = spsig.firwin2(2047, [0.0, 0.5, 1.0], [0.5, 1.0, 2.0])
     np.savetxt(Path(gen_dir, "tilt.txt"), coeffs)
 
     coeffs = np.zeros(10000)

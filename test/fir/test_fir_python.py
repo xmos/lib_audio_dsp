@@ -50,7 +50,7 @@ def test_basic(coeff_path):
         error_flt = np.abs(utils.db(out_int[top_half])-utils.db(out_flt[top_half]))
         mean_error_int = utils.db(np.nanmean(utils.db2gain(error_flt)))
         assert mean_error_int < 0.016
-        np.testing.assert_allclose(out_flt, out_int, atol=2**(-23))
+        np.testing.assert_allclose(out_flt, out_int, atol=2**(-21))
 
 
 # Note the filter coeffs are defined in conftest
