@@ -9,10 +9,6 @@
 #include "fileio.h"
 #include "wav_utils.h"
 #include "app_dsp.h"
-#include "adsp_control.h"
-#include "adsp_instance_id_auto.h"
-#include "cmds.h"
-#include "cmd_offsets.h"
 #include "fileio_task.h"
 
 
@@ -86,11 +82,9 @@ static void prepare_output(int32_t* data, int32_t** dsp_input, int n_ch, int fra
     }
 }
 
-
 /// @brief Task responsible for sending data read from a wav file to the pipeline and writing the output received
 /// from the pipeline to another file. File operations are done using xscope_fileio functions.
 /// @param c_control Unused for now. Will be used for control in future.
-//void fileio_task(adsp_pipeline_t * m_dsp, chanend_t c_control)
 void fileio_task(chanend_t c_control)
 {
     printf("In test app!\n");
@@ -148,6 +142,7 @@ void fileio_task(chanend_t c_control)
     printf("bytes_per_frame = %d\n", bytes_per_frame);
     printf("Block count = %d\n", block_count);
     printf("Frame size = %d\n", app_dsp_frame_size());
+
     int32_t input[ FILEREAD_CHUNK_SIZE * MAX_CHANNELS] = {0}; // Array for storing interleaved input read from wav file
     int32_t output[FILEREAD_CHUNK_SIZE * MAX_CHANNELS] = {0};
     xassert(FILEREAD_CHUNK_SIZE % app_dsp_frame_size() ==0); // frame size must be a factor of read size

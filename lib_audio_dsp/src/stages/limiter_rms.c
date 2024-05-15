@@ -71,8 +71,8 @@ void limiter_rms_init(module_instance_t* instance, adsp_bump_allocator_t* alloca
 
     limiter_copy_config_to_state(state->lim, state->n_inputs, config);
 }
-void limiter_rms_control(void *module_state, module_control_t *control)
 
+void limiter_rms_control(void *module_state, module_control_t *control)
 {
     xassert(module_state != NULL);
     limiter_rms_state_t *state = module_state;

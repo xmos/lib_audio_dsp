@@ -5,7 +5,6 @@
 #pragma once
 #include <xccompat.h>
 #include <stdint.h>
-#include "adsp_pipeline.h"
 
 #define MAX_CHANNELS (4)
 // XC safe wrapper for adsp

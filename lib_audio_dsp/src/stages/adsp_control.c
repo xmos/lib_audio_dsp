@@ -20,7 +20,7 @@ static module_instance_t* get_module_instance(module_instance_t *modules, uint32
             return &modules[i];
         }
     }
-    printf("ERROR: Cannot find a module for the instance-id %lu\n", res_id);
+    debug_printf("ERROR: Cannot find a module for the instance-id %lu\n", res_id);
     xassert(0);
     return NULL;
 }
@@ -38,7 +38,6 @@ static void get_control_cmd_config_offset(module_instance_t *module, uint8_t cmd
             *size = config_offsets[i].size;
             return;
         }
-
     }
     debug_printf("ERROR: cmd_id %d not found in module_type %d\n", cmd_id, module_type);
     xassert(0);
@@ -61,7 +60,7 @@ adsp_control_status_t adsp_read_module_config(module_instance_t* modules, // Arr
         xassert(0);
     }
     config_rw_state_t config_state = module->control.config_rw_state;
-    if((config_state == config_none_pending) || (config_state == config_read_pending) ) // No command pending or read pending
+    if((config_state == config_none_pending) || (config_state == config_read_pending)) // No command pending or read pending
     {
         if(config_state == config_none_pending)
         {
@@ -95,11 +94,9 @@ adsp_control_status_t adsp_write_module_config(module_instance_t* modules, // Ar
                                         )
 {
     module_instance_t *module = get_module_instance(modules, cmd->instance_id, num_modules);
-
     uint32_t offset, size;
     // Get offset into the module's config structure for this command
     get_control_cmd_config_offset(module, cmd->cmd_id, &offset, &size);
-
     if(size != cmd->payload_len)
     {
         debug_printf("ERROR: payload_len mismatch. Expected %lu, but received %u\n", size, cmd->payload_len);
