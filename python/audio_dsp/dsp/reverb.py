@@ -278,7 +278,7 @@ class reverb_room(dspg.dsp_block):
         # feedbacks
         if not (0 <= decay <= 1):
             raise ValueError("Decay must be between 0 and 1")
-        feedback_cb = decay * 0.28 + 0.7 # avoids too much or too little feedback
+        feedback_cb = decay * 0.28 + 0.7  # avoids too much or too little feedback
         feedback_ap = 0.5
 
         self.combs = [
