@@ -1,6 +1,7 @@
 #include "print.h"
 #include "adsp_control.h"
 #include "adsp_instance_id_auto.h"
+#include "xcore/hwtimer.h"
 //#include "cmds.h"
 //#include "cmd_offsets.h"
 
@@ -97,8 +98,8 @@ static void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
                 ret = adsp_write_module_config(m_dsp->modules, m_dsp->n_modules, &cmd);
             }while(ret == ADSP_CONTROL_BUSY);
             assert(ret == ADSP_CONTROL_SUCCESS);
-
             memset(cmd.payload, 0, cmd.payload_len);
+            hwtimer_t t = hwtimer_alloc(); hwtimer_delay(t, 100); //100us to allow command to be written
 
             // Read back the written data
             ret = ADSP_CONTROL_BUSY;

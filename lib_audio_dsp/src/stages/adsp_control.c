@@ -62,7 +62,7 @@ adsp_control_status_t adsp_read_module_config(module_instance_t* modules, // Arr
         xassert(0);
     }
     config_rw_state_t config_state = module->control.config_rw_state;
-    if((config_state == config_none_pending) || (config_state == config_read_pending)) // No command pending or read pending
+    if((config_state == config_none_pending) || (config_state == config_read_pending)  || (config_state == config_write_pending) ) // No command pending or read pending
     {
         if(config_state == config_none_pending)
         {
