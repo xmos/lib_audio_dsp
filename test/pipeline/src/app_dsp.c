@@ -2,17 +2,10 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include "app_dsp.h"
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
 #include "stdbool.h"
-#include <xcore/assert.h>
-#include <assert.h>
 #include "xcore/chanend.h"
 #include "xcore/parallel.h"
 
-//#include "dspt_control.h"
-#include "print.h"
 #include <stages/adsp_pipeline.h>
 #include <adsp_generated_auto.h>
 
