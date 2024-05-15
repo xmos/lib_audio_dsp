@@ -12,25 +12,66 @@ from audio_dsp.dsp import utils
 
 
 class fir_direct(dspg.dsp_block):
-    """An FIR filter, implemented in direct form in the time domain"""
+    """
+    An FIR filter, implemented in direct form in the time domain
+
+    When the filter coefficients are converted to ficed point, if there
+    will be leading zeros, a left shift is applied to the coefficients
+    in order to use the full dynamic range of the VPU. A subsequent
+    right shift is applied to the accumulator after the convolution to
+    return to the same gain.
+
+    Parameters
+    ----------
+    coeffs_path : Path
+        Path to a file containing the coefficients, in a format
+        supported by `np.loadtxt <https://numpy.org/doc/stable/reference/generated/numpy.loadtxt.html>`_.
+
+    Attributes
+    ----------
+    coeffs : np.ndarray
+        Array of the FIR coefficients in floating point format.
+    coeffs_int : list
+        Array of the FIR coefficients in fixed point int32 format.
+    shift : int
+        Right shift to be applied to the fixed point convolution result.
+        This compensates for any left shift applied to the coefficients.
+    n_taps : int
+        Number of taps in the filter.
+    buffer : np.ndarray
+        Buffer of previous inputs for the convlution in floating point
+        format.
+    buffer_int : list
+        Buffer of previous inputs for the convlution in fixed point
+        format.
+    buffer_idx : list
+        List of the floating point buffer head for each channel.
+    buffer_idx_int : list
+        List of the fixed point point buffer head for each channel.
+
+    """
 
     def __init__(self, fs: float, n_chans: int, coeffs_path: Path, Q_sig: int = dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
         self.coeffs = np.loadtxt(coeffs_path)
         self.n_taps = len(self.coeffs)
-        self.coeffs_int, self.shift = self.check_coeff_scaling(self.coeffs)
+        self.coeffs_int, self.shift = self.check_coeff_scaling()
 
         self.reset_state()
         self.buffer_idx = [0] * self.n_chans
         self.buffer_idx_int = [0] * self.n_chans
 
-    def check_coeff_scaling(self, coeffs):
+    def check_coeff_scaling(self):
+        """Check the coefficient scaling is optimal
+
+        If there will be leading zeros, calculate a shift to use the
+        full dynamic range of the VPU"""
         int32_max = 2**31 - 1
 
         # scale to Q30, to match VPU shift but keep as double for now
         # until we see how many bits we have
-        scaled_coeffs = coeffs * (2**30)
+        scaled_coeffs = self.coeffs * (2**30)
 
         # find how many bits we can (or need to) shift the coeffs by
         max_coeff = np.max(np.abs(scaled_coeffs))
@@ -70,17 +111,6 @@ class fir_direct(dspg.dsp_block):
         int_coeffs = np.round(scaled_coeffs).astype(int).tolist()
 
         return int_coeffs, int(shift)
-
-    def make_int_coeffs(self, coeffs):
-        # check headroom on coefficients, preparing for multiplicaiton
-        # by int32_max
-        max_coeff = np.max(coeffs)
-        max_coeff_headroom = -np.ceil(np.log2(max_coeff))
-
-        # we have 43 bits in the accumulator (from summing 8x 40b accs),
-        # so can be 12 bits
-        coeff_sum = np.sum(np.abs(coeffs))
-        coeff_sum_headroom = -np.ceil(np.log2(coeff_sum))
 
     def reset_state(self) -> None:
         """Reset all the delay line values to zero."""
