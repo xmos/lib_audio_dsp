@@ -124,7 +124,7 @@ def do_test(make_p, dut_frame_size, tune_p=None):
             np.testing.assert_equal(out_py_int.T, out_data, err_msg=f"dut frame {dut_frame_size}, ref frame {ref_frame_size}")
 
 def generate_test_param_file(stage_name, stage_config):
-    with open(f"build\\src.autogen\\host\\control_test_params.h", "w") as f_op:
+    with open(Path(__file__).resolve().parent / f"build/src.autogen/host/control_test_params.h", "w") as f_op:
         f_op.write(f"char * stage_name = \"{stage_name}\";\n\n")
         f_op.write(f"control_data_t control_config[{len(stage_config)}] = {{\n")
         for cmd_name, cmd_payload in stage_config.items():
