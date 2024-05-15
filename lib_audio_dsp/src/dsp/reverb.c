@@ -243,7 +243,7 @@ static inline int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
     return output;
 }
 
-int32_t adsp_reverb_calc_gain(float gain_db)
+int32_t adsp_reverb_room_calc_gain(float gain_db)
 {
     xassert(gain_db > ADSP_RVR_MIN_GAIN_DB &&
             gain_db <= ADSP_RVR_MAX_GAIN_DB);
@@ -329,8 +329,8 @@ reverb_room_t adsp_reverb_room_init(
     adsp_reverb_room_set_room_size(&rv, room_size);
 
     rv.pre_gain = float_to_Q_RVR_pos(pregain);
-    rv.dry_gain = adsp_reverb_calc_gain(dry_gain);
-    rv.wet_gain = adsp_reverb_calc_gain(wet_gain);
+    rv.dry_gain = adsp_reverb_room_calc_gain(dry_gain);
+    rv.wet_gain = adsp_reverb_room_calc_gain(wet_gain);
 
     return rv;
 }

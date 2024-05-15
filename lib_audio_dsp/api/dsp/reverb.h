@@ -123,13 +123,13 @@ reverb_room_t adsp_reverb_room_init(
  * initialise the filters and set the rooms size.
  * 
  * feedback can be calculated from the decay parameter as follows:
- * `feedback = Q_RV((decay * 0.28f) + 0.7f)`
+ * `feedback = Q_RVR((decay * 0.28f) + 0.7f)`
  * 
  * @param rv                Reverb room object
  * @param fs                Sampling frequency
  * @param max_room_size     Maximum room size of delay filters
- * @param feedback          Feedback gain for the comb filters in Q_RV format
- * @param damping           Damping coefficient for the comb filters in Q_RV format
+ * @param feedback          Feedback gain for the comb filters in Q_RVR format
+ * @param damping           Damping coefficient for the comb filters in Q_RVR format
  * @param reverb_heap       Pointer to heap to allocate reverb memory
  */
 void adsp_reverb_room_init_filters(
@@ -179,10 +179,10 @@ int32_t adsp_reverb_room(
 /**
  * @brief Calculate the reverb gain in linear scale
  * 
- * Will convert a gain in dB to a linear scale in Q_RV format.
+ * Will convert a gain in dB to a linear scale in Q_RVR format.
  * To be used for converting wet and dry gains for the room_reverb.
  * 
  * @param gain_db           Gain in dB
- * @return int32_t          Linear gain in a Q_RV format
+ * @return int32_t          Linear gain in a Q_RVR format
  */
-int32_t adsp_reverb_calc_gain(float gain_db);
+int32_t adsp_reverb_room_calc_gain(float gain_db);
