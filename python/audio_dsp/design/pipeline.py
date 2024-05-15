@@ -293,7 +293,6 @@ class Pipeline:
         self.generate_pipeline_hash(threads, edges)
 
         node_configs = {node.index: node.get_config() for node in self._graph.nodes}
-        print("\n\n\nnode_configs:\n\n\n"+str(node_configs))
         module_definitions = {
             node.index: {"name": node.name, "yaml_dict": node.yaml_dict}
             for node in self._graph.nodes
@@ -735,15 +734,12 @@ def _generate_dsp_init(resolved_pipeline):
                 stage_frame_size = 1
 
             defaults = {}
-            print(f"resolved_pipeline['configs'][stage_index].items() {resolved_pipeline['configs'][stage_index].items()}")
             for config_field, value in resolved_pipeline["configs"][stage_index].items():
                 if isinstance(value, list) or isinstance(value, tuple):
                     defaults[config_field] = "{" + ", ".join(str(i) for i in value) + "}"
                 else:
                     defaults[config_field] = str(value)
             struct_val = ", ".join(f".{field} = {value}" for field, value in defaults.items())
-            print("\n\n\n"+struct_val)
-            # default_str = f"&({stage_name}_config_t){{{struct_val}}}"
             if resolved_pipeline["modules"][stage_index]["yaml_dict"]:
                 ret += (
                     f"\tstatic {stage_name}_config_t config{stage_index} = {{ {struct_val} }};\n"

@@ -131,11 +131,7 @@ def generate_test_param_file(stage_name, stage_config):
             else:
                 cmd_payload_list = cmd_payload
             for value in cmd_payload_list:
-                #print(cmd_name.upper())
-                #print(value)
-                #print(struct.unpack('4b', struct.pack('I', value&0xFFFFFFFF)))
                 payload_values = payload_values + [ "0x{:02X}".format(x&0xFF) for x in struct.unpack('4b', struct.pack('I', value&0xFFFFFFFF))]
-                #print(payload_values)
             f_op.write(f"\t\t.payload  = {{{', '.join(list(payload_values))}}},\n")
             f_op.write(f"\t}},\n")
         f_op.write(f"}};")
@@ -198,7 +194,6 @@ def test_cascaded_biquad(method, args, frame_size):
             cbq_method(*args)
         else:
             cbq_method()
-        print(f"\n\n\npipeline in test: {p.resolve_pipeline()['configs'][2]}")
 
         stage_config = p.resolve_pipeline()['configs'][2]
         generate_test_param_file("CASCADED_BIQUADS", stage_config)
@@ -217,7 +212,6 @@ def test_limiter_rms(frame_size):
         p.set_outputs(lim.o)
 
         lim.make_limiter_rms(-6, 0.001, 0.1)
-        print(f"\n\n\npipeline in test: {p.resolve_pipeline()['configs'][2]}")
 
         stage_config = p.resolve_pipeline()['configs'][2]
         generate_test_param_file("LIMITER_RMS", stage_config)

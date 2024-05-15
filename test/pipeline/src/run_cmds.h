@@ -77,30 +77,18 @@ static void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
     {
         if (strncmp(stage_name, commands[cmd_idx].cmd_name, strlen(stage_name)) == 0) {
 
-
-            //uint8_t cmd_idx = find_cmd_idx("LIMITER_RMS_THRESHOLD");
-                        printintln(33);
-
-            printintln(cmd_idx);
             cmd.cmd_id = commands[cmd_idx].cmd_id;
             cmd.payload_len = commands[cmd_idx].num_values * sizeof(int32_t);
             cmd.payload = payload_buf;
-            printintln(cmd.payload_len);
             memset(cmd.payload, 0, cmd.payload_len);
             //config2 = { .attack_alpha = 89478485, .release_alpha = 894785, .threshold = 33713969 };
             //int NUM_VALUES_LIMITER_RMS_ATTACK_ALPHA = cmd.payload_len / 4;
             //#define NUM_VALUES_LIMITER_RMS_ATTACK_ALPHA 1
             // Write control command to the stage
             uint8_t config_idx = find_config_idx(commands[cmd_idx].cmd_name);
-            printintln(config_idx);
 
             if (config_idx != 0xFF) {
                 memcpy(cmd.payload, control_config[config_idx].payload, cmd.payload_len);
-                printhex(cmd.payload[0]);
-                printhex(cmd.payload[1]);
-                printhex(cmd.payload[2]);
-                printhex(cmd.payload[3]);
-                printintln(cmd.payload[0]+(cmd.payload[1]<<8)+(cmd.payload[2]<<16)+(cmd.payload[3]<<24));
             }
             uint8_t values_write[1000];
             memcpy(values_write, cmd.payload, cmd.payload_len);
@@ -108,7 +96,6 @@ static void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
             do {
                 ret = adsp_write_module_config(m_dsp->modules, m_dsp->n_modules, &cmd);
             }while(ret == ADSP_CONTROL_BUSY);
-            printintln(333);
             assert(ret == ADSP_CONTROL_SUCCESS);
 
             memset(cmd.payload, 0, cmd.payload_len);
