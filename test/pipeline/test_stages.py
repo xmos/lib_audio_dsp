@@ -52,7 +52,7 @@ def generate_ref(sig, ref_module, pipeline_channels, frame_size):
     return out_py_int
 
 
-def do_test(make_p, dut_frame_size, tune_p=None):
+def do_test(make_p, tune_p, dut_frame_size):
     """
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
@@ -178,7 +178,7 @@ def test_biquad(method, args, frame_size):
         generate_test_param_file("BIQUAD", stage_config)
         return p
 
-    do_test(make_p, frame_size, tune_p)
+    do_test(make_p, tune_p, frame_size)
 
 filter_spec = [['lowpass', fs*0.4, 0.707],
                 ['highpass', fs*0.001, 1],
@@ -214,7 +214,7 @@ def test_cascaded_biquad(method, args, frame_size):
         generate_test_param_file("CASCADED_BIQUADS", stage_config)
         return p
 
-    do_test(make_p, frame_size, tune_p)
+    do_test(make_p, tune_p, frame_size)
 
 def test_limiter_rms(frame_size):
     """
@@ -235,7 +235,7 @@ def test_limiter_rms(frame_size):
         generate_test_param_file("LIMITER_RMS", stage_config)
         return p
 
-    do_test(make_p, frame_size, tune_p)
+    do_test(make_p, tune_p, frame_size)
 
 
 def test_limiter_peak(frame_size):
@@ -257,7 +257,7 @@ def test_limiter_peak(frame_size):
         generate_test_param_file("LIMITER_PEAK", stage_config)
         return p
 
-    do_test(make_p, frame_size, tune_p)
+    do_test(make_p, tune_p, frame_size)
 
 def test_hard_limiter_peak(frame_size):
     """
@@ -278,7 +278,7 @@ def test_hard_limiter_peak(frame_size):
         generate_test_param_file("HARD_LIMITER_PEAK", stage_config)
         return p
 
-    do_test(make_p, frame_size, tune_p)
+    do_test(make_p, tune_p, frame_size)
 
 def test_clipper(frame_size):
     """
@@ -299,7 +299,7 @@ def test_clipper(frame_size):
         generate_test_param_file("CLIPPER", stage_config)
         return p
 
-    do_test(make_p, frame_size, tune_p)
+    do_test(make_p, tune_p, frame_size)
 
 def test_compressor(frame_size):
     """
@@ -320,7 +320,7 @@ def test_compressor(frame_size):
         generate_test_param_file("COMPRESSOR", stage_config)
         return p
 
-    do_test(make_p, frame_size, tune_p)
+    do_test(make_p, tune_p, frame_size)
 
 def test_noise_gate(frame_size):
     """
@@ -341,7 +341,7 @@ def test_noise_gate(frame_size):
         generate_test_param_file("NOISE_GATE", stage_config)
         return p
 
-    do_test(make_p, frame_size, tune_p)
+    do_test(make_p, tune_p, frame_size)
 
 def test_noise_suppressor(frame_size):
     """
@@ -362,7 +362,7 @@ def test_noise_suppressor(frame_size):
         generate_test_param_file("NOISE_SUPPRESSOR", stage_config)
         return p
 
-    do_test(make_p, frame_size, tune_p)
+    do_test(make_p, tune_p, frame_size)
 
 def test_volume(frame_size):
     """
@@ -381,7 +381,7 @@ def test_volume(frame_size):
         generate_test_param_file("VOLUME", stage_config)
         return p
 
-    do_test(make_p, frame_size, tune_p)
+    do_test(make_p, tune_p, frame_size)
 
 def test_fixed_gain(frame_size):
     """
@@ -402,7 +402,7 @@ def test_fixed_gain(frame_size):
         generate_test_param_file("FIXED_GAIN", stage_config)
         return p
 
-    do_test(make_p, frame_size, tune_p)
+    do_test(make_p, tune_p, frame_size)
 
 def test_reverb(frame_size):
     """
@@ -422,7 +422,7 @@ def test_reverb(frame_size):
         generate_test_param_file("REVERB", stage_config)
         return p
 
-    do_test(make_p, frame_size, tune_p)
+    do_test(make_p, tune_p, frame_size)
 
 def test_delay(frame_size):
     """
@@ -442,4 +442,4 @@ def test_delay(frame_size):
         generate_test_param_file("DELAY", stage_config)
         return p
 
-    do_test(make_p, frame_size, tune_p)
+    do_test(make_p, tune_p, frame_size)
