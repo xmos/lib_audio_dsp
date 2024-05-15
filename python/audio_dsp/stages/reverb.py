@@ -45,7 +45,7 @@ class Reverb(Stage):
         Parameters
         ----------
         gain_db : float
-            Wet gain in dB.
+            Wet gain in dB, between 0 and -186 dB.
         """
         self.dsp_block.set_wet_gain(gain_dB)
 
@@ -56,7 +56,7 @@ class Reverb(Stage):
         Parameters
         ----------
         gain_db : float
-            Dry gain in dB.
+            Dry gain in dB, between 0 and -186 dB.
         """
         self.dsp_block.set_dry_gain(gain_dB)
 
@@ -66,8 +66,8 @@ class Reverb(Stage):
 
         Parameters
         ----------
-        preg_gain : float
-            pre gain value
+        pre_gain : float
+            Pre gain value, between 4.66e-10 and 1 (-186, 0 dB).
         """
         self.dsp_block.set_pre_gain(pre_gain)
 
@@ -84,7 +84,23 @@ class Reverb(Stage):
         self.dsp_block.set_room_size(new_room_size)
 
     def set_damping(self, damping):
-        self.dsp_block.set_cb_damping(damping)
+        """
+        Set the damping of the reverb.
+
+        Parameters
+        ----------
+        damping : float
+            How much high frequency attenuation in the room, between 0 and 1.
+        """
+        self.dsp_block.set_damping(damping)
 
     def set_decay(self, decay):
-        self.dsp_block.set_cb_decay(decay)
+        """
+        Set the decay of the reverb.
+
+        Parameters
+        ----------
+        decay : float
+            How long the reverberation of the room is, between 0 and 1.
+        """
+        self.dsp_block.set_decay(decay)

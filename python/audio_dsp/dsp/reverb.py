@@ -62,13 +62,12 @@ class allpass_fv(dspg.dsp_block):
         self._buffer_idx = 0
 
     def set_delay(self, delay):
-        """Set the length of the delay line. Must be < max_delay."""
+        """Set the length of the delay line. Will saturate to max_delay."""
         if delay < self._max_delay:
             self.delay = delay
         else:
             self.delay = self._max_delay
             Warning("Delay cannot be greater than max delay, setting to max delay")
-        return
 
     def reset_state(self):
         """Reset all the delay line values to zero."""
@@ -142,13 +141,12 @@ class comb_fv(dspg.dsp_block):
         self.set_damping(damping)
 
     def set_delay(self, delay):
-        """Set the length of the delay line. Must be < max_delay."""
+        """Set the length of the delay line. Will saturate to max_delay."""
         if delay < self._max_delay:
             self.delay = delay
         else:
             self.delay = self._max_delay
             Warning("Delay cannot be greater than max delay, setting to max delay")
-        return
 
     def set_feedback(self, feedback):
         self.feedback = feedback
@@ -245,14 +243,14 @@ class reverb_room(dspg.dsp_block):
         decay : int, optional
             how long the reverberation of the room is, between 0 and 1
         damping : float, optional
-           how much high frequency attenuation in the room
+            how much high frequency attenuation in the room, between 0 and 1
         wet_gain_db : int, optional
-            wet signal gain
+            wet signal gain, between 0 and -186 dB.
         dry_gain_db : int, optional
-            dry signal gain
+            dry signal gain, between 0 and -186 dB.
         pregain : float, optional
             the amount of gain applied to the signal before being passed
-            into the reverb.
+            into the reverb, between 4.66e-10 and 1 (-186, 0 dB).
         """
         assert n_chans == 1, f"Reverb only supports 1 channel. {n_chans} specified"
 
@@ -278,6 +276,8 @@ class reverb_room(dspg.dsp_block):
         self.ap_lengths = (default_ap_lengths * length_scaling).astype(int)
 
         # feedbacks
+        if not (0 <= decay <= 1):
+            raise ValueError("Decay must be between 0 and 1")
         feedback_cb = decay * 0.28 + 0.7 # avoids too much or too little feedback
         feedback_ap = 0.5
 
@@ -308,7 +308,6 @@ class reverb_room(dspg.dsp_block):
             cb.reset_state()
         for ap in self.allpasses:
             ap.reset_state()
-        return
 
     def get_buffer_lens(self):
         """Get the total length of all the buffers used in the reverb."""
@@ -326,8 +325,10 @@ class reverb_room(dspg.dsp_block):
         Parameters
         ----------
         pre_gain : float
-            pre gain value.
+            pre gain value, between 4.66e-10 and 1 (-186, 0 dB).
         """
+        if not (4.66e-10 < pre_gain < 1):
+            raise ValueError("Pre gain must be between 4.66e-10 and 1")
         self.pregain = pre_gain
         self.pregain_int = utils.int32(self.pregain * 2**Q_VERB)
 
@@ -338,10 +339,11 @@ class reverb_room(dspg.dsp_block):
         Parameters
         ----------
         wet_gain_db : float
-            Wet gain in dB.
+            Wet gain in dB, between 0 and -186 dB.
         """
+        if not (0 >= wet_gain_db > -186):
+            raise ValueError("Wet gain must be between 0 and -186 dB")
         self.wet = utils.db2gain(wet_gain_db)
-        self.wet = min(self.wet, self.int32_max_as_f32)
         self.wet_int = utils.int32((self.wet * 2**Q_VERB) - 1)
 
     def set_dry_gain(self, dry_gain_db):
@@ -351,19 +353,40 @@ class reverb_room(dspg.dsp_block):
         Parameters
         ----------
         dry_gain_db : float
-            Dry gain in dB.
+            Dry gain in dB, between 0 and -186 dB.
         """
+        if not (0 >= dry_gain_db > -186):
+            raise ValueError("Dry gain must be between 0 and -186 dB")
         self.dry = utils.db2gain(dry_gain_db)
-        self.dry = min(self.dry, self.int32_max_as_f32)
         self.dry_int = utils.int32((self.dry * 2**Q_VERB) - 1)
 
-    def set_cb_decay(self, decay):
+    def set_decay(self, decay):
+        """
+        Set the decay of the reverb.
+
+        Parameters
+        ----------
+        decay : float
+            How long the reverberation of the room is, between 0 and 1.
+        """
+        if not (0 <= decay <= 1):
+            raise ValueError("Decay must be between 0 and 1")
         # avoids too much or too little feedback
         feedback_cb = decay * 0.28 + 0.7
         for cb in self.combs:
             cb.set_feedback(feedback_cb)
 
-    def set_cb_damping(self, damping):
+    def set_damping(self, damping):
+        """
+        Set the damping of the reverb.
+
+        Parameters
+        ----------
+        damping : float
+            How much high frequency attenuation in the room, between 0 and 1.
+        """
+        if not (0 <= damping <= 1):
+            raise ValueError("Damping must be between 0 and 1")
         for cb in self.combs:
             cb.set_damping(damping)
 
@@ -377,7 +400,7 @@ class reverb_room(dspg.dsp_block):
             How big the room is as a proportion of max_room_size. This
             sets delay line lengths and must be between 0 and 1.
         """
-        if room_size > 1 or room_size < 0:
+        if not (0 <= room_size <= 1):
             raise ValueError(
                 "room_size must be between 0 and 1. For larger rooms, increase max_room size"
             )
@@ -391,8 +414,6 @@ class reverb_room(dspg.dsp_block):
 
         for n in range(len(self.allpasses)):
             self.allpasses[n].set_delay(ap_delays[n])
-
-        return
 
     def process_frame(self, frame):
         """
