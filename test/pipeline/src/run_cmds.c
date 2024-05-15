@@ -91,7 +91,7 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 #if SEND_CONTROL_COMMANDS
     adsp_stage_control_cmd_t cmd;
     int8_t payload_buf[CMD_PAYLOAD_MAX_SIZE];
-    cmd.instance_id = stage_test_stage_index;
+    cmd.instance_id = control_stage_index;
     for (int cmd_idx = 0; cmd_idx<get_cmds_num(); cmd_idx++)
     {
         if (strncmp(stage_name, commands[cmd_idx].cmd_name, strlen(stage_name)) == 0) {

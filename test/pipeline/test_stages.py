@@ -162,7 +162,7 @@ def test_biquad(method, args, frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            biquad = t.stage(Biquad, p.i)
+            biquad = t.stage(Biquad, p.i, label="control")
         p.set_outputs(biquad.o)
 
         bq_method = getattr(biquad, method)
@@ -172,8 +172,13 @@ def test_biquad(method, args, frame_size):
             bq_method()
         return p
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p = make_p(fr)
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("BIQUAD", stage_config)
+        return p
 
+    do_test(make_p, frame_size, tune_p)
 
 filter_spec = [['lowpass', fs*0.4, 0.707],
                 ['highpass', fs*0.001, 1],
@@ -193,7 +198,7 @@ def test_cascaded_biquad(method, args, frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            cbiquad = t.stage(CascadedBiquads, p.i, label="stage_test")
+            cbiquad = t.stage(CascadedBiquads, p.i, label="control")
         p.set_outputs(cbiquad.o)
 
         cbq_method = getattr(cbiquad, method)
@@ -205,10 +210,8 @@ def test_cascaded_biquad(method, args, frame_size):
 
     def tune_p(fr):
         p = make_p(fr)
-
         stage_config = p.resolve_pipeline()['configs'][2]
         generate_test_param_file("CASCADED_BIQUADS", stage_config)
-
         return p
 
     do_test(make_p, frame_size, tune_p)
@@ -220,7 +223,7 @@ def test_limiter_rms(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            lim = t.stage(LimiterRMS, p.i, label="stage_test")
+            lim = t.stage(LimiterRMS, p.i, label="control")
         p.set_outputs(lim.o)
 
         lim.make_limiter_rms(-6, 0.001, 0.1)
@@ -228,10 +231,8 @@ def test_limiter_rms(frame_size):
         return p
     def tune_p(fr):
         p = make_p(fr)
-
         stage_config = p.resolve_pipeline()['configs'][2]
         generate_test_param_file("LIMITER_RMS", stage_config)
-
         return p
 
     do_test(make_p, frame_size, tune_p)
@@ -244,13 +245,19 @@ def test_limiter_peak(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            lim = t.stage(LimiterPeak, p.i)
+            lim = t.stage(LimiterPeak, p.i, label="control")
         p.set_outputs(lim.o)
 
         lim.make_limiter_peak(-6, 0.001, 0.1)
         return p
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p = make_p(fr)
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("LIMITER_PEAK", stage_config)
+        return p
+
+    do_test(make_p, frame_size, tune_p)
 
 def test_hard_limiter_peak(frame_size):
     """
@@ -259,13 +266,19 @@ def test_hard_limiter_peak(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            lim = t.stage(HardLimiterPeak, p.i)
+            lim = t.stage(HardLimiterPeak, p.i, label="control")
         p.set_outputs(lim.o)
 
         lim.make_hard_limiter_peak(-6, 0.001, 0.1)
         return p
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p = make_p(fr)
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("HARD_LIMITER_PEAK", stage_config)
+        return p
+
+    do_test(make_p, frame_size, tune_p)
 
 def test_clipper(frame_size):
     """
@@ -274,13 +287,19 @@ def test_clipper(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            clip = t.stage(Clipper, p.i)
+            clip = t.stage(Clipper, p.i, label="control")
         p.set_outputs(clip.o)
 
         clip.make_clipper(-6)
         return p
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p = make_p(fr)
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("CLIPPER", stage_config)
+        return p
+
+    do_test(make_p, frame_size, tune_p)
 
 def test_compressor(frame_size):
     """
@@ -289,13 +308,19 @@ def test_compressor(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            comp = t.stage(CompressorRMS, p.i)
+            comp = t.stage(CompressorRMS, p.i, label="control")
         p.set_outputs(comp.o)
 
         comp.make_compressor_rms(2, -6, 0.001, 0.1)
         return p
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p = make_p(fr)
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("COMPRESSOR", stage_config)
+        return p
+
+    do_test(make_p, frame_size, tune_p)
 
 def test_noise_gate(frame_size):
     """
@@ -304,13 +329,19 @@ def test_noise_gate(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            ng = t.stage(NoiseGate, p.i)
+            ng = t.stage(NoiseGate, p.i, label="control")
         p.set_outputs(ng.o)
 
         ng.make_noise_gate(-6, 0.001, 0.1)
         return p
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p = make_p(fr)
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("NOISE_GATE", stage_config)
+        return p
+
+    do_test(make_p, frame_size, tune_p)
 
 def test_noise_suppressor(frame_size):
     """
@@ -319,13 +350,19 @@ def test_noise_suppressor(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            ng = t.stage(NoiseSuppressor, p.i)
+            ng = t.stage(NoiseSuppressor, p.i, label="control")
         p.set_outputs(ng.o)
 
         ng.make_noise_suppressor(2, -6, 0.001, 0.1)
         return p
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p = make_p(fr)
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("NOISE_SUPPRESSOR", stage_config)
+        return p
+
+    do_test(make_p, frame_size, tune_p)
 
 def test_volume(frame_size):
     """
@@ -334,12 +371,17 @@ def test_volume(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            vol = t.stage(VolumeControl, p.i, gain_dB=-6)
+            vol = t.stage(VolumeControl, p.i, gain_dB=-6, label="control")
         p.set_outputs(vol.o)
         return p
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p = make_p(fr)
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("VOLUME", stage_config)
+        return p
 
+    do_test(make_p, frame_size, tune_p)
 
 def test_fixed_gain(frame_size):
     """
@@ -348,13 +390,19 @@ def test_fixed_gain(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            vol = t.stage(FixedGain, p.i)
+            vol = t.stage(FixedGain, p.i, label="control")
         p.set_outputs(vol.o)
 
         vol.set_gain(-6)
         return p
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p = make_p(fr)
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("FIXED_GAIN", stage_config)
+        return p
+
+    do_test(make_p, frame_size, tune_p)
 
 def test_reverb(frame_size):
     """
@@ -364,12 +412,17 @@ def test_reverb(frame_size):
         reverb_test_channels = 1 # Reverb expects only 1 channel
         p = Pipeline(reverb_test_channels, frame_size=fr)
         with p.add_thread() as t:
-            rv = t.stage(Reverb, p.i)
+            rv = t.stage(Reverb, p.i, label="control")
         p.set_outputs(rv.o)
         return p
 
+    def tune_p(fr):
+        p = make_p(fr)
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("REVERB", stage_config)
+        return p
 
-    do_test(make_p, frame_size)
+    do_test(make_p, frame_size, tune_p)
 
 def test_delay(frame_size):
     """
@@ -379,8 +432,14 @@ def test_delay(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            delay = t.stage(Delay, p.i, max_delay=15, starting_delay=10)
+            delay = t.stage(Delay, p.i, max_delay=15, starting_delay=10, label="control")
         p.set_outputs(delay.o)
         return p
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p = make_p(fr)
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("DELAY", stage_config)
+        return p
+
+    do_test(make_p, frame_size, tune_p)
