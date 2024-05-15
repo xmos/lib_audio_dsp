@@ -134,17 +134,12 @@ class comb_fv(dspg.dsp_block):
         self._buffer_int = [0] * self._max_delay
 
         self.delay = 0
-        self.feedback = feedback_gain
-        self.feedback_int = utils.int32(self.feedback * 2**Q_VERB)
+        self.set_feedback(feedback_gain)
 
         self._buffer_idx = 0
         self._filterstore = 0.0
         self._filterstore_int = 0
-        self.damp1 = damping
-        self.damp2 = 1 - self.damp1
-        # super critical these add up, but also don't overflow int32...
-        self.damp1_int = max(utils.int32(self.damp1 * 2**Q_VERB - 1), 1)
-        self.damp2_int = utils.int32((2**31 - 1) - self.damp1_int + 1)
+        self.set_damping(damping)
 
     def set_delay(self, delay):
         """Set the length of the delay line. Must be < max_delay."""
@@ -154,6 +149,17 @@ class comb_fv(dspg.dsp_block):
             self.delay = self._max_delay
             Warning("Delay cannot be greater than max delay, setting to max delay")
         return
+
+    def set_feedback(self, feedback):
+        self.feedback = feedback
+        self.feedback_int = utils.int32(self.feedback * 2**Q_VERB)
+
+    def set_damping(self, damping):
+        self.damp1 = damping
+        self.damp2 = 1 - self.damp1
+        # super critical these add up, but also don't overflow int32...
+        self.damp1_int = max(utils.int32(self.damp1 * 2**Q_VERB - 1), 1)
+        self.damp2_int = utils.int32((2**31 - 1) - self.damp1_int + 1)
 
     def reset_state(self):
         """Reset all the delay line and filterstore values to zero."""
@@ -252,20 +258,12 @@ class reverb_room(dspg.dsp_block):
 
         super().__init__(fs, 1, Q_sig)
 
-        self.damping = damping
-        self.decay = decay
-        self.feedback = decay * 0.28 + 0.7  # avoids too much or too little feedback
-
-        # pregain going into the reverb
-        # can't use self.set_pre_gain() as it requires self.wet to be set
-        self.pregain = pregain
-        self.pregain_int = utils.int32(self.pregain * 2**Q_VERB)
-
         # care needs to be taken converting values from float32 to int32
         # as there are not enough bits to match 2**31-1 in f32, hence
         # the float32 value must be less than int32_max_as_f32
         self.int32_max_as_f32 = float32(np.nextafter(2**Q_VERB, 0, dtype=np.float32))
 
+        self.set_pre_gain(pregain)
         self.set_wet_gain(wet_gain_db)
         self.set_dry_gain(dry_gain_db)
 
@@ -275,28 +273,33 @@ class reverb_room(dspg.dsp_block):
         default_ap_lengths = np.array([556, 441, 341, 225])
 
         # buffer lengths
-        self.length_scaling = self.fs / 44100 * max_room_size
-        self.comb_lengths = (default_comb_lengths * self.length_scaling).astype(int)
-        self.ap_lengths = (default_ap_lengths * self.length_scaling).astype(int)
+        length_scaling = self.fs / 44100 * max_room_size
+        self.comb_lengths = (default_comb_lengths * length_scaling).astype(int)
+        self.ap_lengths = (default_ap_lengths * length_scaling).astype(int)
+
+        # feedbacks
+        feedback_cb = decay * 0.28 + 0.7 # avoids too much or too little feedback
+        feedback_ap = 0.5
 
         self.combs = [
-            comb_fv(self.comb_lengths[0], self.feedback, self.damping),
-            comb_fv(self.comb_lengths[1], self.feedback, self.damping),
-            comb_fv(self.comb_lengths[2], self.feedback, self.damping),
-            comb_fv(self.comb_lengths[3], self.feedback, self.damping),
-            comb_fv(self.comb_lengths[4], self.feedback, self.damping),
-            comb_fv(self.comb_lengths[5], self.feedback, self.damping),
-            comb_fv(self.comb_lengths[6], self.feedback, self.damping),
-            comb_fv(self.comb_lengths[7], self.feedback, self.damping),
+            comb_fv(self.comb_lengths[0], feedback_cb, damping),
+            comb_fv(self.comb_lengths[1], feedback_cb, damping),
+            comb_fv(self.comb_lengths[2], feedback_cb, damping),
+            comb_fv(self.comb_lengths[3], feedback_cb, damping),
+            comb_fv(self.comb_lengths[4], feedback_cb, damping),
+            comb_fv(self.comb_lengths[5], feedback_cb, damping),
+            comb_fv(self.comb_lengths[6], feedback_cb, damping),
+            comb_fv(self.comb_lengths[7], feedback_cb, damping),
         ]
 
         self.allpasses = [
-            allpass_fv(self.ap_lengths[0], 0.5),
-            allpass_fv(self.ap_lengths[1], 0.5),
-            allpass_fv(self.ap_lengths[2], 0.5),
-            allpass_fv(self.ap_lengths[3], 0.5),
+            allpass_fv(self.ap_lengths[0], feedback_ap),
+            allpass_fv(self.ap_lengths[1], feedback_ap),
+            allpass_fv(self.ap_lengths[2], feedback_ap),
+            allpass_fv(self.ap_lengths[3], feedback_ap),
         ]
 
+        # set filter delays
         self.set_room_size(room_size)
 
     def reset_state(self):
@@ -353,6 +356,16 @@ class reverb_room(dspg.dsp_block):
         self.dry = utils.db2gain(dry_gain_db)
         self.dry = min(self.dry, self.int32_max_as_f32)
         self.dry_int = utils.int32((self.dry * 2**Q_VERB) - 1)
+
+    def set_cb_decay(self, decay):
+        # avoids too much or too little feedback
+        feedback_cb = decay * 0.28 + 0.7
+        for cb in self.combs:
+            cb.set_feedback(feedback_cb)
+
+    def set_cb_damping(self, damping):
+        for cb in self.combs:
+            cb.set_damping(damping)
 
     def set_room_size(self, room_size):
         """

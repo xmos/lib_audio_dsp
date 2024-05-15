@@ -31,7 +31,7 @@ class Reverb(Stage):
         self["max_room_size"] = float(max_room_size)
         self.set_control_field_cb("room_size", lambda: self.dsp_block.room_size)
         self.set_control_field_cb("feedback", lambda: self.dsp_block.combs[0].feedback_int)
-        self.set_control_field_cb("damping", lambda: self.dsp_block.damping[0].damp1_int)
+        self.set_control_field_cb("damping", lambda: self.dsp_block.combs[0].damp1_int)
         self.set_control_field_cb("wet_gain", lambda: self.dsp_block.wet_int)
         self.set_control_field_cb("pregain", lambda: self.dsp_block.pregain_int)
         self.set_control_field_cb("dry_gain", lambda: self.dsp_block.dry_int)
@@ -70,3 +70,21 @@ class Reverb(Stage):
             pre gain value
         """
         self.dsp_block.set_pre_gain(pre_gain)
+
+    def set_room_size(self, new_room_size):
+        """
+        Set the room size, will adjust the delay line lengths.
+
+        Parameters
+        ----------
+        new_room_size : float
+            How big the room is as a proportion of max_room_size. This
+            sets delay line lengths and must be between 0 and 1.
+        """
+        self.dsp_block.set_room_size(new_room_size)
+
+    def set_damping(self, damping):
+        self.dsp_block.set_cb_damping(damping)
+
+    def set_decay(self, decay):
+        self.dsp_block.set_cb_decay(decay)

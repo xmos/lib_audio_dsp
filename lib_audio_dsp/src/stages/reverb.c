@@ -73,18 +73,29 @@ void reverb_control(void *module_state, module_control_t *control)
         state->reverb_room.pre_gain = config->pregain;
         state->reverb_room.wet_gain = config->wet_gain;
         state->reverb_room.dry_gain = config->dry_gain;
-        if (config->room_size != state->reverb_room.room_size)
-        {
+        if (config->room_size != state->reverb_room.room_size) {
             adsp_reverb_room_set_room_size(&state->reverb_room, config->room_size);
+        }
+        for (unsigned i = 0; i < ADSP_RV_N_COMBS; i ++) {
+            state->reverb_room.combs[i].feedback = config->feedback;
+            state->reverb_room.combs[i].damp_1 = config->damping;
+            // damping is always at least 1
+            state->reverb_room.combs[i].damp_2 = (uint32_t)(1<<31) - config->damping;
         }
         control->config_rw_state = config_none_pending;
     }
     else if(control->config_rw_state == config_read_pending)
     {
+        // none of these should be changed during the reverb execution,
+        // so don't really need to update the config,
+        // leaving it here in case something goes really wrong,
+        // so there's a way to debug
         config->pregain = state->reverb_room.pre_gain;
         config->wet_gain = state->reverb_room.wet_gain;
         config->dry_gain = state->reverb_room.dry_gain;
         config->room_size = state->reverb_room.room_size;
+        config->feedback = state->reverb_room.combs[0].feedback;
+        config->damping = state->reverb_room.combs[0].damp_1;
         control->config_rw_state = config_read_updated;
     }
     else {
