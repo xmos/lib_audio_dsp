@@ -68,6 +68,10 @@ def do_test(make_p, tune_p, dut_frame_size):
     make_p: function
         function that takes a frame size and returns a pipeline which
         has that frame size as the input.
+    make_p: function
+        function that takes a frame size, returns a pipeline which
+        has that frame size as the input, and tunes the pipelines with the correct
+        configuration values
     dut_frame_size : int
         The frame size to use for the pipeline that will run on the device.
     """
@@ -126,6 +130,14 @@ def do_test(make_p, tune_p, dut_frame_size):
             np.testing.assert_equal(out_py_int.T, out_data, err_msg=f"dut frame {dut_frame_size}, ref frame {ref_frame_size}")
 
 def generate_test_param_file(stage_name, stage_config):
+    """
+    Generate a header file with the configuration parameters listed in the arguments.
+
+    Parameters
+    ----------
+    stage_name: name of the stage to test
+    stage_config: dictionary containing the parameter name and its corresponding value
+    """
     with open(Path(__file__).resolve().parent / f"build/src.autogen/host/control_test_params.h", "w") as f_op:
         f_op.write(f"char * stage_name = \"{stage_name}\";\n\n")
         f_op.write(f"control_data_t control_config[{len(stage_config)}] = {{\n")
