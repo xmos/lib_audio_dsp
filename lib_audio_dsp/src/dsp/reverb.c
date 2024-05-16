@@ -269,8 +269,8 @@ void adsp_reverb_room_init_filters(
     // shift 2 insted of / 4, to avoid division
     rv->total_buffer_length = ADSP_RVR_HEAP_SZ(fs, max_room_size) >> 2;
 
-    int32_t comb_lengths[8] = DEFAULT_COMB_LENS;
-    int32_t ap_lengths[4] = DEFAULT_AP_LENS;
+    uint32_t comb_lengths[8] = DEFAULT_COMB_LENS;
+    uint32_t ap_lengths[4] = DEFAULT_AP_LENS;
     for (int i = 0; i < ADSP_RVR_N_COMBS; i++)
     {
         // Scale maximum lengths by the scale factor (fs/44100 * max_room)
@@ -354,10 +354,13 @@ uint32_t adsp_reverb_room_get_buffer_lens(reverb_room_t *rv)
 void adsp_reverb_room_set_room_size(reverb_room_t *rv,
                                     float new_room_size)
 {
-    int32_t ah = 0, al = 0, zero = 0, q = 30, exp, room_size_int;
     // For larger rooms, increase max_room_size
     xassert(new_room_size >= 0 && new_room_size <= 1);
-    // now, we're sure that new_room_size is positive
+    // could use uq32 for the room size, but it's important
+    // to represent 1.0 here, so loosing one bit of precision
+    // and doing extra lextracts :(
+    int32_t zero = 0, q = 31, exp;
+    uint32_t ah = 0, al = 0, room_size_int;
     asm("fsexp %0, %1, %2": "=r"(zero), "=r"(exp): "r"(new_room_size));
     asm("fmant %0, %1": "=r"(room_size_int): "r"(new_room_size));
     right_shift_t shr = -q - exp + 23;
@@ -366,8 +369,8 @@ void adsp_reverb_room_set_room_size(reverb_room_t *rv,
     rv->room_size = room_size_int;
     for (int comb = 0; comb < ADSP_RVR_N_COMBS; comb++)
     {
-        // Do comb length * new_room_size in Q30
-        int32_t l = rv->combs[comb].max_delay;
+        // Do comb length * new_room_size in UQ31
+        uint32_t l = rv->combs[comb].max_delay;
         asm volatile("lmul %0, %1, %2, %3, %4, %5"
                      : "=r"(ah), "=r"(al)
                      : "r"(room_size_int), "r"(l), "r"(zero), "r"(zero));
@@ -378,8 +381,8 @@ void adsp_reverb_room_set_room_size(reverb_room_t *rv,
     }
     for (int ap = 0; ap < ADSP_RVR_N_APS; ap++)
     {
-        // Do ap length * new_room_size in Q30
-        int32_t l = rv->allpasses[ap].max_delay;
+        // Do ap length * new_room_size in UQ31
+        uint32_t l = rv->allpasses[ap].max_delay;
         asm volatile("lmul %0, %1, %2, %3, %4, %5"
                      : "=r"(ah), "=r"(al)
                      : "r"(room_size_int), "r"(l), "r"(zero), "r"(zero));
