@@ -18,6 +18,9 @@ FILE * _fopen(char * fname, char* mode) {
 
 int main()
 {
+  // this is just a simple wrapper for lib_xcore_math's filter_fir_s32,
+  // for testing bit exactness against the python model.
+
   left_shift_t lsh = 0;
   int32_t n_taps = 0;
 

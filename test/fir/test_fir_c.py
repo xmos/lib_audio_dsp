@@ -104,7 +104,8 @@ def in_signal():
                                         # "comb.txt",
                                         "tilt.txt"])
 def test_fir_direct_c(in_signal, coeff_path):
-
+  # this test compares the Python process_xcore fir implementation
+  # against the lib_xcore_math version and checks for bit exactness
 
   filt = fir.fir_direct(fs, 1, Path(gen_dir, coeff_path))
   filter_name = f"fir_direct_{os.path.splitext(coeff_path)[0]}"
