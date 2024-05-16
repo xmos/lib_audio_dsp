@@ -1,6 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""The compressor stage."""
+"""The FIR pipeline stage."""
 
 from ..design.stage import Stage, find_config
 from ..dsp import fir as fir

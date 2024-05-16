@@ -46,7 +46,7 @@ void fir_direct_init(module_instance_t* instance,
     state->frame_size = frame_size;
     state->n_taps = config->n_taps;
     state->max_taps = config->n_taps;
-    state->coeffs = (int32_t *)adsp_bump_allocator_malloc(allocator, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
+    state->coeffs = (int32_t *)ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
     memcpy(state->coeffs, config->coeffs, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
     state->shift = config->shift;
 
@@ -54,7 +54,7 @@ void fir_direct_init(module_instance_t* instance,
 
     for(int i = 0; i < n_inputs; i++)
     {
-        state->fir_direct[i].buffer = (int32_t *)adsp_bump_allocator_malloc(allocator, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
+        state->fir_direct[i].buffer = (int32_t *)ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
         memset(state->fir_direct[i].buffer, 0, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
         filter_fir_s32_init(&(state->fir_direct[i].filter), state->fir_direct[i].buffer, state->n_taps, state->coeffs, state->shift);
     }

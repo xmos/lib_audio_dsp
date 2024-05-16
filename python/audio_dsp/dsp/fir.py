@@ -1,5 +1,8 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
+"""The FIR dsp block."""
+
 import numpy as np
 import warnings
 from pathlib import Path
@@ -13,9 +16,9 @@ from audio_dsp.dsp import utils
 
 class fir_direct(dspg.dsp_block):
     """
-    An FIR filter, implemented in direct form in the time domain
+    An FIR filter, implemented in direct form in the time domain.
 
-    When the filter coefficients are converted to ficed point, if there
+    When the filter coefficients are converted to fixed point, if there
     will be leading zeros, a left shift is applied to the coefficients
     in order to use the full dynamic range of the VPU. A subsequent
     right shift is applied to the accumulator after the convolution to
@@ -63,10 +66,11 @@ class fir_direct(dspg.dsp_block):
         self.buffer_idx_int = [0] * self.n_chans
 
     def check_coeff_scaling(self):
-        """Check the coefficient scaling is optimal
+        """Check the coefficient scaling is optimal.
 
         If there will be leading zeros, calculate a shift to use the
-        full dynamic range of the VPU"""
+        full dynamic range of the VPU
+        """
         int32_max = 2**31 - 1
 
         # scale to Q30, to match VPU shift but keep as double for now
@@ -120,7 +124,7 @@ class fir_direct(dspg.dsp_block):
 
     def process(self, sample: float, channel: int = 0) -> float:
         """Update the buffer with the current sample and convolve with
-        the filter coefficients, using floating point math
+        the filter coefficients, using floating point math.
 
         Parameters
         ----------
@@ -212,7 +216,7 @@ class fir_direct(dspg.dsp_block):
 
     def freq_response(self, nfft: int = 32768) -> tuple[np.ndarray, np.ndarray]:
         """
-        Calculate the frequency response of the filter
+        Calculate the frequency response of the filter.
 
         Parameters
         ----------
