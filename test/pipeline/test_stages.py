@@ -13,6 +13,8 @@ from audio_dsp.stages.noise_suppressor import NoiseSuppressor
 from audio_dsp.stages.signal_chain import VolumeControl, FixedGain, Delay
 from audio_dsp.stages.compressor import CompressorRMS
 from audio_dsp.stages.reverb import Reverb
+from audio_dsp.dsp.types import float32
+import numpy
 
 import audio_dsp.dsp.utils as utils
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
@@ -137,8 +139,14 @@ def generate_test_param_file(stage_name, stage_config):
             else:
                 cmd_payload_list = cmd_payload
             for value in cmd_payload_list:
-                payload_values = payload_values + [ "0x{:02X}".format(x&0xFF) for x in struct.unpack('4b', struct.pack('I', value&0xFFFFFFFF))]
+                if isinstance(value, int) or isinstance(value, numpy.int32):
+                    ba = bytearray(struct.pack('I', value&0xFFFFFFFF))
+                elif isinstance(value, float32) or isinstance(value, float):
+                    ba = struct.unpack('4b', struct.pack("f", value))
+                else:
+                    raise ValueError(f"{value} is of unsupported type {type(value)}")
 
+                payload_values = payload_values + [ "0x{:02X}".format(x&0xFF) for x in ba]
             f_op.write(f"\t\t.payload  = {{{', '.join(list(payload_values))}}},\n")
             f_op.write(f"\t}},\n")
         f_op.write(f"}};")
@@ -317,11 +325,10 @@ def test_compressor(frame_size):
     def tune_p(fr):
         p = make_p(fr)
         stage_config = p.resolve_pipeline()['configs'][2]
-        generate_test_param_file("COMPRESSOR", stage_config)
+        generate_test_param_file("COMPRESSOR_RMS", stage_config)
         return p
 
-    # TODO: Enable tune test
-    do_test(make_p, None, frame_size)
+    do_test(make_p, tune_p, frame_size)
 
 def test_noise_gate(frame_size):
     """
@@ -363,8 +370,7 @@ def test_noise_suppressor(frame_size):
         generate_test_param_file("NOISE_SUPPRESSOR", stage_config)
         return p
 
-    # TODO: Enable tune test
-    do_test(make_p, None, frame_size)
+    do_test(make_p, tune_p, frame_size)
 
 def test_volume(frame_size):
     """
@@ -380,11 +386,10 @@ def test_volume(frame_size):
     def tune_p(fr):
         p = make_p(fr)
         stage_config = p.resolve_pipeline()['configs'][2]
-        generate_test_param_file("VOLUME", stage_config)
+        generate_test_param_file("VOLUME_CONTROL", stage_config)
         return p
 
-    # TODO: Enable tune test
-    do_test(make_p, None, frame_size)
+    do_test(make_p, tune_p, frame_size)
 
 def test_fixed_gain(frame_size):
     """
@@ -425,8 +430,7 @@ def test_reverb(frame_size):
         generate_test_param_file("REVERB", stage_config)
         return p
 
-    # TODO: Enable tune test
-    do_test(make_p, None, frame_size)
+    do_test(make_p, tune_p, frame_size)
 
 def test_delay(frame_size):
     """

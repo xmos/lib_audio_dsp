@@ -79,7 +79,7 @@ uint8_t get_value_size(enum cmd_param_type_t value_type) {
 uint8_t find_config_idx(char* cmd_name) {
     uint8_t config_size = sizeof(control_config) / sizeof(control_data_t);
     for (int i=0; i<config_size; i++) {
-        if (strcmp(control_config[i].cmd_name,cmd_name) == 0) {
+        if (strcmp(control_config[i].cmd_name, cmd_name) == 0) {
             return i;
         }
     }
@@ -115,6 +115,7 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
                 ret = adsp_write_module_config(m_dsp->modules, m_dsp->n_modules, &cmd);
             }while(ret == ADSP_CONTROL_BUSY);
             xassert(ret == ADSP_CONTROL_SUCCESS);
+
             memset(cmd.payload, 0, cmd.payload_len);
 
             hwtimer_t t = hwtimer_alloc(); hwtimer_delay(t, 100); //100us to allow command to be written
