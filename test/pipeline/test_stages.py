@@ -138,12 +138,23 @@ def generate_test_param_file(stage_name, stage_config):
     stage_name: name of the stage to test
     stage_config: dictionary containing the parameter name and its corresponding value
     """
-    with open(Path(__file__).resolve().parent / f"build/src.autogen/host/control_test_params.h", "w") as f_op:
-        f_op.write(f"char * stage_name = \"{stage_name}\";\n\n")
-        f_op.write(f"control_data_t control_config[{len(stage_config)}] = {{\n")
+    with open(Path(__file__).resolve().parent / f"build/control_test_params.h", "w") as f_op:
+
+        f_op.write("#include \"cmds.h\"\n\n")
+        f_op.write("#include \"cmd_offsets.h\"\n")
+        f_op.write("#define CMD_PAYLOAD_MAX_SIZE 256\n")
+        f_op.write(f"#define CMD_TOTAL_NUM {len(stage_config)}\n\n")
+        f_op.write("typedef struct control_data_t {\n")
+        f_op.write("\tuint32_t cmd_id;\n")
+        f_op.write("\tuint32_t payload[CMD_PAYLOAD_MAX_SIZE];\n")
+        f_op.write("}control_data_t;\n\n")
+        f_op.write(f"module_config_offsets_t * config_offset_p = {stage_name.lower()}_config_offsets;\n")
+        f_op.write(f"const uint32_t config_offset_num = sizeof({stage_name.lower()}_config_offsets) / sizeof(module_config_offsets_t);")
+        f_op.write(f"control_data_t control_config[CMD_TOTAL_NUM] = {{\n")
+
         for cmd_name, cmd_payload in stage_config.items():
             f_op.write(f"\t{{\n")
-            f_op.write(f"\t\t.cmd_name = \"{stage_name.upper()}_{cmd_name.upper()}\",\n")
+            f_op.write(f"\t\t.cmd_id = CMD_{stage_name.upper()}_{cmd_name.upper()},\n")
             payload_values = []
             cmd_payload_list = []
             if not isinstance(cmd_payload, list):
@@ -255,7 +266,7 @@ def test_limiter_rms(frame_size):
         generate_test_param_file("LIMITER_RMS", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test(tune_p, tune_p, frame_size)
 
 
 def test_limiter_peak(frame_size):

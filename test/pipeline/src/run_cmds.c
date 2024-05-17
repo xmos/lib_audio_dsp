@@ -7,139 +7,75 @@
 
 #include "run_cmds.h"
 
-#define CMD_NAME_MAX_SIZE 256
-#define CMD_PAYLOAD_MAX_SIZE 256
-#define CMD_INFO_MAX_SIZE 1024
-
-// The structs and enums before are used by host_cmd_map.h
-enum cmd_param_type_t {TYPE_CHAR, TYPE_UINT8, TYPE_INT32, TYPE_FLOAT, TYPE_UINT32, TYPE_RADIANS};
-/** @brief Enum for read/write command types */
-enum cmd_rw_t {CMD_READ_ONLY, CMD_WRITE_ONLY, CMD_READ_WRITE};
-
-typedef struct cmd_t
-{
-    /** Command resource ID */
-    uint8_t res_id;
-    /** Command name */
-    char cmd_name[CMD_NAME_MAX_SIZE];
-    /** Command value type */
-    enum cmd_param_type_t type;
-    /** Command ID */
-    uint8_t cmd_id;
-    /** Command read/write type */
-    enum cmd_rw_t rw;
-    /** Number of values the command reads/writes */
-    unsigned num_values;
-    /** Command info */
-    char info[CMD_INFO_MAX_SIZE];
-    /** Command visibility status */
-    bool hidden_cmd;
-}cmd_t;
-
-#include "host_cmd_map.h"
-
-uint8_t get_cmds_num() {
-    return sizeof(commands) / sizeof(cmd_t);
-}
-
-uint8_t find_cmd_idx(char* cmd_name) {
-    for (int i=0; i<get_cmds_num(); i++) {
-        if (strcmp(commands[i].cmd_name,cmd_name) == 0) {
-            return i;
-        }
-    }
-    xassert(0 && "Command not found");
-    return 0xFF;
-}
-
-typedef struct control_data_t
-{
-    char cmd_name[CMD_NAME_MAX_SIZE];
-    uint8_t payload[CMD_PAYLOAD_MAX_SIZE];
-}control_data_t;
-
-uint8_t get_value_size(enum cmd_param_type_t value_type) {
-    switch (value_type) {
-        case TYPE_CHAR:
-        case TYPE_UINT8:
-            return 1;
-        case TYPE_INT32:
-        case TYPE_FLOAT:
-        case TYPE_UINT32:
-        case TYPE_RADIANS:
-            return 4;
-        default:
-            xassert(0 && "Invalid value type");
-    }
-}
-
 #if SEND_CONTROL_COMMANDS
 #include "control_test_params.h"
 
-uint8_t find_config_idx(char* cmd_name) {
-    uint8_t config_size = sizeof(control_config) / sizeof(control_data_t);
-    for (int i=0; i<config_size; i++) {
-        if (strcmp(control_config[i].cmd_name, cmd_name) == 0) {
-            return i;
+
+uint32_t get_cmd_size(uint32_t cmd_id, module_config_offsets_t* config_offset_p) {
+    for (int i=0; i<config_offset_num; i++) {
+        if (config_offset_p[i].cmd_id == cmd_id) {
+            return config_offset_p[i].size;
         }
     }
-    return 0xFF;
+    xassert(0);
+    return -1;
 }
-#endif
 
+#endif
 void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 #if SEND_CONTROL_COMMANDS
+
     adsp_stage_control_cmd_t cmd;
     int8_t payload_buf[CMD_PAYLOAD_MAX_SIZE];
     cmd.instance_id = control_stage_index;
-    for (int cmd_idx = 0; cmd_idx<get_cmds_num(); cmd_idx++)
+    for (int cmd_idx = 0; cmd_idx<CMD_TOTAL_NUM; cmd_idx++)
     {
-        if (strncmp(stage_name, commands[cmd_idx].cmd_name, strlen(stage_name)) == 0) {
 
-            cmd.cmd_id = commands[cmd_idx].cmd_id;
+        cmd.cmd_id = control_config[cmd_idx].cmd_id;
 
-            cmd.payload_len = commands[cmd_idx].num_values * get_value_size(commands[cmd_idx].type);
-            cmd.payload = payload_buf;
-            memset(cmd.payload, 0, cmd.payload_len);
+        cmd.payload_len = get_cmd_size(cmd.cmd_id,config_offset_p);//commands[cmd_idx].num_values * get_value_size(commands[cmd_idx].type);
+        cmd.payload = payload_buf;
+        memset(cmd.payload, 0, cmd.payload_len);
 
-            // Write control command to the stage
-            uint8_t config_idx = find_config_idx(commands[cmd_idx].cmd_name);
+        // Write control command to the stage
+        #include "print.h"
+        printintln(cmd.cmd_id);
+        printintln(cmd.payload_len);
+        printintln(control_config[cmd_idx].payload[0]);
+        printintln(control_config[cmd_idx].payload[1]);
+        printintln(control_config[cmd_idx].payload[2]);
+        printintln(control_config[cmd_idx].payload[3]);
+        memcpy(cmd.payload, control_config[cmd_idx].payload, cmd.payload_len)
 
-            if (config_idx != 0xFF) {
-                memcpy(cmd.payload, control_config[config_idx].payload, cmd.payload_len);
-            }
-            uint8_t values_write[CMD_PAYLOAD_MAX_SIZE];
-            memcpy(values_write, cmd.payload, cmd.payload_len);
-            adsp_control_status_t ret = ADSP_CONTROL_BUSY;
-            do {
-                ret = adsp_write_module_config(m_dsp->modules, m_dsp->n_modules, &cmd);
-            }while(ret == ADSP_CONTROL_BUSY);
-            xassert(ret == ADSP_CONTROL_SUCCESS);
+        uint8_t values_write[CMD_PAYLOAD_MAX_SIZE];
+        memcpy(values_write, cmd.payload, cmd.payload_len);
+        adsp_control_status_t ret = ADSP_CONTROL_BUSY;
+        do {
+            ret = adsp_write_module_config(m_dsp->modules, m_dsp->n_modules, &cmd);
+        }while(ret == ADSP_CONTROL_BUSY);
+        xassert(ret == ADSP_CONTROL_SUCCESS);
 
-            memset(cmd.payload, 0, cmd.payload_len);
+        memset(cmd.payload, 0, cmd.payload_len);
 
-            hwtimer_t t = hwtimer_alloc(); hwtimer_delay(t, 100); //100us to allow command to be written
+        hwtimer_t t = hwtimer_alloc(); hwtimer_delay(t, 100); //100us to allow command to be written
 
-            // Read back the written data
-            ret = ADSP_CONTROL_BUSY;
-            do {
-                ret = adsp_read_module_config(m_dsp->modules, m_dsp->n_modules, &cmd);
-            }while(ret == ADSP_CONTROL_BUSY);
+        // Read back the written data
+        ret = ADSP_CONTROL_BUSY;
+        do {
+            ret = adsp_read_module_config(m_dsp->modules, m_dsp->n_modules, &cmd);
+        }while(ret == ADSP_CONTROL_BUSY);
 
-            xassert(ret == ADSP_CONTROL_SUCCESS);
+        xassert(ret == ADSP_CONTROL_SUCCESS);
 
-            uint8_t values_read[CMD_PAYLOAD_MAX_SIZE];
-            memcpy(values_read, cmd.payload, cmd.payload_len);
-            // Check that the configurable values are correct,
-            // the other commands may differ as the stage can overwrite them
-            if (config_idx != 0xFF) {
-                for(int i=0; i<cmd.payload_len; i++)
-                {
-                    if(values_read[i] != values_write[i])
-                    {
-                        debug_printf("Command %d: mismatch at index %d. Expected %d, found %d\n", cmd.cmd_id, i, values_write[i], values_read[i]);
-                        xassert(0);
-                    }
+        uint8_t values_read[CMD_PAYLOAD_MAX_SIZE];
+        memcpy(values_read, cmd.payload, cmd.payload_len);
+        // Check that the configured values are correct
+        for(int i=0; i<cmd.payload_len; i++)
+        {
+            if(values_read[i] != values_write[i])
+            {
+                debug_printf("Command %d: mismatch at index %d. Expected %d, found %d\n", cmd.cmd_id, i, values_write[i], values_read[i]);
+                xassert(0);
                 }
             }
         }
