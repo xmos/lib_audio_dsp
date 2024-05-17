@@ -22,12 +22,15 @@ uint32_t get_cmd_size(uint32_t cmd_id, module_config_offsets_t* config_offset_p)
 }
 
 #endif
+
+#define CONTROL_COMMAND_TIMEOUT_MS 1
 void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 #if SEND_CONTROL_COMMANDS
 
     adsp_stage_control_cmd_t cmd;
     int8_t payload_buf[CMD_PAYLOAD_MAX_SIZE];
     cmd.instance_id = control_stage_index;
+    hwtimer_t t = hwtimer_alloc();
     for (int cmd_idx = 0; cmd_idx<CMD_TOTAL_NUM; cmd_idx++)
     {
 
@@ -50,19 +53,27 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
         uint8_t values_write[CMD_PAYLOAD_MAX_SIZE];
         memcpy(values_write, cmd.payload, cmd.payload_len);
         adsp_control_status_t ret = ADSP_CONTROL_BUSY;
+        uint32_t time_start = hwtimer_get_time(t);
         do {
             ret = adsp_write_module_config(m_dsp->modules, m_dsp->n_modules, &cmd);
+            if (hwtimer_get_time(t) > time_start + CONTROL_COMMAND_TIMEOUT_MS) {
+                xassert(0 && "Timer expired while writing control command");
+            }
         }while(ret == ADSP_CONTROL_BUSY);
         xassert(ret == ADSP_CONTROL_SUCCESS);
 
         memset(cmd.payload, 0, cmd.payload_len);
 
-        hwtimer_t t = hwtimer_alloc(); hwtimer_delay(t, 100); //100us to allow command to be written
+        hwtimer_delay(t, 100); //100us to allow command to be written
 
         // Read back the written data
         ret = ADSP_CONTROL_BUSY;
+        time_start = hwtimer_get_time(t);
         do {
             ret = adsp_read_module_config(m_dsp->modules, m_dsp->n_modules, &cmd);
+            if (hwtimer_get_time(t) > time_start + CONTROL_COMMAND_TIMEOUT_MS) {
+                xassert(0 && "Timer expired while reading control command");
+            }
         }while(ret == ADSP_CONTROL_BUSY);
 
         xassert(ret == ADSP_CONTROL_SUCCESS);
@@ -78,6 +89,7 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
                 xassert(0);
             }
         }
+         hwtimer_free(t);
     }
 #endif
 }
