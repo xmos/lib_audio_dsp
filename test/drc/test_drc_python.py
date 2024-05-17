@@ -399,7 +399,7 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold,
     np.testing.assert_allclose(output_xcore_s, output_xcore_m, atol=2**-31)
 
 @pytest.mark.parametrize("component, threshold, ratio", [("noise_gate", -30, None),
-                                                         ("noise_suppressor", -30, 3)])
+                                                         ("noise_suppressor_expander", -30, 3)])
 def test_noise_gate(component, threshold, ratio):
     # test the noise gate performance on noisy speech
     signal, fs = make_noisy_speech()
@@ -409,7 +409,7 @@ def test_noise_gate(component, threshold, ratio):
     signal = utils.saturate_float_array(signal, dspg.Q_SIG)
 
     if ratio:
-        drcut = drc.noise_suppressor(fs, 1, ratio, threshold, 0.005, 0.2)
+        drcut = drc.noise_suppressor_expander(fs, 1, ratio, threshold, 0.005, 0.2)
     else:
         drcut = drc.noise_gate(fs, 1, threshold, 0.005, 0.2)
 
@@ -447,7 +447,7 @@ def test_noise_gate(component, threshold, ratio):
                                                          ("compressor_rms_softknee", 6, 6),
                                                          ("compressor_rms_softknee", 6, 2),
                                                          ("noise_gate", -1000, None),
-                                                         ("noise_suppressor", -1000, 5),
+                                                         ("noise_suppressor_expander", -1000, 5),
                                                          ("hard_limiter_peak", 0, None),
                                                          ("clipper", 0, None)])
 @pytest.mark.parametrize("rt, at", [[0.001, 0.2], [0.1, 0.5]])
@@ -515,7 +515,7 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
                                                          ("compressor_rms_softknee", 6, 6),
                                                          ("compressor_rms_softknee", 6, 2),
                                                          ("noise_gate", -20, None),
-                                                         ("noise_suppressor", -20, 5),
+                                                         ("noise_suppressor_expander", -20, 5),
                                                          ("hard_limiter_peak", -20, None),
                                                          ("hard_limiter_peak", 6, None),
                                                          ("clipper", -20, None),
@@ -610,7 +610,7 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
                                                          ("compressor_rms_softknee", 6, 6),
                                                          ("compressor_rms_softknee", 6, 2),
                                                          ("noise_gate", -20, None),
-                                                         ("noise_suppressor", -20, 5),
+                                                         ("noise_suppressor_expander", -20, 5),
                                                          ("hard_limiter_peak", -20, None),
                                                          ("hard_limiter_peak", 6, None),
                                                          ("clipper", -20, None),

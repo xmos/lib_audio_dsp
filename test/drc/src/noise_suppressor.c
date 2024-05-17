@@ -36,15 +36,15 @@ int main()
 
   fclose(ns_info);
   if (!th) th = 1;
-  noise_suppressor_t ns = (noise_suppressor_t){
+  noise_suppressor_expander_t ns = (noise_suppressor_expander_t){
               (env_detector_t){at_al, re_al, (1 << (Q_SIG)) - 1}, 0, 0, INT32_MAX, slope};
-  adsp_noise_suppressor_set_th(&ns, th);
+  adsp_noise_suppressor_expander_set_th(&ns, th);
   for (unsigned i = 0; i < in_len; i++)
   {
     int32_t samp = 0, samp_out = 0;
     fread(&samp, sizeof(int32_t), 1, in);
     //printf("%ld ", samp);
-    samp_out = adsp_noise_suppressor(&ns, samp);
+    samp_out = adsp_noise_suppressor_expander(&ns, samp);
     //printf("%ld ", samp_out);
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }
