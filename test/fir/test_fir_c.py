@@ -101,7 +101,7 @@ def in_signal():
                                         "descending_coeffs.txt",
                                         "simple_low_pass.txt",
                                         "aggressive_high_pass.txt",
-                                        # "comb.txt",
+                                        pytest.param("comb.txt",marks=pytest.mark.xfail(reason="lib_xcore_math overflow bug")),
                                         "tilt.txt"])
 def test_fir_direct_c(in_signal, coeff_path):
   # this test compares the Python process_xcore fir implementation

@@ -356,7 +356,8 @@ def make_coeffs():
     gen_dir.mkdir(exist_ok=True, parents=True)
 
     # descending coefficients
-    coeffs = np.arange(10, 0, -1) / 10
+    coeffs = np.arange(10, 0, -1)
+    coeffs = coeffs/np.sum(coeffs)
     np.savetxt(Path(gen_dir, "descending_coeffs.txt"), coeffs)
 
     # simple windowed FIR design
