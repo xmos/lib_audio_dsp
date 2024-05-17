@@ -6,31 +6,27 @@
 #include <stdint.h>
 #include <xmath/types.h>
 
-/** Minimum reverb wet gain in dB */
-#define ADSP_RV_MIN_WET_GAIN_DB (-186.0)
-/** Maximum reverb wet gain in dB */
-#define ADSP_RV_MAX_WET_GAIN_DB (0)
-/** Minimum reverb dry gain in dB */
-#define ADSP_RV_MIN_DRY_GAIN_DB (-186.0)
-/** Maximum reverb dry gain in dB */
-#define ADSP_RV_MAX_DRY_GAIN_DB (0)
+/** Minimum wet/dry gain config for the reverb room in dB */
+#define ADSP_RVR_MIN_GAIN_DB (-186.0)
+/** Maximum wet/dry gain config for the reverb room in dB */
+#define ADSP_RVR_MAX_GAIN_DB (0)
 
-/** Reverb scale factor for the room size */
-#define ADSP_RV_SCALE(FS, MAX_ROOM_SZ) (((FS) / 44100.0f) * (MAX_ROOM_SZ))
+/** Reverb room scale factor for the room size */
+#define ADSP_RVR_SCALE(FS, MAX_ROOM_SZ) (((FS) / 44100.0f) * (MAX_ROOM_SZ))
 
-/** Default reverb buffer length */
-#define ADSP_RV_SUM_DEFAULT_BUF_LENS 12587
-/** Heap size to allocate for the reverb */
-#define ADSP_RV_HEAP_SZ(FS, ROOM_SZ) ((uint32_t)(sizeof(int32_t) *            \
-                                                 ADSP_RV_SCALE(FS, ROOM_SZ) * \
-                                                 ADSP_RV_SUM_DEFAULT_BUF_LENS))
-/** External API for calculating memory to allocate for the reverb*/
-#define REVERB_DSP_REQUIRED_MEMORY(FS, ROOM_SZ) ADSP_RV_HEAP_SZ(FS, ROOM_SZ)
+/** Default reverb room buffer length */
+#define ADSP_RVR_SUM_DEFAULT_BUF_LENS 12587
+/** Heap size to allocate for the reverb room */
+#define ADSP_RVR_HEAP_SZ(FS, ROOM_SZ) ((uint32_t)(sizeof(int32_t) *            \
+                                                 ADSP_RVR_SCALE(FS, ROOM_SZ) * \
+                                                 ADSP_RVR_SUM_DEFAULT_BUF_LENS))
+/** External API for calculating memory to allocate for the reverb room */
+#define REVERB_ROOM_DSP_REQUIRED_MEMORY(FS, ROOM_SZ) ADSP_RVR_HEAP_SZ(FS, ROOM_SZ)
 
-/** Number of comb filters used in the reverb */
-#define ADSP_RV_N_COMBS 8
-/** Number of allpass filters used in the reverb */
-#define ADSP_RV_N_APS 4
+/** Number of comb filters used in the reverb room */
+#define ADSP_RVR_N_COMBS 8
+/** Number of allpass filters used in the reverb room */
+#define ADSP_RVR_N_APS 4
 
 /**
  * @brief A freeverb style all-pass filter structure
@@ -88,9 +84,9 @@ typedef struct
     /** Linear pre-gain */
     int32_t pre_gain;
     /** Comb filters */
-    comb_fv_t combs[ADSP_RV_N_COMBS];
+    comb_fv_t combs[ADSP_RVR_N_COMBS];
     /** Allpass filters */
-    allpass_fv_t allpasses[ADSP_RV_N_APS];
+    allpass_fv_t allpasses[ADSP_RVR_N_APS];
 } reverb_room_t;
 
 /**
@@ -102,8 +98,8 @@ typedef struct
  * @param room_size       Room size compared to the maximum room size [0, 1]
  * @param decay           Lenght of the reverb tail [0, 1]
  * @param damping         High frequency attenuation
- * @param wet_gain        Wet linear gain in Q_RV format
- * @param dry_gain        Dry linear gain in Q_RV format
+ * @param wet_gain        Wet gain in dB
+ * @param dry_gain        Dry gain in dB
  * @param pregain         Linear pre-gain
  * @param reverb_heap     Pointer to heap to allocate reverb memory
  * @return reverb_room_t  Initialised reverb room object
@@ -114,10 +110,35 @@ reverb_room_t adsp_reverb_room_init(
     float room_size,
     float decay,
     float damping,
-    int32_t wet_gain,
-    int32_t dry_gain,
+    float wet_gain,
+    float dry_gain,
     float pregain,
     void *reverb_heap);
+
+/**
+ * @brief Lower level function to initialise the filters of a reverb room object
+ * 
+ * Will only initialise allpass, comb filters and set total buffer length.
+ * Can be used before `adsp_room_reverb_set_room_size()` to
+ * initialise the filters and set the rooms size.
+ * 
+ * feedback can be calculated from the decay parameter as follows:
+ * `feedback = Q_RVR((decay * 0.28f) + 0.7f)`
+ * 
+ * @param rv                Reverb room object
+ * @param fs                Sampling frequency
+ * @param max_room_size     Maximum room size of delay filters
+ * @param feedback          Feedback gain for the comb filters in Q_RVR format
+ * @param damping           Damping coefficient for the comb filters in Q_RVR format
+ * @param reverb_heap       Pointer to heap to allocate reverb memory
+ */
+void adsp_reverb_room_init_filters(
+    reverb_room_t *rv,
+    float fs,
+    float max_room_size,
+    int32_t feedback,
+    int32_t damping,
+    void * reverb_heap);
 
 /**
  * @brief Reset the state of a reverb room object
@@ -156,18 +177,12 @@ int32_t adsp_reverb_room(
     int32_t new_samp);
 
 /**
- * @brief Calculate the wet gain in linear scale
+ * @brief Calculate the reverb gain in linear scale
  * 
- * @param wet_gain_db       Wet gain in dB
- * @param pregain           Pre-gain in linear scale
- * @return int32_t          Wet linear gain in a Q_RV format
- */
-int32_t adsp_reverb_calc_wet_gain(float wet_gain_db, float pregain);
-
-/**
- * @brief Calculate the dry gain in linear scale
+ * Will convert a gain in dB to a linear scale in Q_RVR format.
+ * To be used for converting wet and dry gains for the room_reverb.
  * 
- * @param dry_gain_db       Dry gain in dB
- * @return int32_t          Dry linear gain in a Q_RV format
+ * @param gain_db           Gain in dB
+ * @return int32_t          Linear gain in a Q_RVR format
  */
-int32_t adsp_reverb_calc_dry_gain(float dry_gain_db);
+int32_t adsp_reverb_room_calc_gain(float gain_db);

@@ -6,6 +6,9 @@ import warnings
 from audio_dsp.dsp import generic as dspg
 from audio_dsp.dsp import utils
 
+# Q format for signal gains
+Q_GAIN = 27
+
 
 class mixer(dspg.dsp_block):
     """
@@ -35,7 +38,7 @@ class mixer(dspg.dsp_block):
         assert gain_db <= 24, "Maximum mixer gain is +24dB"
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
-        self.gain_int = utils.int32(self.gain * 2**self.Q_sig)
+        self.gain_int = utils.float_to_int32(self.gain, Q_GAIN)
 
     def process_channels(self, sample_list: list[float]) -> float:
         """
@@ -55,7 +58,7 @@ class mixer(dspg.dsp_block):
         """
         scaled_samples = np.array(sample_list) * self.gain
         y = np.sum(scaled_samples)
-
+        y = utils.saturate_float(y, self.Q_sig)
         return y
 
     def process_channels_xcore(self, sample_list: list[float]) -> float:
@@ -79,10 +82,10 @@ class mixer(dspg.dsp_block):
         """
         y = int(0)
         for sample in sample_list:
-            sample_int = utils.int32(round(sample * 2**self.Q_sig))
-            acc = 1 << (self.Q_sig - 1)
+            sample_int = utils.float_to_int32(sample, self.Q_sig)
+            acc = 1 << (Q_GAIN - 1)
             acc += sample_int * self.gain_int
-            scaled_sample = utils.int32_mult_sat_extract(acc, 1, self.Q_sig)
+            scaled_sample = utils.int32_mult_sat_extract(acc, 1, Q_GAIN)
             y += scaled_sample
 
         y = utils.int32_mult_sat_extract(y, 2, 1)
@@ -183,8 +186,8 @@ class adder(mixer):
 
     """
 
-    def __init__(self, fs: float, num_channels: int) -> None:
-        super().__init__(fs, num_channels, gain_db=0)
+    def __init__(self, fs: float, num_channels: int, Q_sig: int = dspg.Q_SIG) -> None:
+        super().__init__(fs, num_channels, gain_db=0, Q_sig=Q_sig)
 
 
 class subtractor(dspg.dsp_block):
@@ -210,6 +213,7 @@ class subtractor(dspg.dsp_block):
             Result of the subtraction.
         """
         y = sample_list[0] - sample_list[1]
+        y = utils.saturate_float(y, self.Q_sig)
         return y
 
     def process_channels_xcore(self, sample_list: list[float]) -> float:
@@ -230,8 +234,8 @@ class subtractor(dspg.dsp_block):
         float
             Result of the subtraction.
         """
-        sample_int_0 = utils.int32(round(sample_list[0] * 2**self.Q_sig))
-        sample_int_1 = utils.int32(round(sample_list[1] * 2**self.Q_sig))
+        sample_int_0 = utils.float_to_int32(sample_list[0], self.Q_sig)
+        sample_int_1 = utils.float_to_int32(sample_list[1], self.Q_sig)
 
         acc = int(0)
         acc += sample_int_0 * 2
@@ -322,7 +326,7 @@ class fixed_gain(dspg.dsp_block):
         assert gain_db <= 24, "Maximum fixed gain is +24dB"
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
-        self.gain_int = utils.int32(self.gain * 2**self.Q_sig)
+        self.gain_int = utils.float_to_int32(self.gain, Q_GAIN)
 
     def process(self, sample: float, channel: int = 0) -> float:
         """Multiply the input sample by the gain, using floating point
@@ -342,6 +346,8 @@ class fixed_gain(dspg.dsp_block):
             The processed output sample.
         """
         y = sample * self.gain
+        y = utils.saturate_float(y, self.Q_sig)
+
         return y
 
     def process_xcore(self, sample: float, channel: int = 0) -> float:
@@ -364,11 +370,11 @@ class fixed_gain(dspg.dsp_block):
         float
             The processed output sample.
         """
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        sample_int = utils.float_to_int32(sample, self.Q_sig)
         # for rounding
-        acc = 1 << (self.Q_sig - 1)
+        acc = 1 << (Q_GAIN - 1)
         acc += sample_int * self.gain_int
-        y = utils.int32_mult_sat_extract(acc, 1, self.Q_sig)
+        y = utils.int32_mult_sat_extract(acc, 1, Q_GAIN)
 
         y_flt = float(y) * 2**-self.Q_sig
 
@@ -505,6 +511,7 @@ class volume_control(dspg.dsp_block):
         self.gain[channel] += (self.target_gain - self.gain[channel]) * 2**-self.slew_shift
 
         y = sample * self.gain[channel]
+        y = utils.saturate_float(y, self.Q_sig)
         return y
 
     def process_xcore(self, sample: float, channel: int = 0) -> float:
@@ -528,7 +535,7 @@ class volume_control(dspg.dsp_block):
         float
             The processed output sample.
         """
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        sample_int = utils.float_to_int32(sample, self.Q_sig)
 
         # do the exponential slew
         self.gain_int[channel] += (
@@ -536,9 +543,9 @@ class volume_control(dspg.dsp_block):
         ) >> self.slew_shift
 
         # for rounding
-        acc = 1 << (self.Q_sig - 1)
+        acc = 1 << (Q_GAIN - 1)
         acc += sample_int * self.gain_int[channel]
-        y = utils.int32_mult_sat_extract(acc, 1, self.Q_sig)
+        y = utils.int32_mult_sat_extract(acc, 1, Q_GAIN)
 
         y_flt = float(y) * 2**-self.Q_sig
 
@@ -564,7 +571,7 @@ class volume_control(dspg.dsp_block):
         if not self.mute_state:
             self.target_gain_db = gain_db
             self.target_gain = utils.db2gain(gain_db)
-            self.target_gain_int = utils.int32(self.target_gain * 2**self.Q_sig)
+            self.target_gain_int = utils.float_to_int32(self.target_gain, Q_GAIN)
         else:
             self.saved_gain_db = gain_db
 
@@ -752,6 +759,8 @@ class delay(dspg.dsp_block):
         max_delay = self._get_delay_samples(max_delay, units)
         starting_delay = self._get_delay_samples(starting_delay, units)
 
+        if max_delay <= 0:
+            raise ValueError("Max delay must be greater than zero")
         if starting_delay > max_delay:
             raise ValueError("Starting delay cannot be greater than max delay")
 
@@ -769,6 +778,9 @@ class delay(dspg.dsp_block):
 
     def _get_delay_samples(self, delay: float, units: str) -> int:
         """Get the delay in samples from the specified units"""
+        if delay < 0:
+            raise ValueError("Delay must be positive")
+
         if units == "ms":
             delay = int(delay * self.fs / 1000)
         elif units == "s":
@@ -781,7 +793,7 @@ class delay(dspg.dsp_block):
 
     def set_delay(self, delay: float, units: str = "samples") -> None:
         """
-        Set the length of the delay line, must be < max_delay
+        Set the length of the delay line, will saturate at max_delay
 
         Parameters
         ----------
@@ -796,7 +808,7 @@ class delay(dspg.dsp_block):
         if delay <= self.max_delay:
             self.delay = delay
         else:
-            delay = self.max_delay
+            self.delay = self.max_delay
             Warning("Delay cannot be greater than max delay, setting to max delay")
         return
 
@@ -815,8 +827,11 @@ class delay(dspg.dsp_block):
             List of delayed samples.
         """
         y = self.buffer[:, self.buffer_idx].copy()
-        self.buffer[:, self.buffer_idx] = sample.copy()
-        self.buffer_idx = (self.buffer_idx + 1) % self.delay
+        self.buffer[:, self.buffer_idx] = sample
+        # not using the modulo because it breaks for when delay = 0
+        self.buffer_idx += 1
+        if self.buffer_idx >= self.delay:
+            self.buffer_idx = 0
         return y.tolist()
 
     def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:

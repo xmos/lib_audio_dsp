@@ -3,6 +3,7 @@
 from audio_dsp.dsp import utils as utils
 import numpy as np
 from math import sqrt, isqrt
+import warnings
 
 from audio_dsp.dsp.types import float32
 
@@ -11,6 +12,31 @@ FLT_MIN = np.finfo(float).tiny
 
 # Q format for the drc alphas and gains
 Q_alpha = 31
+
+
+def calculate_threshold(threshold_db, Q_sig, power=False):
+    if power:
+        threshold = utils.db_pow2gain(threshold_db)
+    else:
+        threshold = utils.db2gain(threshold_db)
+
+    threshold = utils.saturate_float(threshold, Q_sig)
+
+    if power:
+        new_threshold_db = utils.db_pow(threshold)
+    else:
+        new_threshold_db = utils.db(threshold)
+
+    if threshold_db != new_threshold_db:
+        warnings.warn(
+            "Threshold %d not repsentable in Q format Q%d, saturating to %d"
+            % (threshold_db, Q_sig, new_threshold_db),
+            UserWarning,
+        )
+
+    threshold_int = utils.float_to_int32(threshold, Q_sig)
+
+    return threshold, threshold_int
 
 
 def alpha_from_time(attack_or_release_time, fs):
@@ -127,10 +153,14 @@ def compressor_rms_gain_calc_xcore(envelope_int, threshold_int, slope_f32=None):
     """
     # if envelope below threshold, apply unity gain, otherwise scale
     # down
+    int32_max_as_f32 = float32(np.nextafter(2**31, 0, dtype=np.float32))
+
     if slope_f32 > float32(0) and threshold_int < envelope_int:
         new_gain_int = int(threshold_int) << 31
         new_gain_int = utils.int32(new_gain_int // envelope_int)
-        new_gain_int = ((float32(new_gain_int * 2**-31) ** slope_f32) * float32(2**31)).as_int32()
+        new_gain_int = (
+            (float32(new_gain_int * 2**-31) ** slope_f32) * int32_max_as_f32
+        ).as_int32()
     else:
         new_gain_int = utils.int32(0x7FFFFFFF)
 

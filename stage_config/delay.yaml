@@ -1,0 +1,8 @@
+module:
+  delay:
+    max_delay:
+      type: uint32_t
+    delay:
+      type: uint32_t
+includes:
+  - "stages/adsp_module.h"

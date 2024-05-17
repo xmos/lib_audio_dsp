@@ -20,31 +20,33 @@ int main()
 {
   FILE * in = _fopen("../sig_48k.bin", "rb");
   FILE * out = _fopen("sig_out.bin", "wb");
-  FILE * ns_info = _fopen("info.bin", "rb");
+  FILE * info = _fopen("delay.bin", "rb");
 
   fseek(in, 0, SEEK_END);
   int in_len = ftell(in) / sizeof(int32_t);
   fseek(in, 0, SEEK_SET);
 
-  int32_t th, at_al, re_al;
-  float slope;
+  uint32_t start_delay, max_delay;
+  fread(&max_delay, sizeof(uint32_t), 1, info);
+  fread(&start_delay, sizeof(uint32_t), 1, info);
+  fclose(info);
 
-  fread(&th, sizeof(int32_t), 1, ns_info);
-  fread(&at_al, sizeof(int32_t), 1, ns_info);
-  fread(&re_al, sizeof(int32_t), 1, ns_info);
-  fread(&slope, sizeof(float), 1, ns_info);
+  int32_t * buffer = (int32_t *) malloc(DELAY_DSP_REQUIRED_MEMORY_SAMPLES(max_delay));
+  if (buffer == NULL)
+  {
+    printf("Error allocating memory\n");
+    exit(2);
+  }
+  memset(buffer, 0, DELAY_DSP_REQUIRED_MEMORY_SAMPLES(max_delay));
 
-  fclose(ns_info);
-  if (!th) th = 1;
-  noise_suppressor_t ns = (noise_suppressor_t){
-              (env_detector_t){at_al, re_al, (1 << (Q_SIG)) - 1}, 0, 0, INT32_MAX, slope};
-  adsp_noise_suppressor_set_th(&ns, th);
+  delay_t delay = (delay_t) {0, start_delay, max_delay, 0, buffer};
+
   for (unsigned i = 0; i < in_len; i++)
   {
     int32_t samp = 0, samp_out = 0;
     fread(&samp, sizeof(int32_t), 1, in);
     //printf("%ld ", samp);
-    samp_out = adsp_noise_suppressor(&ns, samp);
+    samp_out = adsp_delay(&delay, samp);
     //printf("%ld ", samp_out);
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }
