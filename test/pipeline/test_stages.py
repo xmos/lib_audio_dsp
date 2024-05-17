@@ -4,6 +4,7 @@
 Tests for audio_dsp.stages with 2 inputs and 2 ouputs
 """
 import pytest
+import scipy.signal as spsig
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 from audio_dsp.stages.biquad import Biquad
 from audio_dsp.stages.cascaded_biquads import CascadedBiquads
@@ -348,9 +349,26 @@ def test_delay(frame_size):
     do_test(make_p, frame_size)
 
 
-@pytest.mark.parametrize("filter_name", ["descending_coeffs.txt", "simple_low_pass.txt"])
+@pytest.fixture(scope="session", autouse=True)
+def make_coeffs():
+    # make sets of coefficients used in the FIR tests
+    gen_dir = Path(__file__).parent / "autogen"
+    gen_dir.mkdir(exist_ok=True, parents=True)
+
+    # descending coefficients
+    coeffs = np.arange(10, 0, -1) / 10
+    np.savetxt(Path(gen_dir, "descending_coeffs.txt"), coeffs)
+
+    # simple windowed FIR design
+    coeffs = spsig.firwin2(512, [0.0, 0.5, 1.0], [1.0, 1.0, 0.0])
+    np.savetxt(Path(gen_dir, "simple_low_pass.txt"), coeffs)
+
+
+@pytest.mark.parametrize(
+    "filter_name", ["descending_coeffs.txt", "simple_low_pass.txt"]
+)
 def test_fir(frame_size, filter_name):
-    """"
+    """ "
     Test FIR Stage
     """
     filter_path = Path(Path(__file__).parent / "autogen", filter_name)
