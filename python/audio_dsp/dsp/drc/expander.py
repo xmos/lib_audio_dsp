@@ -260,8 +260,8 @@ class noise_suppressor_expander(expander_base):
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    ns = noise_suppressor_expander(48000, 1, 3, -20, 0.01, 0.1)
-    ing, outg = ns.get_gain_curve()
+    nse = noise_suppressor_expander(48000, 1, 3, -20, 0.01, 0.1)
+    ing, outg = nse.get_gain_curve()
 
     plt.plot(ing, outg)
     plt.axis("equal")

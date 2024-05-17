@@ -279,10 +279,10 @@ def test_noise_suppressor_expander(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            ng = t.stage(NoiseSuppressorExpander, p.i)
-        p.set_outputs(ng.o)
+            nse = t.stage(NoiseSuppressorExpander, p.i)
+        p.set_outputs(nse.o)
 
-        ng.make_noise_suppressor_expander(2, -6, 0.001, 0.1)
+        nse.make_noise_suppressor_expander(2, -6, 0.001, 0.1)
         return p
 
     do_test(make_p, frame_size)

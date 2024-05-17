@@ -221,12 +221,12 @@ noise_suppressor_expander_t adsp_noise_suppressor_expander_init(
 /**
  * @brief Process a new sample with a noise suppressor (expander)
  *
- * @param ns                  Noise suppressor (Expander) object
+ * @param nse                 Noise suppressor (Expander) object
  * @param new_samp            New sample
  * @return int32_t            Suppressed sample
  */
 int32_t adsp_noise_suppressor_expander(
-  noise_suppressor_expander_t * ns,
+  noise_suppressor_expander_t * nse,
   int32_t new_samp);
 
 /**
@@ -236,7 +236,7 @@ int32_t adsp_noise_suppressor_expander(
  * @param new_th              New threshold in Q_SIG
  */
 void adsp_noise_suppressor_expander_set_th(
-  noise_suppressor_expander_t * ns,
+  noise_suppressor_expander_t * nse,
   int32_t new_th);
 
 /**

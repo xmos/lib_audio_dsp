@@ -9,37 +9,37 @@
 #include "stages/noise_suppressor_expander.h"
 #include "dsp/adsp.h"
 
-static inline void ns_copy_config_to_state(noise_suppressor_expander_t *ns_state, int n_inputs, const noise_suppressor_expander_config_t *ns_config)
+static inline void nse_copy_config_to_state(noise_suppressor_expander_t *nse_state, int n_inputs, const noise_suppressor_expander_config_t *nse_config)
 {
     // Avoid division by 0
-    int32_t th = (!ns_config->threshold) ? 1 : ns_config->threshold;
-    int32_t condition = (ns_state[0].threshold != th); // threshold is the same in all channels
+    int32_t th = (!nse_config->threshold) ? 1 : nse_config->threshold;
+    int32_t condition = (nse_state[0].threshold != th); // threshold is the same in all channels
     // Compute the inverse of the threshold only if the threshold has changed
     int64_t inv_th = (condition) ? INT64_MAX / th : 0; // else doesn't matter here
     // Same config for all channels
     for(int i=0; i<n_inputs; i++)
     {
-        ns_state[i].env_det.attack_alpha = ns_config->attack_alpha;
-        ns_state[i].env_det.release_alpha = ns_config->release_alpha;
-        ns_state[i].slope = ns_config->slope;
+        nse_state[i].env_det.attack_alpha = nse_config->attack_alpha;
+        nse_state[i].env_det.release_alpha = nse_config->release_alpha;
+        nse_state[i].slope = nse_config->slope;
         // Change the inverse of the threshold only if the threshold has changed
         if (condition)
         {
-            ns_state[i].threshold = th;
-            ns_state[i].inv_threshold = inv_th;
+            nse_state[i].threshold = th;
+            nse_state[i].inv_threshold = inv_th;
         }
     }
 }
 
-static inline void ns_copy_state_to_config(noise_suppressor_expander_config_t *ns_config, const noise_suppressor_expander_t *ns_state)
+static inline void nse_copy_state_to_config(noise_suppressor_expander_config_t *nse_config, const noise_suppressor_expander_t *nse_state)
 {
     // Copy from channel 0 state to the config
-    ns_config->attack_alpha = ns_state[0].env_det.attack_alpha;
-    ns_config->release_alpha = ns_state[0].env_det.release_alpha;
-    ns_config->envelope = ns_state[0].env_det.envelope;
-    ns_config->gain = ns_state[0].gain;
-    ns_config->threshold = ns_state[0].threshold;
-    ns_config->slope = ns_state[0].slope;
+    nse_config->attack_alpha = nse_state[0].env_det.attack_alpha;
+    nse_config->release_alpha = nse_state[0].env_det.release_alpha;
+    nse_config->envelope = nse_state[0].env_det.envelope;
+    nse_config->gain = nse_state[0].gain;
+    nse_config->threshold = nse_state[0].threshold;
+    nse_config->slope = nse_state[0].slope;
 }
 
 void noise_suppressor_expander_process(int32_t **input, int32_t **output, void *app_data_state)
@@ -72,19 +72,19 @@ void noise_suppressor_expander_init(module_instance_t* instance, adsp_bump_alloc
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
-    state->ns = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, NOISE_SUPPRESSOR_EXPANDER_STAGE_REQUIRED_MEMORY_SLIM(state->n_inputs));
-    memset(state->ns, 0, NOISE_SUPPRESSOR_EXPANDER_STAGE_REQUIRED_MEMORY_SLIM(state->n_inputs));
+    state->nse = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, NOISE_SUPPRESSOR_EXPANDER_STAGE_REQUIRED_MEMORY_SLIM(state->n_inputs));
+    memset(state->nse, 0, NOISE_SUPPRESSOR_EXPANDER_STAGE_REQUIRED_MEMORY_SLIM(state->n_inputs));
 
     for(int i=0; i<state->n_inputs; i++)
     {
-        state->ns[i].gain = INT32_MAX;
-        state->ns[i].env_det.envelope = 1 << (-SIG_EXP);
+        state->nse[i].gain = INT32_MAX;
+        state->nse[i].env_det.envelope = 1 << (-SIG_EXP);
         // Avoid division by zero
-        if (!state->ns[i].threshold) state->ns[i].threshold = 1;
-        state->ns[i].inv_threshold = INT64_MAX / state->ns[i].threshold;
+        if (!state->nse[i].threshold) state->nse[i].threshold = 1;
+        state->nse[i].inv_threshold = INT64_MAX / state->nse[i].threshold;
     }
 
-    ns_copy_config_to_state(state->ns, state->n_inputs, config);
+    nse_copy_config_to_state(state->nse, state->n_inputs, config);
 }
 
 void noise_suppressor_expander_control(void *module_state, module_control_t *control)
@@ -98,12 +98,12 @@ void noise_suppressor_expander_control(void *module_state, module_control_t *con
     {
         // Finish the write by updating the working copy with the new config
         // TODO update only the fields written by the host
-        ns_copy_config_to_state(state->ns, state->n_inputs, config);
+        nse_copy_config_to_state(state->nse, state->n_inputs, config);
         control->config_rw_state = config_none_pending;
     }
     else if(control->config_rw_state == config_read_pending)
     {
-        ns_copy_state_to_config(config, state->ns);
+        nse_copy_state_to_config(config, state->nse);
         control->config_rw_state = config_read_updated;
     }
     else

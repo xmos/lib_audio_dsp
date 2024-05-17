@@ -8,7 +8,7 @@
 
 typedef struct
 {
-    noise_suppressor_expander_t *ns;
+    noise_suppressor_expander_t *nse;
     int n_inputs;
     int n_outputs;
     int frame_size;
