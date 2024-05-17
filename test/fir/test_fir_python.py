@@ -3,12 +3,40 @@
 import numpy as np
 import pytest
 from pathlib import Path
+import scipy.signal as spsig
+
 
 import audio_dsp.dsp.fir as fir
 import audio_dsp.dsp.signal_gen as sg
 import audio_dsp.dsp.utils as utils
 
 gen_dir = Path(__file__).parent / "autogen"
+
+@pytest.fixture(scope="session")
+def make_coeffs():
+    gen_dir = Path(__file__).parent / "autogen"
+    gen_dir.mkdir(exist_ok=True, parents=True)
+
+    coeffs = np.zeros(1000)
+    coeffs[0] = 1
+    np.savetxt(Path(gen_dir, "passthrough_filter.txt"), coeffs)
+
+    coeffs = np.arange(10, 0, -1)/10
+    np.savetxt(Path(gen_dir, "descending_coeffs.txt"), coeffs)
+
+    coeffs = spsig.firwin2(512, [0.0, 0.5, 1.0], [1.0, 1.0, 0.0])
+    np.savetxt(Path(gen_dir, "simple_low_pass.txt"), coeffs)
+
+    coeffs = spsig.firwin2(2048, [0.0, 20/48000, 1.0], [0.0, 1.0, 1.0], antisymmetric=True)
+    np.savetxt(Path(gen_dir, "aggressive_high_pass.txt"), coeffs)
+
+    coeffs = spsig.firwin2(2047, [0.0, 0.5, 1.0], [0.5, 1.0, 2.0])
+    np.savetxt(Path(gen_dir, "tilt.txt"), coeffs)
+
+    coeffs = np.zeros(10000)
+    coeffs[::8] = 1
+    np.savetxt(Path(gen_dir, "comb.txt"), coeffs)
+
 
 # Note the filter coeffs are defined in conftest
 @pytest.mark.parametrize("coeff_path", ["passthrough_filter.txt",
