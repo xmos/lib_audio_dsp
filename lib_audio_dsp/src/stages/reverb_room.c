@@ -32,10 +32,6 @@ void reverb_room_init(module_instance_t* instance,
     int32_t feedback = config->feedback;
     int32_t damping = config->damping;
 
-    // Both fs and max_room_size are used in heap memory calculation, which is currently defined at compile time
-    // #define REVERB_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (RV_HEAP_SZ(48000, 1.0f)), so ensure the fs and max_room_size
-    // we get at initialisation match.
-
     xassert(n_inputs == 1); // Currently support only 1 channel reverb
 
     uint8_t *reverb_heap = adsp_bump_allocator_malloc(allocator, REVERB_ROOM_STAGE_REQUIRED_MEMORY(fs, max_room_size));

@@ -20,8 +20,8 @@
 
 #define DBTOGAIN(x) (powf(10, (x / 20.0)))
 #define GAINTODB(x) (log10f(x) * 20.0)
-#define TWO_TO_31 2147483648
-#define TWO_TO_31_MINUS_1 2147483647
+#define TWO_TO_31 0x80000000
+#define TWO_TO_31_MINUS_1 0x7FFFFFFF
 
 #define Q_RVR 31
 #define DEFAULT_AP_FEEDBACK 0x40000000 // 0.5 in Q31
@@ -263,14 +263,13 @@ void adsp_reverb_room_init_filters(
         reverb_heap,
         ADSP_RVR_HEAP_SZ(fs, max_room_size));
 
-    // Scale the wet gain; when pregain changes, overall wet gain shouldn't
     const float rv_scale_fac = ADSP_RVR_SCALE(fs, max_room_size);
 
-    // shift 2 insted of / 4, to avoid division
+    // shift 2 insted of / sizeof(int32_t), to avoid division
     rv->total_buffer_length = ADSP_RVR_HEAP_SZ(fs, max_room_size) >> 2;
 
-    uint32_t comb_lengths[8] = DEFAULT_COMB_LENS;
-    uint32_t ap_lengths[4] = DEFAULT_AP_LENS;
+    uint32_t comb_lengths[ADSP_RVR_N_COMBS] = DEFAULT_COMB_LENS;
+    uint32_t ap_lengths[ADSP_RVR_N_APS] = DEFAULT_AP_LENS;
     for (int i = 0; i < ADSP_RVR_N_COMBS; i++)
     {
         // Scale maximum lengths by the scale factor (fs/44100 * max_room)
@@ -314,8 +313,6 @@ reverb_room_t adsp_reverb_room_init(
     xassert(room_size >= 0 && room_size <= 1);
     xassert(decay >= 0 && decay <= 1);
     xassert(damping >= 0 && damping <= 1);
-
-    // These limits should be reconsidered if Q_RVR != 31
     xassert(pregain >= 0 && pregain < 1);
 
     reverb_room_t rv;

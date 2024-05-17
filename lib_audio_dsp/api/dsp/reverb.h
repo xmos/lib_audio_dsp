@@ -118,7 +118,7 @@ reverb_room_t adsp_reverb_room_init(
 /**
  * @brief Lower level function to initialise the filters of a reverb room object
  * 
- * Will only initilise allpass, comb filters and set total buffer length.
+ * Will only initialise allpass, comb filters and set total buffer length.
  * Can be used before `adsp_room_reverb_set_room_size()` to
  * initialise the filters and set the rooms size.
  * 

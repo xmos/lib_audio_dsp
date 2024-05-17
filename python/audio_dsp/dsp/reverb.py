@@ -241,12 +241,12 @@ class reverb_room(dspg.dsp_block):
         damping : float, optional
             how much high frequency attenuation in the room, between 0 and 1
         wet_gain_db : int, optional
-            wet signal gain, less then 0 dB.
+            wet signal gain, less than 0 dB.
         dry_gain_db : int, optional
-            dry signal gain, less then 0 dB.
+            dry signal gain, less than 0 dB.
         pregain : float, optional
             the amount of gain applied to the signal before being passed
-            into the reverb, less then 1.
+            into the reverb, less than 1.
         """
         assert n_chans == 1, f"Reverb only supports 1 channel. {n_chans} specified"
 
@@ -317,10 +317,10 @@ class reverb_room(dspg.dsp_block):
         Parameters
         ----------
         pre_gain : float
-            pre gain value, less then 1.
+            pre gain value, less than 1.
         """
         if not (0 <= pre_gain < 1):
-            raise ValueError("Pre gain must be less then 1 and positive")
+            raise ValueError("Pre gain must be less than 1 and positive")
 
         self.pregain = pre_gain
         self.pregain_int = utils.int32(self.pregain * 2**Q_VERB)
@@ -332,10 +332,10 @@ class reverb_room(dspg.dsp_block):
         Parameters
         ----------
         wet_gain_db : float
-            Wet gain in dB, less then 0 dB.
+            Wet gain in dB, less than 0 dB.
         """
         if wet_gain_db > 0:
-            raise ValueError("Wet gain must be less then 0 dB")
+            raise ValueError("Wet gain must be less than 0 dB")
 
         self.wet = utils.db2gain(wet_gain_db)
         self.wet_int = utils.int32((self.wet * 2**Q_VERB) - 1)
@@ -347,10 +347,10 @@ class reverb_room(dspg.dsp_block):
         Parameters
         ----------
         dry_gain_db : float
-            Dry gain in dB, lees then 0 dB.
+            Dry gain in dB, lees than 0 dB.
         """
         if dry_gain_db > 0:
-            raise ValueError("Dry gain must be less then 0 dB")
+            raise ValueError("Dry gain must be less than 0 dB")
 
         self.dry = utils.db2gain(dry_gain_db)
         self.dry_int = utils.int32((self.dry * 2**Q_VERB) - 1)
@@ -387,7 +387,7 @@ class reverb_room(dspg.dsp_block):
 
     def set_room_size(self, room_size):
         """
-        Set the current room size, will adjust the delay line lengths accordingly.
+        Set the current room size; will adjust the delay line lengths accordingly.
 
         Parameters
         ----------
