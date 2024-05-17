@@ -28,6 +28,8 @@ typedef struct {
 
 // Round N up to a whole number of words.
 #define ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N) ((N) + (4 - ((N) & 0x3)))
+
+// Allocates N bytes from allocator, ensuring that the result is word aligned.
 #define ADSP_BUMP_ALLOCATOR_WORD_ALLIGNED_MALLOC(allocator, N) \
     adsp_bump_allocator_malloc(allocator, ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N))
 
