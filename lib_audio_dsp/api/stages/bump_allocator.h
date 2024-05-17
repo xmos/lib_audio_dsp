@@ -27,7 +27,7 @@ typedef struct {
 
 
 // Round N up to a whole number of words.
-#define ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N) ( N + (4 - (4 - ((N) & 0xff))) )
+#define ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N) ( N + (4 - (4 - ((N) & 0x3))) )
 #define ADSP_BUMP_ALLOCATOR_WORD_ALLIGNED_MALLOC(allocator, N) \
     adsp_bump_allocator_malloc(allocator, ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N))
 
