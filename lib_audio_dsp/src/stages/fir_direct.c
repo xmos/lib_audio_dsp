@@ -46,11 +46,11 @@ void fir_direct_init(module_instance_t* instance,
     state->frame_size = frame_size;
     state->n_taps = config->n_taps;
     state->max_taps = config->n_taps;
+    state->fir_direct = ADSP_BUMP_ALLOCATOR_WORD_ALLIGNED_MALLOC(allocator, n_inputs * sizeof(fir_direct_t));
     state->coeffs = (int32_t *)ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
     memcpy(state->coeffs, config->coeffs, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
     state->shift = config->shift;
 
-    state->fir_direct = adsp_bump_allocator_malloc(allocator, n_inputs * sizeof(fir_direct_t));
 
     for(int i = 0; i < n_inputs; i++)
     {
