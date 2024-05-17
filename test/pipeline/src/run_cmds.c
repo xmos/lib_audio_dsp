@@ -9,18 +9,6 @@
 
 #if SEND_CONTROL_COMMANDS
 #include "control_test_params.h"
-
-
-uint32_t get_cmd_size(uint32_t cmd_id, module_config_offsets_t* config_offset_p) {
-    for (int i=0; i<config_offset_num; i++) {
-        if (config_offset_p[i].cmd_id == cmd_id) {
-            return config_offset_p[i].size;
-        }
-    }
-    xassert(0);
-    return -1;
-}
-
 #endif
 
 #define CONTROL_COMMAND_TIMEOUT_MS 1
@@ -31,12 +19,15 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
     int8_t payload_buf[CMD_PAYLOAD_MAX_SIZE];
     cmd.instance_id = control_stage_index;
     hwtimer_t t = hwtimer_alloc();
+    uint8_t values_write[CMD_PAYLOAD_MAX_SIZE];
+    uint8_t values_read[CMD_PAYLOAD_MAX_SIZE];
+
     for (int cmd_idx = 0; cmd_idx<CMD_TOTAL_NUM; cmd_idx++)
     {
 
+        // Fill up the command fields
         cmd.cmd_id = control_config[cmd_idx].cmd_id;
-
-        cmd.payload_len = get_cmd_size(cmd.cmd_id,config_offset_p);//commands[cmd_idx].num_values * get_value_size(commands[cmd_idx].type);
+        cmd.payload_len = control_config[cmd_idx].cmd_size;
         cmd.payload = payload_buf;
         memset(cmd.payload, 0, cmd.payload_len);
 
@@ -50,10 +41,13 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
         printintln(control_config[cmd_idx].payload[3]);
         memcpy(cmd.payload, control_config[cmd_idx].payload, cmd.payload_len);
 
-        uint8_t values_write[CMD_PAYLOAD_MAX_SIZE];
+        // Save the payload values for the final check
         memcpy(values_write, cmd.payload, cmd.payload_len);
+
         adsp_control_status_t ret = ADSP_CONTROL_BUSY;
         uint32_t time_start = hwtimer_get_time(t);
+
+        // Write the data
         do {
             ret = adsp_write_module_config(m_dsp->modules, m_dsp->n_modules, &cmd);
             if (hwtimer_get_time(t) > time_start + CONTROL_COMMAND_TIMEOUT_MS) {
@@ -78,9 +72,9 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 
         xassert(ret == ADSP_CONTROL_SUCCESS);
 
-        uint8_t values_read[CMD_PAYLOAD_MAX_SIZE];
         memcpy(values_read, cmd.payload, cmd.payload_len);
-        // Check that the configured values are correct
+
+        // Check that read and written values match
         for(int i=0; i<cmd.payload_len; i++)
         {
             if(values_read[i] != values_write[i])

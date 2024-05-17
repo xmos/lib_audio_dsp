@@ -143,21 +143,18 @@ def generate_test_param_file(stage_name, stage_config):
     type_data = {}
     with open(Path(__file__).resolve().parents[2] / f"stage_config/{stage_name}.yaml", "r") as fd:
         type_data = yaml.safe_load(fd)
-        print(type_data)
 
     with open(Path(__file__).resolve().parent / f"build/control_test_params.h", "w") as f_op:
 
 
         f_op.write("#include \"cmds.h\"\n\n")
-        f_op.write("#include \"cmd_offsets.h\"\n")
         f_op.write("#define CMD_PAYLOAD_MAX_SIZE 256\n")
         f_op.write(f"#define CMD_TOTAL_NUM {len(stage_config)}\n\n")
         f_op.write("typedef struct control_data_t {\n")
         f_op.write("\tuint32_t cmd_id;\n")
+        f_op.write("\tuint32_t cmd_size;\n")
         f_op.write("\tuint32_t payload[CMD_PAYLOAD_MAX_SIZE];\n")
         f_op.write("}control_data_t;\n\n")
-        f_op.write(f"module_config_offsets_t * config_offset_p = {stage_name.lower()}_config_offsets;\n")
-        f_op.write(f"const uint32_t config_offset_num = sizeof({stage_name.lower()}_config_offsets) / sizeof(module_config_offsets_t);")
         f_op.write(f"control_data_t control_config[CMD_TOTAL_NUM] = {{\n")
 
         for cmd_name, cmd_payload in stage_config.items():
@@ -169,21 +166,26 @@ def generate_test_param_file(stage_name, stage_config):
                 cmd_payload_list.append(cmd_payload)
             else:
                 cmd_payload_list = cmd_payload
+            payload_size = 0
             for value in cmd_payload_list:
                 data_type = type_data['module'][stage_name.lower()][cmd_name.lower()]['type']
                 if data_type in [ 'int', 'int32_t', 'uint32_t' ]:
                     ba = bytearray(struct.pack('I', value&0xFFFFFFFF))
+                    payload_size += 4
                 elif  data_type in [ 'float' ]:
                     ba = struct.unpack('4b', struct.pack("f", value))
+                    payload_size += 4
                 elif data_type in [ 'int8_t', 'uint8_t' ]:
                     ba = bytearray(value&0xFF)
+                    payload_size += 1
                 else:
                     raise ValueError(f"{data_type} is not supported")
 
                 payload_values = payload_values + [ "0x{:02X}".format(x&0xFF) for x in ba]
+            f_op.write(f"\t\t.cmd_size = {payload_size},\n")
             f_op.write(f"\t\t.payload  = {{{', '.join(list(payload_values))}}},\n")
             f_op.write(f"\t}},\n")
-        f_op.write(f"}};")
+        f_op.write(f"}};\n")
 
 @pytest.mark.parametrize("method, args", [("make_bypass", None),
                                           ("make_lowpass", [1000, 0.707]),
@@ -256,7 +258,7 @@ def test_cascaded_biquad(method, args, frame_size):
         generate_test_param_file("CASCADED_BIQUADS", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test(None, tune_p, frame_size)
 
 def test_limiter_rms(frame_size):
     """
@@ -277,7 +279,7 @@ def test_limiter_rms(frame_size):
         generate_test_param_file("LIMITER_RMS", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test(None, tune_p, frame_size)
 
 
 def test_limiter_peak(frame_size):
