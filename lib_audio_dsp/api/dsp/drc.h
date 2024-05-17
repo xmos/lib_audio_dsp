@@ -232,7 +232,7 @@ int32_t adsp_noise_suppressor_expander(
 /**
  * @brief Set the threshold of a noise suppressor (expander)
  *
- * @param ns                  Noise suppressor (Expander) object
+ * @param nse                  Noise suppressor (Expander) object
  * @param new_th              New threshold in Q_SIG
  */
 void adsp_noise_suppressor_expander_set_th(

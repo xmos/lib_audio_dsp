@@ -21,7 +21,9 @@ class NoiseSuppressorExpander(Stage):
         ratio = 3
         at = 0.005
         rt = 0.120
-        self.dsp_block = drc.noise_suppressor_expander(self.fs, self.n_in, ratio, threshold, at, rt)
+        self.dsp_block = drc.noise_suppressor_expander(
+            self.fs, self.n_in, ratio, threshold, at, rt
+        )
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
