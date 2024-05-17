@@ -15,6 +15,7 @@ from audio_dsp.stages.compressor import CompressorRMS
 from audio_dsp.stages.reverb import Reverb
 from audio_dsp.dsp.types import float32
 import numpy
+import yaml
 
 import audio_dsp.dsp.utils as utils
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
@@ -138,7 +139,14 @@ def generate_test_param_file(stage_name, stage_config):
     stage_name: name of the stage to test
     stage_config: dictionary containing the parameter name and its corresponding value
     """
+
+    type_data = {}
+    with open(Path(__file__).resolve().parents[2] / f"stage_config/{stage_name}.yaml", "r") as fd:
+        type_data = yaml.safe_load(fd)
+        print(type_data)
+
     with open(Path(__file__).resolve().parent / f"build/control_test_params.h", "w") as f_op:
+
 
         f_op.write("#include \"cmds.h\"\n\n")
         f_op.write("#include \"cmd_offsets.h\"\n")
@@ -162,12 +170,15 @@ def generate_test_param_file(stage_name, stage_config):
             else:
                 cmd_payload_list = cmd_payload
             for value in cmd_payload_list:
-                if isinstance(value, int) or isinstance(value, numpy.int32):
+                data_type = type_data['module'][stage_name.lower()][cmd_name.lower()]['type']
+                if data_type in [ 'int', 'int32_t', 'uint32_t' ]:
                     ba = bytearray(struct.pack('I', value&0xFFFFFFFF))
-                elif isinstance(value, float32) or isinstance(value, float):
+                elif  data_type in [ 'float' ]:
                     ba = struct.unpack('4b', struct.pack("f", value))
+                elif data_type in [ 'int8_t', 'uint8_t' ]:
+                    ba = bytearray(value&0xFF)
                 else:
-                    raise ValueError(f"{value} is of unsupported type {type(value)}")
+                    raise ValueError(f"{data_type} is not supported")
 
                 payload_values = payload_values + [ "0x{:02X}".format(x&0xFF) for x in ba]
             f_op.write(f"\t\t.payload  = {{{', '.join(list(payload_values))}}},\n")
@@ -266,7 +277,7 @@ def test_limiter_rms(frame_size):
         generate_test_param_file("LIMITER_RMS", stage_config)
         return p
 
-    do_test(tune_p, tune_p, frame_size)
+    do_test(make_p, tune_p, frame_size)
 
 
 def test_limiter_peak(frame_size):

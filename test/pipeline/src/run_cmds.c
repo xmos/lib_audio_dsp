@@ -45,7 +45,7 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
         printintln(control_config[cmd_idx].payload[1]);
         printintln(control_config[cmd_idx].payload[2]);
         printintln(control_config[cmd_idx].payload[3]);
-        memcpy(cmd.payload, control_config[cmd_idx].payload, cmd.payload_len)
+        memcpy(cmd.payload, control_config[cmd_idx].payload, cmd.payload_len);
 
         uint8_t values_write[CMD_PAYLOAD_MAX_SIZE];
         memcpy(values_write, cmd.payload, cmd.payload_len);
@@ -76,7 +76,6 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
             {
                 debug_printf("Command %d: mismatch at index %d. Expected %d, found %d\n", cmd.cmd_id, i, values_write[i], values_read[i]);
                 xassert(0);
-                }
             }
         }
     }
