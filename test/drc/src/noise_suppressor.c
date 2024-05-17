@@ -20,7 +20,7 @@ int main()
 {
   FILE * in = _fopen("../sig_48k.bin", "rb");
   FILE * out = _fopen("sig_out.bin", "wb");
-  FILE * ex_info = _fopen("info.bin", "rb");
+  FILE * ns_info = _fopen("info.bin", "rb");
 
   fseek(in, 0, SEEK_END);
   int in_len = ftell(in) / sizeof(int32_t);
@@ -29,22 +29,22 @@ int main()
   int32_t th, at_al, re_al;
   float slope;
 
-  fread(&th, sizeof(int32_t), 1, ex_info);
-  fread(&at_al, sizeof(int32_t), 1, ex_info);
-  fread(&re_al, sizeof(int32_t), 1, ex_info);
-  fread(&slope, sizeof(float), 1, ex_info);
+  fread(&th, sizeof(int32_t), 1, ns_info);
+  fread(&at_al, sizeof(int32_t), 1, ns_info);
+  fread(&re_al, sizeof(int32_t), 1, ns_info);
+  fread(&slope, sizeof(float), 1, ns_info);
 
-  fclose(ex_info);
+  fclose(ns_info);
   if (!th) th = 1;
-  expander_t ex = (expander_t){
+  noise_suppressor_t ns = (noise_suppressor_t){
               (env_detector_t){at_al, re_al, 1 << (Q_SIG)}, 0, 0, INT32_MAX, slope};
-  adsp_expander_set_th(&ex, th);
+  adsp_noise_suppressor_set_th(&ns, th);
   for (unsigned i = 0; i < in_len; i++)
   {
     int32_t samp = 0, samp_out = 0;
     fread(&samp, sizeof(int32_t), 1, in);
     //printf("%ld ", samp);
-    samp_out = adsp_expander(&ex, samp);
+    samp_out = adsp_noise_suppressor(&ns, samp);
     //printf("%ld ", samp_out);
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }

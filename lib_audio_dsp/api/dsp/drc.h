@@ -63,9 +63,9 @@ typedef struct{
   int64_t inv_threshold;
   /** Linear gain */
   int32_t gain;
-  /** Slope of the expansion curve */
+  /** Slope of the noise suppression curve */
   float slope;
-}expander_t;
+}noise_suppressor_t;
 
 /**
  * @brief Initialise an envelope detector object
@@ -202,16 +202,16 @@ int32_t adsp_noise_gate(
   int32_t new_samp);
 
 /**
- * @brief Initialise an expander object
+ * @brief Initialise a noise suppressor object
  *
  * @param fs                  Sampling frequency
  * @param threshold_db        Threshold in dB
  * @param attack_t            Attack time in seconds
  * @param release_t           Release time in seconds
- * @param ratio               Expansion ratio
- * @return expander_t Initialised expander object
+ * @param ratio               Noise suppression ratio
+ * @return noise_suppressor_t Initialised noise suppressor object
  */
-expander_t adsp_expander_init(
+noise_suppressor_t adsp_noise_suppressor_init(
   float fs,
   float threshold_db,
   float attack_t,
@@ -219,24 +219,24 @@ expander_t adsp_expander_init(
   float ratio);
 
 /**
- * @brief Process a new sample with an expander
+ * @brief Process a new sample with a noise suppressor
  *
- * @param ex                  Expander object
+ * @param ns                  Noise suppressor object
  * @param new_samp            New sample
  * @return int32_t            Suppressed sample
  */
-int32_t adsp_expander(
-  expander_t * ex,
+int32_t adsp_noise_suppressor(
+  noise_suppressor_t * ns,
   int32_t new_samp);
 
 /**
- * @brief Set the threshold of an expander
+ * @brief Set the threshold of a noise suppressor
  *
- * @param ex                  Expander object
+ * @param ns                  Noise suppressor object
  * @param new_th              New threshold
  */
-void adsp_expander_set_th(
-  expander_t * ex,
+void adsp_noise_suppressor_set_th(
+  noise_suppressor_t * ns,
   int32_t new_th);
 
 /**

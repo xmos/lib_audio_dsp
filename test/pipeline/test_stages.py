@@ -9,7 +9,6 @@ from audio_dsp.stages.biquad import Biquad
 from audio_dsp.stages.cascaded_biquads import CascadedBiquads
 from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak, HardLimiterPeak, Clipper
 from audio_dsp.stages.noise_gate import NoiseGate
-from audio_dsp.stages.expander import Expander
 from audio_dsp.stages.noise_suppressor import NoiseSuppressor
 from audio_dsp.stages.signal_chain import VolumeControl, FixedGain
 from audio_dsp.stages.compressor import CompressorRMS
@@ -273,32 +272,17 @@ def test_noise_gate(frame_size):
 
     do_test(make_p, frame_size)
 
-def test_expander(frame_size):
-    """
-    Test the expander stage suppresses the noise the same in python and C
-    """
-    def make_p(fr):
-        p = Pipeline(channels, frame_size=fr)
-        with p.add_thread() as t:
-            ex = t.stage(Expander, p.i)
-        p.set_outputs(ex.o)
-
-        ex.make_expander(2, -6, 0.001, 0.1)
-        return p
-
-    do_test(make_p, frame_size)
-
 def test_noise_suppressor(frame_size):
     """
-    Test the noise_suppressor stage suppresses the noise the same in python and C
+    Test the noise suppressor stage suppress the noise the same in python and C
     """
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            ns = t.stage(NoiseSuppressor, p.i)
-        p.set_outputs(ns.o)
+            ng = t.stage(NoiseSuppressor, p.i)
+        p.set_outputs(ng.o)
 
-        ns.make_noise_suppressor(2, -6, 0.001, 0.1)
+        ng.make_noise_suppressor(2, -6, 0.001, 0.1)
         return p
 
     do_test(make_p, frame_size)
