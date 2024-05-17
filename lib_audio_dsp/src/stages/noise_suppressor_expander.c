@@ -57,7 +57,7 @@ void noise_suppressor_expander_process(int32_t **input, int32_t **output, void *
 
         int j = 0;
         do {
-            *out++ = adsp_noise_suppressor_expander(&state->ns[i], *in++);
+            *out++ = adsp_noise_suppressor_expander(&state->nse[i], *in++);
         } while(++j < state->frame_size);
     } while(++i < state->n_outputs);
 }
