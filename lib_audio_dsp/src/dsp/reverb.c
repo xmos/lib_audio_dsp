@@ -353,6 +353,7 @@ void adsp_reverb_room_set_room_size(reverb_room_t *rv,
 {
     // For larger rooms, increase max_room_size
     xassert(new_room_size >= 0 && new_room_size <= 1);
+    rv->room_size = new_room_size;
     // could use uq32 for the room size, but it's important
     // to represent 1.0 here, so loosing one bit of precision
     // and doing extra lextracts :(
@@ -363,7 +364,6 @@ void adsp_reverb_room_set_room_size(reverb_room_t *rv,
     right_shift_t shr = -q - exp + 23;
     room_size_int >>= shr;
 
-    rv->room_size = room_size_int;
     for (int comb = 0; comb < ADSP_RVR_N_COMBS; comb++)
     {
         // Do comb length * new_room_size in UQ31
