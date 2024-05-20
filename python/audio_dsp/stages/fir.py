@@ -7,7 +7,7 @@ from ..dsp import fir as fir
 from ..dsp import generic as dspg
 
 
-class Fir_Direct(Stage):
+class FirDirect(Stage):
     """A FIR filter implemented in the time domain.
 
     See :class:`audio_dsp.dsp.fir.fir_direct` for details.

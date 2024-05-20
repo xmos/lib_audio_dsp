@@ -10,7 +10,7 @@ import audio_dsp.dsp.utils as utils
 
 gen_dir = Path(__file__).parent / "autogen"
 
-# Note the filter coeffs are defined in conftest
+# Note the filter coeffs files are defined in test/fir/conftest.py
 @pytest.mark.parametrize("coeff_path", ["passthrough_filter.txt",
                                         "descending_coeffs.txt",
                                         "simple_low_pass.txt",
@@ -53,7 +53,7 @@ def test_basic(coeff_path):
         np.testing.assert_allclose(out_flt, out_int, atol=2**(-21))
 
 
-# Note the filter coeffs are defined in conftest
+# Note the filter coeffs files are defined in test/fir/conftest.py
 @pytest.mark.parametrize("coeff_path", ["passthrough_filter.txt",
                                         "descending_coeffs.txt",
                                         "simple_low_pass.txt"])

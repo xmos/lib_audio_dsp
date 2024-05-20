@@ -12,8 +12,6 @@
  * @brief Delay state structure
  */
 typedef struct{
-  // sample buffer
-  int32_t * buffer;
   // lib_xcore_math FIR struct
   filter_fir_s32_t filter;
 } fir_direct_t;

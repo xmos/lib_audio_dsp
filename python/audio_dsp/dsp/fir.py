@@ -62,8 +62,8 @@ class fir_direct(dspg.dsp_block):
         self.coeffs_int, self.shift = self.check_coeff_scaling()
 
         self.reset_state()
-        self.buffer_idx = [0] * self.n_chans
-        self.buffer_idx_int = [0] * self.n_chans
+        self.buffer_idx = [self.n_taps - 1] * self.n_chans
+        self.buffer_idx_int = [self.n_taps - 1] * self.n_chans
 
     def check_coeff_scaling(self):
         """Check the coefficient scaling is optimal.

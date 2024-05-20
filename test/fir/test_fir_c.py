@@ -97,6 +97,7 @@ def in_signal():
   return get_sig()
 
 
+# Note the filter coeffs files are defined in test/fir/conftest.py
 @pytest.mark.parametrize("coeff_path", ["passthrough_filter.txt",
                                         "descending_coeffs.txt",
                                         "simple_low_pass.txt",

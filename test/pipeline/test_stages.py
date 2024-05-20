@@ -14,7 +14,7 @@ from audio_dsp.stages.noise_suppressor import NoiseSuppressor
 from audio_dsp.stages.signal_chain import VolumeControl, FixedGain, Delay
 from audio_dsp.stages.compressor import CompressorRMS
 from audio_dsp.stages.reverb import ReverbRoom
-from audio_dsp.stages.fir import Fir_Direct
+from audio_dsp.stages.fir import FirDirect
 
 import audio_dsp.dsp.utils as utils
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
@@ -377,7 +377,7 @@ def test_fir(frame_size, filter_name):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            fir = t.stage(Fir_Direct, p.i, coeffs_path=filter_path)
+            fir = t.stage(FirDirect, p.i, coeffs_path=filter_path)
         p.set_outputs(fir.o)
         return p
 

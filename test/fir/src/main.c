@@ -21,7 +21,7 @@ int main()
   // this is just a simple wrapper for lib_xcore_math's filter_fir_s32,
   // for testing bit exactness against the python model.
 
-  left_shift_t lsh = 0;
+  right_shift_t rsh = 0;
   int32_t n_taps = 0;
 
   FILE * in = _fopen("../sig_48k.bin", "rb");
@@ -32,7 +32,7 @@ int main()
   int in_len = ftell(in) / sizeof(int32_t);
   fseek(in, 0, SEEK_SET);
 
-  fread(&lsh, sizeof(int32_t), 1, coeffs);
+  fread(&rsh, sizeof(int32_t), 1, coeffs);
   fread(&n_taps, sizeof(int32_t), 1, coeffs);
 
   int32_t * taps_buf = calloc(sizeof(int32_t), n_taps);
@@ -45,7 +45,7 @@ int main()
 
   filter_fir_s32_t * filter = malloc(sizeof(filter_fir_s32_t));
 
-  filter_fir_s32_init(filter, samp_buf, n_taps, taps_buf, lsh);
+  filter_fir_s32_init(filter, samp_buf, n_taps, taps_buf, rsh);
 
   for (unsigned i = 0; i < in_len; i++)
   {
