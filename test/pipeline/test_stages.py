@@ -12,10 +12,7 @@ from audio_dsp.stages.noise_gate import NoiseGate
 from audio_dsp.stages.noise_suppressor import NoiseSuppressor
 from audio_dsp.stages.signal_chain import VolumeControl, FixedGain, Delay
 from audio_dsp.stages.compressor import CompressorRMS
-from audio_dsp.stages.reverb import Reverb
-from audio_dsp.dsp.types import float32
-import numpy
-import yaml
+from audio_dsp.stages.reverb import ReverbRoom
 
 import audio_dsp.dsp.utils as utils
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
@@ -454,7 +451,7 @@ def test_reverb(frame_size):
         reverb_test_channels = 1 # Reverb expects only 1 channel
         p = Pipeline(reverb_test_channels, frame_size=fr)
         with p.add_thread() as t:
-            rv = t.stage(Reverb, p.i, label="control")
+            rv = t.stage(ReverbRoom, p.i, label="control")
         p.set_outputs(rv.o)
         return p
 

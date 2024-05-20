@@ -16,7 +16,7 @@ set(APP_COMPILER_FLAGS
 
 set(APP_DEPENDENT_MODULES lib_audio_dsp "xscope_fileio(develop)")
 
-set(APP_INCLUDES src src/file_utils build/dsp_pipeline/ ${CMAKE_CURRENT_LIST_DIR}/../../lib_audio_dsp/api/stages/ build/src.autogen/host/ .)
+set(APP_INCLUDES src src/file_utils build/dsp_pipeline/ build/src.autogen/host/ .)
 
 file(GLOB C_SRC CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_LIST_DIR} src/*.c src/*.xc src/file_utils/*.c stages/*.c)
 

@@ -31,20 +31,26 @@ class float32:
     def __gt__(self, other_f32):
         if isinstance(other_f32, float32):
             return self.value > other_f32.value
+        if isinstance(other_f32, float):
+            return self.value > float32(other_f32).value
         else:
-            raise TypeError("float32 can only be compared against float32")
+            raise TypeError("float32 can only be compared against float32 or float")
 
     def __lt__(self, other_f32):
         if isinstance(other_f32, float32):
             return self.value < other_f32.value
+        if isinstance(other_f32, float):
+            return self.value < float32(other_f32).value
         else:
-            raise TypeError("float32 can only be compared against float32")
+            raise TypeError("float32 can only be compared against float32 or float")
 
     def __ge__(self, other_f32):
         if isinstance(other_f32, float32):
             return self.value >= other_f32.value
+        elif isinstance(other_f32, float):
+            return self.value >= float32(other_f32).value
         else:
-            raise TypeError("float32 can only be compared against float32")
+            raise TypeError("float32 can only be compared against float32 or float")
 
     def __sub__(self, other_f32):
         if isinstance(other_f32, float32):
