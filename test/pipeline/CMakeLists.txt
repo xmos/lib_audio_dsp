@@ -40,7 +40,7 @@ set(APP_COMPILER_FLAGS
     -Werror
     -fxscope
     -DTEST_WAV_XSCOPE=1
-    -DSEND_CONTROL_COMMANDS=1)
+    -DSEND_TEST_CONTROL_COMMANDS=1)
 
 set(APP_DEPENDENT_MODULES lib_audio_dsp "xscope_fileio(develop)")
 

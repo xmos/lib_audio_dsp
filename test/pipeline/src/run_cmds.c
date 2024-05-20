@@ -1,3 +1,8 @@
+// Copyright 2024 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
+#if SEND_TEST_CONTROL_COMMANDS
+
 #include <string.h>
 #include "adsp_control.h"
 #include "adsp_instance_id_auto.h"
@@ -7,13 +12,10 @@
 
 #include "run_cmds.h"
 
-#if SEND_CONTROL_COMMANDS
 #include "control_test_params.h"
-#endif
 
 #define CONTROL_COMMAND_TIMEOUT_TICKS 100000 // one tick is 10ns
 void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
-#if SEND_CONTROL_COMMANDS
 
     adsp_stage_control_cmd_t cmd;
     int8_t payload_buf[CMD_PAYLOAD_MAX_SIZE];
@@ -83,5 +85,6 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
         }
     }
     hwtimer_free(t);
-#endif
 }
+
+#endif
