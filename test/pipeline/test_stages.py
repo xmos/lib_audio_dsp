@@ -463,8 +463,7 @@ def test_reverb(frame_size):
         generate_test_param_file("REVERB_ROOM", stage_config)
         return p
 
-    # TODO: RE-enable tune_p() before merging!!!
-    do_test(make_p, None, frame_size)
+    do_test(make_p, tune_p, frame_size)
 
 def test_delay(frame_size):
     """
