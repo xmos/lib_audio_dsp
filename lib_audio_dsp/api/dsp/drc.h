@@ -65,7 +65,7 @@ typedef struct{
   int32_t gain;
   /** Slope of the noise suppression curve */
   float slope;
-}noise_suppressor_t;
+}noise_suppressor_expander_t;
 
 /**
  * @brief Initialise an envelope detector object
@@ -202,16 +202,16 @@ int32_t adsp_noise_gate(
   int32_t new_samp);
 
 /**
- * @brief Initialise a noise suppressor object
+ * @brief Initialise a noise suppressor (expander) object
  *
  * @param fs                  Sampling frequency
  * @param threshold_db        Threshold in dB
  * @param attack_t            Attack time in seconds
  * @param release_t           Release time in seconds
  * @param ratio               Noise suppression ratio
- * @return noise_suppressor_t Initialised noise suppressor object
+ * @return noise_suppressor_expander_t Initialised noise suppressor (expander) object
  */
-noise_suppressor_t adsp_noise_suppressor_init(
+noise_suppressor_expander_t adsp_noise_suppressor_expander_init(
   float fs,
   float threshold_db,
   float attack_t,
@@ -219,24 +219,24 @@ noise_suppressor_t adsp_noise_suppressor_init(
   float ratio);
 
 /**
- * @brief Process a new sample with a noise suppressor
+ * @brief Process a new sample with a noise suppressor (expander)
  *
- * @param ns                  Noise suppressor object
+ * @param nse                 Noise suppressor (Expander) object
  * @param new_samp            New sample
  * @return int32_t            Suppressed sample
  */
-int32_t adsp_noise_suppressor(
-  noise_suppressor_t * ns,
+int32_t adsp_noise_suppressor_expander(
+  noise_suppressor_expander_t * nse,
   int32_t new_samp);
 
 /**
- * @brief Set the threshold of a noise suppressor
+ * @brief Set the threshold of a noise suppressor (expander)
  *
- * @param ns                  Noise suppressor object
+ * @param nse                  Noise suppressor (Expander) object
  * @param new_th              New threshold in Q_SIG
  */
-void adsp_noise_suppressor_set_th(
-  noise_suppressor_t * ns,
+void adsp_noise_suppressor_expander_set_th(
+  noise_suppressor_expander_t * nse,
   int32_t new_th);
 
 /**

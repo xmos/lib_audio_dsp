@@ -76,7 +76,7 @@ typedef struct
     /** Total buffer length */
     uint32_t total_buffer_length;
     /** Room size */
-    uint32_t room_size;
+    float room_size;
     /** Wet linear gain */
     int32_t wet_gain;
     /** Dry linear gain */

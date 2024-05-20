@@ -23,5 +23,5 @@ from audio_dsp.dsp.drc.sidechain import (
 
 from audio_dsp.dsp.drc.expander import (
     noise_gate as noise_gate,
-    noise_suppressor as noise_suppressor,
+    noise_suppressor_expander as noise_suppressor_expander,
 )
