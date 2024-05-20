@@ -138,7 +138,7 @@ def generate_test_param_file(stage_name, stage_config):
     stage_config: dictionary containing the parameter name and its corresponding value
     """
     type_data = {}
-    with open(Path(__file__).resolve().parents[2] / f"stage_config/{stage_name}.yaml", "r") as fd:
+    with open(Path(__file__).resolve().parents[2] / f"stage_config/{stage_name.lower()}.yaml", "r") as fd:
         type_data = yaml.safe_load(fd)
 
     with open(Path(__file__).resolve().parent / f"build/control_test_params.h", "w") as f_op:
