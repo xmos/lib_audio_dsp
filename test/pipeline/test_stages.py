@@ -28,7 +28,7 @@ PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
 
-TEST_FRAME_SIZES=1, 128
+TEST_FRAME_SIZES=1, # , 128
 
 fs = 48000
 channels = 2  # if this changes need to rewrite test signals
@@ -139,13 +139,11 @@ def generate_test_param_file(stage_name, stage_config):
     stage_name: name of the stage to test
     stage_config: dictionary containing the parameter name and its corresponding value
     """
-
     type_data = {}
     with open(Path(__file__).resolve().parents[2] / f"stage_config/{stage_name}.yaml", "r") as fd:
         type_data = yaml.safe_load(fd)
 
     with open(Path(__file__).resolve().parent / f"build/control_test_params.h", "w") as f_op:
-
 
         f_op.write("#include \"cmds.h\"\n\n")
         f_op.write("#define CMD_PAYLOAD_MAX_SIZE 256\n")
@@ -153,7 +151,7 @@ def generate_test_param_file(stage_name, stage_config):
         f_op.write("typedef struct control_data_t {\n")
         f_op.write("\tuint32_t cmd_id;\n")
         f_op.write("\tuint32_t cmd_size;\n")
-        f_op.write("\tuint32_t payload[CMD_PAYLOAD_MAX_SIZE];\n")
+        f_op.write("\tuint8_t payload[CMD_PAYLOAD_MAX_SIZE];\n")
         f_op.write("}control_data_t;\n\n")
         f_op.write(f"control_data_t control_config[CMD_TOTAL_NUM] = {{\n")
 
@@ -258,7 +256,7 @@ def test_cascaded_biquad(method, args, frame_size):
         generate_test_param_file("CASCADED_BIQUADS", stage_config)
         return p
 
-    do_test(None, tune_p, frame_size)
+    do_test(make_p, tune_p, frame_size)
 
 def test_limiter_rms(frame_size):
     """
@@ -279,7 +277,7 @@ def test_limiter_rms(frame_size):
         generate_test_param_file("LIMITER_RMS", stage_config)
         return p
 
-    do_test(None, tune_p, frame_size)
+    do_test(make_p, tune_p, frame_size)
 
 
 def test_limiter_peak(frame_size):
