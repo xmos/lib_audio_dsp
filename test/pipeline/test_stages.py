@@ -400,7 +400,7 @@ def test_noise_suppressor_expander(frame_size):
     def tune_p(fr):
         p = make_p(fr)
         stage_config = p.resolve_pipeline()['configs'][2]
-        generate_test_param_file("NOISE_SUPPRESSOR", stage_config)
+        generate_test_param_file("NOISE_SUPPRESSOR_EXPANDER", stage_config)
         return p
 
     do_test(make_p, tune_p, frame_size)
