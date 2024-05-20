@@ -10,7 +10,7 @@
 #include <xcore/assert.h>
 #include <debug_print.h>
 
-#include "run_cmds.h"
+#include "run_control_cmds.h"
 
 #include "control_test_params.h"
 
@@ -24,9 +24,9 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
     uint8_t values_write[CMD_PAYLOAD_MAX_SIZE];
     uint8_t values_read[CMD_PAYLOAD_MAX_SIZE];
 
+    // Iterate through all the commands in the stage config
     for (int cmd_idx = 0; cmd_idx<CMD_TOTAL_NUM; cmd_idx++)
     {
-
         // Fill up the command fields
         cmd.cmd_id = control_config[cmd_idx].cmd_id;
         cmd.payload_len = control_config[cmd_idx].cmd_size;

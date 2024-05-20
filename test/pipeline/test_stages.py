@@ -137,6 +137,7 @@ def generate_test_param_file(stage_name, stage_config):
     stage_name: name of the stage to test
     stage_config: dictionary containing the parameter name and its corresponding value
     """
+    print(stage_config)
     type_data = {}
     with open(Path(__file__).resolve().parents[2] / f"stage_config/{stage_name.lower()}.yaml", "r") as fd:
         type_data = yaml.safe_load(fd)
@@ -463,7 +464,7 @@ def test_reverb(frame_size):
         return p
 
     # TODO: RE-enable tune_p() before merging!!!
-    do_test(make_p, None, frame_size)
+    do_test(make_p, tune_p, frame_size)
 
 def test_delay(frame_size):
     """

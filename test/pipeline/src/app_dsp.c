@@ -10,7 +10,7 @@
 #include <adsp_generated_auto.h>
 
 #if SEND_TEST_CONTROL_COMMANDS
-#include "run_cmds.h"
+#include "run_control_cmds.h"
 #endif
 
 static adsp_pipeline_t * m_dsp;
