@@ -20,6 +20,7 @@ from python import build_utils, run_pipeline_xcoreai, audio_helpers
 from pathlib import Path
 import numpy as np
 import struct
+import yaml
 
 PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
