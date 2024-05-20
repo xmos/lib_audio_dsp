@@ -26,7 +26,7 @@ PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
 
-TEST_FRAME_SIZES=1, # , 128
+TEST_FRAME_SIZES=1, 128
 
 fs = 48000
 channels = 2  # if this changes need to rewrite test signals
@@ -67,45 +67,49 @@ def do_test(make_p, tune_p, dut_frame_size):
     make_p: function
         function that takes a frame size and returns a pipeline which
         has that frame size as the input.
-    make_p: function
+    tune_p: function
         function that takes a frame size, returns a pipeline which
         has that frame size as the input, and tunes the pipelines with the correct
         configuration values
     dut_frame_size : int
         The frame size to use for the pipeline that will run on the device.
     """
+
     for func_p in [make_p, tune_p]:
-        if not func_p:
-            continue
-        dut_p = func_p(dut_frame_size)
+        dut_p, _ = func_p(dut_frame_size)
         pipeline_channels = len(dut_p.i)
-        infile = "instage.wav"
-        outfile = "outstage.wav"
+
         n_samps, rate = 1024, 48000
 
-        generate_dsp_main(dut_p, out_dir = BUILD_DIR / "dsp_pipeline")
+        out_dir = None
         if func_p == make_p:
-            target = "pipeline_test"
+            out_dir = "dsp_pipeline_uninitialized"
         else:
-            target = "pipeline_test_config_control"
+            out_dir = "dsp_pipeline_initialized111"
+        generate_dsp_main(dut_p, out_dir = BUILD_DIR / out_dir)
+
+    infile = "instage.wav"
+    outfile = "outstage.wav"
+    ref_p = [ tune_p(s)[0] for s in TEST_FRAME_SIZES ]
+    sig0 = np.linspace(-2**26, 2**26, n_samps, dtype=np.int32)  << 4 # numbers which should be unmodified through pipeline
+                                                                 # data formats
+    sig1 = np.linspace(-2**23, 2**23, n_samps, dtype=np.int32)  << 4
+
+    if pipeline_channels == 2:
+        sig = np.stack((sig0, sig1), axis=1)
+    elif pipeline_channels == 1:
+        sig = sig0
+        sig = sig.reshape((len(sig), 1))
+    else:
+        assert False, f"Unsupported number of channels {pipeline_channels}. Test supports 1 or 2 channels"
+
+    audio_helpers.write_wav(infile, rate, sig)
+
+    out_py_int_all = [generate_ref(sig, p.stages[2].dsp_block, pipeline_channels, fr) for p, fr in zip(ref_p, TEST_FRAME_SIZES)]
+
+    for target in [ "pipeline_test",  "pipeline_test_config_control"]:
         # Build pipeline test executable. This will download xscope_fileio if not present
         build_utils.build(APP_DIR, BUILD_DIR, target)
-
-        sig0 = np.linspace(-2**26, 2**26, n_samps, dtype=np.int32)  << 4 # numbers which should be unmodified through pipeline
-                                                                     # data formats
-
-
-        sig1 = np.linspace(-2**23, 2**23, n_samps, dtype=np.int32)  << 4
-
-        if pipeline_channels == 2:
-            sig = np.stack((sig0, sig1), axis=1)
-        elif pipeline_channels == 1:
-            sig = sig0
-            sig = sig.reshape((len(sig), 1))
-        else:
-            assert False, f"Unsupported number of channels {pipeline_channels}. Test supports 1 or 2 channels"
-
-        audio_helpers.write_wav(infile, rate, sig)
 
         xe = APP_DIR / f"bin/{target}.xe"
         run_pipeline_xcoreai.run(xe, infile, outfile, pipeline_channels, 1)
@@ -113,9 +117,6 @@ def do_test(make_p, tune_p, dut_frame_size):
         _, out_data = audio_helpers.read_wav(outfile)
         if out_data.ndim == 1:
             out_data = out_data.reshape(len(out_data), 1)
-
-        ref_p = [make_p(s) for s in TEST_FRAME_SIZES]
-        out_py_int_all = [generate_ref(sig, p.stages[2].dsp_block, pipeline_channels, fr) for p, fr in zip(ref_p, TEST_FRAME_SIZES)]
 
         for out_py_int, ref_frame_size in zip(out_py_int_all, TEST_FRAME_SIZES):
             for ch in range(pipeline_channels):
@@ -267,14 +268,16 @@ def test_limiter_rms(frame_size):
             lim = t.stage(LimiterRMS, p.i, label="control")
         p.set_outputs(lim.o)
 
+        return p, lim
+
+    def tune_p(fr):
+        p, lim = make_p(fr)
+
         lim.make_limiter_rms(-6, 0.001, 0.1)
 
-        return p
-    def tune_p(fr):
-        p = make_p(fr)
         stage_config = p.resolve_pipeline()['configs'][2]
         generate_test_param_file("LIMITER_RMS", stage_config)
-        return p
+        return p, lim
 
     do_test(make_p, tune_p, frame_size)
 

@@ -13,7 +13,7 @@
 #include "run_control_cmds.h"
 
 #include "control_test_params.h"
-
+#include "print.h"
 #define CONTROL_COMMAND_TIMEOUT_TICKS 1000000 // one tick is 10ns
 void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 
@@ -34,7 +34,10 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 
         // Write control command to the stage
         memcpy(cmd.payload, control_config[cmd_idx].payload, cmd.payload_len);
-
+        printintln(cmd.payload[0]);
+        printintln(cmd.payload[1]);
+        printintln(cmd.payload[2]);
+        printintln(cmd.payload[3]);
         // Save the payload values for the final check
         memcpy(values_write, cmd.payload, cmd.payload_len);
 
