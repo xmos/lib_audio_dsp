@@ -67,7 +67,7 @@ def do_test(make_p, tune_p, dut_frame_size):
     make_p: function
         function that takes a frame size and returns a pipeline which
         has that frame size as the input.
-    make_p: function
+    tune_p: function
         function that takes a frame size, returns a pipeline which
         has that frame size as the input, and tunes the pipelines with the correct
         configuration values
