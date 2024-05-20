@@ -14,13 +14,12 @@
 
 #include "control_test_params.h"
 
-#define CONTROL_COMMAND_TIMEOUT_TICKS 100000 // one tick is 10ns
+#define CONTROL_COMMAND_TIMEOUT_TICKS 1000000 // one tick is 10ns
 void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 
     adsp_stage_control_cmd_t cmd;
     int8_t payload_buf[CMD_PAYLOAD_MAX_SIZE];
     cmd.instance_id = control_stage_index;
-    hwtimer_t t = hwtimer_alloc();
     uint8_t values_write[CMD_PAYLOAD_MAX_SIZE];
     uint8_t values_read[CMD_PAYLOAD_MAX_SIZE];
 
@@ -40,13 +39,13 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
         memcpy(values_write, cmd.payload, cmd.payload_len);
 
         adsp_control_status_t ret = ADSP_CONTROL_BUSY;
-        uint32_t time_start = hwtimer_get_time(t);
+        uint32_t time_start = get_reference_time();
 
         // Write the data
         do {
             ret = adsp_write_module_config(m_dsp->modules, m_dsp->n_modules, &cmd);
             // Assert if operation is taking too long
-            if (hwtimer_get_time(t) > time_start + CONTROL_COMMAND_TIMEOUT_TICKS) {
+            if (get_reference_time() > time_start + CONTROL_COMMAND_TIMEOUT_TICKS) {
                 xassert(0 && "Timer expired while writing control command");
             }
         }while(ret == ADSP_CONTROL_BUSY);
@@ -54,18 +53,18 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 
         memset(cmd.payload, 0, cmd.payload_len);
 
-        // Add a delay of 1 ms to address the bug described in https://xmosjira.atlassian.net/browse/LCD-257
+        // Add a delay of 5 ms to address the bug described in https://xmosjira.atlassian.net/browse/LCD-257
         hwtimer_t t_delay = hwtimer_alloc();
-        hwtimer_delay(t_delay, 100);
+        hwtimer_delay(t_delay, 500);
         hwtimer_free(t_delay);
 
         // Read back the written data
         ret = ADSP_CONTROL_BUSY;
-        time_start = hwtimer_get_time(t);
+        time_start = get_reference_time();
         do {
             ret = adsp_read_module_config(m_dsp->modules, m_dsp->n_modules, &cmd);
             // Assert if operation is taking too long
-            if (hwtimer_get_time(t) > time_start + CONTROL_COMMAND_TIMEOUT_TICKS) {
+            if (get_reference_time() > time_start + CONTROL_COMMAND_TIMEOUT_TICKS) {
                 xassert(0 && "Timer expired while reading control command");
             }
         }while(ret == ADSP_CONTROL_BUSY);
@@ -84,7 +83,6 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
             }
         }
     }
-    hwtimer_free(t);
 }
 
 #endif
