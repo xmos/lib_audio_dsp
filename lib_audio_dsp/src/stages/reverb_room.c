@@ -72,11 +72,12 @@ void reverb_room_control(void *module_state, module_control_t *control)
         if (config->room_size != state->rv.room_size) {
             adsp_reverb_room_set_room_size(&state->rv, config->room_size);
         }
+        // damping is always at least 1
+        int32_t damp2 = (uint32_t)(1<<31) - config->damping;
         for (unsigned i = 0; i < ADSP_RVR_N_COMBS; i ++) {
             state->rv.combs[i].feedback = config->feedback;
             state->rv.combs[i].damp_1 = config->damping;
-            // damping is always at least 1
-            state->rv.combs[i].damp_2 = (uint32_t)(1<<31) - config->damping;
+            state->rv.combs[i].damp_2 = damp2;
         }
         control->config_rw_state = config_none_pending;
     }
