@@ -64,7 +64,10 @@ class expander_base(compressor_limiter_base):
         attack_alpha in 32-bit int format.
     release_alpha_int : int
         release_alpha in 32-bit int format.
-
+    gain_calc : function
+        function pointer to floating point gain calculation function.
+    gain_calc_int : function
+        function pointer to fixed point gain calculation function.
     """
 
     def reset_state(self):

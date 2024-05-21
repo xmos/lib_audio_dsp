@@ -59,7 +59,7 @@ class mixer(dspg.dsp_block):
 
         """
         scaled_samples = np.array(sample_list) * self.gain
-        y = np.sum(scaled_samples)
+        y = float(np.sum(scaled_samples))
         y = utils.saturate_float(y, self.Q_sig)
         return y
 

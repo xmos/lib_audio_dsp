@@ -246,14 +246,15 @@ def float_to_int32(x, Q_sig=31):
     return int32(round(x * (2**Q_sig)))
 
 
-def int32_to_float(x: int, Q_sig=31):
+def int32_to_float(x: int, Q_sig: int = 31) -> float:
     """Convert an int32 number to floating point, given it's Q format."""
     # Note this means the max value is 0.99999999953
-    return float(x) / (2**Q_sig)
+    return float(x) / float(2**Q_sig)
 
 
 def hr_s32(x: float_s32):
     """Calculate number of leading zeros on the mantissa of a float_s32."""
+    assert isinstance(x.mant, int)
     return 31 - x.mant.bit_length()
 
 
