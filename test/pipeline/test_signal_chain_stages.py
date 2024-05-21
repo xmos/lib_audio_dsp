@@ -33,8 +33,9 @@ def do_test(p):
     # use the python dsp_block as a reference implementation
     ref_module = p.stages[2].dsp_block
 
-    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
-    target = "pipeline_test"
+    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+    target = "default"
+
     # Build pipeline test executable. This will download xscope_fileio if not present
     build_utils.build(APP_DIR, BUILD_DIR, target)
 
@@ -49,7 +50,7 @@ def do_test(p):
     sig = np.stack((sig0, sig1), axis=1)
     audio_helpers.write_wav(infile, rate, sig)
 
-    xe = APP_DIR / f"bin/{target}.xe"
+    xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile, 1, 1)
 
     _, out_data = audio_helpers.read_wav(outfile)
@@ -59,7 +60,7 @@ def do_test(p):
     sig_flt = np.float64(sig.T) * 2**-31
     signal_frames = utils.frame_signal(sig_flt, frame_size, frame_size)
     out_py = np.zeros((1, sig.shape[0]))
-    
+
     # run through python bit exact implementation
     for n in range(len(signal_frames)):
         out_py[:, n:n+frame_size] = ref_module.process_frame_xcore(signal_frames[n])

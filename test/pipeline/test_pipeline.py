@@ -59,8 +59,8 @@ def test_pipeline():
     p, n_stages = create_pipeline()
 
     # Autogenerate C code
-    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
-    target = "pipeline_test"
+    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+    target = "default"
 
     # Build pipeline test executable. This will download xscope_fileio if not present
     build_utils.build(APP_DIR, BUILD_DIR, target)
@@ -94,7 +94,7 @@ def test_pipeline():
     audio_helpers.write_wav(outfile_py, Fs, sim_sig)
 
     # Run C
-    xe = APP_DIR / f"bin/{target}.xe"
+    xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile_c, num_out_channels, n_stages)
 
     # since gen.sin already generates a quantised input, no need to truncate
@@ -138,15 +138,16 @@ def test_pipeline_q27(input, add):
         addn = t.stage(AddN, p.i, n=add)
     p.set_outputs(addn.o)
 
-    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
-    target = "pipeline_test"
+    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+    target = "default"
+
     # Build pipeline test executable. This will download xscope_fileio if not present
     build_utils.build(APP_DIR, BUILD_DIR, target)
 
     sig = np.multiply(np.ones((n_samps, channels), dtype=np.int32), input, dtype=np.int32)
     audio_helpers.write_wav(infile, rate, sig)
 
-    xe = APP_DIR / f"bin/{target}.xe"
+    xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels, pipeline_stages=1)
 
     expected = np.multiply(np.ones((n_samps, channels), dtype=np.int32), output, dtype=np.int32)
@@ -182,8 +183,9 @@ def test_complex_pipeline():
     p.set_outputs(a.o)
     n_stages = 3  # 2 of the 4 threads are parallel
 
-    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
-    target = "pipeline_test"
+    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+    target = "default"
+
     # Build pipeline test executable. This will download xscope_fileio if not present
     build_utils.build(APP_DIR, BUILD_DIR, target)
 
@@ -193,7 +195,7 @@ def test_complex_pipeline():
     sig = np.multiply(np.ones((n_samps, channels), dtype=np.int32), in_val, dtype=np.int32)
     audio_helpers.write_wav(infile, rate, sig)
 
-    xe = APP_DIR / f"bin/{target}.xe"
+    xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels, n_stages)
     _, out_data = audio_helpers.read_wav(outfile)
     np.testing.assert_equal(expected, out_data)
@@ -209,7 +211,8 @@ def test_stage_labels():
     p, n_stages = create_pipeline()
 
     # Autogenerate C code
-    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
+    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+    target = "default"
 
     # Check if the adsp_instance_id.h file exists and the labels are present in it
     label_defines_file = BUILD_DIR / "dsp_pipeline" / "adsp_instance_id_auto.h"
