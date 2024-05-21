@@ -34,10 +34,7 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 
         // Write control command to the stage
         memcpy(cmd.payload, control_config[cmd_idx].payload, cmd.payload_len);
-        printintln(cmd.payload[0]);
-        printintln(cmd.payload[1]);
-        printintln(cmd.payload[2]);
-        printintln(cmd.payload[3]);
+
         // Save the payload values for the final check
         memcpy(values_write, cmd.payload, cmd.payload_len);
 
@@ -56,9 +53,9 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 
         memset(cmd.payload, 0, cmd.payload_len);
 
-        // Add a delay of 5 ms to address the bug described in https://xmosjira.atlassian.net/browse/LCD-257
+        // Add a delay of 10 ms to address the bug described in https://xmosjira.atlassian.net/browse/LCD-257
         hwtimer_t t_delay = hwtimer_alloc();
-        hwtimer_delay(t_delay, 500);
+        hwtimer_delay(t_delay, 1000);
         hwtimer_free(t_delay);
 
         // Read back the written data
