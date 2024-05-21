@@ -26,11 +26,11 @@ set(APP_COMPILER_FLAGS_control_commands
 
 set(APP_DEPENDENT_MODULES lib_audio_dsp "xscope_fileio(develop)")
 
-set(APP_INCLUDES src src/file_utils build/dsp_pipeline_initialized/ build/src.autogen/host/ .)
+set(APP_INCLUDES src src/file_utils ${CMAKE_CURRENT_LIST_DIR}/../../lib_audio_dsp/api/stages/ build/dsp_pipeline_initialized/ build/ build/src.autogen/host/ .)
 
 file(GLOB C_SRC CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_LIST_DIR} src/*.c src/*.xc src/file_utils/*.c stages/*.c)
 
-#set(APP_C_SRCS ${C_SRC})
+set(APP_C_SRCS ${C_SRC}; build/dsp_pipeline_initialized/adsp_generated_auto.c; build/dsp_pipeline_uninitialized/adsp_generated_auto.c)
 set(SOURCE_FILES_initialized build/dsp_pipeline_initialized/adsp_generated_auto.c)
 set(SOURCE_FILES_control_commands build/dsp_pipeline_uninitialized/adsp_generated_auto.c)
 

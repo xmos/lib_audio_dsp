@@ -111,7 +111,7 @@ def do_test(make_p, tune_p, dut_frame_size):
         # Build pipeline test executable. This will download xscope_fileio if not present
         build_utils.build(APP_DIR, BUILD_DIR, target)
 
-        xe = APP_DIR / f"bin/pipeline_test_{target}.xe"
+        xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
         run_pipeline_xcoreai.run(xe, infile, outfile, pipeline_channels, 1)
 
         _, out_data = audio_helpers.read_wav(outfile)
