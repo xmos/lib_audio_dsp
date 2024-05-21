@@ -25,7 +25,8 @@ dependencies = [
     "pyyaml",
     "mako",
     "tabulate",
-    "docstring-inheritance"
+    "docstring-inheritance",
+    "filelock"
 ]
 
 [tool.ruff]

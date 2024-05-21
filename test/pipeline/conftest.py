@@ -2,7 +2,9 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 from python import run_pipeline_xcoreai
-
+import numpy as np
+import scipy.signal as spsig
+from pathlib import Path
 
 def pytest_configure(config):
     run_pipeline_xcoreai.FORCE_ADAPTER_ID = config.getoption("--adapter-id")

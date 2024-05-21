@@ -191,7 +191,8 @@ pipeline {
                         script {
                           [
                           "test/reverb",
-                          "test/signal_chain"
+                          "test/signal_chain",
+                          "test/fir"
                           ].each {
                             sh "cmake -S ${it} -B ${it}/build"
                             sh "xmake -C ${it}/build -j"
@@ -203,6 +204,22 @@ pipeline {
                 }
               }
             } // Build
+            stage('Test FIR') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/fir") {
+                          runPytest("test_fir_python.py --dist worksteal")
+                          runPytest("test_fir_c.py --dist worksteal")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test SC
             stage('Test SC') {
               steps {
                 dir("lib_audio_dsp") {
