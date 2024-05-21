@@ -77,22 +77,32 @@ def do_test(make_p, tune_p, dut_frame_size):
         The frame size to use for the pipeline that will run on the device.
     """
 
-    for func_p in [make_p, tune_p]:
+    for func_p in [ make_p, tune_p ]:
+
+        # Exit if tune_p is not defined
+        if not func_p:
+            continue
+
         dut_p, _ = func_p(dut_frame_size)
         pipeline_channels = len(dut_p.i)
 
-        n_samps, rate = 1024, 48000
-
         out_dir = None
-        if func_p == make_p:
+
+        # Generate uninitialized stages for make_p, only if tune_p is defined
+        if func_p == make_p and tune_p:
             out_dir = "dsp_pipeline_uninitialized"
         else:
             out_dir = "dsp_pipeline_initialized"
         generate_dsp_main(dut_p, out_dir = BUILD_DIR / out_dir)
 
+    n_samps, rate = 1024, 48000
     infile = "instage.wav"
     outfile = "outstage.wav"
-    ref_p = [ tune_p(s)[0] for s in TEST_FRAME_SIZES ]
+
+    # The reference function should be always tune_p, it is make_p if tune_p is not defined
+    ref_func_p = tune_p if tune_p else make_p
+
+    ref_p = [ ref_func_p(s)[0] for s in TEST_FRAME_SIZES ]
     sig0 = np.linspace(-2**26, 2**26, n_samps, dtype=np.int32)  << 4 # numbers which should be unmodified through pipeline
                                                                  # data formats
     sig1 = np.linspace(-2**23, 2**23, n_samps, dtype=np.int32)  << 4
@@ -110,6 +120,11 @@ def do_test(make_p, tune_p, dut_frame_size):
     out_py_int_all = [generate_ref(sig, p.stages[2].dsp_block, pipeline_channels, fr) for p, fr in zip(ref_p, TEST_FRAME_SIZES)]
 
     for target in [ "default", "control_commands"]:
+
+        # Do not run the control test if tune_p is not defined
+        if not tune_p and target == "control_commands":
+            continue
+
         # Build pipeline test executable. This will download xscope_fileio if not present
         build_utils.build(APP_DIR, BUILD_DIR, target)
 
@@ -517,15 +532,24 @@ def test_delay(frame_size):
     """
     Test Delay stage
     """
-    #TODO: Why is this test not included in the regression?
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            delay = t.stage(Delay, p.i, max_delay=15, starting_delay=10)
+            delay = t.stage(Delay, p.i, max_delay=15, starting_delay=10, label="control")
         p.set_outputs(delay.o)
-        return p
+        return p, delay
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p, delay = make_p(fr)
+
+        # Set initialization parameters of the stage
+        delay.set_delay(5)
+
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("DELAY", stage_config)
+        return p, delay
+
+    do_test(make_p, tune_p, frame_size)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -558,10 +582,9 @@ def test_fir(frame_size, filter_name):
         with p.add_thread() as t:
             fir = t.stage(FirDirect, p.i, coeffs_path=filter_path)
         p.set_outputs(fir.o)
-        return p
+        return p, fir
 
-
-    do_test(make_p, frame_size)
+    do_test(make_p, None, frame_size)
 
 
 if __name__ == "__main__":
