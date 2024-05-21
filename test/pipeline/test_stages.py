@@ -107,11 +107,11 @@ def do_test(make_p, tune_p, dut_frame_size):
 
     out_py_int_all = [generate_ref(sig, p.stages[2].dsp_block, pipeline_channels, fr) for p, fr in zip(ref_p, TEST_FRAME_SIZES)]
 
-    for target in [ "pipeline_test",  "pipeline_test_config_control"]:
+    for target in [ "initialized", "control_commands"]:
         # Build pipeline test executable. This will download xscope_fileio if not present
         build_utils.build(APP_DIR, BUILD_DIR, target)
 
-        xe = APP_DIR / f"bin/{target}.xe"
+        xe = APP_DIR / f"bin/pipeline_test_{target}.xe"
         run_pipeline_xcoreai.run(xe, infile, outfile, pipeline_channels, 1)
 
         _, out_data = audio_helpers.read_wav(outfile)
