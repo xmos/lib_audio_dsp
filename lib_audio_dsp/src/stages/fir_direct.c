@@ -81,7 +81,7 @@ void fir_direct_control(void *state, module_control_t *control)
             fir_direct_state->fir_direct[i].filter.num_taps = fir_direct_config->n_taps;
             fir_direct_state->fir_direct[i].filter.shift = fir_direct_config->shift;
             // keep the buffer values the same, but make sure the head is within range
-            if(fir_direct_state->fir_direct[i].filter.head > fir_direct_config->n_taps){
+            if(fir_direct_state->fir_direct[i].filter.head >= fir_direct_config->n_taps){
                 fir_direct_state->fir_direct[i].filter.head = fir_direct_config->n_taps - 1;
             }
 
