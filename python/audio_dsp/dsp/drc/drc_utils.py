@@ -16,7 +16,7 @@ FLT_MIN = np.finfo(float).tiny
 Q_alpha = 31
 
 
-def calculate_threshold(threshold_db, Q_sig, power=False):
+def calculate_threshold(threshold_db, Q_sig, power=False) -> tuple[float, int]:
     """
     Calculate the linear threshold in floating and fixed point from a
     target threshold in decibels.
@@ -85,7 +85,7 @@ def calc_ema_xcore(x, y, alpha):
     return x
 
 
-def apply_gain_xcore(sample, gain):
+def apply_gain_xcore(sample: int, gain: int) -> int:
     """Apply the gain to a sample using fixed-point math. Assumes that gain is in Q_alpha format."""
     acc = 1 << (Q_alpha - 1)
     acc += sample * gain

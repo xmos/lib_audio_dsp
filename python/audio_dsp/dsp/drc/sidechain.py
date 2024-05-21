@@ -139,6 +139,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         envelope_int = self.env_detector.process_xcore(detect_sample_int)
         # avoid /0
         envelope_int = max(envelope_int, 1)
+        assert isinstance(envelope_int, int)
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
@@ -344,7 +345,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         # do exponential moving average
         self.gain_int = drcu.calc_ema_xcore(self.gain_int, new_gain_int, alpha)
 
-        y = [0] * self.n_chans
+        y = [0.0] * self.n_chans
         # apply gain in int32
         for i in range(len(input_samples)):
             y_uq = drcu.apply_gain_xcore(samples_int[i], self.gain_int)

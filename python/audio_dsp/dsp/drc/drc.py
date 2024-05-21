@@ -362,7 +362,7 @@ class compressor_limiter_base(dspg.dsp_block):
         out_gains = np.zeros_like(gains_lin)
 
         for n in range(len(out_gains)):
-            out_gains[n] = self.gain_calc(gains_lin[n], self.threshold, self.slope)
+            out_gains[n] = self.gain_calc(gains_lin[n], self.threshold, self.slope)  # pyright: ignore
 
         out_gains_db = utils.db(out_gains) + in_gains_db
 
@@ -388,7 +388,7 @@ class compressor_limiter_base(dspg.dsp_block):
                 utils.int32(round(gains_lin[n] * 2**self.Q_sig)),
                 self.threshold_int,
                 self.slope_f32,
-            )
+            )  # pyright: ignore
             out_gains[n] = float(out_gains[n]) * 2**-31
 
         out_gains_db = utils.db(out_gains) + in_gains_db
@@ -427,7 +427,7 @@ class compressor_limiter_base(dspg.dsp_block):
         y = self.gain[channel] * sample
         return y, new_gain, envelope
 
-    def process_xcore(self, sample, channel=0, return_int=False):
+    def process_xcore(self, sample: float, channel=0, return_int=False):  # pyright: ignore
         """
         Update the envelope for a signal, then calculate and apply the
         required gain for compression/limiting, using int32 fixed point
@@ -439,13 +439,13 @@ class compressor_limiter_base(dspg.dsp_block):
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
         # get envelope from envelope detector
-        envelope_int = self.env_detector.process_xcore(sample_int, channel)
+        envelope_int = self.env_detector.process_xcore(sample_int, channel)  # pyright: ignore
         # avoid /0
         envelope_int = max(envelope_int, 1)
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)
+        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)  # pyright: ignore
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int[channel]:
@@ -636,6 +636,10 @@ class hard_limiter_peak(limiter_peak):
 
         """
         y, new_gain_int, envelope_int = super().process_xcore(sample, channel, return_int=True)
+
+        assert isinstance(y, int)
+        assert isinstance(new_gain_int, int)
+        assert isinstance(envelope_int, int)
 
         # hard clip if above threshold
         if y > self.threshold_int:

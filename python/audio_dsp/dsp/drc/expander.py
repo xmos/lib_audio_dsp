@@ -124,13 +124,13 @@ class expander_base(compressor_limiter_base):
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
         # get envelope from envelope detector
-        envelope_int = self.env_detector.process_xcore(sample_int, channel)
+        envelope_int = self.env_detector.process_xcore(sample_int, channel)  # pyright: ignore
         # avoid /0
         envelope_int = max(envelope_int, 1)
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)
+        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)  # pyright: ignore
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int[channel]:

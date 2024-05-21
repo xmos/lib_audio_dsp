@@ -72,7 +72,7 @@ def leq_smooth(x, fs, T):
 def envelope(x, N=None):
     """Calculate the envelope of a signal using the Hilbert transform."""
     y = spsig.hilbert(x, N)
-    return np.abs(y)
+    return np.abs(y)  # pyright: ignore
 
 
 def int32(val: float) -> int:
@@ -239,7 +239,7 @@ def vlmaccr(vect1, vect2, out=0):
     return int40(out)
 
 
-def float_to_int32(x, Q_sig=31):
+def float_to_int32(x, Q_sig=31) -> int:
     """Round and scale a floating point number to an int32 in a given
     Q format.
     """
