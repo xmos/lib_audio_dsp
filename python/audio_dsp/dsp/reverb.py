@@ -145,10 +145,17 @@ class comb_fv(dspg.dsp_block):
             Warning("Delay cannot be greater than max delay, setting to max delay")
 
     def set_feedback(self, feedback):
+        """Set the feedback of the comb filter, which controls the
+        reverberation time.
+        """
         self.feedback = feedback
         self.feedback_int = utils.int32(self.feedback * 2**Q_VERB)
 
     def set_damping(self, damping):
+        """Set the damping of the reverb, which controls how much high
+        frequency damping is in the room. Higher damping will give
+        shorter reverberation times at high frequencies.
+        """
         self.damp1 = damping
         self.damp2 = 1 - self.damp1
         # super critical these add up, but also don't overflow int32...
@@ -212,6 +219,65 @@ class comb_fv(dspg.dsp_block):
 
 
 class reverb_room(dspg.dsp_block):
+    """Generate a room reverb effect. This is based on Freeverb by
+    Jezar at Dreampoint.
+
+    Parameters
+    ----------
+    max_room_size : float, optional
+        sets the maximum size of the delay buffers, can only be set
+        at initialisation
+    room_size : float, optional
+        how big the room is as a proportion of max_room_size. This
+        sets delay line lengths and must be between 0 and 1.
+    decay : int, optional
+        how long the reverberation of the room is, between 0 and 1
+    damping : float, optional
+        how much high frequency attenuation in the room, between 0 and 1
+    wet_gain_db : int, optional
+        wet signal gain, less than 0 dB.
+    dry_gain_db : int, optional
+        dry signal gain, less than 0 dB.
+    pregain : float, optional
+        the amount of gain applied to the signal before being passed
+        into the reverb, less than 1.
+
+
+    Attributes
+    ----------
+    pregain : float
+        The pregain applied before the reverb as a floating point 
+        number.
+    pregain_int : int
+        The pregain applied before the reverb as a fixed point number.
+    wet : float
+        The linear gain applied to the wet signal as a floating point
+        number.
+    wet_int : int
+        The linear gain applied to the wet signal as a fixed point
+        number.
+    dry : float
+        The linear gain applied to the dry signal as a floating point
+        number.
+    dry_int : int
+        The linear gain applied to the dry signal as a fixed point
+        number.
+    comb_lengths : np.ndarray
+        An array of the comb filter delay line lengths, scaled by
+        max_room_size.
+    ap_length : np.ndarray
+        An array of the all pass filter delay line lengths, scaled by
+        max_room_size.
+    combs : list
+        A list of comb_fv objects containing the comb filters for the
+        reverb.
+    allpasses : list
+        A list of allpass_fv objects containing the all pass filters for
+        the reverb.
+    room_size : float
+        The room size as a proportion of the max_room_size.
+    """
+
     def __init__(
         self,
         fs,
@@ -225,29 +291,7 @@ class reverb_room(dspg.dsp_block):
         pregain=0.015,
         Q_sig=dspg.Q_SIG,
     ):
-        """A room reverb effect based on Freeverb by Jezar at
-        Dreampoint.
 
-        Parameters
-        ----------
-        max_room_size : float, optional
-            sets the maximum size of the delay buffers, can only be set
-            at initialisation
-        room_size : float, optional
-            how big the room is as a proportion of max_room_size. This
-            sets delay line lengths and must be between 0 and 1.
-        decay : int, optional
-            how long the reverberation of the room is, between 0 and 1
-        damping : float, optional
-            how much high frequency attenuation in the room, between 0 and 1
-        wet_gain_db : int, optional
-            wet signal gain, less than 0 dB.
-        dry_gain_db : int, optional
-            dry signal gain, less than 0 dB.
-        pregain : float, optional
-            the amount of gain applied to the signal before being passed
-            into the reverb, less than 1.
-        """
         assert n_chans == 1, f"Reverb only supports 1 channel. {n_chans} specified"
 
         super().__init__(fs, 1, Q_sig)

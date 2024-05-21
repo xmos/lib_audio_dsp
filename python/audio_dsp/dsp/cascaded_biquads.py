@@ -42,6 +42,9 @@ class cascaded_biquads_8(dspg.dsp_block):
                 self.biquads[n] = bq.biquad_bypass(fs, n_chans)
 
     def print_xcoremath_coeffs(self):
+        """Print the cascaded biquad coefficients in the format required
+        for lib_xcore_math's filter_biquad_s32_t structure.
+        """
         print("{", end="")
         for nn in range(5):
             print("{", end="")

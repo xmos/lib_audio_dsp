@@ -7,29 +7,41 @@ import audio_dsp.dsp.utils as utils
 
 
 class float32:
+    """This class utilises numpy.float32, but restricts numerical
+    operations to other float32 types to avoid promotion to other
+    floating point types.
+    """
+
     def __init__(self, value):
         self.value = np.float32(value)
         return
 
     def __call__(self):
+        """Return the float32 value."""
         return self.value
 
     def __str__(self):
+        """Return the float32 value as a string."""
         return str(self.value)
 
     def __repr__(self):
+        """Return the float32 value as a string."""
         return self.__str__()
 
     def __iter__(self):
+        """Return the float32 value during an interable call."""
         yield self.value
 
     def __abs__(self):
+        """Return the magnitude of the float32 value as a float32."""
         return float32(np.abs(self.value))
 
     def __neg__(self):
+        """Return the negative of the float32 value as a float32."""
         return float32(-self.value)
 
     def __gt__(self, other_f32):
+        """Calculate if the float32 is greater than the other float32."""
         if isinstance(other_f32, float32):
             return self.value > other_f32.value
         if isinstance(other_f32, float):
@@ -38,6 +50,7 @@ class float32:
             raise TypeError("float32 can only be compared against float32 or float")
 
     def __lt__(self, other_f32):
+        """Calculate if the float32 is less than the other float32."""
         if isinstance(other_f32, float32):
             return self.value < other_f32.value
         if isinstance(other_f32, float):
@@ -46,6 +59,9 @@ class float32:
             raise TypeError("float32 can only be compared against float32 or float")
 
     def __ge__(self, other_f32):
+        """Calculate if the float32 is greater than or equal to the
+        other float32 value.
+        """
         if isinstance(other_f32, float32):
             return self.value >= other_f32.value
         elif isinstance(other_f32, float):
@@ -54,39 +70,46 @@ class float32:
             raise TypeError("float32 can only be compared against float32 or float")
 
     def __sub__(self, other_f32):
+        """Subtract one float32 value from another."""
         if isinstance(other_f32, float32):
             return float32(self.value - other_f32.value)
         else:
             raise TypeError("float32 can only be subtracted from float32")
 
     def __add__(self, other_f32):
+        """Add one float32 value to another."""
         if isinstance(other_f32, float32):
             return float32(self.value + other_f32.value)
         else:
             raise TypeError("float32 can only be added to float32")
 
     def __mul__(self, other_f32):
+        """Multiply one float32 value by another."""
         if isinstance(other_f32, float32):
             return float32(self.value * other_f32.value)
         else:
             raise TypeError("float32 can only be multiplied with float32")
 
     def __truediv__(self, other_f32):
+        """Divide one float32 value by another."""
         if isinstance(other_f32, float32):
             return float32(self.value / other_f32.value)
         else:
             raise TypeError("float32 can only be multiplied with float32")
 
     def __float__(self):
+        """Return the float32 as a native Python float."""
         return float(self.value)
 
     def __pow__(self, other_f32):
+        """Calculate x^y for a float32."""
         if isinstance(other_f32, float32):
             return float32(self.value**other_f32.value)
         else:
             raise TypeError("float32 can only be raised to the power of float32")
 
     def as_int32(self):
+        """Convert the float32 value to int32 format."""
         return utils.int32(self.value)
 
 

@@ -293,7 +293,7 @@ def pink_noise(fs: int, length: float, amplitude: float, precision: int = 24) ->
 
 def mls(fs: int, length: float, amplitude: float, precision: int = 24) -> np.ndarray:
     """
-    Generates a quantized Maximum Length Sequence (MLS) signal.
+    Generate a quantized Maximum Length Sequence (MLS) signal.
 
     Parameters
     ----------
