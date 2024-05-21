@@ -23,28 +23,20 @@ def build(source_dir, build_dir, target):
         print("Configuring...\r")
         if cache.exists():
             # Generator is already known by cmake
-            print(f"cmake -S {source_dir} -B {build_dir}")
             ret = subprocess.run([*(f"cmake -S {source_dir} -B {build_dir}".split())])
         else:
             # need to configure, default to Ninja because its better
             generator = "Ninja" if shutil.which("ninja") else "Unix Makefiles"
-            print(f"cmake -S {source_dir} -B {build_dir} -G {generator}")
             ret = subprocess.run([*(f"cmake -S {source_dir} -B {build_dir} -G".split()), generator])
         if ret.returncode:
             print("Configuring failed, check log for details\r")
             assert(0)
 
     print("Compiling...\r")
-<<<<<<< HEAD
-    print(f"cmake --build {build_dir} --target {target} -j")
-
-    ret = subprocess.run(f"cmake --build {build_dir} --target {target} -j".split())
-=======
     if os.name == "nt":
         ret = subprocess.run(f"cmake --build {build_dir} --target {target}".split())
     else:
         ret = subprocess.run(f"cmake --build {build_dir} --target {target} -j".split())
->>>>>>> 8080a9317ba865df8c2412d96cf0121828e8e081
     if ret.returncode:
         print("ERROR: Building failed, check log for details\r")
         assert(0)
