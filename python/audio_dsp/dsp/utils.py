@@ -5,7 +5,7 @@ import scipy.signal as spsig
 import math
 import warnings
 
-from audio_dsp.dsp.types import float32
+from audio_dsp.dsp.types import float32, float_s32
 
 FLT_MIN = np.finfo(float).tiny
 
@@ -23,13 +23,13 @@ class SaturationWarning(Warning):
 
 
 def db(input):
-    """Convert an amplitude to decibels (20*log10(|x|))."""
+    """Convert an amplitude to decibels (20*log10(abs(x)))."""
     out = 20 * np.log10(np.abs(input) + FLT_MIN)
     return out
 
 
 def db_pow(input):
-    """Convert a power to decibels (10*log10(|x|))."""
+    """Convert a power to decibels (10*log10(abs(x)))."""
     out = 10 * np.log10(np.abs(input) + FLT_MIN)
     return out
 
@@ -248,153 +248,6 @@ def int32_to_float(x: int, Q_sig=31):
     """Convert an int32 number to floating point, given it's Q format."""
     # Note this means the max value is 0.99999999953
     return float(x) / (2**Q_sig)
-
-
-class float_s32:
-    """A floating point number type, where the maintissa is a 32 bit
-    number and the exponent is an integer.
-    """
-
-    def __init__(self, value, Q_sig=None):
-        self.Q_sig = Q_sig
-        if Q_sig and isinstance(value, float):
-            self.mant = int32(round(value * 2**Q_sig))
-            self.exp = -Q_sig
-        elif isinstance(value, float) or isinstance(value, np.float32):
-            self.mant, self.exp = math.frexp(value)
-            self.mant = float_to_int32(self.mant)
-            self.exp -= 31
-        elif isinstance(value, int):
-            self.mant, self.exp = math.frexp(float(value))
-            self.mant = float_to_int32(self.mant)
-            self.exp -= 31
-        elif isinstance(value, list):
-            self.mant = int32(value[0])
-            self.exp = int32(value[1])
-        else:
-            TypeError("s32 can only be initialised by float or list of ints [mant, exp]")
-
-        # overflow checks
-        self.mant = int32(self.mant)
-        self.exp = int32(self.exp)
-
-    def __mul__(self, other_s32):
-        """Multiply one float_s32 by one another."""
-        if isinstance(other_s32, float_s32):
-            # vect_s32_mul_prepare
-            b_hr = hr_s32(self)
-            c_hr = hr_s32(other_s32)
-            total_hr = b_hr + c_hr
-
-            if total_hr == 0:
-                b_shr = 1
-                c_shr = 1
-            elif total_hr == 1:
-                b_shr = 1 if b_hr == 0 else 0
-                c_shr = 1 if c_hr == 0 else 0
-            elif b_hr == 0:
-                b_shr = 0
-                c_shr = 2 - total_hr
-            elif c_hr == 0:
-                b_shr = 2 - total_hr
-                c_shr = 0
-            else:
-                b_shr = 1 - b_hr
-                c_shr = 1 - c_hr
-
-            res_exp = self.exp + other_s32.exp + b_shr + c_shr + 30
-
-            # vect_s32_mul
-            B = ashr32(self.mant, b_shr)
-            C = ashr32(other_s32.mant, c_shr)
-
-            A = vpu_mult(B, C)
-
-            return float_s32([A, res_exp])
-        else:
-            raise TypeError("s32 can only be multiplied by s32")
-
-    def __truediv__(self, other_s32):
-        """Divide one float_s32 by one another."""
-        if isinstance(other_s32, float_s32):
-            # float_s32_div and s32_inverse
-            b_hr = hr_s32(other_s32)
-            scale = 2 * 30 - b_hr
-            dividend = 1 << scale
-            t = float_s32([dividend / other_s32.mant, -scale - other_s32.exp])
-
-            return self.__mul__(t)
-
-        else:
-            raise TypeError("s32 can only be divided by s32")
-
-    def __add__(self, other_s32):
-        """Add float_s32s to one another."""
-        if isinstance(other_s32, float_s32):
-            # from float_s32_add in lib_xcore_math
-            x_hr = hr_s32(self)
-            y_hr = hr_s32(other_s32)
-            x_min_exp = self.exp - x_hr
-            y_min_exp = other_s32.exp - y_hr
-
-            res_exp = max(x_min_exp, y_min_exp) + 1
-
-            x_shr = res_exp - self.exp
-            y_shr = res_exp - other_s32.exp
-
-            mant = ashr32(self.mant, x_shr) + ashr32(other_s32.mant, y_shr)
-
-            return float_s32([mant, res_exp])
-        else:
-            raise TypeError("s32 can only be added to s32")
-
-    def __sub__(self, other_s32):
-        """Subtract float_s32s from one another."""
-        if isinstance(other_s32, float_s32):
-            # from float_s32_sub in lib_xcore_math
-            x_hr = hr_s32(self)
-            y_hr = hr_s32(other_s32)
-            x_min_exp = self.exp - x_hr
-            y_min_exp = other_s32.exp - y_hr
-
-            res_exp = max(x_min_exp, y_min_exp) + 1
-
-            x_shr = res_exp - self.exp
-            y_shr = res_exp - other_s32.exp
-
-            mant = ashr32(self.mant, x_shr) - ashr32(other_s32.mant, y_shr)
-
-            return float_s32([mant, res_exp])
-        else:
-            raise TypeError("s32 can only be subtracted from s32")
-
-    def __gt__(self, other_s32):
-        """Calculate greater than between 2 float_s32s."""
-        if isinstance(other_s32, float_s32):
-            delta = self.__sub__(other_s32)
-            return delta.mant > 0
-        else:
-            raise TypeError("s32 can only be compared against s32")
-
-    def __lt__(self, other_s32):
-        """Calculate less than between 2 float_32s."""
-        if isinstance(other_s32, float_s32):
-            delta = self.__sub__(other_s32)
-            return delta.mant < 0
-        else:
-            raise TypeError("s32 can only be compared against s32")
-
-    def __abs__(self):
-        """Calculate absolute value of a float_s32."""
-        return float_s32([abs(self.mant), self.exp])
-
-    def __float__(self):
-        """Cast a float_s32 to native Python float64.
-        Add 31 here python expects a float mantissa < 1, but we use int32.
-        """
-        return math.ldexp(int32_to_float(self.mant), self.exp + 31)
-
-    __rmul__ = __mul__
 
 
 def hr_s32(x: float_s32):
