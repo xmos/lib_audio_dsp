@@ -73,20 +73,7 @@ void fir_direct_control(void *state, module_control_t *control)
 
     if(control->config_rw_state == config_write_pending) {
 
-        // coeffs and buffer are already allocated, so just copy data and reinit fir_s32 struct
-        memcpy(fir_direct_state->coeffs, fir_direct_config->coeffs, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(fir_direct_config->n_taps));
-
-        for(int i = 0; i < fir_direct_state->n_inputs; i++)
-        {
-            fir_direct_state->fir_direct[i].filter.num_taps = fir_direct_config->n_taps;
-            fir_direct_state->fir_direct[i].filter.shift = fir_direct_config->shift;
-            // keep the buffer values the same, but make sure the head is within range
-            if(fir_direct_state->fir_direct[i].filter.head >= fir_direct_config->n_taps){
-                fir_direct_state->fir_direct[i].filter.head = fir_direct_config->n_taps - 1;
-            }
-
-        }
-        control->config_rw_state = config_none_pending;
+        // FIR cannot currently be updated, it must be set at init
     }
     else if(control->config_rw_state == config_read_pending) {
         fir_direct_config->n_taps =  fir_direct_state->fir_direct[0].filter.num_taps;
