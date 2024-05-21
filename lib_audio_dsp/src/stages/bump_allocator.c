@@ -6,7 +6,13 @@
 
 void* adsp_bump_allocator_malloc(adsp_bump_allocator_t* allocator, size_t n_bytes) {
     xassert(NULL != allocator);
+    if(n_bytes & 0x03) {
+        // A not word alligned size requested, this will break future
+        // allocations so ban it.
+        __builtin_trap();
+    }
     if(n_bytes > allocator->n_bytes_left || NULL == allocator->buf) {
+        // There is not enough space left in the allocator
         __builtin_trap();
     }
     if(0 == n_bytes) {

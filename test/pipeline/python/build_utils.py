@@ -35,9 +35,16 @@ def build(source_dir, build_dir, target):
             assert(0)
 
     print("Compiling...\r")
+<<<<<<< HEAD
     print(f"cmake --build {build_dir} --target {target} -j")
 
     ret = subprocess.run(f"cmake --build {build_dir} --target {target} -j".split())
+=======
+    if os.name == "nt":
+        ret = subprocess.run(f"cmake --build {build_dir} --target {target}".split())
+    else:
+        ret = subprocess.run(f"cmake --build {build_dir} --target {target} -j".split())
+>>>>>>> 8080a9317ba865df8c2412d96cf0121828e8e081
     if ret.returncode:
         print("ERROR: Building failed, check log for details\r")
         assert(0)

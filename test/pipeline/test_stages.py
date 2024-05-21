@@ -4,6 +4,7 @@
 Tests for audio_dsp.stages with 2 inputs and 2 ouputs
 """
 import pytest
+import scipy.signal as spsig
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 from audio_dsp.stages.biquad import Biquad
 from audio_dsp.stages.cascaded_biquads import CascadedBiquads
@@ -13,6 +14,7 @@ from audio_dsp.stages.noise_suppressor_expander import NoiseSuppressorExpander
 from audio_dsp.stages.signal_chain import VolumeControl, FixedGain, Delay
 from audio_dsp.stages.compressor import CompressorRMS
 from audio_dsp.stages.reverb import ReverbRoom
+from audio_dsp.stages.fir import FirDirect
 
 import audio_dsp.dsp.utils as utils
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
@@ -485,6 +487,7 @@ def test_fixed_gain(frame_size):
 
     do_test(make_p, tune_p, frame_size)
 
+
 def test_reverb(frame_size):
     """
     Test Reverb stage
@@ -509,12 +512,12 @@ def test_reverb(frame_size):
 
     do_test(make_p, tune_p, frame_size)
 
+
 def test_delay(frame_size):
     """
     Test Delay stage
     """
     #TODO: Why is this test not included in the regression?
-    pass
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
@@ -523,3 +526,43 @@ def test_delay(frame_size):
         return p
 
     do_test(make_p, frame_size)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def make_coeffs():
+    # make sets of coefficients used in the FIR tests
+    gen_dir = Path(__file__).parent / "autogen"
+    gen_dir.mkdir(exist_ok=True, parents=True)
+
+    # descending coefficients
+    coeffs = np.arange(10, 0, -1)
+    coeffs = coeffs/np.sum(coeffs)
+    np.savetxt(Path(gen_dir, "descending_coeffs.txt"), coeffs)
+
+    # simple windowed FIR design
+    coeffs = spsig.firwin2(512, [0.0, 0.5, 1.0], [1.0, 1.0, 0.0])
+    np.savetxt(Path(gen_dir, "simple_low_pass.txt"), coeffs)
+
+
+@pytest.mark.parametrize(
+    "filter_name", ["descending_coeffs.txt", "simple_low_pass.txt"]
+)
+def test_fir(frame_size, filter_name):
+    """ "
+    Test FIR Stage
+    """
+    filter_path = Path(Path(__file__).parent / "autogen", filter_name)
+
+    def make_p(fr):
+        p = Pipeline(channels, frame_size=fr)
+        with p.add_thread() as t:
+            fir = t.stage(FirDirect, p.i, coeffs_path=filter_path)
+        p.set_outputs(fir.o)
+        return p
+
+
+    do_test(make_p, frame_size)
+
+
+if __name__ == "__main__":
+    test_fir(1)
