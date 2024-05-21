@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""DSP blocks for signal chain components and basic maths."""
+
 import numpy as np
 import warnings
 

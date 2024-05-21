@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The dynamic range control (DRC) DSP blocks."""
+
 from copy import deepcopy
 
 import numpy as np
@@ -232,6 +234,11 @@ class clipper(dspg.dsp_block):
         self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
 
     def process(self, sample, channel=0):
+        """
+        Take one new sample and return the clipped sample, using
+        floating point maths.
+        Input should be scaled with 0dB = 1.0.
+        """
         if sample > self.threshold:
             return self.threshold
         elif sample < -self.threshold:
@@ -240,6 +247,11 @@ class clipper(dspg.dsp_block):
             return sample
 
     def process_xcore(self, sample, channel=0):
+        """
+        Take one new sample and return the clipped sample, using int32
+        fixed point maths.
+        Input should be scaled with 0dB = 1.0.
+        """
         # convert to int
         sample_int = utils.float_to_int32(sample, self.Q_sig)
 
@@ -336,6 +348,9 @@ class compressor_limiter_base(dspg.dsp_block):
         self.gain_int = [2**31 - 1] * self.n_chans
 
     def get_gain_curve(self, max_gain=dspg.HEADROOM_DB, min_gain=-96):
+        """Get the compression gain curve for the float implementation,
+        showing the relationship between the input and output gain.
+        """
         in_gains_db = np.linspace(min_gain, max_gain, 1000)
         gains_lin = utils.db2gain(in_gains_db)
 
@@ -354,6 +369,9 @@ class compressor_limiter_base(dspg.dsp_block):
         return in_gains_db, out_gains_db
 
     def get_gain_curve_int(self, max_gain=dspg.HEADROOM_DB, min_gain=-96):
+        """Get the compression gain curve for the int32 implementation,
+        showing the relationship between the input and output gain.
+        """
         in_gains_db = np.linspace(min_gain, max_gain, 1000)
         gains_lin = utils.db2gain(in_gains_db)
 
@@ -588,7 +606,15 @@ class hard_limiter_peak(limiter_peak):
     """
 
     def process(self, sample, channel=0):
-        # do peak limiting
+        """
+        Update the envelope for a signal, then calculate and apply the
+        required gain for limiting, using floating point maths. If the
+        output signal exceeds the threshold, clip it to the threshold.
+
+        Take one new sample and return the limited sample.
+        Input should be scaled with 0dB = 1.0.
+
+        """
         y, new_gain, envelope = super().process(sample, channel)
 
         # hard clip if above threshold
@@ -599,7 +625,16 @@ class hard_limiter_peak(limiter_peak):
         return y, new_gain, envelope
 
     def process_xcore(self, sample, channel=0, return_int=False):
-        # do peak limiting
+        """
+        Update the envelope for a signal, then calculate and apply the
+        required gain for limiting, using int32 fixed point maths. If
+        the output signal exceeds the threshold, clip it to the
+        threshold.
+
+        Take one new sample and return the limited sample.
+        Input should be scaled with 0dB = 1.0.
+
+        """
         y, new_gain_int, envelope_int = super().process_xcore(sample, channel, return_int=True)
 
         # hard clip if above threshold
@@ -619,7 +654,10 @@ class hard_limiter_peak(limiter_peak):
 
 
 class lookahead_limiter_peak(compressor_limiter_base):
-    # peak limiter with built in delay for avoiding clipping
+    """Not implemented. Peak limiter with built in delay for avoiding
+    clipping.
+    """
+
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
@@ -637,14 +675,19 @@ class lookahead_limiter_peak(compressor_limiter_base):
         raise NotImplementedError
 
     def process(self, sample, channel=0):
+        """Not implemented."""
         raise NotImplementedError
 
     def process_xcore(self, sample, channel=0, return_int=False):
+        """Not implemented."""
         raise NotImplementedError
 
 
 class lookahead_limiter_rms(compressor_limiter_base):
-    # rms limiter with built in delay for avoiding clipping
+    """Not implemented. RMS limiter with built in delay for avoiding
+    clipping.
+    """
+
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
@@ -661,9 +704,11 @@ class lookahead_limiter_rms(compressor_limiter_base):
         raise NotImplementedError
 
     def process(self, sample, channel=0):
+        """Not implemented."""
         raise NotImplementedError
 
     def process_xcore(self, sample, channel=0, return_int=False):
+        """Not implemented."""
         raise NotImplementedError
 
 

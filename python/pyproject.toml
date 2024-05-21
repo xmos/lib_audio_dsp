@@ -42,6 +42,3 @@ fixable = ["ALL"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
-
-[tool.ruff.lint.per-file-ignores]
-"audio_dsp/dsp/*.py" = ["D"]  # Disable doc checks for dsp module as they are not done yet.

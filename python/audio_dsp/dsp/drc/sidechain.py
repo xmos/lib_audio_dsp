@@ -1,5 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The sidechain compressor DSP blocks."""
 
 from copy import deepcopy
 
@@ -17,9 +18,9 @@ from audio_dsp.dsp.drc.stereo_compressor_limiter import compressor_limiter_stere
 
 class compressor_rms_sidechain_mono(compressor_limiter_base):
     """
-    A sidechain compressor based on the RMS value of the signal. When the RMS
-    envelope of the signal exceeds the threshold, the signal amplitude
-    is reduced by the compression ratio.
+    A mono sidechain compressor based on the RMS value of the signal.
+    When the RMS envelope of the signal exceeds the threshold, the
+    signal amplitude is reduced by the compression ratio.
 
     The threshold sets the value above which compression occurs. The
     ratio sets how much the signal is compressed. A ratio of 1 results
@@ -201,6 +202,50 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
 
 class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
+    """
+    A stereo sidechain compressor based on the RMS value of the signal.
+    When the RMS envelope of the signal exceeds the threshold, the
+    signal amplitude is reduced by the compression ratio. The same
+    compression is applied to both channels, using the highest
+    individual channel envelope.
+
+    The threshold sets the value above which compression occurs. The
+    ratio sets how much the signal is compressed. A ratio of 1 results
+    in no compression, while a ratio of infinity results in the same
+    behaviour as a limiter. The attack time sets how fast the compressor
+    starts compressing. The release time sets how long the signal takes
+    to ramp up to it's original level after the envelope is below the
+    threshold.
+
+    Parameters
+    ----------
+    ratio : float
+        Compression gain ratio applied when the signal is above the
+        threshold
+
+    Attributes
+    ----------
+    env_detector : envelope_detector_rms
+        Nested RMS envelope detector used to calculate the envelope of
+        the signal.
+    ratio : float
+        Compression gain ratio applied when the signal is above the
+        threshold.
+    slope : float
+        The slope factor of the compressor, defined as
+        `slope = (1 - 1/ratio)`.
+    slope_f32 : float32
+        The slope factor of the compressor, used for int32 to float32
+        processing.
+    threshold : float
+        Value above which compression occurs for floating point
+        processing.
+    threshold_int : int
+        Value above which compression occurs for int32 fixed point
+        processing.
+
+    """
+
     def __init__(self, fs, ratio, threshold_dB, attack_t, release_t, Q_sig=dspg.Q_SIG):
         n_chans = 2
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)

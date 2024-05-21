@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""DSP blocks for stereo compressors and limiters."""
+
 from copy import deepcopy
 
 import numpy as np

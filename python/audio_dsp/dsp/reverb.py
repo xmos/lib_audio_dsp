@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""DSP blocks for reverb effects."""
+
 import audio_dsp.dsp.generic as dspg
 import numpy as np
 import warnings
@@ -246,7 +248,7 @@ class reverb_room(dspg.dsp_block):
     Attributes
     ----------
     pregain : float
-        The pregain applied before the reverb as a floating point 
+        The pregain applied before the reverb as a floating point
         number.
     pregain_int : int
         The pregain applied before the reverb as a fixed point number.
@@ -291,7 +293,6 @@ class reverb_room(dspg.dsp_block):
         pregain=0.015,
         Q_sig=dspg.Q_SIG,
     ):
-
         assert n_chans == 1, f"Reverb only supports 1 channel. {n_chans} specified"
 
         super().__init__(fs, 1, Q_sig)

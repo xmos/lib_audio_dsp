@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The cascaded biquad DSP block."""
+
 import numpy as np
 import matplotlib.pyplot as plt
 
