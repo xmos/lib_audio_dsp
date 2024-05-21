@@ -85,7 +85,7 @@ def do_test(make_p, tune_p, dut_frame_size):
         if func_p == make_p:
             out_dir = "dsp_pipeline_uninitialized"
         else:
-            out_dir = "dsp_pipeline_initialized"
+            out_dir = "dsp_pipeline"
         generate_dsp_main(dut_p, out_dir = BUILD_DIR / out_dir)
 
     infile = "instage.wav"
