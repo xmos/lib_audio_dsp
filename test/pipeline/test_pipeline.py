@@ -211,7 +211,7 @@ def test_stage_labels():
     p, n_stages = create_pipeline()
 
     # Autogenerate C code
-    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
     target = "default"
 
     # Check if the adsp_instance_id.h file exists and the labels are present in it
