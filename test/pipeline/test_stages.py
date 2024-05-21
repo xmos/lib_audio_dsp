@@ -135,8 +135,10 @@ def generate_test_param_file(stage_name, stage_config):
 
     Parameters
     ----------
-    stage_name: name of the stage to test
-    stage_config: dictionary containing the parameter name and its corresponding value
+    stage_name: string
+        name of the stage to test
+    stage_config: dict
+        dictionary containing the parameter names and their corresponding values
     """
     type_data = {}
     with open(Path(__file__).resolve().parents[2] / f"stage_config/{stage_name.lower()}.yaml", "r") as fd:
@@ -213,6 +215,8 @@ def test_biquad(method, args, frame_size):
         p, biquad = make_p(fr)
 
         bq_method = getattr(biquad, method)
+
+        # Set initialization parameters of the stage
         if args:
             bq_method(*args)
         else:
@@ -250,6 +254,7 @@ def test_cascaded_biquad(method, args, frame_size):
     def tune_p(fr):
         p, cbiquad = make_p(fr)
 
+        # Set initialization parameters of the stage
         bq_method = getattr(cbiquad, method)
         if args:
             bq_method(*args)
@@ -277,6 +282,7 @@ def test_limiter_rms(frame_size):
     def tune_p(fr):
         p, lim = make_p(fr)
 
+        # Set initialization parameters of the stage
         lim.make_limiter_rms(-6, 0.001, 0.1)
 
         stage_config = p.resolve_pipeline()['configs'][2]
@@ -301,6 +307,7 @@ def test_limiter_peak(frame_size):
     def tune_p(fr):
         p, lim = make_p(fr)
 
+        # Set initialization parameters of the stage
         lim.make_limiter_peak(-6, 0.001, 0.1)
 
         stage_config = p.resolve_pipeline()['configs'][2]
@@ -324,6 +331,7 @@ def test_hard_limiter_peak(frame_size):
     def tune_p(fr):
         p, lim = make_p(fr)
 
+        # Set initialization parameters of the stage
         lim.make_hard_limiter_peak(-6, 0.001, 0.1)
 
         stage_config = p.resolve_pipeline()['configs'][2]
@@ -347,6 +355,7 @@ def test_clipper(frame_size):
     def tune_p(fr):
         p, clip = make_p(fr)
 
+        # Set initialization parameters of the stage
         clip.make_clipper(-6)
 
         stage_config = p.resolve_pipeline()['configs'][2]
@@ -370,6 +379,7 @@ def test_compressor(frame_size):
     def tune_p(fr):
         p, comp = make_p(fr)
 
+        # Set initialization parameters of the stage
         comp.make_compressor_rms(2, -6, 0.001, 0.1)
 
         stage_config = p.resolve_pipeline()['configs'][2]
@@ -393,6 +403,7 @@ def test_noise_gate(frame_size):
     def tune_p(fr):
         p, ng = make_p(fr)
 
+        # Set initialization parameters of the stage
         ng.make_noise_gate(-6, 0.001, 0.1)
 
         stage_config = p.resolve_pipeline()['configs'][2]
@@ -416,6 +427,7 @@ def test_noise_suppressor_expander(frame_size):
     def tune_p(fr):
         p, nse = make_p(fr)
 
+        # Set initialization parameters of the stage
         nse.make_noise_suppressor_expander(2, -6, 0.001, 0.1)
 
         stage_config = p.resolve_pipeline()['configs'][2]
@@ -440,6 +452,7 @@ def test_volume(frame_size):
     def tune_p(fr):
         p, vol = make_p(fr)
 
+        # Set initialization parameters of the stage
         vol.make_volume_control(-6, 7)
 
         stage_config = p.resolve_pipeline()['configs'][2]
@@ -463,7 +476,7 @@ def test_fixed_gain(frame_size):
     def tune_p(fr):
         p, fg = make_p(fr)
 
-        #TODO: Is it ok that there is no make_ function for FixedGain class?
+        # Set initialization parameters of the stage
         fg.set_gain(-6)
 
         stage_config = p.resolve_pipeline()['configs'][2]
@@ -488,7 +501,7 @@ def test_reverb(frame_size):
     def tune_p(fr):
         p, rv = make_p(fr)
 
-        #TODO: Is it ok that there is no make_ function for ReverbRoom class?
+        #TODO: Is it ok that there is no make_ function for ReverbRoom class? See https://xmosjira.atlassian.net/browse/LCD-204
 
         stage_config = p.resolve_pipeline()['configs'][2]
         generate_test_param_file("REVERB_ROOM", stage_config)
