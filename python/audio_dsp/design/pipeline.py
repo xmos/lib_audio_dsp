@@ -746,7 +746,7 @@ def _generate_dsp_init(resolved_pipeline):
                 for key in this_dict:
                     this_array = this_dict[key]
                     ret += (
-                        f"\tstatic int32_t {key}{stage_index}[{len(this_array)}] = {{{', '.join(map(str, this_array))}}};\n"
+                        f"\tstatic int32_t {key}[{len(this_array)}] = {{{', '.join(map(str, this_array))}}};\n"
                             )
                     pass
 
