@@ -78,8 +78,8 @@ def do_test(make_p, tune_p, dut_frame_size):
     """
 
     # TODO: Check if this step can be removed
-    import shutil
-    shutil.rmtree('build', ignore_errors=True)
+    #import shutil
+    #shutil.rmtree('build', ignore_errors=True)
 
     for func_p in [ make_p, tune_p ]:
 
