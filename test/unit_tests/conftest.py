@@ -4,6 +4,7 @@ import pytest
 import subprocess
 from pathlib import Path
 import re
+import os
 
 from audio_dsp.design import pipeline
 from stages.dummy import Dummy
@@ -18,10 +19,13 @@ def gen_dummy_pipeline():
 
 
 def pytest_configure():
-    gen_dummy_pipeline()
-    if not Path("bin").exists():
-        subprocess.run(["cmake", "-B", "build"], check=True)
-    subprocess.run(["cmake", "--build", "build"], check=True)
+    worker_id = os.environ.get("PYTEST_XDIST_WORKER")
+    if worker_id is None:
+        # dont run on the worker threads
+        gen_dummy_pipeline()
+        if not Path("bin").exists():
+            subprocess.run(["cmake", "-B", "build"], check=True)
+        subprocess.run(["cmake", "--build", "build"], check=True)
 
 ## Begin pytest magic to convert xe files into tests
 
