@@ -281,10 +281,10 @@ class Stage(Node):
         self._control_fields[field] = PropertyControlField(getter, setter)
 
     def set_constant_array(self, field, array, type, setter=None):
-        #todo some array checks
+        # todo some array checks
 
         # add the end of the id to the field name to keep it unique
-        field_name = str(field) + '_' + self.id.hex[-8:]
+        field_name = str(field) + "_" + self.id.hex[-8:]
         self._constant_arrays[field_name] = array
 
         return field_name

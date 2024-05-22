@@ -295,7 +295,11 @@ class Pipeline:
         node_configs = {node.index: node.get_config() for node in self._graph.nodes}
 
         module_definitions = {
-            node.index: {"name": node.name, "yaml_dict": node.yaml_dict, "constants_array": node._constant_arrays}
+            node.index: {
+                "name": node.name,
+                "yaml_dict": node.yaml_dict,
+                "constants_array": node._constant_arrays,
+            }
             for node in self._graph.nodes
         }
 
@@ -745,11 +749,8 @@ def _generate_dsp_init(resolved_pipeline):
                 this_dict = resolved_pipeline["modules"][stage_index]["constants_array"]
                 for key in this_dict:
                     this_array = this_dict[key]
-                    ret += (
-                        f"\tstatic int32_t {key}[{len(this_array)}] = {{{', '.join(map(str, this_array))}}};\n"
-                            )
+                    ret += f"\tstatic int32_t {key}[{len(this_array)}] = {{{', '.join(map(str, this_array))}}};\n"
                     pass
-
 
             struct_val = ", ".join(f".{field} = {value}" for field, value in defaults.items())
             # default_str = f"&({stage_name}_config_t){{{struct_val}}}"
