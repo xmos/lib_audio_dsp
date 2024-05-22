@@ -33,9 +33,6 @@ list(APPEND APP_C_SRCS
     ${C_SRC}
 )
 
-# force reconfigure
-file(GLOB DSP_DIRS CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_LIST_DIR} build/dsp_pipeline*/*)
-message("${DSP_DIRS}")
 # Handle the files specific to each build config.
 if(EXISTS build/dsp_pipeline_initialized/adsp_generated_auto.c)
     set(SOURCE_FILES_default build/dsp_pipeline_initialized/adsp_generated_auto.c)

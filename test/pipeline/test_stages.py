@@ -77,17 +77,6 @@ def do_test(make_p, tune_p, dut_frame_size):
         The frame size to use for the pipeline that will run on the device.
     """
 
-    # TODO: Check if these steps can be removed
-    # These steps are needed because on Jenkins both adsp_generated_auto.c files are included in the builds.
-    # A proper solution in the CMakeLists.txt has not been found yet. The issue has been seen only on the Jenkins agent.
-    import shutil
-    shutil.rmtree(Path('build/dsp_pipeline_initiated'), ignore_errors=True)
-    shutil.rmtree(Path('build/dsp_pipeline_uninitiated'), ignore_errors=True)
-    shutil.rmtree(Path('build/CMakeFiles/pipeline_test_default.dir/dsp_pipeline_initialized'), ignore_errors=True)
-    shutil.rmtree(Path('build/CMakeFiles/pipeline_test_default.dir/dsp_pipeline_uninitialized'), ignore_errors=True)
-    shutil.rmtree(Path('build/CMakeFiles/pipeline_test_control_commands.dir/dsp_pipeline_initialized'), ignore_errors=True)
-    shutil.rmtree(Path('build/CMakeFiles/pipeline_test_control_commands.dir/dsp_pipeline_uninitialized'), ignore_errors=True)
-
     for func_p in [ make_p, tune_p ]:
 
         # Exit if tune_p is not defined
