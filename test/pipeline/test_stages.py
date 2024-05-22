@@ -83,6 +83,10 @@ def do_test(make_p, tune_p, dut_frame_size):
     import shutil
     shutil.rmtree(Path('build/dsp_pipeline_initiated'), ignore_errors=True)
     shutil.rmtree(Path('build/dsp_pipeline_uninitiated'), ignore_errors=True)
+    shutil.rmtree(Path('build/CMakeFiles/pipeline_test_default.dir/dsp_pipeline_initialized'), ignore_errors=True)
+    shutil.rmtree(Path('build/CMakeFiles/pipeline_test_default.dir/dsp_pipeline_uninitialized'), ignore_errors=True)
+    shutil.rmtree(Path('build/CMakeFiles/pipeline_test_control_commands.dir/dsp_pipeline_initialized'), ignore_errors=True)
+    shutil.rmtree(Path('build/CMakeFiles/pipeline_test_control_commands.dir/dsp_pipeline_uninitialized'), ignore_errors=True)
 
     for func_p in [ make_p, tune_p ]:
 
