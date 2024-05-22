@@ -17,7 +17,7 @@ typedef struct
 }fir_direct_state_t;
 
 #define FIR_DIRECT_STAGE_REQUIRED_MEMORY(N_CH, SAMPLES) \
-    (((N_CH + 1) * ADSP_BUMP_ALLOCATOR_DWORD_N_BYTES(FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(SAMPLES))) \
+    (((N_CH) * ADSP_BUMP_ALLOCATOR_DWORD_N_BYTES(FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(SAMPLES))) \
      + ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N_CH * sizeof(fir_direct_t)))
 
 void fir_direct_init(module_instance_t* instance,
