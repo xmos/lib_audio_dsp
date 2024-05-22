@@ -9,6 +9,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <swlock.h>
 
 /// Control states, used to communicate between DSP and control threads
 /// to notify when control needs processing.
@@ -29,6 +30,8 @@ typedef struct
     uint8_t module_type;  ///< Identifies the stage type. Each type of stage has a unique identifier.
     uint8_t cmd_id;  ///< Is set to the current command being processed.
     config_rw_state_t config_rw_state;
+    intptr_t current_controller; ///< id of the current control object that requested a read, do not modify.
+    swlock_t lock; ///< lock used by controlling threads to manage access
 }module_control_t;
 
 
