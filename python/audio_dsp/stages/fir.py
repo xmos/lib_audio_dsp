@@ -21,7 +21,9 @@ class FirDirect(Stage):
 
         self.set_control_field_cb("n_taps", lambda: self.dsp_block.n_taps)
         self.set_control_field_cb("shift", lambda: self.dsp_block.shift)
-        self.set_control_field_cb("coeffs", lambda: self.dsp_block.coeffs_int)
+
+        self.set_constant_array("coeffs", self.dsp_block.coeffs_int, "int32_t")
+        self.set_control_field_cb("coeffs", lambda: "coeffs2")
 
         self.stage_memory_parameters = (self.n_in, self.dsp_block.n_taps)
 

@@ -589,4 +589,4 @@ def test_fir(frame_size, filter_name):
 
 
 if __name__ == "__main__":
-    test_fir(1)
+    test_fir(1, "descending_coeffs.txt")
