@@ -209,6 +209,7 @@ class Stage(Node):
             self._control_fields = {}
             self.yaml_dict = None
 
+        self._constant_arrays = {}
         self.label = label
 
         self.details = {}
@@ -278,6 +279,10 @@ class Stage(Node):
             )
 
         self._control_fields[field] = PropertyControlField(getter, setter)
+
+    def set_constant_array(self, field, array, type, setter=None):
+        #todo some array checks
+        self._constant_arrays[field] = array
 
     def get_config(self):
         """Get a dictionary containing the current value of the control

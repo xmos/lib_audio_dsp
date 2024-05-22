@@ -3,9 +3,7 @@ module:
     n_taps:
       type: uint32_t
     coeffs:
-      type: int32_t
-      size: 1024
-      attribute: DWORD_ALIGNED
+      type: int32_t*
     shift:
       type: int32_t
 includes:
