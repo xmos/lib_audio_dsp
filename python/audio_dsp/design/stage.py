@@ -282,7 +282,12 @@ class Stage(Node):
 
     def set_constant_array(self, field, array, type, setter=None):
         #todo some array checks
-        self._constant_arrays[field] = array
+
+        # add the end of the id to the field name to keep it unique
+        field_name = str(field) + '_' + self.id.hex[-8:]
+        self._constant_arrays[field_name] = array
+
+        return field_name
 
     def get_config(self):
         """Get a dictionary containing the current value of the control
