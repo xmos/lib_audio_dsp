@@ -267,6 +267,21 @@ pipeline {
                 }
               }
             } // test utils
+            stage('Unit tests') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/unit_tests") {
+                          runPytest("--dist worksteal")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // Unit tests
           }
           post {
             cleanup {
