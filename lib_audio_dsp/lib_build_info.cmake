@@ -89,8 +89,8 @@ file(GLOB DSP_C_SOURCES RELATIVE ${CMAKE_CURRENT_LIST_DIR} CONFIGURE_DEPENDS "${
 list(APPEND LIB_C_SRCS ${DSP_C_SOURCES})
 set(LIB_DEPENDENT_MODULES
     "lib_xcore_math(xcommon_cmake)"
-    "lib_logging(>=3.2.0)"
-    "lib_locks(>=2.2.0)"
+    "lib_logging(3.2.0)"
+    "lib_locks(2.2.0)"
 )
 option(LIB_AUDIO_DSP_DISABLE_OPTIMISATION "Set to disable optimisations for better debugging")
 set(_LAD_OPT -O3)
