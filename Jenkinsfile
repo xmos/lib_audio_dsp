@@ -270,11 +270,13 @@ pipeline {
             stage('Unit tests') {
               steps {
                 dir("lib_audio_dsp") {
-                  withVenv {
-                    withTools(params.TOOLS_VERSION) {
-                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        dir("test/unit_tests") {
-                          runPytest("--dist worksteal")
+                  withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
+                    withVenv {
+                      withTools(params.TOOLS_VERSION) {
+                        catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                          dir("test/unit_tests") {
+                            runPytest("--dist worksteal")
+                          }
                         }
                       }
                     }
