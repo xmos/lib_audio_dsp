@@ -60,7 +60,6 @@ if __name__ == "__main__":
     cmd_map = {}
 
     files = glob.glob(f"{args.config_dir}/*.yaml")
-
     for fl in files:
         with open(fl, "r") as fd:
             data = yaml.safe_load(fd)
@@ -81,10 +80,8 @@ if __name__ == "__main__":
             cmd_map[struct_name] = data["module"][struct_name]
 
     cmd_map = dict(sorted(cmd_map.items()))
-
     with open(f"{args.out_dir}/generator/gen_cmd_map_offset.c", "w") as f_op:
         f_op.write(struct_offset_template.render(cmd_map=cmd_map))
-
     # Generate cmd_map used by the host
     with open(f"{args.out_dir}/host/host_cmd_map.h", "w") as f_op:
         f_op.write(cmd_map_template.render(cmd_map=cmd_map))

@@ -14,6 +14,9 @@
 
 #define FILEREAD_CHUNK_SIZE (1024)
 
+// Token to start control operations
+#define START_CONTROL_TOKEN (0x12345678)
+
 /// @brief Read a chunk of data from the input file.
 /// Takes care of different bit-depths and reads the data in left justified 32bit format.
 /// @param input_file Input file handle
@@ -84,7 +87,7 @@ static void prepare_output(int32_t* data, int32_t** dsp_input, int n_ch, int fra
 
 /// @brief Task responsible for sending data read from a wav file to the pipeline and writing the output received
 /// from the pipeline to another file. File operations are done using xscope_fileio functions.
-/// @param c_control Unused for now. Will be used for control in future.
+/// @param c_control Channel used for control operations.
 void fileio_task(chanend_t c_control)
 {
     printf("In test app!\n");
@@ -95,6 +98,9 @@ void fileio_task(chanend_t c_control)
 
     assert(test_config.input_filename != NULL);
     assert(test_config.output_filename != NULL);
+
+    // Send a token to indicate that the control parameters, if any, can be sent
+    chan_out_word(c_control, START_CONTROL_TOKEN);
 
     file_t input_file, output_file;
     int ret = file_open(&input_file, test_config.input_filename, "rb");

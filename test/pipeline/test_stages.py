@@ -21,6 +21,8 @@ from python import build_utils, run_pipeline_xcoreai, audio_helpers
 
 from pathlib import Path
 import numpy as np
+import struct
+import yaml
 
 PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
@@ -53,7 +55,7 @@ def generate_ref(sig, ref_module, pipeline_channels, frame_size):
     return out_py_int
 
 
-def do_test(make_p, dut_frame_size):
+def do_test(make_p, tune_p, dut_frame_size):
     """
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
@@ -66,25 +68,43 @@ def do_test(make_p, dut_frame_size):
     ----------
     make_p: function
         function that takes a frame size and returns a pipeline which
-        has that frame size as the input.
+        has that frame size as the input. It uses the default configuration values.
+    tune_p: function
+        function that takes a frame size, returns a pipeline which
+        has that frame size as the input, and tunes the pipelines with the desired
+        configuration values
     dut_frame_size : int
         The frame size to use for the pipeline that will run on the device.
     """
-    dut_p = make_p(dut_frame_size)
-    pipeline_channels = len(dut_p.i)
+
+    for func_p in [ make_p, tune_p ]:
+
+        # Exit if tune_p is not defined
+        if not func_p:
+            continue
+
+        dut_p, _ = func_p(dut_frame_size)
+        pipeline_channels = len(dut_p.i)
+
+        out_dir = None
+
+        # Generate uninitialized stages for make_p, only if tune_p is defined
+        if func_p == make_p and tune_p:
+            out_dir = "dsp_pipeline_uninitialized"
+        else:
+            out_dir = "dsp_pipeline_initialized"
+        generate_dsp_main(dut_p, out_dir = BUILD_DIR / out_dir)
+
+    n_samps, rate = 1024, 48000
     infile = "instage.wav"
     outfile = "outstage.wav"
-    n_samps, rate = 1024, 48000
 
-    generate_dsp_main(dut_p, out_dir = BUILD_DIR / "dsp_pipeline")
-    target = "pipeline_test"
-    # Build pipeline test executable. This will download xscope_fileio if not present
-    build_utils.build(APP_DIR, BUILD_DIR, target)
+    # The reference function should be always tune_p, it is make_p if tune_p is not defined
+    ref_func_p = tune_p if tune_p else make_p
 
+    ref_p = [ ref_func_p(s)[0] for s in TEST_FRAME_SIZES ]
     sig0 = np.linspace(-2**26, 2**26, n_samps, dtype=np.int32)  << 4 # numbers which should be unmodified through pipeline
-                                                                     # data formats
-
-
+                                                                 # data formats
     sig1 = np.linspace(-2**23, 2**23, n_samps, dtype=np.int32)  << 4
 
     if pipeline_channels == 2:
@@ -97,28 +117,93 @@ def do_test(make_p, dut_frame_size):
 
     audio_helpers.write_wav(infile, rate, sig)
 
-    xe = APP_DIR / f"bin/{target}.xe"
-    run_pipeline_xcoreai.run(xe, infile, outfile, pipeline_channels, 1)
-
-    _, out_data = audio_helpers.read_wav(outfile)
-    if out_data.ndim == 1:
-        out_data = out_data.reshape(len(out_data), 1)
-
-    ref_p = [make_p(s) for s in TEST_FRAME_SIZES]
     out_py_int_all = [generate_ref(sig, p.stages[2].dsp_block, pipeline_channels, fr) for p, fr in zip(ref_p, TEST_FRAME_SIZES)]
 
-    for out_py_int, ref_frame_size in zip(out_py_int_all, TEST_FRAME_SIZES):
-        for ch in range(pipeline_channels):
-            diff = out_py_int.T[:,ch] - out_data[:, ch]
-            print(f"ch {ch}: max diff {max(abs(diff))}")
-            sol = (~np.equal(out_py_int.T, out_data)).astype(int)
-            indexes = np.flatnonzero(sol)
-            print(f"ch {ch}: {len(indexes)} indexes mismatch")
-            print(f"ch {ch} mismatching indexes = {indexes}")
+    for target in [ "default", "control_commands"]:
 
-        np.testing.assert_equal(out_py_int.T, out_data, err_msg=f"dut frame {dut_frame_size}, ref frame {ref_frame_size}")
+        # Do not run the control test if tune_p is not defined
+        if not tune_p and target == "control_commands":
+            continue
 
+        # Build pipeline test executable. This will download xscope_fileio if not present
+        build_utils.build(APP_DIR, BUILD_DIR, target)
 
+        xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
+        run_pipeline_xcoreai.run(xe, infile, outfile, pipeline_channels, 1)
+
+        _, out_data = audio_helpers.read_wav(outfile)
+        if out_data.ndim == 1:
+            out_data = out_data.reshape(len(out_data), 1)
+
+        for out_py_int, ref_frame_size in zip(out_py_int_all, TEST_FRAME_SIZES):
+            for ch in range(pipeline_channels):
+                diff = out_py_int.T[:,ch] - out_data[:, ch]
+                print(f"ch {ch}: max diff {max(abs(diff))}")
+                sol = (~np.equal(out_py_int.T, out_data)).astype(int)
+                indexes = np.flatnonzero(sol)
+                print(f"ch {ch}: {len(indexes)} indexes mismatch")
+                print(f"ch {ch} mismatching indexes = {indexes}")
+
+            np.testing.assert_equal(out_py_int.T, out_data, err_msg=f"dut frame {dut_frame_size}, ref frame {ref_frame_size}")
+
+def generate_test_param_file(stage_name, stage_config):
+    """
+    Generate a header file with the configuration parameters listed in the arguments.
+
+    Parameters
+    ----------
+    stage_name: string
+        name of the stage to test
+    stage_config: dict
+        dictionary containing the parameter names and their corresponding values
+    """
+    type_data = {}
+    with open(Path(__file__).resolve().parents[2] / f"stage_config/{stage_name.lower()}.yaml", "r") as fd:
+        type_data = yaml.safe_load(fd)
+
+    # Write the autogenerated header file
+    with open(Path(__file__).resolve().parent / f"build/control_test_params.h", "w") as f_op:
+
+        f_op.write("#include \"cmds.h\"\n\n")
+        f_op.write("#define CMD_PAYLOAD_MAX_SIZE 256\n")
+        f_op.write(f"#define CMD_TOTAL_NUM {len(stage_config)}\n\n")
+        f_op.write("typedef struct control_data_t {\n")
+        f_op.write("\tuint32_t cmd_id;\n")
+        f_op.write("\tuint32_t cmd_size;\n")
+        f_op.write("\tuint8_t payload[CMD_PAYLOAD_MAX_SIZE];\n")
+        f_op.write("}control_data_t;\n\n")
+        f_op.write(f"control_data_t control_config[CMD_TOTAL_NUM] = {{\n")
+
+        for cmd_name, cmd_payload in stage_config.items():
+            f_op.write(f"\t{{\n")
+            f_op.write(f"\t\t.cmd_id = CMD_{stage_name.upper()}_{cmd_name.upper()},\n")
+            payload_values = []
+            cmd_payload_list = []
+            if not isinstance(cmd_payload, list):
+                cmd_payload_list.append(cmd_payload)
+            else:
+                cmd_payload_list = cmd_payload
+            payload_size = 0
+            for value in cmd_payload_list:
+                data_type = type_data['module'][stage_name.lower()][cmd_name.lower()]['type']
+                # Convert the values into bytearrays and compute the payload length
+                if data_type in [ 'int', 'int32_t', 'uint32_t' ]:
+                    ba = bytearray(struct.pack('I', value&0xFFFFFFFF))
+                    payload_size += 4
+                elif  data_type in [ 'float' ]:
+                    ba = struct.unpack('4b', struct.pack("f", value))
+                    payload_size += 4
+                elif data_type in [ 'int8_t', 'uint8_t' ]:
+                    ba = bytearray(value&0xFF)
+                    payload_size += 1
+                else:
+                    raise ValueError(f"{data_type} is not supported")
+
+                payload_values = payload_values + [ "0x{:02X}".format(x&0xFF) for x in ba]
+            f_op.write(f"\t\t.cmd_size = {payload_size},\n")
+            f_op.write(f"\t\t.payload  = {{{', '.join(list(payload_values))}}},\n")
+            f_op.write(f"\t}},\n")
+        f_op.write(f"}};\n")
 
 @pytest.mark.parametrize("method, args", [("make_bypass", None),
                                           ("make_lowpass", [1000, 0.707]),
@@ -139,18 +224,27 @@ def test_biquad(method, args, frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            biquad = t.stage(Biquad, p.i)
+            biquad = t.stage(Biquad, p.i, label="control")
         p.set_outputs(biquad.o)
 
+        return p, biquad
+
+    def tune_p(fr):
+        p, biquad = make_p(fr)
+
         bq_method = getattr(biquad, method)
+
+        # Set initialization parameters of the stage
         if args:
             bq_method(*args)
         else:
             bq_method()
-        return p
 
-    do_test(make_p, frame_size)
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("BIQUAD", stage_config)
+        return p, biquad
 
+    do_test(make_p, tune_p, frame_size)
 
 filter_spec = [['lowpass', fs*0.4, 0.707],
                 ['highpass', fs*0.001, 1],
@@ -170,18 +264,26 @@ def test_cascaded_biquad(method, args, frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            cbiquad = t.stage(CascadedBiquads, p.i)
+            cbiquad = t.stage(CascadedBiquads, p.i, label="control")
         p.set_outputs(cbiquad.o)
 
-        cbq_method = getattr(cbiquad, method)
+        return p, cbiquad
+
+    def tune_p(fr):
+        p, cbiquad = make_p(fr)
+
+        # Set initialization parameters of the stage
+        bq_method = getattr(cbiquad, method)
         if args:
-            cbq_method(*args)
+            bq_method(*args)
         else:
-            cbq_method()
-        return p
+            bq_method()
 
-    do_test(make_p, frame_size)
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("CASCADED_BIQUADS", stage_config)
+        return p, cbiquad
 
+    do_test(make_p, tune_p, frame_size)
 
 def test_limiter_rms(frame_size):
     """
@@ -190,13 +292,22 @@ def test_limiter_rms(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            lim = t.stage(LimiterRMS, p.i)
+            lim = t.stage(LimiterRMS, p.i, label="control")
         p.set_outputs(lim.o)
 
-        lim.make_limiter_rms(-6, 0.001, 0.1)
-        return p
+        return p, lim
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p, lim = make_p(fr)
+
+        # Set initialization parameters of the stage
+        lim.make_limiter_rms(-6, 0.001, 0.1)
+
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("LIMITER_RMS", stage_config)
+        return p, lim
+
+    do_test(make_p, tune_p, frame_size)
 
 
 def test_limiter_peak(frame_size):
@@ -206,13 +317,22 @@ def test_limiter_peak(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            lim = t.stage(LimiterPeak, p.i)
+            lim = t.stage(LimiterPeak, p.i, label="control")
         p.set_outputs(lim.o)
 
-        lim.make_limiter_peak(-6, 0.001, 0.1)
-        return p
+        return p, lim
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p, lim = make_p(fr)
+
+        # Set initialization parameters of the stage
+        lim.make_limiter_peak(-6, 0.001, 0.1)
+
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("LIMITER_PEAK", stage_config)
+        return p, lim
+
+    do_test(make_p, tune_p, frame_size)
 
 def test_hard_limiter_peak(frame_size):
     """
@@ -221,13 +341,22 @@ def test_hard_limiter_peak(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            lim = t.stage(HardLimiterPeak, p.i)
+            lim = t.stage(HardLimiterPeak, p.i, label="control")
         p.set_outputs(lim.o)
 
-        lim.make_hard_limiter_peak(-6, 0.001, 0.1)
-        return p
+        return p, lim
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p, lim = make_p(fr)
+
+        # Set initialization parameters of the stage
+        lim.make_hard_limiter_peak(-6, 0.001, 0.1)
+
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("HARD_LIMITER_PEAK", stage_config)
+        return p, lim
+
+    do_test(make_p, tune_p, frame_size)
 
 def test_clipper(frame_size):
     """
@@ -236,13 +365,22 @@ def test_clipper(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            clip = t.stage(Clipper, p.i)
+            clip = t.stage(Clipper, p.i, label="control")
         p.set_outputs(clip.o)
 
-        clip.make_clipper(-6)
-        return p
+        return p, clip
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p, clip = make_p(fr)
+
+        # Set initialization parameters of the stage
+        clip.make_clipper(-6)
+
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("CLIPPER", stage_config)
+        return p, clip
+
+    do_test(make_p, tune_p, frame_size)
 
 def test_compressor(frame_size):
     """
@@ -251,13 +389,22 @@ def test_compressor(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            comp = t.stage(CompressorRMS, p.i)
+            comp = t.stage(CompressorRMS, p.i, label="control")
         p.set_outputs(comp.o)
 
-        comp.make_compressor_rms(2, -6, 0.001, 0.1)
-        return p
+        return p, comp
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p, comp = make_p(fr)
+
+        # Set initialization parameters of the stage
+        comp.make_compressor_rms(2, -6, 0.001, 0.1)
+
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("COMPRESSOR_RMS", stage_config)
+        return p, comp
+
+    do_test(make_p, tune_p, frame_size)
 
 def test_noise_gate(frame_size):
     """
@@ -266,13 +413,22 @@ def test_noise_gate(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            ng = t.stage(NoiseGate, p.i)
+            ng = t.stage(NoiseGate, p.i, label="control")
         p.set_outputs(ng.o)
 
-        ng.make_noise_gate(-6, 0.001, 0.1)
-        return p
+        return p, ng
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p, ng = make_p(fr)
+
+        # Set initialization parameters of the stage
+        ng.make_noise_gate(-6, 0.001, 0.1)
+
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("NOISE_GATE", stage_config)
+        return p, ng
+
+    do_test(make_p, tune_p, frame_size)
 
 def test_noise_suppressor_expander(frame_size):
     """
@@ -281,13 +437,22 @@ def test_noise_suppressor_expander(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            nse = t.stage(NoiseSuppressorExpander, p.i)
+            nse = t.stage(NoiseSuppressorExpander, p.i, label="control")
         p.set_outputs(nse.o)
 
-        nse.make_noise_suppressor_expander(2, -6, 0.001, 0.1)
-        return p
+        return p, nse
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p, nse = make_p(fr)
+
+        # Set initialization parameters of the stage
+        nse.make_noise_suppressor_expander(2, -6, 0.001, 0.1)
+
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("NOISE_SUPPRESSOR_EXPANDER", stage_config)
+        return p, nse
+
+    do_test(make_p, tune_p, frame_size)
 
 def test_volume(frame_size):
     """
@@ -296,12 +461,23 @@ def test_volume(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            vol = t.stage(VolumeControl, p.i, gain_dB=-6)
+            # TODO: Check why gain_dB must be set here. See question 1 in https://xmosjira.atlassian.net/browse/LCD-292.
+            vol = t.stage(VolumeControl, p.i, gain_dB=-6, label="control")
         p.set_outputs(vol.o)
-        return p
 
-    do_test(make_p, frame_size)
+        return p, vol
 
+    def tune_p(fr):
+        p, vol = make_p(fr)
+
+        # Set initialization parameters of the stage
+        # TODO: Check why gain_dB can't be changed to a value different from the intialization value. See question 5 in https://xmosjira.atlassian.net/browse/LCD-292.
+        vol.make_volume_control(-6, 10)
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("VOLUME_CONTROL", stage_config)
+        return p, vol
+
+    do_test(make_p, tune_p, frame_size)
 
 def test_fixed_gain(frame_size):
     """
@@ -310,13 +486,22 @@ def test_fixed_gain(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            vol = t.stage(FixedGain, p.i)
-        p.set_outputs(vol.o)
+            fg = t.stage(FixedGain, p.i, label="control")
+        p.set_outputs(fg.o)
 
-        vol.set_gain(-6)
-        return p
+        return p, fg
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p, fg = make_p(fr)
+
+        # Set initialization parameters of the stage
+        fg.set_gain(-8)
+
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("FIXED_GAIN", stage_config)
+        return p, fg
+
+    do_test(make_p, tune_p, frame_size)
 
 
 def test_reverb(frame_size):
@@ -327,12 +512,21 @@ def test_reverb(frame_size):
         reverb_test_channels = 1 # Reverb expects only 1 channel
         p = Pipeline(reverb_test_channels, frame_size=fr)
         with p.add_thread() as t:
-            rv = t.stage(ReverbRoom, p.i)
+            rv = t.stage(ReverbRoom, p.i, label="control")
         p.set_outputs(rv.o)
-        return p
 
+        return p, rv
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p, rv = make_p(fr)
+
+        #TODO: Is it ok that there is no make_ function for ReverbRoom class? See https://xmosjira.atlassian.net/browse/LCD-204
+
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("REVERB_ROOM", stage_config)
+        return p, rv
+
+    do_test(make_p, tune_p, frame_size)
 
 
 def test_delay(frame_size):
@@ -342,11 +536,21 @@ def test_delay(frame_size):
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            delay = t.stage(Delay, p.i, max_delay=15, starting_delay=10)
+            delay = t.stage(Delay, p.i, max_delay=15, starting_delay=10, label="control")
         p.set_outputs(delay.o)
-        return p
+        return p, delay
 
-    do_test(make_p, frame_size)
+    def tune_p(fr):
+        p, delay = make_p(fr)
+
+        # Set initialization parameters of the stage
+        delay.set_delay(5)
+
+        stage_config = p.resolve_pipeline()['configs'][2]
+        generate_test_param_file("DELAY", stage_config)
+        return p, delay
+
+    do_test(make_p, tune_p, frame_size)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -379,10 +583,9 @@ def test_fir(frame_size, filter_name):
         with p.add_thread() as t:
             fir = t.stage(FirDirect, p.i, coeffs_path=filter_path)
         p.set_outputs(fir.o)
-        return p
+        return p, fir
 
-
-    do_test(make_p, frame_size)
+    do_test(make_p, None, frame_size)
 
 
 if __name__ == "__main__":

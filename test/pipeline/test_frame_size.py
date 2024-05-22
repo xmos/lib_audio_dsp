@@ -32,15 +32,15 @@ def test_frame_size(frame_size):
     outfile = "outframe.wav"
     n_samps, rate = 2048, 48000
 
-    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
-    target = "pipeline_test"
+    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+    target = "default"
     # Build pipeline test executable. This will download xscope_fileio if not present
     build_utils.build(APP_DIR, BUILD_DIR, target)
 
     sig = np.zeros((n_samps, 1), dtype=np.int32)
     audio_helpers.write_wav(infile, rate, sig)
 
-    xe = APP_DIR / f"bin/{target}.xe"
+    xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile, 1, 1)
 
     _, out_data = audio_helpers.read_wav(outfile)
