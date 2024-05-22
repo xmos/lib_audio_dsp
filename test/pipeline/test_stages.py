@@ -520,7 +520,13 @@ def test_reverb(frame_size):
     def tune_p(fr):
         p, rv = make_p(fr)
 
-        #TODO: Is it ok that there is no make_ function for ReverbRoom class? See https://xmosjira.atlassian.net/browse/LCD-204
+        # Set initialization parameters of the stage
+        rv.set_wet_gain(-1)
+        rv.set_dry_gain(-2)
+        rv.set_pre_gain(0.3)
+        rv.set_room_size(0.6)
+        rv.set_damping(0.5)
+        rv.set_decay(0.6)
 
         stage_config = p.resolve_pipeline()['configs'][2]
         generate_test_param_file("REVERB_ROOM", stage_config)
