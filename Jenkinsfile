@@ -161,6 +161,23 @@ pipeline {
             label 'linux&&x86_64'
           }
           stages {
+            stage('Unit tests') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
+                    withVenv {
+                      withTools(params.TOOLS_VERSION) {
+                        catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                          dir("test/unit_tests") {
+                            runPytest("--dist worksteal")
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // Unit tests
             stage ('Build') {
               steps {
                 runningOn(env.NODE_NAME)
@@ -267,23 +284,6 @@ pipeline {
                 }
               }
             } // test utils
-            stage('Unit tests') {
-              steps {
-                dir("lib_audio_dsp") {
-                  withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
-                    withVenv {
-                      withTools(params.TOOLS_VERSION) {
-                        catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                          dir("test/unit_tests") {
-                            runPytest("--dist worksteal")
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            } // Unit tests
           }
           post {
             cleanup {
