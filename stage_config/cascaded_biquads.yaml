@@ -9,5 +9,4 @@ module:
       attribute: DWORD_ALIGNED
 includes:
   - "stdint.h"
-  - "stages/adsp_module.h"
   - "xmath/api.h"

@@ -23,6 +23,9 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
     uint8_t values_write[CMD_PAYLOAD_MAX_SIZE];
     uint8_t values_read[CMD_PAYLOAD_MAX_SIZE];
 
+    adsp_controller_t ctrl;
+    adsp_controller_init(&ctrl, m_dsp);
+
     // Iterate through all the commands in the stage config
     for (int cmd_idx = 0; cmd_idx<CMD_TOTAL_NUM; cmd_idx++)
     {
@@ -43,7 +46,7 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 
         // Write the data
         do {
-            ret = adsp_write_module_config(m_dsp->modules, m_dsp->n_modules, &cmd);
+            ret = adsp_write_module_config(&ctrl, &cmd);
             // Assert if operation is taking too long
             if (get_reference_time() > time_start + CONTROL_COMMAND_TIMEOUT_TICKS) {
                 xassert(0 && "Timer expired while writing control command");
@@ -62,7 +65,7 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
         ret = ADSP_CONTROL_BUSY;
         time_start = get_reference_time();
         do {
-            ret = adsp_read_module_config(m_dsp->modules, m_dsp->n_modules, &cmd);
+            ret = adsp_read_module_config(&ctrl, &cmd);
             // Assert if operation is taking too long
             if (get_reference_time() > time_start + CONTROL_COMMAND_TIMEOUT_TICKS) {
                 xassert(0 && "Timer expired while reading control command");

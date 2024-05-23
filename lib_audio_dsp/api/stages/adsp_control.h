@@ -11,7 +11,10 @@
 
 #pragma once
 #include <stdint.h>
-#include "stages/adsp_module.h"
+#include <stddef.h>
+#include "adsp_module.h"
+#include "adsp_pipeline.h"
+#include "swlock.h"
 
 /// The command to execute. Specifies which stage, what command and contains the buffer
 /// to read from or write to.
@@ -30,7 +33,7 @@ typedef struct
 
     /// The buffer. Must be set to a valid array of size payload_len before calling
     /// the read or write functions.
-    int8_t *payload;
+    void *payload;
 }adsp_stage_control_cmd_t;
 
 /// Control status.
@@ -38,32 +41,51 @@ typedef enum
 {
     ADSP_CONTROL_SUCCESS,  ///< Command succesfully executed.
     ADSP_CONTROL_BUSY,  ///< Stage has not yet processed the command, call again.
-    ADSP_CONTROL_ERROR  ///< An error occured.
 }adsp_control_status_t;
+
+/// Object used to control a DSP pipeline.
+///
+/// As there may be multiple threads attempting to interact with the DSP pipeline at
+/// the same time, a separate instance of @ref adsp_controller_t must be used by each
+/// to ensure that control can proceed safely.
+///
+/// Initialise each instance of @ref adsp_controller_t with @ref adsp_controller_init.
+typedef struct {
+    /// @privatesection
+    module_instance_t* modules;
+    size_t num_modules;
+} adsp_controller_t;
+
+
+/// Create a DSP controller instance for a particular pipeline.
+///
+/// @param ctrl The controller instance to initialise.
+/// @param pipeline The DSP pipeline that will be controlled with this controller.
+void adsp_controller_init(adsp_controller_t* ctrl, adsp_pipeline_t* pipeline);
 
 /// Initiate a read command by passing in an intialised @ref adsp_stage_control_cmd_t.
 ///
-/// Must be called repeatedly with the same cmd until ADSP_CONTROL_SUCCESS is returned.
+/// Must be called repeatedly with the same cmd until ADSP_CONTROL_SUCCESS is returned. If the caller
+/// abandons the attempt to read before SUCCESS is returned then this will leave the stage in a state
+/// where it can never be read from again.
 ///
-/// @param modules A pointer to the array of modules contained within @ref adsp_pipeline_t.
-/// @param num_modules Size of the num_modules array.
+/// @param ctrl An instance of adsp_controller_t which has been initialised to control the DSP pipeline.
 /// @param cmd An initialised @ref adsp_stage_control_cmd_t.
 /// @return @ref adsp_control_status_t
-adsp_control_status_t adsp_read_module_config(module_instance_t* modules,
-                                            size_t num_modules,
-                                            adsp_stage_control_cmd_t *cmd
-                                        );
+adsp_control_status_t adsp_read_module_config(
+        adsp_controller_t* ctrl,
+        adsp_stage_control_cmd_t *cmd
+);
 
 /// Initiate a write command by passing in an initialised @ref adsp_stage_control_cmd_t.
 ///
 /// Must be called repeatedly with the same cmd until ADSP_CONTROL_SUCCESS is returned.
 ///
-/// @param modules A pointer to the array of modules contained within @ref adsp_pipeline_t.
-/// @param num_modules Size of the @p modules array.
+/// @param ctrl An instance of adsp_controller_t which has been initialised to control the DSP pipeline.
 /// @param cmd An initialised @ref adsp_stage_control_cmd_t.
 /// @return @ref adsp_control_status_t
-adsp_control_status_t adsp_write_module_config(module_instance_t* modules,
-                                            size_t num_modules,
-                                            adsp_stage_control_cmd_t *cmd
-                                        );
+adsp_control_status_t adsp_write_module_config(
+        adsp_controller_t* ctrl,
+        adsp_stage_control_cmd_t *cmd
+);
 
