@@ -10,5 +10,4 @@ module:
       type: int32_t
     gain:
       type: int32_t
-includes:
-  - "stages/adsp_module.h"
+includes: []

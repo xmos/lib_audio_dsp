@@ -10,4 +10,3 @@ module:
       type: uint8_t
 includes:
   - "stdint.h"
-  - "stages/adsp_module.h"
