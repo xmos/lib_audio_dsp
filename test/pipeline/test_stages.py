@@ -458,23 +458,24 @@ def test_volume(frame_size):
     Test the volume stage amplifies the same in python and C
     """
 
-    # The gain_dB and mute must match in both make_p() and tune_p().
+    # The gain_dB and mute_state must match in both make_p() and tune_p().
     # Those values are used to compute the starting gain, and it must match in both applications
     gain_dB = -8
-    mute = 0
+    mute_state = 0
 
     def make_p(fr):
         p = Pipeline(channels, frame_size=fr)
         with p.add_thread() as t:
-            vol = t.stage(VolumeControl, p.i, gain_dB=gain_dB, mute=mute, label="control")
+            vol = t.stage(VolumeControl, p.i, label="control")
         p.set_outputs(vol.o)
-
+        vol.set_gain(gain_dB)
+        vol.set_mute_state(mute_state)
         return p, vol
 
     def tune_p(fr):
         p, vol = make_p(fr)
 
-        vol.make_volume_control(gain_dB, 10, mute)
+        vol.make_volume_control(gain_dB, 10, mute_state)
         stage_config = p.resolve_pipeline()['configs'][2]
         generate_test_param_file("VOLUME_CONTROL", stage_config)
         return p, vol

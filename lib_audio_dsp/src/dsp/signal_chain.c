@@ -103,10 +103,10 @@ int32_t adsp_saturate_32b(int64_t acc) {
 volume_control_t adsp_volume_control_init(
   float gain_dB,
   int32_t slew_shift,
-  uint8_t mute
+  uint8_t mute_state
 ) {
   volume_control_t vol_ctl;
-  vol_ctl.mute = mute;
+  vol_ctl.mute_state = mute_state;
   adsp_volume_control_set_gain(&vol_ctl, adsp_dB_to_gain(gain_dB));
   vol_ctl.slew_shift = slew_shift;
   vol_ctl.saved_gain = 0;
@@ -128,7 +128,7 @@ void adsp_volume_control_set_gain(
   volume_control_t * vol_ctl,
   int32_t new_gain
 ) {
-  if(!vol_ctl->mute) {
+  if(!vol_ctl->mute_state) {
     vol_ctl->target_gain = new_gain;
   }
   else
@@ -140,8 +140,8 @@ void adsp_volume_control_set_gain(
 void adsp_volume_control_mute(
   volume_control_t * vol_ctl
 ) {
-  if (!vol_ctl->mute) {
-    vol_ctl->mute = 1;
+  if (!vol_ctl->mute_state) {
+    vol_ctl->mute_state = 1;
     vol_ctl->saved_gain = vol_ctl->target_gain;
     vol_ctl->target_gain = 0;
   }
@@ -150,8 +150,8 @@ void adsp_volume_control_mute(
 void adsp_volume_control_unmute(
   volume_control_t * vol_ctl
 ) {
-  if (vol_ctl->mute) {
-    vol_ctl->mute = 0;
+  if (vol_ctl->mute_state) {
+    vol_ctl->mute_state = 0;
     vol_ctl->target_gain = vol_ctl->saved_gain;
   }
 }

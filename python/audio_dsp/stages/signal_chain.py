@@ -155,25 +155,23 @@ class VolumeControl(Stage):
     """
     Multiply the input by a gain. The gain can be changed at runtime.
 
-    Parameters
-    ----------
-    gain_db : float, optional
-        The gain of the mixer in dB.
-
     """
 
-    def __init__(self, gain_dB=0, slew_shift=7, mute=0, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(config=find_config("volume_control"), **kwargs)
         self.create_outputs(self.n_in)
-        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift)
+        gain_dB = 0
+        slew_shift = 7
+        mute_state = 0
+        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, mute_state)
         self.set_control_field_cb("target_gain", lambda: self.dsp_block.target_gain_int)
         self.set_control_field_cb("slew_shift", lambda: self.dsp_block.slew_shift)
-        self.set_control_field_cb("mute", lambda: np.int32(self.dsp_block.mute_state))
+        self.set_control_field_cb("mute_state", lambda: np.int32(self.dsp_block.mute_state))
 
         self.stage_memory_string = "volume_control"
         self.stage_memory_parameters = (self.n_in,)
 
-    def make_volume_control(self, gain_dB, slew_shift, mute, Q_sig=dspg.Q_SIG):
+    def make_volume_control(self, gain_dB, slew_shift, mute_state, Q_sig=dspg.Q_SIG):
         """
         Update the settings of this volume control.
 
@@ -184,8 +182,8 @@ class VolumeControl(Stage):
         slew_shift
             See :class:`audio_dsp.dsp.signal_chain.volume_control` for details on slew_shift.
         """
-        self.details = dict(target_gain=gain_dB, slew_shift=slew_shift, mute=mute, Q_sig=Q_sig)
-        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, mute, Q_sig)
+        self.details = dict(target_gain=gain_dB, slew_shift=slew_shift, mute_state=mute_state, Q_sig=Q_sig)
+        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, mute_state, Q_sig)
         return self
 
     def set_gain(self, gain_dB):
