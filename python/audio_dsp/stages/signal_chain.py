@@ -154,6 +154,7 @@ class FixedGain(Stage):
 class VolumeControl(Stage):
     """
     Multiply the input by a gain. The gain can be changed at runtime.
+    The stage can be muted and unmuted at runtime.
 
     """
 
