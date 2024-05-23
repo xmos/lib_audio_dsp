@@ -183,8 +183,12 @@ class VolumeControl(Stage):
         slew_shift
             See :class:`audio_dsp.dsp.signal_chain.volume_control` for details on slew_shift.
         """
-        self.details = dict(target_gain=gain_dB, slew_shift=slew_shift, mute_state=mute_state, Q_sig=Q_sig)
-        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, mute_state, Q_sig)
+        self.details = dict(
+            target_gain=gain_dB, slew_shift=slew_shift, mute_state=mute_state, Q_sig=Q_sig
+        )
+        self.dsp_block = sc.volume_control(
+            self.fs, self.n_in, gain_dB, slew_shift, mute_state, Q_sig
+        )
         return self
 
     def set_gain(self, gain_dB):

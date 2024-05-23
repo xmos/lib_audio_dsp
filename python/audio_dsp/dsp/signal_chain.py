@@ -547,7 +547,7 @@ class volume_control(dspg.dsp_block):
             self.target_gain_int - self.gain_int[channel]
         ) >> self.slew_shift
 
-        #print(f"gain {self.gain_int[0]}")
+        # print(f"gain {self.gain_int[0]}")
 
         # for rounding
         acc = 1 << (Q_GAIN - 1)
