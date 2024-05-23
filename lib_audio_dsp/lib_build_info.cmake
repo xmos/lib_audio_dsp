@@ -87,8 +87,17 @@ set(LIB_VERSION 0.2.0)
 set(LIB_INCLUDES api ${PIPELINE_DESIGN_INCLUDE_DIRS})
 file(GLOB DSP_C_SOURCES RELATIVE ${CMAKE_CURRENT_LIST_DIR} CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/src/dsp/*.c")
 list(APPEND LIB_C_SRCS ${DSP_C_SOURCES})
-set(LIB_DEPENDENT_MODULES "lib_xcore_math(develop)" "lib_logging")
-set(LIB_COMPILER_FLAGS -O3 -Wall -Werror -g )
+set(LIB_DEPENDENT_MODULES
+    "lib_xcore_math(release/v2.2.0)"
+    "lib_logging(3.2.0)"
+    "lib_locks(2.2.0)"
+)
+option(LIB_AUDIO_DSP_DISABLE_OPTIMISATION "Set to disable optimisations for better debugging")
+set(_LAD_OPT -O3)
+if(LIB_AUDIO_DSP_DISABLE_OPTIMISATION)
+    set(_LAD_OPT -O0)
+endif()
+set(LIB_COMPILER_FLAGS ${_LAD_OPT} -Wall -Werror -g )
 
 XMOS_REGISTER_MODULE()
 
