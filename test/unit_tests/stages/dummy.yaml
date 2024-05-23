@@ -1,0 +1,5 @@
+
+module:
+  dummy:
+    dummy_field:
+      type: int

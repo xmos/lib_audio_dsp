@@ -1,6 +1,11 @@
 Audio DSP library change log
 ============================
 
+0.3.0
+-----
+
+  * CHANGED: Control API breaking change to support multiple control threads.
+
 0.2.0
 -----
 

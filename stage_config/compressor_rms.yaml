@@ -12,5 +12,4 @@ module:
       type: int32_t
     slope:
       type: float
-includes:
-  - "stages/adsp_module.h"
+includes: []
