@@ -5,7 +5,7 @@ project(unit_test)
 
 set(APP_HW_TARGET XCORE-AI-EXPLORER)
 set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
-set(APP_DEPENDENT_MODULES "xhuw/lib_unity(feature/generate-test-runner)" lib_audio_dsp)
+set(APP_DEPENDENT_MODULES lib_unity lib_audio_dsp)
 
 set(APP_INCLUDES build/dummy_pipeline ${CMAKE_CURRENT_LIST_DIR})
 file(GLOB APP_C_SRCS CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_LIST_DIR} src/*.c build/dummy_pipeline/*.c)
