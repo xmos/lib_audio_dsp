@@ -5,7 +5,7 @@ Tests for audio_dsp.stages with 2 inputs and 2 ouputs
 """
 import pytest
 import scipy.signal as spsig
-from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
+from audio_dsp.design.pipeline import Pipeline, generate_dsp_main, profile_pipeline
 from audio_dsp.stages.biquad import Biquad
 from audio_dsp.stages.cascaded_biquads import CascadedBiquads
 from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak, HardLimiterPeak, Clipper
@@ -118,6 +118,7 @@ def do_test(make_p, tune_p, dut_frame_size):
     audio_helpers.write_wav(infile, rate, sig)
 
     out_py_int_all = [generate_ref(sig, p.stages[2].dsp_block, pipeline_channels, fr) for p, fr in zip(ref_p, TEST_FRAME_SIZES)]
+    profile_pipeline(dut_p)
 
     for target in [ "default", "control_commands"]:
 

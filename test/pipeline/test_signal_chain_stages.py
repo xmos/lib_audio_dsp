@@ -5,7 +5,7 @@ Tests for audio_dsp.stages.signal_chain stages that have a different
 number of inputs and outputs
 """
 import pytest
-from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
+from audio_dsp.design.pipeline import Pipeline, generate_dsp_main, profile_pipeline
 from audio_dsp.stages.signal_chain import Adder, Subtractor, Mixer, Switch
 from audio_dsp.stages.compressor_sidechain import CompressorSidechain
 
@@ -69,6 +69,7 @@ def do_test(p):
     out_py_int = out_py * 2**31
 
     np.testing.assert_equal(out_py_int[0], out_data)
+    profile_pipeline(p)
 
 
 def test_adder():
