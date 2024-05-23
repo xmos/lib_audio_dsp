@@ -15,6 +15,7 @@ from audio_dsp.stages.signal_chain import VolumeControl, FixedGain, Delay
 from audio_dsp.stages.compressor import CompressorRMS
 from audio_dsp.stages.reverb import ReverbRoom
 from audio_dsp.stages.fir import FirDirect
+from audio_dsp.design.host_app import set_host_app
 
 import audio_dsp.dsp.utils as utils
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
@@ -118,6 +119,7 @@ def do_test(make_p, tune_p, dut_frame_size):
     audio_helpers.write_wav(infile, rate, sig)
 
     out_py_int_all = [generate_ref(sig, p.stages[2].dsp_block, pipeline_channels, fr) for p, fr in zip(ref_p, TEST_FRAME_SIZES)]
+    set_host_app("../host_cmd_map/build/xvf_host")
     profile_pipeline(dut_p)
 
     for target in [ "default", "control_commands"]:
