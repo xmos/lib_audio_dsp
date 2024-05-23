@@ -475,6 +475,7 @@ class volume_control(dspg.dsp_block):
         n_chans: int,
         gain_db: float = -6,
         slew_shift: int = 7,
+        mute: bool = 0,
         Q_sig: int = dspg.Q_SIG,
     ) -> None:
         super().__init__(fs, n_chans, Q_sig)
@@ -482,6 +483,8 @@ class volume_control(dspg.dsp_block):
         # set the initial target gains
         self.mute_state = False
         self.set_gain(gain_db)
+        if mute:
+            self.mute()
 
         # initial applied gain can be equal to target until target changes
         self.gain_db = self.target_gain_db

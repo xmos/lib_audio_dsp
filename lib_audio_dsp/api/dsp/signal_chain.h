@@ -152,7 +152,8 @@ int32_t adsp_saturate_32b(int64_t acc);
  */
 volume_control_t adsp_volume_control_init(
   float gain_dB,
-  int32_t slew_shift);
+  int32_t slew_shift,
+  uint8_t mute);
 
 /**
  * @brief Process a new sample with a volume control
