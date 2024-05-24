@@ -67,7 +67,7 @@ def int32(val: float) -> int:
     if -(2**31) <= val <= (2**31 - 1):
         return int(val)
     else:
-        warnings.warn("Overflow occured", OverflowWarning)
+        warnings.warn("Overflow occurred", OverflowWarning)
         return int(((val + 2**31) % (2**32)) - (2**31))
 
 
@@ -77,10 +77,10 @@ def saturate_float(val: float, Q_sig: int) -> float:
     if min_flt <= val <= max_flt:
         return val
     elif val < min_flt:
-        warnings.warn("Saturation occured", SaturationWarning)
+        warnings.warn("Saturation occurred", SaturationWarning)
         return min_flt
     else:
-        warnings.warn("Saturation occured", SaturationWarning)
+        warnings.warn("Saturation occurred", SaturationWarning)
         return max_flt
 
 
@@ -89,7 +89,7 @@ def saturate_float_array(val: np.ndarray, Q_sig: int) -> np.ndarray:
     min_flt = -(2 ** (31 - Q_sig))
 
     if np.any(val < min_flt) or np.any(val > max_flt):
-        warnings.warn("Saturation occured", SaturationWarning)
+        warnings.warn("Saturation occurred", SaturationWarning)
 
     val[val > max_flt] = max_flt
     val[val < min_flt] = min_flt
@@ -102,10 +102,10 @@ def saturate_int32(val: float) -> int:
     if -(2**31) <= val <= (2**31 - 1):
         return int(val)
     elif val < -(2**31):
-        warnings.warn("Saturation occured", SaturationWarning)
+        warnings.warn("Saturation occurred", SaturationWarning)
         return int(-(2**31))
     else:
-        warnings.warn("Saturation occured", SaturationWarning)
+        warnings.warn("Saturation occurred", SaturationWarning)
         return int(2**31 - 1)
 
 
@@ -114,10 +114,10 @@ def saturate_int32_vpu(val: float) -> int:
     if -(2**31 - 1) <= val <= (2**31 - 1):
         return int(val)
     elif val < -(2**31 - 1):
-        warnings.warn("Saturation occured", SaturationWarning)
+        warnings.warn("Saturation occurred", SaturationWarning)
         return int(-(2**31 - 1))
     else:
-        warnings.warn("Saturation occured", SaturationWarning)
+        warnings.warn("Saturation occurred", SaturationWarning)
         return int(2**31 - 1)
 
 
@@ -158,10 +158,10 @@ def vpu_mult(x1: int, x2: int):
 def int32_mult_sat_extract(x1: int, x2: int, Q: int):
     y = int64(x1 * x2)
     if y > (2 ** (31 + Q) - 1):
-        warnings.warn("Saturation occured", SaturationWarning)
+        warnings.warn("Saturation occurred", SaturationWarning)
         y = 2 ** (31 + Q) - 1
     elif y < -(2 ** (31 + Q)):
-        warnings.warn("Saturation occured", SaturationWarning)
+        warnings.warn("Saturation occurred", SaturationWarning)
         y = -(2 ** (31 + Q))
     y = int32(y >> Q)
 
@@ -170,10 +170,10 @@ def int32_mult_sat_extract(x1: int, x2: int, Q: int):
 
 def saturate_int64_to_int32(x: int):
     if x > (2**31 - 1):
-        warnings.warn("Saturation occured", SaturationWarning)
+        warnings.warn("Saturation occurred", SaturationWarning)
         return 2**31 - 1
     elif x < -(2**31):
-        warnings.warn("Saturation occured", SaturationWarning)
+        warnings.warn("Saturation occurred", SaturationWarning)
         return -(2**31)
     else:
         return x
