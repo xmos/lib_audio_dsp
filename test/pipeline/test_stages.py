@@ -54,9 +54,9 @@ def generate_ref(sig, ref_module, pipeline_channels, frame_size):
             ref_module.process_frame_xcore(signal_frames[n])
         )
 
-    # back to int scaling
-    out_py_int = out_py * 2**31
-    print(frame_size, out_py_int)
+    # back to int scaling, and clip so that values are int32
+    out_py_int = np.clip(out_py * 2**31, -2**31, 2**31-1)
+
     return out_py_int
 
 
@@ -144,6 +144,8 @@ def do_test(make_p, tune_p, dut_frame_size):
             out_data = out_data.reshape(len(out_data), 1)
         for out_py_int, ref_frame_size in zip(out_py_int_all, TEST_FRAME_SIZES):
             for ch in range(pipeline_channels):
+                # Save Python tracks
+                audio_helpers.write_wav(outfile.replace(".wav", f"_python_ch{ch}.wav"), rate, np.array(out_py_int.T, dtype=np.int32))
                 diff = out_py_int.T[:, ch] - out_data[:, ch]
                 print(f"ch {ch}: max diff {max(abs(diff))}")
                 sol = (~np.equal(out_py_int.T, out_data)).astype(int)
@@ -583,7 +585,7 @@ def test_reverb(frame_size):
         rv.set_wet_gain(-1)
         rv.set_dry_gain(-2)
         rv.set_pre_gain(0.3)
-        rv.set_room_size(0.6)
+        rv.set_room_size(0.4)
         rv.set_damping(0.5)
         rv.set_decay(0.6)
 
