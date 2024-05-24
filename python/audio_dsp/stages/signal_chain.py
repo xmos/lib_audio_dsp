@@ -158,7 +158,7 @@ class VolumeControl(Stage):
 
     """
 
-    def __init__(self, gain_db=0, mute_state=0, **kwargs):
+    def __init__(self, gain_dB=0, mute_state=0, **kwargs):
         super().__init__(config=find_config("volume_control"), **kwargs)
         self.create_outputs(self.n_in)
         slew_shift = 7
