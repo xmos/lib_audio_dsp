@@ -746,21 +746,25 @@ def _generate_dsp_init(resolved_pipeline):
                     defaults[config_field] = str(value)
 
             if resolved_pipeline["modules"][stage_index]["constants_array"]:
+                ret += f"\tstatic {stage_name}_constants_t {stage_name}_{stage_index}_constants;\n"
                 this_dict = resolved_pipeline["modules"][stage_index]["constants_array"]
                 constant_names = []
+                const_struct = f"{stage_name}_{stage_index}_constants"
                 for key in this_dict:
                     this_array = this_dict[key]
                     this_constant_name = f"{stage_name}_{stage_index}_{key}"
                     if hasattr(this_array, "__len__"):
                         ret += f"\tstatic int32_t {this_constant_name}[] = {{{', '.join(map(str, this_array))}}};\n"
+                        ret += f"\t{const_struct}.{key} = {this_constant_name};\n"
                         constant_names.append(this_constant_name)
 
                     else:
-                        ret += f"\tstatic int32_t {this_constant_name} = {this_array};\n"
+                        # ret += f"\tstatic int32_t {this_constant_name} = {this_array};\n"
+                        ret += f"\t{const_struct}.{key} = {this_array};\n"
                         constant_names.append(f"&{this_constant_name}")
 
-                ret += f"\tstatic void* {stage_name}_{stage_index}_constants[] = {{{', '.join(constant_names)}}};\n"
-                ret += f"\t{adsp}.modules[{stage_index}].constants = {stage_name}_{stage_index}_constants;\n"
+                # ret += f"\tstatic void* {stage_name}_{stage_index}_constants[] = {{{', '.join(constant_names)}}};\n"
+                ret += f"\t{adsp}.modules[{stage_index}].constants = &{const_struct};\n"
 
             struct_val = ", ".join(f".{field} = {value}" for field, value in defaults.items())
             # default_str = f"&({stage_name}_config_t){{{struct_val}}}"
