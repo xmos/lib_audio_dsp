@@ -64,11 +64,11 @@ void fir_direct_init(module_instance_t* instance,
 
 void fir_direct_control(void *state, module_control_t *control)
 {
-    xassert(state != NULL);
-    fir_direct_state_t *fir_direct_state = state;
-    xassert(control != NULL);
+    // xassert(state != NULL);
+    // fir_direct_state_t *fir_direct_state = state;
+    // xassert(control != NULL);
     // fir_direct_config_t *fir_direct_config = control->config;
-    
+
     // xassert(fir_direct_config->n_taps <= fir_direct_state->max_taps);
 
     // if(control->config_rw_state == config_write_pending) {
