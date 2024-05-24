@@ -747,10 +747,20 @@ def _generate_dsp_init(resolved_pipeline):
 
             if resolved_pipeline["modules"][stage_index]["constants_array"]:
                 this_dict = resolved_pipeline["modules"][stage_index]["constants_array"]
+                constant_names = []
                 for key in this_dict:
                     this_array = this_dict[key]
-                    ret += f"\tstatic int32_t {key}[{len(this_array)}] = {{{', '.join(map(str, this_array))}}};\n"
-                    pass
+                    this_constant_name = f"{stage_name}_{key}"
+                    if hasattr(this_array, "__len__"):
+                        ret += f"\tstatic int32_t {this_constant_name}[] = {{{', '.join(map(str, this_array))}}};\n"
+                        constant_names.append(this_constant_name)
+
+                    else:
+                        ret += f"\tstatic int32_t {this_constant_name} = {this_array};\n"
+                        constant_names.append(f"&{this_constant_name}")
+
+                ret += f"\tstatic void* {stage_name}_constants[] = {{{', '.join(constant_names)}}};\n"
+                ret += f"\t{adsp}.modules[{stage_index}].constants = {stage_name}_constants;\n"
 
             struct_val = ", ".join(f".{field} = {value}" for field, value in defaults.items())
             # default_str = f"&({stage_name}_config_t){{{struct_val}}}"

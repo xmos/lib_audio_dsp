@@ -38,7 +38,8 @@ void fir_direct_init(module_instance_t* instance,
 {
     xassert(n_inputs == n_outputs && "fir_direct should have the same number of inputs and outputs");
     fir_direct_state_t *state = instance->state;
-    fir_direct_config_t *config = instance->control.config;
+    // fir_direct_config_t *config = instance->control.config;
+    void* constants = instance->constants;
 
     // // TODO temporary assert while n_taps is hard coded to 1024
     // xassert(config->n_taps <= 1024);
@@ -47,17 +48,17 @@ void fir_direct_init(module_instance_t* instance,
     state->n_inputs = n_inputs;
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
-    state->max_taps = config->n_taps;
-    xassert(config->n_taps <= state->max_taps);
+    state->max_taps = (int32_t)&constants[0];
+    // xassert(config->n_taps <= state->max_taps);
 
     state->fir_direct = ADSP_BUMP_ALLOCATOR_WORD_ALLIGNED_MALLOC(allocator, n_inputs * sizeof(fir_direct_t));
-    state->coeffs = config->coeffs;
-
+    state->coeffs = (int32_t*)&constants[2];
+    int32_t shift = (int32_t)&constants[1];
     for(int i = 0; i < n_inputs; i++)
     {
-        int32_t* temp = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
-        memset(temp, 0, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(config->n_taps));
-        filter_fir_s32_init(&(state->fir_direct[i].filter), temp, config->n_taps, state->coeffs, config->shift);
+        int32_t* temp = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(state->max_taps));
+        memset(temp, 0, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(state->max_taps));
+        filter_fir_s32_init(&(state->fir_direct[i].filter), temp, state->max_taps, state->coeffs, shift);
     }
 }
 
