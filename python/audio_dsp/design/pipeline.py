@@ -700,10 +700,10 @@ def _generate_dsp_init(resolved_pipeline):
 
     ret += f"\tstatic channel_t {adsp}_in_chans[{input_channels}];\n"
     ret += f"\tstatic channel_t {adsp}_out_chans[{output_channels}];\n"
-    ret += f"\tstatic channel_t {adsp}_link_chans[{link_channels}];\n"
+    ret += f"\tstatic const channel_t {adsp}_link_chans[{link_channels}];\n"
 
     num_modules = _resolved_pipeline_num_modules(resolved_pipeline)
-    ret += f"\tstatic module_instance_t {adsp}_modules[{num_modules}];\n"
+    ret += f"\tstatic const module_instance_t {adsp}_modules[{num_modules}];\n"
 
     # We assume that this function generates the arrays adsp_<x>_(in|out)_mux_cfgs
     # and that it will initialise the .(input|output)_mux members of adsp
@@ -804,7 +804,7 @@ def _generate_dsp_muxes(resolved_pipeline):
 
     input_chan_idx = 0
     num_input_mux_cfgs = 0
-    ret = f"\tstatic adsp_mux_elem_t {adsp}_in_mux_cfgs[] = {{\n"
+    ret = f"\tstatic const adsp_mux_elem_t {adsp}_in_mux_cfgs[] = {{\n"
     for thread_input_edges in all_in_edges:
         try:
             edges = thread_input_edges["pipeline_in"]
@@ -818,7 +818,7 @@ def _generate_dsp_muxes(resolved_pipeline):
 
     output_chan_idx = 0
     num_output_mux_cfgs = 0
-    ret += f"\tstatic adsp_mux_elem_t {adsp}_out_mux_cfgs[] = {{\n"
+    ret += f"\tstatic const adsp_mux_elem_t {adsp}_out_mux_cfgs[] = {{\n"
     for thread_output_edges in all_out_edges:
         try:
             edges = thread_output_edges["pipeline_out"]

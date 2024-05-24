@@ -35,6 +35,6 @@ void biquad_init(module_instance_t* instance,
                  int n_outputs,
                  int frame_size);
 
-void biquad_process(int32_t **input, int32_t **output, void *app_data_state);
+void biquad_process(int32_t **input, int32_t **output, void *app_data_state, int32_t frame_size, int32_t channels);
 
 void biquad_control(void *state, module_control_t *control);
