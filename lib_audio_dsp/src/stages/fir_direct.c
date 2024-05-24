@@ -40,8 +40,8 @@ void fir_direct_init(module_instance_t* instance,
     fir_direct_state_t *state = instance->state;
     fir_direct_config_t *config = instance->control.config;
 
-    // TODO temporary assert while n_taps is hard coded to 1024
-    xassert(config->n_taps <= 1024);
+    // // TODO temporary assert while n_taps is hard coded to 1024
+    // xassert(config->n_taps <= 1024);
 
     memset(state, 0, sizeof(fir_direct_state_t));
     state->n_inputs = n_inputs;
