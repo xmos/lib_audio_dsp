@@ -158,12 +158,10 @@ class VolumeControl(Stage):
 
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, gain_db=0, mute_state=0, **kwargs):
         super().__init__(config=find_config("volume_control"), **kwargs)
         self.create_outputs(self.n_in)
-        gain_dB = 0
         slew_shift = 7
-        mute_state = 0
         self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, mute_state)
         self.set_control_field_cb("target_gain", lambda: self.dsp_block.target_gain_int)
         self.set_control_field_cb("slew_shift", lambda: self.dsp_block.slew_shift)
