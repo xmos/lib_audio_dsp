@@ -67,23 +67,23 @@ void fir_direct_control(void *state, module_control_t *control)
     xassert(state != NULL);
     fir_direct_state_t *fir_direct_state = state;
     xassert(control != NULL);
-    fir_direct_config_t *fir_direct_config = control->config;
+    // fir_direct_config_t *fir_direct_config = control->config;
+    
+    // xassert(fir_direct_config->n_taps <= fir_direct_state->max_taps);
 
-    xassert(fir_direct_config->n_taps <= fir_direct_state->max_taps);
+    // if(control->config_rw_state == config_write_pending) {
 
-    if(control->config_rw_state == config_write_pending) {
+    //     // FIR cannot currently be updated, it must be set at init
+    // }
+    // else if(control->config_rw_state == config_read_pending) {
+    //     fir_direct_config->n_taps =  fir_direct_state->fir_direct[0].filter.num_taps;
+    //     fir_direct_config->shift = fir_direct_state->fir_direct[0].filter.shift;
+    //     memcpy(fir_direct_config->coeffs, fir_direct_state->coeffs, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(fir_direct_state->fir_direct[0].filter.num_taps));
 
-        // FIR cannot currently be updated, it must be set at init
-    }
-    else if(control->config_rw_state == config_read_pending) {
-        fir_direct_config->n_taps =  fir_direct_state->fir_direct[0].filter.num_taps;
-        fir_direct_config->shift = fir_direct_state->fir_direct[0].filter.shift;
-        memcpy(fir_direct_config->coeffs, fir_direct_state->coeffs, FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(fir_direct_state->fir_direct[0].filter.num_taps));
-
-        control->config_rw_state = config_read_updated;
-    }
-    else
-    {
-        // nothing to do
-    }
+    //     control->config_rw_state = config_read_updated;
+    // }
+    // else
+    // {
+    //     // nothing to do
+    // }
 }
