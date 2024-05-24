@@ -16,6 +16,16 @@ typedef struct
     int32_t* coeffs;
 }fir_direct_state_t;
 
+typedef struct
+{
+    int32_t n_taps;
+    int32_t shift;
+    int32_t* coeffs;
+}fir_direct_constants_t;
+
+
+
+
 #define FIR_DIRECT_STAGE_REQUIRED_MEMORY(N_CH, SAMPLES) \
     (((N_CH) * ADSP_BUMP_ALLOCATOR_DWORD_N_BYTES(FIR_DIRECT_DSP_REQUIRED_MEMORY_SAMPLES(SAMPLES))) \
      + ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N_CH * sizeof(fir_direct_t)))
