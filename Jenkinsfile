@@ -407,8 +407,7 @@ pipeline {
                 dir('lib_audio_dsp/host') {
                   withVS('vcvars32.bat') {
                     bat 'cmake -G "Ninja" -B build -DTESTING=ON'
-                    bat 'cd build'
-                    bat 'ninja'
+                    bat 'cd build && ninja'
                   }
                 }
               }
