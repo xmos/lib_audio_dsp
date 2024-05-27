@@ -156,6 +156,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 # Build device_control_host for XSCOPE
+if(NOT ${CMAKE_SYSTEM_PROCESSOR} STREQUAL armv7l)
+
 add_library(device_control_host_xscope INTERFACE)
 target_sources(device_control_host_xscope
     INTERFACE
@@ -194,4 +196,5 @@ target_link_libraries(device_xscope
         device_control_host_xscope
 )
 target_link_libraries(device_xscope PRIVATE -fPIC)
+endif()
 
