@@ -402,28 +402,27 @@ pipeline {
                 // build
                 dir('lib_audio_dsp/host') {
                   sh 'cmake -S .. && make -j4'
-                  stage ('Create Python enviroment') {
-                    steps {
-                      sh 'python3 -m venv .venv && source .venv/bin/activate && pip install pytest && pip install jinja2'
-                    }
-                  }
-                  stage ('Test') {
-                    steps {
-                      dir('lib_audio_dsp/host/test') {
-                        sh 'source ../../.venv/bin/activate && pytest -s'
-                      }
-                    }
-                  }
-                } // stages
-                post {
-                  cleanup {
-                    xcoreCleanSandbox()
-                  }
                 }
-              } // RPI Build & Test
+              }
+            stage ('Create Python enviroment') {
+              steps {
+                sh 'python3 -m venv .venv && source .venv/bin/activate && pip install pytest && pip install jinja2'
+              }
+            }
+            stage ('Test') {
+              steps {
+                dir('lib_audio_dsp/host/test') {
+                  sh 'source ../../.venv/bin/activate && pytest -s'
+                }
+              }
+            }
+          } // stages
+          post {
+            cleanup {
+              xcoreCleanSandbox()
             }
           }
-        }
+        } // RPI Build & Test
       } // parallel
     } // CI
   } // stages
