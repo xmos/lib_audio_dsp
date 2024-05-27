@@ -392,7 +392,7 @@ pipeline {
         } // Hardware test
 
         // Host app on Windows
-        stage ('Windows Host Build & Test') {
+        stage ('Win32 Host Build & Test') {
           agent {
             label 'sw-bld-win0'
           }
@@ -414,24 +414,27 @@ pipeline {
                 }
               }
             }
-            stage ('Create Python enviroment') {
-              steps {
-                createVenv("requirements.txt")
-                withVenv{
-                  bat 'pip install -r requirements.txt'
-                }
-              }
-            }
             stage ('Test') {
               steps {
-                withVenv{
-                  dir('release/test') {
-                    bat 'pytest -s'
+                dir("lib_audio_dsp") {
+                  createVenv("requirements.txt")
+                  withVenv{
+                    bat 'pip install -r requirements.txt'
+                  }
+                  withVenv{
+                    dir('test/host') {
+                      bat 'pytest -s'
+                    }
                   }
                 }
               }
             }
           } // stages
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
         }
         stage ('RPI Host Build & Test') {
           agent {
@@ -473,6 +476,45 @@ pipeline {
             }
           }
         } // RPI Build & Test
+        stage ('Linux x86_64 Host  Build & Test') {
+          agent {
+            label 'linux&&x86_64'
+            }
+          stages {
+            stage ('Build') {
+              steps {
+                runningOn(env.NODE_NAME)
+                // build
+                dir("lib_audio_dsp") {
+                  checkout scm
+                }
+                dir('lib_audio_dsp/host') {
+                  sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
+                }
+              }
+            }
+            stage ('Test') {
+              steps {
+                dir("lib_audio_dsp") {
+                  createVenv("requirements.txt")
+                  withVenv{
+                    bat 'pip install -r requirements.txt'
+                  }
+                  withVenv{
+                    dir('test/host') {
+                      bat 'pytest -s'
+                    }
+                  }
+                }
+              }
+            }
+          } // stages
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
+        } // Linux x86_64 Build & Test
       } // parallel
     } // CI
   } // stages
