@@ -138,7 +138,7 @@ as the structure of the pipeline has not changed, the configuration of the pipel
     from audio_dsp.design.host_app import set_host_app
     from audio_dsp.design.pipeline import send_config_to_device, profile_pipeline
 
-    set_host_app("path/to/xvf_host")  # pass the correct path to a host app here
+    set_host_app("path/to/dsp_host")  # pass the correct path to a host app here
 
 This will use the host application to send the configuration to the device whilst it is running. This will not update the generated code and therefore the
 device configuration will be lost when it is switched off. Rerun ``generate_dsp_main()`` in order to create an application with updated tuning parameters

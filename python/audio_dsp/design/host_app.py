@@ -7,7 +7,7 @@ import platform
 import subprocess
 
 
-HOST_APP = Path("xvf_host")
+HOST_APP = Path("dsp_host")
 PROTOCOL = "usb"
 PORT = None
 
