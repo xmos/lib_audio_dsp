@@ -515,7 +515,7 @@ pipeline {
                   }
                 }
               }
-            }2
+            }
           } // stages
           post {
             cleanup {
