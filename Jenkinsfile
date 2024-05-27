@@ -419,7 +419,6 @@ pipeline {
                 dir("lib_audio_dsp") {
                   createVenv("requirements.txt")
                   withVenv{
-                    bat 'pip install -r requirements.txt'
                     bat 'pip install jinja2'
                   }
                   withVenv{
@@ -462,7 +461,6 @@ pipeline {
                 dir("lib_audio_dsp") {
                   createVenv("requirements.txt")
                   withVenv{
-                    sh 'pip install -r requirements.txt'
                     sh 'pip install jinja2'
                   }
                   withVenv{
@@ -508,7 +506,7 @@ pipeline {
                   // This is needed to avoid the error:
                   // ModuleNotFoundError: No module named 'audio_dsp'
                   sh 'mv ../pytest.ini ../pytest.ini.bak'
-                  sh 'source ../../../.venv/bin/activate && pytest -s'
+                  sh 'source ../../.venv/bin/activate && pytest -s'
                 }
               }
             }
