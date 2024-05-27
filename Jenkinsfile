@@ -420,6 +420,7 @@ pipeline {
                   createVenv("requirements.txt")
                   withVenv{
                     bat 'pip install -r requirements.txt'
+                    bat 'pip install jinja2'
                   }
                   withVenv{
                     dir('test/host') {
@@ -436,6 +437,50 @@ pipeline {
             }
           }
         }
+
+        stage ('Linux x86_64 Host  Build & Test') {
+          agent {
+            label 'linux&&x86_64'
+            }
+          stages {
+            stage ('Build') {
+              steps {
+                runningOn(env.NODE_NAME)
+                // build
+                dir("lib_audio_dsp") {
+                  checkout scm
+                }
+                dir('lib_audio_dsp/host') {
+                  withTools(params.TOOLS_VERSION) {
+                    sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
+                  }
+                }
+              }
+            }
+            stage ('Test') {
+              steps {
+                dir("lib_audio_dsp") {
+                  createVenv("requirements.txt")
+                  withVenv{
+                    sh 'pip install -r requirements.txt'
+                    sh 'pip install jinja2'
+                  }
+                  withVenv{
+                    dir('test/host') {
+                      bat 'pytest -s'
+                    }
+                  }
+                }
+              }
+            }
+          } // stages
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
+        } // Linux x86_64 Build & Test
+
         stage ('RPI Host Build & Test') {
           agent {
             label 'armv7l&&raspian'
@@ -453,13 +498,11 @@ pipeline {
                 }
               }
             }
-            stage ('Create Python enviroment') {
-              steps {
-                sh 'python3 -m venv .venv && source .venv/bin/activate && pip install pytest-xdist && pip install pytest && pip install jinja2'
-              }
-            }
             stage ('Test') {
               steps {
+                dir('lib_audio_dsp') {
+                  sh 'python3 -m venv .venv && source .venv/bin/activate && pip install pytest-xdist && pip install pytest && pip install jinja2'
+                }
                 dir('lib_audio_dsp/test/host') {
                   // TODO: Check if we can avoid renaming the pytest.ini file
                   // This is needed to avoid the error:
@@ -476,45 +519,7 @@ pipeline {
             }
           }
         } // RPI Build & Test
-        stage ('Linux x86_64 Host  Build & Test') {
-          agent {
-            label 'linux&&x86_64'
-            }
-          stages {
-            stage ('Build') {
-              steps {
-                runningOn(env.NODE_NAME)
-                // build
-                dir("lib_audio_dsp") {
-                  checkout scm
-                }
-                dir('lib_audio_dsp/host') {
-                  sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
-                }
-              }
-            }
-            stage ('Test') {
-              steps {
-                dir("lib_audio_dsp") {
-                  createVenv("requirements.txt")
-                  withVenv{
-                    bat 'pip install -r requirements.txt'
-                  }
-                  withVenv{
-                    dir('test/host') {
-                      bat 'pytest -s'
-                    }
-                  }
-                }
-              }
-            }
-          } // stages
-          post {
-            cleanup {
-              xcoreCleanSandbox()
-            }
-          }
-        } // Linux x86_64 Build & Test
+
       } // parallel
     } // CI
   } // stages
