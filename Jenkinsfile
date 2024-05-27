@@ -298,7 +298,7 @@ pipeline {
           }
             steps {
               dir("lib_audio_dsp") {
-                checkout scm
+                checkout scMACm
               }
               createVenv("lib_audio_dsp/requirements.txt")
               dir("lib_audio_dsp") {
@@ -438,7 +438,7 @@ pipeline {
           }
         }
 
-        stage ('Linux x86_64 Host  Build & Test') {
+        stage ('Linux x86_64 Host Build & Test') {
           agent {
             label 'linux&&x86_64'
             }
@@ -480,6 +480,92 @@ pipeline {
             }
           }
         } // Linux x86_64 Build & Test
+
+        stage ('Mac x86_64 Host Build & Test') {
+          agent {
+            label 'macos&&x86_64'
+          }
+          stages {
+            stage ('Build') {
+              steps {
+                runningOn(env.NODE_NAME)
+                // build
+                dir("lib_audio_dsp") {
+                  checkout scm
+                }
+                dir('lib_audio_dsp/host') {
+                  withTools(params.TOOLS_VERSION) {
+                    sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
+                  }
+                }
+              }
+            }
+            stage ('Test') {
+              steps {
+                dir("lib_audio_dsp") {
+                  createVenv("requirements.txt")
+                  withVenv{
+                    sh 'pip install -r requirements.txt'
+                    sh 'pip install jinja2'
+                  }
+                  withVenv{
+                    dir('test/host') {
+                      sh 'pytest -s'
+                    }
+                  }
+                }
+              }
+            }2
+          } // stages
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
+        } // Mac x86_64 Build & Test
+
+        stage ('Mac arm64 Host Build & Test') {
+          agent {
+            label 'macos&&arm64'
+          }
+          stages {
+            stage ('Build') {
+              steps {
+                runningOn(env.NODE_NAME)
+                // build
+                dir("lib_audio_dsp") {
+                  checkout scm
+                }
+                dir('lib_audio_dsp/host') {
+                  withTools(params.TOOLS_VERSION) {
+                    sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
+                  }
+                }
+              }
+            }
+            stage ('Test') {
+              steps {
+                dir("lib_audio_dsp") {
+                  createVenv("requirements.txt")
+                  withVenv{
+                    sh 'pip install -r requirements.txt'
+                    sh 'pip install jinja2'
+                  }
+                  withVenv{
+                    dir('test/host') {
+                      sh 'pytest -s'
+                    }
+                  }
+                }
+              }
+            }
+          } // stages
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
+        } // Mac arm64 host build & test
 
         stage ('RPI Host Build & Test') {
           agent {
