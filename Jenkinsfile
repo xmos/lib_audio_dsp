@@ -401,18 +401,18 @@ pipeline {
                 runningOn(env.NODE_NAME)
                 // build
                 dir('lib_audio_dsp/host') {
-                  sh 'cmake -S .. && make -j4'
+                  sh 'cmake -S . -DTESTING=ON && make -j4'
                 }
               }
             }
             stage ('Create Python enviroment') {
               steps {
-                sh 'python3 -m venv .venv && source .venv/bin/activate && pip install pytest && pip install jinja2'
+                sh 'python3 -m venv .venv && source .venv/bin/activate && pip install pytest-xdist && pip install pytest && pip install jinja'
               }
             }
             stage ('Test') {
               steps {
-                dir('lib_audio_dsp/host/test') {
+                dir('lib_audio_dsp/test/host') {
                   sh 'source ../../.venv/bin/activate && pytest -s'
                 }
               }

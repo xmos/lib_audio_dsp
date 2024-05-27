@@ -1,4 +1,4 @@
-# Copyright 2023 XMOS LIMITED.
+# Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XCORE VocalFusion Licence.
 
 import test_utils
@@ -32,7 +32,7 @@ def test_dummy_commands():
 
     with open(test_dir / 'test_buf.bin', 'w'):
         pass
-    
+
     for i in range(num_frames):
         vals = test_utils.gen_rand_array('float', -2147483648, 2147483647)
         single_command_test(host_bin, control_protocol, test_dir, float_cmd, vals)

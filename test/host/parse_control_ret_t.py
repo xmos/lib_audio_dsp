@@ -1,4 +1,4 @@
-# Copyright 2023 XMOS LIMITED.
+# Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XCORE VocalFusion Licence.
 import re
 import sys
@@ -27,7 +27,7 @@ def parse_control_ret_t(file_dev_ctrl_h):
         if struct_found is False or save_struct:
             print(f"Error: control_ret_t enum in {file_dev_ctrl_h} is not formatted correctly")
             assert False
-    
+
     ## Step 1: Parse into a {'enum_str':value} dictionary
     prev = -1
     enum_dict = {}

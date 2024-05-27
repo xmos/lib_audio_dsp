@@ -1,4 +1,4 @@
-// Copyright 2023 XMOS LIMITED.
+// Copyright 2024 XMOS LIMITED.
 // This Software is subject to the terms of the XCORE VocalFusion Licence.
 
 #include <stdlib.h>
@@ -46,12 +46,12 @@ struct cmd_t
     bool hidden_cmd;
 };
 
-/** 
+/**
  * @brief Structure that keeps information needed to range check a single value
- * 
+ *
  * @note All values are inclusive
  */
-struct val_range_t 
+struct val_range_t
 {
     /** Pointer to the array of intervals */
     cmd_param_t * ranges;

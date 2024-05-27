@@ -1,4 +1,4 @@
-// Copyright 2023 XMOS LIMITED.
+// Copyright 2024 XMOS LIMITED.
 // This Software is subject to the terms of the XCORE VocalFusion Licence.
 
 /*********************************/
@@ -6,7 +6,7 @@
 /*********************************/
 
 // control_ret_t enum value to enum string mapping
-const char *control_ret_str_map[] = 
+const char *control_ret_str_map[] =
 {
 {% for i in str_map %}
     "{{i}}",

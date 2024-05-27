@@ -1,4 +1,4 @@
-# Copyright 2023 XMOS LIMITED.
+# Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XCORE VocalFusion Licence.
 
 from pathlib import Path
@@ -30,9 +30,12 @@ def get_dummy_files():
     host_bin = "dsp_host" + bin_suffix
     cmd_map_so = dl_prefix + "command_map"
     device_so = dl_prefix + "device_"
-    local_build_folder = Path(__file__).parents[1] / "build"
-    build_dir = local_build_folder if local_build_folder.is_dir() else Path(__file__).parents[1]
-    test_dir = build_dir / "test"
+    local_build_folder = Path(__file__).parents[2] / "host/build"
+    build_dir = local_build_folder # local_build_folder if local_build_folder.is_dir() else Path(__file__).parent
+    test_dir = Path(__file__).parent
+    #Path(test_dir).mkdir(parents=True, exist_ok=True)
+    print("\n\n\n\n"+str(build_dir))
+    print(test_dir)
     host_bin_path = build_dir / host_bin
     host_bin_copy = test_dir / host_bin
     cmd_map_dummy_path = test_dir / (cmd_map_so + "_dummy" + dl_suffix)
