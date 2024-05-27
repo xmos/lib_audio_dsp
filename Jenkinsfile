@@ -391,6 +391,46 @@ pipeline {
           }
         } // Hardware test
 
+        // Host app on Windows
+        stage ('Windows Host Build & Test') {
+          agent {
+            label 'sw-bld-win0'
+          }
+          stages {
+            stage ('Build') {
+              steps {
+                runningOn(env.NODE_NAME)
+                // build
+                dir("lib_audio_dsp") {
+                  checkout scm
+                }
+                dir('lib_audio_dsp/host') {
+                  withVS('vcvars32.bat') {
+                    bat 'cmake -G "Ninja" -S .. -DTESTING=ON'
+                    bat 'ninja'
+                  }
+                }
+              }
+            }
+            stage ('Create Python enviroment') {
+              steps {
+                createVenv("requirements.txt")
+                withVenv{
+                  bat 'pip install -r requirements.txt'
+                }
+              }
+            }
+            stage ('Test') {
+              steps {
+                withVenv{
+                  dir('release/test') {
+                    bat 'pytest -s'
+                  }
+                }
+              }
+            }
+          } // stages
+        }
         stage ('RPI Host Build & Test') {
           agent {
             label 'armv7l&&raspian'
@@ -419,7 +459,7 @@ pipeline {
                   // TODO: Check if we can avoid renaming the pytest.ini file
                   // This is needed to avoid the error:
                   // ModuleNotFoundError: No module named 'audio_dsp'
-                  sh 'mv ../pyest.ini ../pytest.ini.bak'
+                  sh 'mv ../pytest.ini ../pytest.ini.bak'
                   sh 'source ../../.venv/bin/activate && pytest -s'
                 }
               }
