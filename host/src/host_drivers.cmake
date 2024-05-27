@@ -157,7 +157,8 @@ endif()
 
 # Build device_control_host for XSCOPE
 # Exclude Raspbian and arm64 macOS
-if(NOT ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "armv7l" AND NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64")))
+if (NOT ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "armv7l" AND
+    NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64"))
 
 add_library(device_control_host_xscope INTERFACE)
 target_sources(device_control_host_xscope
