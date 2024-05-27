@@ -404,18 +404,22 @@ pipeline {
                   checkout scm
                 }
                 dir('lib_audio_dsp/host') {
-                  sh 'cmake -S . -DTESTING=ON && make -j4'
+                  sh 'cmake -S . -B build -DTESTING=ON && cd build && make -j4'
                 }
               }
             }
             stage ('Create Python enviroment') {
               steps {
-                sh 'python3 -m venv .venv && source .venv/bin/activate && pip install pytest-xdist && pip install pytest && pip install jinja'
+                sh 'python3 -m venv .venv && source .venv/bin/activate && pip install pytest-xdist && pip install pytest && pip install jinja2'
               }
             }
             stage ('Test') {
               steps {
                 dir('lib_audio_dsp/test/host') {
+                  // TODO: Check if we can avoid renaming the pytest.ini file
+                  // This is needed to avoid the error:
+                  // ModuleNotFoundError: No module named 'audio_dsp'
+                  sh 'mv ../pyest.ini ../pytest.ini.bak'
                   sh 'source ../../.venv/bin/activate && pytest -s'
                 }
               }

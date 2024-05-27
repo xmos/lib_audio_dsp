@@ -19,6 +19,7 @@ class Command
         /** @brief Command information */
         cmd_t cmd;
 
+        /* @bried Instance ID of the DSP stage */
         uint8_t instance_id;
 
     public:

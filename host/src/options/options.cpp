@@ -235,7 +235,7 @@ control_ret_t print_command_list()
     size_t longest_command = 0;
     size_t longest_rw = 10; // READ/WRITE
     size_t longest_args = 2; // double digits
-    size_t longest_type = 7; // radians
+    size_t longest_type = 6; // uint32
     size_t longest_info = 0;
     for(size_t i = 0; i < num_commands; i ++)
     {

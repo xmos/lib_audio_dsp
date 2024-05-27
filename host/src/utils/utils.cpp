@@ -250,17 +250,11 @@ void print_read_result(cmd_t cmd, cmd_param_t *cmd_values)
         cmd_param_t val = cmd_values[i];
         switch(type)
         {
-        case TYPE_CHAR:
-            std::cout << static_cast<char>(val.ui8);
-            break;
         case TYPE_UINT8:
             std::cout << static_cast<int>(val.ui8) << " ";
             break;
         case TYPE_FLOAT:
             std::cout << std::setprecision(7) << val.f << " ";
-            break;
-        case TYPE_RADIANS:
-            std::cout << std::setprecision(5) << std::fixed << val.f << std::setprecision(2) << std::fixed << " (" << val.f  * 180.0f / M_PI << " deg)" << " ";
             break;
         case TYPE_INT32:
             std::cout << val.i32 << " ";

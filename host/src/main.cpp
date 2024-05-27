@@ -53,8 +53,6 @@ int main(int argc, char ** argv)
     dl_handle_t device_handle = get_dynamic_lib(device_dl_path);
     int * device_init_info = get_device_init_info(cmd_map_handle, device_dl_name);
 
-    //print_args_fptr print_args = get_print_args_fptr(cmd_map_handle);
-    //check_range_fptr check_range = get_check_range_fptr(cmd_map_handle);
     device_fptr make_dev = get_device_fptr(device_handle);
 
     vector<string> device_host_args = get_device_host_arg(&argc, argv, device_dl_name); // Device related args that are passed through the command line on the host. For example, --port for control over xscope

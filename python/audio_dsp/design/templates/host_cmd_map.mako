@@ -9,7 +9,7 @@ static cmd_t commands[] =
     %for field_name, field_data in data.items():
 <%
     field_data["size"] = field_data["size"] if "size" in field_data else 1
-    cmd_type = {'int32_t': 'TYPE_INT32', 'int16_t': 'TYPE_INT16', 'int8_t': 'TYPE_CHAR', 'uint8_t': 'TYPE_UINT8', 'float': 'TYPE_FLOAT', 'int': 'TYPE_INT32', 'uint32_t': 'TYPE_UINT32', 'float_s32_t': 'TYPE_INT32'}
+    cmd_type = {'int32_t': 'TYPE_INT32', 'int16_t': 'TYPE_INT16', 'uint8_t': 'TYPE_UINT8', 'float': 'TYPE_FLOAT', 'int': 'TYPE_INT32', 'uint32_t': 'TYPE_UINT32', 'float_s32_t': 'TYPE_INT32'}
 %>\
  {0xff, "${name.upper()}_${field_name.upper()}", ${cmd_type[field_data["type"]]}, CMD_${name.upper()}_${field_name.upper()}, CMD_READ_WRITE, NUM_VALUES_${name.upper()}_${field_name.upper()}, "add help string", false},
     %endfor

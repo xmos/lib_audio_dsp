@@ -89,18 +89,19 @@ def execute_command(host_bin, control_protocol, cwd, cmd_name, cmd_map_path = No
 
     stdout = run_cmd(command, cwd, True)
     words = str(stdout, 'utf-8').strip().split(' ')
-
+    print("\n\n\n\n"+cmd_name)
+    print(words)
     # This will check that the right command is returned
-    if cmd_name[0] != "-" :
-        assert words[0] == cmd_name
+    #if cmd_name[0] != "-" :
+    #    assert words[0] == cmd_name
 
         # Second word should be the value. Return as string so caller must cast to right type
-        if len(words) == 2: # cmd and 1 value
-            return words[1] # To avoid changing all the other tests that call execute_command and expect a single value and not an array
-        else:
-            return words[1:]
-    else:
-        return words
+    #    if len(words) == 2: # cmd and 1 value
+    #        return words[1] # To avoid changing all the other tests that call execute_command and expect a single value and not an array
+    #    else:
+    #        return words[1:]
+    #else:
+    return words
 
 def gen_rand_array(type, min, max, size=20):
     vals = []

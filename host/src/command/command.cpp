@@ -8,8 +8,6 @@ using namespace std;
 Command::Command(Device * _dev, dl_handle_t _handle, uint8_t _instance_id) :
     device(_dev), instance_id(_instance_id)
 {
-    //print_args = get_print_args_fptr(_handle);
-    //check_range = get_check_range_fptr(_handle);
     control_ret_t ret = device->device_init();
     if (ret != CONTROL_SUCCESS)
     {

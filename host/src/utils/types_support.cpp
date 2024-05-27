@@ -14,9 +14,6 @@ string command_param_type_name(const cmd_param_type_t type)
 
     switch (type)
     {
-    case TYPE_CHAR:
-        tstr = "char";
-        break;
 
     case TYPE_UINT8:
         tstr = "uint8";
@@ -34,10 +31,6 @@ string command_param_type_name(const cmd_param_type_t type)
         tstr = "float";
         break;
 
-    case TYPE_RADIANS:
-        tstr = "radians";
-        break;
-
     default:
         cerr << "Unsupported parameter type" << endl;
         exit(HOST_APP_ERROR);
@@ -52,10 +45,6 @@ cmd_param_t cmd_arg_str_to_val(const cmd_param_type_t type, const char * str)
     try{
         switch(type)
         {
-        case TYPE_CHAR:
-            cerr << "TYPE_CHAR commands can only be READ_ONLY" << endl;
-            exit(HOST_APP_ERROR);
-
         case TYPE_UINT8:
         {
             int32_t tmp = stoi(str, nullptr, 0);
@@ -75,7 +64,6 @@ cmd_param_t cmd_arg_str_to_val(const cmd_param_type_t type, const char * str)
             break;
 
         case TYPE_FLOAT:
-        case TYPE_RADIANS:
             val.f = stof(str);
             break;
 
@@ -104,14 +92,12 @@ size_t get_num_bytes_from_type(const cmd_param_type_t type)
     size_t num_bytes;
     switch(type)
     {
-    case TYPE_CHAR:
     case TYPE_UINT8:
         num_bytes = 1;
         break;
     case TYPE_INT32:
     case TYPE_UINT32:
     case TYPE_FLOAT:
-    case TYPE_RADIANS:
         num_bytes = 4;
         break;
     default:

@@ -27,9 +27,8 @@ enum cmd_rw_t {CMD_RO, CMD_WO, CMD_RW};
  * @brief Enum for supported param types
  *
  * @note Add new cmd_param_type's to the end of the list.
- * @note TYPE_CHAR can only be READ ONLY.
  */
-enum cmd_param_type_t {TYPE_CHAR, TYPE_UINT8, TYPE_INT32, TYPE_FLOAT, TYPE_UINT32, TYPE_RADIANS};
+enum cmd_param_type_t {TYPE_UINT8, TYPE_INT32, TYPE_FLOAT, TYPE_UINT32};
 
 /** @brief Union for supporting different command param types */
 union cmd_param_t {uint8_t ui8; int32_t i32; float f; uint32_t ui32;};
@@ -166,12 +165,6 @@ using device_fptr = Device * (*)(int *, std::vector<std::string>);
 /** Function pointer for getting the information to initialise a device */
 using device_info_fptr = int * (*)();
 
-/** Function pointer that prints different argument types */
-using print_args_fptr = void (*)(const std::string, cmd_param_t *);
-
-/** Function pointer to get the range check info */
-using check_range_fptr = void (*)(const std::string, const cmd_param_t *);
-
 /**
  * @brief Get the function pointer to get_num_commands()
  *
@@ -228,13 +221,6 @@ device_fptr get_device_fptr(dl_handle_t handle);
  * @param symbol Name of the function to lookup
  */
 device_info_fptr get_device_info_fptr(dl_handle_t handle, const std::string symbol);
-
-/**
- * @brief Get the function pointer to super_print_arg()
- *
- * @param handle Pointer to the device shared object
- */
-print_args_fptr get_print_args_fptr(dl_handle_t handle);
 
 /** @brief Get param type name string */
 std::string command_param_type_name(const cmd_param_type_t type);
