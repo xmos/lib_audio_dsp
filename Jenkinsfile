@@ -405,9 +405,11 @@ pipeline {
                   checkout scm
                 }
                 dir('lib_audio_dsp/host') {
-                  withVS('vcvars32.bat') {
-                    bat 'cmake -G "Ninja" -B build -DTESTING=ON'
-                    bat 'cd build && ninja'
+                  withTools(params.TOOLS_VERSION) {
+                    withVS('vcvars32.bat') {
+                      bat 'cmake -G "Ninja" -B build -DTESTING=ON'
+                      bat 'cd build && ninja'
+                    }
                   }
                 }
               }
@@ -460,7 +462,7 @@ pipeline {
                   // This is needed to avoid the error:
                   // ModuleNotFoundError: No module named 'audio_dsp'
                   sh 'mv ../pytest.ini ../pytest.ini.bak'
-                  sh 'source ../../.venv/bin/activate && pytest -s'
+                  sh 'source ../../../.venv/bin/activate && pytest -s'
                 }
               }
             }
