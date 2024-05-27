@@ -405,6 +405,7 @@ pipeline {
                   checkout scm
                 }
                 dir('lib_audio_dsp/host') {
+                  // Enable the XTC tools for xSCOPE
                   withTools(params.TOOLS_VERSION) {
                     withVS('vcvars32.bat') {
                       bat 'cmake -G "Ninja" -B build -DTESTING=ON'
@@ -419,6 +420,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   createVenv("requirements.txt")
                   withVenv{
+                    // Enable the XTC tools for xSCOPE
                     withTools(params.TOOLS_VERSION) {
                       bat 'pip install -r requirements.txt'
                       bat 'pip install jinja2'
@@ -438,8 +440,9 @@ pipeline {
               xcoreCleanSandbox()
             }
           }
-        }
+        }// Windows
 
+        // Host app on Linux
         stage ('Linux x86_64 Host Build & Test') {
           agent {
             label 'linux&&x86_64'
@@ -453,6 +456,7 @@ pipeline {
                   checkout scm
                 }
                 dir('lib_audio_dsp/host') {
+                  // Enable the XTC tools for xSCOPE
                   withTools(params.TOOLS_VERSION) {
                     sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
                   }
@@ -464,6 +468,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   createVenv("requirements.txt")
                   withVenv{
+                    // Enable the XTC tools for xSCOPE
                     withTools(params.TOOLS_VERSION) {
                       sh 'pip install -r requirements.txt'
                       sh 'pip install jinja2'
@@ -483,8 +488,9 @@ pipeline {
               xcoreCleanSandbox()
             }
           }
-        } // Linux x86_64 Build & Test
+        } // Linux x86_64
 
+        // Host app on Max x86_64
         stage ('Mac x86_64 Host Build & Test') {
           agent {
             label 'macos&&x86_64'
@@ -498,6 +504,7 @@ pipeline {
                   checkout scm
                 }
                 dir('lib_audio_dsp/host') {
+                  // Enable the XTC tools for xSCOPE
                   withTools(params.TOOLS_VERSION) {
                     sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
                   }
@@ -509,6 +516,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   createVenv("requirements.txt")
                   withVenv{
+                    // Enable the XTC tools for xSCOPE
                     withTools(params.TOOLS_VERSION) {
                       sh 'pip install -r requirements.txt'
                       sh 'pip install jinja2'
@@ -528,8 +536,9 @@ pipeline {
               xcoreCleanSandbox()
             }
           }
-        } // Mac x86_64 Build & Test
+        } // Mac x86_64
 
+        // Host app on Max arm64
         stage ('Mac arm64 Host Build & Test') {
           agent {
             label 'macos&&arm64'
@@ -554,10 +563,10 @@ pipeline {
                 dir("lib_audio_dsp") {
                   createVenv("requirements.txt")
                   withVenv{
-                    //withTools(params.TOOLS_VERSION) {
-                    //  sh 'pip install -r requirements.txt'
-                      sh 'pip install pytest && pip install jinja2'
-                    //}
+                    withTools(params.TOOLS_VERSION) {
+                      sh 'pip install -r requirements.txt'
+                      sh 'pip install jinja2'
+                    }
                   }
                   withVenv{
                     dir('test/host') {
@@ -573,8 +582,9 @@ pipeline {
               xcoreCleanSandbox()
             }
           }
-        } // Mac arm64 host build & test
+        } // Mac arm64
 
+        // Host app on Raspbian
         stage ('RPI Host Build & Test') {
           agent {
             label 'armv7l&&raspian'
@@ -612,7 +622,7 @@ pipeline {
               xcoreCleanSandbox()
             }
           }
-        } // RPI Build & Test
+        } // Raspbian
 
       } // parallel
     } // CI

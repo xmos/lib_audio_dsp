@@ -3,24 +3,32 @@ DSP HOST
 ========
 
 DSP host is a host control reference application.
-It can be used with products in the Audio DSP product family.
+It can be used with products integrated with Audio DSP.
 
 ********
 Building
 ********
 
-Build with cmake from the dsp_host_control/ folder:
+Build with cmake from the lib_audio_dsp/host folder:
+
+.. note::
+
+    Windows, Linux and macOS x86_64 need the XTC tools enabled.
+    For these platforms the drivers for the xSCOPE protocol are built.
+    These drivers require a library included in the XTC tools.
 
 - on Linux and Mac
 
 .. code-block:: console
 
+    # Enable the XTC tools, except for macOS arm64
     cmake -B build && cd build && make
 
 - on Windows
 
 .. code-block:: console
 
+    # Enable the XTC tools
     # building with VS tools
     cmake -G Ninja -B build && cd build && ninja
 
@@ -63,6 +71,8 @@ To find out use cases and more information about the application use:
 Supported platforms and control protocols
 *****************************************
 
+.. note:: Only the platforms that support the
+
 - Raspberry Pi - arm7l (32-bit)
     - dsp_host
     - libdevice_i2c.so
@@ -79,7 +89,6 @@ Supported platforms and control protocols
 - Mac - arm64
     - dsp_host
     - libdevice_usb.dylib
-    - libdevice_xscope.dylib
 - Windows - x86 (32-bit)
     - dsp_host.exe
     - device_usb.dll
