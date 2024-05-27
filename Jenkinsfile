@@ -404,6 +404,7 @@ pipeline {
                   sh 'cmake -S .. && make -j4'
                 }
               }
+            }
             stage ('Create Python enviroment') {
               steps {
                 sh 'python3 -m venv .venv && source .venv/bin/activate && pip install pytest && pip install jinja2'
