@@ -406,7 +406,8 @@ pipeline {
                 }
                 dir('lib_audio_dsp/host') {
                   withVS('vcvars32.bat') {
-                    bat 'cmake -G "Ninja" -S .. -DTESTING=ON'
+                    bat 'cmake -G "Ninja" -B build -DTESTING=ON'
+                    bat 'cd build'
                     bat 'ninja'
                   }
                 }
@@ -444,7 +445,7 @@ pipeline {
                   checkout scm
                 }
                 dir('lib_audio_dsp/host') {
-                  sh 'cmake -S . -B build -DTESTING=ON && cd build && make -j4'
+                  sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
                 }
               }
             }
