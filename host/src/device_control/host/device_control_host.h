@@ -46,6 +46,72 @@ control_ret_t control_init_xscope(const char *host_str, const char *port_str);
 control_ret_t control_cleanup_xscope(void);
 #endif
 
+#if USE_I2C || __DOXYGEN__
+/** Initialize the I2C host (master) interface
+ *
+ *  \param i2c_slave_address    I2C address of the slave (controlled device)
+ *
+ *  \returns                    Whether the initialization was successful or not
+ */
+control_ret_t control_init_i2c(unsigned char i2c_slave_address);
+/** Shutdown the I2C host (master) interface connection
+ *
+ *  \returns           Whether the shutdown was successful or not
+ */
+control_ret_t control_cleanup_i2c(void);
+#endif
+
+#if USE_USB || __DOXYGEN__
+/** Initialize the USB host interface
+ *
+ *  \param vendor_id     Vendor ID of controlled USB device
+ *  \param product_id    Product ID of controlled USB device
+ *  \param interface_num USB Control interface number of controlled device
+ *
+ *  \returns           Whether the initialization was successful or not
+ */
+control_ret_t control_init_usb(int vendor_id, int product_id, int interface_num);
+/** Shutdown the USB host interface connection
+ *
+ *  \returns           Whether the shutdown was successful or not
+ */
+control_ret_t control_cleanup_usb(void);
+#endif
+
+#if USE_SPI || __DOXYGEN__
+#if RPI || __DOXYGEN__
+#include "bcm2835.h"
+/** Initialize the SPI host (master) interface for the Raspberry Pi
+ *
+ *  \param spi_mode             Mode that the SPI will run in
+ *  \param clock_divider        The amount to divide the Raspberry Pi's clock by, e.g.
+ *                              BCM2835_SPI_CLOCK_DIVIDER_1024 gives a clock of ~122kHz
+ *                              on the RPI 2.
+ *  \param intertransaction_delay Delay in nanoseconds that will be applied between each
+ *                                spi transaction. This is implemented with nanosleep() from
+ *                                time.h.
+ *
+ *  \returns                    Whether the initialization was successful or not
+ */
+control_ret_t control_init_spi_pi(spi_mode_t spi_mode, bcm2835SPIClockDivider clock_divider, long intertransation_delay_ns);
+#else
+/** Initialize the SPI host (master) interface
+ *
+ *  \param spi_mode             Mode that the SPI will run in
+ *  \param spi_bitrate          Bitrate for SPI to run at
+ *  \param delay_for_read       Delay between send and recieve for read command
+ *
+ *  \returns                    Whether the initialization was successful or not
+ */
+control_ret_t control_init_spi(spi_mode_t spi_mode, int spi_bitrate, unsigned delay_for_read);
+#endif // RPI || __DOXYGEN__
+/** Shutdown the SPI host (master) interface connection
+ *
+ *  \returns           Whether the shutdown was successful or not
+ */
+control_ret_t control_cleanup_spi(void);
+#endif
+
 #if (!USE_USB && !USE_I2C && !USE_SPI && !USE_XSCOPE)
 #error "Please specify transport for device control using USE_xxx define in build file"
 #error "Eg. -DUSE_I2C=1 or -DUSE_USB=1 or -DUSE_SPI=1 or -DUSE_XSCOPE=1"
