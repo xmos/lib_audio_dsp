@@ -400,6 +400,9 @@ pipeline {
               steps {
                 runningOn(env.NODE_NAME)
                 // build
+                dir("lib_audio_dsp") {
+                  checkout scm
+                }
                 dir('lib_audio_dsp/host') {
                   sh 'cmake -S . -DTESTING=ON && make -j4'
                 }
