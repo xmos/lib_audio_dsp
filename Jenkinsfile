@@ -419,6 +419,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   createVenv("requirements.txt")
                   withVenv{
+                    bat 'pip install -r requirements.txt'
                     bat 'pip install jinja2'
                   }
                   withVenv{
@@ -461,11 +462,12 @@ pipeline {
                 dir("lib_audio_dsp") {
                   createVenv("requirements.txt")
                   withVenv{
+                    sh 'pip install -r requirements.txt'
                     sh 'pip install jinja2'
                   }
                   withVenv{
                     dir('test/host') {
-                      bat 'pytest -s'
+                      sh 'pytest -s'
                     }
                   }
                 }
