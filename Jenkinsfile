@@ -298,7 +298,7 @@ pipeline {
           }
             steps {
               dir("lib_audio_dsp") {
-                checkout scMACm
+                checkout scm
               }
               createVenv("lib_audio_dsp/requirements.txt")
               dir("lib_audio_dsp") {
@@ -554,10 +554,10 @@ pipeline {
                 dir("lib_audio_dsp") {
                   createVenv("requirements.txt")
                   withVenv{
-                    withTools(params.TOOLS_VERSION) {
-                      sh 'pip install -r requirements.txt'
-                      sh 'pip install jinja2'
-                    }
+                    //withTools(params.TOOLS_VERSION) {
+                    //  sh 'pip install -r requirements.txt'
+                      sh 'pip install pytest && pip install jinja2'
+                    //}
                   }
                   withVenv{
                     dir('test/host') {

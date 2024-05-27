@@ -13,13 +13,13 @@
 using namespace std;
 
 opt_t options[] = {
-    {"--help",                    "-h",        "display this information"                                                                       },
-    {"--version",                 "-v",        "print the current version of this application",                                                 },
-    {"--list-commands",           "-l",        "print list of the available commands"                                                           },
-    {"--use",                     "-u",        "use specific hardware protocol, I2C, SPI and USB are available to use"                          },
-    {"--command-map-path",        "-cmp",      "use specific command map path, the path is relative to the working dir"                         },
-    {"--instance-id",             "-i",        "Module instance ID that the control command is directed to"                                     },
-    {"--port",                    "-p",        "port number on which to connect to the device when doing control over xscope"}
+    {"--help",                    "-h",        "Display this information"                                                                                                                       },
+    {"--version",                 "-v",        "Print the current version of this application",                                                                                                 },
+    {"--list-commands",           "-l",        "Print list of the available commands"                                                                                                           },
+    {"--use",                     "-u",        "Use specific hardware protocol: xSCOPE, USB, I2C and SPI are available to use. Check documentation  for the supported protocol of each platform"},
+    {"--command-map-path",        "-cmp",      "Use specific command map path, the path is relative to the working dir"                                                                         },
+    {"--instance-id",             "-i",        "Module instance ID that the control command is directed to"                                                                                     },
+    {"--port",                    "-p",        "Port number on which to connect to the device when doing control over xscope"}
 };
 size_t num_options = end(options) - begin(options);
 
