@@ -110,9 +110,8 @@ string get_device_lib_name(int * argc, char ** argv)
         }
         else
         {
-            // Using I2C by default for now as USB is currently not supported
             cout << "Could not find " << to_upper(protocol_name) << " in supported protocols"
-            << endl << "Will use I2C by default" << endl;
+            << endl << "Will use XSCOPE by default" << endl;
         }
         remove_opt(argc, argv, index, 2);
         return lib_name;
