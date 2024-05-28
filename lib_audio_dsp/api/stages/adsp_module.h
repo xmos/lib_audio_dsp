@@ -40,5 +40,6 @@ typedef struct
 {
     void *state;    ///< Pointer to the module's state memory.
     module_control_t control;  ///< Module's control state.
+    void *constants;
 }module_instance_t;
 
