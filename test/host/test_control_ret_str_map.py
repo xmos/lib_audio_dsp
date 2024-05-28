@@ -1,5 +1,5 @@
 # Copyright 2024 XMOS LIMITED.
-# This Software is subject to the terms of the XCORE VocalFusion Licence.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 ## Autogenerate the control_ret_t string mapping from the device_control_shared.h file and check that
 ## it's the same as what's committed in src/utils/control_ret_str_map.h
