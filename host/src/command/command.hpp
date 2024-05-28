@@ -1,5 +1,5 @@
 // Copyright 2024 XMOS LIMITED.
-// This Software is subject to the terms of the XCORE VocalFusion Licence.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #ifndef COMMAND_CLASS_H_
 #define COMMAND_CLASS_H_
