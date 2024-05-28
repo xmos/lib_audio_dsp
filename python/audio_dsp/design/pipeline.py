@@ -298,7 +298,9 @@ class Pipeline:
             node.index: {
                 "name": node.name,
                 "yaml_dict": node.yaml_dict,
-                "constants_array": node._constant_arrays,
+                "constants": node._constants,
+                "constants_types": node._constants_types,
+
             }
             for node in self._graph.nodes
         }
@@ -745,25 +747,25 @@ def _generate_dsp_init(resolved_pipeline):
                 else:
                     defaults[config_field] = str(value)
 
-            if resolved_pipeline["modules"][stage_index]["constants_array"]:
+            if resolved_pipeline["modules"][stage_index]["constants"]:
                 ret += f"\tstatic {stage_name}_constants_t {stage_name}_{stage_index}_constants;\n"
-                this_dict = resolved_pipeline["modules"][stage_index]["constants_array"]
-                constant_names = []
+                this_dict = resolved_pipeline["modules"][stage_index]["constants"]
+                this_dict_types = resolved_pipeline["modules"][stage_index]["constants_types"]
+
                 const_struct = f"{stage_name}_{stage_index}_constants"
                 for key in this_dict:
                     this_array = this_dict[key]
                     this_constant_name = f"{stage_name}_{stage_index}_{key}"
                     if hasattr(this_array, "__len__"):
-                        ret += f"\tstatic int32_t {this_constant_name}[] = {{{', '.join(map(str, this_array))}}};\n"
+                        # if an array/list, code the array then add the pointer to the const_struct
+                        ret += f"\tstatic {this_dict_types[key]} {this_constant_name}[] = {{{', '.join(map(str, this_array))}}};\n"
                         ret += f"\t{const_struct}.{key} = {this_constant_name};\n"
-                        constant_names.append(this_constant_name)
 
                     else:
-                        # ret += f"\tstatic int32_t {this_constant_name} = {this_array};\n"
+                        # if a scalar, just hard code into const_struct
                         ret += f"\t{const_struct}.{key} = {this_array};\n"
-                        constant_names.append(f"&{this_constant_name}")
 
-                # ret += f"\tstatic void* {stage_name}_{stage_index}_constants[] = {{{', '.join(constant_names)}}};\n"
+                # point the module.constants to the const_struct instance
                 ret += f"\t{adsp}.modules[{stage_index}].constants = &{const_struct};\n"
 
             struct_val = ", ".join(f".{field} = {value}" for field, value in defaults.items())
