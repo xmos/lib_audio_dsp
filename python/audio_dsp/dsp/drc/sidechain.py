@@ -285,7 +285,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
 
-    def process_channels(self, input_samples: list[float], detect_samples: list[float]):  # type: ignore
+    def process_channels(self, input_samples: list[float], detect_samples: list[float]):  # type: ignore : override base class
         """
         Update the envelopes for a detection signal, then calculate and
         apply the required gain for compression/limiting to the input,
@@ -305,7 +305,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
         # calculate the gain, this function should be defined by the
         # child class
-        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # type: ignore
+        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # type: ignore : base inits to None
 
         # see if we're attacking or decaying
         if new_gain < self.gain:
@@ -320,7 +320,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         y = self.gain * input_samples
         return y, new_gain, envelope
 
-    def process_channels_xcore(  # type: ignore
+    def process_channels_xcore(  # type: ignore : override base class
         self, input_samples: list[float], detect_samples: list[float]
     ):
         """
@@ -349,7 +349,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)  # type: ignore
+        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)  # type: ignore : base inits to None
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int:

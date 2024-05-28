@@ -362,7 +362,7 @@ class compressor_limiter_base(dspg.dsp_block):
         out_gains = np.zeros_like(gains_lin)
 
         for n in range(len(out_gains)):
-            out_gains[n] = self.gain_calc(gains_lin[n], self.threshold, self.slope)  # pyright: ignore
+            out_gains[n] = self.gain_calc(gains_lin[n], self.threshold, self.slope)  # pyright: ignore : function handles inits to None
 
         out_gains_db = utils.db(out_gains) + in_gains_db
 
@@ -388,7 +388,7 @@ class compressor_limiter_base(dspg.dsp_block):
                 utils.int32(round(gains_lin[n] * 2**self.Q_sig)),
                 self.threshold_int,
                 self.slope_f32,
-            )  # pyright: ignore
+            )  # pyright: ignore : base inits to None
             out_gains[n] = float(out_gains[n]) * 2**-31
 
         out_gains_db = utils.db(out_gains) + in_gains_db
@@ -406,13 +406,13 @@ class compressor_limiter_base(dspg.dsp_block):
 
         """
         # get envelope from envelope detector
-        envelope = self.env_detector.process(sample, channel)  # type: ignore
+        envelope = self.env_detector.process(sample, channel)  # type: ignore : base inits to None
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
         # calculate the gain, this function should be defined by the
         # child class
-        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # type: ignore
+        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # pyright: ignore : base inits to None
 
         # see if we're attacking or decaying
         if new_gain < self.gain[channel]:
@@ -427,7 +427,7 @@ class compressor_limiter_base(dspg.dsp_block):
         y = self.gain[channel] * sample
         return y, new_gain, envelope
 
-    def process_xcore(self, sample: float, channel=0, return_int=False):  # pyright: ignore
+    def process_xcore(self, sample: float, channel=0, return_int=False):  # pyright: ignore : overload base class
         """
         Update the envelope for a signal, then calculate and apply the
         required gain for compression/limiting, using int32 fixed point
@@ -439,13 +439,13 @@ class compressor_limiter_base(dspg.dsp_block):
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
         # get envelope from envelope detector
-        envelope_int = self.env_detector.process_xcore(sample_int, channel)  # pyright: ignore
+        envelope_int = self.env_detector.process_xcore(sample_int, channel)  # pyright: ignore : base inits to None
         # avoid /0
         envelope_int = max(envelope_int, 1)
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)  # pyright: ignore
+        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)  # pyright: ignore : base inits to None
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int[channel]:

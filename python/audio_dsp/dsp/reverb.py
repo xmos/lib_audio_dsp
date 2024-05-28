@@ -73,7 +73,7 @@ class allpass_fv(dspg.dsp_block):
         self._buffer_int = [0] * self._max_delay
         return
 
-    def process(self, sample):  # type: ignore
+    def process(self, sample):  # type: ignore : overloads base class
         """
         Apply an all pass filter to a signal, using floating point maths.
 
@@ -92,7 +92,7 @@ class allpass_fv(dspg.dsp_block):
 
         return output
 
-    def process_xcore(self, sample_int):  # type: ignore
+    def process_xcore(self, sample_int):  # type: ignore : overloads base class
         """
         Apply an all pass filter to a signal, using fixed point maths.
 
@@ -171,7 +171,7 @@ class comb_fv(dspg.dsp_block):
         self._filterstore = 0.0
         self._filterstore_int = 0
 
-    def process(self, sample):  # type: ignore
+    def process(self, sample):  # type: ignore : overloads base class
         """
         Apply a comb filter to a signal, using floating point maths.
 
@@ -191,7 +191,7 @@ class comb_fv(dspg.dsp_block):
 
         return output
 
-    def process_xcore(self, sample_int):  # type: ignore
+    def process_xcore(self, sample_int):  # type: ignore : overloads base class
         """
         Apply a comb filter to a signal, using fixed point maths.
 

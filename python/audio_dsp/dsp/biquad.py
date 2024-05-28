@@ -7,7 +7,7 @@ from copy import deepcopy
 
 import numpy as np
 import numpy.typing as npt
-import scipy.signal as spsig  # type: ignore
+import scipy.signal as spsig
 import matplotlib.pyplot as plt
 from docstring_inheritance import inherit_numpy_docstring
 
