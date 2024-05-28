@@ -18,7 +18,7 @@ enum cmd_rw_t {CMD_RO, CMD_WO, CMD_RW};
  * @note Add new cmd_param_type's to the end of the list.
  * @note TYPE_CHAR can only be READ ONLY.
  */
-enum cmd_param_type_t {TYPE_CHAR, TYPE_UINT8, TYPE_INT32, TYPE_FLOAT, TYPE_UINT32, TYPE_RADIANS};
+enum cmd_param_type_t {TYPE_CHAR, TYPE_UINT8, TYPE_INT32, TYPE_FLOAT, TYPE_UINT32};
 
 
 union cmd_param_t {uint8_t ui8; int32_t i32; float f; uint32_t ui32;};
@@ -139,44 +139,6 @@ extern "C"
 const int * get_info_i2c()
 {
     return &dummy_info;
-}
-
-void print_arg_local(const cmd_param_type_t type, const cmd_param_t val)
-{
-    switch(type)
-    {
-    case TYPE_CHAR:
-        std::cout << "HERE\n\n\n\n";
-        std::cout << static_cast<char>(val.ui8);
-        break;
-    case TYPE_UINT8:
-        std::cout << static_cast<int>(val.ui8) << " ";
-        break;
-    case TYPE_FLOAT:
-        std::cout << std::setprecision(7) << val.f << " ";
-        break;
-    case TYPE_INT32:
-        std::cout << val.i32 << " ";
-        break;
-    case TYPE_UINT32:
-        std::cout << val.ui32 << " ";
-        break;
-    default:
-        std::cerr << "Unsupported parameter type" << std::endl;
-        exit(-1);
-    }
-}
-
-extern "C"
-void super_print_arg(const std::string cmd_name, cmd_param_t *values)
-{
-    cmd_t * cmd = &commands[get_cmd_index(cmd_name)];
-    std::cout << cmd->cmd_name << " ";
-    for(unsigned i = 0; i < cmd->num_values; i++)
-    {
-        print_arg_local(cmd->type, values[i]);
-    }
-    std::cout << std::endl;
 }
 
 void print_arg_stderr(const cmd_param_type_t type, const cmd_param_t val)
