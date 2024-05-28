@@ -10,6 +10,7 @@ int32_cmd = "CMD_INT32"
 uint32_cmd = "CMD_UINT32"
 rads_cmd = "CMD_RADS"
 uint8_cmd = "CMD_UINT8"
+char_cmd = "CMD_CHAR"
 small_cmd = "CMD_SMALL"
 
 def single_command_test(host_bin, control_protocol, cwd, cmd_name, cmd_vals):
@@ -44,3 +45,8 @@ def test_dummy_commands():
 
         vals = test_utils.gen_rand_array('int', 0, 255)
         single_command_test(host_bin, control_protocol, test_dir, uint8_cmd, vals)
+
+        output = test_utils.execute_command(host_bin, control_protocol, test_dir, char_cmd)
+        sentence = " ".join(str(word) for word in output)
+
+        assert sentence == "Hello New World!\0\0\0\0"

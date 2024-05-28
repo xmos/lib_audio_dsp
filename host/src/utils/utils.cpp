@@ -250,6 +250,9 @@ void print_read_result(cmd_t cmd, cmd_param_t *cmd_values)
         cmd_param_t val = cmd_values[i];
         switch(type)
         {
+        case TYPE_CHAR:
+            std::cout << static_cast<char>(val.ui8);
+        break;
         case TYPE_UINT8:
             std::cout << static_cast<int>(val.ui8) << " ";
             break;
@@ -266,6 +269,6 @@ void print_read_result(cmd_t cmd, cmd_param_t *cmd_values)
             std::cerr << "Unsupported parameter type" << std::endl;
             exit(-1);
         }
-        std::cout << std::endl;
     }
+    std::cout << std::endl;
 }

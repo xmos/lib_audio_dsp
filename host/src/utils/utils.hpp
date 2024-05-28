@@ -27,8 +27,9 @@ enum cmd_rw_t {CMD_RO, CMD_WO, CMD_RW};
  * @brief Enum for supported param types
  *
  * @note Add new cmd_param_type's to the end of the list.
+ * @note TYPE_CHAR can only be READ ONLY.
  */
-enum cmd_param_type_t {TYPE_UINT8, TYPE_INT32, TYPE_FLOAT, TYPE_UINT32};
+enum cmd_param_type_t {TYPE_CHAR, TYPE_UINT8, TYPE_INT32, TYPE_FLOAT, TYPE_UINT32};
 
 /** @brief Union for supporting different command param types */
 union cmd_param_t {uint8_t ui8; int32_t i32; float f; uint32_t ui32;};

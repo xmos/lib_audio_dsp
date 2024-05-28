@@ -14,6 +14,9 @@ string command_param_type_name(const cmd_param_type_t type)
 
     switch (type)
     {
+    case TYPE_CHAR:
+        tstr = "char";
+        break;
 
     case TYPE_UINT8:
         tstr = "uint8";
@@ -45,6 +48,10 @@ cmd_param_t cmd_arg_str_to_val(const cmd_param_type_t type, const char * str)
     try{
         switch(type)
         {
+        case TYPE_CHAR:
+            cerr << "TYPE_CHAR commands can only be READ_ONLY" << endl;
+            exit(HOST_APP_ERROR);
+
         case TYPE_UINT8:
         {
             int32_t tmp = stoi(str, nullptr, 0);
@@ -92,6 +99,7 @@ size_t get_num_bytes_from_type(const cmd_param_type_t type)
     size_t num_bytes;
     switch(type)
     {
+    case TYPE_CHAR:
     case TYPE_UINT8:
         num_bytes = 1;
         break;
