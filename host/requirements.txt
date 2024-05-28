@@ -1,7 +1,0 @@
-# python_version 3.10.8
-# pip_version 22.*
-
-matplotlib
-numpy
-pytest
-jinja2
