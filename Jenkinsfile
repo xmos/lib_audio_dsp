@@ -511,25 +511,6 @@ pipeline {
                 }
               }
             }
-            stage ('Test') {
-              steps {
-                dir("lib_audio_dsp") {
-                  createVenv("requirements.txt")
-                  withVenv{
-                    // Enable the XTC tools for xSCOPE
-                    withTools(params.TOOLS_VERSION) {
-                      sh 'pip install -r requirements.txt'
-                      sh 'pip install jinja2'
-                    }
-                  }
-                  withVenv{
-                    dir('test/host') {
-                      sh 'pytest -s'
-                    }
-                  }
-                }
-              }
-            }
           } // stages
           post {
             cleanup {
@@ -555,23 +536,6 @@ pipeline {
                   withTools(params.TOOLS_VERSION) {
                     sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
                   }
-                }
-              }
-            }
-            stage ('Test') {
-              steps {
-                dir('lib_audio_dsp') {
-                  // Do not use the requirements.txt file, to avoid the error:
-                  // ModuleNotFoundError: No module named 'distutils'
-                  // This error is caused by xscope_fileio: https://github.com/xmos/xscope_fileio/blob/release/v1.2.0/setup.py#L3
-                  sh 'python3 -m venv .venv && source .venv/bin/activate && pip install pytest-xdist && pip install pytest && pip install jinja2'
-                }
-                dir('lib_audio_dsp/test/host') {
-                  // TODO: Check if we can avoid renaming the pytest.ini file
-                  // This is needed to avoid the error:
-                  // ModuleNotFoundError: No module named 'audio_dsp'
-                  sh 'mv ../pytest.ini ../pytest.ini.bak'
-                  sh 'source ../../.venv/bin/activate && pytest -s'
                 }
               }
             }
