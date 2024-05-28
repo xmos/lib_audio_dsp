@@ -16,7 +16,7 @@ opt_t options[] = {
     {"--help",                    "-h",        "Display this information"                                                                                                                       },
     {"--version",                 "-v",        "Print the current version of this application",                                                                                                 },
     {"--list-commands",           "-l",        "Print list of the available commands"                                                                                                           },
-    {"--use",                     "-u",        "Use specific hardware protocol: xSCOPE, USB, I2C and SPI are available to use. Check documentation  for the supported protocol of each platform"},
+    {"--use",                     "-u",        "Use specific hardware protocol: xSCOPE and USB are available to use. Check documentation  for the supported protocol of each platform"},
     {"--command-map-path",        "-cmp",      "Use specific command map path, the path is relative to the working dir"                                                                         },
     {"--instance-id",             "-i",        "Module instance ID that the control command is directed to"                                                                                     },
     {"--port",                    "-p",        "Port number on which to connect to the device when doing control over xscope"}
@@ -92,15 +92,7 @@ string get_device_lib_name(int * argc, char ** argv)
     else
     {
         string protocol_name = argv[index + 1];
-        if (to_upper(protocol_name) == "I2C")
-        {
-            lib_name = device_i2c_dl_name;
-        }
-        else if (to_upper(protocol_name) == "SPI")
-        {
-            lib_name = device_spi_dl_name;
-        }
-        else if (to_upper(protocol_name) == "USB")
+        if (to_upper(protocol_name) == "USB")
         {
             lib_name = device_usb_dl_name;
         }

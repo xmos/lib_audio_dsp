@@ -546,47 +546,6 @@ pipeline {
             }
           }
         } // Mac arm64
-
-        // Host app on Raspbian
-        stage ('RPI Host Build & Test') {
-          agent {
-            label 'armv7l&&raspian'
-          }
-          stages {
-            stage ('Build') {
-              steps {
-                runningOn(env.NODE_NAME)
-                // build
-                dir("lib_audio_dsp") {
-                  checkout scm
-                }
-                dir('lib_audio_dsp/host') {
-                  sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
-                }
-              }
-            }
-            stage ('Test') {
-              steps {
-                dir('lib_audio_dsp') {
-                  sh 'python3 -m venv .venv && source .venv/bin/activate && pip install pytest-xdist && pip install pytest && pip install jinja2'
-                }
-                dir('lib_audio_dsp/test/host') {
-                  // TODO: Check if we can avoid renaming the pytest.ini file
-                  // This is needed to avoid the error:
-                  // ModuleNotFoundError: No module named 'audio_dsp'
-                  sh 'mv ../pytest.ini ../pytest.ini.bak'
-                  sh 'source ../../.venv/bin/activate && pytest -s'
-                }
-              }
-            }
-          } // stages
-          post {
-            cleanup {
-              xcoreCleanSandbox()
-            }
-          }
-        } // Raspbian
-
       } // parallel
     } // CI
   } // stages

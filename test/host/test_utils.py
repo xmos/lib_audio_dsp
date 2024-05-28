@@ -9,7 +9,7 @@ import subprocess
 from random import randint, random
 
 def get_dummy_files():
-    control_protocol = "i2c"
+    control_protocol = "xscope"
     dl_prefix = ""
     dl_suffix = ""
     bin_suffix = ""

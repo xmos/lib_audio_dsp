@@ -135,12 +135,6 @@ uint32_t get_num_commands()
 
 static const int dummy_info = 0x74736574;    // 'test' in ascii
 
-extern "C"
-const int * get_info_i2c()
-{
-    return &dummy_info;
-}
-
 void print_arg_stderr(const cmd_param_type_t type, const cmd_param_t val)
 {
     switch(type)

@@ -73,11 +73,6 @@ Supported platforms and control protocols
 
 .. note:: Only the platforms that support the
 
-- Raspberry Pi - arm7l (32-bit)
-    - dsp_host
-    - libdevice_i2c.so
-    - libdevice_spi.so
-    - libdevice_usb.so
 - Linux - x86_64
     - dsp_host
     - libdevice_usb.so

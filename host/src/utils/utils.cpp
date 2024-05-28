@@ -40,15 +40,7 @@ string to_lower(string str)
 int * get_device_init_info(dl_handle_t handle, string lib_name)
 {
     string symbol;
-    if(lib_name == device_i2c_dl_name)
-    {
-        symbol = "get_info_i2c";
-    }
-    else if(lib_name == device_spi_dl_name)
-    {
-        symbol = "get_info_spi";
-    }
-    else if(lib_name == device_usb_dl_name)
+    if(lib_name == device_usb_dl_name)
     {
         symbol = "get_info_usb";
     }
