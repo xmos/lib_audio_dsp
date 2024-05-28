@@ -300,7 +300,6 @@ class Pipeline:
                 "yaml_dict": node.yaml_dict,
                 "constants": node._constants,
                 "constants_types": node._constants_types,
-
             }
             for node in self._graph.nodes
         }

@@ -298,7 +298,15 @@ class Stage(Node):
             For arrays, only the type of the individual elements is
             required.
         """
-        if value_type not in ["int32_t", 'int16_t', 'int8_t', 'uint8_t', 'float', 'int', 'uint32_t']:
+        if value_type not in [
+            "int32_t",
+            "int16_t",
+            "int8_t",
+            "uint8_t",
+            "float",
+            "int",
+            "uint32_t",
+        ]:
             raise TypeError(f"{value_type} not in supported Stage constant value_types")
 
         if not isinstance(value, (int, float, numpy.ndarray, list)):
