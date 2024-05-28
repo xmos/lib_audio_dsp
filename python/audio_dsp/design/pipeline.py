@@ -299,7 +299,6 @@ class Pipeline:
                 "name": node.name,
                 "yaml_dict": node.yaml_dict,
                 "constants": node._constants,
-                "constants_types": node._constants_types,
             }
             for node in self._graph.nodes
         }
@@ -749,7 +748,6 @@ def _generate_dsp_init(resolved_pipeline):
             if resolved_pipeline["modules"][stage_index]["constants"]:
                 ret += f"\tstatic {stage_name}_constants_t {stage_name}_{stage_index}_constants;\n"
                 this_dict = resolved_pipeline["modules"][stage_index]["constants"]
-                this_dict_types = resolved_pipeline["modules"][stage_index]["constants_types"]
 
                 const_struct = f"{stage_name}_{stage_index}_constants"
                 for key in this_dict:
@@ -757,7 +755,7 @@ def _generate_dsp_init(resolved_pipeline):
                     this_constant_name = f"{stage_name}_{stage_index}_{key}"
                     if hasattr(this_array, "__len__"):
                         # if an array/list, code the array then add the pointer to the const_struct
-                        ret += f"\tstatic {this_dict_types[key]} {this_constant_name}[] = {{{', '.join(map(str, this_array))}}};\n"
+                        ret += f"\tstatic typeof(({stage_name}_constants_t){{}}.{key}[0]) {this_constant_name}[] = {{{', '.join(map(str, this_array))}}};\n"
                         ret += f"\t{const_struct}.{key} = {this_constant_name};\n"
 
                     else:

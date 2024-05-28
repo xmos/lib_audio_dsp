@@ -210,7 +210,6 @@ class Stage(Node):
             self.yaml_dict = None
 
         self._constants = {}
-        self._constants_types = {}
 
         self.label = label
 
@@ -293,22 +292,8 @@ class Stage(Node):
             name of the field
         value : ndarray or int or float or list
             value of the constant. This can be an array or scalar
-        type : str
-            A string of the C type the constant requires, e.g. "int32_t".
-            For arrays, only the type of the individual elements is
-            required.
-        """
-        if value_type not in [
-            "int32_t",
-            "int16_t",
-            "int8_t",
-            "uint8_t",
-            "float",
-            "int",
-            "uint32_t",
-        ]:
-            raise TypeError(f"{value_type} not in supported Stage constant value_types")
 
+        """
         if not isinstance(value, (int, float, numpy.ndarray, list)):
             raise TypeError(f"Type {type(value)} not a supported Stage constant value format")
 
@@ -316,7 +301,6 @@ class Stage(Node):
             raise TypeError(f"Only 1D numpy arrays can be set as Stage constants")
 
         self._constants[field] = value
-        self._constants_types[field] = value_type
 
     def get_config(self):
         """Get a dictionary containing the current value of the control
