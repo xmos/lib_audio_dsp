@@ -89,7 +89,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         self.gain = 1
         self.gain_int = 2**31 - 1
 
-    def process(self, input_sample: float, detect_sample: float):  # type: ignore
+    def process(self, input_sample: float, detect_sample: float):  # type: ignore : overloading base class
         """
         Update the envelope for the detection signal, then calculate and
         apply the required gain for compression/limiting, and apply to
@@ -98,6 +98,13 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.
 
+        Parameters
+        ----------
+        input_sample : float
+            The input sample to be compressed.
+        detect_sample : float
+            The sample used by the envelope detector to determine the
+            amount of compression to apply to the input_sample.
         """
         # get envelope from envelope detector
         envelope = self.env_detector.process(detect_sample)
@@ -121,7 +128,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         y = self.gain * input_sample
         return y, new_gain, envelope
 
-    def process_xcore(self, input_sample: float, detect_sample: float):  # type: ignore
+    def process_xcore(self, input_sample: float, detect_sample: float):  # type: ignore : overloading base class
         """
         Update the envelope for the detection signal, then calculate and
         apply the required gain for compression/limiting, and apply to
@@ -129,6 +136,14 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.
+
+        Parameters
+        ----------
+        input_sample : float
+            The input sample to be compressed.
+        detect_sample : float
+            The sample used by the envelope detector to determine the
+            amount of compression to apply to the input_sample.
 
         """
         # quantize

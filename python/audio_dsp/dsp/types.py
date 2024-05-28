@@ -125,7 +125,7 @@ class float_s32:
         if Q_sig and isinstance(value, float):
             self.mant = utils.int32(round(value * 2**Q_sig))
             self.exp = -Q_sig
-        elif isinstance(value, float) or isinstance(value, np.float32):  # type: ignore
+        elif isinstance(value, (float, np.float32)):
             self.mant, self.exp = math.frexp(value)
             self.mant = utils.float_to_int32(self.mant)
             self.exp -= 31
@@ -255,7 +255,7 @@ class float_s32:
 
     def __float__(self):
         """Cast a float_s32 to native Python float64.
-        Add 31 here python expects a float mantissa < 1, but we use utils.int32.
+        Add 31 here; Python expects a float mantissa < 1, but we use utils.int32.
         """
         assert isinstance(self.mant, int)
         return math.ldexp(utils.int32_to_float(self.mant), self.exp + 31)

@@ -43,7 +43,7 @@ def db2gain(input):
 
 
 def db2gain_f32(input):
-    """Convert from decibels to amplitude in float32(10^(x/20))."""
+    """Convert from decibels to amplitude in float32 (10^(x/20))."""
     out = float32(10) ** (float32(input) / float32(20))
     return out
 
@@ -72,12 +72,12 @@ def leq_smooth(x, fs, T):
 def envelope(x, N=None):
     """Calculate the envelope of a signal using the Hilbert transform."""
     y = spsig.hilbert(x, N)
-    return np.abs(y)  # pyright: ignore
+    return np.abs(y)  # pyright: ignore, not sure why pyright hates this
 
 
 def int32(val: float) -> int:
     """32 bit integer type.
-    Intergers in python are larger than 64b, so checks the value is
+    Integers in Python are larger than 64b, so checks the value is
     within the valid range.
     This function overflows if val is outside the range of int32.
     """
@@ -133,7 +133,7 @@ def saturate_int32(val: int) -> int:
 
 
 def saturate_int32_vpu(val: int) -> int:
-    """Symetrically saturate int32 to ±int32max. This emulates XS3 VPU
+    """Symmetrically saturate int32 to ±int32max. This emulates XS3 VPU
     saturation.
     """
     if -(2**31 - 1) <= val <= (2**31 - 1):
@@ -149,7 +149,7 @@ def saturate_int32_vpu(val: int) -> int:
 def int34(val: float):
     """34 bit integer type. This is used in the VPU multiplication
     product after shifting, before accumulating into an int40.
-    Intergers in python are larger than 64b, so checks the value is
+    Integers in Python are larger than 64b, so checks the value is
     within the valid range.
     """
     if -(2**33) <= val <= (2**33 - 1):
@@ -159,7 +159,7 @@ def int34(val: float):
 
 def int64(val: float):
     """64 bit integer type.
-    Intergers in python are larger than 64b, so checks the value is
+    Integers in Python are larger than 64b, so checks the value is
     within the valid range.
     """
     if -(2**63) <= val <= (2**63 - 1):
@@ -169,7 +169,7 @@ def int64(val: float):
 
 def int40(val: int):
     """40 bit integer type. This emulates the XS3 VPU accumulators.
-    Intergers in python are larger than 64b, so checks the value is
+    Integers in Python are larger than 64b, so checks the value is
     within the valid range.
     """
     if -(2**39) <= val <= (2**39 - 1):
@@ -178,8 +178,10 @@ def int40(val: int):
 
 
 def uq_2_30(val: int):
-    """Unsigned Q2.30 integer format, used by EWM.
-    Intergers in python are larger than int64, so checks the value is
+    """Unsigned Q2.30 integer format, used by EWM (exponentially
+    weighted moving average).
+
+    Integers in Python are larger than int64, so checks the value is
     within the valid range.
     """
     if 0 <= val < (2**32):
@@ -230,7 +232,7 @@ def saturate_int64_to_int32(x: int):
 
 
 def vlmaccr(vect1, vect2, out=0):
-    """Multiply accumulate 2 int32 vectors into an int40 result.
+    """Multiply-accumulate 2 int32 vectors into an int40 result.
     This emulates the XS3 VPU behaviour.
     """
     for val1, val2 in zip(vect1, vect2):
@@ -247,7 +249,7 @@ def float_to_int32(x, Q_sig=31) -> int:
 
 
 def int32_to_float(x: int, Q_sig: int = 31) -> float:
-    """Convert an int32 number to floating point, given it's Q format."""
+    """Convert an int32 number to floating point, given its Q format."""
     # Note this means the max value is 0.99999999953
     return float(x) / float(2**Q_sig)
 
@@ -267,7 +269,7 @@ def ashr32(x, shr):
 
 
 def float_s32_ema(x: float_s32, y: float_s32, alpha: int):
-    """Calculate the exponential moving average of a float_32.
+    """Calculate the exponential moving average of a float_s32.
     This is an implementation of float_s32_ema in lib_xcore_math.
     """
     t = float_s32([alpha, -30])
@@ -279,16 +281,16 @@ def float_s32_ema(x: float_s32, y: float_s32, alpha: int):
 
 
 def float_s32_to_fixed(val: float_s32, out_exp: int):
-    """Convert a float_32 value to fixed point. Shift the mantissa of by
-    the difference between the current expoent and the desired exponent
-    to get the correct fixed point scaling.
+    """Convert a float_32 value to fixed point. Shift the mantissa of
+    val by the difference between the current expoent and the desired
+    exponent to get the correct fixed point scaling.
     """
     shr = out_exp - val.exp
     return ashr32(val.mant, shr)
 
 
 def float_s32_use_exp(val: float_s32, out_exp: int):
-    """Set the exponent of a float_32 to a specific value."""
+    """Set the exponent of a float_s32 to a specific value."""
     val.mant = float_s32_to_fixed(val, out_exp)
     val.exp = out_exp
     return val
