@@ -32,21 +32,6 @@ control_ret_t control_init_xscope(const char *host_str, const char *port_str);
 control_ret_t control_cleanup_xscope(void);
 #endif
 
-#if USE_I2C || __DOXYGEN__
-/** Initialize the I2C host (master) interface
- *
- *  \param i2c_slave_address    I2C address of the slave (controlled device)
- *
- *  \returns                    Whether the initialization was successful or not
- */
-control_ret_t control_init_i2c(unsigned char i2c_slave_address);
-/** Shutdown the I2C host (master) interface connection
- *
- *  \returns           Whether the shutdown was successful or not
- */
-control_ret_t control_cleanup_i2c(void);
-#endif
-
 #if USE_USB || __DOXYGEN__
 /** Initialize the USB host interface
  *
