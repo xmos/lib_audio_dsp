@@ -511,6 +511,7 @@ pipeline {
                 }
               }
             }
+            // The stage for the tests has not been added, see https://xmosjira.atlassian.net/browse/LCD-294 for more details.
           } // stages
           post {
             cleanup {
@@ -539,6 +540,7 @@ pipeline {
                 }
               }
             }
+            // The stage for the tests has not been added, see https://xmosjira.atlassian.net/browse/LCD-294 for more details.
           } // stages
           post {
             cleanup {
