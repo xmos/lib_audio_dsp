@@ -295,7 +295,11 @@ class Pipeline:
         node_configs = {node.index: node.get_config() for node in self._graph.nodes}
 
         module_definitions = {
-            node.index: {"name": node.name, "yaml_dict": node.yaml_dict}
+            node.index: {
+                "name": node.name,
+                "yaml_dict": node.yaml_dict,
+                "constants": node._constants,
+            }
             for node in self._graph.nodes
         }
 
@@ -740,6 +744,27 @@ def _generate_dsp_init(resolved_pipeline):
                     defaults[config_field] = "{" + ", ".join(str(i) for i in value) + "}"
                 else:
                     defaults[config_field] = str(value)
+
+            if resolved_pipeline["modules"][stage_index]["constants"]:
+                ret += f"\tstatic {stage_name}_constants_t {stage_name}_{stage_index}_constants;\n"
+                this_dict = resolved_pipeline["modules"][stage_index]["constants"]
+
+                const_struct = f"{stage_name}_{stage_index}_constants"
+                for key in this_dict:
+                    this_array = this_dict[key]
+                    this_constant_name = f"{stage_name}_{stage_index}_{key}"
+                    if hasattr(this_array, "__len__"):
+                        # if an array/list, code the array then add the pointer to the const_struct
+                        ret += f"\tstatic typeof(({stage_name}_constants_t){{}}.{key}[0]) {this_constant_name}[] = {{{', '.join(map(str, this_array))}}};\n"
+                        ret += f"\t{const_struct}.{key} = {this_constant_name};\n"
+
+                    else:
+                        # if a scalar, just hard code into const_struct
+                        ret += f"\t{const_struct}.{key} = {this_array};\n"
+
+                # point the module.constants to the const_struct instance
+                ret += f"\t{adsp}.modules[{stage_index}].constants = &{const_struct};\n"
+
             struct_val = ", ".join(f".{field} = {value}" for field, value in defaults.items())
             # default_str = f"&({stage_name}_config_t){{{struct_val}}}"
             if resolved_pipeline["modules"][stage_index]["yaml_dict"]:
