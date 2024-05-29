@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The cascaded biquad DSP block."""
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -33,20 +35,23 @@ class cascaded_biquads_8(dspg.dsp_block):
 
     def __init__(self, coeffs_list, fs, n_chans, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
-        self.biquads = [None] * 8
+        self.biquads = []
         assert len(coeffs_list) <= 8, "Too many biquads in coeffs_list"
         for n in range(8):
             if n < len(coeffs_list):
-                self.biquads[n] = bq.biquad(coeffs_list[n], fs, n_chans, Q_sig=Q_sig)
+                self.biquads.append(bq.biquad(coeffs_list[n], fs, n_chans, Q_sig=Q_sig))
             else:
-                self.biquads[n] = bq.biquad_bypass(fs, n_chans)
+                self.biquads.append(bq.biquad_bypass(fs, n_chans))
 
     def print_xcoremath_coeffs(self):
+        """Print the cascaded biquad coefficients in the format required
+        for lib_xcore_math's filter_biquad_s32_t structure.
+        """
         print("{", end="")
         for nn in range(5):
             print("{", end="")
             for n in range(8):
-                this_coeff = filter.biquads[n].int_coeffs[nn]
+                this_coeff = self.biquads[n].int_coeffs[nn]
                 print(f"{hex(this_coeff & (2**32-1))}, ", end="")
             print("},", end="")
         print("}")
@@ -349,7 +354,7 @@ def make_butterworth_lowpass(N, fc, fs):
         b1 = 2 * K
         b2 = K
 
-        coeffs = (b0, b1, b2, a0, a1, a2)
+        coeffs = [b0, b1, b2, a0, a1, a2]
         coeffs = bq._normalise_biquad(coeffs)
         coeffs_list.append(coeffs)
 
@@ -426,7 +431,7 @@ def make_butterworth_highpass(N, fc, fs):
         b1 = -2 * K
         b2 = K
 
-        coeffs = (b0, b1, b2, a0, a1, a2)
+        coeffs = [b0, b1, b2, a0, a1, a2]
         coeffs = bq._normalise_biquad(coeffs)
         coeffs_list.append(coeffs)
 

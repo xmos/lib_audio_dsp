@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The dynamic range control (DRC) DSP blocks."""
+
 from copy import deepcopy
 
 import numpy as np
@@ -232,6 +234,11 @@ class clipper(dspg.dsp_block):
         self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
 
     def process(self, sample, channel=0):
+        """
+        Take one new sample and return the clipped sample, using
+        floating point maths.
+        Input should be scaled with 0dB = 1.0.
+        """
         if sample > self.threshold:
             return self.threshold
         elif sample < -self.threshold:
@@ -240,6 +247,11 @@ class clipper(dspg.dsp_block):
             return sample
 
     def process_xcore(self, sample, channel=0):
+        """
+        Take one new sample and return the clipped sample, using int32
+        fixed point maths.
+        Input should be scaled with 0dB = 1.0.
+        """
         # convert to int
         sample_int = utils.float_to_int32(sample, self.Q_sig)
 
@@ -336,6 +348,9 @@ class compressor_limiter_base(dspg.dsp_block):
         self.gain_int = [2**31 - 1] * self.n_chans
 
     def get_gain_curve(self, max_gain=dspg.HEADROOM_DB, min_gain=-96):
+        """Get the compression gain curve for the float implementation,
+        showing the relationship between the input and output gain.
+        """
         in_gains_db = np.linspace(min_gain, max_gain, 1000)
         gains_lin = utils.db2gain(in_gains_db)
 
@@ -347,13 +362,16 @@ class compressor_limiter_base(dspg.dsp_block):
         out_gains = np.zeros_like(gains_lin)
 
         for n in range(len(out_gains)):
-            out_gains[n] = self.gain_calc(gains_lin[n], self.threshold, self.slope)
+            out_gains[n] = self.gain_calc(gains_lin[n], self.threshold, self.slope)  # pyright: ignore : function handles inits to None
 
         out_gains_db = utils.db(out_gains) + in_gains_db
 
         return in_gains_db, out_gains_db
 
     def get_gain_curve_int(self, max_gain=dspg.HEADROOM_DB, min_gain=-96):
+        """Get the compression gain curve for the int32 implementation,
+        showing the relationship between the input and output gain.
+        """
         in_gains_db = np.linspace(min_gain, max_gain, 1000)
         gains_lin = utils.db2gain(in_gains_db)
 
@@ -370,7 +388,7 @@ class compressor_limiter_base(dspg.dsp_block):
                 utils.int32(round(gains_lin[n] * 2**self.Q_sig)),
                 self.threshold_int,
                 self.slope_f32,
-            )
+            )  # pyright: ignore : base inits to None
             out_gains[n] = float(out_gains[n]) * 2**-31
 
         out_gains_db = utils.db(out_gains) + in_gains_db
@@ -388,13 +406,13 @@ class compressor_limiter_base(dspg.dsp_block):
 
         """
         # get envelope from envelope detector
-        envelope = self.env_detector.process(sample, channel)  # type: ignore
+        envelope = self.env_detector.process(sample, channel)  # type: ignore : base inits to None
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
         # calculate the gain, this function should be defined by the
         # child class
-        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # type: ignore
+        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # pyright: ignore : base inits to None
 
         # see if we're attacking or decaying
         if new_gain < self.gain[channel]:
@@ -409,7 +427,7 @@ class compressor_limiter_base(dspg.dsp_block):
         y = self.gain[channel] * sample
         return y, new_gain, envelope
 
-    def process_xcore(self, sample, channel=0, return_int=False):
+    def process_xcore(self, sample: float, channel=0, return_int=False):  # pyright: ignore : overload base class
         """
         Update the envelope for a signal, then calculate and apply the
         required gain for compression/limiting, using int32 fixed point
@@ -421,13 +439,13 @@ class compressor_limiter_base(dspg.dsp_block):
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
         # get envelope from envelope detector
-        envelope_int = self.env_detector.process_xcore(sample_int, channel)
+        envelope_int = self.env_detector.process_xcore(sample_int, channel)  # pyright: ignore : base inits to None
         # avoid /0
         envelope_int = max(envelope_int, 1)
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)
+        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)  # pyright: ignore : base inits to None
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int[channel]:
@@ -588,7 +606,15 @@ class hard_limiter_peak(limiter_peak):
     """
 
     def process(self, sample, channel=0):
-        # do peak limiting
+        """
+        Update the envelope for a signal, then calculate and apply the
+        required gain for limiting, using floating point maths. If the
+        output signal exceeds the threshold, clip it to the threshold.
+
+        Take one new sample and return the limited sample.
+        Input should be scaled with 0dB = 1.0.
+
+        """
         y, new_gain, envelope = super().process(sample, channel)
 
         # hard clip if above threshold
@@ -599,8 +625,21 @@ class hard_limiter_peak(limiter_peak):
         return y, new_gain, envelope
 
     def process_xcore(self, sample, channel=0, return_int=False):
-        # do peak limiting
+        """
+        Update the envelope for a signal, then calculate and apply the
+        required gain for limiting, using int32 fixed point maths. If
+        the output signal exceeds the threshold, clip it to the
+        threshold.
+
+        Take one new sample and return the limited sample.
+        Input should be scaled with 0dB = 1.0.
+
+        """
         y, new_gain_int, envelope_int = super().process_xcore(sample, channel, return_int=True)
+
+        assert isinstance(y, int)
+        assert isinstance(new_gain_int, int)
+        assert isinstance(envelope_int, int)
 
         # hard clip if above threshold
         if y > self.threshold_int:
@@ -619,7 +658,10 @@ class hard_limiter_peak(limiter_peak):
 
 
 class lookahead_limiter_peak(compressor_limiter_base):
-    # peak limiter with built in delay for avoiding clipping
+    """Not implemented. Peak limiter with built in delay for avoiding
+    clipping.
+    """
+
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
@@ -637,14 +679,19 @@ class lookahead_limiter_peak(compressor_limiter_base):
         raise NotImplementedError
 
     def process(self, sample, channel=0):
+        """Not implemented."""
         raise NotImplementedError
 
     def process_xcore(self, sample, channel=0, return_int=False):
+        """Not implemented."""
         raise NotImplementedError
 
 
 class lookahead_limiter_rms(compressor_limiter_base):
-    # rms limiter with built in delay for avoiding clipping
+    """Not implemented. RMS limiter with built in delay for avoiding
+    clipping.
+    """
+
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
@@ -661,9 +708,11 @@ class lookahead_limiter_rms(compressor_limiter_base):
         raise NotImplementedError
 
     def process(self, sample, channel=0):
+        """Not implemented."""
         raise NotImplementedError
 
     def process_xcore(self, sample, channel=0, return_int=False):
+        """Not implemented."""
         raise NotImplementedError
 
 

@@ -1,5 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The sidechain compressor DSP blocks."""
 
 from copy import deepcopy
 
@@ -17,9 +18,9 @@ from audio_dsp.dsp.drc.stereo_compressor_limiter import compressor_limiter_stere
 
 class compressor_rms_sidechain_mono(compressor_limiter_base):
     """
-    A sidechain compressor based on the RMS value of the signal. When the RMS
-    envelope of the signal exceeds the threshold, the signal amplitude
-    is reduced by the compression ratio.
+    A mono sidechain compressor based on the RMS value of the signal.
+    When the RMS envelope of the signal exceeds the threshold, the
+    signal amplitude is reduced by the compression ratio.
 
     The threshold sets the value above which compression occurs. The
     ratio sets how much the signal is compressed. A ratio of 1 results
@@ -88,7 +89,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         self.gain = 1
         self.gain_int = 2**31 - 1
 
-    def process(self, input_sample: float, detect_sample: float):  # type: ignore
+    def process(self, input_sample: float, detect_sample: float):  # type: ignore : overloading base class
         """
         Update the envelope for the detection signal, then calculate and
         apply the required gain for compression/limiting, and apply to
@@ -97,6 +98,13 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.
 
+        Parameters
+        ----------
+        input_sample : float
+            The input sample to be compressed.
+        detect_sample : float
+            The sample used by the envelope detector to determine the
+            amount of compression to apply to the input_sample.
         """
         # get envelope from envelope detector
         envelope = self.env_detector.process(detect_sample)
@@ -120,7 +128,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         y = self.gain * input_sample
         return y, new_gain, envelope
 
-    def process_xcore(self, input_sample: float, detect_sample: float):  # type: ignore
+    def process_xcore(self, input_sample: float, detect_sample: float):  # type: ignore : overloading base class
         """
         Update the envelope for the detection signal, then calculate and
         apply the required gain for compression/limiting, and apply to
@@ -128,6 +136,14 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.
+
+        Parameters
+        ----------
+        input_sample : float
+            The input sample to be compressed.
+        detect_sample : float
+            The sample used by the envelope detector to determine the
+            amount of compression to apply to the input_sample.
 
         """
         # quantize
@@ -138,6 +154,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         envelope_int = self.env_detector.process_xcore(detect_sample_int)
         # avoid /0
         envelope_int = max(envelope_int, 1)
+        assert isinstance(envelope_int, int)
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
@@ -201,6 +218,50 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
 
 class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
+    """
+    A stereo sidechain compressor based on the RMS value of the signal.
+    When the RMS envelope of the signal exceeds the threshold, the
+    signal amplitude is reduced by the compression ratio. The same
+    compression is applied to both channels, using the highest
+    individual channel envelope.
+
+    The threshold sets the value above which compression occurs. The
+    ratio sets how much the signal is compressed. A ratio of 1 results
+    in no compression, while a ratio of infinity results in the same
+    behaviour as a limiter. The attack time sets how fast the compressor
+    starts compressing. The release time sets how long the signal takes
+    to ramp up to it's original level after the envelope is below the
+    threshold.
+
+    Parameters
+    ----------
+    ratio : float
+        Compression gain ratio applied when the signal is above the
+        threshold
+
+    Attributes
+    ----------
+    env_detector : envelope_detector_rms
+        Nested RMS envelope detector used to calculate the envelope of
+        the signal.
+    ratio : float
+        Compression gain ratio applied when the signal is above the
+        threshold.
+    slope : float
+        The slope factor of the compressor, defined as
+        `slope = (1 - 1/ratio)`.
+    slope_f32 : float32
+        The slope factor of the compressor, used for int32 to float32
+        processing.
+    threshold : float
+        Value above which compression occurs for floating point
+        processing.
+    threshold_int : int
+        Value above which compression occurs for int32 fixed point
+        processing.
+
+    """
+
     def __init__(self, fs, ratio, threshold_dB, attack_t, release_t, Q_sig=dspg.Q_SIG):
         n_chans = 2
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
@@ -224,7 +285,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
 
-    def process_channels(self, input_samples: list[float], detect_samples: list[float]):  # type: ignore
+    def process_channels(self, input_samples: list[float], detect_samples: list[float]):  # type: ignore : override base class
         """
         Update the envelopes for a detection signal, then calculate and
         apply the required gain for compression/limiting to the input,
@@ -244,7 +305,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
         # calculate the gain, this function should be defined by the
         # child class
-        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # type: ignore
+        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # type: ignore : base inits to None
 
         # see if we're attacking or decaying
         if new_gain < self.gain:
@@ -259,7 +320,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         y = self.gain * input_samples
         return y, new_gain, envelope
 
-    def process_channels_xcore(  # type: ignore
+    def process_channels_xcore(  # type: ignore : override base class
         self, input_samples: list[float], detect_samples: list[float]
     ):
         """
@@ -288,7 +349,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)  # type: ignore
+        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)  # type: ignore : base inits to None
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int:
@@ -299,7 +360,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         # do exponential moving average
         self.gain_int = drcu.calc_ema_xcore(self.gain_int, new_gain_int, alpha)
 
-        y = [0] * self.n_chans
+        y = [0.0] * self.n_chans
         # apply gain in int32
         for i in range(len(input_samples)):
             y_uq = drcu.apply_gain_xcore(samples_int[i], self.gain_int)
