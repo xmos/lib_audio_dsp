@@ -134,7 +134,7 @@ T get_function(dl_handle_t handle, const string symbol)
 #if (defined(__linux__) || defined(__APPLE__))
         cerr << dlerror() << endl;
 #elif defined(_WIN32)
-        cerr << "Could not load " << symbol << " function, got " << GetLastError() << "error code" << endl;
+        cerr << "Could not load " << symbol << " function, got " << GetLastError() << " error code" << endl;
 #else
 #error "Unknown Operating System"
 #endif // unix vs windows
