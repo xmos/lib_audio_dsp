@@ -11,8 +11,8 @@ to it with :py:meth:`Pipeline.add_thread() <audio_dsp.design.pipeline.Pipeline.a
 in a `Jupyter Notebook <https://jupyter.org/>`_ using :py:meth:`Pipeline.draw() <audio_dsp.design.pipeline.Pipeline.draw>` and the xcore source code for the
 pipeline can be generated using :py:func:`generate_dsp_main() <audio_dsp.design.pipeline.generate_dsp_main>`.
 
-Once the code is generated use the functions defined in `stages/adsp_pipeline.h`_ to read and write samples to the pipeline and update
-configuration fields.
+.. Once the code is generated use the functions defined in `stages/adsp_pipeline.h`_ to read and write samples to the pipeline and update
+.. configuration fields.
 
 C
 *
@@ -24,8 +24,5 @@ Python Design API
 
 .. include:: gen/audio_dsp.design.inc
 
-Python Design Available DSP Stages
-**********************************
 
-.. include:: gen/audio_dsp.stages.inc
 
