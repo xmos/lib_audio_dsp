@@ -79,7 +79,7 @@ def test_fork_copies():
     p = Pipeline(channels, frame_size=2)
     with p.add_thread() as t:
         fork = t.stage(Fork, p.i, count = 2)
-    p.set_outputs([fork.forks[0][0], fork.forks[1][0]])
+    p.set_outputs(fork.forks[0][0] + fork.forks[1][0])
 
     # input channel 0 comes out both outputs
     do_test(p, (0, 0), (0, 1))

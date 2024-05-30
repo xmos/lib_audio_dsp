@@ -3,7 +3,7 @@
 """Contains classes for adding a thread to the DSP pipeline."""
 
 from .composite_stage import CompositeStage
-from .stage import Stage, find_config
+from .stage import Stage, StageOutputList, find_config
 
 
 class DSPThreadStage(Stage):
@@ -63,4 +63,4 @@ class Thread(CompositeStage):
 
     def add_thread_stage(self):
         """Add to this thread the stage which manages thread level commands."""
-        self.thread_stage = self.stage(DSPThreadStage, [], label=f"thread{self.id}")
+        self.thread_stage = self.stage(DSPThreadStage, StageOutputList(), label=f"thread{self.id}")
