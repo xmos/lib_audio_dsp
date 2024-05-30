@@ -12,6 +12,7 @@ from audio_dsp.design import plot
 from audio_dsp.dsp.generic import dsp_block
 from typing import Optional
 from types import NotImplementedType
+from docstring_inheritance import NumpyDocstringInheritanceInitMeta
 
 
 def find_config(name):
@@ -230,7 +231,7 @@ class ValueControlField:
         self.value = value
 
 
-class Stage(Node):
+class Stage(Node, metaclass=NumpyDocstringInheritanceInitMeta):
     """
     Base class for stages in the DSP pipeline. Each subclass
     should have a corresponding C implementation. Enables

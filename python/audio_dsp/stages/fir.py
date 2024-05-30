@@ -8,9 +8,15 @@ from ..dsp import generic as dspg
 
 
 class FirDirect(Stage):
-    """A FIR filter implemented in the time domain.
+    """A FIR filter implemented in the time domain. The input signal is
+    convolved with the filter coefficients. The filter coefficients can
+    only be set at compile time.
 
-    See :class:`audio_dsp.dsp.fir.fir_direct` for details.
+    Attributes
+    ----------
+    dsp_block : None | audio_dsp.dsp.generic.dsp_block
+        The dsp block class, see :class:`audio_dsp.dsp.fir.fir_direct`
+        for implementation details.
     """
 
     def __init__(self, coeffs_path, **kwargs):
