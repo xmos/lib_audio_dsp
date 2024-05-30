@@ -8,7 +8,7 @@ from tabulate import tabulate
 
 from audio_dsp.design.pipeline_executor import PipelineExecutor, PipelineView
 from .graph import Graph
-from .stage import Stage, StageOutput, find_config
+from .stage import Stage, StageOutput, StageOutputList, find_config
 from .thread import Thread
 from IPython import display
 import yaml
@@ -119,9 +119,9 @@ class Pipeline:
         self._id = identifier
         self.pipeline_stage: None
 
-        self.i = [StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)]
-        self.o: list[StageOutput] | None = None
-        for i, input in enumerate(self.i):
+        self.i = StageOutputList([StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)])
+        self.o: StageOutputList | None = None
+        for i, input in enumerate(self.i.edges):
             self._graph.add_edge(input)
             input.source_index = i
 
@@ -146,9 +146,9 @@ class Pipeline:
     @callonce
     def add_pipeline_stage(self, thread):
         """Add a PipelineStage stage for the pipeline."""
-        self.pipeline_stage = thread.stage(PipelineStage, [])
+        self.pipeline_stage = thread.stage(PipelineStage, StageOutputList())
 
-    def set_outputs(self, output_edges: list[StageOutput]):
+    def set_outputs(self, output_edges: StageOutputList):
         """
         Set the pipeline outputs, configures the output channel index.
 
@@ -162,7 +162,7 @@ class Pipeline:
         if not output_edges:
             raise RuntimeError("Pipeline must have at least 1 output")
         i = -1
-        for i, edge in enumerate(output_edges):
+        for i, edge in enumerate(output_edges.edges):
             if edge is not None:
                 edge.dest_index = i
         self.o = output_edges
@@ -177,7 +177,7 @@ class Pipeline:
                 raise RuntimeError(
                     "Pipeline outputs must be set with `set_outputs` before simulating"
                 )
-            return PipelineView(self._graph.nodes, self.i, self.o)
+            return PipelineView(self._graph.nodes, self.i.edges, self.o.edges)
 
         return PipelineExecutor(self._graph, view)
 
