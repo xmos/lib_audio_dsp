@@ -28,6 +28,27 @@ ${"="*len(module)}
     (Path(__file__).parent / f"{dir.parts[-2]}.{dir.parts[-1]}.inc").write_text(gen)
 
 
+def python_doc_noindex(dir):
+    p_design = sorted(dir.glob("*.py"))
+    p_design_modules = [".".join(p.parts[-3:])[:-3] for p in p_design if not p.name.startswith("_")]
+    gen = Template("""
+% for module in modules:
+${module}
+${"="*len(module)}
+
+
+.. automodule:: ${module}
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :noindex:
+
+
+%endfor
+""").render(modules=p_design_modules)
+    (Path(__file__).parent / f"{dir.parts[-2]}.{dir.parts[-1]}.inc").write_text(gen)
+
+
 def python_doc_no_inheritance(dir):
     p_design = sorted(dir.glob("*.py"))
     p_design_modules = [".".join(p.parts[-3:])[:-3] for p in p_design if not p.name.startswith("_")]
@@ -65,7 +86,7 @@ ${"="*len(str(module))}
 
 
 python_doc(ROOT_DIR / "python" / "audio_dsp" / "design")
-python_doc(ROOT_DIR / "python" / "audio_dsp" / "stages")
+python_doc_noindex(ROOT_DIR / "python" / "audio_dsp" / "stages")
 python_doc(ROOT_DIR / "python" / "audio_dsp" / "dsp")
 python_doc_no_inheritance(ROOT_DIR / "python" / "audio_dsp" / "stages")
 
