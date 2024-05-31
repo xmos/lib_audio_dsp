@@ -56,25 +56,9 @@ opt_t * option_lookup(const string str)
             return opt;
         }
     }
-    /*
-    int shortest_dist = 100;
-    int indx  = 0;
-    for(size_t i = 0; i < num_options; i++)
-    {
-        opt_t * opt = &options[i];
-        int dist_long = Levenshtein_distance(low_str, opt->long_name);
-        int dist_short = Levenshtein_distance(low_str, opt->short_name);
-        int dist = (dist_short < dist_long) ? dist_short : dist_long;
-        if(dist < shortest_dist)
-        {
-            shortest_dist = dist;
-            indx = i;
-        }
-    }
-    */
+
     cerr << "Option " << str << " does not exist." << endl;
-    //<< "Maybe you meant " << options[indx].short_name
-    //<< " or " << options[indx].long_name << "." << endl;
+
     exit(HOST_APP_ERROR);
     return nullptr;
 }
