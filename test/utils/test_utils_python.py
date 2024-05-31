@@ -4,13 +4,14 @@ import pytest
 import numpy as np
 
 import audio_dsp.dsp.utils as utils
+import audio_dsp.dsp.types as types
 
 # seed RNG to avoid collection failures
 np.random.seed(0)
 
 @pytest.mark.parametrize('x', (2*np.random.rand(100)-1)*2**64)
 def test_float_s32_float(x):
-    x_s32 = utils.float_s32(float(x))
+    x_s32 = types.float_s32(float(x))
     x2 = float(x_s32)
 
     tol = 2**x_s32.exp
@@ -21,7 +22,7 @@ def test_float_s32_float(x):
                                            np.random.randint(0, 30, size=100)),
                                           axis=-1))
 def test_float_s32_float_Q(x, Q):
-    x_s32 = utils.float_s32(float(x), Q_sig=Q)
+    x_s32 = types.float_s32(float(x), Q_sig=Q)
     x2 = float(x_s32)
 
     tol = 2**-Q
@@ -30,7 +31,7 @@ def test_float_s32_float_Q(x, Q):
 
 @pytest.mark.parametrize('x', (2*np.random.rand(100)-1)*2**64)
 def test_float_s32_abs(x):
-    x_s32 = utils.float_s32(float(x))
+    x_s32 = types.float_s32(float(x))
     x2 = float(abs(x_s32))
 
     tol = 2**x_s32.exp
@@ -39,8 +40,8 @@ def test_float_s32_abs(x):
 
 @pytest.mark.parametrize("x, y", (2*np.random.rand(100, 2)-1)*2**30)
 def test_float_s32_mult(x, y):
-    x_s32 = utils.float_s32(float(x))
-    y_s32 = utils.float_s32(float(y))
+    x_s32 = types.float_s32(float(x))
+    y_s32 = types.float_s32(float(y))
 
     xy_s32 = x_s32*y_s32
     xy = float(xy_s32)
@@ -52,8 +53,8 @@ def test_float_s32_mult(x, y):
 
 @pytest.mark.parametrize("x, y", (2*np.random.rand(100, 2)-1)*2**30)
 def test_float_s32_div(x, y):
-    x_s32 = utils.float_s32(float(x))
-    y_s32 = utils.float_s32(float(y))
+    x_s32 = types.float_s32(float(x))
+    y_s32 = types.float_s32(float(y))
 
     xy_s32 = x_s32/y_s32
     xy = float(xy_s32)
@@ -64,8 +65,8 @@ def test_float_s32_div(x, y):
 
 @pytest.mark.parametrize("x, y", (2*np.random.rand(100, 2)-1)*2**30)
 def test_float_s32_add(x, y):
-    x_s32 = utils.float_s32(float(x))
-    y_s32 = utils.float_s32(float(y))
+    x_s32 = types.float_s32(float(x))
+    y_s32 = types.float_s32(float(y))
 
     xy_s32 = x_s32 + y_s32
     xy = float(xy_s32)
@@ -76,8 +77,8 @@ def test_float_s32_add(x, y):
 
 @pytest.mark.parametrize("x, y", (2*np.random.rand(100, 2)-1)*2**30)
 def test_float_s32_subt(x, y):
-    x_s32 = utils.float_s32(float(x))
-    y_s32 = utils.float_s32(float(y))
+    x_s32 = types.float_s32(float(x))
+    y_s32 = types.float_s32(float(y))
 
     xy_s32 = x_s32-y_s32
     xy = float(xy_s32)
@@ -88,8 +89,8 @@ def test_float_s32_subt(x, y):
 
 @pytest.mark.parametrize("x, y", (2*np.random.rand(100, 2)-1)*2**30)
 def test_float_s32_gt(x, y):
-    x_s32 = utils.float_s32(float(x))
-    y_s32 = utils.float_s32(float(y))
+    x_s32 = types.float_s32(float(x))
+    y_s32 = types.float_s32(float(y))
 
     xy_s32 = x_s32 > y_s32
     xy = x > y
@@ -99,8 +100,8 @@ def test_float_s32_gt(x, y):
 
 @pytest.mark.parametrize("x, y", (2*np.random.rand(100, 2)-1)*2**30)
 def test_float_s32_lt(x, y):
-    x_s32 = utils.float_s32(float(x))
-    y_s32 = utils.float_s32(float(y))
+    x_s32 = types.float_s32(float(x))
+    y_s32 = types.float_s32(float(y))
 
     xy_s32 = x_s32 < y_s32
     xy = x < y

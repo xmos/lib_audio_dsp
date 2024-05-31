@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""Generic utilities for the dynamic range control DSP blocks."""
+
 from audio_dsp.dsp import utils as utils
 import numpy as np
 from math import sqrt, isqrt
@@ -14,7 +16,11 @@ FLT_MIN = np.finfo(float).tiny
 Q_alpha = 31
 
 
-def calculate_threshold(threshold_db, Q_sig, power=False):
+def calculate_threshold(threshold_db, Q_sig, power=False) -> tuple[float, int]:
+    """
+    Calculate the linear threshold in floating and fixed point from a
+    target threshold in decibels.
+    """
     if power:
         threshold = utils.db_pow2gain(threshold_db)
     else:
@@ -40,17 +46,21 @@ def calculate_threshold(threshold_db, Q_sig, power=False):
 
 
 def alpha_from_time(attack_or_release_time, fs):
-    # Attack times simplified from McNally, seem pretty close.
-    # Assumes the time constant of a digital filter is the -3 dB
-    # point where abs(H(z))**2 = 0.5.
+    """
+    Calculate the exponential moving average time constant from an
+    attack/release time in seconds.
 
-    # This is also approximately the time constant of a first order
-    # system, `alpha = 1 - exp(-T/tau)`, where `T` is the sample period
-    # and `tau` is the time constant.
+    Attack times simplified from McNally, seem pretty close.
+    Assumes the time constant of a digital filter is the -3 dB
+    point where abs(H(z))**2 = 0.5.
 
-    # attack/release time can't be faster than the length of 2
-    # samples, and alpha can't be greater than 1
+    This is also approximately the time constant of a first order
+    system, `alpha = 1 - exp(-T/tau)`, where `T` is the sample period
+    and `tau` is the time constant.
 
+    attack/release time can't be faster than the length of 2
+    samples, and alpha can't be greater than 1
+    """
     T = 1 / fs
     alpha = 2 * T / (attack_or_release_time + FLT_MIN)
 
@@ -75,7 +85,7 @@ def calc_ema_xcore(x, y, alpha):
     return x
 
 
-def apply_gain_xcore(sample, gain):
+def apply_gain_xcore(sample: int, gain: int) -> int:
     """Apply the gain to a sample using fixed-point math. Assumes that gain is in Q_alpha format."""
     acc = 1 << (Q_alpha - 1)
     acc += sample * gain

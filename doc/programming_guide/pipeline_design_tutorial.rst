@@ -168,18 +168,22 @@ Designing Complex Pipelines
 The audio dsp library is not limited to the simple linear pipelines shown above. Stages can scale to take an arbitrary number of inputs, and the outputs of
 each stage can be split and joined arbitrarily.
 
-Every stage has an :py:attr:`o <audio_dsp.design.stages.Stage.o>` attribute. This is a list of stage output instances. When creating a stage, all stages will
-require a list of stage outputs as its inputs. A stage's outputs can be sliced and joined with another stages output and passed as an input to a third stage.
+Every stage has an :py:attr:`o <audio_dsp.design.stages.Stage.o>` attribute. This is an instance of :py:class:`StageOutputList <audio_dsp.design.stage.StageOutputList>`, a
+container of :py:class:`StageOutput <audio_dsp.design.stage.StageOutput>`. The stage's outputs can be selected from the StageOutputList by indexing into
+it, creating a new StageOutputList, which can be concatenated with other StageOutputList instances using the ``+`` operator.
+When creating a stage, it will require a StageOutputList as its inputs.
 
 .. code-block:: python
 
     with p.add_thread() as t:
        # split the pipeline inputs
-       b0 = t.stage(Biquad, p.i[0:2])
-       b1 = t.stage(Biquad, p.i[2:])
-
+       b0 = t.stage(Biquad, p.i[0:2])  # use the first 2 inputs
+       b1 = t.stage(Biquad, p.i[2])  # use the third input (index 2)
+       b2 = t.stage(Biquad, p.i[3, 5, 6])  # use the inputs at index 3, 5, and 6
        # join biquad outputs
-       b2 = t.stage(Biquad, b0.o + b1.o)
+       b3 = t.stage(Biquad, b0.o + b1.o + b2.o[0]) # pass all the outputs from b0 and b1, as well as the first output from b2
+
+    p.set_outputs(b3.o + b2.o[1:]) # b3.o and the rest of b2.o are the pipeline outputs
 
 As the pipeline grows it will also become necessary to add more threads. To determine when a new thread is used, the output of ``profile_pipeline()`` should
 be observed as the pipeline grows. If a thread nears 100% utilisation then it is time to add a new thread. Each thread in the pipeline represents an xcore

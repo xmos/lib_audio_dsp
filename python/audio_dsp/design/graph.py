@@ -110,6 +110,7 @@ class Graph(Generic[NodeSubClass]):
 
     def add_edge(self, edge) -> None:
         """Append an edge to this graph."""
+        assert isinstance(edge, Edge)
         if self._locked:
             raise RuntimeError("Cannot add edges to a locked graph")
         self.edges.append(edge)

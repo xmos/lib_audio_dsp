@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The expander DSP blocks."""
+
 import numpy as np
 
 from audio_dsp.dsp import utils as utils
@@ -62,7 +64,10 @@ class expander_base(compressor_limiter_base):
         attack_alpha in 32-bit int format.
     release_alpha_int : int
         release_alpha in 32-bit int format.
-
+    gain_calc : function
+        function pointer to floating point gain calculation function.
+    gain_calc_int : function
+        function pointer to fixed point gain calculation function.
     """
 
     def reset_state(self):
@@ -86,13 +91,13 @@ class expander_base(compressor_limiter_base):
 
         """
         # get envelope from envelope detector
-        envelope = self.env_detector.process(sample, channel)  # type: ignore
+        envelope = self.env_detector.process(sample, channel)  # type: ignore : base inits to None
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
         # calculate the gain, this function should be defined by the
         # child class
-        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # type: ignore
+        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # type: ignore : base inits to None
 
         # see if we're attacking or decaying
         if new_gain < self.gain[channel]:
@@ -119,13 +124,13 @@ class expander_base(compressor_limiter_base):
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
         # get envelope from envelope detector
-        envelope_int = self.env_detector.process_xcore(sample_int, channel)
+        envelope_int = self.env_detector.process_xcore(sample_int, channel)  # pyright: ignore : base inits to None
         # avoid /0
         envelope_int = max(envelope_int, 1)
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)
+        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)  # pyright: ignore : base inits to None
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int[channel]:
