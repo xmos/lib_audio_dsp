@@ -92,6 +92,10 @@ void init_cmd(cmd_t * cmd, const std::string cmd_name, size_t index)
     if(index == UINT32_MAX)
     {
         index = get_cmd_index(up_str);
+        /*if(index == UINT32_MAX)
+        {
+            calc_Levenshtein_and_error(up_str);
+        }*/
         cmd->cmd_name = up_str;
     }
     else
