@@ -446,6 +446,8 @@ class volume_control(dspg.dsp_block):
         The initial gain in decibels
     slew_shift : int, optional
         The shift value used in the exponential slew.
+    mute_state : int, optional
+        The mute state of the Volume Control: 0: unmuted, 1: muted.
 
     Attributes
     ----------
@@ -463,6 +465,8 @@ class volume_control(dspg.dsp_block):
         The current gain as a fixed-point integer value.
     slew_shift : int
         The shift value used in the exponential slew.
+    mute_state : int
+        The mute state of the Volume Control: 0: unmuted, 1: muted
 
     Raises
     ------
@@ -477,6 +481,7 @@ class volume_control(dspg.dsp_block):
         n_chans: int,
         gain_db: float = -6,
         slew_shift: int = 7,
+        mute_state: int = 0,
         Q_sig: int = dspg.Q_SIG,
     ) -> None:
         super().__init__(fs, n_chans, Q_sig)
@@ -484,6 +489,8 @@ class volume_control(dspg.dsp_block):
         # set the initial target gains
         self.mute_state = False
         self.set_gain(gain_db)
+        if mute_state:
+            self.mute()
 
         # initial applied gain can be equal to target until target changes
         self.gain_db = self.target_gain_db
@@ -543,6 +550,8 @@ class volume_control(dspg.dsp_block):
         self.gain_int[channel] += (
             self.target_gain_int - self.gain_int[channel]
         ) >> self.slew_shift
+
+        # print(f"gain {self.gain_int[0]}")
 
         # for rounding
         acc = 1 << (Q_GAIN - 1)

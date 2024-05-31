@@ -22,8 +22,8 @@ typedef struct{
   int32_t slew_shift;
   // Saved linear gain
   int32_t saved_gain;
-  // Mute flag
-  uint8_t mute;
+  // Mute state: 0: unmuted, 1 muted
+  uint8_t mute_state;
 }volume_control_t;
 
 /**
@@ -148,11 +148,13 @@ int32_t adsp_saturate_32b(int64_t acc);
  *
  * @param gain_dB           Target gain in dB
  * @param slew_shift        Shift value used in the exponential slew
+ * @param mute_state        Initial mute state
  * @return volume_control_t Volume control state object
  */
 volume_control_t adsp_volume_control_init(
   float gain_dB,
-  int32_t slew_shift);
+  int32_t slew_shift,
+  uint8_t mute_state);
 
 /**
  * @brief Process a new sample with a volume control

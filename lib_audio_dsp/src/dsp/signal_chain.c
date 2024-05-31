@@ -102,14 +102,15 @@ int32_t adsp_saturate_32b(int64_t acc) {
 
 volume_control_t adsp_volume_control_init(
   float gain_dB,
-  int32_t slew_shift
+  int32_t slew_shift,
+  uint8_t mute_state
 ) {
   volume_control_t vol_ctl;
-  vol_ctl.target_gain = adsp_dB_to_gain(gain_dB);
-  vol_ctl.gain = vol_ctl.target_gain;
+  vol_ctl.mute_state = mute_state;
+  adsp_volume_control_set_gain(&vol_ctl, adsp_dB_to_gain(gain_dB));
   vol_ctl.slew_shift = slew_shift;
   vol_ctl.saved_gain = 0;
-  vol_ctl.mute = 0;
+
   return vol_ctl;
 }
 
@@ -127,7 +128,7 @@ void adsp_volume_control_set_gain(
   volume_control_t * vol_ctl,
   int32_t new_gain
 ) {
-  if(!vol_ctl->mute) {
+  if(!vol_ctl->mute_state) {
     vol_ctl->target_gain = new_gain;
   }
   else
@@ -139,8 +140,8 @@ void adsp_volume_control_set_gain(
 void adsp_volume_control_mute(
   volume_control_t * vol_ctl
 ) {
-  if (!vol_ctl->mute) {
-    vol_ctl->mute = 1;
+  if (!vol_ctl->mute_state) {
+    vol_ctl->mute_state = 1;
     vol_ctl->saved_gain = vol_ctl->target_gain;
     vol_ctl->target_gain = 0;
   }
@@ -149,8 +150,8 @@ void adsp_volume_control_mute(
 void adsp_volume_control_unmute(
   volume_control_t * vol_ctl
 ) {
-  if (vol_ctl->mute) {
-    vol_ctl->mute = 0;
+  if (vol_ctl->mute_state) {
+    vol_ctl->mute_state = 0;
     vol_ctl->target_gain = vol_ctl->saved_gain;
   }
 }
@@ -204,7 +205,7 @@ int32_t adsp_delay(
   int32_t out = delay->buffer[delay->buffer_idx];
   delay->buffer[delay->buffer_idx] = samp;
   // Could do this with a modulo operation,
-  // but it would break for when the delay is 0 
+  // but it would break for when the delay is 0
   // and use the division unit
   if (++delay->buffer_idx >= delay->delay) {
     delay->buffer_idx = 0;
