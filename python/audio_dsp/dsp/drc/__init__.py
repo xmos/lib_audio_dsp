@@ -1,5 +1,9 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""This sub-package contains all the dynamic range control (DRC)
+DSP components.
+"""
+
 from audio_dsp.dsp.drc.drc import (
     compressor_limiter_base as compressor_limiter_base,
     envelope_detector_peak as envelope_detector_peak,

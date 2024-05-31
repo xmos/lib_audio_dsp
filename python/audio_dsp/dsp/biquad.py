@@ -1,12 +1,13 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The biquad DSP block."""
 
 import warnings
 from copy import deepcopy
 
 import numpy as np
 import numpy.typing as npt
-import scipy.signal as spsig  # type: ignore
+import scipy.signal as spsig
 import matplotlib.pyplot as plt
 from docstring_inheritance import inherit_numpy_docstring
 
@@ -488,7 +489,7 @@ def _round_and_check(coeffs: list[float], b_shift: int = 0) -> tuple[list[float]
 
 def make_biquad_bypass(fs: int) -> list[float]:
     """
-    Creates a bypass biquad filter. Only the b0 coefficient is set.
+    Create a bypass biquad filter. Only the b0 coefficient is set.
 
     Parameters
     ----------
@@ -506,7 +507,7 @@ def make_biquad_bypass(fs: int) -> list[float]:
 
 def make_biquad_mute(fs: int) -> list[float]:
     """
-    Creates a biquad filter coefficients list that represents a mute
+    Create a biquad filter coefficients list that represents a mute
     filter. All the coefficients are 0.
 
     Parameters

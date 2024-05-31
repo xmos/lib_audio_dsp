@@ -4,7 +4,7 @@
 
 from typing import Iterable, Type, TypeVar
 
-from .stage import StageOutput, Stage
+from .stage import StageOutput, Stage, StageOutputList
 from .graph import Graph
 
 from ._draw import new_record_digraph
@@ -60,7 +60,7 @@ class CompositeStage:
         return new
 
     @property
-    def o(self) -> list[StageOutput]:
+    def o(self) -> StageOutputList:
         """
         Outputs of this composite.
 
@@ -69,13 +69,15 @@ class CompositeStage:
         not currently specified.
         """
         all_stages = self.get_all_stages()
-        all_edges = list(itertools.chain.from_iterable([stage.o for stage in all_stages]))
-        return [edge for edge in all_edges if edge.dest not in all_stages]
+        all_edges = list(itertools.chain.from_iterable([stage.o.edges for stage in all_stages]))
+        return StageOutputList(
+            [edge for edge in all_edges if edge is not None and edge.dest not in all_stages]
+        )
 
     def stage(
         self,
         stage_type: Type[_StageOrComposite],
-        inputs: StageOutput | Iterable[StageOutput],
+        inputs: StageOutputList,
         **kwargs,
     ) -> _StageOrComposite:
         """
@@ -96,8 +98,6 @@ class CompositeStage:
         stage_type
             Newly created stage or composite stage.
         """
-        if isinstance(inputs, StageOutput):
-            inputs = [inputs]
         if issubclass(stage_type, CompositeStage):
             # Subclasses of CompositeStage must have extra __init__
             # parameters that pyright cant know.
@@ -106,7 +106,7 @@ class CompositeStage:
         elif issubclass(stage_type, Stage):
             stage = stage_type(inputs=inputs, **kwargs)
             self._graph.add_node(stage)
-            for edge in stage.o:
+            for edge in stage.o.edges:
                 self._graph.add_edge(edge)
             self._stages.append(stage)
         else:
@@ -114,7 +114,7 @@ class CompositeStage:
         return stage
 
     def stages(
-        self, stage_types: list[Type[_StageOrComposite]], inputs: Iterable[StageOutput]
+        self, stage_types: list[Type[_StageOrComposite]], inputs: StageOutputList
     ) -> list[_StageOrComposite]:
         """
         Iterate through the provided stages and connect them linearly.
@@ -162,9 +162,11 @@ class CompositeStage:
     def _internal_edges(self) -> list[StageOutput]:
         """Return a list of edges whose source and dest are within this composite."""
         all_stages = self.get_all_stages()
-        all_edges = list(itertools.chain.from_iterable([stage.o for stage in all_stages]))
+        all_edges = list(itertools.chain.from_iterable([stage.o.edges for stage in all_stages]))
         return [
-            edge for edge in all_edges if edge.dest in all_stages and edge.source in all_stages
+            edge
+            for edge in all_edges
+            if edge is not None and edge.dest in all_stages and edge.source in all_stages
         ]
 
     def draw(self):

@@ -166,7 +166,7 @@ class PipelineExecutor:
         graph: Graph[Stage],
         i_edges: list[StageOutput],
         o_edges: list[StageOutput],
-    ) -> list[numpy.ndarray]:
+    ) -> dict[int, numpy.ndarray]:
         """Process channels through the pipeline and return the result."""
         edges = {}
         for edge, data in zip(i_edges, frame):
@@ -175,12 +175,12 @@ class PipelineExecutor:
         stages = graph.sort()
 
         for stage in stages:
-            inputs = [edges[e] for e in stage.i]
+            inputs = [edges[e] for e in stage.i.edges]
             if stage.o or stage.i:
                 outputs = stage.process(inputs)
-                edges.update({e: o for e, o in zip(stage.o, outputs)})
+                edges.update({e: o for e, o in zip(stage.o.edges, outputs)})
 
-        return [edges[e] for e in o_edges]
+        return {i: edges[e] for i, e in enumerate(o_edges) if e is not None}
 
     def process(self, data: numpy.ndarray) -> ExecutionResult:
         """
@@ -221,7 +221,7 @@ class PipelineExecutor:
         for index in range(0, data.shape[0], frame_size):
             inputs = [data[index : (index + frame_size), i] for i in range(n_i_chans)]
             outputs = self._process_frame(inputs, graph, i_edges, o_edges)
-            for i, val in enumerate(outputs):
+            for i, val in outputs.items():
                 ret[index : index + frame_size, i] = val
         return ExecutionResult(ret, fs)
 

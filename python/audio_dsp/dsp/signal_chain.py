@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""DSP blocks for signal chain components and basic maths."""
+
 import numpy as np
 import warnings
 
@@ -57,7 +59,7 @@ class mixer(dspg.dsp_block):
 
         """
         scaled_samples = np.array(sample_list) * self.gain
-        y = np.sum(scaled_samples)
+        y = float(np.sum(scaled_samples))
         y = utils.saturate_float(y, self.Q_sig)
         return y
 
@@ -734,7 +736,7 @@ class switch(dspg.dsp_block):
 
 class delay(dspg.dsp_block):
     """
-    A simple delay line class
+    A simple delay line class.
 
     Parameters
     ----------
@@ -784,7 +786,7 @@ class delay(dspg.dsp_block):
         return
 
     def _get_delay_samples(self, delay: float, units: str) -> int:
-        """Get the delay in samples from the specified units"""
+        """Get the delay in samples from the specified units."""
         if delay < 0:
             raise ValueError("Delay must be positive")
 
@@ -800,7 +802,7 @@ class delay(dspg.dsp_block):
 
     def set_delay(self, delay: float, units: str = "samples") -> None:
         """
-        Set the length of the delay line, will saturate at max_delay
+        Set the length of the delay line, will saturate at max_delay.
 
         Parameters
         ----------

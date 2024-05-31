@@ -8,7 +8,7 @@ from tabulate import tabulate
 
 from audio_dsp.design.pipeline_executor import PipelineExecutor, PipelineView
 from .graph import Graph
-from .stage import Stage, StageOutput, find_config
+from .stage import Stage, StageOutput, StageOutputList, find_config
 from .thread import Thread
 from IPython import display
 import yaml
@@ -119,9 +119,9 @@ class Pipeline:
         self._id = identifier
         self.pipeline_stage: None
 
-        self.i = [StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)]
-        self.o: list[StageOutput] | None = None
-        for i, input in enumerate(self.i):
+        self.i = StageOutputList([StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)])
+        self.o: StageOutputList | None = None
+        for i, input in enumerate(self.i.edges):
             self._graph.add_edge(input)
             input.source_index = i
 
@@ -146,9 +146,9 @@ class Pipeline:
     @callonce
     def add_pipeline_stage(self, thread):
         """Add a PipelineStage stage for the pipeline."""
-        self.pipeline_stage = thread.stage(PipelineStage, [])
+        self.pipeline_stage = thread.stage(PipelineStage, StageOutputList())
 
-    def set_outputs(self, output_edges: list[StageOutput]):
+    def set_outputs(self, output_edges: StageOutputList):
         """
         Set the pipeline outputs, configures the output channel index.
 
@@ -162,7 +162,7 @@ class Pipeline:
         if not output_edges:
             raise RuntimeError("Pipeline must have at least 1 output")
         i = -1
-        for i, edge in enumerate(output_edges):
+        for i, edge in enumerate(output_edges.edges):
             if edge is not None:
                 edge.dest_index = i
         self.o = output_edges
@@ -177,7 +177,7 @@ class Pipeline:
                 raise RuntimeError(
                     "Pipeline outputs must be set with `set_outputs` before simulating"
                 )
-            return PipelineView(self._graph.nodes, self.i, self.o)
+            return PipelineView(self._graph.nodes, self.i.edges, self.o.edges)
 
         return PipelineExecutor(self._graph, view)
 
@@ -295,7 +295,11 @@ class Pipeline:
         node_configs = {node.index: node.get_config() for node in self._graph.nodes}
 
         module_definitions = {
-            node.index: {"name": node.name, "yaml_dict": node.yaml_dict}
+            node.index: {
+                "name": node.name,
+                "yaml_dict": node.yaml_dict,
+                "constants": node._constants,
+            }
             for node in self._graph.nodes
         }
 
@@ -740,6 +744,27 @@ def _generate_dsp_init(resolved_pipeline):
                     defaults[config_field] = "{" + ", ".join(str(i) for i in value) + "}"
                 else:
                     defaults[config_field] = str(value)
+
+            if resolved_pipeline["modules"][stage_index]["constants"]:
+                ret += f"\tstatic {stage_name}_constants_t {stage_name}_{stage_index}_constants;\n"
+                this_dict = resolved_pipeline["modules"][stage_index]["constants"]
+
+                const_struct = f"{stage_name}_{stage_index}_constants"
+                for key in this_dict:
+                    this_array = this_dict[key]
+                    this_constant_name = f"{stage_name}_{stage_index}_{key}"
+                    if hasattr(this_array, "__len__"):
+                        # if an array/list, code the array then add the pointer to the const_struct
+                        ret += f"\tstatic typeof(({stage_name}_constants_t){{}}.{key}[0]) {this_constant_name}[] = {{{', '.join(map(str, this_array))}}};\n"
+                        ret += f"\t{const_struct}.{key} = {this_constant_name};\n"
+
+                    else:
+                        # if a scalar, just hard code into const_struct
+                        ret += f"\t{const_struct}.{key} = {this_array};\n"
+
+                # point the module.constants to the const_struct instance
+                ret += f"\t{adsp}.modules[{stage_index}].constants = &{const_struct};\n"
+
             struct_val = ", ".join(f".{field} = {value}" for field, value in defaults.items())
             # default_str = f"&({stage_name}_config_t){{{struct_val}}}"
             if resolved_pipeline["modules"][stage_index]["yaml_dict"]:
