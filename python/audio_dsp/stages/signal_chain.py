@@ -49,7 +49,7 @@ class Fork(Stage):
         fork_indices = [list(range(i, self.n_in * count, count)) for i in range(count)]
         self.forks = []
         for indices in fork_indices:
-            self.forks.append([self.o[i] for i in indices])
+            self.forks.append(self.o[(i for i in indices)])
 
     def get_frequency_response(self, nfft=512):
         """Fork has no sensible frequency response, not implemented."""
