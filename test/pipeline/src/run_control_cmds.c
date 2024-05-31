@@ -15,6 +15,8 @@
 #include "control_test_params.h"
 #include "print.h"
 #define CONTROL_COMMAND_TIMEOUT_TICKS 1000000 // one tick is 10ns
+#define CONTROL_COMMAND_DELAY_TICKS 1000 // one tick is 10ns
+
 void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 
     adsp_stage_control_cmd_t cmd;
@@ -58,7 +60,7 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
 
         // Add a delay of 10 ms to address the bug described in https://xmosjira.atlassian.net/browse/LCD-257
         hwtimer_t t_delay = hwtimer_alloc();
-        hwtimer_delay(t_delay, 1000);
+        hwtimer_delay(t_delay, CONTROL_COMMAND_DELAY_TICKS);
         hwtimer_free(t_delay);
 
         // Read back the written data
