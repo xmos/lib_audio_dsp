@@ -447,7 +447,7 @@ class volume_control(dspg.dsp_block):
     slew_shift : int, optional
         The shift value used in the exponential slew.
     mute_state : int, optional
-        The mute state of the Volume Control: 0: unmuted, 1: muted
+        The mute state of the Volume Control: 0: unmuted, 1: muted.
     Attributes
     ----------
     target_gain_db : float

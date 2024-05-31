@@ -49,7 +49,7 @@ class Fork(Stage):
         fork_indices = [list(range(i, self.n_in * count, count)) for i in range(count)]
         self.forks = []
         for indices in fork_indices:
-            self.forks.append(self.o[(i for i in indices)])
+            self.forks.append([self.o[i] for i in indices])
 
     def get_frequency_response(self, nfft=512):
         """Fork has no sensible frequency response, not implemented."""
@@ -156,6 +156,12 @@ class VolumeControl(Stage):
     Multiply the input by a gain. The gain can be changed at runtime.
     The stage can be muted and unmuted at runtime.
 
+    Parameters
+    ----------
+    gain_db : float, optional
+        The gain of the mixer in dB.
+    mute_state : int, optional
+        The mute state of the Volume Control: 0: unmuted, 1: muted.
     """
 
     def __init__(self, gain_dB=0, mute_state=0, **kwargs):
@@ -179,7 +185,9 @@ class VolumeControl(Stage):
         gain_dB
             Target gain of this volume control.
         slew_shift
-            See :class:`audio_dsp.dsp.signal_chain.volume_control` for details on slew_shift.
+            The shift value used in the exponential slew.
+        mute_state
+            The mute state of the Volume Control: 0: unmuted, 1: muted.
         """
         self.details = dict(
             target_gain=gain_dB, slew_shift=slew_shift, mute_state=mute_state, Q_sig=Q_sig
