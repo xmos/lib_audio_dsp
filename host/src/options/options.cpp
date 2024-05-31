@@ -56,7 +56,7 @@ opt_t * option_lookup(const string str)
             return opt;
         }
     }
-    /*
+
     int shortest_dist = 100;
     int indx  = 0;
     for(size_t i = 0; i < num_options; i++)
@@ -71,10 +71,10 @@ opt_t * option_lookup(const string str)
             indx = i;
         }
     }
-    */
-    cerr << "Option " << str << " does not exist." << endl;
-    //<< "Maybe you meant " << options[indx].short_name
-    //<< " or " << options[indx].long_name << "." << endl;
+
+    cerr << "Option " << str << " does not exist." << endl
+    << "Maybe you meant " << options[indx].short_name
+    << " or " << options[indx].long_name << "." << endl;
     exit(HOST_APP_ERROR);
     return nullptr;
 }

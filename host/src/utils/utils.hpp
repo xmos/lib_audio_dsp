@@ -243,7 +243,7 @@ cmd_param_t command_bytes_to_value(const cmd_param_type_t type, const uint8_t * 
 void command_bytes_from_value(const cmd_param_type_t type, uint8_t * data, unsigned index, const cmd_param_t value);
 
 /** @brief Find Levenshtein distance for approximate string matching */
-//int Levenshtein_distance(const std::string source, const std::string target);
+int Levenshtein_distance(const std::string source, const std::string target);
 
 /** @brief Get current terminal width */
 size_t get_term_width();
