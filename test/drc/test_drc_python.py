@@ -346,7 +346,10 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold,
     mono_component_handle = getattr(drc, component_mono)
     if ratio is not None:
         drc_s = stereo_component_handle(fs, ratio, threshold, at, rt)
-        drc_m = mono_component_handle(fs, 1, ratio, threshold, at, rt)
+        if "sidechain" in component_mono:
+            drc_m = mono_component_handle(fs, ratio, threshold, at, rt)
+        else:
+            drc_m = mono_component_handle(fs, 1, ratio, threshold, at, rt)
 
     else:
         drc_s = stereo_component_handle(fs, threshold, at, rt)
@@ -708,11 +711,11 @@ def test_stereo_components(fs, component, at, rt, threshold, ratio):
 # TODO compressor tests
 
 if __name__ == "__main__":
-    test_drc_component_frames(48000, "compressor_rms", 0.1, 0.5, 6, 6, 1, 31)
+    # test_drc_component_frames(48000, "compressor_rms", 0.1, 0.5, 6, 6, 1, 31)
     # test_limiter_peak_attack(48000, 0.001, 0)
     # comp_vs_limiter(48000, 0.001, 0)
     # test_comp_ratio(48000, 0.00000001, 0.00000001, 2, 0)
-    # test_mono_vs_stereo(48000, "compressor_rms_sidechain_mono", "compressor_rms_sidechain_stereo", 0.001, 0.01, 0, 6)
+    test_mono_vs_stereo(48000, "compressor_rms_sidechain_mono", "compressor_rms_sidechain_stereo", 0.001, 0.01, 0, 6)
     # test_sidechain_mono_vs_comp(16000, 0.05, -40)
     # test_noise_gate("noise_gate", -30, None)
     # test_drc_component_bypass(48000, "compressor_rms", 0.01, 0.2, 0, 6)
