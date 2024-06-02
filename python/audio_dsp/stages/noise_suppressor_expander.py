@@ -77,6 +77,6 @@ class NoiseSuppressorExpander(Stage):
             Q_sig=Q_sig,
         )
         self.dsp_block = drc.noise_suppressor_expander(
-            self.fs, self.n_in, ratio, threshold_db, attack_t, release_t, delay, Q_sig
+            self.fs, self.n_in, ratio, threshold_db, attack_t, release_t, Q_sig
         )
         return self

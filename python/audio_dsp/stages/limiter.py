@@ -60,7 +60,7 @@ class LimiterRMS(Stage):
             Q_sig=Q_sig,
         )
         self.dsp_block = drc.limiter_rms(
-            self.fs, self.n_in, threshold_db, attack_t, release_t, delay, Q_sig
+            self.fs, self.n_in, threshold_db, attack_t, release_t, Q_sig
         )
         return self
 
@@ -120,7 +120,7 @@ class LimiterPeak(Stage):
             Q_sig=Q_sig,
         )
         self.dsp_block = drc.limiter_peak(
-            self.fs, self.n_in, threshold_db, attack_t, release_t, delay, Q_sig
+            self.fs, self.n_in, threshold_db, attack_t, release_t, Q_sig
         )
         return self
 
@@ -181,7 +181,7 @@ class HardLimiterPeak(Stage):
             Q_sig=Q_sig,
         )
         self.dsp_block = drc.hard_limiter_peak(
-            self.fs, self.n_in, threshold_db, attack_t, release_t, delay, Q_sig
+            self.fs, self.n_in, threshold_db, attack_t, release_t, Q_sig
         )
         return self
 
