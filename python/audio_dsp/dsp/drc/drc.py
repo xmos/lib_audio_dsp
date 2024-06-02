@@ -26,7 +26,7 @@ class envelope_detector_peak(dspg.dsp_block):
     ----------
     attack_t : float, optional
         Attack time of the envelope detector in seconds.
-    release_t: float, optional
+    release_t : float, optional
         Release time of the envelope detector in seconds.
 
     Attributes
@@ -278,9 +278,9 @@ class compressor_limiter_base(dspg.dsp_block):
         number of parallel channels the compressor/limiter runs on. The
         channels are limited/compressed separately, only the constant
         parameters are shared.
-    attack_t : float, optional
+    attack_t : float
         Attack time of the compressor/limiter in seconds.
-    release_t: float, optional
+    release_t: float
         Release time of the compressor/limiter in seconds.
 
     Attributes
@@ -315,7 +315,7 @@ class compressor_limiter_base(dspg.dsp_block):
 
     # Limiter after Zolzer's DAFX & Guy McNally's "Dynamic Range Control
     # of Digital Audio Signals"
-    def __init__(self, fs, n_chans, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, n_chans, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
         self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
@@ -436,6 +436,12 @@ class compressor_limiter_base(dspg.dsp_block):
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.
 
+        Parameters
+        ----------
+        return_int : bool
+            If True, return int scaled values. If false, rescale to
+            floating point.
+
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
         # get envelope from envelope detector
@@ -522,6 +528,11 @@ class limiter_peak(compressor_limiter_base):
     sets how long the signal takes to ramp up to it's original level
     after the envelope is below the threshold.
 
+    Parameters
+    ----------
+    threshold_db : float
+        Threshold in decibels above which limiting occurs.
+
     Attributes
     ----------
     env_detector : envelope_detector_peak
@@ -530,10 +541,10 @@ class limiter_peak(compressor_limiter_base):
 
     """
 
-    def __init__(self, fs, n_chans, threshold_dB, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
-        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_dB, self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,
@@ -558,6 +569,10 @@ class limiter_rms(compressor_limiter_base):
     sets how long the signal takes to ramp up to it's original level
     after the envelope is below the threshold.
 
+    Parameters
+    ----------
+    threshold_db : float
+        Threshold in decibels above which limiting occurs.
 
     Attributes
     ----------
@@ -571,12 +586,12 @@ class limiter_rms(compressor_limiter_base):
 
     """
 
-    def __init__(self, fs, n_chans, threshold_dB, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         # note rms comes as x**2, so use db_pow
         self.threshold, self.threshold_int = drcu.calculate_threshold(
-            threshold_dB, self.Q_sig, power=True
+            threshold_db, self.Q_sig, power=True
         )
 
         self.env_detector = envelope_detector_rms(
@@ -662,8 +677,8 @@ class lookahead_limiter_peak(compressor_limiter_base):
     clipping.
     """
 
-    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         self.threshold = utils.db2gain(threshold_db)
         self.env_detector = envelope_detector_peak(
@@ -692,7 +707,7 @@ class lookahead_limiter_rms(compressor_limiter_base):
     clipping.
     """
 
-    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
 
         self.threshold = utils.db_pow2gain(threshold_db)
@@ -742,6 +757,8 @@ class compressor_rms(compressor_limiter_base):
     ratio : float
         Compression gain ratio applied when the signal is above the
         threshold
+    threshold_db : float
+        Threshold in decibels above which compression occurs.
 
     Attributes
     ----------
@@ -766,10 +783,8 @@ class compressor_rms(compressor_limiter_base):
 
     """
 
-    def __init__(
-        self, fs, n_chans, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
-    ):
-        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
+    def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         # note rms comes as x**2, so use db_pow
         self.threshold, self.threshold_int = drcu.calculate_threshold(
@@ -847,10 +862,8 @@ class compressor_rms_softknee(compressor_limiter_base):
     https://www.aes.org/e-lib/browse.cfm?elib=16354
     """
 
-    def __init__(
-        self, fs, n_chans, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
-    ):
-        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
+    def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         # note rms comes as x**2, so use db_pow
         self.threshold_db = threshold_db

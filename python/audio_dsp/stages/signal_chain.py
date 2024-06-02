@@ -252,7 +252,8 @@ class Switch(Stage):
         Parameters
         ----------
         position : int
-            The position to move the switch to.
+            The position to move the switch to. This changes the output
+            signal to the input[position]
         """
         self.dsp_block.move_switch(position)
         return self
@@ -262,10 +263,14 @@ class Delay(Stage):
     """
     Delay the input signal by a specified amount.
 
+    The maximum delay is set at compile time, and the runtime delay can
+    be set between 0 and ``max_delay``.
+
     Parameters
     ----------
     max_delay : float
-        The maximum delay in specified units.
+        The maximum delay in specified units. This can only be set at
+        compile time.
     starting_delay : float
         The starting delay in specified units.
     units : str, optional

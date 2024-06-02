@@ -21,6 +21,9 @@ class cascaded_biquads_8(dspg.dsp_block):
     biquads in the cascade, the remaining biquads are set to bypass
     (b0 = 1).
 
+    For documentation on individual biquads, see
+    :class:`audio_dsp.dsp.biquad.biquad`.
+
     Parameters
     ----------
     coeffs_list : list

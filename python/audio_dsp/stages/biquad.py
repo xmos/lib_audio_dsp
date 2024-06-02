@@ -26,7 +26,7 @@ def _ws(locals):
 
 class Biquad(Stage):
     """
-    A second order biquadratic filter, which can bse used to make many
+    A second order biquadratic filter, which can be used to make many
     common second order filters. The filter is initialised in a
     bypass state, and the ``make_*`` methods can be used to calculate the
     coefficients.

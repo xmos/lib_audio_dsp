@@ -9,12 +9,18 @@ from ..dsp import generic as dspg
 
 class EnvelopeDetectorPeak(Stage):
     """
-    Adds a stage with no outputs that measures the signal envelope.
-
-    See :class:`audio_dsp.dsp.drc.envelope_detector_peak` for details.
+    Adds a stage with no outputs that measures the signal peak envelope.
 
     The current envelope of the signal can be read out using this stage's
     ``envelope`` control.
+
+    Attributes
+    ----------
+    dsp_block : audio_dsp.dsp.drc.drc.envelope_detector_peak
+        The dsp block class, see
+        :class:`audio_dsp.dsp.drc.drc.envelope_detector_peak` for implementation
+        details.
+
     """
 
     def __init__(self, **kwargs):
@@ -30,12 +36,19 @@ class EnvelopeDetectorPeak(Stage):
 
         self.stage_memory_parameters = (self.n_in,)
 
-    def make_env_det_peak(self, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        """Update envelope detector configuration based on new parameters."""
+    def make_env_det_peak(self, attack_t, release_t, Q_sig=dspg.Q_SIG):
+        """Update envelope detector configuration based on new parameters.
+
+        Parameters
+        ----------
+        attack_t : float
+            Attack time of the envelope detector in seconds.
+        release_t : float
+            Release time of the envelope detector in seconds.
+        """
         self.details = dict(
             attack_t=attack_t,
             release_t=release_t,
-            delay=delay,
             Q_sig=Q_sig,
         )
         self.dsp_block = drc.envelope_detector_peak(self.fs, self.n_in, attack_t, release_t, Q_sig)
@@ -44,12 +57,18 @@ class EnvelopeDetectorPeak(Stage):
 
 class EnvelopeDetectorRMS(Stage):
     """
-    Adds a stage with no outputs that measures the signal envelope.
-
-    See :class:`audio_dsp.dsp.drc.envelope_detector_rms` for details.
+    Adds a stage with no outputs that measures the signal RMS envelope.
 
     The current envelope of the signal can be read out using this stage's
     ``envelope`` control.
+
+    Attributes
+    ----------
+    dsp_block : audio_dsp.dsp.drc.drc.envelope_detector_rms
+        The dsp block class, see
+        :class:`audio_dsp.dsp.drc.drc.envelope_detector_rms` for implementation
+        details.
+
     """
 
     def __init__(self, **kwargs):
@@ -65,12 +84,19 @@ class EnvelopeDetectorRMS(Stage):
 
         self.stage_memory_parameters = (self.n_in,)
 
-    def make_env_det_rms(self, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        """Update envelope detector configuration based on new parameters."""
+    def make_env_det_rms(self, attack_t, release_t, Q_sig=dspg.Q_SIG):
+        """Update envelope detector configuration based on new parameters.
+
+        Parameters
+        ----------
+        attack_t : float
+            Attack time of the envelope detector in seconds.
+        release_t : float
+            Release time of the envelope detector in seconds.
+        """
         self.details = dict(
             attack_t=attack_t,
             release_t=release_t,
-            delay=delay,
             Q_sig=Q_sig,
         )
         self.dsp_block = drc.envelope_detector_rms(self.fs, self.n_in, attack_t, release_t, Q_sig)

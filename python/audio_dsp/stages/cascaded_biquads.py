@@ -31,7 +31,23 @@ def _parametric_eq_doc(wrapped):
 
 
 class CascadedBiquads(Stage):
-    """8 Cascaded biquads."""
+    """8 cascaded biquad filters. This allows up to 8 second order
+    biquad filters to be run in series. This can be used for either:
+    - an Nth order filter built out of cascaded second order sections
+    - a parametric EQ, where several biquad filters are used at once.
+
+    For documentation on individual biquad filter, see
+    :class:`audio_dsp.stages.biquad.Biquad` and
+    :class:`audio_dsp.dsp.biquad.biquad`
+
+    Attributes
+    ----------
+    dsp_block : audio_dsp.dsp.cascaded_biquad.cascaded_biquad
+        The dsp block class, see
+        :class:`audio_dsp.dsp.cascaded_biquad.cascaded_biquad` for
+        implementation details.
+
+    """
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("cascaded_biquads"), **kwargs)
@@ -89,14 +105,37 @@ class CascadedBiquads(Stage):
         return self
 
     def make_butterworth_highpass(self, N: int, fc: float) -> "CascadedBiquads":
-        """Configure this instance as a Butterworth highpass filter."""
-        self.details = dict(type="butterworth lowpass", N=N, fc=fc)
+        """Configure this instance as an Nth order Butterworth highpass
+        filter using N/2 cascaded biquads.
+
+        For details on the implementation, see
+        :class:`audio_dsp.dsp.cascaded_biquads.make_butterworth_highpass`
+
+        Parameters
+        ----------
+        N : int
+            Filter order, must be even
+        fc : float
+            -3 dB frequency in Hz.
+        """
         self.details = dict(type="butterworth highpass", N=N, fc=fc)
         self.dsp_block = casc_bq.butterworth_highpass(self.fs, self.n_in, N, fc)
         return self
 
     def make_butterworth_lowpass(self, N: int, fc: float) -> "CascadedBiquads":
-        """Configure this instance as a Butterworth lowpass filter."""
+        """Configure this instance as an Nth order Butterworth lowpass
+        filter using N/2 cascaded biquads.
+
+        For details on the implementation, see
+        :class:`audio_dsp.dsp.cascaded_biquads.make_butterworth_lowpass`
+
+        Parameters
+        ----------
+        N : int
+            Filter order, must be even
+        fc : float
+            -3 dB frequency in Hz.
+        """
         self.details = dict(type="butterworth lowpass", N=N, fc=fc)
         self.dsp_block = casc_bq.butterworth_lowpass(self.fs, self.n_in, N, fc)
         return self

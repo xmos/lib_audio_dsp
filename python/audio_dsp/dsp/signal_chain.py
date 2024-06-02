@@ -33,10 +33,10 @@ class mixer(dspg.dsp_block):
     """
 
     def __init__(
-        self, fs: float, num_channels: int, gain_db: float = -6, Q_sig: int = dspg.Q_SIG
+        self, fs: float, n_chans: int, gain_db: float = -6, Q_sig: int = dspg.Q_SIG
     ) -> None:
-        super().__init__(fs, num_channels, Q_sig)
-        self.num_channels = num_channels
+        super().__init__(fs, n_chans, Q_sig)
+        self.num_channels = n_chans
         assert gain_db <= 24, "Maximum mixer gain is +24dB"
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
@@ -188,8 +188,8 @@ class adder(mixer):
 
     """
 
-    def __init__(self, fs: float, num_channels: int, Q_sig: int = dspg.Q_SIG) -> None:
-        super().__init__(fs, num_channels, gain_db=0, Q_sig=Q_sig)
+    def __init__(self, fs: float, n_chans: int, Q_sig: int = dspg.Q_SIG) -> None:
+        super().__init__(fs, n_chans, gain_db=0, Q_sig=Q_sig)
 
 
 class subtractor(dspg.dsp_block):

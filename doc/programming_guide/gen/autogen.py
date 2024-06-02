@@ -7,10 +7,14 @@ from mako.template import Template
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).parents[3]
+PYTHON_ROOT = Path(ROOT_DIR, "python")
 
 def python_doc(dir):
-    p_design = sorted(dir.glob("*.py"))
-    p_design_modules = [".".join(p.parts[-3:])[:-3] for p in p_design if not p.name.startswith("_")]
+    p_design = sorted(dir.glob("**/*.py"))
+    p_design_modules = []
+    for p in p_design:
+        if not p.name.startswith("_"):
+            p_design_modules.append(".".join(p.relative_to(PYTHON_ROOT).parts)[:-3])
     gen = Template("""
 % for module in modules:
 ${module}
@@ -82,7 +86,6 @@ ${"="*len(str(module))}
 %endfor
 """).render(modules=c_design_modules)
     (Path(__file__).parent / f"{dir.parts[-2]}.{dir.parts[-1]}.inc").write_text(gen)
-
 
 
 python_doc(ROOT_DIR / "python" / "audio_dsp" / "design")

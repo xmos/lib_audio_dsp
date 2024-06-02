@@ -8,9 +8,25 @@ from ..dsp import generic as dspg
 
 
 class CompressorRMS(Stage):
-    """A compressor based on the RMS envelope.
+    """A compressor based on the RMS envelope of the input signal.
 
-    See :class:`audio_dsp.dsp.drc.compressor_rms` for details.
+    When the RMS envelope of the signal exceeds the threshold, the
+    signal amplitude is reduced by the compression ratio.
+
+    The threshold sets the value above which compression occurs. The
+    ratio sets how much the signal is compressed. A ratio of 1 results
+    in no compression, while a ratio of infinity results in the same
+    behaviour as a limiter. The attack time sets how fast the compressor
+    starts compressing. The release time sets how long the signal takes
+    to ramp up to it's original level after the envelope is below the
+    threshold.
+
+    Attributes
+    ----------
+    dsp_block : audio_dsp.dsp.drc.drc.compressor_rms
+        The dsp block class, see
+        :class:`audio_dsp.dsp.drc.drc.compressor_rms` for implementation
+        details.
     """
 
     def __init__(self, **kwargs):
@@ -30,16 +46,26 @@ class CompressorRMS(Stage):
 
         self.stage_memory_parameters = (self.n_in,)
 
-    def make_compressor_rms(
-        self, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
-    ):
-        """Update compressor configuration based on new parameters."""
+    def make_compressor_rms(self, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
+        """Update compressor configuration based on new parameters.
+
+        Parameters
+        ----------
+        ratio : float
+            Compression gain ratio applied when the signal is above the
+            threshold
+        threshold_db : float
+            Threshold in decibels above which compression occurs.
+        attack_t : float
+            Attack time of the compressor in seconds.
+        release_t : float
+            Release time of the compressor in seconds.
+        """
         self.details = dict(
             ratio=ratio,
             threshold_db=threshold_db,
             attack_t=attack_t,
             release_t=release_t,
-            delay=delay,
             Q_sig=Q_sig,
         )
         self.dsp_block = drc.compressor_rms(
