@@ -52,4 +52,4 @@ def test_dummy_commands():
         # Remove carriage returns from output string
         sentence = sentence.replace("\n", "").replace("\r", "")
 
-        assert sentence.rstrip() == "Hello New World!\0\0\0\0"
+        assert sentence == "Hello New World!\0\0\0\0"
