@@ -21,7 +21,7 @@ class FirDirect(Stage):
     Attributes
     ----------
     dsp_block : audio_dsp.dsp.fir.fir_direct
-        The dsp block class, see :class:`audio_dsp.dsp.fir.fir_direct`
+        The DSP block class; see :class:`audio_dsp.dsp.fir.fir_direct`
         for implementation details.
     """
 
@@ -39,7 +39,7 @@ class FirDirect(Stage):
         self.stage_memory_parameters = (self.n_in, self.dsp_block.n_taps)
 
     def make_fir_direct(self, coeffs_path, Q_sig=dspg.Q_SIG):
-        """Update fir configuration based on new parameters.
+        """Update FIR configuration based on new parameters.
 
         Parameters
         ----------

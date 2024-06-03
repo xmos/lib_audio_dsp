@@ -51,9 +51,9 @@ class allpass_fv(dspg.dsp_block):
     Parameters
     ----------
     max_delay : int
-        maximum delay of the all pass
+        Maximum delay of the all-pass.
     feedback_gain : float
-        gain applied to the delayed feedback path in the all pass, sets
+        Gain applied to the delayed feedback path in the all-pass. Sets
         the reverb time.
     """
 
@@ -111,7 +111,7 @@ class allpass_fv(dspg.dsp_block):
         Parameters
         ----------
         sample_int : int
-            input sample as an integer
+            Input sample as an integer.
 
         """
         assert isinstance(sample_int, int), "Input sample must be an integer"
@@ -141,12 +141,12 @@ class comb_fv(dspg.dsp_block):
     Parameters
     ----------
     max_delay : int
-        maximum delay of the all pass
+        Maximum delay of the comb filter.
     feedback_gain : float
-        gain applied to the delayed feedback path in the all pass, sets
+        Gain applied to the delayed feedback path in the comb filter, sets
         the reverb time.
     damping : float
-        sets the low pass feedback coefficient.
+        Sets the low pass feedback coefficient.
     """
 
     def __init__(self, max_delay, feedback_gain, damping):
@@ -226,7 +226,7 @@ class comb_fv(dspg.dsp_block):
         Parameters
         ----------
         sample_int : int
-            input sample as an integer
+            Input sample as an integer.
 
         """
         assert isinstance(sample_int, int), "Input sample must be an integer"
@@ -253,7 +253,7 @@ class comb_fv(dspg.dsp_block):
 class reverb_room(dspg.dsp_block):
     """Generate a room reverb effect. This is based on Freeverb by
     Jezar at Dreampoint, and consists of 8 parallel comb filters fed
-    into 4 series all pass filters.
+    into 4 series all-pass filters.
 
     Parameters
     ----------

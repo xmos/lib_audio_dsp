@@ -439,8 +439,8 @@ class compressor_limiter_base(dspg.dsp_block):
         Parameters
         ----------
         return_int : bool
-            If True, return int scaled values. If false, rescale to
-            floating point.
+            If True, return int scaled values. If False, rescale to
+            floating point, scaled by ``2**-self.Q_sig``.
 
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
@@ -525,7 +525,7 @@ class limiter_peak(compressor_limiter_base):
 
     The threshold set the value above which limiting occurs. The attack
     time sets how fast the limiter starts limiting. The release time
-    sets how long the signal takes to ramp up to it's original level
+    sets how long the signal takes to ramp up to its original level
     after the envelope is below the threshold.
 
     Parameters
@@ -566,7 +566,7 @@ class limiter_rms(compressor_limiter_base):
 
     The threshold set the value above which limiting occurs. The attack
     time sets how fast the limiter starts limiting. The release time
-    sets how long the signal takes to ramp up to it's original level
+    sets how long the signal takes to ramp up to its original level
     after the envelope is below the threshold.
 
     Parameters

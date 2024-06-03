@@ -40,7 +40,7 @@ class Biquad(Stage):
     Attributes
     ----------
     dsp_block : audio_dsp.dsp.biquad.biquad
-        The dsp block class, see :class:`audio_dsp.dsp.biquad.biquad`
+        The DSP block class; see :class:`audio_dsp.dsp.biquad.biquad`
         for implementation details.
     """
 
@@ -62,7 +62,7 @@ class Biquad(Stage):
         return np.array(a * (2**30), dtype=np.int32)
 
     def make_bypass(self) -> "Biquad":
-        """Make this biquad a bypass, by setting the b0 coefficient to
+        """Make this biquad a bypass by setting the b0 coefficient to
         1.
         """
         self.details = {}
@@ -75,7 +75,7 @@ class Biquad(Stage):
         Parameters
         ----------
         f : float
-            cutoff frequency of the filter in Hz.
+            Cutoff frequency of the filter in Hz.
         q : float
             Q factor of the filter roll-off. 0.707 is equivalent to a
             Butterworth response.
@@ -90,7 +90,7 @@ class Biquad(Stage):
         Parameters
         ----------
         f : float
-            cutoff frequency of the filter in Hz.
+            Cutoff frequency of the filter in Hz.
         q : float
             Q factor of the filter roll-off. 0.707 is equivalent to a
             Butterworth response.
@@ -105,7 +105,7 @@ class Biquad(Stage):
         Parameters
         ----------
         f : float
-            center frequency of the filter in Hz.
+            Center frequency of the filter in Hz.
         bw : float
             Bandwidth of the filter in octaves.
         """
@@ -119,7 +119,7 @@ class Biquad(Stage):
         Parameters
         ----------
         f : float
-            center frequency of the filter in Hz.
+            Center frequency of the filter in Hz.
         bw : float
             Bandwidth of the filter in octaves.
         """
@@ -133,7 +133,7 @@ class Biquad(Stage):
         Parameters
         ----------
         f : float
-            center frequency of the filter in Hz.
+            Center frequency of the filter in Hz.
         q : float
             Q factor of the filter.
         """
@@ -147,7 +147,7 @@ class Biquad(Stage):
         Parameters
         ----------
         f : float
-            center frequency of the filter in Hz.
+            Center frequency of the filter in Hz.
         q : float
             Q factor of the filter.
         """
@@ -161,7 +161,7 @@ class Biquad(Stage):
         Parameters
         ----------
         f : float
-            center frequency of the filter in Hz.
+            Center frequency of the filter in Hz.
         q : float
             Q factor of the filter.
         boost_db : float
@@ -172,7 +172,7 @@ class Biquad(Stage):
         return self
 
     def make_constant_q(self, f: float, q: float, boost_db: float) -> "Biquad":
-        """Make this biquad a peaking filter with constant q.
+        """Make this biquad a peaking filter with constant Q.
 
         Constant Q means that the bandwidth of the filter remains
         constant as the gain varies. It is commonly used for graphic
@@ -181,7 +181,7 @@ class Biquad(Stage):
         Parameters
         ----------
         f : float
-            center frequency of the filter in Hz.
+            Center frequency of the filter in Hz.
         q : float
             Q factor of the filter.
         boost_db : float
@@ -238,10 +238,10 @@ class Biquad(Stage):
     def make_linkwitz(self, f0: float, q0: float, fp: float, qp: float) -> "Biquad":
         """Make this biquad a Linkwitz Transform biquad filter.
 
-        The Linkwitz Transform is commonly used to change the low
+        The Linkwitz Transform changes the low frequency cutoff of a filter, and is commonly used to change the low
         frequency roll off slope of a loudspeaker. When applied to a
         loudspeaker, it will change the cutoff frequency from f0 to fp,
-        and the quality factor from q0 to qp.
+        and the Q factor from q0 to qp.
 
         Parameters
         ----------

@@ -18,13 +18,13 @@ class CompressorRMS(Stage):
     in no compression, while a ratio of infinity results in the same
     behaviour as a limiter. The attack time sets how fast the compressor
     starts compressing. The release time sets how long the signal takes
-    to ramp up to it's original level after the envelope is below the
+    to ramp up to its original level after the envelope is below the
     threshold.
 
     Attributes
     ----------
     dsp_block : audio_dsp.dsp.drc.drc.compressor_rms
-        The dsp block class, see
+        The DSB block class; see
         :class:`audio_dsp.dsp.drc.drc.compressor_rms` for implementation
         details.
     """
@@ -53,7 +53,7 @@ class CompressorRMS(Stage):
         ----------
         ratio : float
             Compression gain ratio applied when the signal is above the
-            threshold
+            threshold.
         threshold_db : float
             Threshold in decibels above which compression occurs.
         attack_t : float

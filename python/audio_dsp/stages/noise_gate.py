@@ -12,18 +12,18 @@ class NoiseGate(Stage):
     falls below a threshold.
 
     When the signal envelope falls below the threshold, the gain applied
-    to the signal is reduced to 0 (based on the release time). When the
+    to the signal is reduced to 0 over the release time. When the
     envelope returns above the threshold, the gain applied to the signal
     is increased to 1 over the attack time.
 
     The initial state of the noise gate is with the gate open (no
-    attenuation), assuming a full scale signal has been present before
+    attenuation); this models a full scale signal having been present before
     t = 0.
 
     Attributes
     ----------
     dsp_block : audio_dsp.dsp.drc.expander.noise_gate
-        The dsp block class, see
+        The DSP block class; see
         :class:`audio_dsp.dsp.drc.expander.noise_gate` for implementation
         details.
     """

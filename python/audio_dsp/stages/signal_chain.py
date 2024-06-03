@@ -252,7 +252,7 @@ class Switch(Stage):
         Parameters
         ----------
         position : int
-            The position to move the switch to. This changes the output
+            The position to which to move the switch. This changes the output
             signal to the input[position]
         """
         self.dsp_block.move_switch(position)

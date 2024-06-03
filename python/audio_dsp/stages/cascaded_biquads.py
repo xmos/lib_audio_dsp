@@ -36,14 +36,14 @@ class CascadedBiquads(Stage):
     - an Nth order filter built out of cascaded second order sections
     - a parametric EQ, where several biquad filters are used at once.
 
-    For documentation on individual biquad filter, see
+    For documentation on the individual biquad filters, see
     :class:`audio_dsp.stages.biquad.Biquad` and
     :class:`audio_dsp.dsp.biquad.biquad`
 
     Attributes
     ----------
     dsp_block : audio_dsp.dsp.cascaded_biquad.cascaded_biquad
-        The dsp block class, see
+        The DSP block class; see
         :class:`audio_dsp.dsp.cascaded_biquad.cascaded_biquad` for
         implementation details.
 

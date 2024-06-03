@@ -12,15 +12,15 @@ class LimiterRMS(Stage):
     envelope of the signal exceeds the threshold, the signal amplitude
     is reduced.
 
-    The threshold set the value above which limiting occurs. The attack
+    The threshold sets the value above which limiting occurs. The attack
     time sets how fast the limiter starts limiting. The release time
-    sets how long the signal takes to ramp up to it's original level
+    sets how long the signal takes to ramp up to its original level
     after the envelope is below the threshold.
 
     Attributes
     ----------
     dsp_block : audio_dsp.dsp.drc.drc.limiter_rms
-        The dsp block class, see
+        The DSP block class; see
         :class:`audio_dsp.dsp.drc.drc.limiter_rms` for implementation
         details.
 
@@ -71,15 +71,15 @@ class LimiterPeak(Stage):
     envelope of the signal exceeds the threshold, the signal amplitude
     is reduced.
 
-    The threshold set the value above which limiting occurs. The attack
+    The threshold sets the value above which limiting occurs. The attack
     time sets how fast the limiter starts limiting. The release time
-    sets how long the signal takes to ramp up to it's original level
+    sets how long the signal takes to ramp up to its original level
     after the envelope is below the threshold.
 
     Attributes
     ----------
     dsp_block : audio_dsp.dsp.drc.drc.compressor_rms
-        The dsp block class, see
+        The DSP block class; see
         :class:`audio_dsp.dsp.drc.drc.limiter_peak` for implementation
         details.
 
@@ -127,22 +127,22 @@ class LimiterPeak(Stage):
 
 class HardLimiterPeak(Stage):
     """
-    A limiter based on the peak value of the signal, that never allows
-    the signal to be higher than the threshold.
+    A limiter based on the peak value of the signal. The peak
+    envelope of the signal may never exceed the threshold.
 
     When the peak envelope of the signal exceeds the threshold, the
     signal amplitude is reduced. If the signal still exceeds the
     threshold, it is clipped.
 
-    The threshold set the value above which limiting/clipping occurs.
+    The threshold sets the value above which limiting/clipping occurs.
     The attack time sets how fast the limiter starts limiting. The
-    release time sets how long the signal takes to ramp up to it's
+    release time sets how long the signal takes to ramp up to its
     original level after the envelope is below the threshold.
 
     Attributes
     ----------
     dsp_block : audio_dsp.dsp.drc.drc.hard_limiter_peak
-        The dsp block class, see
+        The DSP block class; see
         :class:`audio_dsp.dsp.drc.drc.hard_limiter_peak` for
         implementation details.
     """
@@ -196,7 +196,7 @@ class Clipper(Stage):
     Attributes
     ----------
     dsp_block : audio_dsp.dsp.drc.drc.clipper
-        The dsp block class, see :class:`audio_dsp.dsp.drc.drc.clipper`
+        The DSP block class; see :class:`audio_dsp.dsp.drc.drc.clipper`
         for implementation details.
     """
 

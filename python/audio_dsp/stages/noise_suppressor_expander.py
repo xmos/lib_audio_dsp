@@ -18,13 +18,13 @@ class NoiseSuppressorExpander(Stage):
     gain applied to the signal is increased to 1 over the attack time.
 
     The initial state of the noise suppressor is with the suppression
-    off, assuming a full scale signal has been present before
+    off; this models a full scale signal having been present before
     t = 0.
 
     Attributes
     ----------
     dsp_block : audio_dsp.dsp.drc.expander.noise_suppressor_expander
-        The dsp block class, see
+        The DSP block class; see
         :class:`audio_dsp.dsp.drc.expander.noise_suppressor_expander`
         for implementation details.
     """
