@@ -56,15 +56,14 @@ def test_fork(fork_output, inputs):
     Basic check that the for stage correctly copies data to the expected outputs.
     """
     channels = inputs
-    p = Pipeline(channels)
-    with p.add_thread() as t:
-        count = 2
-        fork = t.stage(Fork, p.i, count = count)
-        assert len(fork.forks) == count
-        for f in fork.forks:
-            assert len(f) == channels
+    p, i = Pipeline.begin(channels)
+    count = 2
+    fork = p.stage(Fork, i, count = count)
+    assert len(fork.forks) == count
+    for f in fork.forks:
+        assert len(f) == channels
 
-        p.set_outputs(fork.forks[fork_output])
+    p.set_outputs(fork.forks[fork_output])
 
     if inputs == 1:
         do_test(p, [0], (0, 1))
@@ -76,9 +75,8 @@ def test_fork_copies():
     Check we can duplicate a channel
     """
     channels = 2
-    p = Pipeline(channels, frame_size=2)
-    with p.add_thread() as t:
-        fork = t.stage(Fork, p.i, count = 2)
+    p, i = Pipeline.begin(channels, frame_size=2)
+    fork = p.stage(Fork, i, count = 2)
     p.set_outputs(fork.forks[0][0] + fork.forks[1][0])
 
     # input channel 0 comes out both outputs

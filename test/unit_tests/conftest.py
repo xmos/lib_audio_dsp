@@ -12,9 +12,8 @@ from stages.dummy import Dummy
 
 def gen_dummy_pipeline():
     p = pipeline.Pipeline(1, identifier="dummy")
-    t = p.add_thread()
-    d = t.stage(Dummy, p.i, label="dummy")
-    p.set_outputs(d.o)
+    d = p.stage(Dummy, p.i, label="dummy")
+    p.set_outputs(d)
     pipeline.generate_dsp_main(p, out_dir=Path(__file__).parent / "build/dummy_pipeline")
 
 

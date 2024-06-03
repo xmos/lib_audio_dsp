@@ -2,7 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Assorted stages for common signal chain operations."""
 
-from ..design.stage import Stage, find_config
+from ..design.stage import Stage, find_config, StageOutputList, StageOutput
 from ..dsp import generic as dspg
 import audio_dsp.dsp.signal_chain as sc
 import numpy as np
@@ -23,6 +23,24 @@ class Bypass(Stage):
         return [np.copy(i) for i in in_channels]
 
 
+class ForkOutputList(StageOutputList):
+    """
+    Custom StageOutputList that is created by Fork.
+
+    This allows convenient access to each fork output.
+
+    Attributes
+    ----------
+    forks: list[StageOutputList]
+        Fork duplicates its inputs, each entry in the forks list is a single copy
+        of the input edges.
+    """
+
+    def __init__(self, edges: list[StageOutput | None] | None = None):
+        super().__init__(edges)
+        self.forks = []
+
+
 class Fork(Stage):
     """
     Fork the signal.
@@ -30,7 +48,7 @@ class Fork(Stage):
     Use if the same data needs to be sent to multiple data paths::
 
         a = t.stage(Example, ...)
-        f = t.stage(Fork, a.o, count=2)  # count optional, default is 2
+        f = t.stage(Fork, a, count=2)  # count optional, default is 2
         b = t.stage(Example, f.forks[0])
         c = t.stage(Example, f.forks[1])
 
@@ -47,9 +65,11 @@ class Fork(Stage):
         self.create_outputs(self.n_in * count)
 
         fork_indices = [list(range(i, self.n_in * count, count)) for i in range(count)]
-        self.forks = []
+        forks = []
         for indices in fork_indices:
-            self.forks.append(self.o[(i for i in indices)])
+            forks.append(self.o[(i for i in indices)])
+        self._o = ForkOutputList(self.o.edges)
+        self._o.forks = forks
 
     def get_frequency_response(self, nfft=512):
         """Fork has no sensible frequency response, not implemented."""
