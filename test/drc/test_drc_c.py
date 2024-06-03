@@ -175,9 +175,6 @@ def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
   info1 = np.array(comp.slope_f32, dtype=np.float32)
 
   if comp_name == "noise_suppressor_expander":
-    print(comp.threshold_int)
-    print(comp.inv_threshold_int)
-
     info2 = np.array(comp.inv_threshold_int, dtype=np.int64)
     info1 = info1.tobytes()
     info2 = info2.tobytes()
