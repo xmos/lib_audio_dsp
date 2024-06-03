@@ -14,7 +14,7 @@
 
 #include "control_test_params.h"
 #include "print.h"
-#include "stdio.h"
+
 #define CONTROL_COMMAND_TIMEOUT_TICKS 1000000 // one tick is 10ns
 #define CONTROL_COMMAND_DELAY_TICKS 1000 // one tick is 10ns
 
