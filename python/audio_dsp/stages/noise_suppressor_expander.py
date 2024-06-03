@@ -28,8 +28,12 @@ class NoiseSuppressorExpander(Stage):
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)
-        self.set_control_field_cb("inv_threshold_hh", lambda: (self.dsp_block.inv_threshold_int >> 32))
-        self.set_control_field_cb("inv_threshold_lh", lambda: (self.dsp_block.inv_threshold_int & 0x00000000FFFFFFFF))
+        self.set_control_field_cb(
+            "inv_threshold_hh", lambda: (self.dsp_block.inv_threshold_int >> 32)
+        )
+        self.set_control_field_cb(
+            "inv_threshold_lh", lambda: (self.dsp_block.inv_threshold_int & 0x00000000FFFFFFFF)
+        )
         self.set_control_field_cb("slope", lambda: self.dsp_block.slope_f32)
 
         self.stage_memory_parameters = (self.n_in,)
