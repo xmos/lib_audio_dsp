@@ -9,7 +9,7 @@ module:
     threshold:
       type: int32_t
     inv_threshold_hh:
-      type: uint32_t
+      type: int32_t
     inv_threshold_lh:
       type: uint32_t
     gain:

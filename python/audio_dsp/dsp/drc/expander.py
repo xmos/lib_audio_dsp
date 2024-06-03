@@ -232,6 +232,8 @@ class noise_suppressor_expander(expander_base):
         The threshold below which the signal is gated.
     threshold_int : int
         The threshold level as a 32-bit signed integer.
+    inv_threshold_int : int64
+        The inverse threshold level as a 64-bit signed integer.
     env_detector : envelope_detector_peak
         An instance of the envelope_detector_peak class used for envelope detection.
 
