@@ -3,7 +3,7 @@
 
 #include "dsp/adsp.h"
 #include "dsp/_helpers/drc_utils.h"
-
+#include "print.h"
 void adsp_noise_suppressor_expander_set_th(
   noise_suppressor_expander_t * nse,
   int32_t new_th
@@ -12,6 +12,10 @@ void adsp_noise_suppressor_expander_set_th(
   nse->threshold = (!new_th) ? 1 : new_th;
   // x * 2 ^ -63 / y * 2 ^ -27 = xy * 2 ^ -36
   nse->inv_threshold =  INT64_MAX / nse->threshold;
+  printintln(111);
+  printintln(new_th);
+  printintln(nse->threshold);
+  printllongln(nse->inv_threshold);
 }
 
 noise_suppressor_expander_t adsp_noise_suppressor_expander_init(

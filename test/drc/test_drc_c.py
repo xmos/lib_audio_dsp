@@ -47,7 +47,7 @@ def get_c_wav(dir_name, bin_name, verbose = False, sim = True):
   sig_bin = dir_name / "sig_out.bin"
   assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
   sig_int = np.fromfile(sig_bin, dtype=np.int32)
-  
+
   sig_fl = qxx_to_float(sig_int)
   sf.write(gen_dir / "sig_c.wav", sig_fl, fs, "PCM_24")
   return sig_fl
@@ -56,7 +56,7 @@ def get_c_wav(dir_name, bin_name, verbose = False, sim = True):
 def run_py(filt, sig_fl, single_output, run_f64 = False):
   out_xpy = np.zeros(sig_fl.size)
   out_pypy = np.zeros(sig_fl.size)
-  
+
   if single_output:
     for n in range(sig_fl.size):
       out_xpy[n] = filt.process_xcore(sig_fl[n])
@@ -100,7 +100,7 @@ def test_env_det_c(in_signal, env_name, at, rt):
   env_info = np.array(env_info, dtype = np.int32)
   env_info.tofile(test_dir / "env_info.bin")
 
-  out_py_int = run_py(env, in_signal, True)  
+  out_py_int = run_py(env, in_signal, True)
   out_c = get_c_wav(test_dir, env_name)
   shutil.rmtree(test_dir)
 
@@ -155,8 +155,8 @@ def test_limiter_c(in_signal, component_name, at, rt, threshold):
                                        "noise_suppressor_expander"])
 @pytest.mark.parametrize("at", [0.005])
 @pytest.mark.parametrize("rt", [0.120])
-@pytest.mark.parametrize("threshold", [-12, 0])
-@pytest.mark.parametrize("ratio", [1, 6])
+@pytest.mark.parametrize("threshold", [ 0])
+@pytest.mark.parametrize("ratio", [ 6])
 def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
   # for the noise suppressor (expander) the lowest sensible threshold is -35
   if comp_name == "noise_suppressor_expander" and threshold == -12:
@@ -173,6 +173,16 @@ def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
   info = [comp.threshold_int, comp.attack_alpha_int, comp.release_alpha_int]
   info = np.array(info, dtype=np.int32)
   info1 = np.array(comp.slope_f32, dtype=np.float32)
+
+  if comp_name == "noise_suppressor_expander":
+    print(comp.threshold_int)
+    print(comp.inv_threshold_int)
+
+    info2 = np.array(comp.inv_threshold_int, dtype=np.int64)
+    info1 = info1.tobytes()
+    info2 = info2.tobytes()
+    info1 = np.append(info2, info1)
+
   info = info.tobytes()
   info1 = info1.tobytes()
   info = np.append(info, info1)

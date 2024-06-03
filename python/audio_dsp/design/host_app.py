@@ -110,6 +110,7 @@ def send_control_cmd(instance_id, *args, verbose=False):
         str(instance_id),
         *[i for i in args],
     ]
+    print(cmd_list)
     if PROTOCOL == "xscope":
         cmd_list.extend(["--port", str(PORT)])
 

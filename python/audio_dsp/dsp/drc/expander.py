@@ -244,6 +244,9 @@ class noise_suppressor_expander(expander_base):
 
         self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
         self.threshold_int = max(1, self.threshold_int)
+        self.inv_threshold_int = utils.int64(((1 << 63) - 1) // self.threshold_int)
+        print(self.threshold_int )
+        print( self.inv_threshold_int )
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,

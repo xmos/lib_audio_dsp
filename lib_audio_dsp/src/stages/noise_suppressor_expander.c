@@ -11,23 +11,15 @@
 
 static inline void nse_copy_config_to_state(noise_suppressor_expander_t *nse_state, int n_inputs, const noise_suppressor_expander_config_t *nse_config)
 {
-    // Avoid division by 0
-    int32_t th = (!nse_config->threshold) ? 1 : nse_config->threshold;
-    int32_t condition = (nse_state[0].threshold != th); // threshold is the same in all channels
-    // Compute the inverse of the threshold only if the threshold has changed
-    int64_t inv_th = (condition) ? INT64_MAX / th : 0; // else doesn't matter here
     // Same config for all channels
     for(int i=0; i<n_inputs; i++)
     {
         nse_state[i].env_det.attack_alpha = nse_config->attack_alpha;
         nse_state[i].env_det.release_alpha = nse_config->release_alpha;
         nse_state[i].slope = nse_config->slope;
-        // Change the inverse of the threshold only if the threshold has changed
-        if (condition)
-        {
-            nse_state[i].threshold = th;
-            nse_state[i].inv_threshold = inv_th;
-        }
+        nse_state[i].threshold = nse_config->threshold;
+        nse_state[i].inv_threshold = nse_config->inv_threshold_hh;
+        nse_state[i].inv_threshold = (nse_state[i].inv_threshold<<32) + nse_config->inv_threshold_lh;
     }
 }
 
@@ -39,6 +31,8 @@ static inline void nse_copy_state_to_config(noise_suppressor_expander_config_t *
     nse_config->envelope = nse_state[0].env_det.envelope;
     nse_config->gain = nse_state[0].gain;
     nse_config->threshold = nse_state[0].threshold;
+    nse_config->inv_threshold_hh = nse_state[0].inv_threshold >> 32;
+    nse_config->inv_threshold_lh = nse_state[0].inv_threshold & 0x00000000FFFFFFFF;
     nse_config->slope = nse_state[0].slope;
 }
 

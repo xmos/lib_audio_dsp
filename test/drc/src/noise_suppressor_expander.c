@@ -26,14 +26,18 @@ int main()
   int in_len = ftell(in) / sizeof(int32_t);
   fseek(in, 0, SEEK_SET);
 
-  int32_t th, at_al, re_al;
+  int32_t th, at_al, re_al, padding;
+  int64_t inv_th;
   float slope;
 
   fread(&th, sizeof(int32_t), 1, nse_info);
   fread(&at_al, sizeof(int32_t), 1, nse_info);
   fread(&re_al, sizeof(int32_t), 1, nse_info);
   fread(&slope, sizeof(float), 1, nse_info);
-
+  // Read 4 bytes of padding due to the encoding in the test script
+  fread(&padding, sizeof(int32_t), 1, nse_info);
+  fread(&inv_th, sizeof(int64_t), 1, nse_info);
+  fread(&slope, sizeof(float), 1, nse_info);
   fclose(nse_info);
   if (!th) th = 1;
   noise_suppressor_expander_t nse = (noise_suppressor_expander_t){

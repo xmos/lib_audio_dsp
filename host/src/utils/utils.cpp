@@ -253,37 +253,6 @@ void command_bytes_from_value(const cmd_param_type_t type, uint8_t * data, unsig
     }
 }
 
-void print_read_result(cmd_t cmd, cmd_param_t *cmd_values)
-{
-    for(unsigned i=0; i<cmd.num_values; i++)
-    {
-        cmd_param_type_t type = cmd.type;
-        cmd_param_t val = cmd_values[i];
-        switch(type)
-        {
-        case TYPE_CHAR:
-            std::cout << static_cast<char>(val.ui8);
-        break;
-        case TYPE_UINT8:
-            std::cout << static_cast<int>(val.ui8) << " ";
-            break;
-        case TYPE_FLOAT:
-            std::cout << std::setprecision(7) << val.f << " ";
-            break;
-        case TYPE_INT32:
-            std::cout << val.i32 << " ";
-            break;
-        case TYPE_UINT32:
-            std::cout << val.ui32 << " ";
-            break;
-        default:
-            std::cerr << "Unsupported parameter type" << std::endl;
-            exit(-1);
-        }
-    }
-    std::cout << std::endl;
-}
-
 // Taken from:
 // https://www.talkativeman.com/levenshtein-distance-algorithm-string-comparison/
 int Levenshtein_distance(const string source, const string target)
@@ -366,4 +335,36 @@ int Levenshtein_distance(const string source, const string target)
     }
 
     return matrix[n][m];
+}
+
+
+void print_read_result(cmd_t cmd, cmd_param_t *cmd_values)
+{
+    for(unsigned i=0; i<cmd.num_values; i++)
+    {
+        cmd_param_type_t type = cmd.type;
+        cmd_param_t val = cmd_values[i];
+        switch(type)
+        {
+        case TYPE_CHAR:
+            std::cout << static_cast<char>(val.ui8);
+        break;
+        case TYPE_UINT8:
+            std::cout << static_cast<int>(val.ui8) << " ";
+            break;
+        case TYPE_FLOAT:
+            std::cout << std::setprecision(7) << val.f << " ";
+            break;
+        case TYPE_INT32:
+            std::cout << val.i32 << " ";
+            break;
+        case TYPE_UINT32:
+            std::cout << val.ui32 << " ";
+            break;
+        default:
+            std::cerr << "Unsupported parameter type" << std::endl;
+            exit(-1);
+        }
+        std::cout << std::endl;
+    }
 }
