@@ -18,8 +18,9 @@ static inline void nse_copy_config_to_state(noise_suppressor_expander_t *nse_sta
         nse_state[i].env_det.release_alpha = nse_config->release_alpha;
         nse_state[i].slope = nse_config->slope;
         nse_state[i].threshold = nse_config->threshold;
+
         nse_state[i].inv_threshold = nse_config->inv_threshold_hh;
-        nse_state[i].inv_threshold = (nse_state[i].inv_threshold<<32) + nse_config->inv_threshold_lh;
+        nse_state[i].inv_threshold = (nse_state[i].inv_threshold<<32) | nse_config->inv_threshold_lh;
     }
 }
 
