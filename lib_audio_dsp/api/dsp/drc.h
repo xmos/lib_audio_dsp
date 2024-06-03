@@ -230,16 +230,6 @@ int32_t adsp_noise_suppressor_expander(
   int32_t new_samp);
 
 /**
- * @brief Set the threshold of a noise suppressor (expander)
- *
- * @param nse                  Noise suppressor (Expander) object
- * @param new_th              New threshold in Q_SIG
- */
-void adsp_noise_suppressor_expander_set_th(
-  noise_suppressor_expander_t * nse,
-  int32_t new_th);
-
-/**
  * @brief Initialise a compressor object
  *
  * @param fs                  Sampling frequency

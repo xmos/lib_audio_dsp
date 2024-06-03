@@ -29,7 +29,7 @@ PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
 
-TEST_FRAME_SIZES = 1,# 128
+TEST_FRAME_SIZES = 1, 128
 
 fs = 48000
 channels = 2  # if this changes need to rewrite test signals

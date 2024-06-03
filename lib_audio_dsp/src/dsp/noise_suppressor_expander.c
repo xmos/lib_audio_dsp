@@ -14,7 +14,6 @@ noise_suppressor_expander_t adsp_noise_suppressor_expander_init(
   noise_suppressor_expander_t nse;
   nse.env_det = adsp_env_detector_init(fs, attack_t, release_t);
   float th = powf(10, threshold_db / 20);
-  //adsp_noise_suppressor_expander_set_th(&nse, from_float_pos(th));
   // Avoid division by zero
   nse.threshold = (!th) ? 1 : th;
   // x * 2 ^ -63 / y * 2 ^ -27 = xy * 2 ^ -36
