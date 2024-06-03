@@ -155,8 +155,8 @@ def test_limiter_c(in_signal, component_name, at, rt, threshold):
                                        "noise_suppressor_expander"])
 @pytest.mark.parametrize("at", [0.005])
 @pytest.mark.parametrize("rt", [0.120])
-@pytest.mark.parametrize("threshold", [ 0])
-@pytest.mark.parametrize("ratio", [ 6])
+@pytest.mark.parametrize("threshold", [-12, 0])
+@pytest.mark.parametrize("ratio", [1, 6])
 def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
   # for the noise suppressor (expander) the lowest sensible threshold is -35
   if comp_name == "noise_suppressor_expander" and threshold == -12:

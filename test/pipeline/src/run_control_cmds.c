@@ -15,7 +15,7 @@
 #include "control_test_params.h"
 #include "print.h"
 #include "stdio.h"
-#define CONTROL_COMMAND_TIMEOUT_TICKS 1000000000 // one tick is 10ns
+#define CONTROL_COMMAND_TIMEOUT_TICKS 1000000 // one tick is 10ns
 #define CONTROL_COMMAND_DELAY_TICKS 1000 // one tick is 10ns
 
 void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
@@ -84,7 +84,7 @@ void send_control_cmds(adsp_pipeline_t * m_dsp, chanend_t c_control) {
         {
             if(values_read[i] != values_write[i])
             {
-                printf("Command %d: mismatch at index %d. Expected %d, found %d\n", cmd.cmd_id, i, values_write[i], values_read[i]);
+                debug_printf("Command %d: mismatch at index %d. Expected %d, found %d\n", cmd.cmd_id, i, values_write[i], values_read[i]);
                 xassert(0);
             }
         }

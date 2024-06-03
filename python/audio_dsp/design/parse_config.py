@@ -42,7 +42,7 @@ if __name__ == "__main__":
         return args
 
     ## Parse command line arguments
-    print("In parse_config.py!!\n\n")
+    print("In parse_config.py:")
     args = parse_arguments()
     print(f"out_dir = {args.out_dir}")
     os.makedirs(args.out_dir, exist_ok=True)
