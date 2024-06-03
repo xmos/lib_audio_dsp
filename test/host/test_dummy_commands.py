@@ -49,4 +49,7 @@ def test_dummy_commands():
         output = test_utils.execute_command(host_bin, control_protocol, test_dir, char_cmd)
         sentence = " ".join(str(word) for word in output)
 
+        # Remove carriage returns from output string
+        sentence = sentence.replace("\n", "").replace("\r", "")
+
         assert sentence == "Hello New World!\0\0\0\0"
