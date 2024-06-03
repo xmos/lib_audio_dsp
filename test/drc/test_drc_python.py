@@ -156,8 +156,6 @@ def comp_vs_limiter(fs, at, threshold):
     x[:] = utils.db2gain(threshold + 6)
     x = utils.saturate_float_array(x, dspg.Q_SIG)
 
-    t = np.arange(len(x))/fs
-
     rt = 0.3
     comp_type = "rms"
     comp_handle = getattr(drc, "compressor_%s" % comp_type)
@@ -199,8 +197,6 @@ def test_peak_vs_rms(fs, at, threshold):
     x = np.ones(int(at*10*fs))
     x[:] = utils.db2gain(threshold + 6)
     x = utils.saturate_float_array(x, dspg.Q_SIG)
-
-    t = np.arange(len(x))/fs
 
     rt = 0.3
     comp_type = "limiter"
@@ -244,8 +240,6 @@ def test_sidechain_mono_vs_comp(fs, at, threshold):
     x = gen.sin(fs, 1, 1, 1)
     x = utils.saturate_float_array(x, dspg.Q_SIG)
 
-    t = np.arange(len(x))/fs
-
     rt = 0.5
     comp_type = "compressor_rms"
     reg_handle = getattr(drc, "%s" % comp_type)
@@ -286,7 +280,6 @@ def test_sidechain_stereo(fs, at, threshold):
     x = utils.saturate_float_array(x, dspg.Q_SIG)
 
     x = np.stack([x, x], axis=0)
-    t = np.arange(len(x))/fs
 
     rt = 0.3
     comp_type = "compressor_rms"
