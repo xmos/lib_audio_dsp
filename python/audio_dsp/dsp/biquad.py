@@ -1035,7 +1035,7 @@ def make_biquad_linkwitz(fs: int, f0: float, q0: float, fp: float, qp: float) ->
     fp : float
         The target cutoff frequency for the filter.
     qp : float
-        The targed quality factor for the filter.
+        The target quality factor for the filter.
 
     Returns
     -------

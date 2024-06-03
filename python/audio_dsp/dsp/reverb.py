@@ -46,7 +46,16 @@ def scale_sat_int64_to_int32_floor(val):
 
 
 class allpass_fv(dspg.dsp_block):
-    """A freeverb style all-pass filter, for use in the reverb_room block."""
+    """A freeverb style all-pass filter, for use in the reverb_room block.
+
+    Parameters
+    ----------
+    max_delay : int
+        Maximum delay of the all-pass.
+    feedback_gain : float
+        Gain applied to the delayed feedback path in the all-pass. Sets
+        the reverb time.
+    """
 
     def __init__(self, max_delay, feedback_gain):
         # max delay cannot be changed, or you'll overflow the buffer
@@ -99,6 +108,11 @@ class allpass_fv(dspg.dsp_block):
         Take one new sample and return the filtered sample.
         Input should be scaled with 0dB = 2**Q_SIG.
 
+        Parameters
+        ----------
+        sample_int : int
+            Input sample as an integer.
+
         """
         assert isinstance(sample_int, int), "Input sample must be an integer"
 
@@ -122,7 +136,18 @@ class allpass_fv(dspg.dsp_block):
 
 
 class comb_fv(dspg.dsp_block):
-    """A freeverb style comb filter for use in the reverb_room block."""
+    """A freeverb style comb filter for use in the reverb_room block.
+
+    Parameters
+    ----------
+    max_delay : int
+        Maximum delay of the comb filter.
+    feedback_gain : float
+        Gain applied to the delayed feedback path in the comb filter, sets
+        the reverb time.
+    damping : float
+        Sets the low pass feedback coefficient.
+    """
 
     def __init__(self, max_delay, feedback_gain, damping):
         # max delay cannot be changed, or you'll overflow the buffer
@@ -198,6 +223,11 @@ class comb_fv(dspg.dsp_block):
         Take one new sample and return the filtered sample.
         Input should be scaled with 0dB = 2**Q_SIG.
 
+        Parameters
+        ----------
+        sample_int : int
+            Input sample as an integer.
+
         """
         assert isinstance(sample_int, int), "Input sample must be an integer"
 
@@ -222,7 +252,8 @@ class comb_fv(dspg.dsp_block):
 
 class reverb_room(dspg.dsp_block):
     """Generate a room reverb effect. This is based on Freeverb by
-    Jezar at Dreampoint.
+    Jezar at Dreampoint, and consists of 8 parallel comb filters fed
+    into 4 series all-pass filters.
 
     Parameters
     ----------

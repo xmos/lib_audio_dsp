@@ -95,7 +95,7 @@ class Mixer(Stage):
 class Adder(Stage):
     """
     Add the input signals together. The adder can be used to add signals
-    together, or to attenuate the input signals.
+    together.
 
     """
 
@@ -122,8 +122,12 @@ class Subtractor(Stage):
 
 class FixedGain(Stage):
     """
-    Multiply the input by a fixed gain. The gain is set at the time of
-    construction and cannot be changed.
+    This stage implements a fixed gain. The input signal is multiplied
+    by a gain. If the gain is changed at runtime, pops and clicks may
+    occur.
+
+    If the gain needs to be changed at runtime, use a VolumeControl
+    stage instead.
 
     Parameters
     ----------
@@ -153,8 +157,10 @@ class FixedGain(Stage):
 
 class VolumeControl(Stage):
     """
-    Multiply the input by a gain. The gain can be changed at runtime.
-    The stage can be muted and unmuted at runtime.
+    This stage implements a volume control. The input signal is
+    multiplied by a gain. The gain can be changed at runtime. To avoid
+    pops and clicks during gain changes, a slew is applied to the gain
+    update. The stage can be muted and unmuted at runtime.
 
     Parameters
     ----------
@@ -246,7 +252,8 @@ class Switch(Stage):
         Parameters
         ----------
         position : int
-            The position to move the switch to.
+            The position to which to move the switch. This changes the output
+            signal to the input[position]
         """
         self.dsp_block.move_switch(position)
         return self
@@ -256,10 +263,14 @@ class Delay(Stage):
     """
     Delay the input signal by a specified amount.
 
+    The maximum delay is set at compile time, and the runtime delay can
+    be set between 0 and ``max_delay``.
+
     Parameters
     ----------
     max_delay : float
-        The maximum delay in specified units.
+        The maximum delay in specified units. This can only be set at
+        compile time.
     starting_delay : float
         The starting delay in specified units.
     units : str, optional

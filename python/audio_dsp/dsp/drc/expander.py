@@ -32,9 +32,9 @@ class expander_base(compressor_limiter_base):
         number of parallel channels the expander runs on. The
         channels are expanded separately, only the constant
         parameters are shared.
-    attack_t : float, optional
+    attack_t : float
         Attack time of the expander in seconds.
-    release_t: float, optional
+    release_t : float
         Release time of the expander in seconds.
 
     Attributes
@@ -184,7 +184,7 @@ class noise_gate(expander_base):
 
     """
 
-    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
@@ -237,9 +237,7 @@ class noise_suppressor_expander(expander_base):
 
     """
 
-    def __init__(
-        self, fs, n_chans, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
-    ):
+    def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
