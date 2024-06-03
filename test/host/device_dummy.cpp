@@ -73,7 +73,7 @@ control_ret_t Device::device_get(control_resid_t res_id, control_cmd_t cmd_id, u
 
     if(!rf.eof() || rf.bad())
     {
-        cerr << "Error occured while reading " << buf_filename << endl;
+        cerr << "Error occurred while reading " << buf_filename << endl;
         exit(CONTROL_ERROR);
     }
 
@@ -113,7 +113,7 @@ control_ret_t Device::device_set(control_resid_t res_id, control_cmd_t cmd_id, c
     wf.close();
     if(wf.bad())
     {
-        cerr << "Error occured when writing to " << buf_filename << endl;
+        cerr << "Error occurred when writing to " << buf_filename << endl;
         return CONTROL_ERROR;
     }
 
