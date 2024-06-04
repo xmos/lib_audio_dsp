@@ -22,11 +22,10 @@ def test_frame_size(frame_size):
     of that outputs position in the frame to check that changing the frame size
     in the pipeline design actually changes the frame size in the generated code.
     """
-    p = Pipeline(1, frame_size=frame_size)
-    t = p.add_thread()
+    p, i = Pipeline.begin(1, frame_size=frame_size)
 
-    s = t.stage(FrameCount, p.i)
-    p.set_outputs(s.o)
+    s = p.stage(FrameCount, i)
+    p.set_outputs(s)
 
     infile = "inframe.wav"
     outfile = "outframe.wav"

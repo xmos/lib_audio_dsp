@@ -18,6 +18,12 @@ class InvalidHostAppError(Exception):
     pass
 
 
+class DeviceConnectionError(Exception):
+    """Raised when the host app cannot connect to the device."""
+
+    pass
+
+
 def set_host_app(host_app, transport_protocol="usb"):
     """
     Set the host_app and the transport protocol to use for control.
@@ -82,7 +88,9 @@ def send_control_cmd(instance_id, *args, verbose=False):
     ------
     InvalidHostAppError
         If set_host_app() hasn't been called to set the host app and transport protocol before calling this function.
-        If the transport protocol is 'xscope', and port num has not been set by calling set_host_app_xscope_port() before calling this function
+        If the transport protocol is 'xscope', and port num has not been set by calling set_host_app_xscope_port() before calling this function.
+    DeviceConnectionError
+        If the device is not programmed and/or not connected to the host
 
     Parameters
     ----------
@@ -118,11 +126,10 @@ def send_control_cmd(instance_id, *args, verbose=False):
         stdout=subprocess.PIPE,
     )
 
-    if ret.returncode:
-        print(f"Unable to connect to device using {HOST_APP}")
-        return ret
-
     if verbose:
         print(*cmd_list)
+
+    if ret.returncode:
+        raise DeviceConnectionError(f"Unable to connect to device using {HOST_APP}")
 
     return ret

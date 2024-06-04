@@ -6,6 +6,7 @@
 from pathlib import Path
 from tabulate import tabulate
 
+from audio_dsp.design.composite_stage import CompositeStage
 from audio_dsp.design.pipeline_executor import PipelineExecutor, PipelineView
 from .graph import Graph
 from .stage import Stage, StageOutput, StageOutputList, find_config
@@ -17,9 +18,9 @@ import json
 import numpy as np
 from uuid import uuid4
 from ._draw import new_record_digraph
-from .host_app import send_control_cmd
+from .host_app import send_control_cmd, DeviceConnectionError
 from functools import wraps
-from typing import NamedTuple
+from typing import NamedTuple, Type
 
 
 class _ResolvedEdge(NamedTuple):
@@ -118,6 +119,7 @@ class Pipeline:
         self._n_out = 0
         self._id = identifier
         self.pipeline_stage: None
+        self._labelled_stages = {}
 
         self.i = StageOutputList([StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)])
         self.o: StageOutputList | None = None
@@ -125,7 +127,21 @@ class Pipeline:
             self._graph.add_edge(input)
             input.source_index = i
 
-    def add_thread(self):
+        self.next_thread()
+
+    @staticmethod
+    def begin(n_in, identifier="auto", frame_size=1, fs=48000):
+        """Create a new Pipeline and get the attributes required for design.
+
+        Returns
+        -------
+        Pipeline, Thread, StageOutputList
+            The pipeline instance, the initial thread and the pipeline input edges.
+        """
+        p = Pipeline(n_in, identifier, frame_size, fs)
+        return p, p.i
+
+    def _add_thread(self) -> Thread:
         """
         Create a new instance of audio_dsp.thread.Thread and add it to
         the pipeline. Stages can then be instantiated in the thread.
@@ -142,6 +158,47 @@ class Pipeline:
         ret.add_thread_stage()
         self.threads.append(ret)
         return ret
+
+    def next_thread(self) -> None:
+        """
+        Update the thread which stages will be added to.
+
+        This will always create a new thread.
+        """
+        thread = self._add_thread()
+        self._current_thread = thread
+
+    def stage(
+        self,
+        stage_type: Type[Stage | CompositeStage],
+        inputs: StageOutputList,
+        label: str | None = None,
+        **kwargs,
+    ) -> StageOutputList:
+        """
+        Add a new stage to the pipeline.
+
+        Parameters
+        ----------
+        stage_type
+            The type of stage to add.
+        inputs
+            A StageOutputList containing edges in this pipeline.
+        label
+            An optional label that can be used for tuning and will also be converted
+            into a macro in the generated pipeline. Label must be set if tuning or
+            run time control is required for this stage.
+        """
+        s = self._current_thread.stage(stage_type, inputs, label=label, **kwargs)
+        if label:
+            if label in self._labelled_stages:
+                raise RuntimeError(f"Label {label} is alread in use.")
+            self._labelled_stages[label] = s
+        return s.o
+
+    def __getitem__(self, key: str):
+        """Get the labelled stage from the pipeline."""
+        return self._labelled_stages[key]
 
     @callonce
     def add_pipeline_stage(self, thread):
@@ -318,6 +375,7 @@ class Pipeline:
 def validate_pipeline_checksum(pipeline: Pipeline):
     """
     Check if python and device pipeline checksums match. Raise a runtime error if the checksums are not equal.
+    The check is performed only if the host application can connect to the device.
 
     Parameters
     ----------
@@ -326,9 +384,6 @@ def validate_pipeline_checksum(pipeline: Pipeline):
     assert pipeline.pipeline_stage is not None  # To stop ruff from complaining
 
     ret = send_control_cmd(pipeline.pipeline_stage.index, "pipeline_checksum")
-
-    if ret.returncode:
-        raise RuntimeError("Unable to connect to device using host app")
 
     stdout = ret.stdout.decode().splitlines()
     device_pipeline_checksum = [int(x) for x in stdout]
@@ -352,7 +407,14 @@ def send_config_to_device(pipeline: Pipeline):
     pipeline : Pipeline
         A designed and optionally tuned pipeline
     """
-    validate_pipeline_checksum(pipeline)
+    try:
+        validate_pipeline_checksum(pipeline)
+    except DeviceConnectionError:
+        # Drop this exception, and print a warning
+        print(
+            "Unable to connect to device using host app. If using the Jupyter notebook, try to re-run all the cells."
+        )
+        return
 
     for stage in pipeline.stages:
         for command, value in stage.get_config().items():

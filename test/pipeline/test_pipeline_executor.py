@@ -8,15 +8,14 @@ from audio_dsp.design.pipeline import Pipeline
 from audio_dsp.stages.biquad import Biquad
 
 def test_pipeline_executor():
-    p = Pipeline(4)
-    t = p.add_thread()
+    p, i = Pipeline.begin(4)
     n_samps = 100
-    s = t.stage(Biquad, p.i)
-    s = t.stage(Biquad, s.o)
-    s0 = t.stage(Biquad, s.o[:2])
-    s1 = t.stage(Biquad, s.o[2:])
-    s = t.stage(Biquad, s0.o + s1.o)
-    p.set_outputs(s.o)
+    s = p.stage(Biquad, i)
+    s = p.stage(Biquad, s)
+    s0 = p.stage(Biquad, s[:2])
+    s1 = p.stage(Biquad, s[2:])
+    s = p.stage(Biquad, s0 + s1)
+    p.set_outputs(s)
 
     executor = p.executor()
     sig = np.ones((n_samps, 4))

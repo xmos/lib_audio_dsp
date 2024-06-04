@@ -77,9 +77,8 @@ def test_adder():
     """
     channels = 2
     p = Pipeline(channels)
-    with p.add_thread() as t:
-        adder = t.stage(Adder, p.i)
-    p.set_outputs(adder.o)
+    adder = p.stage(Adder, p.i)
+    p.set_outputs(adder)
 
     do_test(p)
 
@@ -91,9 +90,8 @@ def test_subtractor():
     """
     channels = 2
     p = Pipeline(channels)
-    with p.add_thread() as t:
-        adder = t.stage(Subtractor, p.i)
-    p.set_outputs(adder.o)
+    adder = p.stage(Subtractor, p.i)
+    p.set_outputs(adder)
 
     do_test(p)
 
@@ -105,9 +103,9 @@ def test_mixer(gain):
     """
     channels = 2
     p = Pipeline(channels)
-    with p.add_thread() as t:
-        adder = t.stage(Mixer, p.i).set_gain(gain)
-    p.set_outputs(adder.o)
+    adder = p.stage(Mixer, p.i, "a")
+    p["a"].set_gain(gain)
+    p.set_outputs(adder)
 
     do_test(p)
 
@@ -118,11 +116,10 @@ def test_compressor_sidechain():
     """
     channels = 2
     p = Pipeline(channels)
-    with p.add_thread() as t:
-        comp = t.stage(CompressorSidechain, p.i)
-    p.set_outputs(comp.o)
+    comp = p.stage(CompressorSidechain, p.i, "c")
+    p.set_outputs(comp)
 
-    comp.make_compressor_sidechain(2, -6, 0.001, 0.1)
+    p["c"].make_compressor_sidechain(2, -6, 0.001, 0.1)
 
     do_test(p)
 
@@ -133,12 +130,9 @@ def test_switch(position):
     """
     channels = 2
     p = Pipeline(channels)
-    with p.add_thread() as t:
-        switch_dsp = t.stage(Switch, p.i).move_switch(position)
-    p.set_outputs(switch_dsp.o)
+    switch_dsp = p.stage(Switch, p.i, "s")
+    p["s"].move_switch(position)
+    p.set_outputs(switch_dsp)
 
     do_test(p)
 
-
-if __name__ == "__main__":
-    test_subtractor(0)

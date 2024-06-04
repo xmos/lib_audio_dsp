@@ -34,44 +34,36 @@ rate must be specified.
 
    from audio_dsp.design.pipeline import Pipeline
 
-   p = Pipeline(
+   pipeline, inputs = Pipeline.begin(
        4,          # Number of pipeline inputs.
        fs=48000    # Sample rate.
    )
 
 
-The xcore is a multithreaded processor and the audio_dsp library can make full use of this. The first thing to do with the newly created pipeline instance is to add a thread.
-
-.. code-block:: python
-
-   # add an initial thread
-   with p.add_thread() as t:
-      ...
-
-The thread object can now be used to add DSP stages. For high shelf and low shelf use :py:class:`Biquad <audio_dsp.stages.biquad.Biquad>` and for
+The pipeline object can now be used to add DSP stages. For high shelf and low shelf use :py:class:`Biquad <audio_dsp.stages.biquad.Biquad>` and for
 the limiter use :py:class:`LimiterPeak <audio_dsp.stages.limiter.LimiterPeak>`.
 
 .. code-block:: python
 
     from audio_dsp.design.pipeline import Pipeline
-    from audio_dsp.stages.biquad import Biquad
-    from audio_dsp.stages.limiter import LimiterPeak
+    from audio_dsp.stages.import *
 
-    p = Pipeline(4, fs=48000)
-    with p.add_thread() as t:
+    p, inputs = Pipeline.begin(4, fs=48000)
 
-        # p.i is a list of pipeline inputs.
-        lowshelf = t.stage(Biquad, p.i)
+    # i is a list of pipeline inputs. "lowshelf" is a label for this instance of Biquad.
+    # the new variable x is the output of the lowshelf Biquad
+    x = p.stage(Biquad, inputs, "lowshelf")
 
-        # The output of lowshelf "lowsheld.o" is pass as the input to the
-        # highshelf.
-        highshelf = t.stage(Biquad, lowshelf.o)
+    # The output of lowshelf "x" is passed as the input to the
+    # highshelf. The variable x is reassigned to the outputs of the new Biquad.
+    x = p.stage(Biquad, x, "highshelf")
 
-        # Connect highshelf to the limiter.
-        limiter = t.stage(LimiterPeak, highshelf.o)
+    # Connect highshelf to the limiter. Labels are optional, however they are required
+    # if the stage will be tuned later.
+    x = p.stage(LimiterPeak, x)
 
-    # Finally connect the last stage to the output of the pipeline.
-    p.set_outputs(limiter.o)
+    # Finally connect to the output of the pipeline.
+    p.set_outputs(x)
 
     p.draw()
 
@@ -90,17 +82,18 @@ Tuning Phase
 Each stage contains a number of designer methods which can be identified as they have the ``make_`` prefix. These can be used to configure
 the stages. The stages also provide a ``plot_frequency_response()`` method which shows the magnitude and phase response of the stage with
 its current configuration. The two biquads created above will have a flat frequency response until they are tuned. The code below shows
-how to use the designer methods to convert them into the low shelf and high shelf that is desired.
+how to use the designer methods to convert them into the low shelf and high shelf that is desired. The individual stages are accessed using
+the labels that were assigned to them when the stage was added to the pipeline.
 
 .. code-block:: python
 
    # Make a low shelf with a centre frequency of 200 Hz, q of 0.7 and gain of +6 dB
-   lowshelf.make_lowshelf(200, 0.7, 6)
-   lowshelf.plot_frequency_response()
+   p["lowshelf"].make_lowshelf(200, 0.7, 6)
+   p["lowshelf"].plot_frequency_response()
 
    # Make a high shelf with a centre frequency of 4000 Hz, q of 0.7 and gain of +6 dB
-   highshelf.make_highshelf(4000, 0.7, 6)
-   highshelf.plot_frequency_response()
+   p["highshelf"].make_highshelf(4000, 0.7, 6)
+   p["highshelf"].plot_frequency_response()
 
 
 .. figure:: images/frequency_response.png
@@ -175,17 +168,17 @@ When creating a stage, it will require a StageOutputList as its inputs.
 
 .. code-block:: python
 
-    with p.add_thread() as t:
-       # split the pipeline inputs
-       b0 = t.stage(Biquad, p.i[0:2])  # use the first 2 inputs
-       b1 = t.stage(Biquad, p.i[2])  # use the third input (index 2)
-       b2 = t.stage(Biquad, p.i[3, 5, 6])  # use the inputs at index 3, 5, and 6
-       # join biquad outputs
-       b3 = t.stage(Biquad, b0.o + b1.o + b2.o[0]) # pass all the outputs from b0 and b1, as well as the first output from b2
+   # split the pipeline inputs
+   i0 = p.stage(Biquad, i[0:2])      # use the first 2 inputs
+   i1 = p.stage(Biquad, i[2])        # use the third input (index 2)
+   i2 = p.stage(Biquad, i[3, 5, 6])  # use the inputs at index 3, 5, and 6
+   # join biquad outputs
+   i3 = p.stage(Biquad, i0 + i1 + i2[0]) # pass all of i0 and i1, as well as the first channel in i2
 
-    p.set_outputs(b3.o + b2.o[1:]) # b3.o and the rest of b2.o are the pipeline outputs
+    p.set_outputs(i3 + i2[1:]) # The pipeline output will be all i3 channels and the 2nd and 3rd channel from i2.
 
-As the pipeline grows it will also become necessary to add more threads. To determine when a new thread is used, the output of ``profile_pipeline()`` should
+As the pipeline grows it may end up consuming more MIPS than are available on a single xcore thread. The pipeline design interface allows adding additional threads
+using the :py:meth:`next_thread() <audio_dsp.design.pipeline.Pipeline.next_thread>` method of the Pipeline instance. To determine when a new thread is used, the output of ``profile_pipeline()`` should
 be observed as the pipeline grows. If a thread nears 100% utilisation then it is time to add a new thread. Each thread in the pipeline represents an xcore
 hardware thread. Do not add more threads than are available in your application. The maximum number of threads that should be used, if available, is five. This
 due to the architecture of the xcore processor.
@@ -193,13 +186,12 @@ due to the architecture of the xcore processor.
 .. code-block:: python
 
     # thread 0
-    with p.add_thread() as t:
-        b0 = t.stage(Biquad, p.i)
+    i = p.stage(Biquad, i)
 
     # thread 1
-    with p.add_thread() as t:
-        b1 = t.stage(Biquad, b0.o)
+    p.next_thread()
+    i = p.stage(Biquad, i)
 
     # thread 2
-    with p.add_thread() as t:
-        b1 = t.stage(Biquad, b1.o)
+    p.next_thread()
+    i = p.stage(Biquad, i)
