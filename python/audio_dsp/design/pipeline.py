@@ -375,6 +375,7 @@ class Pipeline:
 def validate_pipeline_checksum(pipeline: Pipeline):
     """
     Check if python and device pipeline checksums match. Raise a runtime error if the checksums are not equal.
+    The check is performed only if the host application can connect to the device.
 
     Parameters
     ----------
