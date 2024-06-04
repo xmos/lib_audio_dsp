@@ -48,20 +48,22 @@ the limiter use :py:class:`LimiterPeak <audio_dsp.stages.limiter.LimiterPeak>`.
     from audio_dsp.design.pipeline import Pipeline
     from audio_dsp.stages.import *
 
-    p, i = Pipeline.begin(4, fs=48000)
+    p, inputs = Pipeline.begin(4, fs=48000)
 
     # i is a list of pipeline inputs. "lowshelf" is a label for this instance of Biquad.
-    i = p.stage(Biquad, i, "lowshelf")
+    # the new variable x is the output of the lowshelf Biquad
+    x = p.stage(Biquad, inputs, "lowshelf")
 
-    # The output of lowshelf "i" is pass as the input to the
-    # highshelf.
-    i = p.stage(Biquad, i, "highshelf")
+    # The output of lowshelf "x" is passed as the input to the
+    # highshelf. The variable x is reassigned to the outputs of the new Biquad.
+    x = p.stage(Biquad, x, "highshelf")
 
-    # Connect highshelf to the limiter. Labels are optional
-    i = p.stage(LimiterPeak, i)
+    # Connect highshelf to the limiter. Labels are optional, however they are required
+    # if the stage will be tuned later.
+    x = p.stage(LimiterPeak, x)
 
-    # Finally connect the last stage to the output of the pipeline.
-    p.set_outputs(i)
+    # Finally connect to the output of the pipeline.
+    p.set_outputs(x)
 
     p.draw()
 
@@ -81,7 +83,7 @@ Each stage contains a number of designer methods which can be identified as they
 the stages. The stages also provide a ``plot_frequency_response()`` method which shows the magnitude and phase response of the stage with
 its current configuration. The two biquads created above will have a flat frequency response until they are tuned. The code below shows
 how to use the designer methods to convert them into the low shelf and high shelf that is desired. The individual stages are accessed using
-the labels that where assigned to them when the stage was added to the pipeline.
+the labels that were assigned to them when the stage was added to the pipeline.
 
 .. code-block:: python
 
@@ -176,7 +178,7 @@ When creating a stage, it will require a StageOutputList as its inputs.
     p.set_outputs(i3 + i2[1:]) # The pipeline output will be all i3 channels and the 2nd and 3rd channel from i2.
 
 As the pipeline grows it may end up consuming more MIPS than are available on a single xcore thread. The pipeline design interface allows adding additional threads
-using the :py:meth:`next_thread() <audio_dsp.design.pipeline.Pipeline.next_thread>`. To determine when a new thread is used, the output of ``profile_pipeline()`` should
+using the :py:meth:`next_thread() <audio_dsp.design.pipeline.Pipeline.next_thread>` method of the Pipeline instance. To determine when a new thread is used, the output of ``profile_pipeline()`` should
 be observed as the pipeline grows. If a thread nears 100% utilisation then it is time to add a new thread. Each thread in the pipeline represents an xcore
 hardware thread. Do not add more threads than are available in your application. The maximum number of threads that should be used, if available, is five. This
 due to the architecture of the xcore processor.
