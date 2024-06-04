@@ -18,7 +18,7 @@ import json
 import numpy as np
 from uuid import uuid4
 from ._draw import new_record_digraph
-from .host_app import send_control_cmd
+from .host_app import send_control_cmd, DeviceConnectionError
 from functools import wraps
 from typing import NamedTuple, Type
 
@@ -383,11 +383,7 @@ def validate_pipeline_checksum(pipeline: Pipeline):
     """
     assert pipeline.pipeline_stage is not None  # To stop ruff from complaining
 
-    try:
-        ret = send_control_cmd(pipeline.pipeline_stage.index, "pipeline_checksum")
-    except DeviceConnectionError:
-        # Drop this exception
-        pass
+    ret = send_control_cmd(pipeline.pipeline_stage.index, "pipeline_checksum")
 
     stdout = ret.stdout.decode().splitlines()
     device_pipeline_checksum = [int(x) for x in stdout]
@@ -411,7 +407,15 @@ def send_config_to_device(pipeline: Pipeline):
     pipeline : Pipeline
         A designed and optionally tuned pipeline
     """
-    validate_pipeline_checksum(pipeline)
+    try:
+        validate_pipeline_checksum(pipeline)
+    except DeviceConnectionError:
+        # Drop this exception, and print a warning
+        print(
+            "Unable to connect to device using host app. If using the Jupyter notebook, try to re-run all the cells."
+        )
+        return
+
 
     for stage in pipeline.stages:
         for command, value in stage.get_config().items():

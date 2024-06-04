@@ -86,7 +86,9 @@ def send_control_cmd(instance_id, *args, verbose=False):
     ------
     InvalidHostAppError
         If set_host_app() hasn't been called to set the host app and transport protocol before calling this function.
-        If the transport protocol is 'xscope', and port num has not been set by calling set_host_app_xscope_port() before calling this function
+        If the transport protocol is 'xscope', and port num has not been set by calling set_host_app_xscope_port() before calling this function.
+    DeviceConnectionError
+        If the device is not programmed and/or not connected to the host
 
     Parameters
     ----------
