@@ -385,7 +385,7 @@ def validate_pipeline_checksum(pipeline: Pipeline):
     ret = send_control_cmd(pipeline.pipeline_stage.index, "pipeline_checksum")
 
     if ret.returncode:
-        print("Unable to connect to device using host app. If using the Jupyter notebook, try to re-run all the cells.")
+        print("Unable to connect to device using host app. If using the Jupiter notebook, try to re-run all the cells.")
         return
 
     stdout = ret.stdout.decode().splitlines()
