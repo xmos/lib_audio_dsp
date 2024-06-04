@@ -2,7 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """The edges and nodes for a DSP pipeline."""
 
-from typing import Iterable
+from typing import Iterable, Type
 
 import numpy
 from .graph import Edge, Node
@@ -230,6 +230,12 @@ class ValueControlField:
         self.value = value
 
 
+class _GlobalStages:
+    """Class to hold some globals."""
+
+    stages = []
+
+
 class Stage(Node):
     """
     Base class for stages in the DSP pipeline. Each subclass
@@ -329,6 +335,11 @@ class Stage(Node):
         self.dsp_block: Optional[dsp_block] = None
         self.stage_memory_string: str = ""
         self.stage_memory_parameters: tuple | None = None
+
+    def __init_subclass__(cls) -> None:
+        """Add all subclasses of Stage to a global list for querying."""
+        super().__init_subclass__()
+        _GlobalStages.stages.append(cls)
 
     @property
     def o(self) -> StageOutputList:
@@ -513,3 +524,8 @@ class Stage(Node):
             return f"{macro_name}({','.join((str(x) for x in self.stage_memory_parameters))})"
         else:
             return macro_name
+
+
+def all_stages() -> dict[str, Type[Stage]]:
+    """Get a dict containing all stages in scope."""
+    return {s.__name__: s for s in _GlobalStages.stages}

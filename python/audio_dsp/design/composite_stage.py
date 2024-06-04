@@ -78,6 +78,7 @@ class CompositeStage:
         self,
         stage_type: Type[_StageOrComposite],
         inputs: StageOutputList,
+        label: str | None = None,
         **kwargs,
     ) -> _StageOrComposite:
         """
@@ -104,7 +105,7 @@ class CompositeStage:
             stage = stage_type(inputs=inputs, graph=self._graph, **kwargs)  # type: ignore
             self._composite_stages.append(stage)
         elif issubclass(stage_type, Stage):
-            stage = stage_type(inputs=inputs, **kwargs)
+            stage = stage_type(inputs=inputs, label=label, **kwargs)
             self._graph.add_node(stage)
             for edge in stage.o.edges:
                 self._graph.add_edge(edge)

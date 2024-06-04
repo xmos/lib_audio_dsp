@@ -37,18 +37,17 @@ Fs = 48000
 
 def create_pipeline():
     # Create pipeline
-    p = Pipeline(num_in_channels)
+    p, i = Pipeline.begin(num_in_channels)
 
-    with p.add_thread() as t:
-        bi = t.stage(Biquad, p.i, label="biquad")
-        cb = t.stage(CascadedBiquads, bi.o, label="casc_biquad")
-        by = t.stage(Bypass, cb.o, label="byp_1")
-        lp = t.stage(LimiterPeak, by.o)
-        lr = t.stage(LimiterRMS, lp.o)
-    with p.add_thread() as t:                # ch   0   1
-        by1 = t.stage(Bypass, lr.o, label="byp_2")
+    bi = p.stage(Biquad, i, label="biquad")
+    cb = p.stage(CascadedBiquads, bi, label="casc_biquad")
+    by = p.stage(Bypass, cb, label="byp_1")
+    lp = p.stage(LimiterPeak, by)
+    lr = p.stage(LimiterRMS, lp)
+    p.next_thread()                # ch   0   1
+    by1 = p.stage(Bypass, lr, label="byp_2")
 
-    p.set_outputs(by1.o)
+    p.set_outputs(by1)
     stages = 2
     return p, stages
 
@@ -133,10 +132,9 @@ def test_pipeline_q27(input, add):
     output = min(output, INT32_MAX)
     output = max(output, INT32_MIN)
 
-    p = Pipeline(channels)
-    with p.add_thread() as t:
-        addn = t.stage(AddN, p.i, n=add)
-    p.set_outputs(addn.o)
+    p, i = Pipeline.begin(channels)
+    addn = p.stage(AddN, i, n=add)
+    p.set_outputs(addn)
 
     generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
     target = "default"
@@ -162,25 +160,24 @@ def test_complex_pipeline():
     outfile = "outcomplex.wav"
     n_samps, channels, rate = 1024, 2, 48000
 
-    p = Pipeline(channels)
-    with p.add_thread() as t:                # ch   0   1
-        # this thread has both channels
-        a = t.stage(AddN, p.i, n=1)          #     +1  +1
-        a = t.stage(AddN, a.o, n=1)          #     +2  +2
-        a0 = t.stage(AddN, a.o[:1], n=1)     #     +3  +2
-    with p.add_thread() as t:
-        # this thread has channel 1
-        a1 = t.stage(AddN, a.o[1:], n=1)     #     +3  +3
-        a1 = t.stage(AddN, a1.o, n=1)        #     +3  +4
-        a1 = t.stage(AddN, a1.o, n=1)        #     +3  +5
-    with p.add_thread() as t:
-        # this thread has channel 0
-        a0 = t.stage(AddN, a0.o, n=1)        #     +4  +5
-    with p.add_thread() as t:
-        # this thread has both channels
-        a = t.stage(AddN, a0.o + a1.o, n=1)  #     +5  +6
+    p, i = Pipeline.begin(channels)       # ch   0   1
+    # this thread has both channels
+    a = p.stage(AddN, i, n=1)          #     +1  +1
+    a = p.stage(AddN, a, n=1)          #     +2  +2
+    a0 = p.stage(AddN, a[:1], n=1)     #     +3  +2
+    p.next_thread()
+    # this thread has channel 1
+    a1 = p.stage(AddN, a[1:], n=1)     #     +3  +3
+    a1 = p.stage(AddN, a1, n=1)        #     +3  +4
+    a1 = p.stage(AddN, a1, n=1)        #     +3  +5
+    p.next_thread()
+    # this thread has channel 0
+    a0 = p.stage(AddN, a0, n=1)        #     +4  +5
+    p.next_thread()
+    # this thread has both channels
+    a = p.stage(AddN, a0 + a1, n=1)  #     +5  +6
 
-    p.set_outputs(a.o)
+    p.set_outputs(a)
     n_stages = 3  # 2 of the 4 threads are parallel
 
     generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
