@@ -24,7 +24,7 @@ typedef struct
     ((N_IN) * sizeof(int32_t*))
 
 
-#define CASCADED_BIQUADS_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) \
+#define CASCADED_BIQUADS_STAGE_REQUIRED_MEMORY(N_IN) \
     _CBQ_ALL_FILTER_MEMORY(N_IN) + _CBQ_ARR_MEMORY(N_IN)
 
 void cascaded_biquads_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size);

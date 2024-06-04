@@ -1,0 +1,7 @@
+module:
+  delay:
+    max_delay:
+      type: uint32_t
+    delay:
+      type: uint32_t
+includes: []

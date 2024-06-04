@@ -53,9 +53,25 @@ class Edge:
         return self.id.int
 
     def set_source(self, node: Node):
+        """
+        Set the source node of this edge.
+
+        Parameters
+        ----------
+        node
+            The instance to set as the source.
+        """
         self.source = node
 
     def set_dest(self, node: Node):
+        """
+        Set the dest node of this edge.
+
+        Parameters
+        ----------
+        node
+            The instance to set as the dest.
+        """
         self.dest = node
 
 
@@ -63,12 +79,29 @@ NodeSubClass = TypeVar("NodeSubClass", bound=Node)
 
 
 class Graph(Generic[NodeSubClass]):
+    """
+    A container of nodes and edges.
+
+    Attributes
+    ----------
+    nodes
+        A list of the nodes in this graph.
+    edges
+        A list of the edges in this graph.
+    """
+
     def __init__(self):
         self.nodes: list[NodeSubClass] = []
         self.edges: list[Edge] = []
         self._locked = False
 
     def add_node(self, node: NodeSubClass) -> None:
+        """
+        Append a node to this graph.
+
+        The node's index attribute is set here and therefore the node may
+        not coexist in multiple graphs.
+        """
         assert isinstance(node, Node)
         if self._locked:
             raise RuntimeError("Cannot add nodes to a locked graph")
@@ -76,6 +109,8 @@ class Graph(Generic[NodeSubClass]):
         self.nodes.append(node)
 
     def add_edge(self, edge) -> None:
+        """Append an edge to this graph."""
+        assert isinstance(edge, Edge)
         if self._locked:
             raise RuntimeError("Cannot add edges to a locked graph")
         self.edges.append(edge)

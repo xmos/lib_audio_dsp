@@ -1,8 +1,11 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""Generic utilities for the dynamic range control DSP blocks."""
+
 from audio_dsp.dsp import utils as utils
 import numpy as np
 from math import sqrt, isqrt
+import warnings
 
 from audio_dsp.dsp.types import float32
 
@@ -13,18 +16,51 @@ FLT_MIN = np.finfo(float).tiny
 Q_alpha = 31
 
 
+def calculate_threshold(threshold_db, Q_sig, power=False) -> tuple[float, int]:
+    """
+    Calculate the linear threshold in floating and fixed point from a
+    target threshold in decibels.
+    """
+    if power:
+        threshold = utils.db_pow2gain(threshold_db)
+    else:
+        threshold = utils.db2gain(threshold_db)
+
+    threshold = utils.saturate_float(threshold, Q_sig)
+
+    if power:
+        new_threshold_db = utils.db_pow(threshold)
+    else:
+        new_threshold_db = utils.db(threshold)
+
+    if threshold_db != new_threshold_db:
+        warnings.warn(
+            "Threshold %d not repsentable in Q format Q%d, saturating to %d"
+            % (threshold_db, Q_sig, new_threshold_db),
+            UserWarning,
+        )
+
+    threshold_int = utils.float_to_int32(threshold, Q_sig)
+
+    return threshold, threshold_int
+
+
 def alpha_from_time(attack_or_release_time, fs):
-    # Attack times simplified from McNally, seem pretty close.
-    # Assumes the time constant of a digital filter is the -3 dB
-    # point where abs(H(z))**2 = 0.5.
+    """
+    Calculate the exponential moving average time constant from an
+    attack/release time in seconds.
 
-    # This is also approximately the time constant of a first order
-    # system, `alpha = 1 - exp(-T/tau)`, where `T` is the sample period
-    # and `tau` is the time constant.
+    Attack times simplified from McNally, seem pretty close.
+    Assumes the time constant of a digital filter is the -3 dB
+    point where abs(H(z))**2 = 0.5.
 
-    # attack/release time can't be faster than the length of 2
-    # samples, and alpha can't be greater than 1
+    This is also approximately the time constant of a first order
+    system, `alpha = 1 - exp(-T/tau)`, where `T` is the sample period
+    and `tau` is the time constant.
 
+    attack/release time can't be faster than the length of 2
+    samples, and alpha can't be greater than 1
+    """
     T = 1 / fs
     alpha = 2 * T / (attack_or_release_time + FLT_MIN)
 
@@ -41,7 +77,7 @@ def alpha_from_time(attack_or_release_time, fs):
 
 
 def calc_ema_xcore(x, y, alpha):
-    """Calculate fixed-point exponential moving average, given that alpha is in Q_alpha format"""
+    """Calculate fixed-point exponential moving average, given that alpha is in Q_alpha format."""
     acc = int(x) << Q_alpha
     mul = utils.int32(y - x)
     acc += mul * alpha
@@ -49,8 +85,8 @@ def calc_ema_xcore(x, y, alpha):
     return x
 
 
-def apply_gain_xcore(sample, gain):
-    """Apply the gain to a sample usign fixed-point math, assumes that gain is in Q_alpha format"""
+def apply_gain_xcore(sample: int, gain: int) -> int:
+    """Apply the gain to a sample using fixed-point math. Assumes that gain is in Q_alpha format."""
     acc = 1 << (Q_alpha - 1)
     acc += sample * gain
     y = utils.int32_mult_sat_extract(acc, 1, Q_alpha)
@@ -58,14 +94,14 @@ def apply_gain_xcore(sample, gain):
 
 
 def limiter_peak_gain_calc(envelope, threshold, slope=None):
-    """Calculate the float gain for the current sample"""
+    """Calculate the float gain for the current sample."""
     new_gain = threshold / envelope
     new_gain = min(1, new_gain)
     return new_gain
 
 
 def limiter_peak_gain_calc_xcore(envelope_int, threshold_int, slope=None):
-    """Calculate the int gain for the current sample"""
+    """Calculate the int gain for the current sample."""
     if threshold_int >= envelope_int:
         new_gain_int = utils.int32(0x7FFFFFFF)
     else:
@@ -127,10 +163,14 @@ def compressor_rms_gain_calc_xcore(envelope_int, threshold_int, slope_f32=None):
     """
     # if envelope below threshold, apply unity gain, otherwise scale
     # down
+    int32_max_as_f32 = float32(np.nextafter(2**31, 0, dtype=np.float32))
+
     if slope_f32 > float32(0) and threshold_int < envelope_int:
         new_gain_int = int(threshold_int) << 31
         new_gain_int = utils.int32(new_gain_int // envelope_int)
-        new_gain_int = ((float32(new_gain_int * 2**-31) ** slope_f32) * float32(2**31)).as_int32()
+        new_gain_int = (
+            (float32(new_gain_int * 2**-31) ** slope_f32) * int32_max_as_f32
+        ).as_int32()
     else:
         new_gain_int = utils.int32(0x7FFFFFFF)
 
@@ -155,7 +195,7 @@ def noise_gate_gain_calc_xcore(envelope_int, threshold_int, slope_int=None):
     return new_gain_int
 
 
-def noise_suppressor_gain_calc(envelope, threshold, slope):
+def noise_suppressor_expander_gain_calc(envelope, threshold, slope):
     """Calculate the float gain for the current sample.
 
     Note that as the RMS envelope detector returns x**2, we need to
@@ -170,7 +210,7 @@ def noise_suppressor_gain_calc(envelope, threshold, slope):
     return new_gain
 
 
-def noise_suppressor_gain_calc_xcore(envelope_int, threshold_int, slope_f32):
+def noise_suppressor_expander_gain_calc_xcore(envelope_int, threshold_int, slope_f32):
     """Calculate the int gain for the current sample.
 
     Note that as the RMS envelope detector returns x**2, we need to

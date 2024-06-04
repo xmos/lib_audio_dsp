@@ -1,0 +1,20 @@
+module:
+  reverb_room:
+    sampling_freq:
+      type: uint32_t
+    max_room_size:
+      type: float
+    room_size:
+      type: float
+    feedback:
+      type: int32_t
+    damping:
+      type: int32_t
+    wet_gain:
+      type: int32_t
+    dry_gain:
+      type: int32_t
+    pregain:
+      type: int32_t
+includes:
+  - "stdint.h"

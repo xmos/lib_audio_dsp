@@ -1,0 +1,5 @@
+module:
+  clipper:
+    threshold:
+      type: int32_t
+includes: []

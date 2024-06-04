@@ -14,7 +14,7 @@ typedef struct
     int frame_size;
 }volume_control_state_t;
 
-#define VOLUME_CONTROL_REQUIRED_MEMORY(N_IN, N_OUT, FRAME_SIZE) (N_IN * sizeof(volume_control_t))
+#define VOLUME_CONTROL_STAGE_REQUIRED_MEMORY(N_IN) (N_IN * sizeof(volume_control_t))
 
 void volume_control_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 

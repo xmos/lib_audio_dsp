@@ -12,7 +12,7 @@ noise_gate_t adsp_noise_gate_init(
   float release_t
 ) {
   noise_gate_t ng = (noise_gate_t)adsp_limiter_peak_init(fs, threshold_db, attack_t, release_t);
-  ng.env_det.envelope = 1 << (-SIG_EXP);
+  ng.env_det.envelope = (1 << (-SIG_EXP)) - 1;
   return ng;
 }
 

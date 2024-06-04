@@ -13,7 +13,7 @@ limiter_t adsp_limiter_peak_init(
   float release_t
 ) {
   limiter_t lim;
-  lim.env_det = adsp_env_detector_init(fs, attack_t, release_t, 0);
+  lim.env_det = adsp_env_detector_init(fs, attack_t, release_t);
   float th = powf(10, threshold_db / 20);
   lim.threshold = from_float_pos(th);
   lim.gain = INT32_MAX;
@@ -27,7 +27,7 @@ limiter_t adsp_limiter_rms_init(
   float release_t
 ) {
   limiter_t lim;
-  lim.env_det = adsp_env_detector_init(fs, attack_t, release_t, 0);
+  lim.env_det = adsp_env_detector_init(fs, attack_t, release_t);
   float th = powf(10, threshold_db / 10);
   lim.threshold = from_float_pos(th);
   lim.gain = INT32_MAX;
@@ -56,6 +56,16 @@ int32_t adsp_limiter_peak(
   return apply_gain_q31(new_samp, lim->gain);
 }
 
+int32_t adsp_hard_limiter_peak(
+  limiter_t * lim,
+  int32_t new_samp
+) {
+  int32_t out = adsp_limiter_peak(lim, new_samp);
+  // hard clip if above threshold
+  out = (out > lim->threshold) ? lim->threshold : (out < -lim->threshold) ? -lim->threshold : out;
+  return out;
+}
+
 int32_t adsp_limiter_rms(
   limiter_t * lim,
   int32_t new_samp
@@ -80,4 +90,11 @@ int32_t adsp_limiter_rms(
   lim->gain = q31_ema(lim->gain, new_gain, alpha);
   return apply_gain_q31(new_samp, lim->gain);
   return new_samp;
+}
+
+int32_t adsp_clipper(
+  clipper_t clip,
+  int32_t new_samp
+) {
+  return (new_samp > clip) ? clip : (new_samp < -clip) ? -clip : new_samp;
 }

@@ -134,7 +134,7 @@ set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
 
 XMOS_REGISTER_APP()
 
-project(noise_suppressor_test)
+project(noise_suppressor_expander_test)
 
 set(APP_HW_TARGET XCORE-AI-EXPLORER)
 
@@ -147,7 +147,45 @@ set(APP_COMPILER_FLAGS
     -fxscope)
 
 set(APP_DEPENDENT_MODULES lib_audio_dsp)
-set(APP_C_SRCS src/noise_suppressor.c)
+set(APP_C_SRCS src/noise_suppressor_expander.c)
+
+set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
+
+XMOS_REGISTER_APP()
+
+project(hard_limiter_peak_test)
+
+set(APP_HW_TARGET XCORE-AI-EXPLORER)
+
+set(APP_COMPILER_FLAGS
+    -O3
+    -g
+    -report
+    -Wall
+    -Werror
+    -fxscope)
+
+set(APP_DEPENDENT_MODULES lib_audio_dsp)
+set(APP_C_SRCS src/hard_limiter_peak.c)
+
+set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
+
+XMOS_REGISTER_APP()
+
+project(clipper_test)
+
+set(APP_HW_TARGET XCORE-AI-EXPLORER)
+
+set(APP_COMPILER_FLAGS
+    -O3
+    -g
+    -report
+    -Wall
+    -Werror
+    -fxscope)
+
+set(APP_DEPENDENT_MODULES lib_audio_dsp)
+set(APP_C_SRCS src/clipper.c)
 
 set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
 

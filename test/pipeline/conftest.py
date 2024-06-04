@@ -2,6 +2,18 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 from python import run_pipeline_xcoreai
+import numpy as np
+import scipy.signal as spsig
+from pathlib import Path
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def delete_auto_gen():
+    import shutil
+    shutil.rmtree(Path('build/src.autogen'), ignore_errors=True)
+    shutil.rmtree(Path('build/dsp_pipeline_initiated'), ignore_errors=True)
+    shutil.rmtree(Path('build/dsp_pipeline_uninitiated'), ignore_errors=True)
 
 
 def pytest_configure(config):

@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""Signal generator DSP utilities."""
+
 import numpy as np
 import scipy.signal as spsig
 
@@ -27,7 +29,7 @@ def quantize_signal(signal: np.ndarray, precision: int) -> np.ndarray:
         The quantized signal.
 
     """
-    signal = np.round(signal * 2 ** (precision - 1)) / 2 ** (precision - 1)
+    signal = np.round(signal * (2 ** (precision - 1) - 1)) / 2 ** (precision - 1)
     return signal
 
 
@@ -293,7 +295,7 @@ def pink_noise(fs: int, length: float, amplitude: float, precision: int = 24) ->
 
 def mls(fs: int, length: float, amplitude: float, precision: int = 24) -> np.ndarray:
     """
-    Generates a quantized Maximum Length Sequence (MLS) signal.
+    Generate a quantized Maximum Length Sequence (MLS) signal.
 
     Parameters
     ----------

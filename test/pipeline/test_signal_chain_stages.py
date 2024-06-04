@@ -33,8 +33,9 @@ def do_test(p):
     # use the python dsp_block as a reference implementation
     ref_module = p.stages[2].dsp_block
 
-    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
-    target = "pipeline_test"
+    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+    target = "default"
+
     # Build pipeline test executable. This will download xscope_fileio if not present
     build_utils.build(APP_DIR, BUILD_DIR, target)
 
@@ -49,7 +50,7 @@ def do_test(p):
     sig = np.stack((sig0, sig1), axis=1)
     audio_helpers.write_wav(infile, rate, sig)
 
-    xe = APP_DIR / f"bin/{target}.xe"
+    xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile, 1, 1)
 
     _, out_data = audio_helpers.read_wav(outfile)
@@ -59,7 +60,7 @@ def do_test(p):
     sig_flt = np.float64(sig.T) * 2**-31
     signal_frames = utils.frame_signal(sig_flt, frame_size, frame_size)
     out_py = np.zeros((1, sig.shape[0]))
-    
+
     # run through python bit exact implementation
     for n in range(len(signal_frames)):
         out_py[:, n:n+frame_size] = ref_module.process_frame_xcore(signal_frames[n])
@@ -76,9 +77,8 @@ def test_adder():
     """
     channels = 2
     p = Pipeline(channels)
-    with p.add_thread() as t:
-        adder = t.stage(Adder, p.i)
-    p.set_outputs(adder.o)
+    adder = p.stage(Adder, p.i)
+    p.set_outputs(adder)
 
     do_test(p)
 
@@ -90,9 +90,8 @@ def test_subtractor():
     """
     channels = 2
     p = Pipeline(channels)
-    with p.add_thread() as t:
-        adder = t.stage(Subtractor, p.i)
-    p.set_outputs(adder.o)
+    adder = p.stage(Subtractor, p.i)
+    p.set_outputs(adder)
 
     do_test(p)
 
@@ -104,9 +103,9 @@ def test_mixer(gain):
     """
     channels = 2
     p = Pipeline(channels)
-    with p.add_thread() as t:
-        adder = t.stage(Mixer, p.i).set_gain(gain)
-    p.set_outputs(adder.o)
+    adder = p.stage(Mixer, p.i, "a")
+    p["a"].set_gain(gain)
+    p.set_outputs(adder)
 
     do_test(p)
 
@@ -117,11 +116,10 @@ def test_compressor_sidechain():
     """
     channels = 2
     p = Pipeline(channels)
-    with p.add_thread() as t:
-        comp = t.stage(CompressorSidechain, p.i)
-    p.set_outputs(comp.o)
+    comp = p.stage(CompressorSidechain, p.i, "c")
+    p.set_outputs(comp)
 
-    comp.make_compressor_sidechain(2, -6, 0.001, 0.1)
+    p["c"].make_compressor_sidechain(2, -6, 0.001, 0.1)
 
     do_test(p)
 
@@ -132,12 +130,9 @@ def test_switch(position):
     """
     channels = 2
     p = Pipeline(channels)
-    with p.add_thread() as t:
-        switch_dsp = t.stage(Switch, p.i).move_switch(position)
-    p.set_outputs(switch_dsp.o)
+    switch_dsp = p.stage(Switch, p.i, "s")
+    p["s"].move_switch(position)
+    p.set_outputs(switch_dsp)
 
     do_test(p)
 
-
-if __name__ == "__main__":
-    test_subtractor(0)

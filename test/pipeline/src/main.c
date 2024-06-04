@@ -20,6 +20,6 @@ int main_c()
         PJOB(fileio_task, (c_control.end_a)),
         PJOB(app_dsp_main, (c_control.end_b))
     );
-    
+
     return 0;
 }

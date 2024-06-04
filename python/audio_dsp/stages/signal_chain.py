@@ -1,7 +1,8 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""Assorted stages for common signal chain operations."""
 
-from ..design.stage import Stage, find_config
+from ..design.stage import Stage, find_config, StageOutputList, StageOutput
 from ..dsp import generic as dspg
 import audio_dsp.dsp.signal_chain as sc
 import numpy as np
@@ -18,16 +19,36 @@ class Bypass(Stage):
         self.create_outputs(self.n_in)
 
     def process(self, in_channels):
+        """Return a copy of the inputs."""
         return [np.copy(i) for i in in_channels]
+
+
+class ForkOutputList(StageOutputList):
+    """
+    Custom StageOutputList that is created by Fork.
+
+    This allows convenient access to each fork output.
+
+    Attributes
+    ----------
+    forks: list[StageOutputList]
+        Fork duplicates its inputs, each entry in the forks list is a single copy
+        of the input edges.
+    """
+
+    def __init__(self, edges: list[StageOutput | None] | None = None):
+        super().__init__(edges)
+        self.forks = []
 
 
 class Fork(Stage):
     """
-    Fork the signal, use if the same data needs to go down parallel
-    data paths::
+    Fork the signal.
+
+    Use if the same data needs to be sent to multiple data paths::
 
         a = t.stage(Example, ...)
-        f = t.stage(Fork, a.o, count=2)  # count optional, default is 2
+        f = t.stage(Fork, a, count=2)  # count optional, default is 2
         b = t.stage(Example, f.forks[0])
         c = t.stage(Example, f.forks[1])
 
@@ -44,15 +65,19 @@ class Fork(Stage):
         self.create_outputs(self.n_in * count)
 
         fork_indices = [list(range(i, self.n_in * count, count)) for i in range(count)]
-        self.forks = []
+        forks = []
         for indices in fork_indices:
-            self.forks.append([self.o[i] for i in indices])
+            forks.append(self.o[(i for i in indices)])
+        self._o = ForkOutputList(self.o.edges)
+        self._o.forks = forks
 
     def get_frequency_response(self, nfft=512):
+        """Fork has no sensible frequency response, not implemented."""
         # not sure what this looks like!
         raise NotImplementedError
 
     def process(self, in_channels):
+        """Duplicate the inputs to the outputs based on this fork's configuration."""
         n_forks = self.n_out // self.n_in
         ret = []
         for input in in_channels:
@@ -90,7 +115,7 @@ class Mixer(Stage):
 class Adder(Stage):
     """
     Add the input signals together. The adder can be used to add signals
-    together, or to attenuate the input signals.
+    together.
 
     """
 
@@ -117,8 +142,12 @@ class Subtractor(Stage):
 
 class FixedGain(Stage):
     """
-    Multiply the input by a fixed gain. The gain is set at the time of
-    construction and cannot be changed.
+    This stage implements a fixed gain. The input signal is multiplied
+    by a gain. If the gain is changed at runtime, pops and clicks may
+    occur.
+
+    If the gain needs to be changed at runtime, use a VolumeControl
+    stage instead.
 
     Parameters
     ----------
@@ -148,27 +177,50 @@ class FixedGain(Stage):
 
 class VolumeControl(Stage):
     """
-    Multiply the input by a gain. The gain can be changed at runtime.
+    This stage implements a volume control. The input signal is
+    multiplied by a gain. The gain can be changed at runtime. To avoid
+    pops and clicks during gain changes, a slew is applied to the gain
+    update. The stage can be muted and unmuted at runtime.
 
     Parameters
     ----------
     gain_db : float, optional
         The gain of the mixer in dB.
-
+    mute_state : int, optional
+        The mute state of the Volume Control: 0: unmuted, 1: muted.
     """
 
-    def __init__(self, gain_dB=0, **kwargs):
+    def __init__(self, gain_dB=0, mute_state=0, **kwargs):
         super().__init__(config=find_config("volume_control"), **kwargs)
         self.create_outputs(self.n_in)
         slew_shift = 7
-        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift)
+        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, mute_state)
         self.set_control_field_cb("target_gain", lambda: self.dsp_block.target_gain_int)
         self.set_control_field_cb("slew_shift", lambda: self.dsp_block.slew_shift)
-        self.set_control_field_cb("mute", lambda: np.int32(self.dsp_block.mute_state))
+        self.set_control_field_cb("mute_state", lambda: np.int32(self.dsp_block.mute_state))
 
-    def make_volume_control(self, gain_dB, slew_shift, Q_sig=dspg.Q_SIG):
-        self.details = dict(target_gain=gain_dB, slew_shift=slew_shift, Q_sig=Q_sig)
-        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, Q_sig)
+        self.stage_memory_string = "volume_control"
+        self.stage_memory_parameters = (self.n_in,)
+
+    def make_volume_control(self, gain_dB, slew_shift, mute_state, Q_sig=dspg.Q_SIG):
+        """
+        Update the settings of this volume control.
+
+        Parameters
+        ----------
+        gain_dB
+            Target gain of this volume control.
+        slew_shift
+            The shift value used in the exponential slew.
+        mute_state
+            The mute state of the Volume Control: 0: unmuted, 1: muted.
+        """
+        self.details = dict(
+            target_gain=gain_dB, slew_shift=slew_shift, mute_state=mute_state, Q_sig=Q_sig
+        )
+        self.dsp_block = sc.volume_control(
+            self.fs, self.n_in, gain_dB, slew_shift, mute_state, Q_sig
+        )
         return self
 
     def set_gain(self, gain_dB):
@@ -183,13 +235,13 @@ class VolumeControl(Stage):
         self.dsp_block.set_gain(gain_dB)
         return self
 
-    def mute(self, mute_state):
+    def set_mute_state(self, mute_state):
         """
         Set the mute state of the volume control.
 
         Parameters
         ----------
-        mute_state : float
+        mute_state : bool
             The mute state of the volume control.
         """
         if mute_state:
@@ -220,7 +272,52 @@ class Switch(Stage):
         Parameters
         ----------
         position : int
-            The position to move the switch to.
+            The position to which to move the switch. This changes the output
+            signal to the input[position]
         """
         self.dsp_block.move_switch(position)
         return self
+
+
+class Delay(Stage):
+    """
+    Delay the input signal by a specified amount.
+
+    The maximum delay is set at compile time, and the runtime delay can
+    be set between 0 and ``max_delay``.
+
+    Parameters
+    ----------
+    max_delay : float
+        The maximum delay in specified units. This can only be set at
+        compile time.
+    starting_delay : float
+        The starting delay in specified units.
+    units : str, optional
+        The units of the delay, can be 'samples', 'ms' or 's'.
+        Default is 'samples'.
+    """
+
+    def __init__(self, max_delay, starting_delay, units="samples", **kwargs):
+        super().__init__(config=find_config("delay"), **kwargs)
+        self.create_outputs(self.n_in)
+        self.dsp_block = sc.delay(self.fs, self.n_in, max_delay, starting_delay, units)
+        self["max_delay"] = max_delay
+        self.set_control_field_cb("max_delay", lambda: self.dsp_block.max_delay)
+        self.set_control_field_cb("delay", lambda: self.dsp_block.delay)
+
+        self.stage_memory_parameters = (self.n_in, self["max_delay"])
+
+    def set_delay(self, delay, units="samples"):
+        """
+        Set the length of the delay line, will saturate at max_delay.
+
+        Parameters
+        ----------
+        delay : float
+            The delay in specified units.
+        units : str
+            The units of the delay, can be 'samples', 'ms' or 's'.
+            Default is 'samples'.
+        """
+        self.dsp_block.set_delay(delay, units)

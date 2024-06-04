@@ -43,11 +43,11 @@ def get_sig(len=0.05):
 
   return sig_fl
 
-def get_c_wav(dir_name, comp_name, sim = True):
+def get_c_wav(dir_name, comp_name, verbose=False, sim = True):
   app = "xsim" if sim else "xrun --io"
   run_cmd = app + " " + str(bin_dir / f"{comp_name}_test.xe")
   stdout = subprocess.check_output(run_cmd, cwd = dir_name, shell = True)
-  #print("run msg:\n", stdout)
+  if verbose: print("run msg:\n", stdout)
 
   sig_bin = dir_name / "sig_out.bin"
   assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
@@ -168,6 +168,31 @@ def test_volume_control_c(in_signal, gains_dB, slew, mute_test):
   shutil.rmtree(test_dir)
 
   np.testing.assert_allclose(out_c, out_py, rtol=0, atol=0)
+
+@pytest.mark.parametrize("delay_spec", [[1, 0, "samples"],
+                                        [0.5, 0.5, "ms"],
+                                        [0.02, 0.01, "s"]])
+def test_delay_c(in_signal, delay_spec):
+  filter = sc.delay(fs, 1, *delay_spec)
+  test_dir = bin_dir / f"delay_{delay_spec[0]}_{delay_spec[1]}_{delay_spec[2]}"
+  test_dir.mkdir(exist_ok = True, parents = True)
+
+  delay_info = np.empty(0, dtype=np.int32)
+  delay_info = np.append(delay_info, filter.max_delay)
+  delay_info = np.append(delay_info, filter.delay)
+  delay_info = np.array(delay_info, dtype=np.int32)
+  print(delay_info)
+  delay_info.tofile(test_dir / "delay.bin")
+
+  out_py = np.zeros((1, in_signal.shape[1]))
+  for n in range(len(in_signal[0])):
+    out_py[:, n] = filter.process_channels_xcore(in_signal[0, n].tolist())
+
+  sf.write(gen_dir / "sig_py_int.wav", out_py[0], fs, "PCM_24")
+
+  out_c = get_c_wav(test_dir, "delay")
+  shutil.rmtree(test_dir)
+  np.testing.assert_allclose(out_c, out_py[0], rtol=0, atol=0)
 
 if __name__ =="__main__":
   bin_dir.mkdir(exist_ok=True, parents=True)

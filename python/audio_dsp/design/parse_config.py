@@ -1,7 +1,9 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """
-Script for us at build time to generate header files. Use as:
+Script for use at build time to generate header files.
+
+Use as::
 
     python -m audio_dsp.design.parse_config -c CONFIG_DIR -o OUTPUT_DIR
 """
@@ -40,9 +42,7 @@ if __name__ == "__main__":
         return args
 
     ## Parse command line arguments
-    print("In parse_config.py!!\n\n")
     args = parse_arguments()
-    print(f"out_dir = {args.out_dir}")
     os.makedirs(args.out_dir, exist_ok=True)
     os.makedirs(f"{args.out_dir}/common", exist_ok=True)
     os.makedirs(f"{args.out_dir}/device", exist_ok=True)
@@ -58,7 +58,6 @@ if __name__ == "__main__":
     cmd_map = {}
 
     files = glob.glob(f"{args.config_dir}/*.yaml")
-
     for fl in files:
         with open(fl, "r") as fd:
             data = yaml.safe_load(fd)
@@ -79,10 +78,8 @@ if __name__ == "__main__":
             cmd_map[struct_name] = data["module"][struct_name]
 
     cmd_map = dict(sorted(cmd_map.items()))
-
     with open(f"{args.out_dir}/generator/gen_cmd_map_offset.c", "w") as f_op:
         f_op.write(struct_offset_template.render(cmd_map=cmd_map))
-
     # Generate cmd_map used by the host
     with open(f"{args.out_dir}/host/host_cmd_map.h", "w") as f_op:
         f_op.write(cmd_map_template.render(cmd_map=cmd_map))

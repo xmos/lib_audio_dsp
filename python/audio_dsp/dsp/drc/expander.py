@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The expander DSP blocks."""
+
 import numpy as np
 
 from audio_dsp.dsp import utils as utils
@@ -30,9 +32,9 @@ class expander_base(compressor_limiter_base):
         number of parallel channels the expander runs on. The
         channels are expanded separately, only the constant
         parameters are shared.
-    attack_t : float, optional
+    attack_t : float
         Attack time of the expander in seconds.
-    release_t: float, optional
+    release_t : float
         Release time of the expander in seconds.
 
     Attributes
@@ -62,15 +64,19 @@ class expander_base(compressor_limiter_base):
         attack_alpha in 32-bit int format.
     release_alpha_int : int
         release_alpha in 32-bit int format.
-
+    gain_calc : function
+        function pointer to floating point gain calculation function.
+    gain_calc_int : function
+        function pointer to fixed point gain calculation function.
     """
 
     def reset_state(self):
         """Reset the envelope detector to 1 and the gain to 1, so the
-        gate starts off."""
+        gate starts off.
+        """
         if self.env_detector is not None:
             self.env_detector.envelope = [1] * self.n_chans
-            self.env_detector.envelope_int = [utils.int32(2**self.Q_sig)] * self.n_chans
+            self.env_detector.envelope_int = [utils.int32(2**self.Q_sig - 1)] * self.n_chans
         self.gain = [1] * self.n_chans
         self.gain_int = [2**31 - 1] * self.n_chans
 
@@ -85,13 +91,13 @@ class expander_base(compressor_limiter_base):
 
         """
         # get envelope from envelope detector
-        envelope = self.env_detector.process(sample, channel)  # type: ignore
+        envelope = self.env_detector.process(sample, channel)  # type: ignore : base inits to None
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
         # calculate the gain, this function should be defined by the
         # child class
-        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # type: ignore
+        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # type: ignore : base inits to None
 
         # see if we're attacking or decaying
         if new_gain < self.gain[channel]:
@@ -106,7 +112,7 @@ class expander_base(compressor_limiter_base):
         y = self.gain[channel] * sample
         return y, new_gain, envelope
 
-    def process_xcore(self, sample, channel=0):
+    def process_xcore(self, sample, channel=0, return_int=False):
         """
         Update the envelope for a signal, then calculate and apply the
         required gain for expanding, using int32 fixed point
@@ -116,15 +122,15 @@ class expander_base(compressor_limiter_base):
         Input should be scaled with 0dB = 1.0.
 
         """
-        sample_int = utils.int32(round(sample * 2**self.Q_sig))
+        sample_int = utils.float_to_int32(sample, self.Q_sig)
         # get envelope from envelope detector
-        envelope_int = self.env_detector.process_xcore(sample_int, channel)
+        envelope_int = self.env_detector.process_xcore(sample_int, channel)  # pyright: ignore : base inits to None
         # avoid /0
         envelope_int = max(envelope_int, 1)
 
         # if envelope below threshold, apply unity gain, otherwise scale
         # down
-        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)
+        new_gain_int = self.gain_calc_xcore(envelope_int, self.threshold_int, self.slope_f32)  # pyright: ignore : base inits to None
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int[channel]:
@@ -138,11 +144,14 @@ class expander_base(compressor_limiter_base):
         # apply gain
         y = drcu.apply_gain_xcore(sample_int, self.gain_int[channel])
 
-        return (
-            (float(y) * 2**-self.Q_sig),
-            (float(new_gain_int) * 2**-self.Q_alpha),
-            (float(envelope_int) * 2**-self.Q_sig),
-        )
+        if return_int:
+            return y, new_gain_int, envelope_int
+        else:
+            return (
+                utils.int32_to_float(y, self.Q_sig),
+                utils.int32_to_float(new_gain_int, self.Q_alpha),
+                utils.int32_to_float(envelope_int, self.Q_sig),
+            )
 
 
 class noise_gate(expander_base):
@@ -175,11 +184,11 @@ class noise_gate(expander_base):
 
     """
 
-    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
-        self.threshold = utils.db2gain(threshold_db)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
+
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,
@@ -195,7 +204,7 @@ class noise_gate(expander_base):
         self.reset_state()
 
 
-class noise_suppressor(expander_base):
+class noise_suppressor_expander(expander_base):
     """A noise suppressor that reduces the level of an audio signal when
     it falls below a threshold. This is also known as an expander.
 
@@ -228,13 +237,10 @@ class noise_suppressor(expander_base):
 
     """
 
-    def __init__(
-        self, fs, n_chans, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG
-    ):
+    def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
-        self.threshold = utils.db2gain(threshold_db)
-        self.threshold_int = utils.int32(self.threshold * 2**self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
         self.threshold_int = max(1, self.threshold_int)
         self.env_detector = envelope_detector_peak(
             fs,
@@ -248,8 +254,8 @@ class noise_suppressor(expander_base):
         self.slope_f32 = float32(self.slope)
 
         # set the gain calculation function handles
-        self.gain_calc = drcu.noise_suppressor_gain_calc
-        self.gain_calc_xcore = drcu.noise_suppressor_gain_calc_xcore
+        self.gain_calc = drcu.noise_suppressor_expander_gain_calc
+        self.gain_calc_xcore = drcu.noise_suppressor_expander_gain_calc_xcore
 
         self.reset_state()
 
@@ -257,8 +263,8 @@ class noise_suppressor(expander_base):
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    ns = noise_suppressor(48000, 1, 3, -20, 0.01, 0.1)
-    ing, outg = ns.get_gain_curve()
+    nse = noise_suppressor_expander(48000, 1, 3, -20, 0.01, 0.1)
+    ing, outg = nse.get_gain_curve()
 
     plt.plot(ing, outg)
     plt.axis("equal")

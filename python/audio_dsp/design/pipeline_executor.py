@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""Utilities for processing the pipeline on the host machine."""
+
 from pathlib import Path
 from typing import Optional, NamedTuple
 from collections.abc import Callable
@@ -16,6 +18,8 @@ from ..dsp import signal_gen
 
 
 class PipelineView(NamedTuple):
+    """A view of the DSP pipeline that is used by PipelineExecutor."""
+
     stages: Optional[list[Stage]]
     inputs: list[StageOutput]
     outputs: list[StageOutput]
@@ -45,9 +49,7 @@ class ExecutionResult:
         self.fs = fs
 
     def to_wav(self, path: str | Path):
-        """
-        Save output to a wav file
-        """
+        """Save output to a wav file."""
         wavfile.write(path, self.fs, self.data)
 
     def plot(self, path: Optional[str | Path] = None):
@@ -141,7 +143,7 @@ class ExecutionResult:
 
 class PipelineExecutor:
     """
-    Utility for simulating the pipeline
+    Utility for simulating the pipeline.
 
     Parameters
     ----------
@@ -164,10 +166,8 @@ class PipelineExecutor:
         graph: Graph[Stage],
         i_edges: list[StageOutput],
         o_edges: list[StageOutput],
-    ) -> list[numpy.ndarray]:
-        """
-        process channels through the pipeline and return the result.
-        """
+    ) -> dict[int, numpy.ndarray]:
+        """Process channels through the pipeline and return the result."""
         edges = {}
         for edge, data in zip(i_edges, frame):
             edges[edge] = data
@@ -175,22 +175,29 @@ class PipelineExecutor:
         stages = graph.sort()
 
         for stage in stages:
-            inputs = [edges[e] for e in stage.i]
+            inputs = [edges[e] for e in stage.i.edges]
             if stage.o or stage.i:
                 outputs = stage.process(inputs)
-                edges.update({e: o for e, o in zip(stage.o, outputs)})
+                edges.update({e: o for e, o in zip(stage.o.edges, outputs)})
 
-        return [edges[e] for e in o_edges]
+        return {i: edges[e] for i, e in enumerate(o_edges) if e is not None}
 
-    def process(self, data: numpy.ndarray):
-        #
-        # TODO
-        #  - Convert data to a float between -1 and 1, assume int inputs range from INT_MIN to INT_MAX
-        #  - the dsp_block methods all expect float
-        #  - See test_stages.py for example of how the data io should look.
-        #  - Not sure if test should be bit exact with C... maybe both are needed.
-        #
-        #
+    def process(self, data: numpy.ndarray) -> ExecutionResult:
+        """
+        Process the DSP pipeline on the host.
+
+        Parameters
+        ----------
+        data
+            Pipeline input to process through the pipeline. The shape must match the number of channels
+            that the pipeline expects as an input; if this is 1 then it may be a 1 dimensional array. Otherwise,
+            it must have shape (num_samples, num_channels).
+
+        Returns
+        -------
+        ExecutionResult
+            A result object that can be used to visualise or save the output.
+        """
         graph, i_edges, o_edges = self._get_view()
         n_i_chans = len(i_edges)
         n_o_chans = len(o_edges)
@@ -214,7 +221,7 @@ class PipelineExecutor:
         for index in range(0, data.shape[0], frame_size):
             inputs = [data[index : (index + frame_size), i] for i in range(n_i_chans)]
             outputs = self._process_frame(inputs, graph, i_edges, o_edges)
-            for i, val in enumerate(outputs):
+            for i, val in outputs.items():
                 ret[index : index + frame_size, i] = val
         return ExecutionResult(ret, fs)
 
@@ -227,7 +234,7 @@ class PipelineExecutor:
     ) -> ExecutionResult:
         """
         Generate a logarithmic chirp of constant amplitude and play through
-        the simulated pipeline
+        the simulated pipeline.
 
         Parameters
         ----------

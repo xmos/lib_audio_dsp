@@ -7,13 +7,19 @@ import platform
 import subprocess
 
 
-HOST_APP = Path("xvf_host")
+HOST_APP = Path("dsp_host")
 PROTOCOL = "usb"
 PORT = None
 
 
 class InvalidHostAppError(Exception):
     """Raised when there is a issue with the configured host app."""
+
+    pass
+
+
+class DeviceConnectionError(Exception):
+    """Raised when the host app cannot connect to the device."""
 
     pass
 
@@ -50,7 +56,7 @@ def set_host_app(host_app, transport_protocol="usb"):
 
 def set_host_app_xscope_port(port_num):
     """
-    Set the port number on which to communicate with the device when doing control over xscope
+    Set the port number on which to communicate with the device when doing control over xscope.
 
     Raises
     ------
@@ -76,13 +82,15 @@ def set_host_app_xscope_port(port_num):
 
 def send_control_cmd(instance_id, *args, verbose=False):
     """
-    Send a control command from the host to the device
+    Send a control command from the host to the device.
 
     Raises
     ------
     InvalidHostAppError
         If set_host_app() hasn't been called to set the host app and transport protocol before calling this function.
-        If the transport protocol is 'xscope', and port num has not been set by calling set_host_app_xscope_port() before calling this function
+        If the transport protocol is 'xscope', and port num has not been set by calling set_host_app_xscope_port() before calling this function.
+    DeviceConnectionError
+        If the device is not programmed and/or not connected to the host
 
     Parameters
     ----------
@@ -118,11 +126,10 @@ def send_control_cmd(instance_id, *args, verbose=False):
         stdout=subprocess.PIPE,
     )
 
-    if ret.returncode:
-        print(f"Unable to connect to device using {HOST_APP}")
-        return ret
-
     if verbose:
         print(*cmd_list)
+
+    if ret.returncode:
+        raise DeviceConnectionError(f"Unable to connect to device using {HOST_APP}")
 
     return ret

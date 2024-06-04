@@ -16,6 +16,7 @@ from audio_dsp.stages.signal_chain import Bypass
 from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak
 from audio_dsp.design.pipeline import generate_dsp_main
 import audio_dsp.dsp.signal_gen as gen
+from audio_dsp.dsp.generic import HEADROOM_BITS
 
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
 from stages.add_n import AddN
@@ -36,18 +37,17 @@ Fs = 48000
 
 def create_pipeline():
     # Create pipeline
-    p = Pipeline(num_in_channels)
+    p, i = Pipeline.begin(num_in_channels)
 
-    with p.add_thread() as t:
-        bi = t.stage(Biquad, p.i, label="biquad")
-        cb = t.stage(CascadedBiquads, bi.o, label="casc_biquad")
-        by = t.stage(Bypass, cb.o, label="byp_1")
-        lp = t.stage(LimiterPeak, by.o)
-        lr = t.stage(LimiterRMS, lp.o)
-    with p.add_thread() as t:                # ch   0   1
-        by1 = t.stage(Bypass, lr.o, label="byp_2")
+    bi = p.stage(Biquad, i, label="biquad")
+    cb = p.stage(CascadedBiquads, bi, label="casc_biquad")
+    by = p.stage(Bypass, cb, label="byp_1")
+    lp = p.stage(LimiterPeak, by)
+    lr = p.stage(LimiterRMS, lp)
+    p.next_thread()                # ch   0   1
+    by1 = p.stage(Bypass, lr, label="byp_2")
 
-    p.set_outputs(by1.o)
+    p.set_outputs(by1)
     stages = 2
     return p, stages
 
@@ -58,8 +58,8 @@ def test_pipeline():
     p, n_stages = create_pipeline()
 
     # Autogenerate C code
-    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
-    target = "pipeline_test"
+    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+    target = "default"
 
     # Build pipeline test executable. This will download xscope_fileio if not present
     build_utils.build(APP_DIR, BUILD_DIR, target)
@@ -93,7 +93,7 @@ def test_pipeline():
     audio_helpers.write_wav(outfile_py, Fs, sim_sig)
 
     # Run C
-    xe = APP_DIR / f"bin/{target}.xe"
+    xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile_c, num_out_channels, n_stages)
 
     # since gen.sin already generates a quantised input, no need to truncate
@@ -108,12 +108,12 @@ def test_pipeline():
 
 INT32_MIN = -(2**31)
 INT32_MAX = (-INT32_MIN) - 1
-@pytest.mark.parametrize("input,add,output", [(3, 3, 3 << 4),  # input too insignificant, output is shifted
-                                              (-3, 0, -1 << 4), # negative small numbers truncate in the negative direction
-                                              (INT32_MIN, -3, INT32_MIN),
-                                              (INT32_MAX, 3, INT32_MAX),
-                                              (INT32_MAX, -3, ((INT32_MAX >>4) - 3) << 4)])
-def test_pipeline_q27(input, add, output):
+@pytest.mark.parametrize("input, add", [(3, 3),  # input too insignificant, output is shifted
+                                        (-3, 0), # negative small numbers truncate in the negative direction
+                                        (INT32_MIN, -3),
+                                        (INT32_MAX, 3),
+                                        (INT32_MAX, -3)])
+def test_pipeline_q27(input, add):
     """
     Check that the pipeline operates at q5.27 and outputs saturated Q1.31
 
@@ -128,20 +128,24 @@ def test_pipeline_q27(input, add, output):
     outfile = "outq27.wav"
     n_samps, channels, rate = 1024, 2, 48000
 
-    p = Pipeline(channels)
-    with p.add_thread() as t:
-        addn = t.stage(AddN, p.i, n=add)
-    p.set_outputs(addn.o)
+    output = ((input >> HEADROOM_BITS) + add) << HEADROOM_BITS
+    output = min(output, INT32_MAX)
+    output = max(output, INT32_MIN)
 
-    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
-    target = "pipeline_test"
+    p, i = Pipeline.begin(channels)
+    addn = p.stage(AddN, i, n=add)
+    p.set_outputs(addn)
+
+    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+    target = "default"
+
     # Build pipeline test executable. This will download xscope_fileio if not present
     build_utils.build(APP_DIR, BUILD_DIR, target)
 
     sig = np.multiply(np.ones((n_samps, channels), dtype=np.int32), input, dtype=np.int32)
     audio_helpers.write_wav(infile, rate, sig)
 
-    xe = APP_DIR / f"bin/{target}.xe"
+    xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels, pipeline_stages=1)
 
     expected = np.multiply(np.ones((n_samps, channels), dtype=np.int32), output, dtype=np.int32)
@@ -156,39 +160,39 @@ def test_complex_pipeline():
     outfile = "outcomplex.wav"
     n_samps, channels, rate = 1024, 2, 48000
 
-    p = Pipeline(channels)
-    with p.add_thread() as t:                # ch   0   1
-        # this thread has both channels
-        a = t.stage(AddN, p.i, n=1)          #     +1  +1
-        a = t.stage(AddN, a.o, n=1)          #     +2  +2
-        a0 = t.stage(AddN, a.o[:1], n=1)     #     +3  +2
-    with p.add_thread() as t:
-        # this thread has channel 1
-        a1 = t.stage(AddN, a.o[1:], n=1)     #     +3  +3
-        a1 = t.stage(AddN, a1.o, n=1)        #     +3  +4
-        a1 = t.stage(AddN, a1.o, n=1)        #     +3  +5
-    with p.add_thread() as t:
-        # this thread has channel 0
-        a0 = t.stage(AddN, a0.o, n=1)        #     +4  +5
-    with p.add_thread() as t:
-        # this thread has both channels
-        a = t.stage(AddN, a0.o + a1.o, n=1)  #     +5  +6
+    p, i = Pipeline.begin(channels)       # ch   0   1
+    # this thread has both channels
+    a = p.stage(AddN, i, n=1)          #     +1  +1
+    a = p.stage(AddN, a, n=1)          #     +2  +2
+    a0 = p.stage(AddN, a[:1], n=1)     #     +3  +2
+    p.next_thread()
+    # this thread has channel 1
+    a1 = p.stage(AddN, a[1:], n=1)     #     +3  +3
+    a1 = p.stage(AddN, a1, n=1)        #     +3  +4
+    a1 = p.stage(AddN, a1, n=1)        #     +3  +5
+    p.next_thread()
+    # this thread has channel 0
+    a0 = p.stage(AddN, a0, n=1)        #     +4  +5
+    p.next_thread()
+    # this thread has both channels
+    a = p.stage(AddN, a0 + a1, n=1)  #     +5  +6
 
-    p.set_outputs(a.o)
+    p.set_outputs(a)
     n_stages = 3  # 2 of the 4 threads are parallel
 
-    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
-    target = "pipeline_test"
+    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+    target = "default"
+
     # Build pipeline test executable. This will download xscope_fileio if not present
     build_utils.build(APP_DIR, BUILD_DIR, target)
 
     in_val = 1000
     # expected output is +5 on left, +6 on right, in the Q1.27 format
-    expected = (np.array([[5, 6]]*n_samps) + (in_val >> 4)) << 4
+    expected = (np.array([[5, 6]]*n_samps) + (in_val >> HEADROOM_BITS)) << HEADROOM_BITS
     sig = np.multiply(np.ones((n_samps, channels), dtype=np.int32), in_val, dtype=np.int32)
     audio_helpers.write_wav(infile, rate, sig)
 
-    xe = APP_DIR / f"bin/{target}.xe"
+    xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile, num_out_channels, n_stages)
     _, out_data = audio_helpers.read_wav(outfile)
     np.testing.assert_equal(expected, out_data)
@@ -205,6 +209,7 @@ def test_stage_labels():
 
     # Autogenerate C code
     generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
+    target = "default"
 
     # Check if the adsp_instance_id.h file exists and the labels are present in it
     label_defines_file = BUILD_DIR / "dsp_pipeline" / "adsp_instance_id_auto.h"
@@ -222,18 +227,6 @@ def test_stage_labels():
                 assert(len(m.groups()) == 2)
                 labels_autogen[m.groups()[0]] = int(m.groups()[1])
     assert(labels_py == labels_autogen), f"stage labels in python pipeline do not match the stage labels in the autogenerated code"
-
-    target = "pipeline_test_stage_control"
-    build_utils.build(APP_DIR, BUILD_DIR, target)
-
-    xe = APP_DIR / f"bin/{target}.xe"
-    if FORCE_ADAPTER_ID is not None:
-        cmd = f"xrun --xscope --adapter-id {FORCE_ADAPTER_ID} {xe}"
-    else:
-        cmd = f"xrun --xscope {xe}"
-
-    subprocess.run(cmd.split(), check=True)
-
 
 
 

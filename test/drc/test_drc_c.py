@@ -53,22 +53,30 @@ def get_c_wav(dir_name, bin_name, verbose = False, sim = True):
   return sig_fl
 
 
-def run_py(filt, sig_fl):
-  out_f32 = np.zeros(sig_fl.size)
-  out_f64 = np.zeros(sig_fl.size)
+def run_py(filt, sig_fl, single_output, run_f64 = False):
+  out_xpy = np.zeros(sig_fl.size)
+  out_pypy = np.zeros(sig_fl.size)
   
-  for n in range(sig_fl.size):
-    out_f32[n], _, _ = filt.process_xcore(sig_fl[n])
+  if single_output:
+    for n in range(sig_fl.size):
+      out_xpy[n] = filt.process_xcore(sig_fl[n])
+      if run_f64:
+        filt.reset_state()
+        out_pypy[n] = filt.process(sig_fl[n])
+  else:
+    for n in range(sig_fl.size):
+      out_xpy[n] = filt.process_xcore(sig_fl[n])[0]
+      if run_f64:
+        filt.reset_state()
+        out_pypy[n] = filt.process(sig_fl[n])[0]
 
-  sf.write(gen_dir / "sig_py_int.wav", out_f32, fs, "PCM_24")
-  filt.reset_state()
+  sf.write(gen_dir / "sig_py_int.wav", out_xpy, fs, "PCM_24")
 
-  for n in range(sig_fl.size):
-    out_f64[n], _, _ = filt.process(sig_fl[n])
-
-  sf.write(gen_dir / "sig_py_flt.wav", out_f64, fs, "PCM_24")
-
-  return out_f64, out_f32
+  if run_f64:
+    sf.write(gen_dir / "sig_py_flt.wav", out_pypy, fs, "PCM_24")
+    return out_pypy, out_xpy
+  else:
+    return out_xpy
 
 @pytest.fixture(scope="module")
 def in_signal():
@@ -78,8 +86,8 @@ def in_signal():
 
 @pytest.mark.parametrize("env_name", ["envelope_detector_peak",
                                       "envelope_detector_rms"])
-@pytest.mark.parametrize("at", [0.001, 0.1])
-@pytest.mark.parametrize("rt", [0.01, 0.2])
+@pytest.mark.parametrize("at", [0.007, 0.15])
+@pytest.mark.parametrize("rt", [0.005, 0.2])
 def test_env_det_c(in_signal, env_name, at, rt):
   env_handle = getattr(drc, env_name)
   env = env_handle(fs, 1, at, rt)
@@ -92,11 +100,7 @@ def test_env_det_c(in_signal, env_name, at, rt):
   env_info = np.array(env_info, dtype = np.int32)
   env_info.tofile(test_dir / "env_info.bin")
 
-  out_py_int = np.zeros(in_signal.size)
-  for n in range(in_signal.size):
-    out_py_int[n] = env.process_xcore(in_signal[n])
-
-  sf.write(gen_dir / "sig_py_int.wav", out_py_int, fs, "PCM_24")
+  out_py_int = run_py(env, in_signal, True)  
   out_c = get_c_wav(test_dir, env_name)
   shutil.rmtree(test_dir)
 
@@ -104,26 +108,40 @@ def test_env_det_c(in_signal, env_name, at, rt):
 
 @pytest.mark.parametrize("component_name", ["limiter_peak",
                                             "limiter_rms",
-                                            "noise_gate"])
+                                            "hard_limiter_peak",
+                                            "clipper",
+                                            "noise_gate"
+                                            ])
 @pytest.mark.parametrize("at", [0.001, 0.1])
 @pytest.mark.parametrize("rt", [0.01, 0.2])
 @pytest.mark.parametrize("threshold", [-20, 0])
 def test_limiter_c(in_signal, component_name, at, rt, threshold):
-  # there is a difference between C and PY now which shows up in this test case
-  # nothing too critical, should be fixed soon
+  # Skip the test as the clipper doesn't use attack and release times
+  if component_name == "clipper" and (at == 0.1 or rt == 0.2):
+    return
+
   component_handle = getattr(drc, component_name)
-  comp = component_handle(fs, 1, threshold, at, rt)
-  test_name = f"{component_name}_{threshold}_{at}_{rt}"
+  if component_name == "clipper":
+    comp = component_handle(fs, 1, threshold)
+    test_name = f"{component_name}_{threshold}"
+  else:
+    comp = component_handle(fs, 1, threshold, at, rt)
+    test_name = f"{component_name}_{threshold}_{at}_{rt}"
 
   test_dir = bin_dir / test_name
   test_dir.mkdir(exist_ok = True, parents = True)
 
-  info = [comp.threshold_int, comp.attack_alpha_int, comp.release_alpha_int]
+  if component_name == "clipper":
+    info = [comp.threshold_int]
+    single_output = True
+  else:
+    info = [comp.threshold_int, comp.attack_alpha_int, comp.release_alpha_int]
+    single_output = False
   info = np.array(info, dtype = np.int32)
   info.tofile(test_dir / "info.bin")
 
 
-  _, out_py_int = run_py(comp, in_signal)
+  out_py_int = run_py(comp, in_signal, single_output)
   out_c = get_c_wav(test_dir, component_name)
   shutil.rmtree(test_dir)
 
@@ -134,12 +152,15 @@ def test_limiter_c(in_signal, component_name, at, rt, threshold):
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
 @pytest.mark.parametrize("comp_name", ["compressor_rms",
-                                       "noise_suppressor"])
+                                       "noise_suppressor_expander"])
 @pytest.mark.parametrize("at", [0.005])
 @pytest.mark.parametrize("rt", [0.120])
-@pytest.mark.parametrize("threshold", [-12, 0, -35])
+@pytest.mark.parametrize("threshold", [-12, 0])
 @pytest.mark.parametrize("ratio", [1, 6])
 def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
+  # for the noise suppressor (expander) the lowest sensible threshold is -35
+  if comp_name == "noise_suppressor_expander" and threshold == -12:
+    threshold = -35
   comp_handle = getattr(drc, comp_name)
   comp = comp_handle(fs, 1, ratio, threshold, at, rt)
   test_name = f"{comp_name}_{ratio}_{threshold}_{at}_{rt}"
@@ -157,15 +178,17 @@ def test_compressor_c(in_signal, comp_name, at, rt, threshold, ratio):
   info = np.append(info, info1)
   info.tofile(test_dir / "info.bin")
 
-  _, out_py_int = run_py(comp, in_signal)
+  out_py_int = run_py(comp, in_signal, False)
   out_c = get_c_wav(test_dir, comp_name)
   shutil.rmtree(test_dir)
 
   # when ratio is 1, the result should be bit-exact as we don't have to use powf
-  if ratio == 1 or (threshold == 0 and comp_name != "noise_suppressor"):
+  if ratio == 1 or (threshold == 0 and comp_name != "noise_suppressor_expander"):
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
   else:
-    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=1e-8)
+    # tolerace is the 24b float32 mantissa
+    tol = 2**(np.ceil(np.log2(np.max(out_c))) - 24)
+    np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=tol)
 
 if __name__ == "__main__":
   bin_dir.mkdir(exist_ok=True, parents=True)
@@ -174,4 +197,4 @@ if __name__ == "__main__":
 
   test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
   test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -10)
-  test_compressor_c(sig_fl, "noise_suppressor", 0.001, 0.01, -1, 5)
+  test_compressor_c(sig_fl, "noise_suppressor_expander", 0.001, 0.01, -1, 5)

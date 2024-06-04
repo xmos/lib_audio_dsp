@@ -10,3 +10,7 @@ check:
 update:
 	ruff check --fix
 	ruff format
+
+dev:
+	make update
+	make check

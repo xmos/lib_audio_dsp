@@ -34,7 +34,7 @@ int main()
   fclose(ng_info);
 
   noise_gate_t ng = (noise_gate_t){
-              (env_detector_t){at_al, re_al, 1 << (-SIG_EXP)}, th, INT32_MAX};
+              (env_detector_t){at_al, re_al, (1 << (-SIG_EXP)) - 1}, th, INT32_MAX};
 
   for (unsigned i = 0; i < in_len; i++)
   {

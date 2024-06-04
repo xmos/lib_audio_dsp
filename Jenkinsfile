@@ -17,7 +17,7 @@ pipeline {
     )
     string(
       name: 'XCOMMON_CMAKE_VERSION',
-      defaultValue: 'v0.2.0',
+      defaultValue: 'v1.0.0',
       description: 'The xcommon cmake version'
     )
   } // parameters
@@ -33,6 +33,20 @@ pipeline {
   } // options
 
   stages {
+    stage('Stop previous builds') {
+      when {
+        // don't stop runs on develop or main
+        not {
+          anyOf {
+            branch "main"
+            branch "develop"
+          }
+        }
+      }
+      steps {
+        stopPreviousBuilds()
+      }
+    } // Stop previous builds
     stage('CI') {
       parallel {
         stage ('Build & Test') {
@@ -177,7 +191,8 @@ pipeline {
                         script {
                           [
                           "test/reverb",
-                          "test/signal_chain"
+                          "test/signal_chain",
+                          "test/fir"
                           ].each {
                             sh "cmake -S ${it} -B ${it}/build"
                             sh "xmake -C ${it}/build -j"
@@ -189,6 +204,39 @@ pipeline {
                 }
               }
             } // Build
+            stage('Unit tests') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
+                    withVenv {
+                      withTools(params.TOOLS_VERSION) {
+                        catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                          dir("test/unit_tests") {
+                            runPytest("--dist worksteal")
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // Unit tests
+            stage('Test FIR') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/fir") {
+                          runPytest("test_fir_python.py --dist worksteal")
+                          runPytest("test_fir_c.py --dist worksteal")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test SC
             stage('Test SC') {
               steps {
                 dir("lib_audio_dsp") {
@@ -342,6 +390,164 @@ pipeline {
             }
           }
         } // Hardware test
+
+        // Host app on Windows
+        stage ('Win32 Host Build & Test') {
+          agent {
+            label 'sw-bld-win0'
+          }
+          stages {
+            stage ('Build') {
+              steps {
+                runningOn(env.NODE_NAME)
+                // build
+                dir("lib_audio_dsp") {
+                  checkout scm
+                }
+                dir('lib_audio_dsp/host') {
+                  // Enable the XTC tools for xSCOPE
+                  withTools(params.TOOLS_VERSION) {
+                    withVS('vcvars32.bat') {
+                      bat 'cmake -G "Ninja" -B build -DTESTING=ON'
+                      bat 'cd build && ninja'
+                    }
+                  }
+                }
+              }
+            }
+            stage ('Test') {
+              steps {
+                dir("lib_audio_dsp") {
+                  createVenv("requirements.txt")
+                  withVenv{
+                    // Enable the XTC tools for xSCOPE
+                    withTools(params.TOOLS_VERSION) {
+                      bat 'pip install -r requirements.txt'
+                      bat 'pip install jinja2'
+                    }
+                  }
+                  withVenv{
+                    dir('test/host') {
+                      bat 'pytest -s'
+                    }
+                  }
+                }
+              }
+            }
+          } // stages
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
+        }// Windows
+
+        // Host app on Linux
+        stage ('Linux x86_64 Host Build & Test') {
+          agent {
+            label 'linux&&x86_64'
+            }
+          stages {
+            stage ('Build') {
+              steps {
+                runningOn(env.NODE_NAME)
+                // build
+                dir("lib_audio_dsp") {
+                  checkout scm
+                }
+                dir('lib_audio_dsp/host') {
+                  // Enable the XTC tools for xSCOPE
+                  withTools(params.TOOLS_VERSION) {
+                    sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
+                  }
+                }
+              }
+            }
+            stage ('Test') {
+              steps {
+                dir("lib_audio_dsp") {
+                  createVenv("requirements.txt")
+                  withVenv{
+                    // Enable the XTC tools for xSCOPE
+                    withTools(params.TOOLS_VERSION) {
+                      sh 'pip install -r requirements.txt'
+                      sh 'pip install jinja2'
+                    }
+                  }
+                  withVenv{
+                    dir('test/host') {
+                      sh 'pytest -s'
+                    }
+                  }
+                }
+              }
+            }
+          } // stages
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
+        } // Linux x86_64
+
+        // Host app on Max x86_64
+        stage ('Mac x86_64 Host Build & Test') {
+          agent {
+            label 'macos&&x86_64'
+          }
+          stages {
+            stage ('Build') {
+              steps {
+                runningOn(env.NODE_NAME)
+                // build
+                dir("lib_audio_dsp") {
+                  checkout scm
+                }
+                dir('lib_audio_dsp/host') {
+                  // Enable the XTC tools for xSCOPE
+                  withTools(params.TOOLS_VERSION) {
+                    sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
+                  }
+                }
+              }
+            }
+            // The stage for the tests has not been added, see https://xmosjira.atlassian.net/browse/LCD-294 for more details.
+          } // stages
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
+        } // Mac x86_64
+
+        // Host app on Max arm64
+        stage ('Mac arm64 Host Build & Test') {
+          agent {
+            label 'macos&&arm64'
+          }
+          stages {
+            stage ('Build') {
+              steps {
+                runningOn(env.NODE_NAME)
+                // build
+                dir("lib_audio_dsp") {
+                  checkout scm
+                }
+                dir('lib_audio_dsp/host') {
+                  withTools(params.TOOLS_VERSION) {
+                    sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
+                  }
+                }
+              }
+            }
+            // The stage for the tests has not been added, see https://xmosjira.atlassian.net/browse/LCD-294 for more details.
+          } // stages
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
+        } // Mac arm64
       } // parallel
     } // CI
   } // stages

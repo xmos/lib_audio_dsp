@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The cascaded biquad DSP block."""
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -19,6 +21,9 @@ class cascaded_biquads_8(dspg.dsp_block):
     biquads in the cascade, the remaining biquads are set to bypass
     (b0 = 1).
 
+    For documentation on individual biquads, see
+    :class:`audio_dsp.dsp.biquad.biquad`.
+
     Parameters
     ----------
     coeffs_list : list
@@ -33,13 +38,26 @@ class cascaded_biquads_8(dspg.dsp_block):
 
     def __init__(self, coeffs_list, fs, n_chans, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
-        self.biquads = [None] * 8
+        self.biquads = []
         assert len(coeffs_list) <= 8, "Too many biquads in coeffs_list"
         for n in range(8):
             if n < len(coeffs_list):
-                self.biquads[n] = bq.biquad(coeffs_list[n], fs, n_chans)
+                self.biquads.append(bq.biquad(coeffs_list[n], fs, n_chans, Q_sig=Q_sig))
             else:
-                self.biquads[n] = bq.biquad_bypass(fs, n_chans)
+                self.biquads.append(bq.biquad_bypass(fs, n_chans))
+
+    def print_xcoremath_coeffs(self):
+        """Print the cascaded biquad coefficients in the format required
+        for lib_xcore_math's filter_biquad_s32_t structure.
+        """
+        print("{", end="")
+        for nn in range(5):
+            print("{", end="")
+            for n in range(8):
+                this_coeff = self.biquads[n].int_coeffs[nn]
+                print(f"{hex(this_coeff & (2**32-1))}, ", end="")
+            print("},", end="")
+        print("}")
 
     def process(self, sample, channel=0):
         """Process the input sample through the cascaded biquads using
@@ -205,9 +223,7 @@ class cascaded_biquads_8(dspg.dsp_block):
         return f, h_all
 
     def reset_state(self):
-        """
-        Reset the biquad saved states to zero.
-        """
+        """Reset the biquad saved states to zero."""
         for biquad in self.biquads:
             biquad.reset_state()
 
@@ -226,9 +242,9 @@ class butterworth_lowpass(cascaded_biquads_8):
         The cutoff frequency of the filter.
     """
 
-    def __init__(self, fs, n_chans, N, fc):
+    def __init__(self, fs, n_chans, N, fc, Q_sig=dspg.Q_SIG):
         coeffs_list = make_butterworth_lowpass(N, fc, fs)
-        super().__init__(coeffs_list, fs, n_chans)
+        super().__init__(coeffs_list, fs, n_chans, Q_sig)
 
 
 class butterworth_highpass(cascaded_biquads_8):
@@ -243,9 +259,9 @@ class butterworth_highpass(cascaded_biquads_8):
         The cutoff frequency of the filter.
     """
 
-    def __init__(self, fs, n_chans, N, fc):
+    def __init__(self, fs, n_chans, N, fc, Q_sig=dspg.Q_SIG):
         coeffs_list = make_butterworth_highpass(N, fc, fs)
-        super().__init__(coeffs_list, fs, n_chans)
+        super().__init__(coeffs_list, fs, n_chans, Q_sig)
 
 
 class parametric_eq_8band(cascaded_biquads_8):
@@ -264,14 +280,14 @@ class parametric_eq_8band(cascaded_biquads_8):
         parameters specific to that type.
     """
 
-    def __init__(self, fs, n_chans, filter_spec):
+    def __init__(self, fs, n_chans, filter_spec, Q_sig=dspg.Q_SIG):
         coeffs_list = []
         for spec in filter_spec:
             class_name = f"make_biquad_{spec[0]}"
             class_handle = getattr(bq, class_name)
             coeffs_list.append(class_handle(fs, *spec[1:]))
 
-        super().__init__(coeffs_list, fs, n_chans)
+        super().__init__(coeffs_list, fs, n_chans, Q_sig=Q_sig)
 
 
 def make_butterworth_lowpass(N, fc, fs):
@@ -341,7 +357,7 @@ def make_butterworth_lowpass(N, fc, fs):
         b1 = 2 * K
         b2 = K
 
-        coeffs = (b0, b1, b2, a0, a1, a2)
+        coeffs = [b0, b1, b2, a0, a1, a2]
         coeffs = bq._normalise_biquad(coeffs)
         coeffs_list.append(coeffs)
 
@@ -418,7 +434,7 @@ def make_butterworth_highpass(N, fc, fs):
         b1 = -2 * K
         b2 = K
 
-        coeffs = (b0, b1, b2, a0, a1, a2)
+        coeffs = [b0, b1, b2, a0, a1, a2]
         coeffs = bq._normalise_biquad(coeffs)
         coeffs_list.append(coeffs)
 

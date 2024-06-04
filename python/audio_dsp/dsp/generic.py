@@ -1,5 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The generic DSP block and globals."""
+
 from copy import deepcopy
 
 import numpy as np
@@ -86,9 +88,9 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
         float
             The processed output sample.
         """
-        sample_int = utils.int32(sample * 2**self.Q_sig)
+        sample_int = utils.float_to_int32(sample, self.Q_sig)
         y = self.process(float(sample_int))
-        y_flt = float(y) * 2**-self.Q_sig
+        y_flt = utils.int32_to_float(y, self.Q_sig)
 
         return y_flt
 

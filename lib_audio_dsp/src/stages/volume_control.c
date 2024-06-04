@@ -40,7 +40,7 @@ void volume_control_init(module_instance_t* instance, adsp_bump_allocator_t* all
     state->frame_size = frame_size;
     xassert(n_outputs == n_inputs && "Volume control should have the same number of inputs and outputs");
 
-    state->vol_ctl = adsp_bump_allocator_malloc(allocator, state->n_inputs * sizeof(volume_control_t));
+    state->vol_ctl = adsp_bump_allocator_malloc(allocator, VOLUME_CONTROL_STAGE_REQUIRED_MEMORY(state->n_inputs));
 
     for(int i=0; i<state->n_inputs; i++)
     {
@@ -48,7 +48,7 @@ void volume_control_init(module_instance_t* instance, adsp_bump_allocator_t* all
         state->vol_ctl[i].target_gain = config->target_gain;
         state->vol_ctl[i].slew_shift = config->slew_shift;
         state->vol_ctl[i].saved_gain = 0;
-        state->vol_ctl[i].mute = 0;
+        state->vol_ctl[i].mute_state = 0;
     }
 }
 
@@ -65,9 +65,9 @@ void volume_control_control(void *module_state, module_control_t *control)
         for (unsigned i=0; i < state->n_inputs; i++) {
             adsp_volume_control_set_gain(&state->vol_ctl[i], config->target_gain);
             state->vol_ctl[i].slew_shift = config->slew_shift;
-            if ((state->vol_ctl[i].mute != config->mute) && (config->mute)) {
+            if ((state->vol_ctl[i].mute_state != config->mute_state) && (config->mute_state)) {
                 adsp_volume_control_mute(&state->vol_ctl[i]);
-            } else if ((state->vol_ctl[i].mute != config->mute) && (!config->mute)) {
+            } else if ((state->vol_ctl[i].mute_state != config->mute_state) && (!config->mute_state)) {
                 adsp_volume_control_unmute(&state->vol_ctl[i]);
             }
         }
@@ -78,7 +78,7 @@ void volume_control_control(void *module_state, module_control_t *control)
         config->target_gain = state->vol_ctl[0].target_gain;
         config->gain = state->vol_ctl[0].gain;
         config->slew_shift = state->vol_ctl[0].slew_shift;
-        config->mute = state->vol_ctl[0].mute;
+        config->mute_state = state->vol_ctl[0].mute_state;
 
         control->config_rw_state = config_read_updated;
     }

@@ -19,10 +19,19 @@ void add_n_process(int32_t **input, int32_t **output, void *app_data_state)
     do {
         int32_t *in = input[i];
         int32_t *out = output[i];
+        int64_t acc;
         int j = 0;
         do
         {
-            out[j] = in[j] + state->config.n;
+            acc = (int64_t)(in[j]);
+            acc += state->config.n;
+            if (acc > INT32_MAX){
+                acc = INT32_MAX;
+            }
+            else if (acc < INT32_MIN){
+                acc = INT32_MIN;
+            }
+            out[j] = (int32_t) acc;
         } while (++j < state->frame_size);
     } while (++i < state->n_outputs);
 }

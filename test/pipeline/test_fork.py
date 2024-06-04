@@ -25,8 +25,8 @@ def do_test(p, in_ch, out_ch):
     outfile = "outfork.wav"
     n_samps, rate = 1024, 48000
 
-    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
-    target = "pipeline_test"
+    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+    target = "default"
     # Build pipeline test executable. This will download xscope_fileio if not present
     build_utils.build(APP_DIR, BUILD_DIR, target)
 
@@ -39,7 +39,7 @@ def do_test(p, in_ch, out_ch):
         sig = sig0.reshape((n_samps, 1))
     audio_helpers.write_wav(infile, rate, sig)
 
-    xe = APP_DIR / f"bin/{target}.xe"
+    xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile, 2, 1)
 
     _, out_data = audio_helpers.read_wav(outfile)
@@ -56,15 +56,14 @@ def test_fork(fork_output, inputs):
     Basic check that the for stage correctly copies data to the expected outputs.
     """
     channels = inputs
-    p = Pipeline(channels)
-    with p.add_thread() as t:
-        count = 2
-        fork = t.stage(Fork, p.i, count = count)
-        assert len(fork.forks) == count
-        for f in fork.forks:
-            assert len(f) == channels
+    p, i = Pipeline.begin(channels)
+    count = 2
+    fork = p.stage(Fork, i, count = count)
+    assert len(fork.forks) == count
+    for f in fork.forks:
+        assert len(f) == channels
 
-        p.set_outputs(fork.forks[fork_output])
+    p.set_outputs(fork.forks[fork_output])
 
     if inputs == 1:
         do_test(p, [0], (0, 1))
@@ -76,10 +75,9 @@ def test_fork_copies():
     Check we can duplicate a channel
     """
     channels = 2
-    p = Pipeline(channels)
-    with p.add_thread() as t:
-        fork = t.stage(Fork, p.i, count = 2)
-    p.set_outputs([fork.forks[0][0], fork.forks[1][0]])
+    p, i = Pipeline.begin(channels, frame_size=2)
+    fork = p.stage(Fork, i, count = 2)
+    p.set_outputs(fork.forks[0][0] + fork.forks[1][0])
 
     # input channel 0 comes out both outputs
     do_test(p, (0, 0), (0, 1))
