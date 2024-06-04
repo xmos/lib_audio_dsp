@@ -8,15 +8,24 @@ import audio_dsp.dsp.reverb as rvrb
 
 class ReverbRoom(Stage):
     """
-    The reverb stage.
-
-    See :class:`audio_dsp.dsp.reverb.reverb_room` for details on implementation.
+    The room reverb stage. This is based on Freeverb by Jezar at
+    Dreampoint, and consists of 8 parallel comb filters fed into 4
+    series all-pass filters.
 
     Parameters
     ----------
     max_room_size
-        Sets the maximum room size for this reverb. The ``room_size`` parameter sets the
-        fraction of this value actually used at any given time.
+        Sets the maximum room size for this reverb. The ``room_size``
+        parameter sets the fraction of this value actually used at any
+        given time. For optimal memory usage, max_room_size should be
+        set so that the longest reverb tail occurs when
+        ``room_size=1.0``.
+
+    Attributes
+    ----------
+    dsp_block : audio_dsp.dsp.reverb.reverb_room
+        The DSP block class; see :class:`audio_dsp.dsp.reverb.reverb_room`
+        for implementation details.
     """
 
     def __init__(self, max_room_size=1, **kwargs):
@@ -40,7 +49,8 @@ class ReverbRoom(Stage):
 
     def set_wet_gain(self, gain_dB):
         """
-        Set the wet gain of the reverb room stage.
+        Set the wet gain of the reverb room stage. This sets the level
+        of the reverberated signal.
 
         Parameters
         ----------
@@ -51,7 +61,8 @@ class ReverbRoom(Stage):
 
     def set_dry_gain(self, gain_dB):
         """
-        Set the dry gain of the reverb room stage.
+        Set the dry gain of the reverb room stage. This sets the level
+        of the unprocessed signal.
 
         Parameters
         ----------
@@ -62,18 +73,25 @@ class ReverbRoom(Stage):
 
     def set_pre_gain(self, pre_gain):
         """
-        Set the pre gain of the reverb room stage.
+        Set the pre gain of the reverb room stage. It is not advised to
+        increase this value above the default 0.015, as it can result in
+        saturation inside the reverb delay lines.
 
         Parameters
         ----------
         pre_gain : float
-            Pre gain value, less than 1.
+            Pre gain value. Must be less than 1 (default 0.015).
         """
         self.dsp_block.set_pre_gain(pre_gain)
 
     def set_room_size(self, new_room_size):
         """
         Set the room size, will adjust the delay line lengths.
+
+        The room size is proportional to ``max_room_size``, and must be
+        between 0 and 1. To increase the room_size above 1.0,
+        ``max_room_size`` must instead be increased. Optimal memory
+        usage occurs when ``room_size`` is set to 1.0.
 
         Parameters
         ----------
@@ -85,7 +103,9 @@ class ReverbRoom(Stage):
 
     def set_damping(self, damping):
         """
-        Set the damping of the reverb room stage.
+        Set the damping of the reverb room stage. This controls how much
+        high frequency attenuation is in the room. Higher values yield
+        shorter reverberation times at high frequencies.
 
         Parameters
         ----------
@@ -96,7 +116,9 @@ class ReverbRoom(Stage):
 
     def set_decay(self, decay):
         """
-        Set the decay of the reverb room stage.
+        Set the decay of the reverb room stage. This sets how
+        reverberant the room is. Higher values will give a longer
+        reverberation time for a given room size.
 
         Parameters
         ----------

@@ -8,9 +8,21 @@ from ..dsp import generic as dspg
 
 
 class FirDirect(Stage):
-    """A FIR filter implemented in the time domain.
+    """A FIR filter implemented in the time domain. The input signal is
+    convolved with the filter coefficients. The filter coefficients can
+    only be set at compile time.
 
-    See :class:`audio_dsp.dsp.fir.fir_direct` for details.
+    Parameters
+    ----------
+    coeffs_path : Path
+        Path to a file containing the coefficients, in a format
+        supported by `np.loadtxt <https://numpy.org/doc/stable/reference/generated/numpy.loadtxt.html>`_.
+
+    Attributes
+    ----------
+    dsp_block : audio_dsp.dsp.fir.fir_direct
+        The DSP block class; see :class:`audio_dsp.dsp.fir.fir_direct`
+        for implementation details.
     """
 
     def __init__(self, coeffs_path, **kwargs):
@@ -27,7 +39,14 @@ class FirDirect(Stage):
         self.stage_memory_parameters = (self.n_in, self.dsp_block.n_taps)
 
     def make_fir_direct(self, coeffs_path, Q_sig=dspg.Q_SIG):
-        """Update fir configuration based on new parameters."""
+        """Update FIR configuration based on new parameters.
+
+        Parameters
+        ----------
+        coeffs_path : Path
+            Path to a file containing the coefficients, in a format
+            supported by `np.loadtxt <https://numpy.org/doc/stable/reference/generated/numpy.loadtxt.html>`_.
+        """
         self.details = dict(
             coeffs_path=coeffs_path,
             Q_sig=Q_sig,

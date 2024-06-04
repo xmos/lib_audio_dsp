@@ -35,6 +35,8 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
     ratio : float
         Compression gain ratio applied when the signal is above the
         threshold
+    threshold_db : float
+        Threshold in decibels above which compression occurs.
 
     Attributes
     ----------
@@ -59,8 +61,8 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
     """
 
-    def __init__(self, fs, ratio, threshold_db, attack_t, release_t, delay=0, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, 1, attack_t, release_t, delay, Q_sig)
+    def __init__(self, fs, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, 1, attack_t, release_t, Q_sig)
 
         # note rms comes as x**2, so use db_pow
         self.threshold, self.threshold_int = drcu.calculate_threshold(
@@ -238,6 +240,8 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
     ratio : float
         Compression gain ratio applied when the signal is above the
         threshold
+    threshold_db : float
+        Threshold in decibels above which compression occurs.
 
     Attributes
     ----------
@@ -262,12 +266,12 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
     """
 
-    def __init__(self, fs, ratio, threshold_dB, attack_t, release_t, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         n_chans = 2
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         self.threshold, self.threshold_int = drcu.calculate_threshold(
-            threshold_dB, self.Q_sig, power=True
+            threshold_db, self.Q_sig, power=True
         )
 
         self.env_detector = envelope_detector_rms(
@@ -294,6 +298,14 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.
+
+        Parameters
+        ----------
+        input_samples : list[float]
+            List of input samples to be compressed.
+        detect_samples : list[float]
+            List of samples used by the envelope detector to determine the
+            amount of compression to apply to the input_sample.
 
         """
         # get envelope from envelope detector
@@ -331,6 +343,14 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
         Take one new sample and return the compressed/limited sample.
         Input should be scaled with 0dB = 1.0.
+
+        Parameters
+        ----------
+        input_samples : list[float]
+            List of input samples to be compressed.
+        detect_samples : list[float]
+            List of samples used by the envelope detector to determine the
+            amount of compression to apply to the input_sample.
 
         """
         # quantize
