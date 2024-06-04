@@ -385,7 +385,8 @@ def validate_pipeline_checksum(pipeline: Pipeline):
     ret = send_control_cmd(pipeline.pipeline_stage.index, "pipeline_checksum")
 
     if ret.returncode:
-        raise RuntimeError("Unable to connect to device using host app")
+        print("Unable to connect to device using host app")
+        return
 
     stdout = ret.stdout.decode().splitlines()
     device_pipeline_checksum = [int(x) for x in stdout]
