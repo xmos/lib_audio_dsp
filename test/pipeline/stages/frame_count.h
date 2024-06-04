@@ -1,3 +1,6 @@
+// Copyright 2024 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
 /// Custom stage which fills the output with the frame index of that sample
 /// this is used in test_frame_size.py to check the generated pipeline
 /// really has the correct frame size.
