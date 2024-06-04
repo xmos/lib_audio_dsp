@@ -416,7 +416,6 @@ def send_config_to_device(pipeline: Pipeline):
         )
         return
 
-
     for stage in pipeline.stages:
         for command, value in stage.get_config().items():
             command = f"{stage.name}_{command}"
