@@ -383,13 +383,11 @@ def validate_pipeline_checksum(pipeline: Pipeline):
     """
     assert pipeline.pipeline_stage is not None  # To stop ruff from complaining
 
-    ret = send_control_cmd(pipeline.pipeline_stage.index, "pipeline_checksum")
-
-    if ret.returncode:
-        print(
-            "Unable to connect to device using host app. If using the Jupyter notebook, try to re-run all the cells."
-        )
-        return
+    try:
+        ret = send_control_cmd(pipeline.pipeline_stage.index, "pipeline_checksum")
+    except DeviceConnectionError:
+        # Drop this exception
+        pass
 
     stdout = ret.stdout.decode().splitlines()
     device_pipeline_checksum = [int(x) for x in stdout]
