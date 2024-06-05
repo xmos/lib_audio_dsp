@@ -1,3 +1,6 @@
+# Copyright 2024 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 from audio_dsp.dsp.generic import Q_SIG
 from stages.frame_count import FrameCount
