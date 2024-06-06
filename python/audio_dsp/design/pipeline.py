@@ -710,11 +710,13 @@ def _generate_dsp_header(resolved_pipeline, out_dir=Path("build/dsp_pipeline")):
     out_dir = Path(out_dir)
     out_dir.mkdir(exist_ok=True)
 
-    header = "#pragma once\n"
-    header += "#include <stages/adsp_pipeline.h>\n"
-    header += "\n"
-    header += f"adsp_pipeline_t * adsp_{resolved_pipeline['identifier']}_pipeline_init();\n"
-    header += (
+    header = (
+        "#pragma once\n"
+        "#include <stages/adsp_pipeline.h>\n"
+        "#include <xcore/parallel.h>\n"
+        "\n"
+        f"adsp_pipeline_t * adsp_{resolved_pipeline['identifier']}_pipeline_init();\n\n"
+        f"DECLARE_JOB(adsp_{resolved_pipeline['identifier']}_pipeline_main, (adsp_pipeline_t*));\n"
         f"void adsp_{resolved_pipeline['identifier']}_pipeline_main(adsp_pipeline_t* adsp);\n"
     )
 
