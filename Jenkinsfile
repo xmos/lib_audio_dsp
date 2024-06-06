@@ -23,7 +23,7 @@ pipeline {
   } // parameters
 
   environment {
-    XMOSDOC_VERSION = "v5.1.1"
+    XMOSDOC_VERSION = "v5.3.0"
   } // environment
 
   options {
