@@ -327,7 +327,9 @@ pipeline {
           }
           steps {
             checkout scm
-            buildDocs archiveZip: true, archiveFiles: true
+            withTools(params.TOOLS_VERSION) {
+              buildDocs archiveZip: true, archiveFiles: true
+            }
           }
           post {
             cleanup {
