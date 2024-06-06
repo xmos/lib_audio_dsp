@@ -25,7 +25,6 @@ void app_dsp_sink(int32_t** data) {
     adsp_pipeline_sink(m_dsp, data);
 }
 
-DECLARE_JOB(adsp_auto_pipeline_main, (adsp_pipeline_t*));
 DECLARE_JOB(dsp_control_thread, (chanend_t, module_instance_t*, size_t));
 
 void dsp_control_thread(chanend_t c_control, module_instance_t* modules, size_t num_modules)
