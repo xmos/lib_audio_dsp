@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.28.0')
+@Library('xmos_jenkins_shared_library@feature/build_docs') _
 
 def runningOn(machine) {
   println "Stage running on:"
@@ -322,22 +322,12 @@ pipeline {
         } // Style and package
 
         stage('docs') {
-
           agent {
-            label 'linux&&x86_64'
+            label 'documentation'
           }
           steps {
             checkout scm
-            sh """docker run -u "\$(id -u):\$(id -g)" \
-                  --rm \
-                  -v ${WORKSPACE}:/build \
-                  --entrypoint /build/doc/build_docs.sh \
-                  ghcr.io/xmos/xmosdoc:$XMOSDOC_VERSION -v"""
-            archiveArtifacts artifacts: "doc/_out/pdf/*.pdf"
-            archiveArtifacts artifacts: "doc/_out/html/**/*"
-            archiveArtifacts artifacts: "doc/_out/linkcheck/**/*"
-            sh 'find doc/_out/pdf -type f -not -name "*.pdf" -exec rm {} +'  // delete latex junk
-            zip zipFile: "lib_audio_dsp_docs.zip", archive: true, dir: "doc/_out", exclude: "linkcheck/**"
+            buildDocs archiveZip: true, archiveFiles: true
           }
           post {
             cleanup {
