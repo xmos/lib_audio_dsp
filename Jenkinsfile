@@ -300,7 +300,7 @@ pipeline {
               dir("lib_audio_dsp") {
                 checkout scm
               }
-              createVenv("lib_audio_dsp/requirements.txt")
+              createVenv("requirements.txt")
               dir("lib_audio_dsp") {
                 withVenv {
                   withTools(params.TOOLS_VERSION) {
