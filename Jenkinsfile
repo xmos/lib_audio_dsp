@@ -327,8 +327,12 @@ pipeline {
           }
           steps {
             checkout scm
+            createVenv("lib_audio_dsp/requirements.txt")
             withTools(params.TOOLS_VERSION) {
-              buildDocs archiveZip: true, archiveFiles: true
+              withVenv {
+                sh "pip install docstring-inheritance -e ./python"
+                buildDocs archiveZip: true, archiveFiles: true, xmosdocVenvPath: "${WORKSPACE}"
+              }
             }
           }
           post {
