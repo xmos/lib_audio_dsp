@@ -300,7 +300,7 @@ pipeline {
               dir("lib_audio_dsp") {
                 checkout scm
               }
-              createVenv("requirements.txt")
+              createVenv("lib_audio_dsp/requirements.txt")
               dir("lib_audio_dsp") {
                 withVenv {
                   withTools(params.TOOLS_VERSION) {
@@ -327,7 +327,7 @@ pipeline {
           }
           steps {
             checkout scm
-            createVenv("lib_audio_dsp/requirements.txt")
+            createVenv("requirements.txt")
             withTools(params.TOOLS_VERSION) {
               withVenv {
                 sh "pip install docstring-inheritance -e ./python"
