@@ -328,9 +328,11 @@ pipeline {
           steps {
             checkout scm
             createVenv("requirements.txt")
-            withTools(params.TOOLS_VERSION) {
-              withVenv {
-                sh "pip install docstring-inheritance -e ./python"
+            withVenv {
+              withTools(params.TOOLS_VERSION) {  // needed for xscope_fileio
+                // install this repo so that python autodoc works in sphinx
+                sh "pip install docstring-inheritance -e ./python"  // also extra package for docstrings
+                // pass the location of the venv to buildDocs so it knows to install/run xmosdoc from there
                 buildDocs archiveZip: true, archiveFiles: true, xmosdocVenvPath: "${WORKSPACE}"
               }
             }
