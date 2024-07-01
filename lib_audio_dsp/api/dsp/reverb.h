@@ -27,6 +27,8 @@
 #define ADSP_RVR_N_COMBS 8
 /** Number of allpass filters used in the reverb room */
 #define ADSP_RVR_N_APS 4
+/** Reverb room internal Q factor */
+#define Q_RVR 31
 
 /**
  * @brief A freeverb style all-pass filter structure

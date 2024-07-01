@@ -4,25 +4,6 @@
 #include "dsp/adsp.h"
 #include "dsp/_helpers/drc_utils.h"
 
-#include <math.h>
-
-compressor_t adsp_compressor_rms_init(
-  float fs,
-  float threshold_db,
-  float attack_t,
-  float release_t,
-  float ratio
-) {
-  compressor_t comp;
-  comp.env_det = adsp_env_detector_init(fs, attack_t, release_t);
-  float th = powf(10, threshold_db / 10);
-  if (th > 1) th = 1.0;
-  comp.threshold = from_float_pos(th);
-  comp.gain = INT32_MAX;
-  comp.slope = (1 - 1 / ratio) / 2;
-  return comp;
-}
-
 static inline int32_t calc_rms_comp_gain(int32_t th, int32_t env, float slope) {
   // will calculate (th/env)^slope
   // assumes that th and env > 0 and slope [0, 1/2],

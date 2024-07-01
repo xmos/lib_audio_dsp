@@ -10,6 +10,9 @@
 /** Heap size to allocate for the delay from seconds */
 #define DELAY_DSP_REQUIRED_MEMORY_SEC(FS, SEC) (sizeof(int32_t) * (FS) * (SEC))
 
+/** Gain Q factor for fixed gain, mixer, volume control modules */
+#define Q_GAIN 27
+
 /**
  * @brief Volume control state structure
  */
