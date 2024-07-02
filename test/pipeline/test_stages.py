@@ -193,13 +193,11 @@ def generate_test_param_file(stage_name, stage_config):
                 cmd_payload_list.append(cmd_payload)
             else:
                 cmd_payload_list = cmd_payload
-            print(cmd_payload_list)
             payload_size = 0
             for value in cmd_payload_list:
                 data_type = type_data["module"][stage_name.lower()][cmd_name.lower()][
                     "type"
                 ]
-                print(value, data_type)
                 # Convert the values into bytearrays and compute the payload length
                 if data_type in ["int", "int32_t", "uint32_t"]:
                     ba = bytearray(struct.pack("I", value & 0xFFFFFFFF))
