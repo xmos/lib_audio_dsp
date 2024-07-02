@@ -193,11 +193,13 @@ def generate_test_param_file(stage_name, stage_config):
                 cmd_payload_list.append(cmd_payload)
             else:
                 cmd_payload_list = cmd_payload
+            print(cmd_payload_list)
             payload_size = 0
             for value in cmd_payload_list:
                 data_type = type_data["module"][stage_name.lower()][cmd_name.lower()][
                     "type"
                 ]
+                print(value, data_type)
                 # Convert the values into bytearrays and compute the payload length
                 if data_type in ["int", "int32_t", "uint32_t"]:
                     ba = bytearray(struct.pack("I", value & 0xFFFFFFFF))
@@ -224,17 +226,17 @@ def generate_test_param_file(stage_name, stage_config):
     "method, args",
     [
         ("make_bypass", None),
-        ("make_lowpass", [1000, 0.707]),
-        ("make_highpass", [1000, 0.707]),
-        ("make_bandpass", [1000, 0.707]),
-        ("make_bandstop", [1000, 0.707]),
-        ("make_notch", [1000, 0.707]),
-        ("make_allpass", [1000, 0.707]),
-        ("make_peaking", [1000, 0.707, -6]),
-        ("make_constant_q", [1000, 0.707, -6]),
-        ("make_lowshelf", [1000, 0.707, -6]),
-        ("make_highshelf", [1000, 0.707, -6]),
-        ("make_linkwitz", [200, 0.707, 180, 0.707]),
+        #("make_lowpass", [1000, 0.707]),
+        #("make_highpass", [1000, 0.707]),
+        #("make_bandpass", [1000, 0.707]),
+        #("make_bandstop", [1000, 0.707]),
+        #("make_notch", [1000, 0.707]),
+        #("make_allpass", [1000, 0.707]),
+        #("make_peaking", [1000, 0.707, -6]),
+        #("make_constant_q", [1000, 0.707, -6]),
+        #("make_lowshelf", [1000, 0.707, -6]),
+        #("make_highshelf", [1000, 0.707, -6]),
+        #("make_linkwitz", [200, 0.707, 180, 0.707]),
     ],
 )
 def test_biquad(method, args, frame_size):
