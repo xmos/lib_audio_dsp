@@ -137,18 +137,8 @@ Setup Steps
    "http://127.0.0.1/" from the terminal into the browser. The following page
    should open:
 
-   .. figure:: images/jupyter_notebook_top_level.png
-      :width: 100%
-
-      Top-level page of the Jupyter Notebook
-
 #. Run all the cells from the browser. From the menu at the top of the page
    click *Run -> Run all cells*:
-
-   .. figure:: images/jupyter_notebook_run_tests.png
-      :width: 100%
-
-      Run menu of the Jupyter Notebook
 
    This creates the pipeline and builds the app. Wait for all the cells to
    finish
@@ -156,22 +146,10 @@ Setup Steps
    Any configuration or compilation errors will be displayed in the notebook in
    the *Build and Run* cell, as in the example below:
 
-   .. figure:: images/config_error.png
-      :width: 100%
-
-      Configuration error of the Jupyter Notebook
-
 #. Update and run *Pipeline design stage* to add the desired audio processing
    blocks. A diagram will be generated showing the pipeline IO mapping.
 
-   A simple pipeline example is shown in :numref:`pipeline_diagram`:
-
-      .. _pipeline_diagram:
-
-      .. figure:: images/pipeline_diagram.png
-         :width: 100%
-
-         Diagram of a simple audio pipeline
+   A simple pipeline example is shown in pipeline_diagram:
 
    See the top of the notebook for more information about this stage.
 
