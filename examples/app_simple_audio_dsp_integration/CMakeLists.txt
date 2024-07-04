@@ -5,7 +5,6 @@ project(app_simple_audio_dsp_integration)
 set(APP_HW_TARGET XK-EVK-XU316)
 set(APP_DEPENDENT_MODULES
     "lib_audio_dsp"
-    "lib_xcore_math(2.2.0)"
     "lib_logging(3.2.0)"
     "lib_locks(2.2.0)"
 )
