@@ -21,7 +21,7 @@ class DSPBuilder:
     log_str = """<pre style="font-family: monospace, monospace;">{output}</pre>"""
 
     def __init__(
-        self: typing.Self,
+        self: "DSPBuilder",
         source_dir: NullablePathLike = None,
         build_dir: NullablePathLike = None,
         bin_dir: NullablePathLike = None,
@@ -75,44 +75,44 @@ class DSPBuilder:
 
         self.configure_done: bool = False
 
-    def _determine_source_dir(self: typing.Self) -> pathlib.Path:
+    def _determine_source_dir(self: "DSPBuilder") -> pathlib.Path:
         # We assume here that the CWD is the application directory, and that
         #    this is the desired source directory.
         return pathlib.Path.cwd()
 
-    def _determine_build_dir(self: typing.Self) -> pathlib.Path:
+    def _determine_build_dir(self: "DSPBuilder") -> pathlib.Path:
         # We assume here that the CWD is the application directory, and that
         #    this will contain a subdirectory /build/ which is the desired build
         #    directory.
         return pathlib.Path.cwd() / "build"
 
-    def _determine_bin_dir(self: typing.Self) -> pathlib.Path:
+    def _determine_bin_dir(self: "DSPBuilder") -> pathlib.Path:
         # We assume here that the CWD is the application directory, and that
         #    this will contain a subdirectory /bin/ which is the bin
         #    directory.
         return pathlib.Path.cwd() / "bin"
 
-    def _determine_project_name(self: typing.Self) -> str:
+    def _determine_project_name(self: "DSPBuilder") -> str:
         # We assume here that the name of the project is the same as the
         #    name of the enclosing directory
         return pathlib.Path.cwd().name
 
-    def _determine_config_suffix(self: typing.Self) -> str:
+    def _determine_config_suffix(self: "DSPBuilder") -> str:
         # We assume here that if no config has been specified then the default
         #    target name is just the project name with no config suffix
         return ""
 
-    def _determine_config_name(self: typing.Self) -> str:
+    def _determine_config_name(self: "DSPBuilder") -> str:
         # We assume here that if no config has been specified then the default
         #    config name is blank
         return ""
 
-    def _determine_target_name(self: typing.Self) -> str:
+    def _determine_target_name(self: "DSPBuilder") -> str:
         # We assume here that if no config has been specified then the default
         #    target name is the project name with the config suffix appended
         return self.project_name + self.config_suffix
 
-    def _log(self: typing.Self, process: subprocess.Popen, title: str = "") -> None:
+    def _log(self: "DSPBuilder", process: subprocess.Popen, title: str = "") -> None:
         widget = widgets.HTML(value="")
         accordion = widgets.Accordion(children=[widget])
         accordion.set_title(0, title)
@@ -127,7 +127,7 @@ class DSPBuilder:
         else:
             accordion.set_title(0, title + "  ✔")
 
-    def config(self: typing.Self) -> int:
+    def config(self: "DSPBuilder") -> int:
         cache = self.build_dir / "CMakeCache.txt"
         makefile = self.build_dir / "Makefile"
         ninjabuild = self.build_dir / "build.ninja"
@@ -161,7 +161,7 @@ class DSPBuilder:
                 self.configure_done = True
             return ret.returncode
 
-    def build(self: typing.Self) -> int:
+    def build(self: "DSPBuilder") -> int:
         ret = subprocess.Popen(
             f"cmake --build {self.build_dir} --target {self.target_name}".split(),
             stdout=subprocess.PIPE,
@@ -171,7 +171,7 @@ class DSPBuilder:
         self._log(ret, "Compiling...")
         return ret.returncode
 
-    def run(self: typing.Self) -> None:
+    def run(self: "DSPBuilder") -> None:
         app = (
             self.bin_dir
             / self.config_name
@@ -186,7 +186,7 @@ class DSPBuilder:
         self._log(ret, f"Running...")
         return ret.returncode
 
-    def config_build_run(self: typing.Self) -> None:
+    def config_build_run(self: "DSPBuilder") -> None:
         returncode = self.config()
         if returncode:
             return
