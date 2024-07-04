@@ -47,3 +47,6 @@ documentation:
     doc/programming_guide/index:
       pdf_title: '{{product}} - Programming Guide'
       pdf_filename: '{{product}}_programming_guide_v{{version}}'
+    doc/tool_user_guide/index:
+      pdf_title: '{{product}} - Tool User Guide'
+      pdf_filename: '{{product}}_tool_user_guide_v{{version}}'
