@@ -28,9 +28,9 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
     Parameters
     ----------
     fs : int
-        sampling frequency in Hz.
+        Sampling frequency in Hz.
     n_chans : int
-        number of channels the block runs on.
+        Number of channels the block runs on.
     Q_sig: int, optional
         Q format of the signal, number of bits after the decimal point.
         Defaults to Q27.
@@ -38,9 +38,9 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
     Attributes
     ----------
     fs : int
-        sampling frequency in Hz.
+        Sampling frequency in Hz.
     n_chans : int
-        number of channels the block runs on.
+        Number of channels the block runs on.
     Q_sig: int
         Q format of the signal, number of bits after the decimal point.
     """
@@ -74,7 +74,7 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
         """Take one new sample and return 1 processed sample.
 
         For the generic implementation, scale and quantize the input,
-        call the float implementation, then scale back to 1.0 = 0 dB.
+        call the xcore-like implementation, then scale back to 1.0 = 0 dB.
 
         Parameters
         ----------
@@ -129,7 +129,7 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
     def process_frame_xcore(self, frame: list):
         """
         Take a list frames of samples and return the processed frames,
-        using a bit exact xcore implementation.
+        using an xcore-like implementation.
 
         A frame is defined as a list of 1-D numpy arrays, where the
         number of arrays is equal to the number of channels, and the

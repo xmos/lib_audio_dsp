@@ -10,10 +10,10 @@ and python.
 C
 *
 
-.. include:: gen/api.dsp.inc
+#.. include:: gen/api.dsp.inc
 
 Python
 ******
 
-.. include:: gen/audio_dsp.dsp.inc
+#.. include:: gen/audio_dsp.dsp.inc
 

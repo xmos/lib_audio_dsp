@@ -47,3 +47,6 @@ documentation:
     doc/programming_guide/index:
       pdf_title: '{{product}} - Programming Guide'
       pdf_filename: '{{product}}_programming_guide_v{{version}}'
+    doc/dsp_components/index:
+      pdf_title: '{{product}} - DSP components'
+      pdf_filename: '{{product}}_dsp_components_v{{version}}'
