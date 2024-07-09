@@ -84,10 +84,6 @@ class biquad(dspg.dsp_block):
         ----------
         new_coeffs : list[float]
             The new coefficients to be updated.
-
-        Returns
-        -------
-        None
         """
         self.coeffs, self.int_coeffs = _round_and_check(new_coeffs, self.b_shift)
 

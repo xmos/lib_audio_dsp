@@ -16,6 +16,12 @@ A second order oder biquadratic filter. Implemented in the form 1.
     .. automethod:: process
         :noindex:
 
+    .. automethod:: update_coeffs
+        :noindex:
+
+    .. automethod:: reset_state
+        :noindex:
+
 =====================
 Cascadeds Biquads API
 =====================
@@ -26,4 +32,7 @@ Cascadeds Biquads API
     :noindex:
 
     .. automethod:: process
+        :noindex:
+
+    .. automethod:: reset_state
         :noindex:

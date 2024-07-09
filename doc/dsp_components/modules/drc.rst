@@ -11,6 +11,9 @@ Envelope Detectors
 Envelope detectors run an exponential moving avarage (EMA) of the incoming signal. They are used as a part of
 the most DRC components. Can also be used to implement the UV meters.
 
+.. doxygenstruct:: env_detector_t
+    :members:
+
 .. _env_det_peak:
 
 ----------------------
@@ -25,6 +28,9 @@ Peak-based envelope detector will run it's EMA using the absolute value of the i
     :noindex:
 
     .. automethod:: process
+        :noindex:
+
+    .. automethod:: reset_state
         :noindex:
 
 .. _env_det_rms:
@@ -43,6 +49,8 @@ RMS-based envelope detector will run it's EMA using the square of the input samp
     .. automethod:: process
         :noindex:
 
+    .. automethod:: reset_state
+        :noindex:
 
 ==================================
 Clippers, Limiters and Compressors
@@ -58,6 +66,8 @@ Clipper
 
 Will clip an input value if it's above the threshold.
 
+.. doxygentypedef:: clipper_t
+
 .. doxygenfunction:: adsp_clipper
 
 .. autoclass:: audio_dsp.dsp.drc.drc.clipper
@@ -72,6 +82,9 @@ Will clip an input value if it's above the threshold.
 Limiter Peak
 ------------
 
+.. doxygenstruct:: limiter_t
+    :members:
+
 Will use the :ref:`env_det_peak` as an envelope to compare with the `threshold` level. According to that
 will calculate the gain to apply to the sample.
 
@@ -81,6 +94,9 @@ will calculate the gain to apply to the sample.
     :noindex:
 
     .. automethod:: process
+        :noindex:
+
+    .. automethod:: reset_state
         :noindex:
 
 -----------------
@@ -95,6 +111,9 @@ Will run :ref:`lim_peak` and clip the result if it's above the threshold.
     :noindex:
 
     .. automethod:: process
+        :noindex:
+
+    .. automethod:: reset_state
         :noindex:
 
 -----------
@@ -112,9 +131,15 @@ will calculate the gain to apply to the sample.
     .. automethod:: process
         :noindex:
 
+    .. automethod:: reset_state
+        :noindex:
+
 --------------
 RMS Compressor
 --------------
+
+.. doxygenstruct:: compressor_t
+    :members:
 
 Will use the :ref:`env_det_rms` as an envelope to compare with the `threshold` level. According to that
 will calculate the gain to apply to the sample.
@@ -125,6 +150,9 @@ will calculate the gain to apply to the sample.
     :noindex:
 
     .. automethod:: process
+        :noindex:
+
+    .. automethod:: reset_state
         :noindex:
 
 ------------------------
@@ -142,6 +170,9 @@ calculate the gain and apply in to the *input* sample.
     .. automethod:: process
         :noindex:
 
+    .. automethod:: reset_state
+        :noindex:
+
 =========
 Expanders
 =========
@@ -155,12 +186,17 @@ Noise Gate
 Will use the :ref:`env_det_peak` as an envelope to compare with the `threshold` level. According to that
 will calculate the gain to apply to the sample.
 
+.. doxygentypedef:: noise_gate_t
+
 .. doxygenfunction:: adsp_noise_gate
 
 .. autoclass:: audio_dsp.dsp.drc.expander.noise_gate
     :noindex:
 
     .. automethod:: process
+        :noindex:
+
+    .. automethod:: reset_state
         :noindex:
 
 -------------------------
@@ -170,10 +206,15 @@ Noise Suppressor/Expander
 Will use the :ref:`env_det_peak` as an envelope to compare with the `threshold` level. According to that
 will calculate the gain to apply to the sample.
 
+.. doxygenstruct:: noise_suppressor_expander_t
+
 .. doxygenfunction:: adsp_noise_suppressor_expander
 
 .. autoclass:: audio_dsp.dsp.drc.expander.noise_suppressor_expander
     :noindex:
 
     .. automethod:: process
+        :noindex:
+    
+    .. automethod:: reset_state
         :noindex:

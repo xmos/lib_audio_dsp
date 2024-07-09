@@ -22,10 +22,10 @@ C
 Python Design API
 *****************
 
-.. include:: gen/audio_dsp.design.inc
+#.. include:: gen/audio_dsp.design.inc
 
 Python Design Available DSP Stages
 **********************************
 
-.. include:: gen/audio_dsp.stages.inc
+#.. include:: gen/audio_dsp.stages.inc
 
