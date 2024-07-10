@@ -236,7 +236,7 @@ class biquad(dspg.dsp_block):
         ----------
         nfft : int
             The number of points to compute in the frequency response,
-            by default 512.
+            by default 1024.
 
         Returns
         -------

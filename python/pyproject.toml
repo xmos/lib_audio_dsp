@@ -16,7 +16,7 @@ classifiers = [
 dependencies = [
     "numpy < 2.0",
     "scipy",
-    "matplotlib",
+    "matplotlib < 3.9.1",
     "soundfile",
     "IPyWidgets",
     "graphviz",

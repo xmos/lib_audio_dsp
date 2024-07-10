@@ -99,8 +99,8 @@ class StageOutputList:
     design. However the indexing and combining methods shown in the example will be used to
     create new StageOutputList instances.
 
-    Example
-    -------
+    Examples
+    --------
     This example shows how to combine StageOutputList in various ways::
 
         # a and b are StageOutputList

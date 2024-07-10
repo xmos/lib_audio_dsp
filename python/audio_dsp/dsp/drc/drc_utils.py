@@ -196,13 +196,7 @@ def noise_gate_gain_calc_xcore(envelope_int, threshold_int, slope_int=None):
 
 
 def noise_suppressor_expander_gain_calc(envelope, threshold, slope):
-    """Calculate the float gain for the current sample.
-
-    Note that as the RMS envelope detector returns x**2, we need to
-    sqrt the gain. Slope is used instead of ratio to allow the gain
-    calculation to avoid the log domain.
-
-    """
+    """Calculate the float gain for the current sample."""
     # if envelope above threshold, apply unity gain, otherwise scale
     # down
     new_gain = (threshold / envelope) ** slope
@@ -211,13 +205,7 @@ def noise_suppressor_expander_gain_calc(envelope, threshold, slope):
 
 
 def noise_suppressor_expander_gain_calc_xcore(envelope_int, threshold_int, slope_f32):
-    """Calculate the int gain for the current sample.
-
-    Note that as the RMS envelope detector returns x**2, we need to
-    sqrt the gain. Slope is used instead of ratio to allow the gain
-    calculation to avoid the log domain.
-
-    """
+    """Calculate the int gain for the current sample."""
     # if envelope above threshold, apply unity gain, otherwise scale
     # down
     # note this is rearranged to (envelope / threshold) ** -slope in order

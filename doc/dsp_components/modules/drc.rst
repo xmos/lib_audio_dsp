@@ -11,6 +11,12 @@ Envelope Detectors
 Envelope detectors run an exponential moving avarage (EMA) of the incoming signal. They are used as a part of
 the most DRC components. Can also be used to implement the UV meters.
 
+Attack and release times converted to alpha coefficients, so that the shorter the time the bigger the alpha.
+Large alpha will result in the envelope be more reactive to the input samples. Attack or release alpha will
+be chosen to run an EMA according to the difference of the input level and the current envelope.
+
+The C struct below is used for all the envelope detector implementetions.
+
 .. doxygenstruct:: env_detector_t
     :members:
 
@@ -52,17 +58,9 @@ RMS-based envelope detector will run it's EMA using the square of the input samp
     .. automethod:: reset_state
         :noindex:
 
-==================================
-Clippers, Limiters and Compressors
-==================================
-
-Limiters and compressors attenuate the signals that are above the given threshold. Compressor
-level above the threshold is defined by the `ratio` parameter. Limiter acts as a compressor with
-an infinite `ratio`.
-
--------
+=======
 Clipper
--------
+=======
 
 Will clip an input value if it's above the threshold.
 
@@ -76,17 +74,30 @@ Will clip an input value if it's above the threshold.
     .. automethod:: process
         :noindex:
 
+
+========
+Limiters
+========
+
+Limiters will try to maintain the signal to be below or near the threshold. Acts as a compressor with an infinite ratio.
+
+Will run an instance of an envelope detector to get an envelop and compare it to the threshold.
+According to that, will calculate the gain to apply to the signal and run that gain through an EMA.
+The EMA alphas are the same as in the envelope detectors used underneath.
+
+The C struct below is used for all the limiter implementetions.
+
+.. doxygenstruct:: limiter_t
+    :members:
+
 .. _lim_peak:
 
 ------------
 Limiter Peak
 ------------
 
-.. doxygenstruct:: limiter_t
-    :members:
-
-Will use the :ref:`env_det_peak` as an envelope to compare with the `threshold` level. According to that
-will calculate the gain to apply to the sample.
+Will use the :ref:`env_det_peak` to get an envelope. Will use the gain of ``threshold / envelope``
+when envelope is above the threshold.
 
 .. doxygenfunction:: adsp_limiter_peak
 
@@ -103,7 +114,7 @@ will calculate the gain to apply to the sample.
 Hard Limiter Peak
 -----------------
 
-Will run :ref:`lim_peak` and clip the result if it's above the threshold.
+Will run :ref:`lim_peak` and clip the result if it's still above the threshold.
 
 .. doxygenfunction:: adsp_hard_limiter_peak
 
@@ -120,8 +131,8 @@ Will run :ref:`lim_peak` and clip the result if it's above the threshold.
 Limiter RMS
 -----------
 
-Will use the :ref:`env_det_rms` as an envelope to compare with the `threshold` level. According to that
-will calculate the gain to apply to the sample.
+Will use the :ref:`env_det_rms` to get an envelope. Will use the gain of ``sqrt(threshold / envelope)``
+when envelope is above the threshold.
 
 .. doxygenfunction:: adsp_limiter_rms
 
@@ -134,15 +145,32 @@ will calculate the gain to apply to the sample.
     .. automethod:: reset_state
         :noindex:
 
---------------
-RMS Compressor
---------------
+===========
+Compressors
+===========
+
+Compressor will attenuate the signal above the threshold. The input/output relationship above the threshold
+is defined by the compressor ``ratio``.
+
+Simmilarly to the limiters, will run an instance of an envelope detector to get an envelop and compare it to the threshold.
+According to that, will calculate the gain to apply to the signal and run that gain through an EMA.
+The EMA alphas are the same as in the envelope detectors used underneath. The only difference with a limiter, is the
+additional ``ratio`` parameter, which plays the role when calculating the gain.
+
+Internally, the ratio is converted to the ``slope`` by using ``(1 - 1 / ratio) / 2`` convertion.
+The C struct below is used for all the compressors implementetions.
 
 .. doxygenstruct:: compressor_t
     :members:
 
-Will use the :ref:`env_det_rms` as an envelope to compare with the `threshold` level. According to that
-will calculate the gain to apply to the sample.
+.. _rms_comp:
+
+--------------
+RMS Compressor
+--------------
+
+Will use the :ref:`env_det_rms` to get an envelope. Will use the gain of ``(threshold / envelope) ^ slope``
+when envelope is above the threshold.
 
 .. doxygenfunction:: adsp_compressor_rms
 
@@ -159,8 +187,8 @@ will calculate the gain to apply to the sample.
 Sidechain RMS Compressor
 ------------------------
 
-Takes two signals: *detect* and *input*. Will use the *detect* signal to run the :ref:`env_det_rms`,
-calculate the gain and apply in to the *input* sample.
+Takes two signals: *detect* and *input*. Will use the *detect* signal to run the :ref:`env_det_rms`.
+Calculates the gain in the same way as :ref:`rms_comp`. Applies the EMAed gain to the *input* sample.
 
 .. doxygenfunction:: adsp_compressor_rms_sidechain
 
@@ -179,12 +207,17 @@ Expanders
 
 Exanders attenuate the signal that's below the threshold.
 
+Simmilarly to limiters and compressors will run an instance of an envelope detector to get an envelop and compare it to the threshold.
+According to that, will calculate the gain to apply to the signal and run that gain through an EMA.
+The EMA alphas are the same as in the envelope detectors used underneath. The difference with limiters and compressor is that
+attack and release alphas are swapped so when we should normally attack, we release, and vice versa.
+
 ----------
 Noise Gate
 ----------
 
-Will use the :ref:`env_det_peak` as an envelope to compare with the `threshold` level. According to that
-will calculate the gain to apply to the sample.
+Will use the :ref:`env_det_peak` to get an envelope. Will use the gain of ``0`` when the signal is below the threshold
+and the gain of ``1`` when aboove.
 
 .. doxygentypedef:: noise_gate_t
 
@@ -203,10 +236,13 @@ will calculate the gain to apply to the sample.
 Noise Suppressor/Expander
 -------------------------
 
-Will use the :ref:`env_det_peak` as an envelope to compare with the `threshold` level. According to that
-will calculate the gain to apply to the sample.
+Will use the :ref:`env_det_peak` to get an envelope. Will calculate the gain the the same way as :ref:`rms_comp`
+but the ``slope`` is defined as ``1 - ratio`` as the envelope is not squared.
+
+The ``inv_threshold`` is computed from ``threshold`` at init time to simplify run-time computation.
 
 .. doxygenstruct:: noise_suppressor_expander_t
+    :members:
 
 .. doxygenfunction:: adsp_noise_suppressor_expander
 
