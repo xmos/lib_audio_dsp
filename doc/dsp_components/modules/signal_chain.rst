@@ -2,9 +2,13 @@
 Signal Chain Components
 #######################
 
+Signal chain components are meant to help with manage signal between the bigger stages (i.e. combine, gain, delay).
+
 =====
 Adder
 =====
+
+Will add N number of samples, round and saturate the result to the Q31 range.
 
 .. doxygenfunction:: adsp_adder
 
@@ -18,6 +22,8 @@ Adder
 Subratcor
 =========
 
+Will subract one sample form another, round and saturate to Q31 range.
+
 .. doxygenfunction:: adsp_subtractor
 
 .. autoclass:: audio_dsp.dsp.signal_chain.subtractor
@@ -30,6 +36,11 @@ Subratcor
 Fixed Gain
 ==========
 
+Will apply a fixed gain to a sample, round and saturate to Q31 range.
+The gain must be in ``Q_GAIN`` format.
+
+.. doxygendefine:: Q_GAIN
+
 .. doxygenfunction:: adsp_fixed_gain
 
 .. autoclass:: audio_dsp.dsp.signal_chain.fixed_gain
@@ -41,6 +52,9 @@ Fixed Gain
 =====
 Mixer
 =====
+
+Will appliy a gain to all N samples and add then together.
+Will round and saturate the output to the Q31 range. The gain must be in ``Q_GAIN`` format.
 
 .. doxygenfunction:: adsp_mixer
 

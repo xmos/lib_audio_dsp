@@ -10,6 +10,8 @@ from audio_dsp.dsp import utils
 
 # Q format for signal gains
 Q_GAIN = 27
+# Just a remainder
+assert Q_GAIN == 27, "Need to change the assert in the mixer and fixed_gain inits"
 
 
 class mixer(dspg.dsp_block):

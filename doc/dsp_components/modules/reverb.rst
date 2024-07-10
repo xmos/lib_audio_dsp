@@ -6,6 +6,9 @@ Reverb
 Reverb Room
 ===========
 
+This is based on Freeverb by Jezar at Dreampoint, and consists of 8 parallel 
+comb filters fed into 4 series all-pass filters.
+
 .. doxygenstruct:: reverb_room_t
     :members:
 

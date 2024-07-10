@@ -10,6 +10,9 @@
 /** Heap size to allocate for the delay from seconds */
 #define DELAY_DSP_REQUIRED_MEMORY_SEC(FS, SEC) (sizeof(int32_t) * (FS) * (SEC))
 
+/** Gain format to be used in the gain APIs */
+#define Q_GAIN 27
+
 /**
  * @brief Volume control state structure
  */
