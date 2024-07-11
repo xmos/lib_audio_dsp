@@ -2,29 +2,16 @@
 DSP Modules documentation
 #########################
 
-This section will be splitted into sub-sections from simplicity. 
+This section is intented for the user who wants to learn more about the implementation
+details and who want to use the DSP API directly. It will go through thigs like Q formats, C and Python APIs,
+providing more detailed view of the modules implemented. 
 
 .. toctree::
     :maxdepth: 1
 
+    q_format.rst
     biquads.rst
     drc.rst
     reverb.rst
     signal_chain.rst
-
-===================
-How to use the docs
-===================
-
-The sub-sections will have number
-of APIs each of which will have:
-
-- C API for running a module
-- Python class assosiated with a module
-
-All Python module classes are derived from the same base class. For the readability purposes, methods
-from the base class will not be shown in the DSP module classes documentation.
-
-.. autoclass:: audio_dsp.dsp.generic.dsp_block
-    :members:
-    :noindex:
+    more_python.rst
