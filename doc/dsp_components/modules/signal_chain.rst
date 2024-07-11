@@ -18,11 +18,11 @@ Will add N number of samples, round and saturate the result to the Q31 range.
     .. automethod:: process_channels
         :noindex:
 
-=========
-Subratcor
-=========
+==========
+Subtractor
+==========
 
-Will subract one sample form another, round and saturate to Q31 range.
+Will subtract one sample from another, round and saturate to Q31 range.
 
 .. doxygenfunction:: adsp_subtractor
 
@@ -53,7 +53,7 @@ The gain must be in ``Q_GAIN`` format.
 Mixer
 =====
 
-Will appliy a gain to all N samples and add then together.
+Will apply a gain to all N samples and add then together.
 Will round and saturate the output to the Q31 range. The gain must be in ``Q_GAIN`` format.
 
 .. doxygenfunction:: adsp_mixer
@@ -68,16 +68,16 @@ Will round and saturate the output to the Q31 range. The gain must be in ``Q_GAI
 Volume Control
 ==============
 
-Volume control allows save volue adjustments with minimal artifacts. It does that by keeping current and target gains.
+Volume control allows save volume adjustments with minimal artefacts. It does that by keeping current and target gains.
 When user sets the new gain, the target gain gets updated. Every time the new sample is being processed the volume control
-will run an EMA with the current and the target gain to update teh curretn gain. This allows smooth gain change and no clicks
+will run an EMA with the current and the target gain to update the current gain. This allows smooth gain change and no clicks
 in the output signal. 
 
-Mute APi allow the user to safely mute the signal by setting the target gain to ``0``. Unmute will restore the pre-mute
-target gain. The new gain can be set while mutted, it will take effect after the unmute is called. There are separate APIs
+Mute API allows the user to safely mute the signal by setting the target gain to ``0``. Unmute will restore the pre-mute
+target gain. The new gain can be set while muted, it will take effect after the unmute is called. There are separate APIs
 for process, setting the gain, muting and unmiting so that volume control can easily be implemented into the control system.
 
-For run-time efficiency, intead of EMA alpha, this implementation uses a ``slew_shift`` paramenter. The relation between
+For run-time efficiency, instead of EMA alpha, this implementation uses a ``slew_shift`` parameter. The relation between
 ``slew_shift`` and time is further discussed in the python class documentation.
 
 .. doxygenstruct:: volume_control_t

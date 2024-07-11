@@ -11,7 +11,7 @@ different input data types/dimentions, nevertheless they will all have the follo
 The process methods can be split into 2 groups: pure python float implementation and xcore-like implementation. The xcore-like
 implementations will try to mimic the C/assembly code used to implement the module. The ``process_xcore`` methods can be used
 to immulate the xcore implementation precision and the noise floor. All the ``process_xcore`` implementations tend to have a
-very simmilar accuracy as an actuall xcore implementations (subject to the module and implementation). Python immulation 
+very similar accuracy as an actual xcore implementations (subject to the module and implementation). Python emulation 
 methods tend to be slower as python has a very limited support for the fixed point processing.
 
 .. autoclass:: audio_dsp.dsp.generic.dsp_block

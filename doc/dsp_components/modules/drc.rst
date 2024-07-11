@@ -152,7 +152,7 @@ Compressors
 Compressor will attenuate the signal above the threshold. The input/output relationship above the threshold
 is defined by the compressor ``ratio``.
 
-Simmilarly to the limiters, will run an instance of an envelope detector to get an envelop and compare it to the threshold.
+Similarly to the limiters, will run an instance of an envelope detector to get an envelop and compare it to the threshold.
 According to that, will calculate the gain to apply to the signal and run that gain through an EMA.
 The EMA alphas are the same as in the envelope detectors used underneath. The only difference with a limiter, is the
 additional ``ratio`` parameter, which plays the role when calculating the gain.
@@ -207,7 +207,7 @@ Expanders
 
 Exanders attenuate the signal that's below the threshold.
 
-Simmilarly to limiters and compressors will run an instance of an envelope detector to get an envelop and compare it to the threshold.
+Similarly to limiters and compressors will run an instance of an envelope detector to get an envelop and compare it to the threshold.
 According to that, will calculate the gain to apply to the signal and run that gain through an EMA.
 The EMA alphas are the same as in the envelope detectors used underneath. The difference with limiters and compressor is that
 attack and release alphas are swapped so when we should normally attack, we release, and vice versa.
