@@ -14,8 +14,8 @@ pipeline can be generated using :py:func:`generate_dsp_main() <audio_dsp.design.
 Once the code is generated use the functions defined in `stages/adsp_pipeline.h`_ to read and write samples to the pipeline and update
 configuration fields.
 
-C
-*
+C Design API
+************
 
 .. include:: gen/api.stages.inc
 
@@ -23,9 +23,3 @@ Python Design API
 *****************
 
 .. include:: gen/audio_dsp.design.inc
-
-Python Design Available DSP Stages
-**********************************
-
-.. include:: gen/audio_dsp.stages.inc
-

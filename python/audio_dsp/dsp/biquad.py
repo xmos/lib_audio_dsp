@@ -84,10 +84,6 @@ class biquad(dspg.dsp_block):
         ----------
         new_coeffs : list[float]
             The new coefficients to be updated.
-
-        Returns
-        -------
-        None
         """
         self.coeffs, self.int_coeffs = _round_and_check(new_coeffs, self.b_shift)
 
@@ -240,7 +236,7 @@ class biquad(dspg.dsp_block):
         ----------
         nfft : int
             The number of points to compute in the frequency response,
-            by default 512.
+            by default 1024.
 
         Returns
         -------

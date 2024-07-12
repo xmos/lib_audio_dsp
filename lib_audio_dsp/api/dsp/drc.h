@@ -30,7 +30,7 @@ typedef struct{
 }limiter_t;
 
 /**
- * @brief Clipper state structure
+ * @brief Clipper state structure.
  * Should be initilised with the linear threshold
  */
 typedef int32_t clipper_t;
