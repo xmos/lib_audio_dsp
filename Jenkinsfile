@@ -5,6 +5,13 @@ def runningOn(machine) {
   println machine
 }
 
+def buildApps(appList) {
+  appList.each { app ->
+    sh "cmake -G 'Unix Makefiles' -S ${app} -B ${app}/build"
+    sh "xmake -C ${app}/build -j\$(nproc)"
+  }
+}
+
 getApproval()
 pipeline {
   agent none
@@ -12,13 +19,8 @@ pipeline {
   parameters {
     string(
       name: 'TOOLS_VERSION',
-      defaultValue: '15.2.1',
+      defaultValue: '15.3.1002',
       description: 'The XTC tools version'
-    )
-    string(
-      name: 'XCOMMON_CMAKE_VERSION',
-      defaultValue: 'v1.0.0',
-      description: 'The xcommon cmake version'
     )
   } // parameters
 
@@ -57,45 +59,35 @@ pipeline {
             stage ('Build') {
               steps {
                 runningOn(env.NODE_NAME)
-                sh "git clone -b ${params.XCOMMON_CMAKE_VERSION} git@github.com:xmos/xcommon_cmake"
-                sh 'git -C xcommon_cmake rev-parse HEAD'
                 dir("lib_audio_dsp") {
                   checkout scm
                   // try building a simple app without venv to check
                   // build that doesn't use design tools won't
                   // need python
                   withTools(params.TOOLS_VERSION) {
-                    withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
-                      dir("test/biquad") {
-                        sh "cmake -B build"
-                        sh "cmake --build build"
-                      }
-                    }
-                  }
+                    dir("test/biquad") {
+                      sh "cmake -B build"
+                      sh "cmake --build build"
+                    } // dir
+                  } // tools
+                } // dir
 
-                }
                 createVenv("lib_audio_dsp/requirements.txt")
                 dir("lib_audio_dsp") {
                   // build everything
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       sh "pip install -r requirements.txt"
-                      withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
-                        script {
-                          [
-                          "test/biquad",
-                          "test/cascaded_biquads",
-                          "test/drc",
-                          ].each {
-                            sh "cmake -S ${it} -B ${it}/build"
-                            sh "xmake -C ${it}/build -j"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+                      buildApps([
+                        "test/biquad",
+                        "test/cascaded_biquads",
+                        "test/drc",
+                      ]) // buildApps
+                    } // tools
+                  } // withVenv
+                } // dir
+              } // steps
+
             } // Build
             stage('Test Biquad') {
               steps {
@@ -164,41 +156,29 @@ pipeline {
             stage ('Build') {
               steps {
                 runningOn(env.NODE_NAME)
-                sh "git clone -b ${params.XCOMMON_CMAKE_VERSION} git@github.com:xmos/xcommon_cmake"
-                sh 'git -C xcommon_cmake rev-parse HEAD'
                 dir("lib_audio_dsp") {
                   checkout scm
                   // try building a simple app without venv to check
                   // build that doesn't use design tools won't
                   // need python
                   withTools(params.TOOLS_VERSION) {
-                    withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
-                      dir("test/biquad") {
-                        sh "cmake -B build"
-                        sh "cmake --build build"
-                      }
-                    }
-                  }
-
-                }
+                    dir("test/biquad") {
+                      sh "cmake -B build"
+                      sh "cmake --build build"
+                    } // dir
+                  } // tools
+                } // dir
                 createVenv("lib_audio_dsp/requirements.txt")
                 dir("lib_audio_dsp") {
                   // build everything
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       sh "pip install -r requirements.txt"
-                      withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
-                        script {
-                          [
-                          "test/reverb",
-                          "test/signal_chain",
-                          "test/fir"
-                          ].each {
-                            sh "cmake -S ${it} -B ${it}/build"
-                            sh "xmake -C ${it}/build -j"
-                          }
-                        }
-                      }
+                      buildApps([
+                        "test/reverb",
+                        "test/signal_chain",
+                        "test/fir"
+                      ]) // buildApps
                     }
                   }
                 }
@@ -352,8 +332,6 @@ pipeline {
 
           steps {
             runningOn(env.NODE_NAME)
-            sh "git clone -b ${params.XCOMMON_CMAKE_VERSION} git@github.com:xmos/xcommon_cmake"
-            sh 'git -C xcommon_cmake rev-parse HEAD'
             sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
             dir("lib_audio_dsp") {
               checkout scm
@@ -365,14 +343,12 @@ pipeline {
                 withTools(params.TOOLS_VERSION) {
                   sh "pip install -r requirements.txt"
                   sh "pip install -e ${WORKSPACE}/xtagctl"
-                  withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
                     withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       sh "xtagctl reset ${adapterIDs[0]}"
                       dir("test/pipeline") {
                         sh "python -m pytest --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
                       }
                     }
-                  }
                 }
               }
             }
