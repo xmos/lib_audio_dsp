@@ -28,9 +28,10 @@ Software Requirements
 - `Python 3.10 <https://www.python.org/downloads/>`_
 - `CMake <https://cmake.org/download/>`_
 
-Additionally, on Windows the following are required: - `Visual Studio x86 native
-tools <https://visualstudio.microsoft.com/downloads/>`_ - `ninja-build
-<https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages#user-content-windows>`_
+Additionally, on Windows the following are required: 
+
+- `Visual Studio x86 native tools <https://visualstudio.microsoft.com/downloads/>`_ 
+- `ninja-build <https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages#user-content-windows>`_
 
 .. _all_steps:
 
