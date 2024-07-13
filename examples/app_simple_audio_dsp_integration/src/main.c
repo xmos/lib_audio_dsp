@@ -20,7 +20,7 @@
 /* Application libraries */
 #include <stages/adsp_pipeline.h>
 #include <adsp_generated_auto.h>
-#include "sine_1k_48k_1period.h"
+#include "whitenoise_1024samples.h"
 
 #define SAMPLE_RATE 48000              // Hertz
 #define OUTPUT_BUFFER_LENGTH 64        // samples
@@ -43,10 +43,10 @@ void signal_producer(adsp_pipeline_t * m_dsp)
     uint32_t trigger_time = hwtimer_get_time(event_timer) + sample_period_ticks;
     hwtimer_set_trigger_time(event_timer, trigger_time);
 
-    /* Set up the input buffer. We're using a precalculated 1 kHz sine wave at a
-     * 48 kHz sample rate, and will just loop through this over and over. */
-    int32_t sine_wave[] = {SINE_1K_48K_1P};
-    uint32_t const n_samps = sizeof(sine_wave) / sizeof(sine_wave[0]);
+    /* Set up the input buffer. We're using precalculated white noise
+     * and will just loop through this over and over. */
+    int32_t white_noise[] = {WHITENOISE_1024};
+    uint32_t const n_samps = sizeof(white_noise) / sizeof(white_noise[0]);
     uint32_t sample_no = 0;
 
     while(1)
@@ -60,7 +60,7 @@ void signal_producer(adsp_pipeline_t * m_dsp)
          * This example also currently assumes a frame size of 1. Increasing the
          * frame size would require each element of this array becoming an array
          * of length FRAME_SIZE. */
-        int32_t * input_samples[NUM_CHANNELS] = {&sine_wave[sample_no]};
+        int32_t * input_samples[NUM_CHANNELS] = {&white_noise[sample_no]};
         sample_no = (sample_no + 1) % n_samps;
         adsp_pipeline_source(m_dsp, input_samples);
 

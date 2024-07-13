@@ -11,7 +11,6 @@ import pathlib
 import shutil
 import subprocess
 import time
-import typing
 
 NullablePathLike = str | pathlib.Path | None
 
@@ -30,34 +29,31 @@ class DSPBuilder:
     ) -> None:
         if source_dir is None:
             self.source_dir = self._determine_source_dir()
-        elif type(source_dir) == str:
-            self.source_dir = pathlib.Path(source_dir)
-        elif type(source_dir) == pathlib.Path:
-            self.source_dir = source_dir
         else:
-            raise TypeError("source_dir parameter must be pathlike or None!")
+            try:
+                self.source_dir = pathlib.Path(source_dir)
+            except TypeError as e:
+                raise TypeError("source_dir must be pathlike or None!") from e
 
         if build_dir is None:
             self.build_dir = self._determine_build_dir()
-        elif type(build_dir) == str:
-            self.build_dir = pathlib.Path(build_dir)
-        elif type(build_dir) == pathlib.Path:
-            self.build_dir = build_dir
         else:
-            raise TypeError("build_dir parameter must be pathlike or None!")
+            try:
+                self.build_dir = pathlib.Path(build_dir)
+            except TypeError as e:
+                raise TypeError("build_dir must be pathlike or None!") from e
 
         if bin_dir is None:
             self.bin_dir = self._determine_bin_dir()
-        elif type(bin_dir) == str:
-            self.bin_dir = pathlib.Path(bin_dir)
-        elif type(bin_dir) == pathlib.Path:
-            self.bin_dir = bin_dir
         else:
-            raise TypeError("bin_dir parameter must be pathlike or None!")
+            try:
+                self.bin_dir = pathlib.Path(bin_dir)
+            except TypeError as e:
+                raise TypeError("bin_dir must be pathlike or None!") from e
 
         if project_name is None:
             self.project_name = self._determine_project_name()
-        elif type(project_name) == str:
+        elif isinstance(project_name, str):
             self.project_name = project_name
         else:
             raise TypeError("project_name parameter must be str or None!")
@@ -65,51 +61,50 @@ class DSPBuilder:
         if config_name is None:
             self.config_suffix = self._determine_config_suffix()
             self.config_name = self._determine_config_name()
-            self.target_name = self._determine_target_name()
-        elif type(config_name) == str:
+        elif isinstance(config_name, str):
             self.config_suffix = "_" + config_name
             self.config_name = config_name
-            self.target_name = config_name
         else:
             raise TypeError("config_name parameter must be str or None!")
 
+        self.target_name = self._determine_target_name()
         self.configure_done: bool = False
 
     def _determine_source_dir(self: "DSPBuilder") -> pathlib.Path:
         # We assume here that the CWD is the application directory, and that
-        #    this is the desired source directory.
+        #     this is the desired source directory.
         return pathlib.Path.cwd()
 
     def _determine_build_dir(self: "DSPBuilder") -> pathlib.Path:
         # We assume here that the CWD is the application directory, and that
-        #    this will contain a subdirectory /build/ which is the desired build
-        #    directory.
+        #     this will contain a subdirectory /build/ which is the desired
+        #     build directory.
         return pathlib.Path.cwd() / "build"
 
     def _determine_bin_dir(self: "DSPBuilder") -> pathlib.Path:
         # We assume here that the CWD is the application directory, and that
-        #    this will contain a subdirectory /bin/ which is the bin
-        #    directory.
+        #     this will contain a subdirectory /bin/ which is the bin
+        #     directory.
         return pathlib.Path.cwd() / "bin"
 
     def _determine_project_name(self: "DSPBuilder") -> str:
         # We assume here that the name of the project is the same as the
-        #    name of the enclosing directory
+        #     name of the enclosing directory
         return pathlib.Path.cwd().name
 
     def _determine_config_suffix(self: "DSPBuilder") -> str:
         # We assume here that if no config has been specified then the default
-        #    target name is just the project name with no config suffix
+        #     target name is just the project name with no config suffix
         return ""
 
     def _determine_config_name(self: "DSPBuilder") -> str:
         # We assume here that if no config has been specified then the default
-        #    config name is blank
+        #     config name is blank
         return ""
 
     def _determine_target_name(self: "DSPBuilder") -> str:
-        # We assume here that if no config has been specified then the default
-        #    target name is the project name with the config suffix appended
+        # We assume here that the default target name is always the project name
+        #     with the config suffix appended
         return self.project_name + self.config_suffix
 
     def _log(self: "DSPBuilder", process: subprocess.Popen, title: str = "") -> None:
@@ -127,7 +122,7 @@ class DSPBuilder:
         else:
             accordion.set_title(0, title + "  ✔")
 
-    def config(self: "DSPBuilder") -> int:
+    def configure(self: "DSPBuilder") -> int:
         cache = self.build_dir / "CMakeCache.txt"
         makefile = self.build_dir / "Makefile"
         ninjabuild = self.build_dir / "build.ninja"
@@ -186,8 +181,8 @@ class DSPBuilder:
         self._log(ret, f"Running...")
         return ret.returncode
 
-    def config_build_run(self: "DSPBuilder") -> None:
-        returncode = self.config()
+    def configure_build_run(self: "DSPBuilder") -> None:
+        returncode = self.configure()
         if returncode:
             return
         returncode = self.build()
