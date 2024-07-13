@@ -17,7 +17,9 @@ documentation:
   root_doc: index.rst
   exclude_patterns_path: doc/exclude_patterns.inc
   substitutions_path: doc/substitutions.inc
-  linkcheck_ignore_regex: []
+  linkcheck_ignore_regex: 
+    - ".*127\\.0\\.0\\.1.*"
+    - ".*lib_audio_dsp"  # this repo is private
   doc_dirname: doc
   build_path: doc/_build
   output_path: doc/_out
