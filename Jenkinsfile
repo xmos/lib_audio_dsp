@@ -23,7 +23,7 @@ pipeline {
   } // parameters
 
   environment {
-    XMOSDOC_VERSION = "v5.1.1"
+    XMOSDOC_VERSION = "v5.2.0"
   } // environment
 
   options {
@@ -324,20 +324,19 @@ pipeline {
         stage('docs') {
 
           agent {
-            label 'linux&&x86_64'
+            label 'documentation'
           }
           steps {
             checkout scm
-            sh """docker run -u "\$(id -u):\$(id -g)" \
-                  --rm \
-                  -v ${WORKSPACE}:/build \
-                  --entrypoint /build/doc/build_docs.sh \
-                  ghcr.io/xmos/xmosdoc:$XMOSDOC_VERSION -v"""
-            archiveArtifacts artifacts: "doc/_out/pdf/*.pdf"
-            archiveArtifacts artifacts: "doc/_out/html/**/*"
-            archiveArtifacts artifacts: "doc/_out/linkcheck/**/*"
-            sh 'find doc/_out/pdf -type f -not -name "*.pdf" -exec rm {} +'  // delete latex junk
-            zip zipFile: "lib_audio_dsp_docs.zip", archive: true, dir: "doc/_out", exclude: "linkcheck/**"
+            createVenv("requirements.txt")
+            withVenv {
+              sh 'pip install -e ./python'
+              sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${XMOSDOC_VERSION}"
+              sh 'xmosdoc'
+            }
+
+            archiveArtifacts artifacts: "doc/_out/**"
+            zip zipFile: "lib_audio_dsp_docs.zip", archive: true, dir: "doc/_out"
           }
           post {
             cleanup {

@@ -10,19 +10,22 @@
 /** Heap size to allocate for the delay from seconds */
 #define DELAY_DSP_REQUIRED_MEMORY_SEC(FS, SEC) (sizeof(int32_t) * (FS) * (SEC))
 
+/** Gain format to be used in the gain APIs */
+#define Q_GAIN 27
+
 /**
  * @brief Volume control state structure
  */
 typedef struct{
-  // Target linear gain
+  /** Target linear gain */
   int32_t target_gain;
-  // Current linear gain
+  /** Current linear gain */
   int32_t gain;
-  // Slew shift
+  /** Slew shift */
   int32_t slew_shift;
-  // Saved linear gain
+  /** Saved linear gain */
   int32_t saved_gain;
-  // Mute state: 0: unmuted, 1 muted
+  /** Mute state: 0: unmuted, 1 muted */
   uint8_t mute_state;
 }volume_control_t;
 
@@ -30,15 +33,15 @@ typedef struct{
  * @brief Delay state structure
  */
 typedef struct{
-  // Sampling frequency
+  /** Sampling frequency */
   float fs;
-  // Current delay in samples
+  /** Current delay in samples */
   uint32_t delay;
-  // Maximum delay in samples
+  /** Maximum delay in samples */
   uint32_t max_delay;
-  // Current buffer index
+  /** Current buffer index */
   uint32_t buffer_idx;
-  // Buffer
+  /** Buffer */
   int32_t * buffer;
 } delay_t;
 
@@ -46,11 +49,11 @@ typedef struct{
  * @brief Enum for different time units
  */
 typedef enum{
-  // Time in samples
+  /** Time in samples */
   SAMPLES = 0,
-  // Time in milliseconds
+  /** Time in milliseconds */
   MILLISECONDS = 1,
-  // Time in seconds
+  /** Time in seconds */
   SECONDS = 2
 } time_units_t;
 
@@ -110,7 +113,7 @@ int32_t adsp_subtractor(int32_t x, int32_t y);
 int32_t adsp_fixed_gain(int32_t input, int32_t gain);
 
 /**
- * @brief Mixer
+ * @brief Mixer.
  * Will add signals with gain applied to each signal before mixing
  *
  * @param input             Array of samples
@@ -122,7 +125,7 @@ int32_t adsp_fixed_gain(int32_t input, int32_t gain);
 int32_t adsp_mixer(int32_t * input, unsigned n_ch, int32_t gain);
 
 /**
- * @brief Saturating 64-bit accumulator
+ * @brief Saturating 64-bit accumulator.
  * Will saturate to 32-bit, so that the output value is in the range of int32_t
  *
  * @param acc               Accumulator
@@ -131,7 +134,7 @@ int32_t adsp_mixer(int32_t * input, unsigned n_ch, int32_t gain);
 int32_t adsp_saturate_32b(int64_t acc);
 
 /**
- * @brief Initialise volume control object
+ * @brief Initialise volume control object.
  * The slew shift will determine the speed of the volume change.
  * A list of the first 10 slew shifts is shown below:
  *
@@ -178,7 +181,7 @@ void adsp_volume_control_set_gain(
   int32_t new_gain);
 
 /**
- * @brief Mute a volume control
+ * @brief Mute a volume control.
  * Will save the current target gain and set the target gain to 0
  *
  * @param vol_ctl           Volume control object
@@ -187,7 +190,7 @@ void adsp_volume_control_mute(
   volume_control_t * vol_ctl);
 
 /**
- * @brief Unmute a volume control
+ * @brief Unmute a volume control.
  * Will restore the saved target gain
  *
  * @param vol_ctl           Volume control object
@@ -213,7 +216,7 @@ delay_t adsp_delay_init(
   void * delay_heap);
 
 /**
- * @brief Set the delay of a delay object
+ * @brief Set the delay of a delay object.
  * Will set the delay to the new value, saturating to the maximum delay
  *
  * @param delay             Delay object
