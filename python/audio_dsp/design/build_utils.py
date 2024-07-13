@@ -111,9 +111,9 @@ class DSPBuilder:
         widget = widgets.HTML(value="")
         accordion = widgets.Accordion(children=[widget])
         accordion.set_title(0, title)
-        IPython.display.display(accordion)
+        IPython.display.display(accordion) # pyright: ignore [reportAttributeAccessIssue]
         output = ""
-        for line in process.stdout:
+        for line in process.stdout: # pyright: ignore [reportOptionalIterable]
             output += line
             widget.value = DSPBuilder.log_str.format(output=output)
         process.wait()
@@ -122,7 +122,7 @@ class DSPBuilder:
         else:
             accordion.set_title(0, title + "  ✔")
 
-    def configure(self: "DSPBuilder") -> int:
+    def configure(self: "DSPBuilder") -> int | None:
         cache = self.build_dir / "CMakeCache.txt"
         makefile = self.build_dir / "Makefile"
         ninjabuild = self.build_dir / "build.ninja"
@@ -166,7 +166,7 @@ class DSPBuilder:
         self._log(ret, "Compiling...")
         return ret.returncode
 
-    def run(self: "DSPBuilder") -> None:
+    def run(self: "DSPBuilder") -> int:
         app = (
             self.bin_dir
             / self.config_name
