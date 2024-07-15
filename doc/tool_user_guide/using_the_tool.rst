@@ -126,7 +126,7 @@ Code Generation
 With an initial pipeline complete, it is time to generate the xcore source code
 and run it on a device. The code can be generated using the
 :py:class:`generate_dsp_main() <audio_dsp.design.pipeline.generate_dsp_main>`
-function::
+function.
 
 .. code-block:: python
 
