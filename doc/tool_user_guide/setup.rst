@@ -48,7 +48,7 @@ Setup Steps
 
       On Windows:
 
-      #. Open *x86 Native Tools Command Prompt*
+      #. Open the Command Prompt or other terminal application of choice
       #. Activate the XTC environment:
 
          .. code-block:: console
