@@ -146,9 +146,7 @@ class XCommonCMakeHelper:
         widget = widgets.HTML(value="")
         accordion = widgets.Accordion(children=[widget])
         accordion.set_title(0, title)
-        IPython.display.display(
-            accordion
-        )  # pyright: ignore [reportAttributeAccessIssue]
+        IPython.display.display(accordion)  # pyright: ignore [reportAttributeAccessIssue]
         output = ""
         for line in process.stdout:  # pyright: ignore [reportOptionalIterable]
             output += line
