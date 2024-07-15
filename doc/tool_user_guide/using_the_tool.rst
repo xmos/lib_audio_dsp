@@ -150,8 +150,7 @@ The audio dsp library is not limited to the simple linear pipelines shown above.
 Stages can scale to take an arbitrary number of inputs, and the outputs of each
 stage can be split and joined arbitrarily.
 
-Every stage has an :py:attr:`o <audio_dsp.design.stages.Stage.o>` attribute.
-This is an instance of 
+When created, every stage's initialiser returns an instance of
 :py:class:`StageOutputList<audio_dsp.design.stage.StageOutputList>`, 
 a container of 
 :py:class:`StageOutput<audio_dsp.design.stage.StageOutput>`. 
