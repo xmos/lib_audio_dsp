@@ -160,7 +160,7 @@ class XCommonCMakeHelper:
     def configure(self) -> int | None:
         """
         Invoke CMake with the options specified in this class instance.
-        Invokation will be of the form 
+        Invokation will be of the form
         "cmake -S <source_dir> -B <build_dir>". On first run, the invokation
         will also contain "-G <generator>", where "generator"
         will be either "Ninja" if Ninja is present on the current system or
@@ -207,7 +207,7 @@ class XCommonCMakeHelper:
     def build(self) -> int:
         """
         Invoke CMake's build with the options specified in this class instance.
-        Invokation will be of the form 
+        Invokation will be of the form
         "cmake --build <build_dir> --target <target_name>", where the target
         name is constructed as per this class' docstring.
 
@@ -228,7 +228,7 @@ class XCommonCMakeHelper:
     def run(self) -> int:
         """
         Invoke xrun with the options specified in this class instance.
-        Invokation will be of the form 
+        Invokation will be of the form
         "xrun <binary>", where the path to the binary is constructed as per this
         class' docstring.
 
@@ -237,11 +237,7 @@ class XCommonCMakeHelper:
         returncode
             Return code from the invokation of xrun. 0 if success.
         """
-        app = (
-            self.bin_dir
-            / self.config_name
-            / (self.project_name + self.config_suffix + ".xe")
-        )
+        app = self.bin_dir / self.config_name / (self.project_name + self.config_suffix + ".xe")
         ret = subprocess.Popen(
             f"xrun {app}".split(),
             stdout=subprocess.PIPE,
