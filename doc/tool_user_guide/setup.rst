@@ -169,7 +169,7 @@ Setup Steps
       .. _pipeline_diagram:
 
       .. figure:: images/pipeline_diagram.png
-         :width: 100%
+         :width: 25%
 
          Diagram of a simple audio pipeline
 
