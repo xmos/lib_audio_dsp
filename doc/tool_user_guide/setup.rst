@@ -138,7 +138,7 @@ Setup Steps
    should open:
 
    .. figure:: images/jupyter_notebook_top_level.png
-      :width: 100%
+      :width: 25%
 
       Top-level page of the Jupyter Notebook
 
