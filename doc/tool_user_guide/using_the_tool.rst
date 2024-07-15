@@ -83,7 +83,7 @@ When running the above snippet in a Jupyter Notebook it will output the followin
 image which illustrates the pipeline which has been designed:
 
 .. figure:: images/pipeline_diagram.png
-   :width: 100%
+   :width: 25%
 
    Generated pipeline diagram
 
