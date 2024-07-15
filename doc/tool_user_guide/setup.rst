@@ -28,9 +28,8 @@ Software Requirements
 - `Python 3.10 <https://www.python.org/downloads/>`_
 - `CMake <https://cmake.org/download/>`_
 
-Additionally, on Windows the following are required: 
+Additionally, on Windows the following is required: 
 
-- `Visual Studio x86 native tools <https://visualstudio.microsoft.com/downloads/>`_ 
 - `ninja-build <https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages#user-content-windows>`_
 
 .. _all_steps:
@@ -195,9 +194,6 @@ required:
    * Enable the Python Virtual Environment: this is checked by running the
      command ``echo %VIRTUAL_ENV%`` on Windows, or ``echo $VIRTUAL_ENV`` on
      Linux or macOS.  The path should have been set.
-   * On Windows only, enable the VisualStudio (VS) tools: this can be checked by
-     running the command ``cl`` from the terminal. If the command is not found,
-     the VS tools are not installed correctly.
 
 #. Open the notebook by running ``jupyter notebook
    lib_audio_dsp/examples/app_simple_audio_dsp_integration/dsp_design.ipynb``

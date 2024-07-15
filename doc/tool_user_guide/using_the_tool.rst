@@ -79,10 +79,10 @@ the limiter use :py:class:`LimiterPeak <audio_dsp.stages.limiter.LimiterPeak>`.
     p.draw()
 
 
-When running the above snippet in a Jupyter Notebook it will output the f
-ollowing image which illustrates the pipeline which has been designed:
+When running the above snippet in a Jupyter Notebook it will output the following 
+image which illustrates the pipeline which has been designed:
 
-.. figure:: images/tutorial_pipeline.png
+.. figure:: images/pipeline_diagram.png
    :width: 100%
 
    Generated pipeline diagram
@@ -130,8 +130,8 @@ function::
 
 .. code-block:: python
 
-    from audio_dsp.design.pipeline import generate_dsp_main
-    generate_dsp_main(p)
+   from audio_dsp.design.pipeline import generate_dsp_main
+   generate_dsp_main(p)
 
 
 The reference application should then provide instructions for compiling the
@@ -141,8 +141,6 @@ With that the tuned DSP pipeline will be running on the xcore device and can be
 used to stream audio. The next step is to iterate on the design and tune it to
 perfection. One option is to repeat the steps described above, regenerating the
 code with new tuning values until the performance requirements are satisfied.
-But a faster option is described below which allows run time tuning of the
-stages in the pipeline.
 
 
 Designing Complex Pipelines
