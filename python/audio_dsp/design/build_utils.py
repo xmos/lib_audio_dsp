@@ -159,7 +159,7 @@ class XCommonCMakeHelper:
 
     def configure(self) -> int | None:
         """
-        Invokes CMake with the options specified in this class instance.
+        Invoke CMake with the options specified in this class instance.
         Invokation will be of the form 
         "cmake -S <source_dir> -B <build_dir>". On first run, the invokation
         will also contain "-G <generator>", where "generator"
@@ -206,7 +206,7 @@ class XCommonCMakeHelper:
 
     def build(self) -> int:
         """
-        Invokes CMake's build with the options specified in this class instance.
+        Invoke CMake's build with the options specified in this class instance.
         Invokation will be of the form 
         "cmake --build <build_dir> --target <target_name>", where the target
         name is constructed as per this class' docstring.
@@ -227,7 +227,7 @@ class XCommonCMakeHelper:
 
     def run(self) -> int:
         """
-        Invokes xrun with the options specified in this class instance.
+        Invoke xrun with the options specified in this class instance.
         Invokation will be of the form 
         "xrun <binary>", where the path to the binary is constructed as per this
         class' docstring.
@@ -253,7 +253,7 @@ class XCommonCMakeHelper:
 
     def configure_build_run(self) -> None:
         """
-        Runs, in order, this class' .configure(), .build(), and .run() methods.
+        Run, in order, this class' .configure(), .build(), and .run() methods.
         If any return code from any of the three is nonzero, returns early.
         Otherwise, sleeps for 5 seconds after the .run() stage and prints
         "Done!".
