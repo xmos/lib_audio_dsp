@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.28.0')
+@Library('xmos_jenkins_shared_library@v0.32.0')
 
 def runningOn(machine) {
   println "Stage running on:"
@@ -403,7 +403,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   checkout scm
                 }
-                dir('lib_audio_dsp/host') {
+                dir('lib_audio_dsp/host/dsp_host') {
                   // Enable the XTC tools for xSCOPE
                   withTools(params.TOOLS_VERSION) {
                     withVS('vcvars32.bat') {
@@ -454,7 +454,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   checkout scm
                 }
-                dir('lib_audio_dsp/host') {
+                dir('lib_audio_dsp/host/dsp_host') {
                   // Enable the XTC tools for xSCOPE
                   withTools(params.TOOLS_VERSION) {
                     sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
@@ -502,7 +502,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   checkout scm
                 }
-                dir('lib_audio_dsp/host') {
+                dir('lib_audio_dsp/host/dsp_host') {
                   // Enable the XTC tools for xSCOPE
                   withTools(params.TOOLS_VERSION) {
                     sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
@@ -532,7 +532,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   checkout scm
                 }
-                dir('lib_audio_dsp/host') {
+                dir('lib_audio_dsp/host/dsp_host') {
                   withTools(params.TOOLS_VERSION) {
                     sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
                   }

@@ -17,7 +17,9 @@ documentation:
   root_doc: index.rst
   exclude_patterns_path: doc/exclude_patterns.inc
   substitutions_path: doc/substitutions.inc
-  linkcheck_ignore_regex: []
+  linkcheck_ignore_regex: 
+    - ".*127\\.0\\.0\\.1.*"
+    - ".*lib_audio_dsp"  # this repo is private
   doc_dirname: doc
   build_path: doc/_build
   output_path: doc/_out
@@ -47,6 +49,9 @@ documentation:
     doc/programming_guide/index:
       pdf_title: '{{product}} - Programming Guide'
       pdf_filename: '{{product}}_programming_guide_v{{version}}'
+    doc/tool_user_guide/index:
+      pdf_title: '{{product}} - Tool User Guide'
+      pdf_filename: '{{product}}_tool_user_guide_v{{version}}'
     doc/dsp_components/index:
       pdf_title: '{{product}} - DSP components'
       pdf_filename: '{{product}}_dsp_components_v{{version}}'
