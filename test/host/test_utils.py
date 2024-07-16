@@ -30,7 +30,7 @@ def get_dummy_files():
     host_bin = "dsp_host" + bin_suffix
     cmd_map_so = dl_prefix + "command_map"
     device_so = dl_prefix + "device_"
-    local_build_folder = Path(__file__).parents[2] / "host/build"
+    local_build_folder = Path(__file__).parents[2] / "host/dsp_host/build"
     build_dir = local_build_folder # local_build_folder if local_build_folder.is_dir() else Path(__file__).parent
     test_dir = Path(__file__).parent
     host_bin_path = build_dir / host_bin
