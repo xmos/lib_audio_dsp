@@ -13,7 +13,6 @@ INPUT += ../lib_audio_dsp/api/dsp \
          ./programming_guide/gen/control_gen/common
 
 INCLUDE_PATH = ../lib_audio_dsp/api \
-               ./programming_guide/gen/control_gen/common
 
 
 PREDEFINED = DWORD_ALIGNED= DECLARE_JOB(a,b)=

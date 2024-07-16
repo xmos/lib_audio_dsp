@@ -23,10 +23,24 @@ typedef struct
     size_str = "[" + str(field_data['size']) + "]" if "size" in field_data else ""
     help_str = f'{field_data["help"]} ' if "help" in field_data else ""
 %>\
-    /** ${help_str}*/
+<%block filter="wrap_helpstr">
+    ${help_str}
+</%block>
     ${field_data["type"]} ${attrib_str}${field_name}${size_str};
+
 %endfor
 }${name}_config_t;
 
 #endif
 
+<%!
+# This is a function to wrap long help descriptions
+import textwrap
+def wrap_helpstr(text):
+    line_len = 80
+    max_len = line_len - 4 - 4 - 3
+    if len(text) > line_len:
+        return "    /**\n     * " + '\n'.join(textwrap.wrap(text.strip(), line_len, subsequent_indent='     * ')).strip() + "\n     */"
+    else:
+        return f"    /** {text.strip()} */"
+%>
