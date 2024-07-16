@@ -34,7 +34,7 @@ documentation:
     my-special-thing: A special thing for a special project
   cognidox_part_number: XM-015034-PC
   run_before: |
-    python doc/programming_guide/gen/autogen.py
+    python doc/autogen.py
   extra_sphinx_opts: [-W]
   use_numpydoc: true
   doxygen_projects:

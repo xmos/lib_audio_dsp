@@ -7,9 +7,10 @@ from mako.template import Template
 from pathlib import Path
 import ast
 
-ROOT_DIR = Path(__file__).parents[3]
+ROOT_DIR = Path(__file__).parents[1]
 PYTHON_ROOT = Path(ROOT_DIR, "python")
-PROG_GEN_DIR = Path(__file__).parent
+DSP_GEN_DIR = Path(__file__).parent / "dsp_components" / "stages" / "gen"
+PROG_GEN_DIR = Path(__file__).parent / "programming_guide" / "gen"
 
 def python_doc(src_dir, dst_dir):
     p_design = sorted(src_dir.glob("*.py"))
@@ -77,7 +78,7 @@ ${"="*len(cl)}
         (dst_dir / f"{module_name}.rst").write_text(gen)
 
 
-def c_doc(src_dir, glob="*.h"):
+def c_doc(src_dir, dst_dir, glob="*.h"):
     api_dir = ROOT_DIR/"lib_audio_dsp"/"api"
     c_api_files = sorted(src_dir.glob(glob))
     c_design_modules = [p.relative_to(api_dir) for p in c_api_files if not p.name.startswith("_")]
@@ -90,11 +91,10 @@ ${"="*len(str(module))}
 
 %endfor
 """).render(modules=c_design_modules)
-    (Path(__file__).parent / f"{src_dir.parts[-2]}.{src_dir.parts[-1]}.inc").write_text(gen)
+    (dst_dir / f"{src_dir.parts[-2]}.{src_dir.parts[-1]}.inc").write_text(gen)
 
 
 python_doc(ROOT_DIR / "python" / "audio_dsp" / "design", PROG_GEN_DIR)
-python_doc_stages(ROOT_DIR / "python" / "audio_dsp" / "stages",
-                   Path(__file__).parents[2] / "dsp_components" / "stages" / "gen")
+python_doc_stages(ROOT_DIR / "python" / "audio_dsp" / "stages", DSP_GEN_DIR)
 
-c_doc(ROOT_DIR / "lib_audio_dsp" / "api" / "stages", "adsp_*.h")
+c_doc(ROOT_DIR / "lib_audio_dsp" / "api" / "stages", PROG_GEN_DIR, "adsp_*.h")
