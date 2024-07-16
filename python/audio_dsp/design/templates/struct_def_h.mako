@@ -11,13 +11,19 @@
 #define ${d}    ${defines[d]}
 %endfor
 
+/** 
+ * This structure allows for real time control of the ${name} stage.
+ * It should be passed to the ${name}_control function.
+ */
 typedef struct
 {
 %for field_name, field_data in data.items():
 <%
     attrib_str = f'{field_data["attribute"]} ' if "attribute" in field_data else ""
     size_str = "[" + str(field_data['size']) + "]" if "size" in field_data else ""
+    help_str = f'{field_data["help"]} ' if "help" in field_data else ""
 %>\
+    /** ${help_str}*/
     ${field_data["type"]} ${attrib_str}${field_name}${size_str};
 %endfor
 }${name}_config_t;

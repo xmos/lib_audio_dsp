@@ -2,13 +2,17 @@ module:
   biquad:
     left_shift:
       type: int
+      help: The number of bits to shift the coefficients by.
     filter_coeffs:
       type: int32_t
       size: 5
       attribute: DWORD_ALIGNED
+      help: The normalised biquad filter coefficients, in the format `[b0, b1, b2, -a1, -a2]/a0`.
     reserved:
       type: int32_t
       size: 3
+      hidden: true
+      help: Reserved memory to ensure the VPU receives 8 DWORD_ALIGNED coefficients.
 includes:
   - "stdint.h"
   - "xmath/api.h"

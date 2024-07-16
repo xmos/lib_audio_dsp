@@ -2,14 +2,20 @@ module:
   compressor_sidechain:
     attack_alpha:
       type: int32_t
+      help: The attack alpha in Q0.31 format.
     release_alpha:
       type: int32_t
+      help: The release alpha in Q0.31 format.
     envelope:
       type: int32_t
+      help: The current RMS envelope of the signal in Q_SIG format.
     threshold:
       type: int32_t
+      help: The threshold in Q_SIG format above which compression will occur.
     gain:
       type: int32_t
+      help: The current gain applied by the compressor in Q_GAIN format.
     slope:
       type: float
+      help: The compression slope of the compressor. This is calculated as `(1 - 1 / ratio) / 2.0`.
 includes: []

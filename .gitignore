@@ -30,3 +30,4 @@
 # macOS 
 .DS_Store
 .venv
+doc/programming_guide/gen/control_gen

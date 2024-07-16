@@ -2,11 +2,15 @@ module:
   volume_control:
     target_gain:
       type: int32_t
+      help: The target gain of the volume control.
     gain:
       type: int32_t
+      help: The curent gain of the volume control. This will slew towards the target gain.
     slew_shift:
       type: int32_t
+      help: The shift value used to set the slew rate.
     mute_state:
       type: uint8_t
+      help: Sets the mute state. 1 is muted and 0 is unmuted.
 includes:
   - "stdint.h"
