@@ -158,7 +158,7 @@ class FixedGain(Stage):
     by a gain. If the gain is changed at runtime, pops and clicks may
     occur.
 
-    If the gain needs to be changed at runtime, use a 
+    If the gain needs to be changed at runtime, use a
     :class:`VolumeControl` stage instead.
 
     Parameters
@@ -204,7 +204,7 @@ class VolumeControl(Stage):
         The gain of the mixer in dB.
     mute_state : int, optional
         The mute state of the Volume Control: 0: unmuted, 1: muted.
-    
+
     Attributes
     ----------
     dsp_block : :class:`audio_dsp.dsp.signal_chain.volume_control`
@@ -317,7 +317,7 @@ class Delay(Stage):
     units : str, optional
         The units of the delay, can be 'samples', 'ms' or 's'.
         Default is 'samples'.
-    
+
     Attributes
     ----------
     dsp_block : :class:`audio_dsp.dsp.signal_chain.delay`
