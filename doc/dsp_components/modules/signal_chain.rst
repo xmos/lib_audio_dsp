@@ -4,6 +4,8 @@ Signal Chain Components
 
 Signal chain components are meant to help with manage signal between the bigger stages (i.e. combine, gain, delay).
 
+.. _Adder:
+
 =====
 Adder
 =====
@@ -18,6 +20,8 @@ Will add N number of samples, round and saturate the result to the Q31 range.
     .. automethod:: process_channels
         :noindex:
 
+.. _Subtractor:
+
 ==========
 Subtractor
 ==========
@@ -31,6 +35,8 @@ Will subtract one sample from another, round and saturate to Q31 range.
 
     .. automethod:: process_channels
         :noindex:
+
+.. _FixedGain:
 
 ==========
 Fixed Gain
@@ -49,6 +55,8 @@ The gain must be in ``Q_GAIN`` format.
     .. automethod:: process
         :noindex:
 
+.. _Mixer:
+
 =====
 Mixer
 =====
@@ -58,11 +66,18 @@ Will round and saturate the output to the Q31 range. The gain must be in ``Q_GAI
 
 .. doxygenfunction:: adsp_mixer
 
+Another way to implement mixer will be to multiply-accumulate samples into a 64-bit word
+and saturate it to a 32-bit word using:
+
+.. doxygenfunction:: adsp_saturate_32b
+
 .. autoclass:: audio_dsp.dsp.signal_chain.mixer
     :noindex:
 
     .. automethod:: process_channels
         :noindex:
+
+.. _VolumeControl:
 
 ==============
 Volume Control
@@ -105,6 +120,8 @@ For run-time efficiency, instead of EMA alpha, this implementation uses a ``slew
 
     .. automethod:: unmute
         :noindex:
+
+.. _Delay:
 
 =====
 Delay

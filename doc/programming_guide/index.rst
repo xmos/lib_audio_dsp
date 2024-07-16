@@ -7,5 +7,4 @@ LIB AUDIO DSP DOCUMENTATION
 
     introduction
     pipeline_design_tutorial
-    available_dsp_stages
     pipeline_design

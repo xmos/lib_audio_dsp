@@ -2,6 +2,8 @@
 Reverb
 ######
 
+.. _ReverbRoom:
+
 ===========
 Reverb Room
 ===========

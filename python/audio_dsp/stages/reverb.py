@@ -23,8 +23,8 @@ class ReverbRoom(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.reverb.reverb_room
-        The DSP block class; see :class:`audio_dsp.dsp.reverb.reverb_room`
+    dsp_block : :class:`audio_dsp.dsp.reverb.reverb_room`
+        The DSP block class; see :ref:`ReverbRoom`
         for implementation details.
     """
 

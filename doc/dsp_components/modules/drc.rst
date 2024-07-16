@@ -20,7 +20,7 @@ The C struct below is used for all the envelope detector implementetions.
 .. doxygenstruct:: env_detector_t
     :members:
 
-.. _env_det_peak:
+.. _EnvelopeDetectorPeak:
 
 ----------------------
 Envelope Detector Peak
@@ -39,7 +39,7 @@ Peak-based envelope detector will run it's EMA using the absolute value of the i
     .. automethod:: reset_state
         :noindex:
 
-.. _env_det_rms:
+.. _EnvelopeDetectorRMS:
 
 ---------------------
 Envelope Detector RMS
@@ -57,6 +57,8 @@ RMS-based envelope detector will run it's EMA using the square of the input samp
 
     .. automethod:: reset_state
         :noindex:
+
+.. _Clipper:
 
 =======
 Clipper
@@ -90,13 +92,13 @@ The C struct below is used for all the limiter implementetions.
 .. doxygenstruct:: limiter_t
     :members:
 
-.. _lim_peak:
+.. _LimiterPeak:
 
 ------------
 Limiter Peak
 ------------
 
-Will use the :ref:`env_det_peak` to get an envelope. Will use the gain of ``threshold / envelope``
+Will use the :ref:`EnvelopeDetectorPeak` to get an envelope. Will use the gain of ``threshold / envelope``
 when envelope is above the threshold.
 
 .. doxygenfunction:: adsp_limiter_peak
@@ -110,11 +112,13 @@ when envelope is above the threshold.
     .. automethod:: reset_state
         :noindex:
 
+.. _HardLimiterPeak:
+
 -----------------
 Hard Limiter Peak
 -----------------
 
-Will run :ref:`lim_peak` and clip the result if it's still above the threshold.
+Will run :ref:`LimiterPeak` and clip the result if it's still above the threshold.
 
 .. doxygenfunction:: adsp_hard_limiter_peak
 
@@ -127,11 +131,13 @@ Will run :ref:`lim_peak` and clip the result if it's still above the threshold.
     .. automethod:: reset_state
         :noindex:
 
+.. _LimiterRMS:
+
 -----------
 Limiter RMS
 -----------
 
-Will use the :ref:`env_det_rms` to get an envelope. Will use the gain of ``sqrt(threshold / envelope)``
+Will use the :ref:`EnvelopeDetectorRMS` to get an envelope. Will use the gain of ``sqrt(threshold / envelope)``
 when envelope is above the threshold.
 
 .. doxygenfunction:: adsp_limiter_rms
@@ -163,13 +169,13 @@ The C struct below is used for all the compressors implementetions.
 .. doxygenstruct:: compressor_t
     :members:
 
-.. _rms_comp:
+.. _CompressorRMS:
 
 --------------
 RMS Compressor
 --------------
 
-Will use the :ref:`env_det_rms` to get an envelope. Will use the gain of ``(threshold / envelope) ^ slope``
+Will use the :ref:`EnvelopeDetectorRMS` to get an envelope. Will use the gain of ``(threshold / envelope) ^ slope``
 when envelope is above the threshold.
 
 .. doxygenfunction:: adsp_compressor_rms
@@ -183,12 +189,14 @@ when envelope is above the threshold.
     .. automethod:: reset_state
         :noindex:
 
+.. _CompressorSidechain:
+
 ------------------------
 Sidechain RMS Compressor
 ------------------------
 
-Takes two signals: *detect* and *input*. Will use the *detect* signal to run the :ref:`env_det_rms`.
-Calculates the gain in the same way as :ref:`rms_comp`. Applies the EMAed gain to the *input* sample.
+Takes two signals: *detect* and *input*. Will use the *detect* signal to run the :ref:`EnvelopeDetectorRMS`.
+Calculates the gain in the same way as :ref:`CompressorRMS`. Applies the EMAed gain to the *input* sample.
 
 .. doxygenfunction:: adsp_compressor_rms_sidechain
 
@@ -212,11 +220,13 @@ According to that, will calculate the gain to apply to the signal and run that g
 The EMA alphas are the same as in the envelope detectors used underneath. The difference with limiters and compressor is that
 attack and release alphas are swapped so when we should normally attack, we release, and vice versa.
 
+.. _NoiseGate:
+
 ----------
 Noise Gate
 ----------
 
-Will use the :ref:`env_det_peak` to get an envelope. Will use the gain of ``0`` when the signal is below the threshold
+Will use the :ref:`EnvelopeDetectorPeak` to get an envelope. Will use the gain of ``0`` when the signal is below the threshold
 and the gain of ``1`` when aboove.
 
 .. doxygentypedef:: noise_gate_t
@@ -232,11 +242,13 @@ and the gain of ``1`` when aboove.
     .. automethod:: reset_state
         :noindex:
 
+.. _NoiseSuppressorExpander:
+
 -------------------------
 Noise Suppressor/Expander
 -------------------------
 
-Will use the :ref:`env_det_peak` to get an envelope. Will calculate the gain the the same way as :ref:`rms_comp`
+Will use the :ref:`EnvelopeDetectorPeak` to get an envelope. Will calculate the gain the the same way as :ref:`CompressorRMS`
 but the ``slope`` is defined as ``1 - ratio`` as the envelope is not squared.
 
 The ``inv_threshold`` is computed from ``threshold`` at init time to simplify run-time computation.

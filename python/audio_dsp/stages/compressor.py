@@ -23,10 +23,9 @@ class CompressorRMS(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.drc.drc.compressor_rms
-        The DSB block class; see
-        :class:`audio_dsp.dsp.drc.drc.compressor_rms` for implementation
-        details.
+    dsp_block : :class:`audio_dsp.dsp.drc.drc.compressor_rms`
+        The DSB block class; see :ref:`CompressorRMS`
+        for implementation details.
     """
 
     def __init__(self, **kwargs):

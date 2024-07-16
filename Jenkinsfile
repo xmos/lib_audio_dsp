@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.28.0')
+@Library('xmos_jenkins_shared_library@v0.32.0')
 
 def runningOn(machine) {
   println "Stage running on:"
@@ -23,7 +23,7 @@ pipeline {
   } // parameters
 
   environment {
-    XMOSDOC_VERSION = "v5.2.0"
+    XMOSDOC_VERSION = "v5.5.1"
   } // environment
 
   options {
@@ -300,6 +300,7 @@ pipeline {
               dir("lib_audio_dsp") {
                 checkout scm
               }
+              versionChecks()
               createVenv("lib_audio_dsp/requirements.txt")
               dir("lib_audio_dsp") {
                 withVenv {

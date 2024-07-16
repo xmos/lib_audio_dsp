@@ -22,9 +22,8 @@ class NoiseGate(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.drc.expander.noise_gate
-        The DSP block class; see
-        :class:`audio_dsp.dsp.drc.expander.noise_gate` for implementation
+    dsp_block : :class:`audio_dsp.dsp.drc.expander.noise_gate`
+        The DSP block class; see :ref:`NoiseGate` for implementation
         details.
     """
 

@@ -2,6 +2,8 @@
 Bi-Quad Filters
 ###############
 
+.. _Biquad:
+
 ============
 Singe Biquad
 ============
@@ -26,6 +28,8 @@ so it will left-shift the output. The ``state`` should be initialised to ``0``.
 
     .. automethod:: reset_state
         :noindex:
+
+.. _CascadedBiquads:
 
 ================
 Cascaded Biquads

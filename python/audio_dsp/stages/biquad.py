@@ -39,8 +39,8 @@ class Biquad(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.biquad.biquad
-        The DSP block class; see :class:`audio_dsp.dsp.biquad.biquad`
+    dsp_block : :class:`audio_dsp.dsp.biquad.biquad`
+        The DSP block class; see :ref:`Biquad`
         for implementation details.
     """
 
