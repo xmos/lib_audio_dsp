@@ -292,47 +292,20 @@ pipeline {
           }
         } // Build and test 2
 
-        stage('Style and package') {
-          agent {
-            label 'linux&&x86_64'
-          }
-            steps {
-              dir("lib_audio_dsp") {
-                checkout scm
-              }
-              versionChecks()
-              createVenv("lib_audio_dsp/requirements.txt")
-              dir("lib_audio_dsp") {
-                withVenv {
-                  withTools(params.TOOLS_VERSION) {
-                    dir("python") {
-                      sh "pip install ."
-                      sh 'pip install "pyright < 2.0"'
-                      sh 'pip install "ruff < 0.4"'
-                      sh "make check"
-                    }
-                  }
-                }
-              }
-            }
-          post {
-            cleanup {
-              xcoreCleanSandbox()
-            }
-          }
-        } // Style and package
-
-        stage('docs') {
+        stage('Style and docs') {
 
           agent {
-            label 'documentation'
+            label 'documentation&&linux&&x86_64'
           }
           steps {
             checkout scm
             createVenv("requirements.txt")
             withVenv {
               sh 'pip install -e ./python'
+              sh 'pip install "pyright < 2.0"'
+              sh 'pip install "ruff < 0.4"'
               sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${XMOSDOC_VERSION}"
+              sh "make -C python check"
               sh 'xmosdoc'
             }
 
@@ -344,7 +317,7 @@ pipeline {
               xcoreCleanSandbox()
             }
           }
-        } // docs
+        } // Style and docs
 
         stage ('Hardware Test') {
           agent {

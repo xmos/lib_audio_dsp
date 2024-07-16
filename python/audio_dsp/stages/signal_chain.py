@@ -67,7 +67,7 @@ class Fork(Stage):
         forks = []
         for indices in fork_indices:
             forks.append(self.o[(i for i in indices)])
-        self._o = ForkOutputList(self.o.edges)
+        self._o = self.ForkOutputList(self.o.edges)
         self._o.forks = forks
 
     def get_frequency_response(self, nfft=512):
