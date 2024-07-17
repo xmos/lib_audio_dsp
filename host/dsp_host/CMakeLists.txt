@@ -29,5 +29,5 @@ include(${CMAKE_CURRENT_LIST_DIR}/src/host_drivers.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/src/host_application.cmake)
 
 if(TESTING)
-    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../test/host ${CMAKE_CURRENT_LIST_DIR}/../test/host)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../../test/host ${CMAKE_CURRENT_LIST_DIR}/../../test/host)
 endif()

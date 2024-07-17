@@ -3,7 +3,7 @@
 INTRODUCTION
 ############
 
-Lib audio DSP is a DSP library for the xcore. It also provides a DSP pipeline generation python library
+lib_audio_dsp is a DSP library for the xcore. It also provides a DSP pipeline generation python library
 for simple generation of mulithreaded audio DSP pipelines that efficiently utilise the xcore architecture.
 
 This documentation separates the DSP library and pipeline generation into separate sections as it is
