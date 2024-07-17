@@ -70,7 +70,9 @@ def main(args):
     with open(f"{args.out_dir}/device/cmd_offsets.h", "w") as f_op:
         f_op.write(module_config_offsets_template.render(cmd_map=cmd_map))
 
+
 if __name__ == "__main__":
+
     def parse_arguments():
         """Parse command line arguments."""
         parser = argparse.ArgumentParser(description="Generate config struct files")

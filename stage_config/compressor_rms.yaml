@@ -14,7 +14,7 @@ module:
       help: The threshold in Q_SIG format above which compression will occur.
     gain:
       type: int32_t
-      help: The current gain applied by the compressor in Q_GAIN format.
+      help: The current gain applied by the compressor in Q0.31 format.
     slope:
       type: float
       help: The compression slope of the compressor. This is calculated as `(1 - 1 / ratio) / 2.0`.

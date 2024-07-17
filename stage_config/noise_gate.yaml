@@ -14,5 +14,5 @@ module:
       help: The threshold in Q_SIG format below which gating will occur.
     gain:
       type: int32_t
-      help: The current gain applied by the noise gate in Q_GAIN format.
+      help: The current gain applied by the compressor in Q0.31 format.
 includes: []
