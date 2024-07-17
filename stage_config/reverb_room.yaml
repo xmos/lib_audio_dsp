@@ -11,7 +11,7 @@ module:
       help: How big the room is as a proportion of max_room_size. This sets delay line lengths and must be between 0 and 1.
     feedback:
       type: int32_t
-      help: feedback gain in Q0.31 format. Feedback can be calculated from decay as `(decay * 0.28) + 0.7`.
+      help: feedback gain in Q0.31 format. Feedback can be calculated from decay as `(0.28 decay) + 0.7`.
     damping:
       type: int32_t
       help: High frequency attenuation in Q0.31 format.

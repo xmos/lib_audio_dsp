@@ -43,6 +43,17 @@ def main(args):
             struct_name = list(data["module"].keys())[0]
             includes = data["includes"] if "includes" in data else []
             defines = data["defines"] if "defines" in data else dict()
+
+            for param in list(data["module"][struct_name]):
+                if "help" not in data["module"][struct_name][param]:
+                    raise ValueError(
+                        f"{param} in {struct_name} in {fl} does not contain a help parameter"
+                    )
+                elif "*" in data["module"][struct_name][param]["help"]:
+                    raise ValueError(
+                        f"{param} in {struct_name} in {fl} contains a forbidden character '*'"
+                    )
+
             with open(f"{args.out_dir}/common/{struct_name}_config.h", "w", newline="") as f_op:
                 f_op.write(
                     struct_def_template.render(
