@@ -33,4 +33,4 @@ This package is supported by XMOS Ltd. Issues can be raised against the software
 License
 *******
 
-This Software is subject to the terms of the `XMOS Public Licence: Version 1 <https://github.com/xmos/lib_audio_dsp/LICENSE.rst>`_.
+This Software is subject to the terms of the `XMOS Public Licence: Version 1 <https://github.com/xmos/lib_audio_dsp/blob/main/LICENSE.rst>`_.
