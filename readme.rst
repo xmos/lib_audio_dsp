@@ -1,20 +1,22 @@
 Lib Audio DSP
 #############
 
-Lib audio DSP is a DSP library for the XMOS xcore architecture. It facilitates the creation of
+lib_audio_dsp is a DSP library for the XMOS xcore architecture. It facilitates the creation of
 multithreaded audio DSP pipelines that efficiently utilise the xcore architecture.
 
 The library is built around a set of DSP function blocks, referred to in the documentation as “Stages” ,
-which have a consistent API and can be combined to create many different designs. A tool for easily
+which have a consistent API and can be combined to create many different designs. 
+
+A tool for easily
 combining Stages into a custom DSP pipeline is provided. DSP pipeline parameters can be adjusted and 
 tuned on the fly via a PC based tuning interface, and utilities for hardware controls are also provided.
 
-Lib Audio DSP includes common signal processing blocks optimised for the xcore, such as:
+lib_audio_dsp includes common signal processing functions optimised for the xcore, such as:
 
-* biquad and FIR filters
-* compressors, limiters, noise gates, and envelope detectors
-* adders, subtractors, gains, volume controls, and mixers
-* delays, and reverb.
+* biquads and FIR filters
+* compressors, limiters, noise gates and envelope detectors
+* adders, subtractors, gains, volume controls and mixers
+* delays and reverb.
 
 See the :ref:`programming guide<programming_guide_introduction>` for usage details and getting started. 
 
