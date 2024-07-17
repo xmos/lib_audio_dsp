@@ -10,3 +10,4 @@ used as an API directly. The higher-level API group is called *DSP stages* and m
 
     modules/index.rst
     stages/index.rst
+    runtime_control/index.rst

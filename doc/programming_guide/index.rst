@@ -8,4 +8,3 @@ Programming Guide (to be removed!)
     introduction
     pipeline_design_tutorial
     pipeline_design
-    c_control_api

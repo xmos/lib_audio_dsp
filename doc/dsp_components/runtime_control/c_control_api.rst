@@ -1,4 +1,4 @@
-C CONTROL API
+C Control API
 #############
 
 The DSP stages can be controlled by passing the relevant control

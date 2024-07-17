@@ -12,6 +12,7 @@ ROOT_DIR = Path(__file__).parents[1]
 PYTHON_ROOT = Path(ROOT_DIR, "python")
 DSP_GEN_DIR = Path(__file__).parent / "dsp_components" / "stages" / "gen"
 PROG_GEN_DIR = Path(__file__).parent / "programming_guide" / "gen"
+CTRL_GEN_DIR = Path(__file__).parent / "dsp_components" / "runtime_control" / "gen"
 
 gen_control.main()
 
@@ -97,9 +98,9 @@ ${"="*len(str(module))}
     (dst_dir / f"{src_dir.parts[-2]}.{src_dir.parts[-1]}.inc").write_text(gen)
 
 
-def control_doc(dir, glob="*config.h"):
+def control_doc(src_dir, dst_dir, glob="*config.h"):
     api_dir = ROOT_DIR
-    c_api_files = sorted(dir.glob(glob))
+    c_api_files = sorted(src_dir.glob(glob))
     c_design_modules = [p.relative_to(api_dir) for p in c_api_files if not p.name.startswith("_")]
     gen = Template("""
 % for module in modules:
@@ -110,11 +111,11 @@ ${"="*len(str(module.name))}
 
 %endfor
 """).render(modules=c_design_modules)
-    (Path(__file__).parent / f"{dir.parts[-2]}.{dir.parts[-1]}.inc").write_text(gen)
+    (dst_dir / f"{src_dir.parts[-2]}.{src_dir.parts[-1]}.inc").write_text(gen)
 
 
 python_doc(ROOT_DIR / "python" / "audio_dsp" / "design", PROG_GEN_DIR)
 python_doc_stages(ROOT_DIR / "python" / "audio_dsp" / "stages", DSP_GEN_DIR)
 
 c_doc(ROOT_DIR / "lib_audio_dsp" / "api" / "stages", PROG_GEN_DIR, "adsp_*.h")
-control_doc(ROOT_DIR / "doc" / "programming_guide" / "gen" / "control_gen" / "common")
+control_doc(ROOT_DIR / "doc" / "programming_guide" / "gen" / "control_gen" / "common", CTRL_GEN_DIR)
