@@ -15,4 +15,7 @@ module:
     gain:
       type: int32_t
       help: The current gain applied by the noise suppressor in Q_GAIN format.
+    slope:
+      type: float
+      help: The compression slope of the noise suppressor. This is calculated as `(1 - ratio)`.
 includes: []
