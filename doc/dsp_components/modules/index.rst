@@ -12,6 +12,7 @@ providing more detailed view of the modules implemented.
     q_format.rst
     biquads.rst
     drc.rst
+    fir.rst
     reverb.rst
     signal_chain.rst
     more_python.rst

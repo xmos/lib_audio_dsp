@@ -4,19 +4,35 @@ Signal Chain Components
 
 Signal chain components are meant to help with manage signal between the bigger stages (i.e. combine, gain, delay).
 
+.. _Adder:
+
 =====
 Adder
 =====
 
 Will add N number of samples, round and saturate the result to the Q31 range.
 
-.. doxygenfunction:: adsp_adder
+.. tab:: C API
 
-.. autoclass:: audio_dsp.dsp.signal_chain.adder
-    :noindex:
+    .. only:: latex
 
-    .. automethod:: process_channels
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_adder
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.signal_chain.adder
         :noindex:
+
+        .. automethod:: process_channels
+            :noindex:
+
+.. _Subtractor:
 
 ==========
 Subtractor
@@ -24,13 +40,27 @@ Subtractor
 
 Will subtract one sample from another, round and saturate to Q31 range.
 
-.. doxygenfunction:: adsp_subtractor
+.. tab:: C API
 
-.. autoclass:: audio_dsp.dsp.signal_chain.subtractor
-    :noindex:
+    .. only:: latex
 
-    .. automethod:: process_channels
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_subtractor
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.signal_chain.subtractor
         :noindex:
+
+        .. automethod:: process_channels
+            :noindex:
+
+.. _FixedGain:
 
 ==========
 Fixed Gain
@@ -41,13 +71,27 @@ The gain must be in ``Q_GAIN`` format.
 
 .. doxygendefine:: Q_GAIN
 
-.. doxygenfunction:: adsp_fixed_gain
+.. tab:: C API
 
-.. autoclass:: audio_dsp.dsp.signal_chain.fixed_gain
-    :noindex:
+    .. only:: latex
 
-    .. automethod:: process
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_fixed_gain
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.signal_chain.fixed_gain
         :noindex:
+
+        .. automethod:: process
+            :noindex:
+
+.. _Mixer:
 
 =====
 Mixer
@@ -56,13 +100,32 @@ Mixer
 Will apply a gain to all N samples and add then together.
 Will round and saturate the output to the Q31 range. The gain must be in ``Q_GAIN`` format.
 
-.. doxygenfunction:: adsp_mixer
+.. tab:: C API
 
-.. autoclass:: audio_dsp.dsp.signal_chain.mixer
-    :noindex:
+    .. only:: latex
 
-    .. automethod:: process_channels
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_mixer
+
+    Another way to implement mixer will be to multiply-accumulate samples into a 64-bit word
+    and saturate it to a 32-bit word using:
+
+    .. doxygenfunction:: adsp_saturate_32b
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.signal_chain.mixer
         :noindex:
+
+        .. automethod:: process_channels
+            :noindex:
+
+.. _VolumeControl:
 
 ==============
 Volume Control
@@ -83,28 +146,42 @@ For run-time efficiency, instead of EMA alpha, this implementation uses a ``slew
 .. doxygenstruct:: volume_control_t
     :members:
 
-.. doxygenfunction:: adsp_volume_control
+.. tab:: C API
 
-.. doxygenfunction:: adsp_volume_control_set_gain
+    .. only:: latex
 
-.. doxygenfunction:: adsp_volume_control_mute
+        .. rubric:: C API
 
-.. doxygenfunction:: adsp_volume_control_unmute
+    .. doxygenfunction:: adsp_volume_control
 
-.. autoclass:: audio_dsp.dsp.signal_chain.volume_control
-    :noindex:
+    .. doxygenfunction:: adsp_volume_control_set_gain
 
-    .. automethod:: process
+    .. doxygenfunction:: adsp_volume_control_mute
+
+    .. doxygenfunction:: adsp_volume_control_unmute
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.signal_chain.volume_control
         :noindex:
 
-    .. automethod:: set_gain
-        :noindex:
+        .. automethod:: process
+            :noindex:
 
-    .. automethod:: mute
-        :noindex:
+        .. automethod:: set_gain
+            :noindex:
 
-    .. automethod:: unmute
-        :noindex:
+        .. automethod:: mute
+            :noindex:
+
+        .. automethod:: unmute
+            :noindex:
+
+.. _Delay:
 
 =====
 Delay
@@ -117,16 +194,28 @@ range safely.
 .. doxygenstruct:: delay_t
     :members:
 
-.. doxygenfunction:: adsp_delay
+.. tab:: C API
 
-.. autoclass:: audio_dsp.dsp.signal_chain.delay
-    :noindex:
+    .. only:: latex
 
-    .. automethod:: process_channels
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_delay
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.signal_chain.delay
         :noindex:
 
-    .. automethod:: reset_state
-        :noindex:
+        .. automethod:: process_channels
+            :noindex:
 
-    .. automethod:: set_delay
-        :noindex:
+        .. automethod:: reset_state
+            :noindex:
+
+        .. automethod:: set_delay
+            :noindex:

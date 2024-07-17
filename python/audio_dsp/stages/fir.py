@@ -20,8 +20,8 @@ class FirDirect(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.fir.fir_direct
-        The DSP block class; see :class:`audio_dsp.dsp.fir.fir_direct`
+    dsp_block : :class:`audio_dsp.dsp.fir.fir_direct`
+        The DSP block class; see :ref:`FirDirect`
         for implementation details.
     """
 
