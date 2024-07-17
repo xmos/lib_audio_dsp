@@ -333,13 +333,13 @@ and the gain of ``1`` when aboove.
 
         .. rubric:: C API
 
+    .. doxygenfunction:: adsp_noise_gate
+
 .. tab:: Python API
 
     .. only:: latex
 
         .. rubric:: Python API
-
-    .. doxygenfunction:: adsp_noise_gate
 
     .. autoclass:: audio_dsp.dsp.drc.expander.noise_gate
         :noindex:
