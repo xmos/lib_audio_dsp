@@ -15,19 +15,31 @@ in the range of ``[-2, 1.999]`` they should be right-shifted and the shift shoul
 so it will left-shift the output. The ``state`` should be initialised to ``0``.
 ``state`` and ``coeffs`` must be word-aligned.
 
-.. doxygenfunction:: adsp_biquad
+.. tab:: C API
 
-.. autoclass:: audio_dsp.dsp.biquad.biquad
-    :noindex:
+    .. only:: latex
 
-    .. automethod:: process
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_biquad
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.biquad.biquad
         :noindex:
 
-    .. automethod:: update_coeffs
-        :noindex:
+        .. automethod:: process
+            :noindex:
 
-    .. automethod:: reset_state
-        :noindex:
+        .. automethod:: update_coeffs
+            :noindex:
+
+        .. automethod:: reset_state
+            :noindex:
 
 .. _CascadedBiquads:
 
@@ -38,13 +50,25 @@ Cascaded Biquads
 Same as the single biquad implementation but processes 8 biquad filters at a time. Can be used to implement
 a simple parametric equaliser or high-order Butterworth filters.
 
-.. doxygenfunction:: adsp_cascaded_biquads_8b
+.. tab:: C API
 
-.. autoclass:: audio_dsp.dsp.cascaded_biquads.cascaded_biquads_8
-    :noindex:
+    .. only:: latex
 
-    .. automethod:: process
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_cascaded_biquads_8b
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.cascaded_biquads.cascaded_biquads_8
         :noindex:
 
-    .. automethod:: reset_state
-        :noindex:
+        .. automethod:: process
+            :noindex:
+
+        .. automethod:: reset_state
+            :noindex:
