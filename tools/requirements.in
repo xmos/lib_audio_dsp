@@ -1,6 +1,7 @@
 # python_version 3.12.1
 # pip_version 23.2.1
 
+# PyPI
 soundfile
 pytest
 pytest-xdist
@@ -9,7 +10,7 @@ ruff
 filelock
 
 # git
-git+ssh://git@github.com/xmos/xscope_fileio@v1.2.0
+git+ssh://git@github.com/xmos/xscope_fileio@v1.2.0#egg=xscope_fileio
 
-# audio_dsp
--e file:./python
+# own
+-e file:./python#egg=audio_dsp
