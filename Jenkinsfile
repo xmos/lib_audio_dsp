@@ -353,7 +353,7 @@ pipeline {
                 }
                 dir('lib_audio_dsp/host/dsp_host') {
                   // Enable the XTC tools for xSCOPE
-                  withTools(params.TOOLS_VERSION) {
+                  withTools('15.2.1') { //TODO fix endpoint issue to upgrade to 15.3.1
                     withVS('vcvars32.bat') {
                       bat 'cmake -G "Ninja" -B build -DTESTING=ON'
                       bat 'cd build && ninja'
@@ -368,7 +368,7 @@ pipeline {
                   createVenv("requirements.txt")
                   withVenv{
                     // Enable the XTC tools for xSCOPE
-                    withTools(params.TOOLS_VERSION) {
+                    withTools('15.2.1') { //TODO fix endpoint issue to upgrade to 15.3.1
                       bat 'pip install -r requirements.txt'
                       bat 'pip install jinja2'
                     }
