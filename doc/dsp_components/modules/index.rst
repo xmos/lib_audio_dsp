@@ -2,11 +2,11 @@
 DSP Modules
 ###########
 
-This section is intended for the user who wants to learn more about the
-implementation details of the DSP algorithms, and those who want to use
-the DSP API directly without the pipeline building tool. It includes
-topics such as Q formats, C and Python APIs, providing more detailed
-view of the DSP modules.
+In lib_audio_dsp, DSP modules are the lower level functions and APIs.
+These can be used directly without the pipeline building tool, and the
+documentation also includes more implementation details of the DSP
+algorithms. It includes topics such as Q formats, C and Python APIs,
+providing more detailed view of the DSP modules.
 
 Each DSP module has been implemented in floating point Python, fixed
 point int32 Python and fixed point int32 C, with optimisations for xcore.
