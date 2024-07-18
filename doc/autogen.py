@@ -6,7 +6,7 @@ Generate includes for all the APIs in this repo
 from mako.template import Template
 from pathlib import Path
 import ast
-import programming_guide.gen.gen_control as gen_control
+import gen_control
 
 ROOT_DIR = Path(__file__).parents[1]
 PYTHON_ROOT = Path(ROOT_DIR, "python")
@@ -56,7 +56,8 @@ def python_doc_stages(src_dir, dst_dir):
         module = ".".join(file.parts[-3:])[:-3]
         module_name = (file.parts[-1])[:-3]
         title = module_name.replace("_", " ")
-        title = title.title()
+        # Sorry
+        title = title.title().replace("Rms", "RMS").replace("Fir", "FIR")
         docstring, classes = get_file_info(file)
         gen = Template(
 """${"#"*len(title)}
@@ -104,8 +105,8 @@ def control_doc(src_dir, dst_dir, glob="*config.h"):
     c_design_modules = [p.relative_to(api_dir) for p in c_api_files if not p.name.startswith("_")]
     gen = Template("""
 % for module in modules:
-${str(module.name)}
-${"="*len(str(module.name))}
+${str(module.name[:-len("_config.h")].replace("_", " ").title().replace("Rms", "RMS").replace("Fir", "FIR"))}
+${"="*len(str(module.name)[:-len("_config.h")])}
 
 .. doxygenfile:: ${module.name}
 
@@ -118,4 +119,4 @@ python_doc(ROOT_DIR / "python" / "audio_dsp" / "design", PROG_GEN_DIR)
 python_doc_stages(ROOT_DIR / "python" / "audio_dsp" / "stages", DSP_GEN_DIR)
 
 c_doc(ROOT_DIR / "lib_audio_dsp" / "api" / "stages", PROG_GEN_DIR, "adsp_*.h")
-control_doc(ROOT_DIR / "doc" / "programming_guide" / "gen" / "control_gen" / "common", CTRL_GEN_DIR)
+control_doc(ROOT_DIR / "doc" / "dsp_components" / "gen" / "control_gen" / "common", CTRL_GEN_DIR)

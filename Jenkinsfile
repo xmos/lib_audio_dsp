@@ -306,7 +306,7 @@ pipeline {
               sh 'pip install "ruff < 0.4"'
               sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${XMOSDOC_VERSION}"
               sh "make -C python check"
-              sh 'xmosdoc -dvvv'
+              sh 'xmosdoc'
             }
 
             archiveArtifacts artifacts: "doc/_out/**"

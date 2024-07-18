@@ -10,7 +10,7 @@ INPUT += ../lib_audio_dsp/api/dsp \
          ../lib_audio_dsp/api/stages/adsp_control.h \
          ../lib_audio_dsp/api/stages/adsp_module.h \
          ../lib_audio_dsp/api/stages/adsp_pipeline.h \
-         ./programming_guide/gen/control_gen/common
+         ./dsp_components/gen/control_gen/common
 
 INCLUDE_PATH = ../lib_audio_dsp/api \
 

@@ -6,11 +6,11 @@ import types
 
 def main():
     # parse the configs and make the control header files
-    pkg_dir = Path(__file__).parents[3]
+    pkg_dir = Path(__file__).parents[1]
     config_dir = f"{pkg_dir}/stage_config"
     parse_config_path = Path(pkg_dir, "design", "parse_config")
 
-    out_dir = Path(pkg_dir, "doc", "programming_guide", "gen", "control_gen")
+    out_dir = Path(pkg_dir, "doc", "dsp_components", "gen", "control_gen")
 
     pc_args = types.SimpleNamespace()
     pc_args.out_dir = out_dir

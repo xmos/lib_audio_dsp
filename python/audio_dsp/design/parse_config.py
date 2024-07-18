@@ -67,14 +67,14 @@ def main(args):
             cmd_map[struct_name] = data["module"][struct_name]
 
     cmd_map = dict(sorted(cmd_map.items()))
-    with open(f"{args.out_dir}/generator/gen_cmd_map_offset.c", "w") as f_op:
+    with open(f"{args.out_dir}/generator/gen_cmd_map_offset.c", "w", newline="") as f_op:
         f_op.write(struct_offset_template.render(cmd_map=cmd_map))
     # Generate cmd_map used by the host
-    with open(f"{args.out_dir}/host/host_cmd_map.h", "w") as f_op:
+    with open(f"{args.out_dir}/host/host_cmd_map.h", "w", newline="") as f_op:
         f_op.write(cmd_map_template.render(cmd_map=cmd_map))
 
     # Generate #defines present in the cmd map used by the host
-    with open(f"{args.out_dir}/common/cmds.h", "w") as f_op:
+    with open(f"{args.out_dir}/common/cmds.h", "w", newline="") as f_op:
         f_op.write(cmd_ids_template.render(cmd_map=cmd_map))
 
     # generate the config offsets for every module
