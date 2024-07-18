@@ -3,8 +3,8 @@ DSP Modules
 ###########
 
 In lib_audio_dsp, DSP modules are the lower level functions and APIs.
-These can be used directly without the pipeline building tool, and the
-documentation also includes more implementation details of the DSP
+These can be used directly without the pipeline building tool. The
+documentation also includes more implementation details about the DSP
 algorithms. It includes topics such as Q formats, C and Python APIs,
 providing more detailed view of the DSP modules.
 

@@ -2,20 +2,36 @@
 Dynamic Range Control
 #####################
 
-This page contains modules that provide the dynamic adjustment according to the range of the signal.
+DSP modules that modify the signal based on the level have been classed
+as dynamic range control (DRC) modules. This includes compressors, limiters
+and clippers, as well as the envelope detectors used to detect the signal
+level.
+
+========================
+Attack and Release Times
+========================
+
+Nearly all DRC modules feature an attack and release time to control the
+responsiveness of the module to changes in signal level. Attack and
+release times converted from seconds to alpha coefficients for use in
+the exponential moving average. The shorter the attack or release time,
+the bigger the alpha. Large alpha will result in the envelope be more
+reactive to the input samples. Small alpha values will give more smoothed
+behaviour. The difference between the input level and the current
+envelope or gain determines whether the attack or release alpha is used.
 
 ==================
 Envelope Detectors
 ==================
 
-Envelope detectors run an exponential moving avarage (EMA) of the incoming signal. They are used as a part of
-the most DRC components. Can also be used to implement the UV meters.
+Envelope detectors run an exponential moving average (EMA) of the 
+incoming signal. They are used as a part of the most DRC components.
+They can also be used to implement the VU meters and level detectors.
 
-Attack and release times converted to alpha coefficients, so that the shorter the time the bigger the alpha.
-Large alpha will result in the envelope be more reactive to the input samples. Attack or release alpha will
-be chosen to run an EMA according to the difference of the input level and the current envelope.
+They feature `attack and release times`_ to control the responsiveness
+of the envelope detector.
 
-The C struct below is used for all the envelope detector implementetions.
+The C struct below is used for all the envelope detector implementations.
 
 .. doxygenstruct:: env_detector_t
     :members:
@@ -23,10 +39,10 @@ The C struct below is used for all the envelope detector implementetions.
 .. _EnvelopeDetectorPeak:
 
 ----------------------
-Envelope Detector Peak
+Peak Envelope Detector
 ----------------------
 
-Peak-based envelope detector will run it's EMA using the absolute value of the input sample.
+A peak-based envelope detector will run its EMA using the absolute value of the input sample.
 
 .. tab:: C API
 
@@ -54,10 +70,11 @@ Peak-based envelope detector will run it's EMA using the absolute value of the i
 .. _EnvelopeDetectorRMS:
 
 ---------------------
-Envelope Detector RMS
+RMS Envelope Detector
 ---------------------
 
-RMS-based envelope detector will run it's EMA using the square of the input sample.
+An RMS-based envelope detector will run its EMA using the square of the
+input sample. It returns the mean² in order to avoid a square root.
 
 .. tab:: C API
 
@@ -88,7 +105,8 @@ RMS-based envelope detector will run it's EMA using the square of the input samp
 Clipper
 =======
 
-Will clip an input value if it's above the threshold.
+A clipper limits the signal to a specified threshold. It is applied
+instantaneously, so has no attack or release times.
 
 .. doxygentypedef:: clipper_t
 
@@ -117,13 +135,18 @@ Will clip an input value if it's above the threshold.
 Limiters
 ========
 
-Limiters will try to maintain the signal to be below or near the threshold. Acts as a compressor with an infinite ratio.
+Limiters will reduce the amplitude of a signal when the signal envelope
+exceeds the desired threshold. This is similar behaviour to a compressor
+with an infinite ratio.
 
-Will run an instance of an envelope detector to get an envelop and compare it to the threshold.
-According to that, will calculate the gain to apply to the signal and run that gain through an EMA.
-The EMA alphas are the same as in the envelope detectors used underneath.
+A limiter will run an internal envelope detector to get the signal
+envelope, then compare it to the threshold. If the envelope exceeds the
+threshold, the applied gain will be reduced. If the envelope is below
+the threshold, unity gain will be applied. The gain is run through an EMA
+to avoid abrupt changes. The same `attack and release times`_ are used
+for the envelope detector and the gain smoothing.
 
-The C struct below is used for all the limiter implementetions.
+The C struct below is used for all the limiter implementations.
 
 .. doxygenstruct:: limiter_t
     :members:
@@ -131,11 +154,12 @@ The C struct below is used for all the limiter implementetions.
 .. _LimiterPeak:
 
 ------------
-Limiter Peak
+Peak Limiter
 ------------
 
-Will use the :ref:`EnvelopeDetectorPeak` to get an envelope. Will use the gain of ``threshold / envelope``
-when envelope is above the threshold.
+A peak limiter uses the :ref:`EnvelopeDetectorPeak` to get an envelope.
+When envelope is above the threshold, the new gain is calculated as 
+``threshold / envelope``.
 
 .. tab:: C API
 
@@ -163,10 +187,13 @@ when envelope is above the threshold.
 .. _HardLimiterPeak:
 
 -----------------
-Hard Limiter Peak
+Hard Peak Limiter
 -----------------
 
-Will run :ref:`LimiterPeak` and clip the result if it's still above the threshold.
+A hard peak limiter is similar to a :ref:`LimiterPeak`, but will clip
+the output if it's still above the threshold after the peak limiter.
+This can be useful for a final output limiter before truncating any
+headroom bits.
 
 .. tab:: C API
 
@@ -194,11 +221,12 @@ Will run :ref:`LimiterPeak` and clip the result if it's still above the threshol
 .. _LimiterRMS:
 
 -----------
-Limiter RMS
+RMS Limiter
 -----------
 
-Will use the :ref:`EnvelopeDetectorRMS` to get an envelope. Will use the gain of ``sqrt(threshold / envelope)``
-when envelope is above the threshold.
+A RMS limiter uses the :ref:`EnvelopeDetectorRMS` to calculate an envelope.
+When envelope is above the threshold, the new gain is calculated as 
+``sqrt(threshold / envelope)``.
 
 .. tab:: C API
 
@@ -236,7 +264,7 @@ The EMA alphas are the same as in the envelope detectors used underneath. The on
 additional ``ratio`` parameter, which plays the role when calculating the gain.
 
 Internally, the ratio is converted to the ``slope`` by using ``(1 - 1 / ratio) / 2`` convertion.
-The C struct below is used for all the compressors implementetions.
+The C struct below is used for all the compressors implementations.
 
 .. doxygenstruct:: compressor_t
     :members:
