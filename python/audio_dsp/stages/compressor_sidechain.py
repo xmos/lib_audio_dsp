@@ -29,9 +29,8 @@ class CompressorSidechain(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.drc.sidechain.compressor_rms_sidechain_mono
-        The DSP block class; see
-        :class:`audio_dsp.dsp.drc.sidechain.compressor_rms_sidechain_mono`
+    dsp_block : :class:`audio_dsp.dsp.drc.sidechain.compressor_rms_sidechain_mono`
+        The DSP block class; see :ref:`CompressorSidechain`
         for implementation details.
     """
 
