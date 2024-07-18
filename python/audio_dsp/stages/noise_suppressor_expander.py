@@ -23,9 +23,8 @@ class NoiseSuppressorExpander(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.drc.expander.noise_suppressor_expander
-        The DSP block class; see
-        :class:`audio_dsp.dsp.drc.expander.noise_suppressor_expander`
+    dsp_block : :class:`audio_dsp.dsp.drc.expander.noise_suppressor_expander`
+        The DSP block class; see :ref:`NoiseSuppressorExpander`
         for implementation details.
     """
 

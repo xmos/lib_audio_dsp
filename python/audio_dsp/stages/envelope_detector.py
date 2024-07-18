@@ -16,10 +16,9 @@ class EnvelopeDetectorPeak(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.drc.drc.envelope_detector_peak
-        The DSP block class; see
-        :class:`audio_dsp.dsp.drc.drc.envelope_detector_peak` for implementation
-        details.
+    dsp_block : :class:`audio_dsp.dsp.drc.drc.envelope_detector_peak`
+        The DSP block class; see :ref:`EnvelopeDetectorPeak`
+        for implementation details.
 
     """
 
@@ -64,10 +63,9 @@ class EnvelopeDetectorRMS(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.drc.drc.envelope_detector_rms
-        The DSP block class; see
-        :class:`audio_dsp.dsp.drc.drc.envelope_detector_rms` for implementation
-        details.
+    dsp_block : :class:`audio_dsp.dsp.drc.drc.envelope_detector_rms`
+        The DSP block class; see :ref:`EnvelopeDetectorRMS`
+        for implementation details.
 
     """
 

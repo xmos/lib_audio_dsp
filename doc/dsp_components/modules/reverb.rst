@@ -2,6 +2,8 @@
 Reverb
 ######
 
+.. _ReverbRoom:
+
 ===========
 Reverb Room
 ===========
@@ -12,31 +14,43 @@ comb filters fed into 4 series all-pass filters.
 .. doxygenstruct:: reverb_room_t
     :members:
 
-.. doxygenfunction:: adsp_reverb_room
+.. tab:: C API
 
-.. autoclass:: audio_dsp.dsp.reverb.reverb_room
-    :noindex:
+    .. only:: latex
 
-    .. automethod:: process
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_reverb_room
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.reverb.reverb_room
         :noindex:
 
-    .. automethod:: reset_state
-        :noindex:
+        .. automethod:: process
+            :noindex:
 
-    .. automethod:: set_pre_gain
-        :noindex:
+        .. automethod:: reset_state
+            :noindex:
 
-    .. automethod:: set_wet_gain
-        :noindex:
+        .. automethod:: set_pre_gain
+            :noindex:
 
-    .. automethod:: set_dry_gain
-        :noindex:
+        .. automethod:: set_wet_gain
+            :noindex:
 
-    .. automethod:: set_decay
-        :noindex:
+        .. automethod:: set_dry_gain
+            :noindex:
 
-    .. automethod:: set_damping
-        :noindex:
+        .. automethod:: set_decay
+            :noindex:
 
-    .. automethod:: set_room_size
-        :noindex:
+        .. automethod:: set_damping
+            :noindex:
+
+        .. automethod:: set_room_size
+            :noindex:

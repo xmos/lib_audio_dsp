@@ -42,9 +42,8 @@ class CascadedBiquads(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.cascaded_biquad.cascaded_biquad
-        The DSP block class; see
-        :class:`audio_dsp.dsp.cascaded_biquad.cascaded_biquad` for
+    dsp_block : :class:`audio_dsp.dsp.cascaded_biquad.cascaded_biquad`
+        The DSP block class; see :ref:`CascadedBiquads` for
         implementation details.
 
     """
