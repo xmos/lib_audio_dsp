@@ -5,6 +5,7 @@ pytest-xdist
 pyright
 ruff
 filelock
+pip-tools
 
 # git
 git+ssh://git@github.com/xmos/xscope_fileio@v1.2.0#egg=xscope_fileio
