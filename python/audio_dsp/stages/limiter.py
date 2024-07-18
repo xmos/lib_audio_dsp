@@ -19,10 +19,9 @@ class LimiterRMS(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.drc.drc.limiter_rms
-        The DSP block class; see
-        :class:`audio_dsp.dsp.drc.drc.limiter_rms` for implementation
-        details.
+    dsp_block : :class:`audio_dsp.dsp.drc.drc.limiter_rms`
+        The DSP block class; see :ref:`LimiterRMS`
+        for implementation details.
 
     """
 
@@ -78,10 +77,9 @@ class LimiterPeak(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.drc.drc.compressor_rms
-        The DSP block class; see
-        :class:`audio_dsp.dsp.drc.drc.limiter_peak` for implementation
-        details.
+    dsp_block : :class:`audio_dsp.dsp.drc.drc.limiter_peak`
+        The DSP block class; see :ref:`LimiterPeak`
+        for implementation details.
 
     """
 
@@ -141,9 +139,8 @@ class HardLimiterPeak(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.drc.drc.hard_limiter_peak
-        The DSP block class; see
-        :class:`audio_dsp.dsp.drc.drc.hard_limiter_peak` for
+    dsp_block : :class:`audio_dsp.dsp.drc.drc.hard_limiter_peak`
+        The DSP block class; see :ref:`HardLimiterPeak` for
         implementation details.
     """
 
@@ -195,8 +192,8 @@ class Clipper(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.drc.drc.clipper
-        The DSP block class; see :class:`audio_dsp.dsp.drc.drc.clipper`
+    dsp_block : :class:`audio_dsp.dsp.drc.drc.clipper`
+        The DSP block class; see :ref:`Clipper`
         for implementation details.
     """
 

@@ -23,24 +23,6 @@ class Bypass(Stage):
         return [np.copy(i) for i in in_channels]
 
 
-class ForkOutputList(StageOutputList):
-    """
-    Custom StageOutputList that is created by Fork.
-
-    This allows convenient access to each fork output.
-
-    Attributes
-    ----------
-    forks: list[StageOutputList]
-        Fork duplicates its inputs, each entry in the forks list is a single copy
-        of the input edges.
-    """
-
-    def __init__(self, edges: list[StageOutput | None] | None = None):
-        super().__init__(edges)
-        self.forks = []
-
-
 class Fork(Stage):
     """
     Fork the signal.
@@ -60,6 +42,23 @@ class Fork(Stage):
         data as the input.
     """
 
+    class ForkOutputList(StageOutputList):
+        """
+        Custom StageOutputList that is created by Fork.
+
+        This allows convenient access to each fork output.
+
+        Attributes
+        ----------
+        forks: list[StageOutputList]
+            Fork duplicates its inputs, each entry in the forks list is a single copy
+            of the input edges.
+        """
+
+        def __init__(self, edges: list[StageOutput | None] | None = None):
+            super().__init__(edges)
+            self.forks = []
+
     def __init__(self, count=2, **kwargs):
         super().__init__(name="fork", **kwargs)
         self.create_outputs(self.n_in * count)
@@ -68,7 +67,7 @@ class Fork(Stage):
         forks = []
         for indices in fork_indices:
             forks.append(self.o[(i for i in indices)])
-        self._o = ForkOutputList(self.o.edges)
+        self._o = self.ForkOutputList(self.o.edges)
         self._o.forks = forks
 
     def get_frequency_response(self, nfft=512):
@@ -91,6 +90,11 @@ class Mixer(Stage):
     """
     Mixes the input signals together. The mixer can be used to add signals
     together, or to attenuate the input signals.
+
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.signal_chain.mixer`
+        The DSP block class; see :ref:`Mixer` for implementation details
     """
 
     def __init__(self, **kwargs):
@@ -117,6 +121,10 @@ class Adder(Stage):
     Add the input signals together. The adder can be used to add signals
     together.
 
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.signal_chain.adder`
+        The DSP block class; see :ref:`Adder` for implementation details.
     """
 
     def __init__(self, **kwargs):
@@ -130,6 +138,10 @@ class Subtractor(Stage):
     Subtract the second input from the first. The subtractor can be used to
     subtract signals from each other. It must only have 2 inputs.
 
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.signal_chain.subtractor`
+        The DSP block class; see :ref:`Subtractor` for implementation details.
     """
 
     def __init__(self, **kwargs):
@@ -146,14 +158,18 @@ class FixedGain(Stage):
     by a gain. If the gain is changed at runtime, pops and clicks may
     occur.
 
-    If the gain needs to be changed at runtime, use a VolumeControl
-    stage instead.
+    If the gain needs to be changed at runtime, use a
+    :class:`VolumeControl` stage instead.
 
     Parameters
     ----------
     gain_db : float, optional
         The gain of the mixer in dB.
 
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.signal_chain.fixed_gain`
+        The DSP block class; see :ref:`FixedGain` for implementation details.
     """
 
     def __init__(self, gain_db=0, **kwargs):
@@ -188,6 +204,11 @@ class VolumeControl(Stage):
         The gain of the mixer in dB.
     mute_state : int, optional
         The mute state of the Volume Control: 0: unmuted, 1: muted.
+
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.signal_chain.volume_control`
+        The DSP block class; see :ref:`VolumeControl` for implementation details.
     """
 
     def __init__(self, gain_dB=0, mute_state=0, **kwargs):
@@ -296,6 +317,11 @@ class Delay(Stage):
     units : str, optional
         The units of the delay, can be 'samples', 'ms' or 's'.
         Default is 'samples'.
+
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.signal_chain.delay`
+        The DSP block class; see :ref:`Delay` for implementation details.
     """
 
     def __init__(self, max_delay, starting_delay, units="samples", **kwargs):

@@ -1,5 +1,5 @@
 project: lib_audio_dsp
-version: 0.2.0
+version: 0.3.0
 
 ## example of overridable setting
 # watermarks is redefined in documentation and again for a specific product
@@ -34,8 +34,9 @@ documentation:
     my-special-thing: A special thing for a special project
   cognidox_part_number: XM-015034-PC
   run_before: |
-    python doc/programming_guide/gen/autogen.py
+    python doc/autogen.py
   extra_sphinx_opts: [-W]
+  use_numpydoc: true
   doxygen_projects:
     lib_audio_dsp:
       doxyfile_path: doc/Doxyfile.inc

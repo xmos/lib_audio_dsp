@@ -1,6 +1,6 @@
-###########################
-LIB AUDIO DSP DOCUMENTATION
-###########################
+###############
+Tool User Guide
+###############
 
 .. toctree::
     :maxdepth: 3
