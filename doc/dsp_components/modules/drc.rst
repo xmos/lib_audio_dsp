@@ -255,15 +255,27 @@ When envelope is above the threshold, the new gain is calculated as
 Compressors
 ===========
 
-Compressor will attenuate the signal above the threshold. The input/output relationship above the threshold
-is defined by the compressor ``ratio``.
+A compressor will attenuate the signal when the envelope exceeds the
+threshold. The input/output relationship above the threshold is defined
+by the compressor ``ratio``.
 
-Similarly to the limiters, will run an instance of an envelope detector to get an envelop and compare it to the threshold.
-According to that, will calculate the gain to apply to the signal and run that gain through an EMA.
-The EMA alphas are the same as in the envelope detectors used underneath. The only difference with a limiter, is the
-additional ``ratio`` parameter, which plays the role when calculating the gain.
+As with a limiter, the compressor runs an internal envelope detector 
+to get the signal envelope, then compare it to the threshold. If the
+envelope exceeds the threshold, the gain will be proportionally reduced
+by the ``ratio``, such that it exceeds the by a smaller amount. 
+If the envelope is below the threshold, unity gain will be applied. 
+The gain is then run through an EMA to avoid abrupt changes, before being
+applied. 
 
-Internally, the ratio is converted to the ``slope`` by using ``(1 - 1 / ratio) / 2`` convertion.
+The ``ratio`` defines the input/output gradient in the logarithmic domain.
+For example, a ratio of 2 will reduce the output gain by 0.5 dB for every 
+1 dB the envelope is over the threshold. 
+A ratio of 1 will apply no compression. 
+To avoid converting the envelope to the logarithmic domain for the gain
+calculation, the ratio is converted to the ``slope`` as 
+``(1 - 1 / ratio) / 2`` . The gain can then be calculated as an
+exponential in the linear domain.
+
 The C struct below is used for all the compressors implementations.
 
 .. doxygenstruct:: compressor_t
@@ -275,8 +287,10 @@ The C struct below is used for all the compressors implementations.
 RMS Compressor
 --------------
 
-Will use the :ref:`EnvelopeDetectorRMS` to get an envelope. Will use the gain of ``(threshold / envelope) ^ slope``
-when envelope is above the threshold.
+The RMS compressor uses the :ref:`EnvelopeDetectorRMS` to calculate an
+envelope.
+When the envelope is above the threshold, the new gain is calculated as
+``(threshold / envelope) ^ slope``.
 
 .. tab:: C API
 
@@ -307,8 +321,14 @@ when envelope is above the threshold.
 Sidechain RMS Compressor
 ------------------------
 
-Takes two signals: *detect* and *input*. Will use the *detect* signal to run the :ref:`EnvelopeDetectorRMS`.
-Calculates the gain in the same way as :ref:`CompressorRMS`. Applies the EMAed gain to the *input* sample.
+The sidechain RMS compressor uses the envelope of one signal to compress
+another signal.
+It two signals: *detect* and *input*. The envelope of the *detect* signal 
+is calculated using an internal :ref:`EnvelopeDetectorRMS`.
+The gain is calculated in the same way as a :ref:`CompressorRMS`, but the
+gain is then applied to the *input* sample.
+This can be used to reduce the level of the *input* signal when the
+*detect* signal gets above the threshold.
 
 .. tab:: C API
 
@@ -337,12 +357,21 @@ Calculates the gain in the same way as :ref:`CompressorRMS`. Applies the EMAed g
 Expanders
 =========
 
-Exanders attenuate the signal that's below the threshold.
+An expander attenuates a signal when the envelope is below the threshold.
+This increases the dynamic range of the signal, and can be used to
+attenuate quiet signals, such as low level noise.
 
-Similarly to limiters and compressors will run an instance of an envelope detector to get an envelop and compare it to the threshold.
-According to that, will calculate the gain to apply to the signal and run that gain through an EMA.
-The EMA alphas are the same as in the envelope detectors used underneath. The difference with limiters and compressor is that
-attack and release alphas are swapped so when we should normally attack, we release, and vice versa.
+Like limiters and compressors, an expander will run an internal envelope
+detector to calculate the envelope and compare it to the threshold.
+If the envelope is below the threshold, the applied gain will be reduced.
+If the envelope exceeds the threshold, unity gain will be applied.
+The gain is run through an EMA to avoid abrupt changes. 
+The same `attack and release times`_ are used for the envelope detector
+and the gain smoothing.
+.. TODO verify this next part
+The difference with limiters and compressor is that the attack and
+release alphas are swapped so when we should normally attack,
+we release, and vice versa.
 
 .. _NoiseGate:
 
@@ -350,8 +379,10 @@ attack and release alphas are swapped so when we should normally attack, we rele
 Noise Gate
 ----------
 
-Will use the :ref:`EnvelopeDetectorPeak` to get an envelope. Will use the gain of ``0`` when the signal is below the threshold
-and the gain of ``1`` when aboove.
+A noise gate uses the :ref:`EnvelopeDetectorPeak` to calculate the 
+envelope of the input signal.
+When the envelope  is below the threshold, a gain of ``0`` is applied to
+the input signal. Otherwise, unity gain is applied.
 
 .. doxygentypedef:: noise_gate_t
 
@@ -384,10 +415,24 @@ and the gain of ``1`` when aboove.
 Noise Suppressor/Expander
 -------------------------
 
-Will use the :ref:`EnvelopeDetectorPeak` to get an envelope. Will calculate the gain the the same way as :ref:`CompressorRMS`
-but the ``slope`` is defined as ``1 - ratio`` as the envelope is not squared.
+A basic expander can also be used as a noise suppressor.
+It uses the :ref:`EnvelopeDetectorPeak` to calculate the envelope of the
+input signal.
+When the envelope is below the threshold, the gain of the signal is 
+reduced according to the ratio. Otherwise, unity gain is applied.
 
-The ``inv_threshold`` is computed from ``threshold`` at init time to simplify run-time computation.
+Like a compressor, the ``ratio`` defines the input/output gradient in
+the logarithmic domain.
+For example, a ratio of 2 will reduce the output gain by 0.5 dB for every 
+1 dB the envelope is below the threshold. 
+A ratio of 1 will apply no gain changes. 
+To avoid converting the envelope to the logarithmic domain for the gain
+calculation, the ratio is converted to the ``slope`` as 
+``(1 - ratio)``. The gain can then be calculated as an
+exponential in the linear domain.
+
+For speed, some parameters such as  ``inv_threshold`` are computed at 
+initialisation to simplify run-time computation.
 
 .. doxygenstruct:: noise_suppressor_expander_t
     :members:
