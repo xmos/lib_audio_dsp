@@ -15,14 +15,13 @@ ${"="*len(cl)}
     :noindex:
     :members:
 
-.. _control_${cl}:
 
-${cl} control parameters
-${"-"*len(cl)}-------------------
+.. rubric:: Control
 
 % if class_data[cl]:
-
 The following control parameters are available for the ${module}.${cl} Stage:
+
+## .. list-table::
 
 * - index
   - cmd_id
