@@ -259,7 +259,7 @@ class reverb_room(dspg.dsp_block):
     ----------
     max_room_size : float, optional
         sets the maximum size of the delay buffers, can only be set
-        at initialisation
+        at initialisation.
     room_size : float, optional
         how big the room is as a proportion of max_room_size. This
         sets delay line lengths and must be between 0 and 1.

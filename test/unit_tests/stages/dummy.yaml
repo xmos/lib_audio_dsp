@@ -3,3 +3,4 @@ module:
   dummy:
     dummy_field:
       type: int
+      help: Some help string
