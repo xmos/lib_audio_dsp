@@ -11,6 +11,7 @@ ROOT_DIR = Path(__file__).parents[1]
 PYTHON_ROOT = Path(ROOT_DIR, "python")
 DSP_GEN_DIR = Path(__file__).parent / "dsp_components" / "stages" / "gen"
 PROG_GEN_DIR = Path(__file__).parent / "programming_guide" / "gen"
+CTRL_GEN_DIR = Path(__file__).parent / "dsp_components" / "runtime_control" / "gen"
 
 def python_doc(src_dir, dst_dir):
     p_design = sorted(src_dir.glob("*.py"))
@@ -52,7 +53,8 @@ def python_doc_stages(src_dir, dst_dir):
         module = ".".join(file.parts[-3:])[:-3]
         module_name = (file.parts[-1])[:-3]
         title = module_name.replace("_", " ")
-        title = title.title()
+        # Sorry
+        title = title.title().replace("Rms", "RMS").replace("Fir", "FIR")
         docstring, classes = get_file_info(file)
         gen = Template(
 """${"#"*len(title)}
