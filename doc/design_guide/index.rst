@@ -12,7 +12,7 @@ accompanying tool and component guides should be consulted for the basic process
 Summary of the xcore.ai architecture
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A basic understanding of the xcore architecture is required in order to understand the consequences various design choices that can be made in the DSP pipeline. 
+A basic understanding of the xcore architecture is required in order to understand the consequences of various design choices that can be made in the DSP pipeline. 
 
 An xcore application will consist of 1 or more xcore.ai chips connected together via a communication fabric (the XLink). Each xcore.ai contains 2 or more tiles, a tile is an independent processor with its own memory. A tile cannot read or write the memory of another tile. Each tile contains 8 logical cores, a logical core is an independent thread of execution that will run some application code. Each tile also has 32 chanends available for allocation, connecting 2 chanends allows for synchronous communication between any 2 logical cores in the system (even between tiles or packages).
 
