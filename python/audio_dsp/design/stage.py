@@ -80,7 +80,7 @@ class StageOutput(Edge):
     @dest_index.setter
     def dest_index(self, value):
         if self._dest_index is not None:
-            raise RuntimeError(f"This edge alread has a dest index, can't be changes to {value}")
+            raise RuntimeError(f"This edge has already been connected, edges cannot have multiple destinations.")
         self._dest_index = value
 
     def __repr__(self) -> str:

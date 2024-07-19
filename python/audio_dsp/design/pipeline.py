@@ -192,7 +192,7 @@ class Pipeline:
         s = self._current_thread.stage(stage_type, inputs, label=label, **kwargs)
         if label:
             if label in self._labelled_stages:
-                raise RuntimeError(f"Label {label} is alread in use.")
+                raise RuntimeError(f"Label {label} is already in use.")
             self._labelled_stages[label] = s
         return s.o
 
