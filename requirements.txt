@@ -81,6 +81,7 @@ matplotlib-inline==0.1.7
     # via ipython
 nodeenv==1.9.1
     # via pyright
+notebook==7.2.1
 numpy==1.26.4
     # via
     #   audio-dsp
