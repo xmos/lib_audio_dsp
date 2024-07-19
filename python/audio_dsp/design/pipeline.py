@@ -248,9 +248,9 @@ class Pipeline:
         - All edges have the same fs and frame_size (until future enhancements)
         """
 
-    def draw(self, path: Path | None=None):
-        """Render a dot diagram of this pipeline. 
-        
+    def draw(self, path: Path | None = None):
+        """Render a dot diagram of this pipeline.
+
         If `path` is not none then the image will be saved to the named file instead of drawing to the jupyter notebook.
         """
         dot = new_record_digraph()
@@ -275,7 +275,7 @@ class Pipeline:
         if path is None:
             display.display_svg(dot)
         else:
-            dot.format="png"
+            dot.format = "png"
             dot.render(path)
 
     @property
@@ -747,12 +747,14 @@ def _generate_instance_id_defines(resolved_pipeline, out_dir=Path("build/dsp_pip
     header += f"#define {pipeline_id}_thread_stage_indices  {{ {thread_stage_ids} }}\n"
     (out_dir / f"adsp_instance_id_{pipeline_id}.h").write_text(header)
 
+
 def _generate_dsp_max_thread_ticks(resolved_pipeline):
     """Generate a function to print the max ticks for each thread."""
     identifier = resolved_pipeline["identifier"]
     n_threads = len(resolved_pipeline["threads"])
     read_threads_code = "\n\t".join(
-        f"do_read(thread{i}_stage_index, CMD_DSP_THREAD_MAX_CYCLES, sizeof(int), &thread_ticks[{i}]);" for i in range(n_threads)
+        f"do_read(thread{i}_stage_index, CMD_DSP_THREAD_MAX_CYCLES, sizeof(int), &thread_ticks[{i}]);"
+        for i in range(n_threads)
     )
     fmt_str = "\\n".join(f"{i}:\\t%d" for i in range(n_threads))
     fmt_args = ", ".join(f"thread_ticks[{i}]" for i in range(n_threads))
@@ -784,7 +786,7 @@ void adsp_{identifier}_print_thread_max_ticks(void) {{
     printf("DSP Thread Ticks:\\n{fmt_str}\\n", {fmt_args});
 }}
 """
-    
+
 
 def _generate_dsp_init(resolved_pipeline):
     """Create the init function which initialised all modules and channels."""
