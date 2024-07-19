@@ -6,7 +6,6 @@ LIB AUDIO DSP DOCUMENTATION
     :maxdepth: 3
 
     doc/dsp_components/index
-    doc/programming_guide/index
     doc/tool_user_guide/index
 
 
