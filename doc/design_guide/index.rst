@@ -20,7 +20,7 @@ An xcore application will consist of 1 or more xcore.ai chips connected together
 XLink). Each xcore.ai contains 2 or more tiles; a tile is an independent processor with its own memory. A tile cannot
 read or write the memory of another tile. Each tile contains 8 logical cores; a logical core is an independent thread
 of execution that will run some application code. Each tile also has 32 chanends available for allocation; connecting
-2 chanends allows for synchronous communication between any 2 logical cores in the system (even between tiles or
+2 chanends forms a channel, which allows for synchronous communication between any 2 logical cores in the system (even between tiles or
 packages).
 
 In its default configuration, an xcore.ai chip will operate at 600MHz; this means that each tile executes instructions
@@ -36,7 +36,7 @@ Term              Definition
 xcore.ai          A chip containing 2 or more tiles.
 Tile              A single processor with some memory.
 Logical Core      1 of the 8 threads available in each tile.
-Chanend           The physical hardware used by a logical core to create a channel, there are 32 available per tile.
+Chanend           The physical hardware used by a logical core to create a channel. There are 32 available per tile.
 Channel           The bidirectional communication pathway that is created when 2 chanends are connected.
 ================= ===============
 
@@ -59,7 +59,7 @@ class in this context refers to a C struct and the functions that operate on it.
 The application package contains Audio Source, Audio Sink and Control classes. The Audio Source and Sink are responsible
 for producing and consuming audio at the rate required by the DSP pipeline. The Control is responsible for implementing
 any application specific dynamic control of the DSP pipeline; this is optional and will only be present where run time
-control is used. These are in the application package as they will be unique for each application. Audio Source Audio
+control is used. These are in the Application package as they will be unique for each application. Audio Source, Audio
 Sink, and Control make use of the classes in lib_audio_dsp; all make use of a pointer to a shared adsp_pipeline_t (as
 shown by the aggregation relationships (hollow diamond) in :numref:`dsp-class-label`). lib_audio_dsp presents a thread
 safe API, allowing Audio Source, Audio Sink and Control to exist on separate threads if desired. However, they must all
