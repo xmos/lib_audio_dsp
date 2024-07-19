@@ -6,15 +6,12 @@ Generate includes for all the APIs in this repo
 from mako.template import Template
 from pathlib import Path
 import ast
-import gen_control
 
 ROOT_DIR = Path(__file__).parents[1]
 PYTHON_ROOT = Path(ROOT_DIR, "python")
 DSP_GEN_DIR = Path(__file__).parent / "dsp_components" / "stages" / "gen"
 PROG_GEN_DIR = Path(__file__).parent / "programming_guide" / "gen"
 CTRL_GEN_DIR = Path(__file__).parent / "dsp_components" / "runtime_control" / "gen"
-
-gen_control.main()
 
 def python_doc(src_dir, dst_dir):
     p_design = sorted(src_dir.glob("*.py"))
@@ -99,24 +96,7 @@ ${"="*len(str(module))}
     (dst_dir / f"{src_dir.parts[-2]}.{src_dir.parts[-1]}.inc").write_text(gen)
 
 
-def control_doc(src_dir, dst_dir, glob="*config.h"):
-    api_dir = ROOT_DIR
-    c_api_files = sorted(src_dir.glob(glob))
-    c_design_modules = [p.relative_to(api_dir) for p in c_api_files if not p.name.startswith("_")]
-    gen = Template("""
-% for module in modules:
-${str(module.name[:-len("_config.h")].replace("_", " ").title().replace("Rms", "RMS").replace("Fir", "FIR"))}
-${"="*len(str(module.name)[:-len("_config.h")])}
-
-.. doxygenfile:: ${module.name}
-
-%endfor
-""").render(modules=c_design_modules)
-    (dst_dir / f"{src_dir.parts[-2]}.{src_dir.parts[-1]}.inc").write_text(gen)
-
-
 python_doc(ROOT_DIR / "python" / "audio_dsp" / "design", PROG_GEN_DIR)
 python_doc_stages(ROOT_DIR / "python" / "audio_dsp" / "stages", DSP_GEN_DIR)
 
 c_doc(ROOT_DIR / "lib_audio_dsp" / "api" / "stages", PROG_GEN_DIR, "adsp_*.h")
-control_doc(ROOT_DIR / "doc" / "dsp_components" / "gen" / "control_gen" / "common", CTRL_GEN_DIR)
