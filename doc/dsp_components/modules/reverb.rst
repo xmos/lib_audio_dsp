@@ -8,8 +8,13 @@ Reverb
 Reverb Room
 ===========
 
-This is based on Freeverb by Jezar at Dreampoint, and consists of 8 parallel 
-comb filters fed into 4 series all-pass filters.
+The room reverb imitates the reflections of a room. The algorithm is a 
+Schroeder style reverberation, based on Freeverb by Jezar at Dreampoint.
+It consists of 8 parallel comb filters fed into 4 series all-pass filters,
+with a wet and dry mic control to set the effect level.
+
+For more details on the algorithm, see `Physical Audio Signal Processing
+<https://www.dsprelated.com/freebooks/pasp/Freeverb.html>`_ by Julius Smith.
 
 .. doxygenstruct:: reverb_room_t
     :members:
