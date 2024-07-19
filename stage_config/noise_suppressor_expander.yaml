@@ -17,5 +17,5 @@ module:
       help: The current gain applied by the noise suppressor in Q0.31 format.
     slope:
       type: float
-      help: The compression slope of the noise suppressor. This is calculated as `(1 - ratio)`.
+      help: The expansion slope of the noise suppressor. This is calculated as `(1 - ratio)`.
 includes: []

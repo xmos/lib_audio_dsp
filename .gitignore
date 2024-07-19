@@ -9,7 +9,6 @@
 **/autogen/
 **/bin*/
 **/dist*/
-doc/dsp_components/gen
 
 # Build & debug 
 *.a
