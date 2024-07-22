@@ -10,6 +10,7 @@
 #include "wav_utils.h"
 #include "app_dsp.h"
 #include "fileio_task.h"
+#include "adsp_generated_auto.h"
 
 
 #define FILEREAD_CHUNK_SIZE (1024)
@@ -205,6 +206,7 @@ void fileio_task(chanend_t c_control)
     file_close(&input_file);
     file_close(&output_file);
     shutdown_session();
+    adsp_auto_print_thread_max_ticks();
     printf("DONE\n");
     _Exit(0);
 }

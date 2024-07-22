@@ -30,3 +30,6 @@
 # macOS 
 .DS_Store
 .venv
+*.gv
+.gdb_history
+*.bkp
