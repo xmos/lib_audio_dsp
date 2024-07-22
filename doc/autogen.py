@@ -65,10 +65,11 @@ def python_doc_stages(src_dir, dst_dir):
         class_data = {}
         for class_name in classes:
             safe_name = class_name.replace("RMS", "Rms")
-            yaml_path =  Path(YAML_DIR, re.sub(r'(?<!^)(?=[A-Z])', '_', safe_name).lower() + ".yaml")
+            snake_name = re.sub(r'(?<!^)(?=[A-Z])', '_', safe_name).lower()
+            yaml_path =  Path(YAML_DIR, snake_name + ".yaml")
             if yaml_path.is_file():
                 with open(yaml_path, "r") as fd:
-                    data = yaml.safe_load(fd)
+                    data = yaml.safe_load(fd)   
                     struct_name = list(data["module"].keys())[0]
                     class_data[class_name] = data["module"][struct_name]
             else:

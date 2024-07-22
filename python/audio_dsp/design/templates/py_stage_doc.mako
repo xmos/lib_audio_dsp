@@ -23,9 +23,9 @@ The following runtime control parameters are available for the ${cl} Stage:
 .. list-table::
 
   ## * - index
-  * - cmd_id
-    - payload_len
-    - description
+  * - Command ID macro
+    - Payload length
+    - Description
 
 <% cmd_id = 1 %>\
 % for field_name, field_data in class_data[cl].items():
