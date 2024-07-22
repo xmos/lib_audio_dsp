@@ -1,6 +1,9 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""Stage implementation for the noise suppressor (expander)."""
+"""Noise suppressor and expander Stages control the behaviour
+of quiet signals, typically by tring to reduce the audibility of noise
+in the signal.
+"""
 
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc

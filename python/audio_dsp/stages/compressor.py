@@ -1,6 +1,8 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""The compressor stage."""
+"""Compressor stages allow for control of the dynamic range of the
+signal, such as reducing the level of loud sounds.
+"""
 
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc

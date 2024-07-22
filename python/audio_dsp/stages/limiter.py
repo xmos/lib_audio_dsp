@@ -1,6 +1,8 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""Assorted stages for limiting the signal."""
+"""Limiter Stages allow the amplitude of the signal to be restricted
+based on its envelope.
+"""
 
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
