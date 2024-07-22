@@ -10,8 +10,8 @@ providing more detailed view of the DSP modules.
 
 Each DSP module has been implemented in floating point Python, fixed
 point int32 Python and fixed point int32 C, with optimisations for xcore.
-Typically the Python and C fixed point implementations are bit exact,
-allowing for Python prototyping of DSP pipelines.
+The Python and C fixed point implementations aim to be bit exact with
+each other, allowing for Python prototyping of DSP pipelines.
 
 .. toctree::
     :maxdepth: 1

@@ -136,11 +136,11 @@ Limiters
 ========
 
 Limiters will reduce the amplitude of a signal when the signal envelope
-exceeds the desired threshold. This is similar behaviour to a compressor
+is greater than the desired threshold. This is similar behaviour to a compressor
 with an infinite ratio.
 
 A limiter will run an internal envelope detector to get the signal
-envelope, then compare it to the threshold. If the envelope exceeds the
+envelope, then compare it to the threshold. If the envelope is greater than the
 threshold, the applied gain will be reduced. If the envelope is below
 the threshold, unity gain will be applied. The gain is run through an EMA
 to avoid abrupt changes. The same `attack and release times`_ are used
@@ -255,14 +255,14 @@ When envelope is above the threshold, the new gain is calculated as
 Compressors
 ===========
 
-A compressor will attenuate the signal when the envelope exceeds the
+A compressor will attenuate the signal when the envelope is greater than the
 threshold. The input/output relationship above the threshold is defined
 by the compressor ``ratio``.
 
 As with a limiter, the compressor runs an internal envelope detector 
 to get the signal envelope, then compare it to the threshold. If the
-envelope exceeds the threshold, the gain will be proportionally reduced
-by the ``ratio``, such that it exceeds the by a smaller amount. 
+envelope is greater than the threshold, the gain will be proportionally reduced
+by the ``ratio``, such that it is greater than the threshold by a smaller amount. 
 If the envelope is below the threshold, unity gain will be applied. 
 The gain is then run through an EMA to avoid abrupt changes, before being
 applied. 
@@ -321,8 +321,8 @@ When the envelope is above the threshold, the new gain is calculated as
 Sidechain RMS Compressor
 ------------------------
 
-The sidechain RMS compressor uses the envelope of one signal to compress
-another signal.
+The sidechain RMS compressor calculates the envelope of one signal and
+uses it to compress another signal.
 It two signals: *detect* and *input*. The envelope of the *detect* signal 
 is calculated using an internal :ref:`EnvelopeDetectorRMS`.
 The gain is calculated in the same way as a :ref:`CompressorRMS`, but the
@@ -364,14 +364,12 @@ attenuate quiet signals, such as low level noise.
 Like limiters and compressors, an expander will run an internal envelope
 detector to calculate the envelope and compare it to the threshold.
 If the envelope is below the threshold, the applied gain will be reduced.
-If the envelope exceeds the threshold, unity gain will be applied.
+If the envelope is greater than the threshold, unity gain will be applied.
 The gain is run through an EMA to avoid abrupt changes. 
 The same `attack and release times`_ are used for the envelope detector
-and the gain smoothing.
-.. TODO verify this next part
-The difference with limiters and compressor is that the attack and
-release alphas are swapped so when we should normally attack,
-we release, and vice versa.
+and the gain smoothing. In an expander, the attack time is defined as the
+speed at which the gain returns to unity after the signal has been
+below the threshold.
 
 .. _NoiseGate:
 

@@ -204,7 +204,7 @@ Delay
 
 The delay module uses a memory buffer to return a sample after a specified
 time period.
-THe returned samples will be delayed by a specified value.
+The returned samples will be delayed by a specified value.
 The ``max_delay`` is set at initialisation, and sets the amount of
 memory used by the buffers. It cannot be changed at runtime.
 The current ``delay`` value can be changed at runtime within the range
