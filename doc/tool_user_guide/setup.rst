@@ -103,7 +103,7 @@ Setup Steps
          cmake -B build 
          cd ../../../..
 
-#. Create a python virtualenv inside *lib_audio_dsp*.
+#. Create a requirements file inside *lib_audio_dsp_sandbox*.
 
    .. tab:: Windows
 
@@ -111,7 +111,27 @@ Setup Steps
 
       .. code-block:: console
 
-         cd lib_audio_dsp 
+         echo -e lib_audio_dsp/python > requirements.txt
+         echo notebook >> requirements.txt
+
+   .. tab:: Linux and macOS
+
+      On Linux or macOS:
+
+      .. code-block:: console
+
+         echo "-e lib_audio_dsp/python" > requirements.txt
+         echo notebook >> requirements.txt
+         chmod 644 requirements.txt
+
+#. Create a python virtualenv inside *lib_audio_dsp_sandbox*.
+
+   .. tab:: Windows
+
+      On Windows:
+
+      .. code-block:: console
+
          python -m venv .venv 
          .venv\Scripts\activate.bat 
          pip install -Ur requirements.txt 
@@ -123,7 +143,6 @@ Setup Steps
 
       .. code-block:: console
 
-         cd lib_audio_dsp 
          python -m venv .venv 
          source .venv/bin/activate 
          pip install -Ur requirements.txt 
