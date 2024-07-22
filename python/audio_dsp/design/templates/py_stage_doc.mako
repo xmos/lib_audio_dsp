@@ -18,23 +18,26 @@ ${"="*len(cl)}
 .. rubric:: Control
 
 % if class_data[cl]:
-The following control parameters are available for the ${module}.${cl} Stage:
+The following runtime control parameters are available for the ${cl} Stage:
 
 .. list-table::
 
-  * - index
-    - cmd_id
+  ## * - index
+  * - cmd_id
     - payload_len
     - description
 
 <% cmd_id = 1 %>\
 % for field_name, field_data in class_data[cl].items():
 <%
+    import re
     size_str = "*[" + str(field_data['size']) + "]" if "size" in field_data else ""
     help_str = f'{field_data["help"]} ' if "help" in field_data else ""
+    safe_name = cl.replace("RMS", "Rms")
+    snake_name = re.sub(r'(?<!^)(?=[A-Z])', '_', safe_name).upper()
 %>\
-  * - ${cmd_id}
-    - CMD_${cl.upper()}_${field_name.upper()}
+  ## * - ${cmd_id}
+  * - CMD_${snake_name}_${field_name.upper()}
     - ``sizeof(${field_data["type"]})${size_str}``
     - ${help_str}
 
@@ -43,7 +46,7 @@ The following control parameters are available for the ${module}.${cl} Stage:
 
 % else:  ## class_data[cl]
 
-The ${module}.${cl} Stage has no runtime controllable parameters.
+The ${cl} Stage has no runtime controllable parameters.
 
 % endif ## class_data[cl]
 
