@@ -188,8 +188,8 @@ class XCommonCMakeHelper:
                     text=True,
                 )
             else:
-                # need to configure, default to Ninja because it's better
-                generator = "Ninja" if shutil.which("ninja") else "Unix Makefiles"
+                # Use Makefiles as its the only one xcommon cmake officially supports
+                generator = "Unix Makefiles"
                 ret = subprocess.Popen(
                     [
                         *(f"cmake -S {self.source_dir} -B {self.build_dir} -G".split()),
