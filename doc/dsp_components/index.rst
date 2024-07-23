@@ -3,7 +3,7 @@ DSP Components
 ##############
 
 Introduction
-^^^^^^^^^^^^
+------------
 
 lib_audio_dsp provides many common signal processing function optimised
 for xcore. These can be combined together to make complex audio pipelines
@@ -19,7 +19,7 @@ use cases.
 The higher-level APIs are called *DSP Stages*. These stages are designed
 to work with the Python DSP pipeline tool. This tool allows developers
 to quickly and easily create, test, and deploy DSP pipelines without
-needing to write a lot of code. By using DSP Stages, you can build
+needing to write a lot of code. By using DSP Stages, the user can build
 complex audio processing workflows in a short amount of time, making it
 ideal for rapid prototyping and development.
 
@@ -32,8 +32,10 @@ existing system, or as a starting point for creating bespoke DSP
 functions.
 
 
+
 .. toctree::
     :maxdepth: 1
+    :hidden:
 
     modules/index.rst
     stages/index.rst
