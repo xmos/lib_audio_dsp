@@ -21,7 +21,7 @@ ${"="*len(cl)}
 The following runtime control parameters are available for the ${cl} Stage:
 
 .. list-table::
-  :widths: 29, 19, 50
+  :widths: 38, 21, 31
 
   * - Command ID macro
     - Payload length
