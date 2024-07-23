@@ -21,6 +21,8 @@ lib_audio_dsp includes common signal processing functions optimised for the xcor
 
 .. end-introductory-statement
 
+
+.. TODO make this point to the lib_audio_dsp docs once they're online
 See the `XMOS website <https://www.xmos.com/develop/dsp#software>`_ for usage details and getting started. 
 
 
