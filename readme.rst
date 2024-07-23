@@ -19,6 +19,10 @@ lib_audio_dsp includes common signal processing functions optimised for the xcor
 * adders, subtractors, gains, volume controls and mixers
 * delays and reverb.
 
+These can be combined together to make complex audio pipelines for many
+different applications, such as home audio, music production, voice
+processing, and AI feature extraction.
+
 .. end-introductory-statement
 
 
