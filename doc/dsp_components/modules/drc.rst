@@ -323,7 +323,7 @@ Sidechain RMS Compressor
 
 The sidechain RMS compressor calculates the envelope of one signal and
 uses it to compress another signal.
-It two signals: *detect* and *input*. The envelope of the *detect* signal 
+It takes two signals: *detect* and *input*. The envelope of the *detect* signal 
 is calculated using an internal :ref:`EnvelopeDetectorRMS`.
 The gain is calculated in the same way as a :ref:`CompressorRMS`, but the
 gain is then applied to the *input* sample.
