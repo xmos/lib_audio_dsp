@@ -133,7 +133,7 @@ class envelope_detector_rms(envelope_detector_peak):
     """
     Envelope detector that follows the RMS value of a signal.
 
-    Note this returns the mean**2 value, there is no need to do the
+    Note this returns the mean² value, there is no need to do the
     sqrt() as if the output is converted to dB, 10log10() can be taken
     instead of 20log10().
 
@@ -150,7 +150,7 @@ class envelope_detector_rms(envelope_detector_peak):
         Take one new sample and return the updated envelope. Input
         should be scaled with 0dB = 1.0.
 
-        Note this returns the mean**2 value, there is no need to do the
+        Note this returns the mean² value, there is no need to do the
         sqrt() as if the output is converted to dB, 10log10() can be
         taken instead of 20log10().
 
@@ -177,7 +177,7 @@ class envelope_detector_rms(envelope_detector_peak):
         Take one new sample and return the updated envelope. Input
         should be scaled with 0dB = 1.0.
 
-        Note this returns the mean**2 value, there is no need to do the
+        Note this returns the mean² value, there is no need to do the
         sqrt() as if the output is converted to dB, 10log10() can be
         taken instead of 20log10().
 
@@ -582,7 +582,7 @@ class limiter_rms(compressor_limiter_base):
     threshold : float
         Value above which limiting occurs for floating point
         processing. Note the threshold is saves in the power domain, as
-        the RMS envelope detector returns x**2
+        the RMS envelope detector returns x²
 
     """
 
@@ -893,7 +893,7 @@ class compressor_rms_softknee(compressor_limiter_base):
 
         The knee is approximated as a straight line between the knee
         start at (x1, y1) and the knee end at (x2, y2) BUT as the
-        envelope is RMS**2, we actually get a curve.
+        envelope is RMS², we actually get a curve.
 
         x2 is modified to be halfway between the threshold and the end
         of the knee, trying to join closer to the true knee end than
@@ -938,7 +938,7 @@ class compressor_rms_softknee(compressor_limiter_base):
     def compressor_rms_softknee_gain_calc(self, envelope, threshold, slope=None):
         """Calculate the float gain for the current sample.
 
-        Note that as the RMS envelope detector returns x**2, we need to
+        Note that as the RMS envelope detector returns x², we need to
         use db_pow. The knee is exponential in the log domain, so must
         be calculated in the log domain.
 
@@ -963,7 +963,7 @@ class compressor_rms_softknee(compressor_limiter_base):
     def compressor_rms_softknee_gain_calc_approx(self, envelope, threshold, slope=None):
         """Calculate the float gain for the current sample, using a
         linear approximation for the soft knee. Since the RMS envelope
-        is used, and returns RMS**2, the linear approximation gives a
+        is used, and returns RMS², the linear approximation gives a
         quadratic fit, and so is reasonably close to the true soft knee.
 
         Below the start of the knee, the gain is 1. Above the end of the
@@ -985,7 +985,7 @@ class compressor_rms_softknee(compressor_limiter_base):
     def compressor_rms_softknee_gain_calc_xcore(self, envelope_int, threshold_int, slope_f32=None):
         """Calculate the int gain for the current sample, using a
         linear approximation for the soft knee. Since the RMS envelope
-        is used, and returns RMS**2, the linear approximation gives a
+        is used, and returns RMS², the linear approximation gives a
         quadratic fit, and so is reasonably close to the true soft knee.
 
         Below the start of the knee, the gain is 1. Above the end of the

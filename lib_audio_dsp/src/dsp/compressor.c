@@ -16,7 +16,6 @@ compressor_t adsp_compressor_rms_init(
   compressor_t comp;
   comp.env_det = adsp_env_detector_init(fs, attack_t, release_t);
   float th = powf(10, threshold_db / 10);
-  if (th > 1) th = 1.0;
   comp.threshold = from_float_pos(th);
   comp.gain = INT32_MAX;
   comp.slope = (1 - 1 / ratio) / 2;

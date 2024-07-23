@@ -18,9 +18,9 @@ class expander_base(compressor_limiter_base):
     A base class for expanders (including noise suppressors).
 
     Expanders differ from compressors in that they reduce the level of a
-    signal when it falls below a threshold (instead of above). This
-    means the attack and release times are swapped in the gain
-    calculation (i.e. release after going above the threshold).
+    signal when it falls below a threshold (instead of above). The
+    attack time is still defined as how quickly the gain is changed
+    after the envelope exceeds the threshold.
 
     Expanders, noise gates and noise suppressors have very similar
     structures, with differences in the gain calculation. All the shared
@@ -101,8 +101,10 @@ class expander_base(compressor_limiter_base):
 
         # see if we're attacking or decaying
         if new_gain < self.gain[channel]:
+            # below threshold, gain < unity
             alpha = self.release_alpha
         else:
+            # above threshold, gain = unity
             alpha = self.attack_alpha
 
         # do exponential moving average
@@ -134,8 +136,10 @@ class expander_base(compressor_limiter_base):
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int[channel]:
+            # below threshold, gain < unity
             alpha = self.release_alpha_int
         else:
+            # above threshold, gain = unity
             alpha = self.attack_alpha_int
 
         # do exponential moving average

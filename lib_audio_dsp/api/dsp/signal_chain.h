@@ -93,7 +93,7 @@ int32_t adsp_to_q31(int32_t input);
 int32_t adsp_adder(int32_t * input, unsigned n_ch);
 
 /**
- * @brief Saturating subtraction of two samples
+ * @brief Saturating subtraction of two samples, this returns `x - y`.
  *
  * @param x                 Minuend
  * @param y                 Subtrahend
