@@ -1,11 +1,10 @@
 Setup
 #####
 
-In this section the requirements and the steps to run a basic pipeline are
-described. This document lists the necessary steps for both Windows and
-Linux/macOS. This section uses the *app_simple_audio_dsp_integration* example
-found within this repository. The steps will be broadly similar for any
-user-created project. This 
+This section describes the requirements and the steps to run a basic pipeline.
+This document lists the necessary steps for both Windows and Linux/macOS.
+This section uses the *app_simple_audio_dsp_integration* example found within this repository.
+The steps will be broadly similar for any user-created project.
 
 .. note::
 
@@ -26,7 +25,13 @@ Software Requirements
   installed and the ``dot`` executable must be on the system path.
 - `XTC 15.2.1 <https://www.xmos.com/software-tools/>`_
 - `Python 3.10 <https://www.python.org/downloads/>`_
+- `Jupyter 7.2.1 <https://jupyter.org/install>`_
 - `CMake <https://cmake.org/download/>`_
+
+..
+   Attempts to use XTC 15.2.1 require manual installation of xcommon-cmake.
+   Once XTC 15.3.1 is publicly available, update the requirement here to that version.
+   XTC 15.3.1 has xcommon-cmake built-in
 
 Additionally, on Windows the following is required: 
 
@@ -86,7 +91,7 @@ Setup Steps
       .. code-block:: console
 
          cd lib_audio_dsp\examples\app_simple_audio_dsp_integration 
-         cmake -B build -G Ninja cd ..\..
+         cmake -B build -G Ninja cd ..\..\..\..
 
    .. tab:: Linux and macOS
 
@@ -96,9 +101,9 @@ Setup Steps
 
          cd lib_audio_dsp/examples/app_simple_audio_dsp_integration 
          cmake -B build 
-         cd ../..
+         cd ../../../..
 
-#. Create a python virtualenv inside *lib_audio_dsp*.
+#. Create a requirements file inside *lib_audio_dsp_sandbox*.
 
    .. tab:: Windows
 
@@ -106,7 +111,27 @@ Setup Steps
 
       .. code-block:: console
 
-         cd lib_audio_dsp 
+         echo -e lib_audio_dsp/python > requirements.txt
+         echo notebook >> requirements.txt
+
+   .. tab:: Linux and macOS
+
+      On Linux or macOS:
+
+      .. code-block:: console
+
+         echo "-e lib_audio_dsp/python" > requirements.txt
+         echo notebook >> requirements.txt
+         chmod 644 requirements.txt
+
+#. Create a python virtualenv inside *lib_audio_dsp_sandbox*.
+
+   .. tab:: Windows
+
+      On Windows:
+
+      .. code-block:: console
+
          python -m venv .venv 
          .venv\Scripts\activate.bat 
          pip install -Ur requirements.txt 
@@ -118,7 +143,6 @@ Setup Steps
 
       .. code-block:: console
 
-         cd lib_audio_dsp 
          python -m venv .venv 
          source .venv/bin/activate 
          pip install -Ur requirements.txt 

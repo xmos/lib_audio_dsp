@@ -7,3 +7,4 @@ Tool User Guide
 
     setup
     using_the_tool
+    pipeline_design

@@ -1,6 +1,6 @@
 .. _pipeline_design_api:
 
-PIPELINE DESIGN API
+Pipeline Design API
 ###################
 
 This page describes the C and python APIs that will be needed when using the pipeline design utility.
