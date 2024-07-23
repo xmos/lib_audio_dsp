@@ -2,9 +2,6 @@
 DSP Components
 ##############
 
-Introduction
-------------
-
 lib_audio_dsp provides many common signal processing function optimised
 for xcore. These can be combined together to make complex audio pipelines
 for many different applications, such as home audio, music production,
@@ -35,7 +32,6 @@ functions.
 
 .. toctree::
     :maxdepth: 1
-    :hidden:
 
     modules/index.rst
     stages/index.rst
