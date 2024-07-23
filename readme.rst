@@ -1,3 +1,4 @@
+#############
 Lib Audio DSP
 #############
 
@@ -19,6 +20,8 @@ lib_audio_dsp includes common signal processing functions optimised for the xcor
 * delays and reverb.
 
 See the :ref:`programming guide<programming_guide_introduction>` for usage details and getting started. 
+
+.. end-introductory-statement
 
 Software version
 ****************

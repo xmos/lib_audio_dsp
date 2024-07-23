@@ -1,6 +1,5 @@
-###########################
-LIB AUDIO DSP DOCUMENTATION
-###########################
+.. include:: ./readme.rst
+    :end-before: .. end-introductory-statement
 
 .. toctree::
     :maxdepth: 3
