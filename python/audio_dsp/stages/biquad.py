@@ -257,6 +257,3 @@ class Biquad(Stage):
         self.details = dict(type="linkwitz", **_ws(locals()))
         self.dsp_block = bq.biquad_linkwitz(self.fs, self.n_in, f0, q0, fp, qp)
         return self
-
-if __name__ == "__main__":
-    pass

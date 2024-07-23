@@ -19,9 +19,10 @@ lib_audio_dsp includes common signal processing functions optimised for the xcor
 * adders, subtractors, gains, volume controls and mixers
 * delays and reverb.
 
-See the :ref:`programming guide<programming_guide_introduction>` for usage details and getting started. 
-
 .. end-introductory-statement
+
+See the `XMOS website <https://www.xmos.com/develop/dsp#software>`_ for usage details and getting started. 
+
 
 Software version
 ****************
