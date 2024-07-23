@@ -21,7 +21,6 @@ ${"="*len(cl)}
 The following runtime control parameters are available for the ${cl} Stage:
 
 .. list-table::
-  :class: longtable
   :widths: auto
 
   * - Command ID macro
