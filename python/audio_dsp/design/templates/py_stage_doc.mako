@@ -21,7 +21,7 @@ ${"="*len(cl)}
 The following runtime control parameters are available for the ${cl} Stage:
 <%
   row_list = []
-  max_cmd = len("Command ID macro")
+  max_cmd = len("Command ID macro") + 2 # add 2 so the title doesn't ever get split in the PDF
   max_pay = len("Payload length")
   max_help = len("Description")
   for field_name, field_data in class_data[cl].items():
@@ -42,13 +42,14 @@ The following runtime control parameters are available for the ${cl} Stage:
     if len(help_str) > max_help:
       max_help = len(help_str)
   
-  page_width = 75
+  page_width = 74 # this is a guesstimate of number of chars in a page
   cmd_width = int((max_cmd/page_width)*100)
-  pay_width = int(((max_pay - 4)/page_width)*100)
+  pay_width = int(((max_pay - 5)/page_width)*100) # subtract ` chars and compensate for font (ish)
   help_width = 100 - cmd_width - pay_width
 
 %>
 ##  do the printing, use ljust to pad to max size
+
 .. table::
   :widths: ${cmd_width}, ${pay_width}, ${help_width} 
   
