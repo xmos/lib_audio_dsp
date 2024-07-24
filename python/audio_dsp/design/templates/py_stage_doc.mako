@@ -41,11 +41,16 @@ The following runtime control parameters are available for the ${cl} Stage:
       max_pay = len(payload_str)
     if len(help_str) > max_help:
       max_help = len(help_str)
-    
+  
+  page_width = 80
+  cmd_width = int((max_cmd/page_width)*100)
+  pay_width = int((max_pay/page_width)*100)
+  help_width = 100 - cmd_width - pay_width
+
 %>
 ##  do the printing, use ljust to pad to max size
 .. table::
-  :widths: ${max_cmd/70}, ${max_pay/70}, ${100-(max_cmd + max_pay)/70} 
+  :widths: ${cmd_width}, ${pay_width}, ${help_width} 
   
   ${"="*max_cmd}  ${"="*max_pay}  ${"="*max_help}
   ${"Command ID macro".ljust(max_cmd)}  ${"Payload length".ljust(max_pay)}  ${"Description".ljust(max_help)}
