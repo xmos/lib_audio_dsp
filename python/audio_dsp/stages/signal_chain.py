@@ -1,6 +1,9 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""Assorted stages for common signal chain operations."""
+"""Signal chain stages allow for the control of signal flow through the
+pipeline. This includes Stages for combining and splitting signals, basic
+gain components, and delays.
+"""
 
 from ..design.stage import Stage, find_config, StageOutputList, StageOutput
 from ..dsp import generic as dspg

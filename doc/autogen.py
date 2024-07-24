@@ -6,11 +6,16 @@ Generate includes for all the APIs in this repo
 from mako.template import Template
 from pathlib import Path
 import ast
+import re
+import yaml
 
 ROOT_DIR = Path(__file__).parents[1]
 PYTHON_ROOT = Path(ROOT_DIR, "python")
 CTRL_GEN_DIR = Path(__file__).parent / "dsp_components" / "runtime_control" / "gen"
 DSP_GEN_DIR = Path(__file__).parent / "dsp_components" / "stages" / "gen"
+PROG_GEN_DIR = Path(__file__).parent / "programming_guide" / "gen"
+PY_STAGE_MAKO = Path(PYTHON_ROOT, "audio_dsp", "design", "templates", "py_stage_doc.mako")
+YAML_DIR =  Path(ROOT_DIR, "stage_config")
 TOOL_USER_GEN_DIR = Path(__file__).parent / "tool_user_guide" / "gen"
 
 def python_doc(src_dir, dst_dir):
@@ -56,28 +61,23 @@ def python_doc_stages(src_dir, dst_dir):
         # Sorry
         title = title.title().replace("Rms", "RMS").replace("Fir", "FIR")
         docstring, classes = get_file_info(file)
-        gen = Template(
-"""${"#"*len(title)}
-${title}
-${"#"*len(title)}
 
-${docstring}
+        class_data = {}
+        for class_name in classes:
+            safe_name = class_name.replace("RMS", "Rms")
+            snake_name = re.sub(r'(?<!^)(?=[A-Z])', '_', safe_name).lower()
+            yaml_path =  Path(YAML_DIR, snake_name + ".yaml")
+            if yaml_path.is_file():
+                with open(yaml_path, "r") as fd:
+                    data = yaml.safe_load(fd)   
+                    struct_name = list(data["module"].keys())[0]
+                    class_data[class_name] = data["module"][struct_name]
+            else:
+                class_data[class_name] = None
+            pass
 
-%for cl in classes:
-
-%if len(classes) != 1:
-${"="*len(cl)}
-${cl}
-${"="*len(cl)}
-%endif
-
-.. autoclass:: ${module}.${cl}
-    :noindex:
-    :members:
-
-%endfor"""
-).render(title = title, module = module, classes = classes, docstring = docstring)
-        (dst_dir / f"{module_name}.rst").write_text(gen)
+        gen = Template(filename=str(PY_STAGE_MAKO)).render(title = title, module = module, classes = classes, docstring = docstring, class_data = class_data)
+        (dst_dir / f"{module_name}.rst").write_text(gen, newline="")
 
 
 def c_doc(src_dir, dst_dir, glob="*.h"):
@@ -95,8 +95,8 @@ ${"="*len(str(module))}
 """).render(modules=c_design_modules)
     (dst_dir / f"{src_dir.parts[-2]}.{src_dir.parts[-1]}.inc").write_text(gen)
 
+if __name__ == "__main__":
+	python_doc(ROOT_DIR / "python" / "audio_dsp" / "design", TOOL_USER_GEN_DIR)
+	python_doc_stages(ROOT_DIR / "python" / "audio_dsp" / "stages", DSP_GEN_DIR)
 
-python_doc(ROOT_DIR / "python" / "audio_dsp" / "design", TOOL_USER_GEN_DIR)
-python_doc_stages(ROOT_DIR / "python" / "audio_dsp" / "stages", DSP_GEN_DIR)
-
-c_doc(ROOT_DIR / "lib_audio_dsp" / "api" / "stages", TOOL_USER_GEN_DIR, "adsp_*.h")
+	c_doc(ROOT_DIR / "lib_audio_dsp" / "api" / "stages", TOOL_USER_GEN_DIR, "adsp_*.h")

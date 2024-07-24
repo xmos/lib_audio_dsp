@@ -1,8 +1,8 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""The biquad stage."""
+"""Biquad Stages can be used for basic audio filters."""
 
-from ..design.stage import Stage, find_config
+from audio_dsp.design.stage import Stage, find_config
 import audio_dsp.dsp.biquad as bq
 import numpy as np
 

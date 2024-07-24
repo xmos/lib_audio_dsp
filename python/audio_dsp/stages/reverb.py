@@ -1,6 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""The reverb stage."""
+"""Reverb Stages emulate the natural reverberance of rooms."""
 
 from ..design.stage import Stage, find_config
 import audio_dsp.dsp.reverb as rvrb

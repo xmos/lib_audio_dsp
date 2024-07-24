@@ -1,6 +1,8 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""The sidechain compressor."""
+"""Sidechain compressor Stages use the envelope of one input to control
+the level of a different input.
+"""
 
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
