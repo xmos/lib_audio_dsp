@@ -42,9 +42,9 @@ The following runtime control parameters are available for the ${cl} Stage:
     if len(help_str) > max_help:
       max_help = len(help_str)
   
-  page_width = 80
+  page_width = 75
   cmd_width = int((max_cmd/page_width)*100)
-  pay_width = int((max_pay/page_width)*100)
+  pay_width = int(((max_pay - 4)/page_width)*100)
   help_width = 100 - cmd_width - pay_width
 
 %>
