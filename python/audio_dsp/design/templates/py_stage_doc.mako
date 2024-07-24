@@ -45,7 +45,7 @@ The following runtime control parameters are available for the ${cl} Stage:
 %>
 ##  do the printing, use ljust to pad to max size
 .. table::
-  :widths: ${max_cmd}, ${max_pay}, ${70-max_cmd-max_pay} 
+  :widths: ${max_cmd/70}, ${max_pay/70}, ${100-(max_cmd + max_pay)/70} 
   
   ${"="*max_cmd}  ${"="*max_pay}  ${"="*max_help}
   ${"Command ID macro".ljust(max_cmd)}  ${"Payload length".ljust(max_pay)}  ${"Description".ljust(max_help)}
