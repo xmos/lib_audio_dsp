@@ -3,6 +3,7 @@
 """Signal generator DSP utilities."""
 
 import numpy as np
+import numpy.lib.scimath as emath
 import scipy.signal as spsig
 
 from audio_dsp.dsp import utils as utils
@@ -230,7 +231,7 @@ def pink_filter(fs: int, fmin: int = 20) -> tuple[np.ndarray, np.ndarray, float]
         A tuple containing the filter coefficients (a), gains (g), and
         output gain (output_g).
     """
-    n_filters = np.floor(np.emath.logn(4, 48000) - np.emath.logn(4, fmin)).astype(int)
+    n_filters = np.floor(emath.logn(4, 48000) - emath.logn(4, fmin)).astype(int)
 
     fc = np.zeros(n_filters)
     a = np.zeros(n_filters)
