@@ -51,8 +51,11 @@ documentation:
       pdf_title: '{{product}} - Tool User Guide'
       pdf_filename: '{{product}}_tool_user_guide_v{{version}}'
     doc/dsp_components/index:
-      pdf_title: '{{product}} - DSP components'
+      pdf_title: '{{product}} - DSP Components'
       pdf_filename: '{{product}}_dsp_components_v{{version}}'
     doc/design_guide/index:
       pdf_title: '{{product}} - DSP Design Guide'
       pdf_filename: '{{product}}_design_guide_v{{version}}'
+    doc/run_time_control_guide/index:
+      pdf_title: '{{product}} - DSP Run-time Control guide'
+      pdf_filename: '{{product}}_run_time_control_guide_v{{version}}'

@@ -7,6 +7,7 @@
     doc/dsp_components/index
     doc/design_guide/index
     doc/tool_user_guide/index
+    doc/run_time_control_guide/index
 
 
 Copyright & Disclaimer

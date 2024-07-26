@@ -73,4 +73,3 @@ reduce compute for simple functions. For a pipeline consisting of just biquads:
 
     modules/index.rst
     stages/index.rst
-    runtime_control/index.rst

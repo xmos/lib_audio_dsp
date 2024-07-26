@@ -1,3 +1,5 @@
+.. _dsp_stages_section:
+
 ##########
 DSP Stages
 ##########
