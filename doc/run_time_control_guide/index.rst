@@ -1,4 +1,4 @@
-Run-time control user guide
+Run-Time Control User Guide
 ===========================
 
 Introduction
@@ -76,7 +76,7 @@ This will print this dictionary of parameters:
 
 .. literalinclude:: ../../test/pipeline/doc_examples/run_time_dsp/config.txt
 
-This dict does not contain `CMD_VOLUME_CONTROL_TARGET_GAIN`, but is does contain "target_gain". The final
+This dictionary does not contain `CMD_VOLUME_CONTROL_TARGET_GAIN`, but is does contain "target_gain". The final
 command name is constructed as "CMD_{STAGE}_{PARAMETER}" where stage and parameter should be replaced with
 the correct values for each, capitalised.
 
