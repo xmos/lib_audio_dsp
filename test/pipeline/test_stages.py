@@ -199,8 +199,13 @@ def generate_test_param_file(stage_name, stage_config):
                     "type"
                 ]
                 # Convert the values into bytearrays and compute the payload length
-                if data_type in ["int", "int32_t", "uint32_t"]:
-                    ba = bytearray(struct.pack("I", value & 0xFFFFFFFF))
+                if data_type in ["uint32_t"]:
+                    value = np.uint32(value)
+                    ba = bytearray(struct.pack("I", value))
+                    payload_size += 4
+                elif data_type in ["int", "int32_t"]:
+                    value = np.int32(value)
+                    ba = bytearray(struct.pack("i", value))
                     payload_size += 4
                 elif data_type in ["float"]:
                     ba = struct.unpack("4b", struct.pack("f", value))
@@ -638,4 +643,3 @@ def test_fir(frame_size, filter_name):
         return p
 
     do_test(make_p, None, frame_size)
-
