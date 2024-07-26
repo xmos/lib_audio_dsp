@@ -13,9 +13,10 @@ This document details how to use this interface to extend a DSP application with
 of the audio processing. For a complete example of an application that updates the DSP configuration
 based on user input refer to application note AN02015.
 
-Control Interface Walkthrough
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+Control Interface Walkt_TYPEhrough
+^^^^^^^^^^^^^^^^^^^ type^^^^^^^^^^
+ All stages of the same type (e.g. `VolumeControl`) will have the same
+set of parameters. 
 Defining a Controllable Pipeline
 ********************************
 
@@ -77,8 +78,9 @@ This will print this dictionary of parameters:
 .. literalinclude:: ../../test/pipeline/doc_examples/run_time_dsp/config.txt
 
 This dictionary does not contain `CMD_VOLUME_CONTROL_TARGET_GAIN`, but is does contain "target_gain". The final
-command name is constructed as "CMD_{STAGE}_{PARAMETER}" where stage and parameter should be replaced with
-the correct values for each, capitalised.
+command name is constructed as "CMD_{STAGE_TYPE}_{PARAMETER}" where stage type and parameter should be replaced with
+the correct values for each, capitalised. All stages of the same type (e.g. `VolumeControl`) will have the same
+set of parameters. 
 
 The format and type of the control parameters for each stage are chosen to optimise processing time on the
 DSP thread. For example, `CMD_VOLUME_CONTROL_TARGET_GAIN` is not a floating point value in decibels, but rather
