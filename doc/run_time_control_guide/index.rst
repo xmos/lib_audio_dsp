@@ -13,10 +13,9 @@ This document details how to use this interface to extend a DSP application with
 of the audio processing. For a complete example of an application that updates the DSP configuration
 based on user input refer to application note AN02015.
 
-Control Interface Walkt_TYPEhrough
-^^^^^^^^^^^^^^^^^^^ type^^^^^^^^^^
- All stages of the same type (e.g. `VolumeControl`) will have the same
-set of parameters. 
+Control Interface Walkthrough
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Defining a Controllable Pipeline
 ********************************
 
