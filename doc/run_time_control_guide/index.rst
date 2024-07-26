@@ -7,7 +7,7 @@ Introduction
 For many applications, the ability to update the DSP configuration at run time will be required. A simple example
 would be a volume control where the end product will update the volume setting based on user input. This
 DSP library has been designed with use cases like this in mind and the generated DSP pipeline provides an interface for
-writing and reading the configuration.
+writing and reading the configuration of each stage.
 
 This document details how to use this interface to extend a DSP application with run-time control
 of the audio processing. For a complete example of an application that updates the DSP configuration
@@ -44,7 +44,7 @@ A point of interest in this example is that the `label` argument to the pipeline
 method is set, but only for the volume control stage. The label for the volume control in 
 this example is "volume". After generating the source code for this pipeline, a file will
 be created in the specified directory named "adsp_instance_id_auto.h" (assuming that the pipeline
-identifier "auto" has not been set). The contents of the generated file is shown below:
+identifier has been left as its default value of "auto"). The contents of the generated file are shown below:
 
 .. literalinclude:: ../../test/pipeline/doc_examples/run_time_dsp/src/dsp/adsp_instance_id_auto.h
    :language: C
@@ -61,18 +61,18 @@ Each stage type has a set of controllable parameters that can be read or written
 each parameter along with its type and name can be found in the :ref:`dsp_stages_section` section
 in the DSP components document. For volume control, there is a command named `CMD_VOLUME_CONTROL_TARGET_GAIN`
 that can be updated at run time to set the volume. This command is defined in the generated header file
-"cmds.h". This will be placed into the build directory at `src.autogen/common/cmds.h` and contain all
+"cmds.h". This will be placed into the build directory at `src.autogen/common/cmds.h`, which contains all
 the command IDs for all the stage types that were found by CMake.
 
 It is also possible to see the available control parameters, along with the values they will be set to, while
-designing the pipeline in python. This can be done using the `get_config` method of the stage as shown below.
+designing the pipeline in Python. This can be done using the `get_config` method of the stage as shown below.
 
 .. literalinclude:: ../../test/pipeline/doc_examples/run_time_control.py
    :language: python
    :start-after: # start config
    :end-before: # end config
 
-Which will print this dictionary of parameters.
+This will print this dictionary of parameters:
 
 .. literalinclude:: ../../test/pipeline/doc_examples/run_time_dsp/config.txt
 
@@ -81,12 +81,12 @@ command name is constructed as "CMD_{STAGE}_{PARAMETER}" where stage and paramet
 the correct values for each, capitalised.
 
 The format and type of the control parameters for each stage are chosen to optimise processing time on the
-DSP thread. This is the case for `CMD_VOLUME_CONTROL_TARGET_GAIN`, which is not a floating point value in decibels that
-may be expected, instead it is a linear fixed point value. For this example we can use the convenience function
+DSP thread. For example, `CMD_VOLUME_CONTROL_TARGET_GAIN` is not a floating point value in decibels, but rather
+a linear fixed point value. For this example we can use the convenience function
 `adsp_dB_to_gain()` which is defined in `dsp/signal_chain.h`.
 
-In order to send a control command, the API defined in `stages/adsp_control.h` us used. This API is documented in the
-tool user guide, :ref:`pipeline_design_api` section. The thread that will set the control parameter must complete the
+In order to send a control command, the API defined in `stages/adsp_control.h` is used. This API is documented in the
+Tool User Guide, in the :ref:`pipeline_design_api` section. Complete the
 following steps:
 
 #. Create a thread that will be updating the DSP configuration. This thread must be on the same tile as the DSP.
@@ -98,10 +98,10 @@ following steps:
 #. Initialise a new `adsp_stage_control_cmd_t`, specifying the instance ID (`volume_stage_index`), the command
    ID (`CMD_VOLUME_CONTROL_TARGET_GAIN`), and payload length (`sizeof(int32_t)`).
 
-#. Create the command payload, this will be an `int32_t` containing the computed gain. Update the command payload
+#. Create the command payload; this will be an `int32_t` containing the computed gain. Update the command payload
    pointer to reference the payload.
 
-#. Call `adsp_write_module_config` until it returns `ADSP_CONTROL_SUCCESS`. There may be in progress write or read 
+#. Call `adsp_write_module_config` until it returns `ADSP_CONTROL_SUCCESS`. There may be in-progress write or read 
    commands which have been issued but not completed when starting the new command. In this scenario
    the `adsp_write_module_config` will return `ADSP_CONTROL_BUSY` which means that the attempt to write had no 
    effect and should be attempted again.
@@ -118,7 +118,7 @@ Reading the Configuration of a Stage
 
 In some cases it makes sense to read back the configuration of the stage. Some stages have dynamic values that are 
 updated as the audio is processed and can be read back to the control thread. Volume control is an example of this
-as it will smoothly adjust the gain towards `CMD_VOLUME_CONTROL_TARGET_GAIN`, the current value of the gain which
+as it will smoothly adjust the gain towards `CMD_VOLUME_CONTROL_TARGET_GAIN`; the current value of the gain which
 is actually being applied can be read by reading from the parameter `CMD_VOLUME_CONTROL_GAIN`. The API for reading
 is largely the same as writing, except the control API will write to the payload buffer.
 
@@ -147,7 +147,7 @@ for the stage and write to the control state variable that new parameters are av
 an opportunity the stage will see that the parameters have been updated and update its internal state to match. When
 this is complete the control state variable will be cleared. 
 
-For a read command the process is similar, the control thread requests a read by updating the control state variable.
+For a read command the process is similar. The control thread requests a read by updating the control state variable.
 The stage will see this and update the configuration struct with the latest value and notify the control thread, via the
 control state variable, that it has completed the request.
 
