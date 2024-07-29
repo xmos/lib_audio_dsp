@@ -15,18 +15,18 @@ The library is split into 2 levels of API, DSP Stages and DSP Modules.
 Both APIs provide similar DSP functionality, but are suited to different
 use cases.
 
-.. rubric:: DSP Stages
+.. rubric:: :ref:`dsp_stages_section`
 
-The higher-level APIs are called *DSP Stages*. These stages are designed
+The higher-level APIs are called :ref:`dsp_stages_section`. These stages are designed
 to work with the Python DSP pipeline tool. This tool allows developers
 to quickly and easily create, test, and deploy DSP pipelines without
 needing to write a lot of code. By using DSP Stages, the user can build
 complex audio processing workflows in a short amount of time, making it
 ideal for rapid prototyping and development.
 
-.. rubric:: DSP Modules
+.. rubric:: :ref:`dsp_modules_section`
 
-The lower-level APIs are called *DSP Modules*. Those are meant to be
+The lower-level APIs are called :ref:`dsp_modules_section`. Those are meant to be
 used as an API directly in cases where the Python DSP pipeline tool is 
 not used. These can be useful when integrating DSP function into an
 existing system, or as a starting point for creating bespoke DSP
@@ -44,7 +44,8 @@ By default, the signal processing in the audio pipeline is carried out at 32 bit
 precision in Q4.27 format. Assuming a 24 bit input signal in Q0.24 format, this gives 4 bits of
 internal headroom in the audio pipeline. The output of the audio pipeline will be clipped back to
 Q0.24 before returning. For more precision, the pipeline can be configured to run with no headroom
-in Q0.31 format, but this requires manual headroom management.
+in Q0.31 format, but this requires manual headroom management. More information on setting the Q
+format can be found in the :ref:`library_q_format_section` section.
 
 DSP algorithms are implemented either on the XS3 CPU or VPU (vector processing unit).
 
@@ -72,6 +73,7 @@ reduce compute for simple functions. For a pipeline consisting of just biquads:
 
 .. toctree::
     :maxdepth: 1
+    :hidden:
 
-    modules/index.rst
     stages/index.rst
+    modules/index.rst

@@ -1,3 +1,5 @@
+.. _dsp_modules_section:
+
 ###########
 DSP Modules
 ###########
