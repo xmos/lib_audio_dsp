@@ -1,3 +1,5 @@
+.. _library_q_format_section:
+
 ################
 Library Q Format
 ################
