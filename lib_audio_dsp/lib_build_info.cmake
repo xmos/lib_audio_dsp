@@ -2,11 +2,11 @@ set(LIB_C_SRCS "")
 
 # The sources in the "stages" subdirectories of src/ and api/ require
 # some code generation to take place. The below implements the code
-# generation using some python that is a part of this repo.
+# generation using some Python that is a part of this repo.
 #
 # As this repo should also be available as a general purpose DSP library
 # for which no code generation is requried it is desired that installing the
-# python dependencies should not be required for that use case. Therefore
+# Python dependencies should not be required for that use case. Therefore
 # the below checks if the dependencies are available. If they are then it
 # always adds the code gen to the build and it is up to Make to decide
 # if they are needed. If the dependencies are not present, then the auto gen
@@ -75,10 +75,10 @@ if(PYTHON_EXE)
         file(GLOB STAGES_C_SOURCES RELATIVE ${CMAKE_CURRENT_LIST_DIR} CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/src/stages/*.c")
         list(APPEND LIB_C_SRCS ${STAGES_C_SOURCES})
     else()
-        message("Excluding lib_audio_dsp stages as audio_dsp python package not available")
+        message("Excluding lib_audio_dsp stages as audio_dsp Python package not available")
     endif()
 else()
-    message("Excluding lib_audio_dsp stages as python not available")
+    message("Excluding lib_audio_dsp stages as Python not available")
 endif()
 
 

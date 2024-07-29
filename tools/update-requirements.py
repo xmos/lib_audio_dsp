@@ -2,7 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 """
-Wrapper around pip-tools to make life easy, python for portability
+Wrapper around pip-tools to make life easy, Python for portability
 each <file.in> in the current folder will produce a compiled <file.txt> on top-level folder
 """
 

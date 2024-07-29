@@ -63,7 +63,7 @@ pipeline {
                   checkout scm
                   // try building a simple app without venv to check
                   // build that doesn't use design tools won't
-                  // need python
+                  // need Python
                   withTools(params.TOOLS_VERSION) {
                     dir("test/biquad") {
                       sh "cmake -B build"
@@ -160,7 +160,7 @@ pipeline {
                   checkout scm
                   // try building a simple app without venv to check
                   // build that doesn't use design tools won't
-                  // need python
+                  // need Python
                   withTools(params.TOOLS_VERSION) {
                     dir("test/biquad") {
                       sh "cmake -B build"

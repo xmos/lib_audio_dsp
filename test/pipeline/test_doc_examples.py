@@ -13,7 +13,7 @@ EXAMPLES = list(EXAMPLES_DIR.glob("*.py"))
 
 @pytest.mark.parametrize("example", EXAMPLES, ids=[e.name for e in EXAMPLES])
 def test_doc_examples(example):
-    """Run all the python scripts in doc_examples/"""
+    """Run all the Python scripts in doc_examples/"""
     run([sys.executable, example], check=True)
     
     
