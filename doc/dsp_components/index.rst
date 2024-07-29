@@ -1,3 +1,5 @@
+.. _dsp_components_section:
+
 ##############
 DSP Components
 ##############

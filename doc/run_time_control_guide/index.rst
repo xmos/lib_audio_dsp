@@ -1,3 +1,5 @@
+.. _run_time_control_guide_section:
+
 Run-Time Control User Guide
 ===========================
 

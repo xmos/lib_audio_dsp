@@ -1,6 +1,11 @@
+.. _tool_user_guide_section:
+
 ###############
 Tool User Guide
 ###############
+
+This guide introduces the `audio_dsp` python library, and how to use it to generate multithreaded
+DSP pipelines for the xcore.
 
 .. toctree::
     :maxdepth: 3

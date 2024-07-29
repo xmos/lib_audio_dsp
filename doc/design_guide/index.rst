@@ -1,3 +1,5 @@
+.. _design_guide_section:
+
 Design Guide
 ============
 
