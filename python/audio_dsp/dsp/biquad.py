@@ -386,7 +386,7 @@ def biquad_linkwitz(
 
 def _round_to_q30(coeffs: list[float]) -> tuple[list[float], list[int]]:
     """
-    Round a list of filter coefficients to Q30 format and int32
+    Round a list of filter coefficients to Q1.30 format and int32
     precision. The coefficients should already have any b_shift applied.
 
     Returns the rounded coefficients in float and int formats
@@ -397,7 +397,7 @@ def _round_to_q30(coeffs: list[float]) -> tuple[list[float], list[int]]:
 
     Q = 30
     for n in range(len(coeffs)):
-        # scale to Q30 ints, note this is intentionally not multiplied
+        # scale to Q1.30 ints, note this is intentionally not multiplied
         # (2**Q -1) to keep 1.0 as 1.0
         rounded_coeffs[n] = round(coeffs[n] * (2**Q))
         # check for overflow
@@ -429,7 +429,7 @@ def _apply_biquad_bshift(coeffs: list[float], b_shift: int) -> list[float]:
 
     This can be used for high gain shelf and peaking filters, where the
     filter coefficients are greater than 2, and so cannot be represented
-    in Q30 format.
+    in Q1.30 format.
 
     """
     gain = 2**-b_shift
@@ -639,7 +639,7 @@ def make_biquad_bandpass(fs: int, filter_freq: float, BW) -> list[float]:
         The center frequency of the bandpass filter.
     BW : float
         The bandwidth of the bandpass filter in octaves, measured
-        between -3dB points.
+        between -3 dB points.
 
     Returns
     -------
@@ -683,7 +683,7 @@ def make_biquad_bandstop(fs: int, filter_freq: float, BW: float) -> list[float]:
         The center frequency of the bandstop filter.
     BW : float
         The bandwidth of the bandstop filter in octaves, measured
-        between -3dB points
+        between -3 dB points
 
     Returns
     -------

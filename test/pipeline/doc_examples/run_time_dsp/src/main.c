@@ -1,3 +1,8 @@
+// Copyright 2024 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
+
+
 // example that is used in the run time guide
 
 // start example

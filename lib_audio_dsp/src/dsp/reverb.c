@@ -24,7 +24,7 @@
 #define TWO_TO_31_MINUS_1 0x7FFFFFFF
 
 #define Q_RVR 31
-#define DEFAULT_AP_FEEDBACK 0x40000000 // 0.5 in Q31
+#define DEFAULT_AP_FEEDBACK 0x40000000 // 0.5 in Q0.31
 
 static inline int32_t float_to_Q_RVR_pos(float val)
 {
@@ -45,7 +45,7 @@ static inline int32_t scale_sat_int64_to_int32_floor(int32_t ah,
 {
     int32_t big_q = TWO_TO_31_MINUS_1, one = 1, shift_minus_one = shift - 1;
 
-    // If ah:al < 0, add just under 1 (represented in Q31)
+    // If ah:al < 0, add just under 1 (represented in Q0.31)
     if (ah < 0) // ah is sign extended, so this test is sufficient
     {
         asm volatile("maccs %0, %1, %2, %3"
@@ -366,7 +366,7 @@ void adsp_reverb_room_set_room_size(reverb_room_t *rv,
 
     for (int comb = 0; comb < ADSP_RVR_N_COMBS; comb++)
     {
-        // Do comb length * new_room_size in UQ31
+        // Do comb length * new_room_size in UQ0.31
         uint32_t l = rv->combs[comb].max_delay;
         asm volatile("lmul %0, %1, %2, %3, %4, %5"
                      : "=r"(ah), "=r"(al)
@@ -378,7 +378,7 @@ void adsp_reverb_room_set_room_size(reverb_room_t *rv,
     }
     for (int ap = 0; ap < ADSP_RVR_N_APS; ap++)
     {
-        // Do ap length * new_room_size in UQ31
+        // Do ap length * new_room_size in UQ0.31
         uint32_t l = rv->allpasses[ap].max_delay;
         asm volatile("lmul %0, %1, %2, %3, %4, %5"
                      : "=r"(ah), "=r"(al)

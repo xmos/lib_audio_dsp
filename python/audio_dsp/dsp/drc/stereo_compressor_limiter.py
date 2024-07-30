@@ -61,7 +61,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
         Take one new pair of samples and return the compressed/limited
         samples.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         """
         # get envelope from envelope detector
@@ -97,7 +97,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         Take one new pair of samples and return the compressed/limited
         samples.  The float input sample is quantized to int32, and
         returned to float before outputting. Input should be scaled with
-        0dB = 1.0.
+        0 dB = 1.0.
 
         """
         samples_int = [int(0)] * len(input_samples)

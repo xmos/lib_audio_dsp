@@ -1,7 +1,7 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Signal chain stages allow for the control of signal flow through the
-pipeline. This includes Stages for combining and splitting signals, basic
+pipeline. This includes stages for combining and splitting signals, basic
 gain components, and delays.
 """
 

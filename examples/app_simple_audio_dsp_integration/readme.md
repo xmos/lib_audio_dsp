@@ -1,10 +1,10 @@
 app_simple_audio_dsp_integration
 ---
 
-This example shows the minimum required to integrate a DSP pipeline into an
+This minimal example shows how to integrate a DSP pipeline into an
 xcore application. Two application threads are spawned, a "signal producer" and
 a "signal consumer". The DSP pipeline is also initialised at the same time, and
-will use as many threads as has been designed in `dsp_design.ipynb` - by default
+will use as many threads as have been designed in `dsp_design.ipynb` - by default
 one. The signal producer acts as a clock master, and every 48 kHz pushes a new
 sample into the pipeline. This sample is drawn from a static array filled with
 precomputed values to generate approximate white noise at 0 dBFS. The signal

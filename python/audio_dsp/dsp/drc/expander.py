@@ -87,7 +87,7 @@ class expander_base(compressor_limiter_base):
         maths.
 
         Take one new sample and return the expanded sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         """
         # get envelope from envelope detector
@@ -121,7 +121,7 @@ class expander_base(compressor_limiter_base):
         maths.
 
         Take one new sample and return the expanded sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)

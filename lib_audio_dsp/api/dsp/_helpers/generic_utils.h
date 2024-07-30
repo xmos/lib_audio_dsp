@@ -6,10 +6,10 @@
 #define Q_alpha (31)
 
 /**
- * @brief Saturating rounding multiply by a Q31 gain.
+ * @brief Saturating rounding multiply by a Q0.31 gain.
  * 
  * @param samp Sample to be multipled.
- * @param gain Gain to apply; assumes a Q31 gain.
+ * @param gain Gain to apply; assumes a Q0.31 gain.
  * @return int32_t Returns either samp * gain or MAXINT/MININT if over/underflow
  */
 static inline int32_t apply_gain_q31(int32_t samp, q1_31 gain) {

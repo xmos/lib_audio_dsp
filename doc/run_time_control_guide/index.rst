@@ -37,7 +37,7 @@ This code snippet will generate the pipeline diagram shown in :numref:`run_time_
 .. figure:: run_time_control.gv.png
    :width: 20%
 
-   The example pipeline diagram.
+   The example pipeline diagram
 
 In this example the tuning methods on the stages in the pipeline are not called which means
 the code that is generated will intialise the stages with their default configuration values.
@@ -63,8 +63,8 @@ Each stage type has a set of controllable parameters that can be read or written
 each parameter along with its type and name can be found in the :ref:`dsp_stages_section` section
 in the DSP components document. For volume control, there is a command named `CMD_VOLUME_CONTROL_TARGET_GAIN`
 that can be updated at run time to set the volume. This command is defined in the generated header file
-"cmds.h". This will be placed into the build directory at `src.autogen/common/cmds.h`, which contains all
-the command IDs for all the stage types that were found by CMake.
+"cmds.h" which will be placed into the build directory at "src.autogen/common/cmds.h". "cmds.h" contains all
+the command IDs for all the stage types that CMake found.
 
 It is also possible to see the available control parameters, along with the values they will be set to, while
 designing the pipeline in Python. This can be done using the `get_config` method of the stage as shown below.
