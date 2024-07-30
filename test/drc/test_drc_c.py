@@ -146,7 +146,7 @@ def test_limiter_c(in_signal, component_name, at, rt, threshold):
   shutil.rmtree(test_dir)
 
   if component_name == "limiter_rms" and threshold != 0:
-    # python uses float sqrt when C uses the fixed point one, so expect some diff
+    # Python uses float sqrt when C uses the fixed point one, so expect some diff
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=7.5e-9)
   else:
     np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)

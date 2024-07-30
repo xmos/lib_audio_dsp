@@ -155,7 +155,7 @@ The slew is applied as an exponential of the difference between the
 target and current gain.
 For run-time efficiency, instead of an EMA-style alpha, the difference
 is right shifted by the ``slew_shift`` parameter. The relation between
-``slew_shift`` and time is further discussed in the python class
+``slew_shift`` and time is further discussed in the Python class
 documentation.
 
 .. doxygenstruct:: volume_control_t

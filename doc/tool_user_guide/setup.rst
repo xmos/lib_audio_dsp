@@ -119,7 +119,7 @@ Setup Steps
          echo notebook >> requirements.txt
          chmod 644 requirements.txt
 
-#. Create a python virtualenv inside *lib_audio_dsp_sandbox*.
+#. Create a Python virtualenv inside *lib_audio_dsp_sandbox*.
 
    .. tab:: Windows
 

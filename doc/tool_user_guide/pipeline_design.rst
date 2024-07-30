@@ -3,7 +3,7 @@
 Pipeline Design API
 ###################
 
-This page describes the C and python APIs that will be needed when using the pipeline design utility.
+This page describes the C and Python APIs that will be needed when using the pipeline design utility.
 
 When designing a pipeline first create an instance of :py:class:`Pipeline <audio_dsp.design.pipeline.Pipeline>`, add threads
 to it with :py:meth:`Pipeline.add_thread() <audio_dsp.design.pipeline.Pipeline.add_thread>`. Then add DSP stages such as
