@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.32.0')
+@Library('xmos_jenkins_shared_library@v0.33.0')
 
 def runningOn(machine) {
   println "Stage running on:"
@@ -11,6 +11,13 @@ def buildApps(appList) {
     sh "xmake -C ${app}/build -j\$(nproc)"
   }
 }
+
+def versionsPairs = [
+    "python/pyproject.toml": /version[\s='\"]*([\d.]+)/,
+    "settings.yml": /version[\s:'\"]*([\d.]+)/,
+    "CHANGELOG.rst": /([\d.]+)/,
+    "**/lib_build_info.cmake": /set\(LIB_VERSION \"?([\d.]+)/,
+]
 
 getApproval()
 pipeline {
@@ -285,6 +292,7 @@ pipeline {
               sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${XMOSDOC_VERSION}"
               sh 'xmosdoc'
               sh "make -C python check"
+              versionChecks checkReleased: false, versionsPairs: versionsPairs
             }
           }
           post {
