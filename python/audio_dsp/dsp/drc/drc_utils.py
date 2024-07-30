@@ -35,7 +35,7 @@ def calculate_threshold(threshold_db, Q_sig, power=False) -> tuple[float, int]:
 
     if threshold_db != new_threshold_db:
         warnings.warn(
-            "Threshold %d not repsentable in Q format Q%d, saturating to %d"
+            "Threshold %d not representable in Q format Q%d, saturating to %d"
             % (threshold_db, Q_sig, new_threshold_db),
             UserWarning,
         )
