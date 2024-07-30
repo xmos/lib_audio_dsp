@@ -1,9 +1,23 @@
-@Library('xmos_jenkins_shared_library@v0.28.0')
+@Library('xmos_jenkins_shared_library@v0.33.0')
 
 def runningOn(machine) {
   println "Stage running on:"
   println machine
 }
+
+def buildApps(appList) {
+  appList.each { app ->
+    sh "cmake -G 'Unix Makefiles' -S ${app} -B ${app}/build"
+    sh "xmake -C ${app}/build -j\$(nproc)"
+  }
+}
+
+def versionsPairs = [
+    "python/pyproject.toml": /version[\s='\"]*([\d.]+)/,
+    "settings.yml": /version[\s:'\"]*([\d.]+)/,
+    "CHANGELOG.rst": /([\d.]+)/,
+    "**/lib_build_info.cmake": /set\(LIB_VERSION \"?([\d.]+)/,
+]
 
 getApproval()
 pipeline {
@@ -12,18 +26,13 @@ pipeline {
   parameters {
     string(
       name: 'TOOLS_VERSION',
-      defaultValue: '15.2.1',
+      defaultValue: '15.3.0',
       description: 'The XTC tools version'
-    )
-    string(
-      name: 'XCOMMON_CMAKE_VERSION',
-      defaultValue: 'v1.0.0',
-      description: 'The xcommon cmake version'
     )
   } // parameters
 
   environment {
-    XMOSDOC_VERSION = "v5.1.1"
+    XMOSDOC_VERSION = "v5.5.1"
   } // environment
 
   options {
@@ -57,45 +66,35 @@ pipeline {
             stage ('Build') {
               steps {
                 runningOn(env.NODE_NAME)
-                sh "git clone -b ${params.XCOMMON_CMAKE_VERSION} git@github.com:xmos/xcommon_cmake"
-                sh 'git -C xcommon_cmake rev-parse HEAD'
                 dir("lib_audio_dsp") {
                   checkout scm
                   // try building a simple app without venv to check
                   // build that doesn't use design tools won't
-                  // need python
+                  // need Python
                   withTools(params.TOOLS_VERSION) {
-                    withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
-                      dir("test/biquad") {
-                        sh "cmake -B build"
-                        sh "cmake --build build"
-                      }
-                    }
-                  }
+                    dir("test/biquad") {
+                      sh "cmake -B build"
+                      sh "cmake --build build"
+                    } // dir
+                  } // tools
+                } // dir
 
-                }
                 createVenv("lib_audio_dsp/requirements.txt")
                 dir("lib_audio_dsp") {
                   // build everything
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       sh "pip install -r requirements.txt"
-                      withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
-                        script {
-                          [
-                          "test/biquad",
-                          "test/cascaded_biquads",
-                          "test/drc",
-                          ].each {
-                            sh "cmake -S ${it} -B ${it}/build"
-                            sh "xmake -C ${it}/build -j"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+                      buildApps([
+                        "test/biquad",
+                        "test/cascaded_biquads",
+                        "test/drc",
+                      ]) // buildApps
+                    } // tools
+                  } // withVenv
+                } // dir
+              } // steps
+
             } // Build
             stage('Test Biquad') {
               steps {
@@ -164,41 +163,29 @@ pipeline {
             stage ('Build') {
               steps {
                 runningOn(env.NODE_NAME)
-                sh "git clone -b ${params.XCOMMON_CMAKE_VERSION} git@github.com:xmos/xcommon_cmake"
-                sh 'git -C xcommon_cmake rev-parse HEAD'
                 dir("lib_audio_dsp") {
                   checkout scm
                   // try building a simple app without venv to check
                   // build that doesn't use design tools won't
-                  // need python
+                  // need Python
                   withTools(params.TOOLS_VERSION) {
-                    withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
-                      dir("test/biquad") {
-                        sh "cmake -B build"
-                        sh "cmake --build build"
-                      }
-                    }
-                  }
-
-                }
+                    dir("test/biquad") {
+                      sh "cmake -B build"
+                      sh "cmake --build build"
+                    } // dir
+                  } // tools
+                } // dir
                 createVenv("lib_audio_dsp/requirements.txt")
                 dir("lib_audio_dsp") {
                   // build everything
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       sh "pip install -r requirements.txt"
-                      withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
-                        script {
-                          [
-                          "test/reverb",
-                          "test/signal_chain",
-                          "test/fir"
-                          ].each {
-                            sh "cmake -S ${it} -B ${it}/build"
-                            sh "xmake -C ${it}/build -j"
-                          }
-                        }
-                      }
+                      buildApps([
+                        "test/reverb",
+                        "test/signal_chain",
+                        "test/fir"
+                      ]) // buildApps
                     }
                   }
                 }
@@ -207,13 +194,11 @@ pipeline {
             stage('Unit tests') {
               steps {
                 dir("lib_audio_dsp") {
-                  withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
-                    withVenv {
-                      withTools(params.TOOLS_VERSION) {
-                        catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                          dir("test/unit_tests") {
-                            runPytest("--dist worksteal")
-                          }
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/unit_tests") {
+                          runPytest("--dist worksteal")
                         }
                       }
                     }
@@ -292,59 +277,34 @@ pipeline {
           }
         } // Build and test 2
 
-        stage('Style and package') {
-          agent {
-            label 'linux&&x86_64'
-          }
-            steps {
-              dir("lib_audio_dsp") {
-                checkout scm
-              }
-              createVenv("lib_audio_dsp/requirements.txt")
-              dir("lib_audio_dsp") {
-                withVenv {
-                  withTools(params.TOOLS_VERSION) {
-                    dir("python") {
-                      sh "pip install ."
-                      sh 'pip install "pyright < 2.0"'
-                      sh 'pip install "ruff < 0.4"'
-                      sh "make check"
-                    }
-                  }
-                }
-              }
-            }
-          post {
-            cleanup {
-              xcoreCleanSandbox()
-            }
-          }
-        } // Style and package
-
-        stage('docs') {
+        stage('Style and docs') {
 
           agent {
-            label 'linux&&x86_64'
+            label 'documentation&&linux&&x86_64'
           }
           steps {
             checkout scm
-            sh """docker run -u "\$(id -u):\$(id -g)" \
-                  --rm \
-                  -v ${WORKSPACE}:/build \
-                  --entrypoint /build/doc/build_docs.sh \
-                  ghcr.io/xmos/xmosdoc:$XMOSDOC_VERSION -v"""
-            archiveArtifacts artifacts: "doc/_out/pdf/*.pdf"
-            archiveArtifacts artifacts: "doc/_out/html/**/*"
-            archiveArtifacts artifacts: "doc/_out/linkcheck/**/*"
-            sh 'find doc/_out/pdf -type f -not -name "*.pdf" -exec rm {} +'  // delete latex junk
-            zip zipFile: "lib_audio_dsp_docs.zip", archive: true, dir: "doc/_out", exclude: "linkcheck/**"
+            createVenv("requirements.txt")
+            withVenv {
+              sh 'pip install -e ./python'
+              sh 'pip install "pyright < 2.0"'
+              sh 'pip install "ruff < 0.4"'
+              sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${XMOSDOC_VERSION}"
+              sh 'xmosdoc'
+              sh "make -C python check"
+              versionChecks checkReleased: false, versionsPairs: versionsPairs
+            }
           }
           post {
+            always {
+              archiveArtifacts artifacts: "doc/_out/**"
+              zip zipFile: "lib_audio_dsp_docs.zip", archive: true, dir: "doc/_out"
+            }
             cleanup {
               xcoreCleanSandbox()
             }
           }
-        } // docs
+        } // Style and docs
 
         stage ('Hardware Test') {
           agent {
@@ -353,8 +313,6 @@ pipeline {
 
           steps {
             runningOn(env.NODE_NAME)
-            sh "git clone -b ${params.XCOMMON_CMAKE_VERSION} git@github.com:xmos/xcommon_cmake"
-            sh 'git -C xcommon_cmake rev-parse HEAD'
             sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
             dir("lib_audio_dsp") {
               checkout scm
@@ -366,14 +324,12 @@ pipeline {
                 withTools(params.TOOLS_VERSION) {
                   sh "pip install -r requirements.txt"
                   sh "pip install -e ${WORKSPACE}/xtagctl"
-                  withEnv(["XMOS_CMAKE_PATH=${WORKSPACE}/xcommon_cmake"]) {
                     withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       sh "xtagctl reset ${adapterIDs[0]}"
                       dir("test/pipeline") {
                         sh "python -m pytest --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
                       }
                     }
-                  }
                 }
               }
             }
@@ -404,9 +360,9 @@ pipeline {
                 dir("lib_audio_dsp") {
                   checkout scm
                 }
-                dir('lib_audio_dsp/host') {
+                dir('lib_audio_dsp/host/dsp_host') {
                   // Enable the XTC tools for xSCOPE
-                  withTools(params.TOOLS_VERSION) {
+                  withTools('15.2.1') { //TODO fix endpoint issue to upgrade to 15.3.1
                     withVS('vcvars32.bat') {
                       bat 'cmake -G "Ninja" -B build -DTESTING=ON'
                       bat 'cd build && ninja'
@@ -421,7 +377,7 @@ pipeline {
                   createVenv("requirements.txt")
                   withVenv{
                     // Enable the XTC tools for xSCOPE
-                    withTools(params.TOOLS_VERSION) {
+                    withTools('15.2.1') { //TODO fix endpoint issue to upgrade to 15.3.1
                       bat 'pip install -r requirements.txt'
                       bat 'pip install jinja2'
                     }
@@ -455,7 +411,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   checkout scm
                 }
-                dir('lib_audio_dsp/host') {
+                dir('lib_audio_dsp/host/dsp_host') {
                   // Enable the XTC tools for xSCOPE
                   withTools(params.TOOLS_VERSION) {
                     sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
@@ -503,7 +459,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   checkout scm
                 }
-                dir('lib_audio_dsp/host') {
+                dir('lib_audio_dsp/host/dsp_host') {
                   // Enable the XTC tools for xSCOPE
                   withTools(params.TOOLS_VERSION) {
                     sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
@@ -533,7 +489,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   checkout scm
                 }
-                dir('lib_audio_dsp/host') {
+                dir('lib_audio_dsp/host/dsp_host') {
                   withTools(params.TOOLS_VERSION) {
                     sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
                   }

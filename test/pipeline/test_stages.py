@@ -34,13 +34,13 @@ def frame_size(request):
 
 def generate_ref(sig, ref_module, pipeline_channels, frame_size):
     """
-    Process the signal through a python stage of a certain frame size
+    Process the signal through a Python stage of a certain frame size
     """
     sig_flt = np.float64(sig.T) * 2**-31
     signal_frames = utils.frame_signal(sig_flt, frame_size, frame_size)
     out_py = np.zeros((pipeline_channels, sig.shape[0]))
 
-    # run through python bit exact implementation
+    # run through Python bit exact implementation
     for n in range(len(signal_frames)):
         out_py[:, n * frame_size : n * frame_size + frame_size] = (
             ref_module.process_frame_xcore(signal_frames[n])
@@ -239,7 +239,7 @@ def generate_test_param_file(stage_name, stage_config):
 )
 def test_biquad(method, args, frame_size):
     """
-    Test the biquad stage filters the same in python and C
+    Test the biquad stage filters the same in Python and C
     """
 
     def make_p(fr):
@@ -289,7 +289,7 @@ filter_spec = [
 )
 def test_cascaded_biquad(method, args, frame_size):
     """
-    Test the biquad stage filters the same in python and C
+    Test the biquad stage filters the same in Python and C
     """
 
     def make_p(fr):
@@ -318,7 +318,7 @@ def test_cascaded_biquad(method, args, frame_size):
 
 def test_limiter_rms(frame_size):
     """
-    Test the limiter stage limits the same in python and C
+    Test the limiter stage limits the same in Python and C
     """
 
     def make_p(fr):
@@ -343,7 +343,7 @@ def test_limiter_rms(frame_size):
 
 def test_limiter_peak(frame_size):
     """
-    Test the limiter stage limits the same in python and C
+    Test the limiter stage limits the same in Python and C
     """
 
     def make_p(fr):
@@ -368,7 +368,7 @@ def test_limiter_peak(frame_size):
 
 def test_hard_limiter_peak(frame_size):
     """
-    Test the limiter stage limits the same in python and C
+    Test the limiter stage limits the same in Python and C
     """
 
     def make_p(fr):
@@ -393,7 +393,7 @@ def test_hard_limiter_peak(frame_size):
 
 def test_clipper(frame_size):
     """
-    Test the clipper stage clips the same in python and C
+    Test the clipper stage clips the same in Python and C
     """
 
     def make_p(fr):
@@ -418,7 +418,7 @@ def test_clipper(frame_size):
 
 def test_compressor(frame_size):
     """
-    Test the compressor stage compresses the same in python and C
+    Test the compressor stage compresses the same in Python and C
     """
 
     def make_p(fr):
@@ -443,7 +443,7 @@ def test_compressor(frame_size):
 
 def test_noise_gate(frame_size):
     """
-    Test the noise gate stage gates the noise the same in python and C
+    Test the noise gate stage gates the noise the same in Python and C
     """
 
     def make_p(fr):
@@ -468,7 +468,7 @@ def test_noise_gate(frame_size):
 
 def test_noise_suppressor_expander(frame_size):
     """
-    Test the noise suppressor (expander) stage suppress the noise the same in python and C
+    Test the noise suppressor (expander) stage suppress the noise the same in Python and C
     """
 
     def make_p(fr):
@@ -493,7 +493,7 @@ def test_noise_suppressor_expander(frame_size):
 
 def test_volume(frame_size):
     """
-    Test the volume stage amplifies the same in python and C
+    Test the volume stage amplifies the same in Python and C
     """
 
     # The gain_dB and mute_state must match in both make_p() and tune_p().
@@ -522,7 +522,7 @@ def test_volume(frame_size):
 
 def test_fixed_gain(frame_size):
     """
-    Test the volume stage amplifies the same in python and C
+    Test the volume stage amplifies the same in Python and C
     """
 
     def make_p(fr):

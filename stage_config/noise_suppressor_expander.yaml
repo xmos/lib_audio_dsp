@@ -2,14 +2,20 @@ module:
   noise_suppressor_expander:
     attack_alpha:
       type: int32_t
+      help: The attack alpha in Q0.31 format.
     release_alpha:
       type: int32_t
+      help: The release alpha in Q0.31 format.
     envelope:
       type: int32_t
+      help: The current peak envelope of the signal in Q_SIG format.
     threshold:
       type: int32_t
+      help: The threshold in Q_SIG format below which suppression will occur.
     gain:
       type: int32_t
+      help: The current gain applied by the noise suppressor in Q0.31 format.
     slope:
       type: float
+      help: The expansion slope of the noise suppressor. This is calculated as `(1 - ratio)`.
 includes: []

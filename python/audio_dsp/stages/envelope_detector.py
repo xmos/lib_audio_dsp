@@ -1,6 +1,8 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""Stages for measuring the amplitude of the signal."""
+"""Envelope detector Stages measure how the average or peak amplitude of
+a signal varies over time.
+"""
 
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
@@ -16,10 +18,9 @@ class EnvelopeDetectorPeak(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.drc.drc.envelope_detector_peak
-        The DSP block class; see
-        :class:`audio_dsp.dsp.drc.drc.envelope_detector_peak` for implementation
-        details.
+    dsp_block : :class:`audio_dsp.dsp.drc.drc.envelope_detector_peak`
+        The DSP block class; see :ref:`EnvelopeDetectorPeak`
+        for implementation details.
 
     """
 
@@ -64,10 +65,9 @@ class EnvelopeDetectorRMS(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.drc.drc.envelope_detector_rms
-        The DSP block class; see
-        :class:`audio_dsp.dsp.drc.drc.envelope_detector_rms` for implementation
-        details.
+    dsp_block : :class:`audio_dsp.dsp.drc.drc.envelope_detector_rms`
+        The DSP block class; see :ref:`EnvelopeDetectorRMS`
+        for implementation details.
 
     """
 

@@ -9,7 +9,7 @@ from pathlib import Path
 import subprocess
 
 def test_control_ret_str_map():
-    src_dir = Path(__file__).parents[2] / "host/src"
+    src_dir = Path(__file__).parents[2] / "host/dsp_host/src"
     device_control_shared_h = Path(src_dir) / "device_control/api/device_control_shared.h"
     assert device_control_shared_h.is_file(), f"Error: {device_control_shared_h} is not a valid file"
     control_ret_dict, control_ret_str_map = parse_control_ret_t.parse_control_ret_t(device_control_shared_h)

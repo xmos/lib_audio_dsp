@@ -3,5 +3,6 @@ module:
     checksum:
       type: uint8_t
       size: 16
+      help: The checksum of the pipeline, set at compile time. Used to verify the control command and pipeline are in sync.
 includes:
   - "stdint.h"

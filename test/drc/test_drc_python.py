@@ -585,7 +585,7 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
         if "softknee" in component:
             # different implementation of knee adds more error
             if drcut.Q_sig > 27:
-                pytest.skip("Soft knee breaks above Q27")
+                pytest.skip("Soft knee breaks above Q4.27")
             else:
                 assert mean_error_flt < 0.08
         else:
@@ -625,7 +625,7 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans, 
     # test the process_frame functions of the drc components
 
     if q_format == 31 and rt != 0.2 and at != 0.001 and n_chans != 1:
-        pytest.skip("Don't run all tests at Q31")
+        pytest.skip("Don't run all tests at Q0.31")
 
     component_handle = getattr(drc, component)
 

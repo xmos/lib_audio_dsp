@@ -2,4 +2,5 @@ module:
   add_n:
     n:
       type: int
+      help: add_n
 includes: []

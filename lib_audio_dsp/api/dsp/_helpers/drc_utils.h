@@ -6,7 +6,7 @@
 #include "generic_utils.h"
 
 /**
- * @brief Exponential moving average with a Q31 alpha
+ * @brief Exponential moving average with a Q0.31 alpha
  * Upadates the exponential moving average of x with the new sample y
  * 
  * @param x         Current moving average

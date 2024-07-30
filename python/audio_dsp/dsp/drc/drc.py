@@ -70,7 +70,7 @@ class envelope_detector_peak(dspg.dsp_block):
         maths.
 
         Take one new sample and return the updated envelope. Input
-        should be scaled with 0dB = 1.0.
+        should be scaled with 0 dB = 1.0.
 
         """
         if isinstance(sample, list) or isinstance(sample, np.ndarray):
@@ -133,7 +133,7 @@ class envelope_detector_rms(envelope_detector_peak):
     """
     Envelope detector that follows the RMS value of a signal.
 
-    Note this returns the mean**2 value, there is no need to do the
+    Note this returns the mean² value, there is no need to do the
     sqrt() as if the output is converted to dB, 10log10() can be taken
     instead of 20log10().
 
@@ -148,9 +148,9 @@ class envelope_detector_rms(envelope_detector_peak):
         maths.
 
         Take one new sample and return the updated envelope. Input
-        should be scaled with 0dB = 1.0.
+        should be scaled with 0 dB = 1.0.
 
-        Note this returns the mean**2 value, there is no need to do the
+        Note this returns the mean² value, there is no need to do the
         sqrt() as if the output is converted to dB, 10log10() can be
         taken instead of 20log10().
 
@@ -175,9 +175,9 @@ class envelope_detector_rms(envelope_detector_peak):
         maths.
 
         Take one new sample and return the updated envelope. Input
-        should be scaled with 0dB = 1.0.
+        should be scaled with 0 dB = 1.0.
 
-        Note this returns the mean**2 value, there is no need to do the
+        Note this returns the mean² value, there is no need to do the
         sqrt() as if the output is converted to dB, 10log10() can be
         taken instead of 20log10().
 
@@ -237,7 +237,7 @@ class clipper(dspg.dsp_block):
         """
         Take one new sample and return the clipped sample, using
         floating point maths.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
         """
         if sample > self.threshold:
             return self.threshold
@@ -250,7 +250,7 @@ class clipper(dspg.dsp_block):
         """
         Take one new sample and return the clipped sample, using int32
         fixed point maths.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
         """
         # convert to int
         sample_int = utils.float_to_int32(sample, self.Q_sig)
@@ -402,7 +402,7 @@ class compressor_limiter_base(dspg.dsp_block):
         maths.
 
         Take one new sample and return the compressed/limited sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         """
         # get envelope from envelope detector
@@ -434,7 +434,7 @@ class compressor_limiter_base(dspg.dsp_block):
         maths.
 
         Take one new sample and return the compressed/limited sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         Parameters
         ----------
@@ -582,7 +582,7 @@ class limiter_rms(compressor_limiter_base):
     threshold : float
         Value above which limiting occurs for floating point
         processing. Note the threshold is saves in the power domain, as
-        the RMS envelope detector returns x**2
+        the RMS envelope detector returns x²
 
     """
 
@@ -627,7 +627,7 @@ class hard_limiter_peak(limiter_peak):
         output signal exceeds the threshold, clip it to the threshold.
 
         Take one new sample and return the limited sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         """
         y, new_gain, envelope = super().process(sample, channel)
@@ -647,7 +647,7 @@ class hard_limiter_peak(limiter_peak):
         threshold.
 
         Take one new sample and return the limited sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         """
         y, new_gain_int, envelope_int = super().process_xcore(sample, channel, return_int=True)
@@ -893,7 +893,7 @@ class compressor_rms_softknee(compressor_limiter_base):
 
         The knee is approximated as a straight line between the knee
         start at (x1, y1) and the knee end at (x2, y2) BUT as the
-        envelope is RMS**2, we actually get a curve.
+        envelope is RMS², we actually get a curve.
 
         x2 is modified to be halfway between the threshold and the end
         of the knee, trying to join closer to the true knee end than
@@ -902,16 +902,16 @@ class compressor_rms_softknee(compressor_limiter_base):
 
         """
         # W is the knee width, increasing the knee width requires taking
-        # an nth root of the envelope, so a width of 10dB has been used
+        # an nth root of the envelope, so a width of 10 dB has been used
         # to avoid needing a root
         self.w = 10
         self.offset = 1
 
-        # # Alternative knee values for 15dB wide knee
+        # # Alternative knee values for 15 dB wide knee
         # self.w = 15
         # self.offset = 0.5
 
-        # # Alternative knee values for 20dB wide knee
+        # # Alternative knee values for 20 dB wide knee
         # self.w = 20
         # self.offset = 0.25
 
@@ -938,7 +938,7 @@ class compressor_rms_softknee(compressor_limiter_base):
     def compressor_rms_softknee_gain_calc(self, envelope, threshold, slope=None):
         """Calculate the float gain for the current sample.
 
-        Note that as the RMS envelope detector returns x**2, we need to
+        Note that as the RMS envelope detector returns x², we need to
         use db_pow. The knee is exponential in the log domain, so must
         be calculated in the log domain.
 
@@ -963,7 +963,7 @@ class compressor_rms_softknee(compressor_limiter_base):
     def compressor_rms_softknee_gain_calc_approx(self, envelope, threshold, slope=None):
         """Calculate the float gain for the current sample, using a
         linear approximation for the soft knee. Since the RMS envelope
-        is used, and returns RMS**2, the linear approximation gives a
+        is used, and returns RMS², the linear approximation gives a
         quadratic fit, and so is reasonably close to the true soft knee.
 
         Below the start of the knee, the gain is 1. Above the end of the
@@ -985,7 +985,7 @@ class compressor_rms_softknee(compressor_limiter_base):
     def compressor_rms_softknee_gain_calc_xcore(self, envelope_int, threshold_int, slope_f32=None):
         """Calculate the int gain for the current sample, using a
         linear approximation for the soft knee. Since the RMS envelope
-        is used, and returns RMS**2, the linear approximation gives a
+        is used, and returns RMS², the linear approximation gives a
         quadratic fit, and so is reasonably close to the true soft knee.
 
         Below the start of the knee, the gain is 1. Above the end of the
