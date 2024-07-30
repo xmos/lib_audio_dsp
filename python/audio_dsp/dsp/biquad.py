@@ -639,7 +639,7 @@ def make_biquad_bandpass(fs: int, filter_freq: float, BW) -> list[float]:
         The center frequency of the bandpass filter.
     BW : float
         The bandwidth of the bandpass filter in octaves, measured
-        between -3dB points.
+        between -3 dB points.
 
     Returns
     -------
@@ -683,7 +683,7 @@ def make_biquad_bandstop(fs: int, filter_freq: float, BW: float) -> list[float]:
         The center frequency of the bandstop filter.
     BW : float
         The bandwidth of the bandstop filter in octaves, measured
-        between -3dB points
+        between -3 dB points
 
     Returns
     -------

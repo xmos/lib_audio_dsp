@@ -87,7 +87,7 @@ class allpass_fv(dspg.dsp_block):
         Apply an all pass filter to a signal, using floating point maths.
 
         Take one new sample and return the filtered sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         """
         buff_out = self._buffer[self._buffer_idx]
@@ -106,7 +106,7 @@ class allpass_fv(dspg.dsp_block):
         Apply an all pass filter to a signal, using fixed point maths.
 
         Take one new sample and return the filtered sample.
-        Input should be scaled with 0dB = 2**Q_SIG.
+        Input should be scaled with 0 dB = 2**Q_SIG.
 
         Parameters
         ----------
@@ -201,7 +201,7 @@ class comb_fv(dspg.dsp_block):
         Apply a comb filter to a signal, using floating point maths.
 
         Take one new sample and return the filtered sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         """
         output = self._buffer[self._buffer_idx]
@@ -221,7 +221,7 @@ class comb_fv(dspg.dsp_block):
         Apply a comb filter to a signal, using fixed point maths.
 
         Take one new sample and return the filtered sample.
-        Input should be scaled with 0dB = 2**Q_SIG.
+        Input should be scaled with 0 dB = 2**Q_SIG.
 
         Parameters
         ----------
@@ -516,7 +516,7 @@ class reverb_room(dspg.dsp_block):
         Add reverberation to a signal, using floating point maths.
 
         Take one new sample and return the sample with reverb.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         """
         reverb_input = sample * self.pregain
@@ -536,7 +536,7 @@ class reverb_room(dspg.dsp_block):
         Add reverberation to a signal, using fixed point maths.
 
         Take one new sample and return the sample with reverb.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
 

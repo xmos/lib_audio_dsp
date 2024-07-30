@@ -42,7 +42,7 @@ functions.
 
 By default, the signal processing in the audio pipeline is carried out at 32 bit fixed point
 precision in Q4.27 format. Assuming a 24 bit input signal in Q0.24 format, this gives 4 bits of internal headroom in
-the audio pipeline, which is equivalent to 24dB. The output of the audio pipeline will be clipped back to Q0.24 before
+the audio pipeline, which is equivalent to 24 dB. The output of the audio pipeline will be clipped back to Q0.24 before
 returning. For more precision, the pipeline can be configured to run with no headroom
 in Q0.31 format, but this requires manual headroom management. More information on setting the Q
 format can be found in the :ref:`library_q_format_section` section.

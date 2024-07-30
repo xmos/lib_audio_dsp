@@ -39,7 +39,7 @@ class mixer(dspg.dsp_block):
     ) -> None:
         super().__init__(fs, n_chans, Q_sig)
         self.num_channels = n_chans
-        assert gain_db <= 24, "Maximum mixer gain is +24dB"
+        assert gain_db <= 24, "Maximum mixer gain is +24 dB"
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
         self.gain_int = utils.float_to_int32(self.gain, Q_GAIN)
@@ -313,12 +313,12 @@ class subtractor(dspg.dsp_block):
 class fixed_gain(dspg.dsp_block):
     """Multiply every sample by a fixed gain value.
 
-    In the current implementation, the maximum boost is +24dB.
+    In the current implementation, the maximum boost is +24 dB.
 
     Parameters
     ----------
     gain_db : float
-        The gain in decibels. Maximum fixed gain is +24dB.
+        The gain in decibels. Maximum fixed gain is +24 dB.
     gain : float
         Gain as a linear value.
     gain_int : int
@@ -327,7 +327,7 @@ class fixed_gain(dspg.dsp_block):
 
     def __init__(self, fs: float, n_chans: int, gain_db: float, Q_sig: int = dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
-        assert gain_db <= 24, "Maximum fixed gain is +24dB"
+        assert gain_db <= 24, "Maximum fixed gain is +24 dB"
         self.gain_db = gain_db
         self.gain = utils.db2gain(gain_db)
         self.gain_int = utils.float_to_int32(self.gain, Q_GAIN)
@@ -580,7 +580,7 @@ class volume_control(dspg.dsp_block):
 
         """
         if gain_db > 24:
-            raise ValueError("Maximum volume control gain is +24dB")
+            raise ValueError("Maximum volume control gain is +24 dB")
         if not self.mute_state:
             self.target_gain_db = gain_db
             self.target_gain = utils.db2gain(gain_db)
