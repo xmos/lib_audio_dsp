@@ -73,7 +73,7 @@ class fir_direct(dspg.dsp_block):
         """
         int32_max = 2**31 - 1
 
-        # scale to Q30, to match VPU shift but keep as double for now
+        # scale to Q1.30, to match VPU shift but keep as double for now
         # until we see how many bits we have
         scaled_coeffs = self.coeffs * (2**30)
 

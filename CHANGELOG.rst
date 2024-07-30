@@ -1,6 +1,11 @@
 Audio DSP library change log
 ============================
 
+1.0.0
+-----
+
+  * ADDED: User guides for the Python library and DSP library in this repository
+
 0.3.0
 -----
 

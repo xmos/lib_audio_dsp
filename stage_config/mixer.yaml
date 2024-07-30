@@ -2,5 +2,6 @@ module:
   mixer:
     gain:
       type: int32_t
+      help: The current gain in Q_GAIN format.
 includes:
   - "stdint.h"

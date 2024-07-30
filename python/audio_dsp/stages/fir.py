@@ -1,6 +1,8 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""The FIR pipeline stage."""
+"""Finite impulse response (FIR) filter Stages allow the use of
+arbitrary filters with a finite number of taps.
+"""
 
 from ..design.stage import Stage, find_config
 from ..dsp import fir as fir
@@ -20,8 +22,8 @@ class FirDirect(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.fir.fir_direct
-        The DSP block class; see :class:`audio_dsp.dsp.fir.fir_direct`
+    dsp_block : :class:`audio_dsp.dsp.fir.fir_direct`
+        The DSP block class; see :ref:`FirDirect`
         for implementation details.
     """
 

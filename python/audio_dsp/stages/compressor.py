@@ -1,6 +1,8 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""The compressor stage."""
+"""Compressor stages allow for control of the dynamic range of the
+signal, such as reducing the level of loud sounds.
+"""
 
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
@@ -23,10 +25,9 @@ class CompressorRMS(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.drc.drc.compressor_rms
-        The DSB block class; see
-        :class:`audio_dsp.dsp.drc.drc.compressor_rms` for implementation
-        details.
+    dsp_block : :class:`audio_dsp.dsp.drc.drc.compressor_rms`
+        The DSB block class; see :ref:`CompressorRMS`
+        for implementation details.
     """
 
     def __init__(self, **kwargs):
