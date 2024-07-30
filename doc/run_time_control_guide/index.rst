@@ -37,7 +37,7 @@ This code snippet will generate the pipeline diagram shown in :numref:`run_time_
 .. figure:: run_time_control.gv.png
    :width: 20%
 
-   The example pipeline diagram.
+   The example pipeline diagram
 
 In this example the tuning methods on the stages in the pipeline are not called which means
 the code that is generated will intialise the stages with their default configuration values.

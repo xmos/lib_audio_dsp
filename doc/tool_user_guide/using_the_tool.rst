@@ -29,7 +29,7 @@ The DSP pipeline will perform the following processes:
 .. figure:: images/bass_treble_limit.drawio.png
    :width: 100%
 
-   The target pipeline.
+   The target pipeline
 
 
 The first step is to create an instance of the 
@@ -112,7 +112,7 @@ labels that were assigned to them when the stage was added to the pipeline.
 .. figure:: images/frequency_response.png
    :width: 100%
 
-   Frequency response of the biquads (low shelf left, high shelf right).
+   Frequency response of the biquads (low shelf left, high shelf right)
 
 
 For this tutorial the default settings for the limiter will provide adequate performance.

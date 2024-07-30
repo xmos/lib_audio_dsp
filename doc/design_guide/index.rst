@@ -56,7 +56,7 @@ class in this context refers to a C struct and the functions that operate on it.
 .. figure:: dsp_class.drawio.png
    :width: 100%
 
-   Class diagram of a lib_audio_dsp application.
+   Class diagram of a lib_audio_dsp application
 
 The application package contains Audio Source, Audio Sink and Control classes. The Audio Source and Sink are responsible
 for producing and consuming audio at the rate required by the DSP pipeline. The Control is responsible for implementing
@@ -110,7 +110,7 @@ The generated DSP threads and the APIs for exchanging inputs with the pipeline a
 .. figure:: design_guide_resources.gv.png
    :width: 20%
 
-   Output of `Pipeline.draw()` for the example pipeline.
+   Output of `Pipeline.draw()` for the example pipeline
 
 :numref:`design_resources_chanends_label` shows how the chanends are allocated for this design. A channel (2 chanends)
 is allocated for every connection from one thread to another. Thread 2 receives data from thread 0 and 1, therefore it
@@ -128,7 +128,7 @@ used for 3 DSP threads.
 .. figure:: chanends.drawio.png
    :width: 100%
 
-   Chanend usage for the example pipeline.
+   Chanend usage for the example pipeline
 
 .. _design_thread_usage_section:
 
