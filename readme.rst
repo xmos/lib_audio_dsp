@@ -9,7 +9,7 @@ The library is built around a set of DSP function blocks, referred to in the doc
 which have a consistent API and can be combined to create many different designs. 
 
 A tool for easily
-combining Stages into a custom DSP pipeline is provided. DSP pipeline parameters can be adjusted and 
+combining stages into a custom DSP pipeline is provided. DSP pipeline parameters can be adjusted and 
 tuned on the fly via a PC based tuning interface, and utilities for hardware controls are also provided.
 
 lib_audio_dsp includes common signal processing functions optimised for the xcore, such as:

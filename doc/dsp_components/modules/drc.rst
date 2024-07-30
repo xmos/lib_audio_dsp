@@ -2,10 +2,9 @@
 Dynamic Range Control
 #####################
 
-DSP modules that modify the signal based on the level have been classed
-as dynamic range control (DRC) modules. This includes compressors, limiters
-and clippers, as well as the envelope detectors used to detect the signal
-level.
+Dynamic Range Control (DRC) in audio digital signal processing (DSP) refers to the automatic adjustment of an audio
+signal's amplitude to reduce its dynamic range - the difference between the loudest and quietest parts of the audio.
+They include compressors, limiters and clippers, as well as the envelope detectors used to detect the signal level.
 
 ========================
 Attack and Release Times
@@ -14,11 +13,10 @@ Attack and Release Times
 Nearly all DRC modules feature an attack and release time to control the
 responsiveness of the module to changes in signal level. Attack and
 release times converted from seconds to alpha coefficients for use in
-the exponential moving average. The shorter the attack or release time,
-the bigger the alpha. Large alpha will result in the envelope be more
-reactive to the input samples. Small alpha values will give more smoothed
-behaviour. The difference between the input level and the current
-envelope or gain determines whether the attack or release alpha is used.
+the the exponential moving average calculation. The shorter the attack or release time, the bigger the alpha. Large
+alpha will result in the envelope becoming more reactive to the input samples. Small alpha values will give more
+smoothed behaviour. The difference between the input level and the current envelope or gain determines whether the
+attack or release alpha is used.
 
 ==================
 Envelope Detectors
@@ -26,7 +24,7 @@ Envelope Detectors
 
 Envelope detectors run an exponential moving average (EMA) of the 
 incoming signal. They are used as a part of the most DRC components.
-They can also be used to implement the VU meters and level detectors.
+They can also be used to implement VU meters and level detectors.
 
 They feature `attack and release times`_ to control the responsiveness
 of the envelope detector.
@@ -260,7 +258,7 @@ threshold. The input/output relationship above the threshold is defined
 by the compressor ``ratio``.
 
 As with a limiter, the compressor runs an internal envelope detector 
-to get the signal envelope, then compare it to the threshold. If the
+to get the signal envelope, then compares it to the threshold. If the
 envelope is greater than the threshold, the gain will be proportionally reduced
 by the ``ratio``, such that it is greater than the threshold by a smaller amount. 
 If the envelope is below the threshold, unity gain will be applied. 
@@ -379,7 +377,7 @@ Noise Gate
 
 A noise gate uses the :ref:`EnvelopeDetectorPeak` to calculate the 
 envelope of the input signal.
-When the envelope  is below the threshold, a gain of ``0`` is applied to
+When the envelope  is below the threshold, a gain of 0 is applied to
 the input signal. Otherwise, unity gain is applied.
 
 .. doxygentypedef:: noise_gate_t

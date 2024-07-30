@@ -12,7 +12,7 @@ A second order biquadratic filter, which can be used to implement many common se
 The filter had been implemented in the direct form 1, and uses the xcore.ai vector unit to
 calculate the 5 filter taps in a single instruction.
 
-Coefficients are stored in Q30 format to benefit from the vector unit, allowing for a filter 
+Coefficients are stored in Q1.30 format to benefit from the vector unit, allowing for a filter 
 coefficient range of ``[-2, 1.999]``. For some high gain biquads (e.g. high shelf filters), the
 numerator coefficients may exceed this range. If this is the case, the numerator coefficients only
 should be right-shifted until they fit within the range (the denominator coefficients cannot become

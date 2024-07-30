@@ -14,11 +14,9 @@ These scenarios are:
 - Tuning and simulating a pipeline
 - Deploying pipeline code onto the xcore.
 
-It is assumed that users have first completed the installation guide found in [TODO: HYPERLINK].
-
 The steps in this guide should be executed in a `Jupyter Notebook <https://jupyter.org/>`_.
 
-Creating a pipeline
+Creating a Pipeline
 ===================
 
 A simple yet useful DSP pipeline that could be made is a bass and treble control
@@ -160,7 +158,7 @@ can be concatenated with other StageOutputList instances using the ``+``
 operator. When creating a stage, it will require a StageOutputList as its
 inputs.
 
-The below shows an example of how this could work with a Pipeline with 7 inputs.
+The below shows an example of how this could work with a pipeline with 7 inputs.
 
 .. code-block:: python
 
@@ -180,7 +178,7 @@ threads using the
 method of the Pipeline instance. Each thread
 in the pipeline represents an xcore hardware thread. Do not add more threads
 than are available in your application. The maximum number of threads that
-should be used, if available, is five. This due to the architecture of the xcore
+should be used, if available, is five. This limitation is due to the architecture of the xcore
 processor.
 
 .. code-block:: python

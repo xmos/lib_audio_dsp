@@ -23,15 +23,18 @@ This format is defined by the ``Q_SIG`` macro. An additional macro for the signa
 
 To ensure optimal headroom and noise floor, the user should ensure that signals are in the correct
 Q format before processing. Either the input Q format can be converted to ``Q_SIG``, or ``Q_SIG``
-can be changed to the desired value. Note that not using the DSP pipeline tool means that Q formats
-will not automatically be managed, and the user should take care to ensure they have the correct
-values for optimum performance and signal level.
+can be changed to the desired value.
+
+.. note::
+   Not using the DSP pipeline tool means that Q formats
+   will not automatically be managed, and the user should take care to ensure they have the correct
+   values for optimum performance and signal level.
 
 For example, for more precision, the pipeline can be configured to run with no headroom
 in Q0.31 format, but this would require manual headroom management (e.g. reducing the signal level
 before a boost to avoid clipping).
 
-To convert between ``Q_SIG`` and Q31 in a safe and optimised way, the APIs below are provided.
+To convert between ``Q_SIG`` and Q0.31 in a safe and optimised way, the APIs below are provided.
 
 .. doxygenfunction:: adsp_from_q31
 

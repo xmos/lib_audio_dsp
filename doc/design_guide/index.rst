@@ -62,17 +62,17 @@ The application package contains Audio Source, Audio Sink and Control classes. T
 for producing and consuming audio at the rate required by the DSP pipeline. The Control is responsible for implementing
 any application specific dynamic control of the DSP pipeline; this is optional and will only be present where run time
 control is used. These are in the Application package as they will be unique for each application. Audio Source, Audio
-Sink, and Control make use of the classes in lib_audio_dsp; all make use of a pointer to a shared adsp_pipeline_t (as
+Sink, and Control make use of the classes in lib_audio_dsp; all make use of a pointer to a shared `adsp_pipeline_t` (as
 shown by the aggregation relationships (hollow diamond) in :numref:`dsp-class-label`). lib_audio_dsp presents a thread
 safe API, allowing Audio Source, Audio Sink and Control to exist on separate threads if desired. However, they must all
-exist on the same tile in order to access the shared adsp_pipeline_t.
+exist on the same tile in order to access the shared `adsp_pipeline_t`.
 
-The "lib_audio_dsp" package represents the classes from this library. These APIs are documented fully in the Tool User
-Guide.
+The "lib_audio_dsp" repository represents the classes from this library. These APIs are documented fully in the Tool
+User Guide.
 
 The "Generated Pipeline" package represents the classes and objects which will be generated from the user's specified
 DSP pipeline design. :numref:`dsp-class-label` shows that `adsp_generated_auto` is composed of (filled diamond) the
-`adsp_pipeline_t`and multiple `module_instance_t`. Therefore, the generated pipeline is responsible for allocating
+`adsp_pipeline_t` and multiple `module_instance_t`. Therefore, the generated pipeline is responsible for allocating
 the memory for all the stages in the pipeline and also initialising each stage. The generated pipeline also creates
 multiple threads (labelled `dsp_threadX` in :numref:`dsp-class-label`), each of which will have been uniquely
 generated for the DSP pipeline that has been designed. The generated pipeline will always require at least 1 thread to
@@ -94,8 +94,9 @@ Chanend Usage
 *************
 
 The following snippet of Python shows a DSP design; the pipeline diagram for the snippet is shown
-in :numref:`design_resources_gv_label`. This design splits 4 DSP stages amongst 3 threads. Thread 0 and 1 operate on the
-pipeline inputs in parallel. Thread 2 receives its inputs from threads 0 and 1. The pipeline output comes from thread 1.
+in :numref:`design_resources_gv_label`. This design splits 4 DSP stages amongst 3 threads. Threads 0 and 1 operate
+on the pipeline inputs in parallel. Thread 2 receives its inputs from threads 0 and 1. The pipeline output comes from
+thread 1.
 
 The generated DSP threads and the APIs for exchanging inputs with the pipeline all use channels to communicate audio. 
 
@@ -119,7 +120,7 @@ If multiple data channels are passed from 1 thread to another (e.g. 3 channels f
 consumes a single xcore channel (2 chanends) as all the data channels are sent over the same xcore channel.
 
 For a simple linear pipeline, the chanend usage will be :math:`2 * num_dsp_threads + 2`. For pipelines with parallel
-threads this will be higher, as shown in :numref:`design_resources_chanends_label` where 10 chanends (5 channels) are
+threads the usage will be higher, as shown in :numref:`design_resources_chanends_label` where 10 chanends (5 channels) are
 used for 3 DSP threads.
 
 .. _design_resources_chanends_label:
@@ -165,8 +166,8 @@ Each thread measures the total number of system ticks (periods of the system clo
 while it is doing work and stores the maximum value that has occured since boot. This measurement can be used to get
 an estimate of the threads' MIPS utilisations. To access this value, the function `adsp_auto_print_thread_max_ticks()`
 ("auto" may be replaced with a custom pipeline identifier if specified) is generated along with the other generated
-pipeline functions. Calling this on the same tile as the pipeline will print this value. This uses `printf`, so the
-output will only be visible when connected to the device with `xrun` or `xgdb`.
+pipeline functions. Calling this function on the same tile as the pipeline will print the measured value. Printing
+is implemented with `printf`, so the output will only be visible when connected to the device with `xrun` or `xgdb`.
 
 The number of available ticks on each thread depends on the frame size and sample rate of the data. For example, given
 that the system clock runs by default at 100MHz, if the sample rate is 48000 Hz and frame size is 1 then the available
@@ -202,7 +203,7 @@ Tile exceeds available chanends
 *******************************
 
 If a tile attempts to allocate too many chanends it will raise an illegal resource exception and cease execution. This
-can be detected easily with the xgdb or xrun as it will print the following message::
+can be detected easily with xgdb or xrun as it will print the following message::
 
    Unhandled exception: ILLEGAL_RESOURCE
 
@@ -220,7 +221,7 @@ Tile exceeds available threads
 *******************************
 
 If a tile attempts to fork too many threads it will raise an illegal resource exception and cease execution. This can be
-detected easily with the xgdb or xrun as it will print the following message::
+detected easily with xgdb or xrun as it will print the following message::
 
    Unhandled exception: ILLEGAL_RESOURCE
 
