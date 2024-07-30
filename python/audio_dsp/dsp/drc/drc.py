@@ -326,6 +326,7 @@ class compressor_limiter_base(dspg.dsp_block):
         # These are defined differently for peak and RMS limiters
         self.env_detector = None
 
+        self._threshold_db = None
         self.threshold = None
         self.threshold_int = None
 
@@ -339,6 +340,10 @@ class compressor_limiter_base(dspg.dsp_block):
         # set the gain calculation function handles
         self.gain_calc = None
         self.gain_calc_xcore = None
+
+    @property
+    def threshold_db(self):
+        return self._threshold_db
 
     def reset_state(self):
         """Reset the envelope detector to 0 and the gain to 1."""
@@ -544,7 +549,9 @@ class limiter_peak(compressor_limiter_base):
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
-        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
+        self.threshold_db = threshold_db
+
+        # self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,
@@ -556,6 +563,15 @@ class limiter_peak(compressor_limiter_base):
         # set the gain calculation function handles
         self.gain_calc = drcu.limiter_peak_gain_calc
         self.gain_calc_xcore = drcu.limiter_peak_gain_calc_xcore
+
+    @property
+    def threshold_db(self):
+        return self._threshold_db
+
+    @threshold_db.setter
+    def threshold_db(self, value):
+        self._threshold_db = value
+        self.threshold, self.threshold_int = drcu.calculate_threshold(self._threshold_db, self.Q_sig)
 
 
 class limiter_rms(compressor_limiter_base):
@@ -783,13 +799,15 @@ class compressor_rms(compressor_limiter_base):
 
     """
 
+
     def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
-        # note rms comes as x**2, so use db_pow
-        self.threshold, self.threshold_int = drcu.calculate_threshold(
-            threshold_db, self.Q_sig, power=True
-        )
+        self.threshold_db = threshold_db
+        # # note rms comes as x**2, so use db_pow
+        # self.threshold, self.threshold_int = drcu.calculate_threshold(
+        #     threshold_db, self.Q_sig, power=True
+        # )
 
         self.env_detector = envelope_detector_rms(
             fs,
@@ -805,6 +823,16 @@ class compressor_rms(compressor_limiter_base):
         # set the gain calculation function handles
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
+
+    threshold_db = property(compressor_limiter_base.threshold_db.__get__)
+
+    @threshold_db.setter
+    def threshold_db(self, value):
+        self._threshold_db = value
+        self.threshold, self.threshold_int = drcu.calculate_threshold(
+            self.threshold_db, self.Q_sig, power=True
+        )
+
 
 
 class compressor_rms_softknee(compressor_limiter_base):
@@ -865,11 +893,11 @@ class compressor_rms_softknee(compressor_limiter_base):
     def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
-        # note rms comes as x**2, so use db_pow
+        # # note rms comes as x**2, so use db_pow
         self.threshold_db = threshold_db
-        self.threshold, self.threshold_int = drcu.calculate_threshold(
-            threshold_db, self.Q_sig, power=True
-        )
+        # self.threshold, self.threshold_int = drcu.calculate_threshold(
+        #     threshold_db, self.Q_sig, power=True
+        # )
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=n_chans,
@@ -887,6 +915,16 @@ class compressor_rms_softknee(compressor_limiter_base):
         # more inputs
         self.gain_calc = self.compressor_rms_softknee_gain_calc
         self.gain_calc_xcore = self.compressor_rms_softknee_gain_calc_xcore
+
+    threshold_db = property(compressor_limiter_base.threshold_db.__get__)
+
+    @threshold_db.setter
+    def threshold_db(self, value):
+        self._threshold_db = value
+        self.threshold, self.threshold_int = drcu.calculate_threshold(
+            self.threshold_db, self.Q_sig, power=True
+        )
+
 
     def piecewise_calc(self):
         """Calculate the piecewise linear approximation of the soft knee.
