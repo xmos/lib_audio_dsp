@@ -15,7 +15,7 @@ Adder
 =====
 
 The adder will add samples from N inputs together. 
-It will round and saturate the result to the Q31 range.
+It will round and saturate the result to the Q0.31 range.
 
 .. tab:: C API
 
@@ -43,7 +43,7 @@ It will round and saturate the result to the Q31 range.
 Subtractor
 ==========
 
-The subtractor will subtract one sample from another, then round and saturate the difference to Q31 range.
+The subtractor will subtract one sample from another, then round and saturate the difference to Q0.31 range.
 
 .. tab:: C API
 
@@ -71,7 +71,7 @@ The subtractor will subtract one sample from another, then round and saturate th
 Fixed Gain
 ==========
 
-This module applies a fixed gain to a sample, with rounding and saturation to Q31 range.
+This module applies a fixed gain to a sample, with rounding and saturation to Q0.31 range.
 The gain must be in ``Q_GAIN`` format.
 
 .. doxygendefine:: Q_GAIN
@@ -103,7 +103,7 @@ Mixer
 =====
 
 The mixer applies a gain to all N channels of input samples and adds them together.
-The sum is rounded and saturated to Q31 range. The gain must be in ``Q_GAIN`` format.
+The sum is rounded and saturated to Q0.31 range. The gain must be in ``Q_GAIN`` format.
 
 .. tab:: C API
 
@@ -155,7 +155,7 @@ The slew is applied as an exponential of the difference between the
 target and current gain.
 For run-time efficiency, instead of an EMA-style alpha, the difference
 is right shifted by the ``slew_shift`` parameter. The relation between
-``slew_shift`` and time is further discussed in the python class
+``slew_shift`` and time is further discussed in the Python class
 documentation.
 
 .. doxygenstruct:: volume_control_t

@@ -98,7 +98,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         the input signal using floating point maths.
 
         Take one new sample and return the compressed/limited sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         Parameters
         ----------
@@ -137,7 +137,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         the input signal using int32 maths.
 
         Take one new sample and return the compressed/limited sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         Parameters
         ----------
@@ -297,7 +297,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         stereo channels.
 
         Take one new sample and return the compressed/limited sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         Parameters
         ----------
@@ -342,7 +342,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         stereo channels.
 
         Take one new sample and return the compressed/limited sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         Parameters
         ----------

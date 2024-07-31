@@ -67,18 +67,18 @@ typedef enum{
 int32_t adsp_dB_to_gain(float dB_gain);
 
 /**
- * @brief Convert from Q31 to Q_SIG
+ * @brief Convert from Q0.31 to Q_SIG
  *
- * @param input             Input in Q31 format
+ * @param input             Input in Q0.31 format
  * @return int32_t          Output in Q_SIG format
  */
 int32_t adsp_from_q31(int32_t input);
 
 /**
- * @brief Convert from Q_SIG to Q31
+ * @brief Convert from Q_SIG to Q0.31
  *
  * @param input             Input in Q_SIG format
- * @return int32_t          Output in Q31 format
+ * @return int32_t          Output in Q0.31 format
  */
 int32_t adsp_to_q31(int32_t input);
 

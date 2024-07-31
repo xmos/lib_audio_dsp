@@ -33,7 +33,7 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
         Number of channels the block runs on.
     Q_sig: int, optional
         Q format of the signal, number of bits after the decimal point.
-        Defaults to Q27.
+        Defaults to Q4.27.
 
     Attributes
     ----------

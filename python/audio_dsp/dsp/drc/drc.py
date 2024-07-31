@@ -70,7 +70,7 @@ class envelope_detector_peak(dspg.dsp_block):
         maths.
 
         Take one new sample and return the updated envelope. Input
-        should be scaled with 0dB = 1.0.
+        should be scaled with 0 dB = 1.0.
 
         """
         if isinstance(sample, list) or isinstance(sample, np.ndarray):
@@ -148,7 +148,7 @@ class envelope_detector_rms(envelope_detector_peak):
         maths.
 
         Take one new sample and return the updated envelope. Input
-        should be scaled with 0dB = 1.0.
+        should be scaled with 0 dB = 1.0.
 
         Note this returns the mean² value, there is no need to do the
         sqrt() as if the output is converted to dB, 10log10() can be
@@ -175,7 +175,7 @@ class envelope_detector_rms(envelope_detector_peak):
         maths.
 
         Take one new sample and return the updated envelope. Input
-        should be scaled with 0dB = 1.0.
+        should be scaled with 0 dB = 1.0.
 
         Note this returns the mean² value, there is no need to do the
         sqrt() as if the output is converted to dB, 10log10() can be
@@ -237,7 +237,7 @@ class clipper(dspg.dsp_block):
         """
         Take one new sample and return the clipped sample, using
         floating point maths.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
         """
         if sample > self.threshold:
             return self.threshold
@@ -250,7 +250,7 @@ class clipper(dspg.dsp_block):
         """
         Take one new sample and return the clipped sample, using int32
         fixed point maths.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
         """
         # convert to int
         sample_int = utils.float_to_int32(sample, self.Q_sig)
@@ -402,7 +402,7 @@ class compressor_limiter_base(dspg.dsp_block):
         maths.
 
         Take one new sample and return the compressed/limited sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         """
         # get envelope from envelope detector
@@ -434,7 +434,7 @@ class compressor_limiter_base(dspg.dsp_block):
         maths.
 
         Take one new sample and return the compressed/limited sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         Parameters
         ----------
@@ -627,7 +627,7 @@ class hard_limiter_peak(limiter_peak):
         output signal exceeds the threshold, clip it to the threshold.
 
         Take one new sample and return the limited sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         """
         y, new_gain, envelope = super().process(sample, channel)
@@ -647,7 +647,7 @@ class hard_limiter_peak(limiter_peak):
         threshold.
 
         Take one new sample and return the limited sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         """
         y, new_gain_int, envelope_int = super().process_xcore(sample, channel, return_int=True)
@@ -902,16 +902,16 @@ class compressor_rms_softknee(compressor_limiter_base):
 
         """
         # W is the knee width, increasing the knee width requires taking
-        # an nth root of the envelope, so a width of 10dB has been used
+        # an nth root of the envelope, so a width of 10 dB has been used
         # to avoid needing a root
         self.w = 10
         self.offset = 1
 
-        # # Alternative knee values for 15dB wide knee
+        # # Alternative knee values for 15 dB wide knee
         # self.w = 15
         # self.offset = 0.5
 
-        # # Alternative knee values for 20dB wide knee
+        # # Alternative knee values for 20 dB wide knee
         # self.w = 20
         # self.offset = 0.25
 

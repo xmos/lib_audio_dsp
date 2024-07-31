@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.32.0')
+@Library('xmos_jenkins_shared_library@v0.33.0')
 
 def runningOn(machine) {
   println "Stage running on:"
@@ -12,6 +12,13 @@ def buildApps(appList) {
   }
 }
 
+def versionsPairs = [
+    "python/pyproject.toml": /version[\s='\"]*([\d.]+)/,
+    "settings.yml": /version[\s:'\"]*([\d.]+)/,
+    "CHANGELOG.rst": /([\d.]+)/,
+    "**/lib_build_info.cmake": /set\(LIB_VERSION \"?([\d.]+)/,
+]
+
 getApproval()
 pipeline {
   agent none
@@ -19,7 +26,7 @@ pipeline {
   parameters {
     string(
       name: 'TOOLS_VERSION',
-      defaultValue: '15.3.1002',
+      defaultValue: '15.3.0',
       description: 'The XTC tools version'
     )
   } // parameters
@@ -63,7 +70,7 @@ pipeline {
                   checkout scm
                   // try building a simple app without venv to check
                   // build that doesn't use design tools won't
-                  // need python
+                  // need Python
                   withTools(params.TOOLS_VERSION) {
                     dir("test/biquad") {
                       sh "cmake -B build"
@@ -160,7 +167,7 @@ pipeline {
                   checkout scm
                   // try building a simple app without venv to check
                   // build that doesn't use design tools won't
-                  // need python
+                  // need Python
                   withTools(params.TOOLS_VERSION) {
                     dir("test/biquad") {
                       sh "cmake -B build"
@@ -285,6 +292,7 @@ pipeline {
               sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${XMOSDOC_VERSION}"
               sh 'xmosdoc'
               sh "make -C python check"
+              versionChecks checkReleased: false, versionsPairs: versionsPairs
             }
           }
           post {
