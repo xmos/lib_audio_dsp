@@ -371,10 +371,6 @@ class compressor_limiter_base(dspg.dsp_block):
         # threshold_int and threshold
         self.threshold_db = threshold_db
 
-        # slope is used for compressors, not limiters
-        self.slope = None
-        self.slope_f32 = None
-
         # initialise gain states
         self.reset_state()
 
@@ -417,7 +413,6 @@ class compressor_limiter_base(dspg.dsp_block):
         self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(self._release_t, self.fs)
         # update the envelope detector
         self.env_detector.release_t = self.release_t
-
 
     def reset_state(self):
         """Reset the envelope detector to 0 and the gain to 1."""
@@ -826,12 +821,22 @@ class compressor_rms(compressor_limiter_base):
     def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "rms", Q_sig)
 
-        self.slope = (1 - 1 / ratio) / 2.0
-        self.slope_f32 = float32(self.slope)
+        # property calculates the slopes as well
+        self.ratio = ratio
 
         # set the gain calculation function handles
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
+
+    @property
+    def ratio(self):
+        return self._ratio
+
+    @ratio.setter
+    def ratio(self, value):
+        self._ratio = value
+        self.slope = (1 - 1 / self.ratio) / 2.0
+        self.slope_f32 = float32(self.slope)
 
 
 class compressor_rms_softknee(compressor_limiter_base):
@@ -893,14 +898,23 @@ class compressor_rms_softknee(compressor_limiter_base):
         super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "rms", Q_sig)
 
         self.ratio = ratio
-        self.slope = (1 - 1 / self.ratio) / 2.0
-        self.slope_f32 = float32(self.slope)
-        self.piecewise_calc()
 
         # this is a bit of a bodge, as the soft knee compressor needs
         # more inputs
         self.gain_calc = self.compressor_rms_softknee_gain_calc
         self.gain_calc_xcore = self.compressor_rms_softknee_gain_calc_xcore
+
+    @property
+    def ratio(self):
+        return self._ratio
+
+    @ratio.setter
+    def ratio(self, value):
+        self._ratio = value
+        self.slope = (1 - 1 / self.ratio) / 2.0
+        self.slope_f32 = float32(self.slope)
+        self.piecewise_calc()
+
 
     def piecewise_calc(self):
         """Calculate the piecewise linear approximation of the soft knee.

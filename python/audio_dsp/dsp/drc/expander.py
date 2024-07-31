@@ -189,30 +189,12 @@ class noise_gate(expander_base):
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
-
-        self.env_detector = envelope_detector_peak(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "peak", Q_sig)
 
         # set the gain calculation function handles
         self.gain_calc = drcu.noise_gate_gain_calc
         self.gain_calc_xcore = drcu.noise_gate_gain_calc_xcore
 
-        self.reset_state()
-
-    @property
-    def threshold_db(self):
-        return self._threshold_db
-
-    @threshold_db.setter
-    def threshold_db(self, value):
-        self._threshold_db = value
-        self.threshold, self.threshold_int = drcu.calculate_threshold(self._threshold_db, self.Q_sig)
 
 class noise_suppressor_expander(expander_base):
     """A noise suppressor that reduces the level of an audio signal when
@@ -248,36 +230,27 @@ class noise_suppressor_expander(expander_base):
     """
 
     def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "peak", Q_sig)
 
         #todo check why this is here
         self.threshold_int = max(1, self.threshold_int)
 
-        self.env_detector = envelope_detector_peak(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
-
-        self.slope = 1 - ratio
-        self.slope_f32 = float32(self.slope)
+        # property calculates the slopes as well
+        self.ratio = ratio
 
         # set the gain calculation function handles
         self.gain_calc = drcu.noise_suppressor_expander_gain_calc
         self.gain_calc_xcore = drcu.noise_suppressor_expander_gain_calc_xcore
 
-        self.reset_state()
-
     @property
-    def threshold_db(self):
-        return self._threshold_db
+    def ratio(self):
+        return self._ratio
 
-    @threshold_db.setter
-    def threshold_db(self, value):
-        self._threshold_db = value
-        self.threshold, self.threshold_int = drcu.calculate_threshold(self._threshold_db, self.Q_sig)
+    @ratio.setter
+    def ratio(self, value):
+        self._ratio = value
+        self.slope = 1 - self.ratio
+        self.slope_f32 = float32(self.slope)
 
 
 if __name__ == "__main__":

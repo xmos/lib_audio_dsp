@@ -21,22 +21,43 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
     apply the same gain to both channels.
     """
 
-    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, envelope_detector, Q_sig=dspg.Q_SIG):
         assert n_chans == 2, "has to be stereo"
         super().__init__(fs, n_chans, Q_sig)
 
-        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
-        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(release_t, fs)
         self.Q_alpha = drcu.Q_alpha
         assert self.Q_alpha == 31, "When changing this the reset value will have to be updated"
 
-        # These are defined differently for peak and RMS limiters
-        self.threshold_db = threshold_db
-        self.env_detector = None
+        self.env_detector_type = envelope_detector.lower()
 
-        # slope is used for compressors, not limiters
-        self.slope = None
-        self.slope_f32 = None
+        # These are defined differently for peak and RMS limiters
+        if self.env_detector_type == "peak":
+            self.env_detector = envelope_detector_peak(
+                fs,
+                n_chans=n_chans,
+                attack_t=attack_t,
+                release_t=release_t,
+                Q_sig=self.Q_sig,
+            )
+        elif self.env_detector_type == "rms":
+            self.env_detector = envelope_detector_rms(
+                fs,
+                n_chans=n_chans,
+                attack_t=attack_t,
+                release_t=release_t,
+                Q_sig=self.Q_sig,
+            )
+        else:
+            raise ValueError(f"unknown envelope detector type: {envelope_detector}")
+
+        # setting attack and release times sets the EWM coeffs in this and 
+        # the envelope detector
+        self.attack_t = attack_t
+        self.release_t = release_t
+
+        # threshold_db should be a property of the child class that sets
+        # threshold_int and threshold
+        self.threshold_db = threshold_db
 
         # set the gain calculation function handles
         self.gain_calc = None
@@ -44,6 +65,42 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
         # initialise gain states
         self.reset_state()
+
+    @property
+    def threshold_db(self):
+        return self._threshold_db
+
+    @threshold_db.setter
+    def threshold_db(self, value):
+        self._threshold_db = value
+        if self.env_detector_type == "peak":
+            self.threshold, self.threshold_int = drcu.calculate_threshold(self._threshold_db, self.Q_sig)
+        elif self.env_detector_type == "rms":
+            self.threshold, self.threshold_int = drcu.calculate_threshold(self._threshold_db, self.Q_sig, power=True)
+
+    @property
+    def attack_t(self):
+        return self._attack_t
+    
+    @attack_t.setter
+    def attack_t(self, value):
+        self._attack_t = value
+        # calculate EWM alpha from time constant
+        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(self._attack_t, self.fs)
+        # update the envelope detector
+        self.env_detector.attack_t = self.attack_t
+
+    @property
+    def release_t(self):
+        return self._release_t
+    
+    @release_t.setter
+    def release_t(self, value):
+        self._release_t = value
+        # calculate EWM alpha from time constant
+        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(self._release_t, self.fs)
+        # update the envelope detector
+        self.env_detector.release_t = self.release_t
 
     def reset_state(self):
         """Reset the envelope detectors to 0 and the gain to 1."""
@@ -193,29 +250,11 @@ class limiter_peak_stereo(compressor_limiter_stereo_base):
 
     def __init__(self, fs, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         n_chans = 2
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
-
-        self.env_detector = envelope_detector_peak(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "peak", Q_sig)
 
         # set the gain calculation function handles
         self.gain_calc = drcu.limiter_peak_gain_calc
         self.gain_calc_xcore = drcu.limiter_peak_gain_calc_xcore
-
-    @property
-    def threshold_db(self):
-        return self._threshold_db
-
-    @threshold_db.setter
-    def threshold_db(self, value):
-        self._threshold_db = value
-        self.threshold, self.threshold_int = drcu.calculate_threshold(self._threshold_db, self.Q_sig)
-
 
 
 class compressor_rms_stereo(compressor_limiter_stereo_base):
@@ -235,31 +274,21 @@ class compressor_rms_stereo(compressor_limiter_stereo_base):
 
     def __init__(self, fs, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         n_chans = 2
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "rms", Q_sig)
 
-        self.env_detector = envelope_detector_rms(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
-
-        self.slope = (1 - 1 / ratio) / 2.0
-        self.slope_f32 = float32(self.slope)
+        # property calculates the slopes as well
+        self.ratio = ratio
 
         # set the gain calculation function handles
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
 
     @property
-    def threshold_db(self):
-        return self._threshold_db
+    def ratio(self):
+        return self._ratio
 
-    @threshold_db.setter
-    def threshold_db(self, value):
-        self._threshold_db = value
-        # note rms comes as x**2, so use db_pow
-        self.threshold, self.threshold_int = drcu.calculate_threshold(
-            self.threshold_db, self.Q_sig, power=True
-        )
+    @ratio.setter
+    def ratio(self, value):
+        self._ratio = value
+        self.slope = (1 - 1 / self.ratio) / 2.0
+        self.slope_f32 = float32(self.slope)

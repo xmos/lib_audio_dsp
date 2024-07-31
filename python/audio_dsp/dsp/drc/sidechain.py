@@ -62,35 +62,24 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
     """
 
     def __init__(self, fs, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, 1, threshold_db, attack_t, release_t, Q_sig)
+        super().__init__(fs, 1, threshold_db, attack_t, release_t, "rms", Q_sig)
 
-        self.env_detector = envelope_detector_rms(
-            fs,
-            n_chans=1,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
-
-        self.slope = (1 - 1 / ratio) / 2.0
-        self.slope_f32 = float32(self.slope)
+        # property calculates the slopes as well
+        self.ratio = ratio
 
         # set the gain calculation function handles
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
 
     @property
-    def threshold_db(self):
-        return self._threshold_db
+    def ratio(self):
+        return self._ratio
 
-    @threshold_db.setter
-    def threshold_db(self, value):
-        self._threshold_db = value
-        # note rms comes as x**2, so use db_pow
-        self.threshold, self.threshold_int = drcu.calculate_threshold(
-            self.threshold_db, self.Q_sig, power=True
-        )
-
+    @ratio.setter
+    def ratio(self, value):
+        self._ratio = value
+        self.slope = (1 - 1 / self.ratio) / 2.0
+        self.slope_f32 = float32(self.slope)
 
     def reset_state(self):
         """Reset the envelope detectors to 0 and the gain to 1."""
@@ -276,35 +265,25 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
     def __init__(self, fs, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         n_chans = 2
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "rms", Q_sig)
 
-        self.env_detector = envelope_detector_rms(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
+        # property calculates the slopes as well
+        self.ratio = ratio
 
-        self.slope = (1 - 1 / ratio) / 2.0
-        self.slope_f32 = float32(self.slope)
 
         # set the gain calculation function handles
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
 
     @property
-    def threshold_db(self):
-        return self._threshold_db
+    def ratio(self):
+        return self._ratio
 
-    @threshold_db.setter
-    def threshold_db(self, value):
-        self._threshold_db = value
-        # note rms comes as x**2, so use db_pow
-        self.threshold, self.threshold_int = drcu.calculate_threshold(
-            self.threshold_db, self.Q_sig, power=True
-        )
-
+    @ratio.setter
+    def ratio(self, value):
+        self._ratio = value
+        self.slope = (1 - 1 / self.ratio) / 2.0
+        self.slope_f32 = float32(self.slope)
 
     def process_channels(self, input_samples: list[float], detect_samples: list[float]):  # type: ignore : override base class
         """
