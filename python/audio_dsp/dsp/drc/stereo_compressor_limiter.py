@@ -21,7 +21,9 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
     apply the same gain to both channels.
     """
 
-    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, envelope_detector, Q_sig=dspg.Q_SIG):
+    def __init__(
+        self, fs, n_chans, threshold_db, attack_t, release_t, envelope_detector, Q_sig=dspg.Q_SIG
+    ):
         assert n_chans == 2, "has to be stereo"
         super().__init__(fs, n_chans, Q_sig)
 
@@ -50,7 +52,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         else:
             raise ValueError(f"unknown envelope detector type: {envelope_detector}")
 
-        # setting attack and release times sets the EWM coeffs in this and 
+        # setting attack and release times sets the EWM coeffs in this and
         # the envelope detector
         self.attack_t = attack_t
         self.release_t = release_t
@@ -72,20 +74,26 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
     @property
     def threshold_db(self):
+        """The threshold in decibels. Setting this also updates the fixed and floating point thresholds in linear gain."""
         return self._threshold_db
 
     @threshold_db.setter
     def threshold_db(self, value):
         self._threshold_db = value
         if self.env_detector_type == "peak":
-            self.threshold, self.threshold_int = drcu.calculate_threshold(self._threshold_db, self.Q_sig)
+            self.threshold, self.threshold_int = drcu.calculate_threshold(
+                self._threshold_db, self.Q_sig
+            )
         elif self.env_detector_type == "rms":
-            self.threshold, self.threshold_int = drcu.calculate_threshold(self._threshold_db, self.Q_sig, power=True)
+            self.threshold, self.threshold_int = drcu.calculate_threshold(
+                self._threshold_db, self.Q_sig, power=True
+            )
 
     @property
     def attack_t(self):
+        """The attack time in seconds. Changing this also sets the EWM alpha values."""
         return self._attack_t
-    
+
     @attack_t.setter
     def attack_t(self, value):
         self._attack_t = value
@@ -96,8 +104,9 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
     @property
     def release_t(self):
+        """The release time in seconds. Changing this also sets the EWM alpha values."""
         return self._release_t
-    
+
     @release_t.setter
     def release_t(self, value):
         self._release_t = value
@@ -289,6 +298,7 @@ class compressor_rms_stereo(compressor_limiter_stereo_base):
 
     @property
     def ratio(self):
+        """Compression gain ratio applied when the signal is above the threshold."""
         return self._ratio
 
     @ratio.setter

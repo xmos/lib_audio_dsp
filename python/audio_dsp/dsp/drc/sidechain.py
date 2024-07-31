@@ -73,6 +73,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
     @property
     def ratio(self):
+        """Compression gain ratio applied when the signal is above the threshold."""
         return self._ratio
 
     @ratio.setter
@@ -270,13 +271,13 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
         # property calculates the slopes as well
         self.ratio = ratio
 
-
         # set the gain calculation function handles
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
 
     @property
     def ratio(self):
+        """Compression gain ratio applied when the signal is above the threshold."""
         return self._ratio
 
     @ratio.setter
