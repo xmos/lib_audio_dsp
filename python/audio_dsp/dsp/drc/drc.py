@@ -371,6 +371,10 @@ class compressor_limiter_base(dspg.dsp_block):
         # threshold_int and threshold
         self.threshold_db = threshold_db
 
+        # slope only used by compressors, but needs to be set for gain_calc API
+        self.slope = None
+        self.slope_f32 = None
+
         # initialise gain states
         self.reset_state()
 
