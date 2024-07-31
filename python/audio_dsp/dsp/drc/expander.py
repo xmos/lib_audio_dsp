@@ -189,9 +189,7 @@ class noise_gate(expander_base):
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
-
-        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
         self.env_detector = envelope_detector_peak(
             fs,
@@ -207,6 +205,14 @@ class noise_gate(expander_base):
 
         self.reset_state()
 
+    @property
+    def threshold_db(self):
+        return self._threshold_db
+
+    @threshold_db.setter
+    def threshold_db(self, value):
+        self._threshold_db = value
+        self.threshold, self.threshold_int = drcu.calculate_threshold(self._threshold_db, self.Q_sig)
 
 class noise_suppressor_expander(expander_base):
     """A noise suppressor that reduces the level of an audio signal when
@@ -242,10 +248,11 @@ class noise_suppressor_expander(expander_base):
     """
 
     def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
-        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
+        #todo check why this is here
         self.threshold_int = max(1, self.threshold_int)
+
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,
@@ -262,6 +269,15 @@ class noise_suppressor_expander(expander_base):
         self.gain_calc_xcore = drcu.noise_suppressor_expander_gain_calc_xcore
 
         self.reset_state()
+
+    @property
+    def threshold_db(self):
+        return self._threshold_db
+
+    @threshold_db.setter
+    def threshold_db(self, value):
+        self._threshold_db = value
+        self.threshold, self.threshold_int = drcu.calculate_threshold(self._threshold_db, self.Q_sig)
 
 
 if __name__ == "__main__":

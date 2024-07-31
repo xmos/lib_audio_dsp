@@ -315,7 +315,7 @@ class compressor_limiter_base(dspg.dsp_block):
 
     # Limiter after Zolzer's DAFX & Guy McNally's "Dynamic Range Control
     # of Digital Audio Signals"
-    def __init__(self, fs, n_chans, attack_t, release_t, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
         self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
@@ -326,9 +326,9 @@ class compressor_limiter_base(dspg.dsp_block):
         # These are defined differently for peak and RMS limiters
         self.env_detector = None
 
-        self._threshold_db = None
-        self.threshold = None
-        self.threshold_int = None
+        # threshold_db should be a property of the child class that sets
+        # threshold_int and threshold
+        self.threshold_db = threshold_db
 
         # slope is used for compressors, not limiters
         self.slope = None
@@ -543,11 +543,8 @@ class limiter_peak(compressor_limiter_base):
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
-        self.threshold_db = threshold_db
-
-        # self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,
@@ -599,9 +596,7 @@ class limiter_rms(compressor_limiter_base):
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
-
-        self.threshold_db = threshold_db
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
         self.env_detector = envelope_detector_rms(
             fs,
@@ -709,9 +704,8 @@ class lookahead_limiter_peak(compressor_limiter_base):
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
-        self.threshold_db = threshold_db
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,
@@ -731,7 +725,7 @@ class lookahead_limiter_peak(compressor_limiter_base):
     @threshold_db.setter
     def threshold_db(self, value):
         self._threshold_db = value
-        self.threshold, self.threshold_int = drcu.calculate_threshold(self._threshold_db, self.Q_sig)
+        self.threshold, self.threshold_int = drcu.calculate_threshold(self._threshold_db, self.Q_sig, power=True)
 
 
     def process(self, sample, channel=0):
@@ -749,9 +743,8 @@ class lookahead_limiter_rms(compressor_limiter_base):
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, delay, Q_sig)
 
-        self.threshold = utils.db_pow2gain(threshold_db)
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=n_chans,
@@ -825,13 +818,7 @@ class compressor_rms(compressor_limiter_base):
     """
 
     def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
-
-        self.threshold_db = threshold_db
-        # # note rms comes as x**2, so use db_pow
-        # self.threshold, self.threshold_int = drcu.calculate_threshold(
-        #     threshold_db, self.Q_sig, power=True
-        # )
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
         self.env_detector = envelope_detector_rms(
             fs,
@@ -911,18 +898,14 @@ class compressor_rms_softknee(compressor_limiter_base):
     References
     ----------
     [1] Giannoulis, D., Massberg, M., & Reiss, J. D. (2012). Digital
-    Dynamic Range Compressor Designâ€”A Tutorial and Analysis. Journal of
-    Audio Engineering Society, 60(6), 399â€“408.
+    Dynamic Range Compressor Design - A Tutorial and Analysis. Journal of
+    Audio Engineering Society, 60(6), 399-408.
     https://www.aes.org/e-lib/browse.cfm?elib=16354
     """
 
     def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
-        self.threshold_db = threshold_db
-        # self.threshold, self.threshold_int = drcu.calculate_threshold(
-        #     threshold_db, self.Q_sig, power=True
-        # )
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=n_chans,
