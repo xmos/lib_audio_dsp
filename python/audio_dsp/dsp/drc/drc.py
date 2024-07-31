@@ -250,7 +250,16 @@ class clipper(dspg.dsp_block):
     def __init__(self, fs, n_chans, threshold_db, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
-        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
+        self.threshold_db = threshold_db
+
+    @property
+    def threshold_db(self):
+        return self._threshold_db
+
+    @threshold_db.setter
+    def threshold_db(self, value):
+        self._threshold_db = value
+        self.threshold, self.threshold_int = drcu.calculate_threshold(self._threshold_db, self.Q_sig)
 
     def process(self, sample, channel=0):
         """
