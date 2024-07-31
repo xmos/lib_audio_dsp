@@ -52,12 +52,31 @@ class envelope_detector_peak(dspg.dsp_block):
     def __init__(self, fs, n_chans, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
-        # calculate EWM alpha from time constant
-        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
-        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(release_t, fs)
+        self.attack_t = attack_t
+        self.release_t = release_t
 
         # initialise envelope state
         self.reset_state()
+
+    @property
+    def attack_t(self):
+        return self._attack_t
+    
+    @attack_t.setter
+    def attack_t(self, value):
+        self._attack_t = value
+        # calculate EWM alpha from time constant
+        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(self._attack_t, self.fs)
+
+    @property
+    def release_t(self):
+        return self._release_t
+    
+    @release_t.setter
+    def release_t(self, value):
+        self._release_t = value
+        # calculate EWM alpha from time constant
+        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(self._release_t, self.fs)
 
     def reset_state(self):
         """Reset the envelope to zero."""
@@ -315,16 +334,36 @@ class compressor_limiter_base(dspg.dsp_block):
 
     # Limiter after Zolzer's DAFX & Guy McNally's "Dynamic Range Control
     # of Digital Audio Signals"
-    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, envelope_detector, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
-        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
-        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(release_t, fs)
         self.Q_alpha = drcu.Q_alpha
         assert self.Q_alpha == 31, "When changing this the reset value will have to be updated"
 
         # These are defined differently for peak and RMS limiters
-        self.env_detector = None
+        if envelope_detector.lower() == "peak":
+            self.env_detector = envelope_detector_peak(
+                fs,
+                n_chans=n_chans,
+                attack_t=attack_t,
+                release_t=release_t,
+                Q_sig=self.Q_sig,
+            )
+        elif envelope_detector.lower() == "rms":
+            self.env_detector = envelope_detector_rms(
+                fs,
+                n_chans=n_chans,
+                attack_t=attack_t,
+                release_t=release_t,
+                Q_sig=self.Q_sig,
+            )
+        else:
+            raise ValueError(f"unknown envelope detector type: {envelope_detector}")
+
+        # setting attack and release times sets the EWM coeffs in this and 
+        # the envelope detector
+        self.attack_t = attack_t
+        self.release_t = release_t
 
         # threshold_db should be a property of the child class that sets
         # threshold_int and threshold
@@ -340,6 +379,31 @@ class compressor_limiter_base(dspg.dsp_block):
         # set the gain calculation function handles
         self.gain_calc = None
         self.gain_calc_xcore = None
+
+    @property
+    def attack_t(self):
+        return self._attack_t
+    
+    @attack_t.setter
+    def attack_t(self, value):
+        self._attack_t = value
+        # calculate EWM alpha from time constant
+        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(self._attack_t, self.fs)
+        # update the envelope detector
+        self.env_detector.attack_t = self.attack_t
+
+    @property
+    def release_t(self):
+        return self._release_t
+    
+    @release_t.setter
+    def release_t(self, value):
+        self._release_t = value
+        # calculate EWM alpha from time constant
+        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(self._release_t, self.fs)
+        # update the envelope detector
+        self.env_detector.release_t = self.release_t
+
 
     def reset_state(self):
         """Reset the envelope detector to 0 and the gain to 1."""
@@ -543,15 +607,7 @@ class limiter_peak(compressor_limiter_base):
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
-
-        self.env_detector = envelope_detector_peak(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "peak", Q_sig)
 
         # set the gain calculation function handles
         self.gain_calc = drcu.limiter_peak_gain_calc
@@ -596,15 +652,7 @@ class limiter_rms(compressor_limiter_base):
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
-
-        self.env_detector = envelope_detector_rms(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "rms", Q_sig)
 
         # set the gain calculation function handles
         self.gain_calc = drcu.limiter_rms_gain_calc
@@ -704,15 +752,7 @@ class lookahead_limiter_peak(compressor_limiter_base):
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
-
-        self.env_detector = envelope_detector_peak(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "peak", Q_sig)
 
         self.delay = np.ceil(attack_t * fs)
         self.delay_line = np.zeros(self.delay)
@@ -743,15 +783,8 @@ class lookahead_limiter_rms(compressor_limiter_base):
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, delay, Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "rms", Q_sig)
 
-        self.env_detector = envelope_detector_rms(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
         self.delay = np.ceil(attack_t * fs)
         self.delay_line = np.zeros(self.delay)
         raise NotImplementedError
@@ -818,15 +851,7 @@ class compressor_rms(compressor_limiter_base):
     """
 
     def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
-
-        self.env_detector = envelope_detector_rms(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "rms", Q_sig)
 
         self.slope = (1 - 1 / ratio) / 2.0
         self.slope_f32 = float32(self.slope)
@@ -904,15 +929,7 @@ class compressor_rms_softknee(compressor_limiter_base):
     """
 
     def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
-
-        self.env_detector = envelope_detector_rms(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "rms", Q_sig)
 
         self.ratio = ratio
         self.slope = (1 - 1 / self.ratio) / 2.0
