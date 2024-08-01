@@ -91,7 +91,7 @@ class expander_base(compressor_limiter_base):
 
         """
         # get envelope from envelope detector
-        envelope = self.env_detector.process(sample, channel)  # type: ignore : base inits to None
+        envelope = self.env_detector.process(sample, channel)
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
@@ -126,7 +126,7 @@ class expander_base(compressor_limiter_base):
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
         # get envelope from envelope detector
-        envelope_int = self.env_detector.process_xcore(sample_int, channel)  # pyright: ignore : base inits to None
+        envelope_int = self.env_detector.process_xcore(sample_int, channel)
         # avoid /0
         envelope_int = max(envelope_int, 1)
 
@@ -250,8 +250,7 @@ class noise_suppressor_expander(expander_base):
     @ratio.setter
     def ratio(self, value):
         self._ratio = value
-        self.slope = 1 - self.ratio
-        self.slope_f32 = float32(self.slope)
+        self.slope, self.slope_f32 = drcu.expander_slope_from_ratio(self.ratio)
 
 
 if __name__ == "__main__":

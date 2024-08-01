@@ -507,13 +507,13 @@ class compressor_limiter_base(dspg.dsp_block):
 
         """
         # get envelope from envelope detector
-        envelope = self.env_detector.process(sample, channel)  # type: ignore : base inits to None
+        envelope = self.env_detector.process(sample, channel) 
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
         # calculate the gain, this function should be defined by the
         # child class
-        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # pyright: ignore : base inits to None
+        new_gain = self.gain_calc(envelope, self.threshold, self.slope)
 
         # see if we're attacking or decaying
         if new_gain < self.gain[channel]:
@@ -546,7 +546,7 @@ class compressor_limiter_base(dspg.dsp_block):
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
         # get envelope from envelope detector
-        envelope_int = self.env_detector.process_xcore(sample_int, channel)  # pyright: ignore : base inits to None
+        envelope_int = self.env_detector.process_xcore(sample_int, channel)
         # avoid /0
         envelope_int = max(envelope_int, 1)
 
@@ -863,8 +863,7 @@ class compressor_rms(compressor_limiter_base):
     @ratio.setter
     def ratio(self, value):
         self._ratio = value
-        self.slope = (1 - 1 / self.ratio) / 2.0
-        self.slope_f32 = float32(self.slope)
+        self.slope, self.slope_f32 = drcu.compressor_slope_from_ratio(self.ratio)
 
 
 class compressor_rms_softknee(compressor_limiter_base):
@@ -940,8 +939,7 @@ class compressor_rms_softknee(compressor_limiter_base):
     @ratio.setter
     def ratio(self, value):
         self._ratio = value
-        self.slope = (1 - 1 / self.ratio) / 2.0
-        self.slope_f32 = float32(self.slope)
+        self.slope, self.slope_f32 = drcu.compressor_slope_from_ratio(self.ratio)
         self.piecewise_calc()
 
     def piecewise_calc(self):

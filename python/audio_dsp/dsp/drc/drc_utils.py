@@ -76,6 +76,18 @@ def alpha_from_time(attack_or_release_time, fs):
     return alpha, alpha_int
 
 
+def compressor_slope_from_ratio(ratio):
+    slope = (1 - 1 / ratio) / 2.0
+    slope_f32 = float32(slope)
+    return slope, slope_f32
+
+
+def expander_slope_from_ratio(ratio):
+    slope = 1 - ratio
+    slope_f32 = float32(slope)
+    return slope, slope_f32
+
+
 def calc_ema_xcore(x, y, alpha):
     """Calculate fixed-point exponential moving average, given that alpha is in Q_alpha format."""
     acc = int(x) << Q_alpha

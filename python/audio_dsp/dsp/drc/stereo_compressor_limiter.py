@@ -134,8 +134,8 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
         """
         # get envelope from envelope detector
-        env0 = self.env_detector.process(input_samples[0], 0)  # type: ignore : base inits to None
-        env1 = self.env_detector.process(input_samples[1], 1)  # type: ignore : base inits to None
+        env0 = self.env_detector.process(input_samples[0], 0)
+        env1 = self.env_detector.process(input_samples[1], 1)
         envelope = np.maximum(env0, env1)
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
@@ -174,8 +174,8 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
             samples_int[i] = utils.float_to_int32(input_samples[i], self.Q_sig)
 
         # get envelope from envelope detector
-        env0_int = self.env_detector.process_xcore(samples_int[0], 0)  # type: ignore : base inits to None
-        env1_int = self.env_detector.process_xcore(samples_int[1], 1)  # type: ignore : base inits to None
+        env0_int = self.env_detector.process_xcore(samples_int[0], 0)
+        env1_int = self.env_detector.process_xcore(samples_int[1], 1)
         envelope_int = max(env0_int, env1_int)
         # avoid /0
         envelope_int = max(envelope_int, 1)
@@ -304,5 +304,4 @@ class compressor_rms_stereo(compressor_limiter_stereo_base):
     @ratio.setter
     def ratio(self, value):
         self._ratio = value
-        self.slope = (1 - 1 / self.ratio) / 2.0
-        self.slope_f32 = float32(self.slope)
+        self.slope, self.slope_f32 = drcu.compressor_slope_from_ratio(self.ratio)
