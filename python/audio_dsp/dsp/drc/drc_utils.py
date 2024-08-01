@@ -59,7 +59,7 @@ def alpha_from_time(attack_or_release_time, fs):
     and `tau` is the time constant.
 
     attack/release time can't be faster than the length of 2
-    samples, and alpha can't be greater than 1
+    samples, and alpha can't be greater than 1.
     """
     T = 1 / fs
     alpha = 2 * T / (attack_or_release_time + FLT_MIN)
@@ -68,7 +68,8 @@ def alpha_from_time(attack_or_release_time, fs):
         alpha = 1
         Warning("Attack or release time too fast for sample rate, setting as fast as possible.")
 
-    # I don't think this is possible, but let's make sure!
+    # This is possible if alpha > (2/fs)*(2**31), which is 24 hours @ 48kHz,
+    # in which case you should probably use a lower sample rate.
     assert alpha > 0
 
     alpha_int = utils.int32(round(alpha * 2**31)) if alpha != 1.0 else utils.int32(2**31 - 1)

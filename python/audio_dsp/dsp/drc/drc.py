@@ -24,13 +24,19 @@ class envelope_detector_peak(dspg.dsp_block):
 
     Parameters
     ----------
-    attack_t : float, optional
-        Attack time of the envelope detector in seconds.
-    release_t : float, optional
-        Release time of the envelope detector in seconds.
+    attack_t : float
+        Attack time of the envelope detector in seconds. This cannot be
+        faster than the length of 2 samples, and saturates to that
+        value. Exceptionally large attack times may converge to zero.
+    release_t: float
+        Release time of the envelope detector in seconds. This cannot 
+        be faster than the length of 2 samples, and saturates to that
+        value. Exceptionally large release times may converge to zero.
 
     Attributes
     ----------
+    attack_t : float
+    release_t : float
     attack_alpha : float
         Attack time parameter used for exponential moving average in
         floating point processing.
@@ -60,7 +66,10 @@ class envelope_detector_peak(dspg.dsp_block):
 
     @property
     def attack_t(self):
-        """The attack time in seconds. Changing this also sets the EWM alpha values."""
+        """The attack time of the compressor/limiter in seconds;
+        changing this property also sets the EWM alpha values for fixed
+        and floating point implementations.
+        """
         return self._attack_t
 
     @attack_t.setter
@@ -71,7 +80,10 @@ class envelope_detector_peak(dspg.dsp_block):
 
     @property
     def release_t(self):
-        """The release time in seconds. Changing this also sets the EWM alpha values."""
+        """The release time of the compressor/limiter in seconds;
+        changing this property also sets the EWM alpha values for fixed
+        and floating point implementations.
+        """
         return self._release_t
 
     @release_t.setter
@@ -241,6 +253,7 @@ class clipper(dspg.dsp_block):
 
     Attributes
     ----------
+    threshold_db : float
     threshold : float
         Value above which clipping occurs for floating point processing.
     threshold_int : int
@@ -256,7 +269,9 @@ class clipper(dspg.dsp_block):
 
     @property
     def threshold_db(self):
-        """The threshold in decibels. Setting this also updates the fixed and floating point thresholds in linear gain."""
+        """The threshold in decibels; changing this property also
+        updates the fixed and floating point thresholds in linear gain.
+        """
         return self._threshold_db
 
     @threshold_db.setter
@@ -311,13 +326,27 @@ class compressor_limiter_base(dspg.dsp_block):
         number of parallel channels the compressor/limiter runs on. The
         channels are limited/compressed separately, only the constant
         parameters are shared.
+    threshold_db : float
+        Threshold in decibels above which compression/limiting occurs.
+        This cannot be greater than the maximum value representable in
+        Q_SIG format, and will saturate to that value.
     attack_t : float
-        Attack time of the compressor/limiter in seconds.
+        Attack time of the compressor/limiter in seconds. This cannot be
+        faster than the length of 2 samples, and saturates to that
+        value. Exceptionally large attack times may converge to zero.
     release_t: float
-        Release time of the compressor/limiter in seconds.
+        Release time of the compressor/limiter in seconds. This cannot 
+        be faster than the length of 2 samples, and saturates to that
+        value. Exceptionally large release times may converge to zero.
+    envelope_detector : {'peak', 'rms'}
+        The type of envelope detector to use, either a peak envelope
+        detector, or an RMS envelope detector.
 
     Attributes
     ----------
+    threshold_db : float
+    attack_t : float
+    release_t : float
     env_detector : envelope_detector_peak
         Nested envelope detector used to calculate the envelope of the
         signal. Either a peak or RMS envelope detector can be used.
@@ -400,7 +429,10 @@ class compressor_limiter_base(dspg.dsp_block):
 
     @property
     def threshold_db(self):
-        """The threshold in decibels. Setting this also updates the fixed and floating point thresholds in linear gain."""
+        """The threshold in decibels; changing this property also
+        updates the fixed and floating point thresholds in linear
+        gain.
+        """
         return self._threshold_db
 
     @threshold_db.setter
@@ -417,7 +449,10 @@ class compressor_limiter_base(dspg.dsp_block):
 
     @property
     def attack_t(self):
-        """The attack time in seconds. Changing this also sets the EWM alpha values."""
+        """The attack time of the compressor/limiter in seconds;
+        changing this property also sets the EWM alpha values for fixed
+        and floating point implementations.
+        """
         return self._attack_t
 
     @attack_t.setter
@@ -430,7 +465,10 @@ class compressor_limiter_base(dspg.dsp_block):
 
     @property
     def release_t(self):
-        """The release time in seconds. Changing this also sets the EWM alpha values."""
+        """The release time of the compressor/limiter in seconds;
+        changing this property also sets the EWM alpha values for fixed
+        and floating point implementations.
+        """
         return self._release_t
 
     @release_t.setter
@@ -629,11 +667,6 @@ class limiter_peak(compressor_limiter_base):
     sets how long the signal takes to ramp up to its original level
     after the envelope is below the threshold.
 
-    Parameters
-    ----------
-    threshold_db : float
-        Threshold in decibels above which limiting occurs.
-
     Attributes
     ----------
     env_detector : envelope_detector_peak
@@ -661,11 +694,6 @@ class limiter_rms(compressor_limiter_base):
     sets how long the signal takes to ramp up to its original level
     after the envelope is below the threshold.
 
-    Parameters
-    ----------
-    threshold_db : float
-        Threshold in decibels above which limiting occurs.
-
     Attributes
     ----------
     env_detector : envelope_detector_rms
@@ -673,7 +701,7 @@ class limiter_rms(compressor_limiter_base):
         the signal.
     threshold : float
         Value above which limiting occurs for floating point
-        processing. Note the threshold is saves in the power domain, as
+        processing. Note the threshold is saved in the power domain, as
         the RMS envelope detector returns x²
 
     """
@@ -819,14 +847,17 @@ class compressor_rms(compressor_limiter_base):
     ratio : float
         Compression gain ratio applied when the signal is above the
         threshold
-    threshold_db : float
-        Threshold in decibels above which compression occurs.
 
     Attributes
     ----------
+    ratio : float
     env_detector : envelope_detector_rms
         Nested RMS envelope detector used to calculate the envelope of
         the signal.
+    threshold : float
+        Value above which limiting occurs for floating point
+        processing. Note the threshold is saved in the power domain, as
+        the RMS envelope detector returns x²
     ratio : float
         Compression gain ratio applied when the signal is above the
         threshold.
@@ -835,12 +866,6 @@ class compressor_rms(compressor_limiter_base):
         `slope = (1 - 1/ratio)`.
     slope_f32 : float32
         The slope factor of the compressor, used for int32 to float32
-        processing.
-    threshold : float
-        Value above which compression occurs for floating point
-        processing.
-    threshold_int : int
-        Value above which compression occurs for int32 fixed point
         processing.
 
     """
@@ -857,7 +882,10 @@ class compressor_rms(compressor_limiter_base):
 
     @property
     def ratio(self):
-        """Compression gain ratio applied when the signal is above the threshold."""
+        """Compression gain ratio applied when the signal is above the
+        threshold; changing this property also updates the slope used in
+        the fixed and floating point implementation.
+        """
         return self._ratio
 
     @ratio.setter
@@ -889,9 +917,14 @@ class compressor_rms_softknee(compressor_limiter_base):
 
     Attributes
     ----------
+    ratio : float
     env_detector : envelope_detector_rms
         Nested RMS envelope detector used to calculate the envelope of
         the signal.
+    threshold : float
+        Value above which limiting occurs for floating point
+        processing. Note the threshold is saved in the power domain, as
+        the RMS envelope detector returns x²
     ratio : float
         Compression gain ratio applied when the signal is above the
         threshold.
@@ -900,15 +933,6 @@ class compressor_rms_softknee(compressor_limiter_base):
         `slope = (1 - 1/ratio)`.
     slope_f32 : np.float32
         The slope factor of the compressor, used for int32 to float32
-        processing.
-    threshold : float
-        Value above which compression occurs for floating point
-        processing.
-    threshold_f32 : np.float32
-        Value above which compression occurs for floating point
-        processing.
-    threshold_int : int
-        Value above which compression occurs for int32 fixed point
         processing.
     w : float
         The width over which the soft knee extends.
@@ -933,7 +957,11 @@ class compressor_rms_softknee(compressor_limiter_base):
 
     @property
     def ratio(self):
-        """Compression gain ratio applied when the signal is above the threshold."""
+        """Compression gain ratio applied when the signal is above the
+        threshold; changing this property also updates the slope used in
+        the fixed and floating point implementation, and the soft knee
+        fitting.
+        """
         return self._ratio
 
     @ratio.setter
