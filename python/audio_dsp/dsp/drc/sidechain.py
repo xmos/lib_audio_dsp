@@ -35,30 +35,23 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
     ratio : float
         Compression gain ratio applied when the signal is above the
         threshold
-    threshold_db : float
-        Threshold in decibels above which compression occurs.
 
     Attributes
     ----------
+    ratio : float
     env_detector : envelope_detector_rms
         Nested RMS envelope detector used to calculate the envelope of
         the signal.
-    ratio : float
-        Compression gain ratio applied when the signal is above the
-        threshold.
+    threshold : float
+        Value above which limiting occurs for floating point
+        processing. Note the threshold is saved in the power domain, as
+        the RMS envelope detector returns x²
     slope : float
         The slope factor of the compressor, defined as
-        `slope = (1 - 1/ratio)`.
+        `slope = (1 - 1/ratio) / 2`.
     slope_f32 : float32
         The slope factor of the compressor, used for int32 to float32
         processing.
-    threshold : float
-        Value above which compression occurs for floating point
-        processing.
-    threshold_int : int
-        Value above which compression occurs for int32 fixed point
-        processing.
-
     """
 
     def __init__(self, fs, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
@@ -73,7 +66,10 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
 
     @property
     def ratio(self):
-        """Compression gain ratio applied when the signal is above the threshold."""
+        """Compression gain ratio applied when the signal is above the
+        threshold; changing this property also updates the slope used in
+        the fixed and floating point implementation.
+        """
         return self._ratio
 
     @ratio.setter
@@ -237,30 +233,22 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
     ratio : float
         Compression gain ratio applied when the signal is above the
         threshold
-    threshold_db : float
-        Threshold in decibels above which compression occurs.
 
     Attributes
     ----------
+    ratio : float
     env_detector : envelope_detector_rms
         Nested RMS envelope detector used to calculate the envelope of
-        the signal.
-    ratio : float
-        Compression gain ratio applied when the signal is above the
-        threshold.
+    threshold : float
+        Value above which limiting occurs for floating point
+        processing. Note the threshold is saved in the power domain, as
+        the RMS envelope detector returns x²
     slope : float
         The slope factor of the compressor, defined as
         `slope = (1 - 1/ratio)`.
     slope_f32 : float32
         The slope factor of the compressor, used for int32 to float32
         processing.
-    threshold : float
-        Value above which compression occurs for floating point
-        processing.
-    threshold_int : int
-        Value above which compression occurs for int32 fixed point
-        processing.
-
     """
 
     def __init__(self, fs, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
@@ -276,7 +264,10 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
     @property
     def ratio(self):
-        """Compression gain ratio applied when the signal is above the threshold."""
+        """Compression gain ratio applied when the signal is above the
+        threshold; changing this property also updates the slope used in
+        the fixed and floating point implementation.
+        """
         return self._ratio
 
     @ratio.setter

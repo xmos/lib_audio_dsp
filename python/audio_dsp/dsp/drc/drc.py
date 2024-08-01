@@ -29,7 +29,7 @@ class envelope_detector_peak(dspg.dsp_block):
         faster than the length of 2 samples, and saturates to that
         value. Exceptionally large attack times may converge to zero.
     release_t: float
-        Release time of the envelope detector in seconds. This cannot 
+        Release time of the envelope detector in seconds. This cannot
         be faster than the length of 2 samples, and saturates to that
         value. Exceptionally large release times may converge to zero.
 
@@ -335,7 +335,7 @@ class compressor_limiter_base(dspg.dsp_block):
         faster than the length of 2 samples, and saturates to that
         value. Exceptionally large attack times may converge to zero.
     release_t: float
-        Release time of the compressor/limiter in seconds. This cannot 
+        Release time of the compressor/limiter in seconds. This cannot
         be faster than the length of 2 samples, and saturates to that
         value. Exceptionally large release times may converge to zero.
     envelope_detector : {'peak', 'rms'}
@@ -372,7 +372,10 @@ class compressor_limiter_base(dspg.dsp_block):
         attack_alpha in 32-bit int format.
     release_alpha_int : int
         release_alpha in 32-bit int format.
-
+    gain_calc : function
+        function pointer to floating point gain calculation function.
+    gain_calc_int : function
+        function pointer to fixed point gain calculation function.
     """
 
     # Limiter after Zolzer's DAFX & Guy McNally's "Dynamic Range Control
@@ -545,7 +548,7 @@ class compressor_limiter_base(dspg.dsp_block):
 
         """
         # get envelope from envelope detector
-        envelope = self.env_detector.process(sample, channel) 
+        envelope = self.env_detector.process(sample, channel)
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
@@ -672,7 +675,6 @@ class limiter_peak(compressor_limiter_base):
     env_detector : envelope_detector_peak
         Nested peak envelope detector used to calculate the envelope of
         the signal.
-
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
@@ -858,12 +860,9 @@ class compressor_rms(compressor_limiter_base):
         Value above which limiting occurs for floating point
         processing. Note the threshold is saved in the power domain, as
         the RMS envelope detector returns x²
-    ratio : float
-        Compression gain ratio applied when the signal is above the
-        threshold.
     slope : float
         The slope factor of the compressor, defined as
-        `slope = (1 - 1/ratio)`.
+        `slope = (1 - 1/ratio) / 2`.
     slope_f32 : float32
         The slope factor of the compressor, used for int32 to float32
         processing.
@@ -904,7 +903,7 @@ class compressor_rms_softknee(compressor_limiter_base):
     The threshold sets the value above which compression occurs. The
     ratio sets how much the signal is compressed. A ratio of 1 results
     in no compression, while a ratio of infinity results in the same
-    behaviour as a limiter. The attack time sets how fast the comressor
+    behaviour as a limiter. The attack time sets how fast the compressor
     starts compressing. The release time sets how long the signal takes
     to ramp up to it's original level after the envelope is below the
     threshold.
@@ -930,7 +929,7 @@ class compressor_rms_softknee(compressor_limiter_base):
         threshold.
     slope : float
         The slope factor of the compressor, defined as
-        `slope = (1 - 1/ratio)`.
+        `slope = (1 - 1/ratio) / 2`.
     slope_f32 : np.float32
         The slope factor of the compressor, used for int32 to float32
         processing.

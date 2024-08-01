@@ -32,42 +32,28 @@ class expander_base(compressor_limiter_base):
         number of parallel channels the expander runs on. The
         channels are expanded separately, only the constant
         parameters are shared.
+    threshold_db : float
+        Threshold in decibels below which expansion occurs. This cannot
+        be greater than the maximum value representable in
+        Q_SIG format, and will saturate to that value.
     attack_t : float
-        Attack time of the expander in seconds.
-    release_t : float
-        Release time of the expander in seconds.
+        Attack time of the expander in seconds. This cannot be
+        faster than the length of 2 samples, and saturates to that
+        value. Exceptionally large attack times may converge to zero.
+    release_t: float
+        Release time of the expander in seconds. This cannot
+        be faster than the length of 2 samples, and saturates to that
+        value. Exceptionally large release times may converge to zero.
 
     Attributes
     ----------
-    env_detector : envelope_detector_peak
-        Nested envelope detector used to calculate the envelope of the
-        signal. Either a peak or RMS envelope detector can be used.
     threshold : float
         Value below which expanding occurs for floating point
         processing.
-    gain : list[float]
-        Current gain to be applied to the signal for each channel for
-        floating point processing.
-    attack_alpha : float
-        Attack time parameter used for exponential moving average in
-        floating point processing.
-    release_alpha : float
-        Release time parameter used for exponential moving average in
-        floating point processing.
     threshold_int : int
         Value below which expanding occurs for int32 fixed
         point processing.
-    gain_int : list[int]
-        Current gain to be applied to the signal for each channel for
-        int32 fixed point processing.
-    attack_alpha_int : int
-        attack_alpha in 32-bit int format.
-    release_alpha_int : int
-        release_alpha in 32-bit int format.
-    gain_calc : function
-        function pointer to floating point gain calculation function.
-    gain_calc_int : function
-        function pointer to fixed point gain calculation function.
+
     """
 
     def reset_state(self):
@@ -171,21 +157,11 @@ class noise_gate(expander_base):
     attenuation), assuming a full scale signal has been present before
     t = 0.
 
-    Parameters
-    ----------
-    threshold_db : float
-        The threshold level in decibels below which the audio signal is
-        attenuated.
-
     Attributes
     ----------
-    threshold : float
-        The threshold below which the signal is gated.
-    threshold_int : int
-        The threshold level as a 32-bit signed integer.
     env_detector : envelope_detector_peak
-        An instance of the envelope_detector_peak class used for envelope detection.
-
+        Nested peak envelope detector used to calculate the envelope of
+        the signal.
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
@@ -214,19 +190,19 @@ class noise_suppressor_expander(expander_base):
     ratio : float
         The expansion ratio applied to the signal when the envelope
         falls below the threshold.
-    threshold_db : float
-        The threshold level in decibels below which the audio signal is
-        attenuated.
 
     Attributes
     ----------
-    threshold : float
-        The threshold below which the signal is gated.
-    threshold_int : int
-        The threshold level as a 32-bit signed integer.
+    ratio : float
     env_detector : envelope_detector_peak
-        An instance of the envelope_detector_peak class used for envelope detection.
-
+        Nested peak envelope detector used to calculate the envelope of
+        the signal.
+    slope : float
+        The slope factor of the expander, defined as
+        `slope = 1 - ratio`.
+    slope_f32 : float32
+        The slope factor of the expander, used for int32 to float32
+        processing.
     """
 
     def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
@@ -244,7 +220,10 @@ class noise_suppressor_expander(expander_base):
 
     @property
     def ratio(self):
-        """Compression gain ratio applied when the signal is above the threshold."""
+        """Expansion gain ratio applied when the signal is below the
+        threshold; changing this property also updates the slope used in
+        the fixed and floating point implementation.
+        """
         return self._ratio
 
     @ratio.setter
