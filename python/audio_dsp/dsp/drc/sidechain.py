@@ -12,11 +12,11 @@ from audio_dsp.dsp import generic as dspg
 import audio_dsp.dsp.drc.drc_utils as drcu
 from audio_dsp.dsp.types import float32
 
-from audio_dsp.dsp.drc.drc import compressor_limiter_base, envelope_detector_rms
-from audio_dsp.dsp.drc.stereo_compressor_limiter import compressor_limiter_stereo_base
+from audio_dsp.dsp.drc.drc import rms_compressor_limiter_base
+from audio_dsp.dsp.drc.stereo_compressor_limiter import rms_compressor_limiter_stereo_base
 
 
-class compressor_rms_sidechain_mono(compressor_limiter_base):
+class compressor_rms_sidechain_mono(rms_compressor_limiter_base):
     """
     A mono sidechain compressor based on the RMS value of the signal.
     When the RMS envelope of the signal exceeds the threshold, the
@@ -39,13 +39,6 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
     Attributes
     ----------
     ratio : float
-    env_detector : envelope_detector_rms
-        Nested RMS envelope detector used to calculate the envelope of
-        the signal.
-    threshold : float
-        Value above which limiting occurs for floating point
-        processing. Note the threshold is saved in the power domain, as
-        the RMS envelope detector returns x²
     slope : float
         The slope factor of the compressor, defined as
         `slope = (1 - 1/ratio) / 2`.
@@ -55,7 +48,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
     """
 
     def __init__(self, fs, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, 1, threshold_db, attack_t, release_t, "rms", Q_sig)
+        super().__init__(fs, 1, threshold_db, attack_t, release_t, Q_sig)
 
         # property calculates the slopes as well
         self.ratio = ratio
@@ -212,7 +205,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         return [output]
 
 
-class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
+class compressor_rms_sidechain_stereo(rms_compressor_limiter_stereo_base):
     """
     A stereo sidechain compressor based on the RMS value of the signal.
     When the RMS envelope of the signal exceeds the threshold, the
@@ -237,12 +230,6 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
     Attributes
     ----------
     ratio : float
-    env_detector : envelope_detector_rms
-        Nested RMS envelope detector used to calculate the envelope of
-    threshold : float
-        Value above which limiting occurs for floating point
-        processing. Note the threshold is saved in the power domain, as
-        the RMS envelope detector returns x²
     slope : float
         The slope factor of the compressor, defined as
         `slope = (1 - 1/ratio)`.
@@ -253,7 +240,7 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
 
     def __init__(self, fs, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         n_chans = 2
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "rms", Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
         # property calculates the slopes as well
         self.ratio = ratio

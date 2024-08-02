@@ -8,7 +8,7 @@ from audio_dsp.dsp import utils as utils
 from audio_dsp.dsp import generic as dspg
 import audio_dsp.dsp.drc.drc_utils as drcu
 from audio_dsp.dsp.types import float32
-from audio_dsp.dsp.drc.drc import envelope_detector_peak, compressor_limiter_base, peak_compressor_limiter_base
+from audio_dsp.dsp.drc.drc import compressor_limiter_base, peak_compressor_limiter_base
 
 FLT_MIN = np.finfo(float).tiny
 
