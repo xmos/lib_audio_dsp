@@ -77,13 +77,20 @@ def alpha_from_time(attack_or_release_time, fs):
     return alpha, alpha_int
 
 
-def compressor_slope_from_ratio(ratio):
+def rms_compressor_slope_from_ratio(ratio):
+    """Convert a compressor ratio to the slope, where the slope is
+    defined as (1 - 1 / ratio) / 2.0. The division by 2 compensates for
+    the RMS envelope detector returning the RMS².
+    """
     slope = (1 - 1 / ratio) / 2.0
     slope_f32 = float32(slope)
     return slope, slope_f32
 
 
-def expander_slope_from_ratio(ratio):
+def peak_expander_slope_from_ratio(ratio):
+    """Convert an expander ratio to the slope, where the slope is
+    defined as (1 - ratio).
+    """
     slope = 1 - ratio
     slope_f32 = float32(slope)
     return slope, slope_f32

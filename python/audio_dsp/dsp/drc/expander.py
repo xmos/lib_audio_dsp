@@ -229,7 +229,7 @@ class noise_suppressor_expander(peak_expander_base):
     @ratio.setter
     def ratio(self, value):
         self._ratio = value
-        self.slope, self.slope_f32 = drcu.expander_slope_from_ratio(self.ratio)
+        self.slope, self.slope_f32 = drcu.peak_expander_slope_from_ratio(self.ratio)
 
 
 if __name__ == "__main__":

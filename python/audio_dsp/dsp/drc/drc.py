@@ -535,7 +535,7 @@ class compressor_limiter_base(dspg.dsp_block):
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
         # get envelope from envelope detector
-        envelope_int = self.env_detector.process_xcore(sample_int, channel)
+        envelope_int = self.env_detector.process_xcore(sample_int, channel)  # type: ignore : base inits to None
         # avoid /0
         envelope_int = max(envelope_int, 1)
 
@@ -652,8 +652,8 @@ class peak_compressor_limiter_base(compressor_limiter_base):
 
 class rms_compressor_limiter_base(compressor_limiter_base):
     """
-    A compressor/limiter with an RMS envelope detector. 
-    
+    A compressor/limiter with an RMS envelope detector.
+
     Note the threshold is saved in the power domain, as the RMS envelope
     detector returns x².
 
@@ -906,7 +906,7 @@ class compressor_rms(rms_compressor_limiter_base):
     @ratio.setter
     def ratio(self, value):
         self._ratio = value
-        self.slope, self.slope_f32 = drcu.compressor_slope_from_ratio(self.ratio)
+        self.slope, self.slope_f32 = drcu.rms_compressor_slope_from_ratio(self.ratio)
 
 
 class compressor_rms_softknee(rms_compressor_limiter_base):
@@ -972,7 +972,7 @@ class compressor_rms_softknee(rms_compressor_limiter_base):
     @ratio.setter
     def ratio(self, value):
         self._ratio = value
-        self.slope, self.slope_f32 = drcu.compressor_slope_from_ratio(self.ratio)
+        self.slope, self.slope_f32 = drcu.rms_compressor_slope_from_ratio(self.ratio)
         self.piecewise_calc()
 
     def piecewise_calc(self):

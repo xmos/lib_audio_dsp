@@ -81,9 +81,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         function pointer to fixed point gain calculation function.
     """
 
-    def __init__(
-        self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG
-    ):
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         assert n_chans == 2, "has to be stereo"
         super().__init__(fs, n_chans, Q_sig)
 
@@ -155,8 +153,8 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
         """
         # get envelope from envelope detector
-        env0 = self.env_detector.process(input_samples[0], 0)
-        env1 = self.env_detector.process(input_samples[1], 1)
+        env0 = self.env_detector.process(input_samples[0], 0)  # type: ignore : base inits to None
+        env1 = self.env_detector.process(input_samples[1], 1)  # type: ignore : base inits to None
         envelope = np.maximum(env0, env1)
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
@@ -195,8 +193,8 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
             samples_int[i] = utils.float_to_int32(input_samples[i], self.Q_sig)
 
         # get envelope from envelope detector
-        env0_int = self.env_detector.process_xcore(samples_int[0], 0)
-        env1_int = self.env_detector.process_xcore(samples_int[1], 1)
+        env0_int = self.env_detector.process_xcore(samples_int[0], 0)  # type: ignore : base inits to None
+        env1_int = self.env_detector.process_xcore(samples_int[1], 1)  # type: ignore : base inits to None
         envelope_int = max(env0_int, env1_int)
         # avoid /0
         envelope_int = max(envelope_int, 1)
@@ -315,8 +313,8 @@ class peak_compressor_limiter_stereo_base(compressor_limiter_stereo_base):
 
 class rms_compressor_limiter_stereo_base(compressor_limiter_stereo_base):
     """
-    A compressor/limiter with an RMS envelope detector. 
-    
+    A compressor/limiter with an RMS envelope detector.
+
     Note the threshold is saved in the power domain, as the RMS envelope
     detector returns x².
 
@@ -360,7 +358,6 @@ class rms_compressor_limiter_stereo_base(compressor_limiter_stereo_base):
         self.threshold, self.threshold_int = drcu.calculate_threshold(
             self._threshold_db, self.Q_sig, power=True
         )
-
 
 
 class limiter_peak_stereo(peak_compressor_limiter_stereo_base):
@@ -418,4 +415,4 @@ class compressor_rms_stereo(rms_compressor_limiter_stereo_base):
     @ratio.setter
     def ratio(self, value):
         self._ratio = value
-        self.slope, self.slope_f32 = drcu.compressor_slope_from_ratio(self.ratio)
+        self.slope, self.slope_f32 = drcu.rms_compressor_slope_from_ratio(self.ratio)

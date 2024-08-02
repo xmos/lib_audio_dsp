@@ -68,7 +68,7 @@ class compressor_rms_sidechain_mono(rms_compressor_limiter_base):
     @ratio.setter
     def ratio(self, value):
         self._ratio = value
-        self.slope, self.slope_f32 = drcu.compressor_slope_from_ratio(self.ratio)
+        self.slope, self.slope_f32 = drcu.rms_compressor_slope_from_ratio(self.ratio)
 
     def reset_state(self):
         """Reset the envelope detectors to 0 and the gain to 1."""
@@ -260,7 +260,7 @@ class compressor_rms_sidechain_stereo(rms_compressor_limiter_stereo_base):
     @ratio.setter
     def ratio(self, value):
         self._ratio = value
-        self.slope, self.slope_f32 = drcu.compressor_slope_from_ratio(self.ratio)
+        self.slope, self.slope_f32 = drcu.rms_compressor_slope_from_ratio(self.ratio)
 
     def process_channels(self, input_samples: list[float], detect_samples: list[float]):  # type: ignore : override base class
         """
