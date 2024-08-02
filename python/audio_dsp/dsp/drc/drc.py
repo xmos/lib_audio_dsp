@@ -347,6 +347,9 @@ class compressor_limiter_base(dspg.dsp_block):
     threshold_db : float
     attack_t : float
     release_t : float
+    env_detector_type : {'peak', 'rms'}
+        The type of envelope detector to use, either a peak envelope
+        detector, or an RMS envelope detector.
     env_detector : envelope_detector_peak
         Nested envelope detector used to calculate the envelope of the
         signal. Either a peak or RMS envelope detector can be used.

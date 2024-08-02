@@ -16,9 +16,75 @@ from audio_dsp.dsp.types import float32
 
 class compressor_limiter_stereo_base(dspg.dsp_block):
     """
+    A base class shared by stereo compressor and limiter objects.
+
     Stereo compressors and limiters work in a similar way to normal
     compressor_limiter_base objects, but they process two channels and
     apply the same gain to both channels.
+
+    The compressor and limiter have very similar structures, with
+    differences in the gain calculation. All the shared code and
+    parameters are calculated in this base class.
+
+    Parameters
+    ----------
+    n_chans : int
+        number of parallel channels the compressor/limiter runs on. The
+        channels are limited/compressed separately, only the constant
+        parameters are shared.
+    threshold_db : float
+        Threshold in decibels above which compression/limiting occurs.
+        This cannot be greater than the maximum value representable in
+        Q_SIG format, and will saturate to that value.
+    attack_t : float
+        Attack time of the compressor/limiter in seconds. This cannot be
+        faster than the length of 2 samples, and saturates to that
+        value. Exceptionally large attack times may converge to zero.
+    release_t: float
+        Release time of the compressor/limiter in seconds. This cannot
+        be faster than the length of 2 samples, and saturates to that
+        value. Exceptionally large release times may converge to zero.
+    envelope_detector : {'peak', 'rms'}
+        The type of envelope detector to use, either a peak envelope
+        detector, or an RMS envelope detector.
+
+    Attributes
+    ----------
+    threshold_db : float
+    attack_t : float
+    release_t : float
+    env_detector_type : {'peak', 'rms'}
+        The type of envelope detector to use, either a peak envelope
+        detector, or an RMS envelope detector.
+    env_detector : envelope_detector_peak
+        Nested envelope detector used to calculate the envelope of the
+        signal. Either a peak or RMS envelope detector can be used.
+    threshold : float
+        Value above which compression/limiting occurs for floating point
+        processing.
+    gain : list[float]
+        Current gain to be applied to the signal for each channel for
+        floating point processing.
+    attack_alpha : float
+        Attack time parameter used for exponential moving average in
+        floating point processing.
+    release_alpha : float
+        Release time parameter used for exponential moving average in
+        floating point processing.
+    threshold_int : int
+        Value above which compression/limiting occurs for int32 fixed
+        point processing.
+    gain_int : list[int]
+        Current gain to be applied to the signal for each channel for
+        int32 fixed point processing.
+    attack_alpha_int : int
+        attack_alpha in 32-bit int format.
+    release_alpha_int : int
+        release_alpha in 32-bit int format.
+    gain_calc : function
+        function pointer to floating point gain calculation function.
+    gain_calc_int : function
+        function pointer to fixed point gain calculation function.
     """
 
     def __init__(
