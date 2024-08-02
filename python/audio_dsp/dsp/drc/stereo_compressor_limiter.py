@@ -32,10 +32,6 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         number of parallel channels the compressor/limiter runs on. The
         channels are limited/compressed separately, only the constant
         parameters are shared.
-    threshold_db : float
-        Threshold in decibels above which compression/limiting occurs.
-        This cannot be greater than the maximum value representable in
-        Q_SIG format, and will saturate to that value.
     attack_t : float
         Attack time of the compressor/limiter in seconds. This cannot be
         faster than the length of 2 samples, and saturates to that
@@ -44,9 +40,6 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         Release time of the compressor/limiter in seconds. This cannot
         be faster than the length of 2 samples, and saturates to that
         value. Exceptionally large release times may converge to zero.
-    envelope_detector : {'peak', 'rms'}
-        The type of envelope detector to use, either a peak envelope
-        detector, or an RMS envelope detector.
 
     Attributes
     ----------
@@ -81,7 +74,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         function pointer to fixed point gain calculation function.
     """
 
-    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, n_chans, attack_t, release_t, Q_sig=dspg.Q_SIG):
         assert n_chans == 2, "has to be stereo"
         super().__init__(fs, n_chans, Q_sig)
 
@@ -92,10 +85,6 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         # the envelope detector
         self.attack_t = attack_t
         self.release_t = release_t
-
-        # threshold_db should be a property of the child class that sets
-        # threshold_int and threshold
-        self.threshold_db = threshold_db
 
         # slope only used by compressors, but needs to be set for gain_calc API
         self.slope = None
@@ -289,7 +278,7 @@ class peak_compressor_limiter_stereo_base(compressor_limiter_stereo_base):
             Q_sig=Q_sig,
         )
 
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
+        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         # threshold_db should be a property of the child class that sets
         # threshold_int and threshold
@@ -338,7 +327,7 @@ class rms_compressor_limiter_stereo_base(compressor_limiter_stereo_base):
             Q_sig=Q_sig,
         )
 
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
+        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
 
         # threshold_db should be a property of the child class that sets
         # threshold_int and threshold
