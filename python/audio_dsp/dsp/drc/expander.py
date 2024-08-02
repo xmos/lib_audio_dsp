@@ -8,7 +8,7 @@ from audio_dsp.dsp import utils as utils
 from audio_dsp.dsp import generic as dspg
 import audio_dsp.dsp.drc.drc_utils as drcu
 from audio_dsp.dsp.types import float32
-from audio_dsp.dsp.drc import envelope_detector_peak, compressor_limiter_base
+from audio_dsp.dsp.drc.drc import envelope_detector_peak, compressor_limiter_base, peak_compressor_limiter_base
 
 FLT_MIN = np.finfo(float).tiny
 
@@ -144,7 +144,16 @@ class expander_base(compressor_limiter_base):
             )
 
 
-class noise_gate(expander_base):
+class peak_expander_base(expander_base, peak_compressor_limiter_base):
+    """A generic expander base class that uses a peak envelope detector.
+
+    Inheritance from expander_base is prioritised over
+    peak_compressor_limiter_base due to the order in the definition. To
+    confirm this, peak_expander_base.__mro__ can be inspected.
+    """
+
+
+class noise_gate(peak_expander_base):
     """A noise gate that reduces the level of an audio signal when it
     falls below a threshold.
 
@@ -156,23 +165,17 @@ class noise_gate(expander_base):
     The initial state of the noise gate is with the gate open (no
     attenuation), assuming a full scale signal has been present before
     t = 0.
-
-    Attributes
-    ----------
-    env_detector : envelope_detector_peak
-        Nested peak envelope detector used to calculate the envelope of
-        the signal.
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "peak", Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
         # set the gain calculation function handles
         self.gain_calc = drcu.noise_gate_gain_calc
         self.gain_calc_xcore = drcu.noise_gate_gain_calc_xcore
 
 
-class noise_suppressor_expander(expander_base):
+class noise_suppressor_expander(peak_expander_base):
     """A noise suppressor that reduces the level of an audio signal when
     it falls below a threshold. This is also known as an expander.
 
@@ -194,9 +197,6 @@ class noise_suppressor_expander(expander_base):
     Attributes
     ----------
     ratio : float
-    env_detector : envelope_detector_peak
-        Nested peak envelope detector used to calculate the envelope of
-        the signal.
     slope : float
         The slope factor of the expander, defined as
         `slope = 1 - ratio`.
@@ -206,7 +206,7 @@ class noise_suppressor_expander(expander_base):
     """
 
     def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, "peak", Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
         # todo check why this is here
         self.threshold_int = max(1, self.threshold_int)
