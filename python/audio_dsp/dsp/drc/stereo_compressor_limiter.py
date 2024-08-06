@@ -361,9 +361,9 @@ class limiter_peak_stereo(peak_compressor_limiter_stereo_base):
     after the envelope is below the threshold.
     """
 
-    def __init__(self, fs, threshold_dB, attack_t, release_t, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         n_chans = 2
-        super().__init__(fs, n_chans, threshold_dB, attack_t, release_t, Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
         # set the gain calculation function handles
         self.gain_calc = drcu.limiter_peak_gain_calc
@@ -385,9 +385,9 @@ class compressor_rms_stereo(rms_compressor_limiter_stereo_base):
     threshold.
     """
 
-    def __init__(self, fs, ratio, threshold_dB, attack_t, release_t, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         n_chans = 2
-        super().__init__(fs, n_chans, threshold_dB, attack_t, release_t, Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
         # property calculates the slopes as well
         self.ratio = ratio
