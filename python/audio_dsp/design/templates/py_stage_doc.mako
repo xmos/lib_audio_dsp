@@ -15,10 +15,13 @@ ${"="*len(cl)}
     :noindex:
     :members:
 
-.. rubric:: Control
+${cl} Control
+${"="*len(cl)}========
 
 % if class_data[cl]:
-The following runtime control parameters are available for the ${cl} Stage:
+The following runtime command ids are available for the ${cl} Stage. For
+details on reading and writing these commands, see the Run-Time Control User Guide.
+
 <%
   row_list = []
   max_cmd = len("Command ID macro") + 2 # add 2 so the title doesn't ever get split in the PDF
@@ -45,21 +48,24 @@ The following runtime control parameters are available for the ${cl} Stage:
   page_width = 74 # this is a guesstimate of number of chars in a page
   cmd_width = int((max_cmd/page_width)*100)
   pay_width = int(((max_pay - 5)/page_width)*100) # subtract ` chars and compensate for font (ish)
-  help_width = 100 - cmd_width - pay_width
+  help_width = 100 - pay_width
 
 %>
 ##  do the printing, use ljust to pad to max size
+% for row in row_list:
+${row[0]}
+${"-"*len(row[0])}
 
 .. table::
-  :widths: ${cmd_width}, ${pay_width}, ${help_width} 
-  
-  ${"="*max_cmd}  ${"="*max_pay}  ${"="*max_help}
-  ${"Command ID macro".ljust(max_cmd)}  ${"Payload length".ljust(max_pay)}  ${"Description".ljust(max_help)}
-  ${"="*max_cmd}  ${"="*max_pay}  ${"="*max_help}
-% for row in row_list:
-  ${row[0].ljust(max_cmd)}  ${row[1].ljust(max_pay)}  ${row[2].ljust(max_help)}
+  :widths: ${pay_width}, ${help_width} 
+
+  ${"="*max_pay}  ${"="*max_help}
+  ${"Payload length".ljust(max_pay)}  ${"Description".ljust(max_help)}
+  ${"="*max_pay}  ${"="*max_help}
+  ${row[1].ljust(max_pay)}  ${row[2].ljust(max_help)}
+  ${"="*max_pay}  ${"="*max_help}
+
 % endfor  ## row in row_list
-  ${"="*max_cmd}  ${"="*max_pay}  ${"="*max_help}
 
 % else:  ## class_data[cl]
 
