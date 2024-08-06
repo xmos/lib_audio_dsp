@@ -70,7 +70,9 @@ def alpha_from_time(attack_or_release_time, fs):
 
     # This is possible if alpha > (2/fs)*(2**31), which is 24 hours @ 48kHz,
     # in which case you should probably use a lower sample rate.
-    assert alpha > 0
+    assert alpha > 0, (
+        "alpha not > 0, this is possible if attack/release time > (2/fs)*(2**31)."
+    )
 
     alpha_int = utils.int32(round(alpha * 2**31)) if alpha != 1.0 else utils.int32(2**31 - 1)
     assert alpha_int > 0

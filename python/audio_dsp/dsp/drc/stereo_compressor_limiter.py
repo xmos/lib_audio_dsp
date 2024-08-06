@@ -29,16 +29,16 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
     Parameters
     ----------
     n_chans : int
-        number of parallel channels the compressor/limiter runs on. The
+        Number of parallel channels the compressor/limiter runs on. The
         channels are limited/compressed separately, only the constant
         parameters are shared.
     attack_t : float
         Attack time of the compressor/limiter in seconds. This cannot be
-        faster than the length of 2 samples, and saturates to that
+        faster than 2/fs seconds, and saturates to that
         value. Exceptionally large attack times may converge to zero.
     release_t: float
         Release time of the compressor/limiter in seconds. This cannot
-        be faster than the length of 2 samples, and saturates to that
+        be faster than 2/fs seconds, and saturates to that
         value. Exceptionally large release times may converge to zero.
 
     Attributes
@@ -265,7 +265,7 @@ class peak_compressor_limiter_stereo_base(compressor_limiter_stereo_base):
     ----------
     threshold_db : float
     env_detector : envelope_detector_peak
-        Nested peak envelope detector used to calculate the envelope of
+        Peak envelope detector object used to calculate the envelope of
         the signal.
     """
 
@@ -310,7 +310,7 @@ class rms_compressor_limiter_stereo_base(compressor_limiter_stereo_base):
     Attributes
     ----------
     env_detector : envelope_detector_rms
-        Nested RMS envelope detector used to calculate the envelope of
+        RMS envelope detector object used to calculate the envelope of
         the signal.
     threshold : float
         Value above which compression/limiting occurs for floating point

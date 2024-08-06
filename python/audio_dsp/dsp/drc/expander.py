@@ -38,11 +38,11 @@ class expander_base(compressor_limiter_base):
         Q_SIG format, and will saturate to that value.
     attack_t : float
         Attack time of the expander in seconds. This cannot be
-        faster than the length of 2 samples, and saturates to that
+        faster than 2/fs seconds, and saturates to that
         value. Exceptionally large attack times may converge to zero.
     release_t: float
         Release time of the expander in seconds. This cannot
-        be faster than the length of 2 samples, and saturates to that
+        be faster than 2/fs seconds, and saturates to that
         value. Exceptionally large release times may converge to zero.
 
     Attributes
