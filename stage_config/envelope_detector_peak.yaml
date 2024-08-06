@@ -2,11 +2,20 @@ module:
   envelope_detector_peak:
     attack_alpha:
       type: int32_t
-      help: The attack alpha in Q0.31 format.
+      help: >
+        The attack alpha in Q0.31 format. To convert an attack time in
+        seconds to an ``int32_t`` control value, use the function
+        ``calc_alpha(fs, attack_time)`` in ``generic_utils.h``.
     release_alpha:
       type: int32_t
-      help: The release alpha in Q0.31 format.
+      help: >
+        The release alpha in Q0.31 format. To convert a release time in
+        seconds to an ``int32_t`` control value, use the function
+        ``calc_alpha(fs, release_time)`` in ``generic_utils.h``.
     envelope:
       type: int32_t
-      help: The current peak envelope of the signal in Q_SIG format.
+      help: > 
+        The current peak envelope of the signal in Q_SIG format. To read
+        the ``int32_t`` control value, use the function
+        ``q_format_to_db(envelope, Q_SIG)`` in ``generic_utils.h``
 includes: []

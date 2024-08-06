@@ -2,5 +2,8 @@ module:
   clipper:
     threshold:
       type: int32_t
-      help: The threshold in Q_SIG format above which clipping will occur.
+      help: >
+        The threshold in Q_SIG format above which clipping will occur.
+        To convert a threshold in dB to the ``int32_t`` control value, use the function
+        ``db_to_q_format(x, Q_SIG)`` in ``generic_utils.h``.
 includes: []

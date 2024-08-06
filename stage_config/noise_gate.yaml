@@ -2,17 +2,32 @@ module:
   noise_gate:
     attack_alpha:
       type: int32_t
-      help: The attack alpha in Q0.31 format.
+      help: >
+        The attack alpha in Q0.31 format. To convert an attack time in
+        seconds to an ``int32_t`` control value, use the function
+        ``calc_alpha(fs, attack_time)`` in ``generic_utils.h``.
     release_alpha:
       type: int32_t
-      help: The release alpha in Q0.31 format.
+      help: >
+        The release alpha in Q0.31 format. To convert a release time in
+        seconds to an ``int32_t`` control value, use the function
+        ``calc_alpha(fs, release_time)`` in ``generic_utils.h``.
     envelope:
       type: int32_t
-      help: The current peak envelope of the signal in Q_SIG format.
+      help: > 
+        The current peak envelope of the signal in Q_SIG format. To read
+        the ``int32_t`` control value, use the function
+        ``q_format_to_db(envelope, Q_SIG)`` in ``generic_utils.h``
     threshold:
       type: int32_t
-      help: The threshold in Q_SIG format below which gating will occur.
+      help: >
+        The threshold in Q_SIG format below which gating will occur.
+        To convert a threshold in dB to the ``int32_t`` control value, use the function
+        ``calc_peak_threshold(x)`` in ``generic_utils.h``.
     gain:
       type: int32_t
-      help: The current gain applied by the noise gate in Q0.31 format.
+      help: >
+        The current gain applied by the noise gate in Q0.31 format.
+        To read the ``int32_t`` control value, use the function
+        ``q_format_to_db(envelope, 31)`` in ``generic_utils.h``
 includes: []
