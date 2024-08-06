@@ -42,6 +42,9 @@ def calculate_threshold(threshold_db, Q_sig, power=False) -> tuple[float, int]:
 
     threshold_int = utils.float_to_int32(threshold, Q_sig)
 
+    # this avoids division by zero for expanders
+    self.threshold_int = max(1, self.threshold_int)
+
     return threshold, threshold_int
 
 

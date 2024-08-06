@@ -208,9 +208,6 @@ class noise_suppressor_expander(peak_expander_base):
     def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
-        # todo check why this is here
-        self.threshold_int = max(1, self.threshold_int)
-
         # property calculates the slopes as well
         self.ratio = ratio
 
