@@ -43,7 +43,7 @@ def calculate_threshold(threshold_db, Q_sig, power=False) -> tuple[float, int]:
     threshold_int = utils.float_to_int32(threshold, Q_sig)
 
     # this avoids division by zero for expanders
-    self.threshold_int = max(1, self.threshold_int)
+    threshold_int = max(1, threshold_int)
 
     return threshold, threshold_int
 
@@ -73,9 +73,7 @@ def alpha_from_time(attack_or_release_time, fs):
 
     # This is possible if alpha > (2/fs)*(2**31), which is 24 hours @ 48kHz,
     # in which case you should probably use a lower sample rate.
-    assert alpha > 0, (
-        "alpha not > 0, this is possible if attack/release time > (2/fs)*(2**31)."
-    )
+    assert alpha > 0, "alpha not > 0, this is possible if attack/release time > (2/fs)*(2**31)."
 
     alpha_int = utils.int32(round(alpha * 2**31)) if alpha != 1.0 else utils.int32(2**31 - 1)
     assert alpha_int > 0
