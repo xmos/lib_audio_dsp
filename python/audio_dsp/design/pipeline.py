@@ -1091,12 +1091,6 @@ static adsp_controller_t* m_control;
 
     (out_dir / f"adsp_generated_{resolved_pipe['identifier']}.c").write_text(dsp_main)
 
-    yaml_dir = out_dir / "yaml"
-    yaml_dir.mkdir(exist_ok=True)
-
-    for name, defintion in resolved_pipe["modules"].items():
-        (yaml_dir / f"{name}.yaml").write_text(yaml.dump(defintion))
-
 
 def profile_pipeline(pipeline: Pipeline):
     """
