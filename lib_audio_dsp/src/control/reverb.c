@@ -2,7 +2,7 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include <xcore/assert.h>
-#include "dsp/adsp.h"
+#include "control/adsp_control.h"
 
 #include <math.h>
 
