@@ -192,7 +192,7 @@ class Pipeline:
         s = self._current_thread.stage(stage_type, inputs, label=label, **kwargs)
         if label:
             if label in self._labelled_stages:
-                raise RuntimeError(f"Label {label} is alread in use.")
+                raise RuntimeError(f"Label {label} is already in use.")
             self._labelled_stages[label] = s
         return s.o
 
@@ -248,8 +248,11 @@ class Pipeline:
         - All edges have the same fs and frame_size (until future enhancements)
         """
 
-    def draw(self):
-        """Render a dot diagram of this pipeline."""
+    def draw(self, path: Path | None = None):
+        """Render a dot diagram of this pipeline.
+
+        If `path` is not none then the image will be saved to the named file instead of drawing to the jupyter notebook.
+        """
         dot = new_record_digraph()
         for thread in self.threads:
             thread.add_to_dot(dot)
@@ -269,7 +272,11 @@ class Pipeline:
                 dest = uuid4().hex
                 dot.node(dest, "", shape="point")
             dot.edge(source, dest)
-        display.display_svg(dot)
+        if path is None:
+            display.display_svg(dot)
+        else:
+            dot.format = "png"
+            dot.render(path)
 
     @property
     def stages(self):
@@ -374,7 +381,7 @@ class Pipeline:
 
 def validate_pipeline_checksum(pipeline: Pipeline):
     """
-    Check if python and device pipeline checksums match. Raise a runtime error if the checksums are not equal.
+    Check if Python and device pipeline checksums match. Raise a runtime error if the checksums are not equal.
     The check is performed only if the host application can connect to the device.
 
     Parameters
@@ -718,6 +725,7 @@ def _generate_dsp_header(resolved_pipeline, out_dir=Path("build/dsp_pipeline")):
         f"adsp_pipeline_t * adsp_{resolved_pipeline['identifier']}_pipeline_init();\n\n"
         f"DECLARE_JOB(adsp_{resolved_pipeline['identifier']}_pipeline_main, (adsp_pipeline_t*));\n"
         f"void adsp_{resolved_pipeline['identifier']}_pipeline_main(adsp_pipeline_t* adsp);\n"
+        f"void adsp_{resolved_pipeline['identifier']}_print_thread_max_ticks(void);\n"
     )
 
     (out_dir / f"adsp_generated_{resolved_pipeline['identifier']}.h").write_text(header)
@@ -740,13 +748,55 @@ def _generate_instance_id_defines(resolved_pipeline, out_dir=Path("build/dsp_pip
     (out_dir / f"adsp_instance_id_{pipeline_id}.h").write_text(header)
 
 
+def _generate_dsp_max_thread_ticks(resolved_pipeline):
+    """Generate a function to print the max ticks for each thread."""
+    identifier = resolved_pipeline["identifier"]
+    n_threads = len(resolved_pipeline["threads"])
+    read_threads_code = "\n\t".join(
+        f"do_read(thread{i}_stage_index, CMD_DSP_THREAD_MAX_CYCLES, sizeof(int), &thread_ticks[{i}]);"
+        for i in range(n_threads)
+    )
+    fmt_str = "\\n".join(f"{i}:\\t%d" for i in range(n_threads))
+    fmt_args = ", ".join(f"thread_ticks[{i}]" for i in range(n_threads))
+    return f"""
+#include "adsp_instance_id_{identifier}.h"
+#include <stdio.h>
+
+static void do_read(int instance, int cmd_id, int size, void* data) {{
+    adsp_stage_control_cmd_t cmd = {{
+        .instance_id = instance,
+        .cmd_id = cmd_id,
+        .payload_len = size,
+        .payload = data
+    }};
+    xassert(m_control);
+    for(;;) {{
+        adsp_control_status_t ret = adsp_read_module_config(
+                m_control,
+                &cmd);
+        if(ADSP_CONTROL_SUCCESS == ret) {{
+            return;
+        }}
+    }}
+}}
+
+void adsp_{identifier}_print_thread_max_ticks(void) {{
+    int thread_ticks[{n_threads}];
+    {read_threads_code}
+    printf("DSP Thread Ticks:\\n{fmt_str}\\n", {fmt_args});
+}}
+"""
+
+
 def _generate_dsp_init(resolved_pipeline):
     """Create the init function which initialised all modules and channels."""
     chans = _determine_channels(resolved_pipeline)
     adsp = f"adsp_{resolved_pipeline['identifier']}"
 
     ret = f"adsp_pipeline_t * {adsp}_pipeline_init() {{\n"
-    ret += f"\tstatic adsp_pipeline_t {adsp};\n\n"
+    ret += f"\tstatic adsp_pipeline_t {adsp};\n"
+    ret += f"\tstatic adsp_controller_t {adsp}_controller;\n"
+    ret += f"\tm_control = &{adsp}_controller;\n"
 
     # Track the number of channels so we can initialise them
     input_channels = 0
@@ -860,6 +910,7 @@ def _generate_dsp_init(resolved_pipeline):
                 """
 
             ret += f"{stage_name}_init(&{adsp}.modules[{stage_index}], &allocator{stage_index}, {stage_index}, {stage_n_in}, {stage_n_out}, {stage_frame_size});\n"
+    ret += f"\tadsp_controller_init(&{adsp}_controller, &{adsp});\n"
     ret += f"\treturn &{adsp};\n"
     ret += "}\n\n"
     return ret
@@ -938,8 +989,10 @@ def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
 
     dsp_main = """
 #include <stages/adsp_pipeline.h>
+#include <stages/adsp_control.h>
 #include <xcore/select.h>
 #include <xcore/channel.h>
+#include <xcore/assert.h>
 #include <xcore/hwtimer.h>
 #include <xcore/thread.h>
 #include <print.h>
@@ -948,6 +1001,8 @@ def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
 #include <stages/bump_allocator.h>
 #include <dsp/signal_chain.h>
 
+// used in print_max_ticks
+static adsp_controller_t* m_control;
 """
     # add includes for each stage type in the pipeline
     dsp_main += "".join(
@@ -961,6 +1016,7 @@ def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
     )
     dsp_main += _generate_dsp_threads(resolved_pipe)
     dsp_main += _generate_dsp_init(resolved_pipe)
+    dsp_main += _generate_dsp_max_thread_ticks(resolved_pipe)
 
     dsp_main += (
         f"void adsp_{resolved_pipe['identifier']}_pipeline_main(adsp_pipeline_t* adsp) {{\n"
@@ -1034,12 +1090,6 @@ def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
     dsp_main += "}\n"
 
     (out_dir / f"adsp_generated_{resolved_pipe['identifier']}.c").write_text(dsp_main)
-
-    yaml_dir = out_dir / "yaml"
-    yaml_dir.mkdir(exist_ok=True)
-
-    for name, defintion in resolved_pipe["modules"].items():
-        (yaml_dir / f"{name}.yaml").write_text(yaml.dump(defintion))
 
 
 def profile_pipeline(pipeline: Pipeline):

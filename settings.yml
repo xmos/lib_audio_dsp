@@ -1,5 +1,5 @@
 project: lib_audio_dsp
-version: 0.2.0
+version: 1.0.0
 
 ## example of overridable setting
 # watermarks is redefined in documentation and again for a specific product
@@ -17,7 +17,9 @@ documentation:
   root_doc: index.rst
   exclude_patterns_path: doc/exclude_patterns.inc
   substitutions_path: doc/substitutions.inc
-  linkcheck_ignore_regex: []
+  linkcheck_ignore_regex: 
+    - ".*127\\.0\\.0\\.1.*"
+    - ".*lib_audio_dsp"  # this repo is private
   doc_dirname: doc
   build_path: doc/_build
   output_path: doc/_out
@@ -32,8 +34,9 @@ documentation:
     my-special-thing: A special thing for a special project
   cognidox_part_number: XM-015034-PC
   run_before: |
-    python doc/programming_guide/gen/autogen.py
+    python doc/autogen.py
   extra_sphinx_opts: [-W]
+  use_numpydoc: true
   doxygen_projects:
     lib_audio_dsp:
       doxyfile_path: doc/Doxyfile.inc
@@ -44,6 +47,15 @@ documentation:
         WARN_IF_UNDOCUMENTED = no
 
   pdfs:
-    doc/programming_guide/index:
-      pdf_title: '{{product}} - Programming Guide'
-      pdf_filename: '{{product}}_programming_guide_v{{version}}'
+    doc/tool_user_guide/index:
+      pdf_title: '{{product}} - Tool User Guide'
+      pdf_filename: '{{product}}_tool_user_guide_v{{version}}'
+    doc/dsp_components/index:
+      pdf_title: '{{product}} - DSP Components'
+      pdf_filename: '{{product}}_dsp_components_v{{version}}'
+    doc/design_guide/index:
+      pdf_title: '{{product}} - DSP Design Guide'
+      pdf_filename: '{{product}}_design_guide_v{{version}}'
+    doc/run_time_control_guide/index:
+      pdf_title: '{{product}} - DSP Run-time Control guide'
+      pdf_filename: '{{product}}_run_time_control_guide_v{{version}}'

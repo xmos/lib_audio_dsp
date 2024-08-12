@@ -7,7 +7,7 @@
 
 
 /**
- * @brief  Biquad filter
+ * @brief Biquad filter.
  *  This function implements a biquad filter. The filter is implemented as a direct form 1
  * 
  * @param new_sample      New sample to be filtered
@@ -183,7 +183,7 @@ left_shift_t adsp_design_biquad_const_q(
  * This function creates a biquad filter with a lowshelf response.
  * 
  * The Q factor is defined in a similar way to standard low pass, i.e.
- * > 0.707 will yield peakiness (where the shelf response does not
+ * Q > 0.707 will yield peakiness (where the shelf response does not
  * monotonically change). The level change at f will be boost_db/2.
  * 
  * @param coeffs          Lowshelf filter coefficients
@@ -205,7 +205,7 @@ left_shift_t adsp_design_biquad_lowshelf(
  * This function creates a biquad filter with a highshelf response.
  * 
  * The Q factor is defined in a similar way to standard high pass, i.e.
- * > 0.707 will yield peakiness. The level change at f will be
+ * Q > 0.707 will yield peakiness. The level change at f will be
  * boost_db/2.
  * 
  * @param coeffs          Highshelf filter coefficients

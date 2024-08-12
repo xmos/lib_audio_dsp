@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "audio_dsp"
-version = "0.2.0"
+version = "1.0.0"
 description = "An audio DSP library for the xcore"
 authors = [
 ]
@@ -14,9 +14,9 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "numpy < 2.0",
+    "numpy >= 2.0",
     "scipy",
-    "matplotlib",
+    "matplotlib < 3.9.1",
     "soundfile",
     "IPyWidgets",
     "graphviz",

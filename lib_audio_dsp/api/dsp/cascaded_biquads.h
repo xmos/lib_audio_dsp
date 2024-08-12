@@ -7,7 +7,8 @@
 
 /**
  * @brief 8-band cascaded biquad filter
- * This function implements an 8-band cascaded biquad filter. The filter is implemented as a direct form 1
+ * This function implements an 8-band cascaded biquad filter. The filter is implemented as a direct
+ * form 1 filter.
  * 
  * @param new_sample    New sample to be filtered
  * @param coeffs        Filter coefficients

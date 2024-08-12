@@ -16,26 +16,77 @@ from audio_dsp.dsp.types import float32
 
 class compressor_limiter_stereo_base(dspg.dsp_block):
     """
+    A base class shared by stereo compressor and limiter objects.
+
     Stereo compressors and limiters work in a similar way to normal
     compressor_limiter_base objects, but they process two channels and
     apply the same gain to both channels.
+
+    The compressor and limiter have very similar structures, with
+    differences in the gain calculation. All the shared code and
+    parameters are calculated in this base class.
+
+    Parameters
+    ----------
+    n_chans : int
+        Number of parallel channels the compressor/limiter runs on. The
+        channels are limited/compressed separately, only the constant
+        parameters are shared.
+    attack_t : float
+        Attack time of the compressor/limiter in seconds. This cannot be
+        faster than 2/fs seconds, and saturates to that
+        value. Exceptionally large attack times may converge to zero.
+    release_t: float
+        Release time of the compressor/limiter in seconds. This cannot
+        be faster than 2/fs seconds, and saturates to that
+        value. Exceptionally large release times may converge to zero.
+
+    Attributes
+    ----------
+    threshold_db : float
+    attack_t : float
+    release_t : float
+    threshold : float
+        Value above which compression/limiting occurs for floating point
+        processing.
+    gain : list[float]
+        Current gain to be applied to the signal for each channel for
+        floating point processing.
+    attack_alpha : float
+        Attack time parameter used for exponential moving average in
+        floating point processing.
+    release_alpha : float
+        Release time parameter used for exponential moving average in
+        floating point processing.
+    threshold_int : int
+        Value above which compression/limiting occurs for int32 fixed
+        point processing.
+    gain_int : list[int]
+        Current gain to be applied to the signal for each channel for
+        int32 fixed point processing.
+    attack_alpha_int : int
+        attack_alpha in 32-bit int format.
+    release_alpha_int : int
+        release_alpha in 32-bit int format.
+    gain_calc : function
+        function pointer to floating point gain calculation function.
+    gain_calc_int : function
+        function pointer to fixed point gain calculation function.
     """
 
     def __init__(self, fs, n_chans, attack_t, release_t, Q_sig=dspg.Q_SIG):
         assert n_chans == 2, "has to be stereo"
         super().__init__(fs, n_chans, Q_sig)
 
-        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
-        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(release_t, fs)
         self.Q_alpha = drcu.Q_alpha
         assert self.Q_alpha == 31, "When changing this the reset value will have to be updated"
 
-        # These are defined differently for peak and RMS limiters
-        self.threshold = None
-        self.threshold_int = None
-        self.env_detector = None
+        # setting attack and release times sets the EWM coeffs in this and
+        # the envelope detector
+        self.attack_t = attack_t
+        self.release_t = release_t
 
-        # slope is used for compressors, not limiters
+        # slope only used by compressors, but needs to be set for gain_calc API
         self.slope = None
         self.slope_f32 = None
 
@@ -45,6 +96,32 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
         # initialise gain states
         self.reset_state()
+
+    @property
+    def attack_t(self):
+        """The attack time in seconds. Changing this also sets the EWM alpha values."""
+        return self._attack_t
+
+    @attack_t.setter
+    def attack_t(self, value):
+        self._attack_t = value
+        # calculate EWM alpha from time constant
+        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(self._attack_t, self.fs)
+        # update the envelope detector
+        self.env_detector.attack_t = self.attack_t
+
+    @property
+    def release_t(self):
+        """The release time in seconds. Changing this also sets the EWM alpha values."""
+        return self._release_t
+
+    @release_t.setter
+    def release_t(self, value):
+        self._release_t = value
+        # calculate EWM alpha from time constant
+        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(self._release_t, self.fs)
+        # update the envelope detector
+        self.env_detector.release_t = self.release_t
 
     def reset_state(self):
         """Reset the envelope detectors to 0 and the gain to 1."""
@@ -61,7 +138,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
         Take one new pair of samples and return the compressed/limited
         samples.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         """
         # get envelope from envelope detector
@@ -97,7 +174,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         Take one new pair of samples and return the compressed/limited
         samples.  The float input sample is quantized to int32, and
         returned to float before outputting. Input should be scaled with
-        0dB = 1.0.
+        0 dB = 1.0.
 
         """
         samples_int = [int(0)] * len(input_samples)
@@ -180,7 +257,99 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         return output
 
 
-class limiter_peak_stereo(compressor_limiter_stereo_base):
+class peak_compressor_limiter_stereo_base(compressor_limiter_stereo_base):
+    """
+    A compressor/limiter with a peak envelope detector.
+
+    Attributes
+    ----------
+    threshold_db : float
+    env_detector : envelope_detector_peak
+        Peak envelope detector object used to calculate the envelope of
+        the signal.
+    """
+
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
+        self.env_detector = envelope_detector_peak(
+            fs,
+            n_chans=n_chans,
+            attack_t=attack_t,
+            release_t=release_t,
+            Q_sig=Q_sig,
+        )
+
+        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
+
+        # threshold_db should be a property of the child class that sets
+        # threshold_int and threshold
+        self.threshold_db = threshold_db
+
+    @property
+    def threshold_db(self):
+        """The threshold in decibels; changing this property also
+        updates the fixed and floating point thresholds in linear
+        gain.
+        """
+        return self._threshold_db
+
+    @threshold_db.setter
+    def threshold_db(self, value):
+        self._threshold_db = value
+        self.threshold, self.threshold_int = drcu.calculate_threshold(
+            self._threshold_db, self.Q_sig
+        )
+
+
+class rms_compressor_limiter_stereo_base(compressor_limiter_stereo_base):
+    """
+    A compressor/limiter with an RMS envelope detector.
+
+    Note the threshold is saved in the power domain, as the RMS envelope
+    detector returns x².
+
+    Attributes
+    ----------
+    env_detector : envelope_detector_rms
+        RMS envelope detector object used to calculate the envelope of
+        the signal.
+    threshold : float
+        Value above which compression/limiting occurs for floating point
+        processing. Note the threshold is saved in the power domain, as
+        the RMS envelope detector returns x².
+    """
+
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
+        self.env_detector = envelope_detector_rms(
+            fs,
+            n_chans=n_chans,
+            attack_t=attack_t,
+            release_t=release_t,
+            Q_sig=Q_sig,
+        )
+
+        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
+
+        # threshold_db should be a property of the child class that sets
+        # threshold_int and threshold
+        self.threshold_db = threshold_db
+
+    @property
+    def threshold_db(self):
+        """The threshold in decibels; changing this property also
+        updates the fixed and floating point thresholds in linear
+        gain.
+        """
+        return self._threshold_db
+
+    @threshold_db.setter
+    def threshold_db(self, value):
+        self._threshold_db = value
+        self.threshold, self.threshold_int = drcu.calculate_threshold(
+            self._threshold_db, self.Q_sig, power=True
+        )
+
+
+class limiter_peak_stereo(peak_compressor_limiter_stereo_base):
     """
     A stereo limiter based on the peak value of the signal. When the
     peak envelope of either signal channel, exceeds the threshold, the
@@ -194,24 +363,14 @@ class limiter_peak_stereo(compressor_limiter_stereo_base):
 
     def __init__(self, fs, threshold_dB, attack_t, release_t, Q_sig=dspg.Q_SIG):
         n_chans = 2
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
-
-        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_dB, self.Q_sig)
-
-        self.env_detector = envelope_detector_peak(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
+        super().__init__(fs, n_chans, threshold_dB, attack_t, release_t, Q_sig)
 
         # set the gain calculation function handles
         self.gain_calc = drcu.limiter_peak_gain_calc
         self.gain_calc_xcore = drcu.limiter_peak_gain_calc_xcore
 
 
-class compressor_rms_stereo(compressor_limiter_stereo_base):
+class compressor_rms_stereo(rms_compressor_limiter_stereo_base):
     """
     A stereo compressor based on the RMS value of the signal. When the
     RMS envelope of the either signal channel exceeds the threshold, the
@@ -228,23 +387,21 @@ class compressor_rms_stereo(compressor_limiter_stereo_base):
 
     def __init__(self, fs, ratio, threshold_dB, attack_t, release_t, Q_sig=dspg.Q_SIG):
         n_chans = 2
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
+        super().__init__(fs, n_chans, threshold_dB, attack_t, release_t, Q_sig)
 
-        self.threshold, self.threshold_int = drcu.calculate_threshold(
-            threshold_dB, self.Q_sig, power=True
-        )
-
-        self.env_detector = envelope_detector_rms(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
-
-        self.slope = (1 - 1 / ratio) / 2.0
-        self.slope_f32 = float32(self.slope)
+        # property calculates the slopes as well
+        self.ratio = ratio
 
         # set the gain calculation function handles
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
+
+    @property
+    def ratio(self):
+        """Compression gain ratio applied when the signal is above the threshold."""
+        return self._ratio
+
+    @ratio.setter
+    def ratio(self, value):
+        self._ratio = value
+        self.slope, self.slope_f32 = drcu.rms_compressor_slope_from_ratio(self.ratio)

@@ -2,8 +2,11 @@ module:
   envelope_detector_rms:
     attack_alpha:
       type: int32_t
+      help: The attack alpha in Q0.31 format.
     release_alpha:
       type: int32_t
+      help: The release alpha in Q0.31 format.
     envelope:
       type: int32_t
+      help: The current RMS envelope of the signal in Q_SIG format.
 includes: []

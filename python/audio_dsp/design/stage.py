@@ -80,7 +80,9 @@ class StageOutput(Edge):
     @dest_index.setter
     def dest_index(self, value):
         if self._dest_index is not None:
-            raise RuntimeError(f"This edge alread has a dest index, can't be changes to {value}")
+            raise RuntimeError(
+                f"This edge has already been connected, edges cannot have multiple destinations."
+            )
         self._dest_index = value
 
     def __repr__(self) -> str:
@@ -99,8 +101,8 @@ class StageOutputList:
     design. However the indexing and combining methods shown in the example will be used to
     create new StageOutputList instances.
 
-    Example
-    -------
+    Examples
+    --------
     This example shows how to combine StageOutputList in various ways::
 
         # a and b are StageOutputList
