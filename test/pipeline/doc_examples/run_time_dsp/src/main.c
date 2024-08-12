@@ -11,6 +11,7 @@
 #include "adsp_generated_auto.h"
 #include "adsp_instance_id_auto.h"
 #include "dsp/signal_chain.h"
+#include "control/signal_chain.h"
 #include "stages/adsp_control.h"
 #include "stages/adsp_pipeline.h"
 
