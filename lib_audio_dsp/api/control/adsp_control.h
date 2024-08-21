@@ -12,3 +12,4 @@
 #include "control/drc.h"
 #include "control/reverb.h"
 #include "control/signal_chain.h"
+#include "control/helpers.h"
