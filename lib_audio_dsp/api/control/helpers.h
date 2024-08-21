@@ -3,8 +3,12 @@
 
 #pragma once
 #include <xcore/assert.h>    // for xassert()
+#include <math.h>
+#include "xmath/xmath.h"
+#include <dsp/_helpers/generic_utils.h>
+#include <dsp/defines.h>
 
-static inline int32_t _float2fixed( float x, int32_t q )
+static inline int32_t _float2fixed2( float x, int32_t q )
 {
   if     ( x < 0 ) return (((float)(1 << q))       * x - 0.5);
   else if( x > 0 ) return (((float)((1 << q) - 1)) * x + 0.5);
@@ -22,7 +26,7 @@ static inline int32_t _float2fixed( float x, int32_t q )
  */
 static inline int32_t db_to_q_format(float level_db, int q_format) {
   float A  = powf(10, (level_db / 20));
-  int32_t out = _float2fixed( A, q_format);
+  int32_t out = _float2fixed2( A, q_format);
   return out;
 }
 
@@ -37,7 +41,7 @@ static inline int32_t db_to_q_format(float level_db, int q_format) {
  */
 static inline int32_t db_pow_to_q_format(float level_db, int q_format) {
   float A  = powf(10, (level_db / 10));
-  int32_t out = _float2fixed( A, q_format);
+  int32_t out = _float2fixed2( A, q_format);
   return out;
 }
 
@@ -78,24 +82,42 @@ static inline float q_format_to_db_pow(int32_t level, int q_format) {
  * @return int32_t attack/release alpha as an int32_t
  */
 static inline int32_t calc_alpha(float fs, float time) {
-  xassert(time > 0 && "time has to be positive");
-  time = 2 / (fs * time);
-  int32_t sign, exp, mant;
-  asm("fsexp %0, %1, %2": "=r" (sign), "=r" (exp): "r" (time));
-  asm("fmant %0, %1": "=r" (mant): "r" (time));
+//   xassert(time > 0 && "time has to be positive");
+  float alpha = 1;
+  if (time > 0){
+    alpha = 2 / (fs * time);
+    alpha = alpha > 1.0 ? 1.0 : alpha;
+  }
 
-  // mant to q31
-  right_shift_t shr = -Q_alpha - exp + 23;
-  mant >>= shr;
+  int32_t mant;
+
+  if(alpha == 1.0){
+    mant = 2147483647;
+  }
+  else{
+  #ifdef __XS3A__
+    int32_t sign, exp;
+    asm("fsexp %0, %1, %2": "=r" (sign), "=r" (exp): "r" (alpha));
+    asm("fmant %0, %1": "=r" (mant): "r" (alpha));
+    // mant to q31
+    right_shift_t shr = -Q_alpha - exp + 23;
+    mant >>= shr;
+  #else
+    mant = (int32_t)(alpha * 2147483648.0);
+  #endif
+  }
+
   return mant;
 }
 
-static inline int32_t calc_peak_threshold(float level_db){
-  db_to_q_format(level_db, Q_SIG);
+static inline int32_t calculate_peak_threshold(float level_db){
+  int32_t out = db_to_q_format(level_db, Q_SIG);
+  return out;
 }
 
-static inline int32_t calc_rms_threshold(float level_db){
-  db_pow_to_q_format(level_db, Q_SIG);
+static inline int32_t calculate_rms_threshold(float level_db){
+  int32_t out = db_pow_to_q_format(level_db, Q_SIG);
+  return out;
 }
 
 /**
