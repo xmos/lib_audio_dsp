@@ -10,7 +10,9 @@
 
 static inline int32_t _float2fixed2( float x, int32_t q )
 {
-  if     ( x < 0 ) return (((float)(1 << q))       * x - 0.5);
+  if (x < -(1 << (31-q))) return INT32_MIN;
+  else if ( x < 0 ) return (((float)(1 << q))       * x - 0.5);
+  else if ( x >= 1 << (31-q)) return INT32_MAX;
   else if( x > 0 ) return (((float)((1 << q) - 1)) * x + 0.5);
   return 0;
 }
@@ -41,6 +43,7 @@ static inline int32_t db_to_q_format(float level_db, int q_format) {
  */
 static inline int32_t db_pow_to_q_format(float level_db, int q_format) {
   float A  = powf(10, (level_db / 10));
+//   A = MIN(A, MAX_SIG_GAIN);
   int32_t out = _float2fixed2( A, q_format);
   return out;
 }
@@ -86,7 +89,7 @@ static inline int32_t calc_alpha(float fs, float time) {
   float alpha = 1;
   if (time > 0){
     alpha = 2 / (fs * time);
-    alpha = alpha > 1.0 ? 1.0 : alpha;
+    alpha = MIN(alpha, 1.0);
   }
 
   int32_t mant;
@@ -112,20 +115,24 @@ static inline int32_t calc_alpha(float fs, float time) {
 
 static inline int32_t calculate_peak_threshold(float level_db){
   int32_t out = db_to_q_format(level_db, Q_SIG);
+  out = MAX(out, 1);
   return out;
 }
 
 static inline int32_t calculate_rms_threshold(float level_db){
   int32_t out = db_pow_to_q_format(level_db, Q_SIG);
+  out = MAX(out, 1);
   return out;
 }
 
 /**
  * @brief Convert a compressor ratio to the slope, where the slope is
  *        defined as (1 - 1 / ratio) / 2.0. The division by 2 compensates for
- *        the RMS envelope detector returning the RMS².
+ *        the RMS envelope detector returning the RMS². The ratio must be
+ *        greater than 1, if it is not the ratio is set to 1.
  */
 static inline float rms_compressor_slope_from_ratio(float ratio){
+  ratio = MAX(ratio, 1.0);
   float slope = (1.0 - 1.0 / ratio) / 2.0;
   return slope;
 
@@ -133,9 +140,11 @@ static inline float rms_compressor_slope_from_ratio(float ratio){
 
 /**
  * @brief Convert an expander ratio to the slope, where the slope is
-          defined as (1 - ratio).
+          defined as (1 - ratio). The ratio must be
+ *        greater than 1, if it is not the ratio is set to 1.
  */
 static inline float peak_expander_slope_from_ratio(float ratio){
+  ratio = MAX(ratio, 1.0);
   float slope = 1.0 - ratio;
   return slope;
 }

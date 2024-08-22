@@ -54,12 +54,9 @@ def test_compressor_ratio_helper():
     out_c = get_c_wav(test_dir, "compressor_ratio")
 
     slopes_python = np.zeros_like(ratios, dtype=np.float32)
-    n = 0
+
     for n in range(len(ratios)):
-        try:
-            slope, slopes_python[n] = drcu.rms_compressor_slope_from_ratio(ratios[n])
-        except:
-            slopes_python[n] = np.nan
+        slope, slopes_python[n] = drcu.rms_compressor_slope_from_ratio(ratios[n])
 
     assert np.all(out_c == slopes_python)
 
@@ -74,12 +71,9 @@ def test_expander_ratio_helper():
     out_c = get_c_wav(test_dir, "expander_ratio")
 
     slopes_python = np.zeros_like(ratios, dtype=np.float32)
-    n = 0
+
     for n in range(len(ratios)):
-        try:
-            slope, slopes_python[n] = drcu.peak_expander_slope_from_ratio(ratios[n])
-        except:
-            slopes_python[n] = np.nan
+        slope, slopes_python[n] = drcu.peak_expander_slope_from_ratio(ratios[n])
 
     assert np.all(out_c == slopes_python)
 
@@ -94,12 +88,9 @@ def test_rms_threshold():
     out_c = get_c_wav(test_dir, "rms_threshold", dtype=np.int32)
 
     thresh_python = np.zeros_like(threshold_dbs, dtype=np.int32)
-    n = 0
+
     for n in range(len(threshold_dbs)):
-        try:
-            thresh, thresh_python[n] = drcu.calculate_threshold(threshold_dbs[n], Q_SIG, power=True)
-        except:
-            thresh_python[n] = np.nan
+        thresh, thresh_python[n] = drcu.calculate_rms_threshold(threshold_dbs[n], Q_SIG)
 
     assert np.all(out_c == thresh_python)
 
@@ -115,12 +106,9 @@ def test_peak_threshold():
     out_c = get_c_wav(test_dir, "peak_threshold", dtype=np.int32)
 
     thresh_python = np.zeros_like(threshold_dbs, dtype=np.int32)
-    n = 0
+
     for n in range(len(threshold_dbs)):
-        try:
-            thresh, thresh_python[n] = drcu.calculate_threshold(threshold_dbs[n], Q_SIG, power=False)
-        except:
-            thresh_python[n] = np.nan
+        thresh, thresh_python[n] = drcu.calculate_threshold(threshold_dbs[n], Q_SIG, power=False)
 
     assert np.all(out_c == thresh_python)
 
@@ -136,15 +124,11 @@ def test_calc_alpha():
     out_c = get_c_wav(test_dir, "calc_alpha", dtype=np.int32)
 
     alphas_python = np.zeros_like(attack_times, dtype=np.int32)
-    n = 0
     for n in range(len(attack_times)):
-        try:
-            alpha, alphas_python[n] = drcu.alpha_from_time(attack_times[n], 48000)
-        except:
-            alphas_python[n] = 0
+        alpha, alphas_python[n] = drcu.alpha_from_time(attack_times[n], 48000)
 
-    # not exact due to float implementation differences
-    assert np.testing.assert_allclose(out_c, alphas_python)
+    # not exact due to float32 implementation differences
+    np.testing.assert_allclose(out_c, alphas_python, rtol=2**-24, atol=0)
 
 
 if __name__ == "__main__":

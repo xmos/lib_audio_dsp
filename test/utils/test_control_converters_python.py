@@ -4,24 +4,32 @@ import audio_dsp.dsp.drc.drc_utils as drcu
 from audio_dsp.dsp.generic import Q_SIG, HEADROOM_DB
 
 
-@pytest.mark.parametrize("ratio", [pytest.param(0, marks=pytest.mark.xfail(raises=ValueError, strict=True)),
-                                   pytest.param(0.9, marks=pytest.mark.xfail(raises=ValueError, strict=True)),
-                                   1,
-                                   5,
-                                   10000,
-                                   999999999999999999999999999])
-def test_compressor_ratio_helper(ratio):
-    slope, slope_f32 = drcu.rms_compressor_slope_from_ratio(ratio)
+@pytest.mark.parametrize("ratio, warning", [(0, UserWarning),
+                                            (0.9, UserWarning),
+                                            (1, None),
+                                            (5, None),
+                                            (10000, None),
+                                            (999999999999999999999999999, None)])
+def test_compressor_ratio_helper(ratio, warning):
+    if warning:
+        with pytest.warns(warning):
+            slope, slope_f32 = drcu.rms_compressor_slope_from_ratio(ratio)
+    else:
+            slope, slope_f32 = drcu.rms_compressor_slope_from_ratio(ratio)
 
 
-@pytest.mark.parametrize("ratio", [pytest.param(0, marks=pytest.mark.xfail(raises=ValueError, strict=True)),
-                                   pytest.param(0.9, marks=pytest.mark.xfail(raises=ValueError, strict=True)),
-                                   1,
-                                   5,
-                                   10000,
-                                   999999999999999999999999999])
-def test_expander_ratio_helper(ratio):
-    slope, slope_f32 = drcu.peak_expander_slope_from_ratio(ratio)
+@pytest.mark.parametrize("ratio, warning", [(0, UserWarning),
+                                            (0.9, UserWarning),
+                                            (1, None),
+                                            (5, None),
+                                            (10000, None),
+                                            (999999999999999999999999999, None)])
+def test_expander_ratio_helper(ratio, warning):
+    if warning:
+        with pytest.warns(warning):
+            slope, slope_f32 = drcu.peak_expander_slope_from_ratio(ratio)
+    else:
+            slope, slope_f32 = drcu.peak_expander_slope_from_ratio(ratio)
 
 
 @pytest.mark.parametrize("threshold_db, warning", [(-2000, None),
@@ -46,13 +54,13 @@ def test_peak_threshold(threshold_db, warning):
             thresh, thresh_int = drcu.calculate_threshold(threshold_db, Q_SIG, power=False)
 
 
-@pytest.mark.parametrize("time, warning", [pytest.param(-1, None, marks=pytest.mark.xfail(raises=ValueError, strict=True)),
+@pytest.mark.parametrize("time, warning", [(-1, UserWarning),
                                            (0, UserWarning),
                                            (1/48000, UserWarning),
                                            (3/48000, None),
                                            (1, None),
                                            (1000, None),
-                                           pytest.param((4/48000)*(2**31), None, marks=pytest.mark.xfail(raises=ValueError, strict=True)),
+                                           ((4/48000)*(2**31), UserWarning),
                                            ])
 def test_calc_alpha(time, warning):
     if warning:

@@ -184,7 +184,8 @@ pipeline {
                       buildApps([
                         "test/reverb",
                         "test/signal_chain",
-                        "test/fir"
+                        "test/fir",
+                        "test/utils"
                       ]) // buildApps
                     }
                   }

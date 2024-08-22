@@ -16,6 +16,22 @@ FLT_MIN = np.finfo(float).tiny
 Q_alpha = 31
 
 
+def calculate_rms_threshold(threshold_db, Q_sig) -> tuple[float, int]:
+    """
+    Calculate the linear RMS threshold in floating and fixed point from a
+    target threshold in decibels.
+    """
+    return calculate_threshold(threshold_db, Q_sig, power=True)
+
+
+def calculate_peak_threshold(threshold_db, Q_sig) -> tuple[float, int]:
+    """
+    Calculate the linear peak threshold in floating and fixed point from a
+    target threshold in decibels.
+    """
+    return calculate_threshold(threshold_db, Q_sig, power=False)
+
+
 def calculate_threshold(threshold_db, Q_sig, power=False) -> tuple[float, int]:
     """
     Calculate the linear threshold in floating and fixed point from a
@@ -65,8 +81,10 @@ def alpha_from_time(attack_or_release_time, fs):
     samples, and alpha can't be greater than 1.
     """
     if attack_or_release_time < 0:
-        raise ValueError("Attack/release time must not be negative. For the fastest possible "
-        "attack/release time, use zero.")
+        warnings.warn("Attack/release time must not be negative. For the fastest possible "
+        "attack/release time, use zero. Time set to zero", UserWarning)
+        attack_or_release_time = 0
+
     T = 1 / fs
     alpha = 2 * T / (attack_or_release_time + FLT_MIN)
 
@@ -80,7 +98,9 @@ def alpha_from_time(attack_or_release_time, fs):
     # This is possible if alpha > (4/fs)*(2**31), which is 49.7 hours @ 48kHz,
     # in which case you should probably use a lower sample rate.
     if alpha_int <= 0:
-        raise ValueError("alpha not > 0, this is possible if attack/release time > (4/fs)*(2**31).")
+        warnings.warn("alpha not > 0, this is possible if attack/release time > (4/fs)*(2**31)."
+        "Setting alpha_int to 0 (no smoothing)", UserWarning)
+        alpha_int = 0
 
     return alpha, alpha_int
 
@@ -91,7 +111,9 @@ def rms_compressor_slope_from_ratio(ratio):
     the RMS envelope detector returning the RMS².
     """
     if ratio < 1:
-        raise ValueError("Compressor ratio must be >= 1")
+        warnings.warn("Compressor ratio must be >= 1, setting ratio to 1", UserWarning)
+        ratio = 1
+
     slope = (1 - 1 / ratio) / 2.0
     slope_f32 = float32(slope)
     return slope, slope_f32
@@ -102,7 +124,9 @@ def peak_expander_slope_from_ratio(ratio):
     defined as (1 - ratio).
     """
     if ratio < 1:
-        raise ValueError("Expander ratio must be >= 1")
+        warnings.warn("Expander ratio must be >= 1, setting ratio to 1", UserWarning)
+        ratio = 1
+
     slope = 1 - ratio
     slope_f32 = float32(slope)
     return slope, slope_f32
