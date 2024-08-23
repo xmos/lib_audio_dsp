@@ -5,5 +5,5 @@ module:
       help: >
         The threshold in Q_SIG format above which clipping will occur.
         To convert a threshold in dB to the ``int32_t`` control value, use the function
-        ``db_to_q_format(x, Q_SIG)`` in ``generic_utils.h``.
+        ``calculate_peak_threshold(x)`` in ``control/helpers.h``.
 includes: []

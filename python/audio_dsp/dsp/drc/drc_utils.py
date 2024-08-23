@@ -20,6 +20,8 @@ def calculate_rms_threshold(threshold_db, Q_sig) -> tuple[float, int]:
     """
     Calculate the linear RMS threshold in floating and fixed point from a
     target threshold in decibels.
+    If the threshold is higher than representable in the fixed point
+    format, it is saturated.
     """
     return calculate_threshold(threshold_db, Q_sig, power=True)
 
@@ -28,6 +30,8 @@ def calculate_peak_threshold(threshold_db, Q_sig) -> tuple[float, int]:
     """
     Calculate the linear peak threshold in floating and fixed point from a
     target threshold in decibels.
+    If the threshold is higher than representable in the fixed point
+    format, it is saturated.
     """
     return calculate_threshold(threshold_db, Q_sig, power=False)
 
@@ -36,6 +40,8 @@ def calculate_threshold(threshold_db, Q_sig, power=False) -> tuple[float, int]:
     """
     Calculate the linear threshold in floating and fixed point from a
     target threshold in decibels.
+    If the threshold is higher than representable in the fixed point
+    format, it is saturated.
     """
     if power:
         threshold = utils.db_pow2gain(threshold_db)
@@ -78,11 +84,15 @@ def alpha_from_time(attack_or_release_time, fs):
     and `tau` is the time constant.
 
     attack/release time can't be faster than the length of 2
-    samples, and alpha can't be greater than 1.
+    samples, and alpha can't be greater than 1. This function will
+    saturate to those values.
     """
     if attack_or_release_time < 0:
-        warnings.warn("Attack/release time must not be negative. For the fastest possible "
-        "attack/release time, use zero. Time set to zero", UserWarning)
+        warnings.warn(
+            "Attack/release time must not be negative. For the fastest possible "
+            "attack/release time, use zero. Time set to zero",
+            UserWarning,
+        )
         attack_or_release_time = 0
 
     T = 1 / fs
@@ -90,16 +100,21 @@ def alpha_from_time(attack_or_release_time, fs):
 
     if alpha > 1:
         alpha = 1
-        warnings.warn("Attack or release time too fast for sample rate, setting as fast as possible.", UserWarning)
-
+        warnings.warn(
+            "Attack or release time too fast for sample rate, setting as fast as possible.",
+            UserWarning,
+        )
 
     alpha_int = utils.int32(round(alpha * 2**31)) if alpha != 1.0 else utils.int32(2**31 - 1)
 
     # This is possible if alpha > (4/fs)*(2**31), which is 49.7 hours @ 48kHz,
     # in which case you should probably use a lower sample rate.
     if alpha_int <= 0:
-        warnings.warn("alpha not > 0, this is possible if attack/release time > (4/fs)*(2**31)."
-        "Setting alpha_int to 0 (no smoothing)", UserWarning)
+        warnings.warn(
+            "alpha not > 0, this is possible if attack/release time > (4/fs)*(2**31)."
+            "Setting alpha_int to 0 (no smoothing)",
+            UserWarning,
+        )
         alpha_int = 0
 
     return alpha, alpha_int

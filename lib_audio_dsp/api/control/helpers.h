@@ -8,7 +8,18 @@
 #include <dsp/_helpers/generic_utils.h>
 #include <dsp/defines.h>
 
-static inline int32_t _float2fixed2( float x, int32_t q )
+
+
+/**
+ * @brief Convert a float value to a fixed point int32 number in
+ *        q format. If the value of x is outside the fixed point range,
+ *        it is saturated.
+ * 
+ * @param x Level in db
+ * @param q Q format of the output
+ * @return int32_t x in q fixed point format
+ */
+static inline int32_t _float2fixed_saturate( float x, int32_t q )
 {
   if (x < -(1 << (31-q))) return INT32_MIN;
   else if ( x < 0 ) return (((float)(1 << q))       * x - 0.5);
@@ -17,34 +28,49 @@ static inline int32_t _float2fixed2( float x, int32_t q )
   return 0;
 }
 
+/**
+ * @brief Convert a positive float value to a fixed point int32 number in
+ *        Q_SIG format. By assuming the value is positive (e.g. a gain value
+ *        converted from decibels), negative cases can be ignored. If the
+ *        value of x exceeds the fixed point maximum, it is saturated.
+ * 
+ * @param x Level in db
+ * @return int32_t x in Q_SIG fixed point format
+ */
+static inline int32_t _positive_float2fixed_qsig(float x)
+{
+  if ( x >= 1 << (31-Q_SIG)) return INT32_MAX;
+  else if( x > 0 ) return (((float)((1 << Q_SIG) - 1)) * x + 0.5);
+  return 0;
+}
+
 
 /**
  * @brief Convert a value in decibels to a fixed point int32 number in
- *        the given Q format.
+ *        Q_SIG format. If the level exceeds the fixed point maximum,
+ *        it is saturated.
  * 
  * @param level_db Level in db
- * @param q_format Required Q format of the output
  * @return int32_t level_db as an int32_t
  */
-static inline int32_t db_to_q_format(float level_db, int q_format) {
+static inline int32_t db_to_q_sig(float level_db) {
   float A  = powf(10, (level_db / 20));
-  int32_t out = _float2fixed2( A, q_format);
+  int32_t out = _positive_float2fixed_qsig(A);
   return out;
 }
 
 
 /**
  * @brief Convert a power level in decibels to a fixed point int32 number in
- *        the given Q format.
+ *        Q_SIG format. If the level exceeds the fixed point maximum,
+ *        it is saturated.
  * 
  * @param level_db Power level in db
- * @param q_format Required Q format of the output
- * @return int32_t level_db as an int32_t
+ * @return int32_t level_db in Q_SIG fixed point format
  */
-static inline int32_t db_pow_to_q_format(float level_db, int q_format) {
+static inline int32_t db_pow_to_q_sig(float level_db) {
   float A  = powf(10, (level_db / 10));
-//   A = MIN(A, MAX_SIG_GAIN);
-  int32_t out = _float2fixed2( A, q_format);
+  int32_t out = _positive_float2fixed_qsig(A);
   return out;
 }
 
@@ -62,6 +88,7 @@ static inline float q_format_to_db(int32_t level, int q_format) {
   return level_db;
 }
 
+
 /**
  * @brief Convert a fixed point int32 number in the given Q format to a
  *        value in decibels, when the input level is power.
@@ -78,14 +105,15 @@ static inline float q_format_to_db_pow(int32_t level, int q_format) {
 
 /**
  * @brief Convert an attack or release time in seconds to an EWM alpha 
- *        value as a fixed point int32 number in Q_alpha format.
+ *        value as a fixed point int32 number in Q_alpha format. If the
+ *        desired time is too large or small to be represented in the fixed
+ *        point format, it is saturated.
  * 
  * @param fs sampling frequency
  * @param time attack/release time in seconds
  * @return int32_t attack/release alpha as an int32_t
  */
 static inline int32_t calc_alpha(float fs, float time) {
-//   xassert(time > 0 && "time has to be positive");
   float alpha = 1;
   if (time > 0){
     alpha = 2 / (fs * time);
@@ -113,23 +141,49 @@ static inline int32_t calc_alpha(float fs, float time) {
   return mant;
 }
 
+
+/**
+ * @brief Convert a peak compressor/limiter/expander threshold in decibels
+ *        to an int32 fixed point gain in Q_SIG Q format.
+ *        If the threshold is higher than representable in the fixed point
+ *        format, it is saturated.
+ *        The miniumum threshold returned by this function is 1.
+ *
+ * @param level_db the desired threshold in decibels
+ * @return int32_t the threshold as a fixed point integer.
+ */
 static inline int32_t calculate_peak_threshold(float level_db){
-  int32_t out = db_to_q_format(level_db, Q_SIG);
+  int32_t out = db_to_q_sig(level_db);
   out = MAX(out, 1);
   return out;
 }
 
+
+/**
+ * @brief Convert an RMS² compressor/limiter/expander threshold in decibels
+ *        to an int32 fixed point gain in Q_SIG Q format.
+ *        If the threshold is higher than representable in the fixed point
+ *        format, it is saturated.
+ *        The miniumum threshold returned by this function is 1.
+ *
+ * @param level_db the desired threshold in decibels
+ * @return int32_t the threshold as a fixed point integer.
+ */
 static inline int32_t calculate_rms_threshold(float level_db){
-  int32_t out = db_pow_to_q_format(level_db, Q_SIG);
+  int32_t out = db_pow_to_q_sig(level_db);
   out = MAX(out, 1);
   return out;
 }
+
 
 /**
  * @brief Convert a compressor ratio to the slope, where the slope is
  *        defined as (1 - 1 / ratio) / 2.0. The division by 2 compensates for
  *        the RMS envelope detector returning the RMS². The ratio must be
  *        greater than 1, if it is not the ratio is set to 1.
+ *
+ * @param ratio the desired compressor ratio
+ * @return float slope of the compressor
  */
 static inline float rms_compressor_slope_from_ratio(float ratio){
   ratio = MAX(ratio, 1.0);
@@ -138,10 +192,14 @@ static inline float rms_compressor_slope_from_ratio(float ratio){
 
 }
 
+
 /**
  * @brief Convert an expander ratio to the slope, where the slope is
-          defined as (1 - ratio). The ratio must be
+ *        defined as (1 - ratio). The ratio must be
  *        greater than 1, if it is not the ratio is set to 1.
+ *
+ * @param ratio the desired expander ratio
+ * @return float slope of the expander
  */
 static inline float peak_expander_slope_from_ratio(float ratio){
   ratio = MAX(ratio, 1.0);
