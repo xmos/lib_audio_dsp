@@ -10,8 +10,8 @@
 #define Q_factor 30
 #define BOOST_BSHIFT 2
 
-static const float pi =    M_PI;
-static const float log_2 = 0.69314718055;
+static const float pi =    (float)M_PI;
+static const float log_2 = 0.69314718055f;
 
 static inline int32_t _float2fixed( float x, int32_t q )
 {
@@ -37,7 +37,7 @@ void adsp_design_biquad_mute(q2_30 coeffs[5]) {
 }
 
 left_shift_t adsp_design_biquad_gain(q2_30 coeffs[5], const float gain_db) {
-  float A  = powf(10, (gain_db / 20));
+  float A  = powf(10.0f, (gain_db * (1.0f / 20.0f)));
 
   coeffs[0] = _float2fixed( A, Q_factor - BOOST_BSHIFT );
   coeffs[1] = 0;
@@ -48,6 +48,7 @@ left_shift_t adsp_design_biquad_gain(q2_30 coeffs[5], const float gain_db) {
   return BOOST_BSHIFT;
 }
 
+
 void adsp_design_biquad_lowpass
 (
   q2_30 coeffs[5],
@@ -56,24 +57,39 @@ void adsp_design_biquad_lowpass
   const float filter_Q
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
+  unsigned t0, t1, t2;
+	asm volatile("gettime %0": "=r"(t0));
   // Compute common factors
-  float w0 = 2.0 * pi * fc / fs;
-  float alpha = f32_sin(w0) / (2.0 * filter_Q);
-
+  float K = tanf(pi * fc/fs);
+  float KK = K * K;
+  float KQ = K / filter_Q;
+  float norm = 1.0f / (1.0f + KQ + KK);
+  
   // Compute coeffs
-  float b0 = (1.0 - f32_cos(w0)) / 2.0;
-  float b1 = (1.0 - f32_cos(w0));
-  float b2 =  b0;
-  float a0 =  1.0 + alpha;
-  float a1 = -2.0 * f32_cos(w0);
-  float a2 =  1.0 - alpha;
+  float b0 = KK * norm;
+  float b1 = 2.0f * b0;
+  float b2 = b0;
+  float a1 = 2.0f * (KK - 1.0f) * norm;
+  float a2 = (1.0f - KQ + KK) * norm;
+	asm volatile("gettime %0": "=r"(t1));
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 / a0, Q_factor );
-  coeffs[1] = _float2fixed(  b1 / a0, Q_factor );
-  coeffs[2] = _float2fixed(  b2 / a0, Q_factor );
-  coeffs[3] = _float2fixed( -a1 / a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 / a0, Q_factor );
+  coeffs[0] = _float2fixed(  b0, Q_factor );
+  coeffs[1] = _float2fixed(  b1, Q_factor );
+  coeffs[2] = _float2fixed(  b2, Q_factor );
+  coeffs[3] = _float2fixed( -a1, Q_factor );
+  coeffs[4] = _float2fixed( -a2, Q_factor );
+
+	asm volatile("gettime %0": "=r"(t0));
+  float x1 = sinf(pi * fc);
+	asm volatile("gettime %0": "=r"(t1));
+  float x2 = f32_sin(pi * fc);
+
+  asm volatile("gettime %0": "=r"(t2));
+
+	printf("%d %d\n", t1-t0, t2-t1);
+	printf("%f %f\n", x1, x2);
+
 }
 
 void adsp_design_biquad_highpass
@@ -84,24 +100,26 @@ void adsp_design_biquad_highpass
   const float filter_Q
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
-  // Compute common factors
-  float w0    = 2.0 * pi * fc / fs;
-  float alpha = f32_sin(w0) / (2.0 * filter_Q);
 
+  // Compute common factors
+  float K = tanf(pi * fc/fs);
+  float KK = K * K;
+  float KQ = K / filter_Q;
+  float norm = 1.0f / (1.0f + KQ + KK);
+  
   // Compute coeffs
-  float b0 =  (1.0 + f32_cos(w0)) / 2.0;
-  float b1 = -(1.0 + f32_cos(w0));
-  float b2 =   b0;
-  float a0 =   1.0 + alpha;
-  float a1 =  -2.0 * f32_cos(w0);
-  float a2 =   1.0 - alpha;
+  float b0 = norm;
+  float b1 = -2.0f * b0;
+  float b2 = b0;
+  float a1 = 2.0f * (KK - 1.0f) * norm;
+  float a2 = (1.0f - KQ + KK) * norm;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 / a0, Q_factor );
-  coeffs[1] = _float2fixed(  b1 / a0, Q_factor );
-  coeffs[2] = _float2fixed(  b2 / a0, Q_factor );
-  coeffs[3] = _float2fixed( -a1 / a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 / a0, Q_factor );
+  coeffs[0] = _float2fixed(  b0, Q_factor );
+  coeffs[1] = _float2fixed(  b1, Q_factor );
+  coeffs[2] = _float2fixed(  b2, Q_factor );
+  coeffs[3] = _float2fixed( -a1, Q_factor );
+  coeffs[4] = _float2fixed( -a2, Q_factor );
 }
 
 
@@ -113,24 +131,33 @@ void adsp_design_biquad_bandpass
   const float bandwidth
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
+  unsigned t0, t1;
+	asm volatile("gettime %0": "=r"(t0));
+
   // Compute common factors
-  float w0    = 2.0 * pi * fc / fs;
-  float alpha = f32_sin(w0) * sinhf(log_2 / 2 * bandwidth * w0 / f32_sin(w0));
+  float w0    = 2.0f * pi * fc / fs;
+  float sinf_w0 = sinf(w0);
+  float alpha = sinf_w0 * sinhf(log_2 / 2.0f * bandwidth * w0 / sinf_w0);
 
   // Compute coeffs
   float b0 =  alpha;
-  float b1 =  0.0;
+  float b1 =  0.0f;
   float b2 = -alpha;
-  float a0 =  1.0 + alpha;
-  float a1 = -2.0 * f32_cos(w0);
-  float a2 =  1.0 - alpha;
+  float a0 =  1.0f + alpha;
+  float a1 = -2.0f * cosf(w0);
+  float a2 =  1.0f - alpha;
+
+  float inv_a0 = 1.0f/a0;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 / a0, Q_factor );
-  coeffs[1] = _float2fixed(  b1 / a0, Q_factor );
-  coeffs[2] = _float2fixed(  b2 / a0, Q_factor );
-  coeffs[3] = _float2fixed( -a1 / a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 / a0, Q_factor );
+  coeffs[0] = _float2fixed(  b0 * inv_a0, Q_factor );
+  coeffs[1] = _float2fixed(  b1 * inv_a0, Q_factor );
+  coeffs[2] = _float2fixed(  b2 * inv_a0, Q_factor );
+  coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
+  coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
+  asm volatile("gettime %0": "=r"(t1));
+
+	printf("%d\n", t1-t0);
 }
 
 void adsp_design_biquad_bandstop
@@ -142,23 +169,26 @@ void adsp_design_biquad_bandstop
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
   // Compute common factors
-  float w0    = 2.0 * pi * fc / fs;
-  float alpha = f32_sin(w0) * sinhf(log_2 / 2 * bandwidth * w0 / f32_sin(w0));
+  float w0    = 2.0f * pi * fc / fs;
+  float sinf_w0 = sinf(w0);
+  float alpha = sinf_w0 * sinhf(log_2 / 2.0f * bandwidth * w0 / sinf_w0);
 
   // Compute coeffs
-  float b0 =  1.0;
-  float b1 = -2.0 * f32_cos(w0);
-  float b2 =  1.0;
-  float a0 =  1.0 + alpha;
+  float b0 =  1.0f;
+  float b1 = -2.0f * cosf(w0);
+  float b2 =  1.0f;
+  float a0 =  1.0f + alpha;
   float a1 =  b1;
-  float a2 =  1.0 - alpha;
+  float a2 =  1.0f - alpha;
+
+  float inv_a0 = 1.0f/a0;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 / a0, Q_factor );
-  coeffs[1] = _float2fixed(  b1 / a0, Q_factor );
-  coeffs[2] = _float2fixed(  b2 / a0, Q_factor );
-  coeffs[3] = _float2fixed( -a1 / a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 / a0, Q_factor );
+  coeffs[0] = _float2fixed(  b0 * inv_a0, Q_factor );
+  coeffs[1] = _float2fixed(  b1 * inv_a0, Q_factor );
+  coeffs[2] = _float2fixed(  b2 * inv_a0, Q_factor );
+  coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
+  coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
 }
 
 void adsp_design_biquad_notch
@@ -169,25 +199,34 @@ void adsp_design_biquad_notch
   const float filter_Q
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
-  // Compute common factors
-  float w0    = 2.0 * pi * fc / fs;
-  float alpha = f32_sin(w0) / (2.0 * filter_Q);
+  // unsigned t0, t1;
+	// asm volatile("gettime %0": "=r"(t0));
 
+  // Compute common factors
+  float K = tanf(pi * fc/fs);
+  float KK = K * K;
+  float KQ = K / filter_Q;
+  float norm = 1.0f / (1.0f + KQ + KK);
+  
   // Compute coeffs
-  float b0 =  1.0;
-  float b1 = -2.0 * f32_cos(w0);
-  float b2 =  1.0;
-  float a0 =  1.0 + alpha;
-  float a1 =  b1;
-  float a2 =  1.0 - alpha;
+  float b0 = (1.0f + KK) * norm;
+  float b1 = 2.0f * (KK - 1.0f) * norm;
+  float b2 = b0;
+  float a1 = b1;
+  float a2 = (1.0f - KQ + KK) * norm;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 / a0, Q_factor );
-  coeffs[1] = _float2fixed(  b1 / a0, Q_factor );
-  coeffs[2] = _float2fixed(  b2 / a0, Q_factor );
-  coeffs[3] = _float2fixed( -a1 / a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 / a0, Q_factor );
+  coeffs[0] = _float2fixed(  b0, Q_factor );
+  coeffs[1] = _float2fixed(  b1, Q_factor );
+  coeffs[2] = _float2fixed(  b2, Q_factor );
+  coeffs[3] = _float2fixed( -a1, Q_factor );
+  coeffs[4] = _float2fixed( -a2, Q_factor );
+
+  // asm volatile("gettime %0": "=r"(t1));
+
+	// printf("%d\n", t1-t0);
 }
+
 
 void adsp_design_biquad_allpass
 (
@@ -197,25 +236,33 @@ void adsp_design_biquad_allpass
   const float filter_Q
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
-  // Compute common factors
-  float w0    = 2.0 * pi * fc / fs;
-  float alpha = f32_sin(w0) / (2.0 * filter_Q);
+  // unsigned t0, t1;
+	// asm volatile("gettime %0": "=r"(t0));
 
+  // Compute common factors
+  float K = tanf(pi * fc/fs);
+  float KK = K * K;
+  float KQ = K / filter_Q;
+  float norm = 1.0f / (1.0f + KQ + KK);
+  
   // Compute coeffs
-  float b0 =  1.0 - alpha;
-  float b1 = -2.0 * f32_cos(w0);
-  float b2 =  1.0 + alpha;
-  float a0 =  1.0 + alpha;
-  float a1 =  b1;
-  float a2 =  1.0 - alpha;
+  float b0 = (1.0f - KQ + KK) * norm;
+  float b1 = 2.0f * (KK - 1.0f) * norm;
+  float b2 = 1.0f;
+  float a1 = b1;
+  float a2 = b0;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 / a0, Q_factor );
-  coeffs[1] = _float2fixed(  b1 / a0, Q_factor );
-  coeffs[2] = _float2fixed(  b2 / a0, Q_factor );
-  coeffs[3] = _float2fixed( -a1 / a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 / a0, Q_factor );
+  coeffs[0] = _float2fixed(  b0, Q_factor );
+  coeffs[1] = _float2fixed(  b1, Q_factor );
+  coeffs[2] = _float2fixed(  b2, Q_factor );
+  coeffs[3] = _float2fixed( -a1, Q_factor );
+  coeffs[4] = _float2fixed( -a2, Q_factor );
+
+  // asm volatile("gettime %0": "=r"(t1));
+	// printf("%d\n", t1-t0);
 }
+
 
 left_shift_t adsp_design_biquad_peaking
 (
@@ -226,25 +273,32 @@ left_shift_t adsp_design_biquad_peaking
   const float gain_db
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
+  // unsigned t0, t1;
+	// asm volatile("gettime %0": "=r"(t0));
   // Compute common factors
-  float A  = sqrtf(powf(10, (gain_db / 20)));
-  float w0 = 2.0 * pi * fc / fs;
-  float alpha = f32_sin(w0) / (2.0 * filter_Q);
+  float A  = powf(10.0f, (gain_db * (1.0f / 40.0f)));
+  float w0 = 2.0f * pi * (fc / fs); 
+  // intentional double precision, gets extra precision
+  float alpha = sinf(w0) / (2.0 * filter_Q);
 
   // Compute coeffs
-  float b0 =  1.0 + alpha * A;
-  float b1 = -2.0 * f32_cos(w0);
-  float b2 =  1.0 - alpha * A;
-  float a0 =  1.0 + alpha / A;
+  float norm = 1.0f /(1.0f + alpha / A);
+
+  float b0 =  (1.0f + alpha * A)*norm;
+  float b1 = (-2.0f * cosf(w0))*norm;
+  float b2 =  (1.0f - alpha * A)*norm;
   float a1 =  b1;
-  float a2 =  1.0 - alpha / A;
+  float a2 =  (1.0f - alpha / A)*norm;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 / a0, Q_factor - BOOST_BSHIFT );
-  coeffs[1] = _float2fixed(  b1 / a0, Q_factor - BOOST_BSHIFT );
-  coeffs[2] = _float2fixed(  b2 / a0, Q_factor - BOOST_BSHIFT );
-  coeffs[3] = _float2fixed( -a1 / a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 / a0, Q_factor );
+  coeffs[0] = _float2fixed(  b0, Q_factor - BOOST_BSHIFT);
+  coeffs[1] = _float2fixed(  b1, Q_factor - BOOST_BSHIFT);
+  coeffs[2] = _float2fixed(  b2, Q_factor - BOOST_BSHIFT);
+  coeffs[3] = _float2fixed( -a1, Q_factor );
+  coeffs[4] = _float2fixed( -a2, Q_factor );
+  // asm volatile("gettime %0": "=r"(t1));
+
+	// printf("%d\n", t1-t0);
 
   return BOOST_BSHIFT;
 }
@@ -258,8 +312,11 @@ left_shift_t adsp_design_biquad_const_q
   const float gain_db
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
+
+  // unsigned t0, t1;
+	// asm volatile("gettime %0": "=r"(t0));
   // Compute common factors
-  float V = powf(10, (gain_db / 20));
+  float V = powf(10.0f, (gain_db * (1.0f/ 20.0f)));
   // w0 is only needed for calculating K
   float K = tanf(pi * fc / fs);
 
@@ -276,20 +333,24 @@ left_shift_t adsp_design_biquad_const_q
   }
 
   // Compute coeffs
-  float b0 = 1 + factor_b + K_pow2;
-  float b1 = 2 * (K_pow2  - 1);
-  float b2 = 1 - factor_b + K_pow2;
-  float a0 = 1 + factor_a + K_pow2;
+  float b0 = 1.0f + factor_b + K_pow2;
+  float b1 = 2.0f * (K_pow2  - 1.0f);
+  float b2 = 1.0f - factor_b + K_pow2;
+  float a0 = 1.0f + factor_a + K_pow2;
   float a1 = b1;
-  float a2 = 1 - factor_a + K_pow2;
+  float a2 = 1.0f - factor_a + K_pow2;
+
+  float inv_a0 = 1.0f/a0;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 / a0, Q_factor - BOOST_BSHIFT );
-  coeffs[1] = _float2fixed(  b1 / a0, Q_factor - BOOST_BSHIFT );
-  coeffs[2] = _float2fixed(  b2 / a0, Q_factor - BOOST_BSHIFT );
-  coeffs[3] = _float2fixed( -a1 / a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 / a0, Q_factor );
+  coeffs[0] = _float2fixed(  b0 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[1] = _float2fixed(  b1 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[2] = _float2fixed(  b2 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
+  coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
+  // asm volatile("gettime %0": "=r"(t1));
 
+	// printf("%d\n", t1-t0);
   return BOOST_BSHIFT;
 }
 
@@ -302,29 +363,37 @@ left_shift_t adsp_design_biquad_lowshelf
   const float gain_db
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
+  unsigned t0, t1;
+	asm volatile("gettime %0": "=r"(t0));
   // Compute common factors
-  float A  = powf(10, (gain_db / 40));
-  float w0 = 2.0 * pi * fc / fs;
-  float alpha = f32_sin(w0) / (2.0 * filter_Q);
+  float A  = powf(10.0f, (gain_db * (1.0f / 40.0f)));
+  float w0 = 2.0f * pi * fc / fs;
+  float alpha = sinf(w0) / (2.0f * filter_Q);
 
-  float alpha_factor = 2 * sqrtf(A) * alpha;
-  float Am1_cosw0 = (A - 1) * f32_cos(w0);
-  float Ap1_cosw0 = (A + 1) * f32_cos(w0);
+  float cosw0 = cosf(w0);
+  float alpha_factor = 2.0f * sqrtf(A) * alpha;
+  float Am1_cosw0 = (A - 1.0f) * cosw0;
+  float Ap1_cosw0 = (A + 1.0f) * cosw0;
 
   // Compute coeffs
-  float b0 =  A * ((A + 1) - Am1_cosw0 + alpha_factor);
-  float b1 =  2 * A * ((A - 1) - Ap1_cosw0);
-  float b2 =  A * ((A + 1) - Am1_cosw0 - alpha_factor);
-  float a0 = (A + 1) + Am1_cosw0 + alpha_factor;
-  float a1 = -2 * ((A - 1) + Ap1_cosw0);
-  float a2 = (A + 1) + Am1_cosw0 - alpha_factor;
+  float b0 =  A * ((A + 1.0f) - Am1_cosw0 + alpha_factor);
+  float b1 =  2.0f * A * ((A - 1.0f) - Ap1_cosw0);
+  float b2 =  A * ((A + 1.0f) - Am1_cosw0 - alpha_factor);
+  float a0 = (A + 1.0f) + Am1_cosw0 + alpha_factor;
+  float a1 = -2.0f * ((A - 1.0f) + Ap1_cosw0);
+  float a2 = (A + 1.0f) + Am1_cosw0 - alpha_factor;
+
+  float inv_a0 = 1.0f / a0;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 / a0, Q_factor - BOOST_BSHIFT );
-  coeffs[1] = _float2fixed(  b1 / a0, Q_factor - BOOST_BSHIFT );
-  coeffs[2] = _float2fixed(  b2 / a0, Q_factor - BOOST_BSHIFT );
-  coeffs[3] = _float2fixed( -a1 / a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 / a0, Q_factor );
+  coeffs[0] = _float2fixed(  b0 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[1] = _float2fixed(  b1 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[2] = _float2fixed(  b2 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
+  coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
+
+  asm volatile("gettime %0": "=r"(t1));
+	printf("%d\n", t1-t0);
 
   return BOOST_BSHIFT;
 }
@@ -338,29 +407,39 @@ left_shift_t adsp_design_biquad_highshelf
   const float gain_db
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
-  // Compute common factors
-  float A  = powf(10, (gain_db / 40));
-  float w0 = 2.0 * pi * fc / fs;
-  float alpha = f32_sin(w0) / (2.0 * filter_Q);
 
-  float alpha_factor = 2 * sqrtf(A) * alpha;
-  float Am1_cosw0 = (A - 1) * f32_cos(w0);
-  float Ap1_cosw0 = (A + 1) * f32_cos(w0);
+  unsigned t0, t1;
+	asm volatile("gettime %0": "=r"(t0));
+
+  // Compute common factors
+  float A  = powf(10.0f, (gain_db * (1.0f / 40.0f)));
+  float w0 = 2.0f * pi * fc / fs;
+  float alpha = sinf(w0) / (2.0f * filter_Q);
+
+  float alpha_factor = 2.0f * sqrtf(A) * alpha;
+  float cosw0 = cosf(w0);
+  float Am1_cosw0 = (A - 1.0f) * cosw0;
+  float Ap1_cosw0 = (A + 1.0f) * cosw0;
 
   // Compute coeffs
-  float b0 =  A * ((A + 1) + Am1_cosw0 + alpha_factor);
-  float b1 = -2 * A * ((A - 1) + Ap1_cosw0);
-  float b2 =  A * ((A + 1) + Am1_cosw0 - alpha_factor);
-  float a0 = (A + 1) - Am1_cosw0 + alpha_factor;
-  float a1 =  2 * ((A - 1) - Ap1_cosw0);
-  float a2 = (A + 1) - Am1_cosw0 - alpha_factor;
+  float b0 =  A * ((A + 1.0f) + Am1_cosw0 + alpha_factor);
+  float b1 = -2.0f * A * ((A - 1.0f) + Ap1_cosw0);
+  float b2 =  A * ((A + 1.0f) + Am1_cosw0 - alpha_factor);
+  float a0 = (A + 1.0f) - Am1_cosw0 + alpha_factor;
+  float a1 =  2.0f * ((A - 1.0f) - Ap1_cosw0);
+  float a2 = (A + 1.0f) - Am1_cosw0 - alpha_factor;
+
+  float inv_a0 = 1.0f/a0;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 / a0, Q_factor - BOOST_BSHIFT );
-  coeffs[1] = _float2fixed(  b1 / a0, Q_factor - BOOST_BSHIFT );
-  coeffs[2] = _float2fixed(  b2 / a0, Q_factor - BOOST_BSHIFT );
-  coeffs[3] = _float2fixed( -a1 / a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 / a0, Q_factor );
+  coeffs[0] = _float2fixed(  b0 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[1] = _float2fixed(  b1 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[2] = _float2fixed(  b2 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
+  coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
+
+  asm volatile("gettime %0": "=r"(t1));
+	printf("%d\n", t1-t0);
 
   return BOOST_BSHIFT;
 }
@@ -375,34 +454,47 @@ void adsp_design_biquad_linkwitz(
 ) {
   xassert(fp <= fs / 2 && "fc must be less than fs/2");
   xassert(f0 <= fs / 2 && "fc must be less than fs/2");
+
+  unsigned t0, t1;
+	asm volatile("gettime %0": "=r"(t0));
+
   // Compute common factors
-  float fc = (f0 + fp) / 2;
+  float fc = (f0 + fp) / 2.0f;
 
-  float d0i = 2 * pi * fc;
-  float d1i = d0i / q0;
-  d0i = d0i * d0i;
+  float w_f0 = 2.0f * pi * f0;
+  float half_w_fc = pi * fc;
+  float w_fp = 2.0f * pi * fp;
 
-  float c0i = 2 * pi * fp;
-  float c1i = c0i / qp;
-  c0i = c0i * c0i;
+  float w_f0_pow2 = w_f0 * w_f0;
+  float d1i = w_f0 / q0;
 
-  float gn = (2 * pi * fc) / (tanf(pi * fc / fs));
+  float w_fp_pow2 = w_fp * w_fp;
+  float c1i = w_fp / qp;
+
+  float gn = 2.0f * half_w_fc * (1.0f / (tanf(half_w_fc / fs)));
   float gn_pow2 = gn * gn;
+
+
   float factor_b = gn * d1i;
   float factor_a = gn * c1i;
 
   // Compute coeffs
-  float b0 = d0i + factor_b + gn_pow2;
-  float b1 = 2 * (d0i - gn_pow2);
-  float b2 = d0i - factor_b + gn_pow2;
-  float a0 = c0i + factor_a + gn_pow2;
-  float a1 = 2 * (c0i - gn_pow2);
-  float a2 = c0i - factor_a + gn_pow2;
+  float  a0 = w_fp_pow2 + factor_a + gn_pow2;
+  float  a1 = 2.0f * (w_fp_pow2 - gn_pow2);
+  float  a2 = w_fp_pow2 - factor_a + gn_pow2;
+  float  b0 = w_f0_pow2 + factor_b + gn_pow2;
+  float  b1 = 2.0f * (w_f0_pow2 - gn_pow2);
+  float  b2 = w_f0_pow2 - factor_b + gn_pow2;
+
+  float inv_a0 = 1.0f / a0;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 / a0, Q_factor );
-  coeffs[1] = _float2fixed(  b1 / a0, Q_factor );
-  coeffs[2] = _float2fixed(  b2 / a0, Q_factor );
-  coeffs[3] = _float2fixed( -a1 / a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 / a0, Q_factor );
+  coeffs[0] = _float2fixed(  b0 * inv_a0, Q_factor );
+  coeffs[1] = _float2fixed(  b1 * inv_a0, Q_factor );
+  coeffs[2] = _float2fixed(  b2 * inv_a0, Q_factor );
+  coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
+  coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
+
+  asm volatile("gettime %0": "=r"(t1));
+	printf("%d\n", t1-t0);
 }

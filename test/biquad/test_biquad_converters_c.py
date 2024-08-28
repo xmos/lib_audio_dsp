@@ -36,7 +36,7 @@ def flt_to_bin_file(sig_fl, out_dir=bin_dir):
   sig_fl32.tofile(out_dir /  f"{name}.bin")
 #   time.sleep(1)
 
-  return sig_fl
+  return sig_fl32
 
 
 def get_c_wav(dir_name, conv_name, verbose=False, sim = True, dtype=np.float32):
@@ -158,7 +158,7 @@ def test_design_biquad_highpass():
         flt_coeffs = bq.make_biquad_highpass(ratios[n][1], ratios[n][0], ratios[n][2])
         _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-16, atol=0)
+    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-19, atol=0)
 
 
 def bandx_param_check(ratios):
@@ -198,7 +198,7 @@ def test_design_biquad_bandpass():
         flt_coeffs = bq.make_biquad_bandpass(ratios[n][1], ratios[n][0], ratios[n][2])
         _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-16, atol=0)
+    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-17, atol=0)
 
 
 def test_design_biquad_bandstop():
@@ -225,7 +225,7 @@ def test_design_biquad_bandstop():
         flt_coeffs = bq.make_biquad_bandstop(ratios[n][1], ratios[n][0], ratios[n][2])
         _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-16, atol=0)
+    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-17, atol=0)
 
 
 def test_design_biquad_notch():
@@ -251,7 +251,7 @@ def test_design_biquad_notch():
         flt_coeffs = bq.make_biquad_notch(ratios[n][1], ratios[n][0], ratios[n][2])
         _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-16, atol=0)
+    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-19, atol=0)
 
 
 def test_design_biquad_allpass():
@@ -262,7 +262,6 @@ def test_design_biquad_allpass():
     q = [0.1, 0.5, 1, 2, 5, 10]
     fs = [16000, 44100, 48000, 88200, 96000, 192000]
     ratios = list(itertools.product(f, fs, q))
-
     # get rid of f >= fs/2
     ratios = [ratio for ratio in ratios if ratio[0] < (ratio[1]/2)]
     flt_to_bin_file(ratios, test_dir)
@@ -276,7 +275,7 @@ def test_design_biquad_allpass():
         flt_coeffs = bq.make_biquad_allpass(ratios[n][1], ratios[n][0], ratios[n][2])
         _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-16, atol=0)
+    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-19, atol=0)
 
 
 def test_design_biquad_peaking():
@@ -303,7 +302,7 @@ def test_design_biquad_peaking():
         flt_coeffs = bq.make_biquad_peaking(ratios[n][1], ratios[n][0], ratios[n][2], ratios[n][3])
         _, coeffs_python[n] = bq._round_and_check(flt_coeffs, bq.BOOST_BSHIFT)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-13, atol=1)
+    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-13, atol=0)
 
 
 def test_design_biquad_constq():
@@ -330,7 +329,7 @@ def test_design_biquad_constq():
         flt_coeffs = bq.make_biquad_constant_q(ratios[n][1], ratios[n][0], ratios[n][2], ratios[n][3])
         _, coeffs_python[n] = bq._round_and_check(flt_coeffs, bq.BOOST_BSHIFT)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-12, atol=1)
+    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-12, atol=0)
 
 
 def test_design_biquad_high_shelf():
@@ -357,7 +356,7 @@ def test_design_biquad_high_shelf():
         flt_coeffs = bq.make_biquad_highshelf(ratios[n][1], ratios[n][0], ratios[n][2], ratios[n][3])
         _, coeffs_python[n] = bq._round_and_check(flt_coeffs, bq.BOOST_BSHIFT)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-12, atol=1)
+    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-13, atol=0)
 
 
 def test_design_biquad_low_shelf():
@@ -384,7 +383,7 @@ def test_design_biquad_low_shelf():
         flt_coeffs = bq.make_biquad_lowshelf(ratios[n][1], ratios[n][0], ratios[n][2], ratios[n][3])
         _, coeffs_python[n] = bq._round_and_check(flt_coeffs, bq.BOOST_BSHIFT)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-12, atol=1)
+    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-13, atol=0)
 
 
 
@@ -392,8 +391,20 @@ def test_design_biquad_linkwitz():
     test_dir = bin_dir / "coeffs_linkwitz"
     test_dir.mkdir(exist_ok = True, parents = True)
 
-    ratios = [[1000, 48000, 1, 1000, 2], [1000, 48000, 1, 1000, 2]]
-    flt_to_bin_file(ratios, test_dir)
+    fs = [16000, 44100, 48000, 88200, 96000, 192000]
+    f0 = [20, 50, 100, 200]
+    fp_ratio = [0.4, 1, 4]
+    q0 = [0.5, 2, 0.707]
+    qp = [0.5, 2, 0.707]
+    initialratios = list(itertools.product(f0, fs, q0, fp_ratio, qp))
+    ratios = []
+    for ratio in initialratios:
+        if ratio[1] > 100000 and ratio[0] < 50 and ratio[3] < 1:
+            ratio_0 = 30
+        else: ratio_0 = ratio[0]
+        ratios.append([ratio_0, ratio[1], ratio[2], ratio[3]*ratio_0, ratio[4]])
+
+    ratios_32 = flt_to_bin_file(ratios, test_dir)
 
     out_c = get_c_wav(test_dir, "coeffs_linkwitz", dtype=np.int32)
     out_c = np.reshape(out_c, newshape=[-1, 5])
@@ -404,7 +415,7 @@ def test_design_biquad_linkwitz():
         flt_coeffs = bq.make_biquad_linkwitz(ratios[n][1], ratios[n][0], ratios[n][2], ratios[n][3], ratios[n][4])
         _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-16, atol=0)
+    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-22, atol=0)
 
 
 if __name__ == "__main__":
