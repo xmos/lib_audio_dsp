@@ -16,7 +16,6 @@ static const float log_2 = 0.69314718055f;
 static inline int32_t _float2fixed( float x, int32_t q )
 {
   float max_val = (float)(1<<(31-q));
-  printf("%f %f\n", max_val, x);
   xassert(x < max_val && "Too much gain, biquad coefficient will overflow");
   xassert(x >= -max_val && "Too much gain, biquad coefficient will overflow");
 
@@ -127,15 +126,15 @@ void adsp_design_biquad_bandpass
 
   // Compute common factors
   float w0    = 2.0f * pi * fc / fs;
-  float sinf_w0 = sinf(w0);
-  float alpha = sinf_w0 * sinhf(log_2 / 2.0f * bandwidth * w0 / sinf_w0);
+  float sin_w0 = f32_sin(w0);
+  float alpha = sin_w0 * sinhf(log_2 / 2.0f * bandwidth * w0 / sin_w0);
 
   // Compute coeffs
   float b0 =  alpha;
   float b1 =  0.0f;
   float b2 = -alpha;
   float a0 =  1.0f + alpha;
-  float a1 = -2.0f * cosf(w0);
+  float a1 = -2.0f * f32_cos(w0);
   float a2 =  1.0f - alpha;
 
   float inv_a0 = 1.0f/a0;
@@ -156,14 +155,15 @@ void adsp_design_biquad_bandstop
   const float bandwidth
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
+
   // Compute common factors
   float w0    = 2.0f * pi * fc / fs;
-  float sinf_w0 = sinf(w0);
-  float alpha = sinf_w0 * sinhf(log_2 / 2.0f * bandwidth * w0 / sinf_w0);
+  float sin_w0 = f32_sin(w0);
+  float alpha = sin_w0 * sinhf(log_2 / 2.0f * bandwidth * w0 / sin_w0);
 
   // Compute coeffs
   float b0 =  1.0f;
-  float b1 = -2.0f * cosf(w0);
+  float b1 = -2.0f * f32_cos(w0);
   float b2 =  1.0f;
   float a0 =  1.0f + alpha;
   float a1 =  b1;
@@ -255,13 +255,13 @@ left_shift_t adsp_design_biquad_peaking
   float A  = powf(10.0f, (gain_db * (1.0f / 40.0f)));
   float w0 = 2.0f * pi * (fc / fs); 
   // intentional double precision, gets extra precision
-  float alpha = sinf(w0) / (2.0 * filter_Q);
+  float alpha = f32_sin(w0) / (2.0 * filter_Q);
 
   // Compute coeffs
   float norm = 1.0f /(1.0f + alpha / A);
 
   float b0 =  (1.0f + alpha * A)*norm;
-  float b1 = (-2.0f * cosf(w0))*norm;
+  float b1 = (-2.0f * f32_cos(w0))*norm;
   float b2 =  (1.0f - alpha * A)*norm;
   float a1 =  b1;
   float a2 =  (1.0f - alpha / A)*norm;
