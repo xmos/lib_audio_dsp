@@ -15,6 +15,11 @@ static const float log_2 = 0.69314718055f;
 
 static inline int32_t _float2fixed( float x, int32_t q )
 {
+  float max_val = (float)(1<<(31-q));
+  printf("%f %f\n", max_val, x);
+  xassert(x < max_val && "Too much gain, biquad coefficient will overflow");
+  xassert(x >= -max_val && "Too much gain, biquad coefficient will overflow");
+
   if     ( x < 0 ) return (((float)(1 << q))       * x - 0.5f);
   else if( x > 0 ) return (((float)((1 << q) - 1)) * x + 0.5f);
   return 0;
@@ -57,8 +62,7 @@ void adsp_design_biquad_lowpass
   const float filter_Q
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
-  unsigned t0, t1, t2;
-	asm volatile("gettime %0": "=r"(t0));
+
   // Compute common factors
   float K = tanf(pi * fc/fs);
   float KK = K * K;
@@ -71,7 +75,6 @@ void adsp_design_biquad_lowpass
   float b2 = b0;
   float a1 = 2.0f * (KK - 1.0f) * norm;
   float a2 = (1.0f - KQ + KK) * norm;
-	asm volatile("gettime %0": "=r"(t1));
 
   // Store as fixed-point values
   coeffs[0] = _float2fixed(  b0, Q_factor );
@@ -79,16 +82,6 @@ void adsp_design_biquad_lowpass
   coeffs[2] = _float2fixed(  b2, Q_factor );
   coeffs[3] = _float2fixed( -a1, Q_factor );
   coeffs[4] = _float2fixed( -a2, Q_factor );
-
-	asm volatile("gettime %0": "=r"(t0));
-  float x1 = sinf(pi * fc);
-	asm volatile("gettime %0": "=r"(t1));
-  float x2 = f32_sin(pi * fc);
-
-  asm volatile("gettime %0": "=r"(t2));
-
-	printf("%d %d\n", t1-t0, t2-t1);
-	printf("%f %f\n", x1, x2);
 
 }
 
@@ -131,8 +124,6 @@ void adsp_design_biquad_bandpass
   const float bandwidth
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
-  unsigned t0, t1;
-	asm volatile("gettime %0": "=r"(t0));
 
   // Compute common factors
   float w0    = 2.0f * pi * fc / fs;
@@ -155,9 +146,6 @@ void adsp_design_biquad_bandpass
   coeffs[2] = _float2fixed(  b2 * inv_a0, Q_factor );
   coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
   coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
-  asm volatile("gettime %0": "=r"(t1));
-
-	printf("%d\n", t1-t0);
 }
 
 void adsp_design_biquad_bandstop
@@ -199,8 +187,6 @@ void adsp_design_biquad_notch
   const float filter_Q
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
-  // unsigned t0, t1;
-	// asm volatile("gettime %0": "=r"(t0));
 
   // Compute common factors
   float K = tanf(pi * fc/fs);
@@ -221,10 +207,6 @@ void adsp_design_biquad_notch
   coeffs[2] = _float2fixed(  b2, Q_factor );
   coeffs[3] = _float2fixed( -a1, Q_factor );
   coeffs[4] = _float2fixed( -a2, Q_factor );
-
-  // asm volatile("gettime %0": "=r"(t1));
-
-	// printf("%d\n", t1-t0);
 }
 
 
@@ -236,8 +218,6 @@ void adsp_design_biquad_allpass
   const float filter_Q
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
-  // unsigned t0, t1;
-	// asm volatile("gettime %0": "=r"(t0));
 
   // Compute common factors
   float K = tanf(pi * fc/fs);
@@ -258,9 +238,6 @@ void adsp_design_biquad_allpass
   coeffs[2] = _float2fixed(  b2, Q_factor );
   coeffs[3] = _float2fixed( -a1, Q_factor );
   coeffs[4] = _float2fixed( -a2, Q_factor );
-
-  // asm volatile("gettime %0": "=r"(t1));
-	// printf("%d\n", t1-t0);
 }
 
 
@@ -273,8 +250,7 @@ left_shift_t adsp_design_biquad_peaking
   const float gain_db
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
-  // unsigned t0, t1;
-	// asm volatile("gettime %0": "=r"(t0));
+
   // Compute common factors
   float A  = powf(10.0f, (gain_db * (1.0f / 40.0f)));
   float w0 = 2.0f * pi * (fc / fs); 
@@ -296,9 +272,6 @@ left_shift_t adsp_design_biquad_peaking
   coeffs[2] = _float2fixed(  b2, Q_factor - BOOST_BSHIFT);
   coeffs[3] = _float2fixed( -a1, Q_factor );
   coeffs[4] = _float2fixed( -a2, Q_factor );
-  // asm volatile("gettime %0": "=r"(t1));
-
-	// printf("%d\n", t1-t0);
 
   return BOOST_BSHIFT;
 }
@@ -313,8 +286,6 @@ left_shift_t adsp_design_biquad_const_q
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
 
-  // unsigned t0, t1;
-	// asm volatile("gettime %0": "=r"(t0));
   // Compute common factors
   float V = powf(10.0f, (gain_db * (1.0f/ 20.0f)));
   // w0 is only needed for calculating K
@@ -348,9 +319,7 @@ left_shift_t adsp_design_biquad_const_q
   coeffs[2] = _float2fixed(  b2 * inv_a0, Q_factor - BOOST_BSHIFT);
   coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
   coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
-  // asm volatile("gettime %0": "=r"(t1));
 
-	// printf("%d\n", t1-t0);
   return BOOST_BSHIFT;
 }
 
@@ -363,8 +332,7 @@ left_shift_t adsp_design_biquad_lowshelf
   const float gain_db
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
-  unsigned t0, t1;
-	asm volatile("gettime %0": "=r"(t0));
+
   // Compute common factors
   float A  = powf(10.0f, (gain_db * (1.0f / 40.0f)));
   float w0 = 2.0f * pi * fc / fs;
@@ -392,9 +360,6 @@ left_shift_t adsp_design_biquad_lowshelf
   coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
   coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
 
-  asm volatile("gettime %0": "=r"(t1));
-	printf("%d\n", t1-t0);
-
   return BOOST_BSHIFT;
 }
 
@@ -407,9 +372,6 @@ left_shift_t adsp_design_biquad_highshelf
   const float gain_db
 ) {
   xassert(fc <= fs / 2 && "fc must be less than fs/2");
-
-  unsigned t0, t1;
-	asm volatile("gettime %0": "=r"(t0));
 
   // Compute common factors
   float A  = powf(10.0f, (gain_db * (1.0f / 40.0f)));
@@ -438,9 +400,6 @@ left_shift_t adsp_design_biquad_highshelf
   coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
   coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
 
-  asm volatile("gettime %0": "=r"(t1));
-	printf("%d\n", t1-t0);
-
   return BOOST_BSHIFT;
 }
 
@@ -454,9 +413,6 @@ void adsp_design_biquad_linkwitz(
 ) {
   xassert(fp <= fs / 2 && "fc must be less than fs/2");
   xassert(f0 <= fs / 2 && "fc must be less than fs/2");
-
-  unsigned t0, t1;
-	asm volatile("gettime %0": "=r"(t0));
 
   // Compute common factors
   float fc = (f0 + fp) / 2.0f;
@@ -495,6 +451,4 @@ void adsp_design_biquad_linkwitz(
   coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
   coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
 
-  asm volatile("gettime %0": "=r"(t1));
-	printf("%d\n", t1-t0);
 }

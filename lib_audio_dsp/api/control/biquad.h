@@ -35,6 +35,7 @@ left_shift_t adsp_design_biquad_gain(q2_30 coeffs[5], const float gain_db);
 /**
  * @brief Design lowpass biquad filter
  * This function creates a biquad filter with a lowpass response
+ *  ``fc`` must be less than ``fs/2``.
  * 
  * @param coeffs          Lowpass filter coefficients
  * @param fc              Cutoff frequency
@@ -50,6 +51,7 @@ void adsp_design_biquad_lowpass(
 /**
  * @brief Design highpass biquad filter
  * This function creates a biquad filter with a highpass response
+ *  ``fc`` must be less than ``fs/2``.
  * 
  * @param coeffs          Highpass filter coefficients
  * @param fc              Cutoff frequency
@@ -65,6 +67,7 @@ void adsp_design_biquad_highpass(
 /**
  * @brief Design bandpass biquad filter
  * This function creates a biquad filter with a bandpass response
+ *  ``fc`` must be less than ``fs/2``.
  * 
  * @param coeffs          Bandpass filter coefficients
  * @param fc              Central frequency
@@ -80,6 +83,7 @@ void adsp_design_biquad_bandpass(
 /**
  * @brief Design bandstop biquad filter
  * This function creates a biquad filter with a bandstop response
+ *  ``fc`` must be less than ``fs/2``.
  * 
  * @param coeffs          Bandstop filter coefficients
  * @param fc              Central frequency
@@ -95,6 +99,7 @@ void adsp_design_biquad_bandstop(
 /**
  * @brief Design notch biquad filter
  * This function creates a biquad filter with an notch response
+ *  ``fc`` must be less than ``fs/2``.
  * 
  * @param coeffs          Notch filter coefficients
  * @param fc              Central frequency
@@ -110,6 +115,7 @@ void adsp_design_biquad_notch(
 /**
  * @brief Design allpass biquad filter
  * This function creates a biquad filter with an allpass response
+ *  ``fc`` must be less than ``fs/2``.
  * 
  * @param coeffs          Allpass filter coefficients
  * @param fc              Central frequency
@@ -125,6 +131,7 @@ void adsp_design_biquad_allpass(
 /**
  * @brief Design peaking biquad filter
  * This function creates a biquad filter with a peaking response
+ *  ``fc`` must be less than ``fs/2``.
  * 
  * @param coeffs          Peaking filter coefficients
  * @param fc              Central frequency
@@ -146,6 +153,7 @@ left_shift_t adsp_design_biquad_peaking(
  * 
  * Constant Q means that the bandwidth of the filter remains constant
  * as the gain varies. It is commonly used for graphic equalisers.
+ *  ``fc`` must be less than ``fs/2``.
  * 
  * @param coeffs          Constant Q filter coefficients
  * @param fc              Central frequency
@@ -168,6 +176,7 @@ left_shift_t adsp_design_biquad_const_q(
  * The Q factor is defined in a similar way to standard low pass, i.e.
  * Q > 0.707 will yield peakiness (where the shelf response does not
  * monotonically change). The level change at f will be boost_db/2.
+ *  ``fc`` must be less than ``fs/2``.
  * 
  * @param coeffs          Lowshelf filter coefficients
  * @param fc              Cutoff frequency
@@ -189,7 +198,7 @@ left_shift_t adsp_design_biquad_lowshelf(
  * 
  * The Q factor is defined in a similar way to standard high pass, i.e.
  * Q > 0.707 will yield peakiness. The level change at f will be
- * boost_db/2.
+ * boost_db/2. ``fc`` must be less than ``fs/2``.
  * 
  * @param coeffs          Highshelf filter coefficients
  * @param fc              Cutoff frequency
@@ -212,7 +221,7 @@ left_shift_t adsp_design_biquad_highshelf(
  * The Linkwitz Transform is commonly used to change the low frequency
  * roll off slope of a loudspeaker. When applied to a loudspeaker, it
  * will change the cutoff frequency from f0 to fp, and the quality
- * factor from q0 to qp.
+ * factor from q0 to qp. ``f0`` must be less than ``fs/2``.
  * 
  * @param coeffs          Linkwitz filter coefficients
  * @param f0              Original cutoff frequency
