@@ -17,7 +17,7 @@ module:
       help: > 
         The current RMS² envelope of the signal in Q_SIG format. To read
         the ``int32_t`` control value, use the function
-        ``q_format_to_db_pow(envelope, Q_SIG)`` in ``control/helpers.h``
+        ``q_format_to_db_pow(envelope, Q_SIG)`` in ``control/helpers.h``.
     threshold:
       type: int32_t
       help: > 
@@ -34,7 +34,7 @@ module:
       type: float
       help: >
         The compression slope of the compressor. This is calculated 
-        as `(1 - 1 / ratio) / 2.0`. To convert a ratio to a slope, use
+        as ``(1 - 1 / ratio) / 2.0``. To convert a ratio to a slope, use
         the function ``rms_compressor_slope_from_ratio(ratio)`` in
         ``control/helpers.h``.
 includes: []

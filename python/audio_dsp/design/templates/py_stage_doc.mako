@@ -52,20 +52,26 @@ details on reading and writing these commands, see the Run-Time Control User Gui
 
 %>
 ##  do the printing, use ljust to pad to max size
-% for row in row_list:
-${row[0]}
-${"-"*len(row[0])}
-
 .. table::
-  :widths: ${pay_width}, ${help_width} 
+  :widths: ${help_width}, ${pay_width} 
 
-  ${"="*max_pay}  ${"="*max_help}
-  ${"Payload length".ljust(max_pay)}  ${"Description".ljust(max_help)}
-  ${"="*max_pay}  ${"="*max_help}
-  ${row[1].ljust(max_pay)}  ${row[2].ljust(max_help)}
-  ${"="*max_pay}  ${"="*max_help}
-
+  ${"="*max_help}  ${"="*max_pay}
+  ${"Control parameter".ljust(max_help)}  ${"Payload length".ljust(max_pay)}
+  ${"="*max_help}  ${"="*max_pay}
+% for row in row_list:
+  ${row[0].ljust(max_help)}  ${row[1].ljust(max_pay)}
+% if "²" in row[2]:  ## ljust in Mako ignores ², no idea why
+  ${row[2].ljust(max_help + 1)}  ${'\\'.ljust(max_pay)}
+% else:
+  ${row[2].ljust(max_help)}  ${'\\'.ljust(max_pay)}
+%endif  ## "²" in row[2]:
+% if row_list.index(row) < len(row_list) - 1:
+  ## don't print a blank row at the end
+  |
+  ${"-"*max_help}--${"-"*max_pay}
+% endif  ## row_list.index(row) < len(row_list) - 1
 % endfor  ## row in row_list
+  ${"="*max_help}  ${"="*max_pay}
 
 % else:  ## class_data[cl]
 
