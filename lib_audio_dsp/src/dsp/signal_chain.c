@@ -6,10 +6,10 @@
 #include <xcore/assert.h>
 
 #if Q_GAIN != 27
-#error "Need to change the assert value in adsp_dB_to_gain"
+#error "Need to change the assert value in adsp_db_to_gain"
 #endif
 
-int32_t adsp_dB_to_gain(float dB_gain) {
+int32_t adsp_db_to_gain(float dB_gain) {
   xassert(dB_gain <= 24 && "Maximum fixed gain is +24 dB");
   float gain_fl = powf(10, (dB_gain / 20));
   // gain_fl will always be positive
@@ -107,7 +107,7 @@ volume_control_t adsp_volume_control_init(
 ) {
   volume_control_t vol_ctl;
   vol_ctl.mute_state = mute_state;
-  adsp_volume_control_set_gain(&vol_ctl, adsp_dB_to_gain(gain_dB));
+  adsp_volume_control_set_gain(&vol_ctl, adsp_db_to_gain(gain_dB));
   vol_ctl.slew_shift = slew_shift;
   vol_ctl.saved_gain = 0;
 

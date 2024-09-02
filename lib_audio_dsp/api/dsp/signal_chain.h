@@ -64,7 +64,7 @@ typedef enum{
  * @return int32_t          Linear gain in Q_GAIN format
  * @note With the current Q_GAIN format, the maximum gain is +24 dB
  */
-int32_t adsp_dB_to_gain(float dB_gain);
+int32_t adsp_db_to_gain(float dB_gain);
 
 /**
  * @brief Convert from Q0.31 to Q_SIG
