@@ -17,7 +17,7 @@ module:
       help: > 
         The current peak envelope of the signal in Q_SIG format. To read
         the ``int32_t`` control value, use the function
-        ``q_format_to_db(envelope, Q_SIG)`` in ``control/helpers.h``
+        ``qxx_to_db(envelope, Q_SIG)`` in ``control/helpers.h``
     threshold:
       type: int32_t
       help: >
@@ -29,7 +29,7 @@ module:
       help: >
         The current gain applied by the noise suppressor in Q0.31 format.
         To read the ``int32_t`` control value, use the function
-        ``q_format_to_db(envelope, 31)`` in ``control/helpers.h``
+        ``qxx_to_db(envelope, 31)`` in ``control/helpers.h``
     slope:
       type: float
       help: >
