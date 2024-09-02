@@ -110,7 +110,7 @@ static inline float q_format_to_db_pow(int32_t level, int q_format) {
  *        desired time is too large or small to be represented in the fixed
  *        point format, it is saturated.
  * 
- * @param fs sampling frequency
+ * @param fs sampling frequency in Hz
  * @param time attack/release time in seconds
  * @return int32_t attack/release alpha as an int32_t
  */
@@ -149,7 +149,7 @@ static inline int32_t calc_alpha(float fs, float time) {
  *        to an int32 fixed point gain in Q_SIG Q format.
  *        If the threshold is higher than representable in the fixed point
  *        format, it is saturated.
- *        The miniumum threshold returned by this function is 1.
+ *        The minimum threshold returned by this function is 1.
  *
  * @param level_db the desired threshold in decibels
  * @return int32_t the threshold as a fixed point integer.
@@ -166,7 +166,7 @@ static inline int32_t calculate_peak_threshold(float level_db){
  *        to an int32 fixed point gain in Q_SIG Q format.
  *        If the threshold is higher than representable in the fixed point
  *        format, it is saturated.
- *        The miniumum threshold returned by this function is 1.
+ *        The minimum threshold returned by this function is 1.
  *
  * @param level_db the desired threshold in decibels
  * @return int32_t the threshold as a fixed point integer.
