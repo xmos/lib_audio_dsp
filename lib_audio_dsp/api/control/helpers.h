@@ -4,8 +4,9 @@
 #pragma once
 #include <xcore/assert.h>    // for xassert()
 #include <math.h>
+#include <limits.h>
 #include "xmath/xmath.h"
-#include <dsp/_helpers/generic_utils.h>
+#include <dsp/_helpers/generic_utils.h> // for Q_alpha
 #include <dsp/defines.h>
 
 
@@ -22,7 +23,7 @@
 static inline int32_t _float2fixed_saturate( float x, int32_t q )
 {
   if (x < -(1 << (31-q))) return INT32_MIN;
-  else if ( x < 0 ) return (((float)(1 << q))       * x - 0.5f);
+  else if ( x < 0 ) return (((float)(1 << q)) * x - 0.5f);
   else if ( x >= 1 << (31-q)) return INT32_MAX;
   else if( x > 0 ) return (((float)((1 << q) - 1)) * x + 0.5f);
   return 0;
@@ -123,10 +124,11 @@ static inline int32_t calc_alpha(float fs, float time) {
   int32_t mant;
 
   if(alpha == 1.0f){
-    mant = 2147483647;
+    mant = INT32_MAX;
   }
   else{
   #ifdef __XS3A__
+    // multiply alpha by 2**31 and convert to an int32
     int32_t sign, exp;
     asm("fsexp %0, %1, %2": "=r" (sign), "=r" (exp): "r" (alpha));
     asm("fmant %0, %1": "=r" (mant): "r" (alpha));
@@ -134,7 +136,7 @@ static inline int32_t calc_alpha(float fs, float time) {
     right_shift_t shr = -Q_alpha - exp + 23;
     mant >>= shr;
   #else
-    mant = (int32_t)(alpha * 2147483648.0f);
+    mant = (int32_t)(alpha * (float)(1u << 31));
   #endif
   }
 
