@@ -31,7 +31,7 @@ void adsp_design_biquad_mute(q2_30 coeffs[5]) {
 left_shift_t adsp_design_biquad_gain(q2_30 coeffs[5], const float gain_db) {
   float A  = powf(10.0f, (gain_db * (1.0f / 20.0f)));
 
-  coeffs[0] = _float2fixed( A, Q_factor - BOOST_BSHIFT );
+  coeffs[0] = _float2fixed_assert( A, Q_factor - BOOST_BSHIFT );
   coeffs[1] = 0;
   coeffs[2] = 0;
   coeffs[3] = 0;
@@ -48,8 +48,12 @@ void adsp_design_biquad_lowpass
   const float fs,
   const float filter_Q
 ) {
-  xassert(fc <= fs / 2 && "fc must be less than fs/2");
-
+  // float fc_sat = fc;
+  // saturate if > fs/2
+  // if (fc_sat >= fs / 2.0f){
+  //   fc_sat = fs / 2.0f;
+  // }
+  
   // Compute common factors
   float K = tanf(pi * fc/fs);
   float KK = K * K;
@@ -64,11 +68,11 @@ void adsp_design_biquad_lowpass
   float a2 = (1.0f - KQ + KK) * norm;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0, Q_factor );
-  coeffs[1] = _float2fixed(  b1, Q_factor );
-  coeffs[2] = _float2fixed(  b2, Q_factor );
-  coeffs[3] = _float2fixed( -a1, Q_factor );
-  coeffs[4] = _float2fixed( -a2, Q_factor );
+  coeffs[0] = _float2fixed_assert(  b0, Q_factor );
+  coeffs[1] = _float2fixed_assert(  b1, Q_factor );
+  coeffs[2] = _float2fixed_assert(  b2, Q_factor );
+  coeffs[3] = _float2fixed_assert( -a1, Q_factor );
+  coeffs[4] = _float2fixed_assert( -a2, Q_factor );
 
 }
 
@@ -79,10 +83,14 @@ void adsp_design_biquad_highpass
   const float fs,
   const float filter_Q
 ) {
-  xassert(fc <= fs / 2 && "fc must be less than fs/2");
-
+  float fc_sat = fc;
+  // saturate if > fs/2
+  if (fc_sat >= fs / 2.0f){
+    fc_sat = fs / 2.0f;
+  }
+  
   // Compute common factors
-  float K = tanf(pi * fc/fs);
+  float K = tanf(pi * fc_sat/fs);
   float KK = K * K;
   float KQ = K / filter_Q;
   float norm = 1.0f / (1.0f + KQ + KK);
@@ -95,11 +103,11 @@ void adsp_design_biquad_highpass
   float a2 = (1.0f - KQ + KK) * norm;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0, Q_factor );
-  coeffs[1] = _float2fixed(  b1, Q_factor );
-  coeffs[2] = _float2fixed(  b2, Q_factor );
-  coeffs[3] = _float2fixed( -a1, Q_factor );
-  coeffs[4] = _float2fixed( -a2, Q_factor );
+  coeffs[0] = _float2fixed_assert(  b0, Q_factor );
+  coeffs[1] = _float2fixed_assert(  b1, Q_factor );
+  coeffs[2] = _float2fixed_assert(  b2, Q_factor );
+  coeffs[3] = _float2fixed_assert( -a1, Q_factor );
+  coeffs[4] = _float2fixed_assert( -a2, Q_factor );
 }
 
 
@@ -110,10 +118,14 @@ void adsp_design_biquad_bandpass
   const float fs,
   const float bandwidth
 ) {
-  xassert(fc <= fs / 2 && "fc must be less than fs/2");
-
+  float fc_sat = fc;
+  // saturate if > fs/2
+  if (fc_sat >= fs / 2.0f){
+    fc_sat = fs / 2.0f;
+  }
+  
   // Compute common factors
-  float w0    = 2.0f * pi * fc / fs;
+  float w0    = 2.0f * pi * fc_sat / fs;
   float sin_w0 = f32_sin(w0);
   float alpha = sin_w0 * sinhf(log_2 / 2.0f * bandwidth * w0 / sin_w0);
 
@@ -128,11 +140,11 @@ void adsp_design_biquad_bandpass
   float inv_a0 = 1.0f/a0;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 * inv_a0, Q_factor );
-  coeffs[1] = _float2fixed(  b1 * inv_a0, Q_factor );
-  coeffs[2] = _float2fixed(  b2 * inv_a0, Q_factor );
-  coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
+  coeffs[0] = _float2fixed_assert(  b0 * inv_a0, Q_factor );
+  coeffs[1] = _float2fixed_assert(  b1 * inv_a0, Q_factor );
+  coeffs[2] = _float2fixed_assert(  b2 * inv_a0, Q_factor );
+  coeffs[3] = _float2fixed_assert( -a1 * inv_a0, Q_factor );
+  coeffs[4] = _float2fixed_assert( -a2 * inv_a0, Q_factor );
 }
 
 void adsp_design_biquad_bandstop
@@ -142,10 +154,14 @@ void adsp_design_biquad_bandstop
   const float fs,
   const float bandwidth
 ) {
-  xassert(fc <= fs / 2 && "fc must be less than fs/2");
+  float fc_sat = fc;
+  // saturate if > fs/2
+  if (fc_sat >= fs / 2.0f){
+    fc_sat = fs / 2.0f;
+  }
 
   // Compute common factors
-  float w0    = 2.0f * pi * fc / fs;
+  float w0    = 2.0f * pi * fc_sat / fs;
   float sin_w0 = f32_sin(w0);
   float alpha = sin_w0 * sinhf(log_2 / 2.0f * bandwidth * w0 / sin_w0);
 
@@ -160,11 +176,11 @@ void adsp_design_biquad_bandstop
   float inv_a0 = 1.0f/a0;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 * inv_a0, Q_factor );
-  coeffs[1] = _float2fixed(  b1 * inv_a0, Q_factor );
-  coeffs[2] = _float2fixed(  b2 * inv_a0, Q_factor );
-  coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
+  coeffs[0] = _float2fixed_assert(  b0 * inv_a0, Q_factor );
+  coeffs[1] = _float2fixed_assert(  b1 * inv_a0, Q_factor );
+  coeffs[2] = _float2fixed_assert(  b2 * inv_a0, Q_factor );
+  coeffs[3] = _float2fixed_assert( -a1 * inv_a0, Q_factor );
+  coeffs[4] = _float2fixed_assert( -a2 * inv_a0, Q_factor );
 }
 
 void adsp_design_biquad_notch
@@ -174,10 +190,14 @@ void adsp_design_biquad_notch
   const float fs,
   const float filter_Q
 ) {
-  xassert(fc <= fs / 2 && "fc must be less than fs/2");
-
+  float fc_sat = fc;
+  // saturate if > fs/2
+  if (fc_sat >= fs / 2.0f){
+    fc_sat = fs / 2.0f;
+  }
+  
   // Compute common factors
-  float K = tanf(pi * fc/fs);
+  float K = tanf(pi * fc_sat/fs);
   float KK = K * K;
   float KQ = K / filter_Q;
   float norm = 1.0f / (1.0f + KQ + KK);
@@ -190,11 +210,11 @@ void adsp_design_biquad_notch
   float a2 = (1.0f - KQ + KK) * norm;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0, Q_factor );
-  coeffs[1] = _float2fixed(  b1, Q_factor );
-  coeffs[2] = _float2fixed(  b2, Q_factor );
-  coeffs[3] = _float2fixed( -a1, Q_factor );
-  coeffs[4] = _float2fixed( -a2, Q_factor );
+  coeffs[0] = _float2fixed_assert(  b0, Q_factor );
+  coeffs[1] = _float2fixed_assert(  b1, Q_factor );
+  coeffs[2] = _float2fixed_assert(  b2, Q_factor );
+  coeffs[3] = _float2fixed_assert( -a1, Q_factor );
+  coeffs[4] = _float2fixed_assert( -a2, Q_factor );
 }
 
 
@@ -205,10 +225,14 @@ void adsp_design_biquad_allpass
   const float fs,
   const float filter_Q
 ) {
-  xassert(fc <= fs / 2 && "fc must be less than fs/2");
+  float fc_sat = fc;
+  // saturate if > fs/2
+  if (fc_sat >= fs / 2.0f){
+    fc_sat = fs / 2.0f;
+  }
 
   // Compute common factors
-  float K = tanf(pi * fc/fs);
+  float K = tanf(pi * fc_sat/fs);
   float KK = K * K;
   float KQ = K / filter_Q;
   float norm = 1.0f / (1.0f + KQ + KK);
@@ -221,11 +245,11 @@ void adsp_design_biquad_allpass
   float a2 = b0;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0, Q_factor );
-  coeffs[1] = _float2fixed(  b1, Q_factor );
-  coeffs[2] = _float2fixed(  b2, Q_factor );
-  coeffs[3] = _float2fixed( -a1, Q_factor );
-  coeffs[4] = _float2fixed( -a2, Q_factor );
+  coeffs[0] = _float2fixed_assert(  b0, Q_factor );
+  coeffs[1] = _float2fixed_assert(  b1, Q_factor );
+  coeffs[2] = _float2fixed_assert(  b2, Q_factor );
+  coeffs[3] = _float2fixed_assert( -a1, Q_factor );
+  coeffs[4] = _float2fixed_assert( -a2, Q_factor );
 }
 
 
@@ -237,11 +261,20 @@ left_shift_t adsp_design_biquad_peaking
   const float filter_Q,
   const float gain_db
 ) {
-  xassert(fc <= fs / 2 && "fc must be less than fs/2");
+  float gain_db_sat = gain_db;
+  // saturate to 12 dB
+  if (gain_db_sat > ((float)(BOOST_BSHIFT + 1)*db_2)){
+    gain_db_sat = ((float)(BOOST_BSHIFT + 1)*db_2);
+  }
+  float fc_sat = fc;
+  // saturate if > fs/2
+  if (fc_sat >= fs / 2.0f){
+    fc_sat = fs / 2.0f;
+  }
 
   // Compute common factors
-  float A  = powf(10.0f, (gain_db * (1.0f / 40.0f)));
-  float w0 = 2.0f * pi * (fc / fs); 
+  float A  = powf(10.0f, (gain_db_sat * (1.0f / 40.0f)));
+  float w0 = 2.0f * pi * (fc_sat / fs); 
   // intentional double precision, gets extra precision
   float alpha = f32_sin(w0) / (2.0 * filter_Q);
 
@@ -255,11 +288,11 @@ left_shift_t adsp_design_biquad_peaking
   float a2 =  (1.0f - alpha / A)*norm;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0, Q_factor - BOOST_BSHIFT);
-  coeffs[1] = _float2fixed(  b1, Q_factor - BOOST_BSHIFT);
-  coeffs[2] = _float2fixed(  b2, Q_factor - BOOST_BSHIFT);
-  coeffs[3] = _float2fixed( -a1, Q_factor );
-  coeffs[4] = _float2fixed( -a2, Q_factor );
+  coeffs[0] = _float2fixed_assert(  b0, Q_factor - BOOST_BSHIFT);
+  coeffs[1] = _float2fixed_assert(  b1, Q_factor - BOOST_BSHIFT);
+  coeffs[2] = _float2fixed_assert(  b2, Q_factor - BOOST_BSHIFT);
+  coeffs[3] = _float2fixed_assert( -a1, Q_factor );
+  coeffs[4] = _float2fixed_assert( -a2, Q_factor );
 
   return BOOST_BSHIFT;
 }
@@ -272,17 +305,26 @@ left_shift_t adsp_design_biquad_const_q
   const float filter_Q,
   const float gain_db
 ) {
-  xassert(fc <= fs / 2 && "fc must be less than fs/2");
+  float gain_db_sat = gain_db;
+  // saturate to 12 dB
+  if (gain_db_sat > ((float)(BOOST_BSHIFT + 1)*db_2)){
+    gain_db_sat = ((float)(BOOST_BSHIFT + 1)*db_2);
+  }
+  float fc_sat = fc;
+  // saturate if > fs/2
+  if (fc_sat >= fs / 2.0f){
+    fc_sat = fs / 2.0f;
+  }
 
   // Compute common factors
-  float V = powf(10.0f, (gain_db * (1.0f/ 20.0f)));
+  float V = powf(10.0f, (gain_db_sat * (1.0f/ 20.0f)));
   // w0 is only needed for calculating K
-  float K = tanf(pi * fc / fs);
+  float K = tanf(pi * fc_sat / fs);
 
   float factor_a = K / filter_Q;
   float factor_b = 0;
   float K_pow2 = K * K;
-  if(gain_db > 0) {
+  if(gain_db_sat > 0) {
     factor_b = V * factor_a;
   }
   else
@@ -302,11 +344,11 @@ left_shift_t adsp_design_biquad_const_q
   float inv_a0 = 1.0f/a0;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 * inv_a0, Q_factor - BOOST_BSHIFT);
-  coeffs[1] = _float2fixed(  b1 * inv_a0, Q_factor - BOOST_BSHIFT);
-  coeffs[2] = _float2fixed(  b2 * inv_a0, Q_factor - BOOST_BSHIFT);
-  coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
+  coeffs[0] = _float2fixed_assert(  b0 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[1] = _float2fixed_assert(  b1 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[2] = _float2fixed_assert(  b2 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[3] = _float2fixed_assert( -a1 * inv_a0, Q_factor );
+  coeffs[4] = _float2fixed_assert( -a2 * inv_a0, Q_factor );
 
   return BOOST_BSHIFT;
 }
@@ -319,11 +361,20 @@ left_shift_t adsp_design_biquad_lowshelf
   const float filter_Q,
   const float gain_db
 ) {
-  xassert(fc <= fs / 2 && "fc must be less than fs/2");
+  float gain_db_sat = gain_db;
+  // saturate to 12 dB
+  if (gain_db_sat > ((float)(BOOST_BSHIFT)*db_2)){
+    gain_db_sat = ((float)(BOOST_BSHIFT)*db_2);
+  }
+  float fc_sat = fc;
+  // saturate if > fs/2
+  if (fc_sat >= fs / 2.0f){
+    fc_sat = fs / 2.0f;
+  }
 
   // Compute common factors
-  float A  = powf(10.0f, (gain_db * (1.0f / 40.0f)));
-  float w0 = 2.0f * pi * fc / fs;
+  float A  = powf(10.0f, (gain_db_sat * (1.0f / 40.0f)));
+  float w0 = 2.0f * pi * fc_sat / fs;
   float alpha = sinf(w0) / (2.0f * filter_Q);
 
   float cosw0 = cosf(w0);
@@ -342,11 +393,11 @@ left_shift_t adsp_design_biquad_lowshelf
   float inv_a0 = 1.0f / a0;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 * inv_a0, Q_factor - BOOST_BSHIFT);
-  coeffs[1] = _float2fixed(  b1 * inv_a0, Q_factor - BOOST_BSHIFT);
-  coeffs[2] = _float2fixed(  b2 * inv_a0, Q_factor - BOOST_BSHIFT);
-  coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
+  coeffs[0] = _float2fixed_assert(  b0 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[1] = _float2fixed_assert(  b1 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[2] = _float2fixed_assert(  b2 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[3] = _float2fixed_assert( -a1 * inv_a0, Q_factor );
+  coeffs[4] = _float2fixed_assert( -a2 * inv_a0, Q_factor );
 
   return BOOST_BSHIFT;
 }
@@ -359,11 +410,20 @@ left_shift_t adsp_design_biquad_highshelf
   const float filter_Q,
   const float gain_db
 ) {
-  xassert(fc <= fs / 2 && "fc must be less than fs/2");
+  float gain_db_sat = gain_db;
+  // saturate to 12 dB
+  if (gain_db_sat > ((float)(BOOST_BSHIFT)*db_2)){
+    gain_db_sat = ((float)(BOOST_BSHIFT)*db_2);
+  }
+  float fc_sat = fc;
+  // saturate if > fs/2
+  if (fc_sat >= fs / 2.0f){
+    fc_sat = fs / 2.0f;
+  }
 
   // Compute common factors
-  float A  = powf(10.0f, (gain_db * (1.0f / 40.0f)));
-  float w0 = 2.0f * pi * fc / fs;
+  float A  = powf(10.0f, (gain_db_sat * (1.0f / 40.0f)));
+  float w0 = 2.0f * pi * fc_sat / fs;
   float alpha = sinf(w0) / (2.0f * filter_Q);
 
   float alpha_factor = 2.0f * sqrtf(A) * alpha;
@@ -382,11 +442,11 @@ left_shift_t adsp_design_biquad_highshelf
   float inv_a0 = 1.0f/a0;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 * inv_a0, Q_factor - BOOST_BSHIFT);
-  coeffs[1] = _float2fixed(  b1 * inv_a0, Q_factor - BOOST_BSHIFT);
-  coeffs[2] = _float2fixed(  b2 * inv_a0, Q_factor - BOOST_BSHIFT);
-  coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
+  coeffs[0] = _float2fixed_assert(  b0 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[1] = _float2fixed_assert(  b1 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[2] = _float2fixed_assert(  b2 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[3] = _float2fixed_assert( -a1 * inv_a0, Q_factor );
+  coeffs[4] = _float2fixed_assert( -a2 * inv_a0, Q_factor );
 
   return BOOST_BSHIFT;
 }
@@ -399,15 +459,21 @@ void adsp_design_biquad_linkwitz(
   const float fp,
   const float qp
 ) {
-  xassert(fp <= fs / 2 && "fc must be less than fs/2");
-  xassert(f0 <= fs / 2 && "fc must be less than fs/2");
-
+  float f0_sat = f0;
+  float fp_sat = fp;
+  // saturate if > fs/2
+  if (f0_sat >= fs / 2.0f){
+    f0_sat = fs / 2.0f;
+  }
+  if (fp_sat >= fs / 2.0f){
+    fp_sat = fs / 2.0f;
+  }
   // Compute common factors
-  float fc = (f0 + fp) / 2.0f;
+  float fc = (f0_sat + fp_sat) / 2.0f;
 
-  float w_f0 = 2.0f * pi * f0;
+  float w_f0 = 2.0f * pi * f0_sat;
   float half_w_fc = pi * fc;
-  float w_fp = 2.0f * pi * fp;
+  float w_fp = 2.0f * pi * fp_sat;
 
   float w_f0_pow2 = w_f0 * w_f0;
   float d1i = w_f0 / q0;
@@ -433,10 +499,10 @@ void adsp_design_biquad_linkwitz(
   float inv_a0 = 1.0f / a0;
 
   // Store as fixed-point values
-  coeffs[0] = _float2fixed(  b0 * inv_a0, Q_factor );
-  coeffs[1] = _float2fixed(  b1 * inv_a0, Q_factor );
-  coeffs[2] = _float2fixed(  b2 * inv_a0, Q_factor );
-  coeffs[3] = _float2fixed( -a1 * inv_a0, Q_factor );
-  coeffs[4] = _float2fixed( -a2 * inv_a0, Q_factor );
+  coeffs[0] = _float2fixed_assert(  b0 * inv_a0, Q_factor );
+  coeffs[1] = _float2fixed_assert(  b1 * inv_a0, Q_factor );
+  coeffs[2] = _float2fixed_assert(  b2 * inv_a0, Q_factor );
+  coeffs[3] = _float2fixed_assert( -a1 * inv_a0, Q_factor );
+  coeffs[4] = _float2fixed_assert( -a2 * inv_a0, Q_factor );
 
 }

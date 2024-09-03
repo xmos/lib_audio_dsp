@@ -11,6 +11,7 @@
 
 static const float pi =    (float)M_PI;
 static const float log_2 = 0.69314718055f;
+static const float db_2 = 6.02059991328f;  // 20*log10(2)
 
 
 /**
@@ -24,6 +25,27 @@ static const float log_2 = 0.69314718055f;
  */
 static inline int32_t _float2fixed( float x, int32_t q )
 {
+  if     ( x < 0 ) return (((float)(1 << q))       * x - 0.5f);
+  else if( x > 0 ) return (((float)((1 << q) - 1)) * x + 0.5f);
+  return 0;
+}
+
+
+/**
+ * @brief Convert a float value to a fixed point int32 number in
+ *        q format. If the value of x is outside the fixed point range,
+ *        this will raise an assertion.
+ * 
+ * @param x A floating point value
+ * @param q Q format of the output
+ * @return int32_t x in q fixed point format
+ */
+static inline int32_t _float2fixed_assert( float x, int32_t q )
+{
+  float max_val = (float)(1<<(31-q));
+  xassert(x < max_val); // Too much gain, cannot be represented in desired number format
+  xassert(x >= -max_val);
+
   if     ( x < 0 ) return (((float)(1 << q))       * x - 0.5f);
   else if( x > 0 ) return (((float)((1 << q) - 1)) * x + 0.5f);
   return 0;
