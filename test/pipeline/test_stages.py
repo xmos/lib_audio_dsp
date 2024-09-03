@@ -549,12 +549,10 @@ def test_fixed_gain(frame_size):
 
     do_test(make_p, tune_p, frame_size)
 
-# The reverb test is expected to fail.
-# More details about this failure can be found in https://xmosjira.atlassian.net/browse/LCD-204?focusedCommentId=19048
-# The test passes if pregain is set lower than 0.015. Before we update the pregain,
-# we would like to investigate the root cause of the overflowing occurring with the current pregain value.
-@pytest.mark.xfail
-def test_reverb(frame_size):
+@pytest.mark.parametrize("pregain", [
+    0.01,
+    pytest.param(0.3, marks=pytest.mark.xfail(reason="Reverb can overflow for large values of pregain, tracked at LCD-297"))])
+def test_reverb(frame_size, pregain):
     """
     Test Reverb stage
     """
@@ -573,7 +571,7 @@ def test_reverb(frame_size):
         # Set initialization parameters of the stage
         p["control"].set_wet_gain(-1)
         p["control"].set_dry_gain(-2)
-        p["control"].set_pre_gain(0.3)
+        p["control"].set_pre_gain(pregain)
         p["control"].set_room_size(0.4)
         p["control"].set_damping(0.5)
         p["control"].set_decay(0.6)

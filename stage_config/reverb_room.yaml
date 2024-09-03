@@ -1,11 +1,5 @@
 module:
   reverb_room:
-    sampling_freq:
-      type: uint32_t
-      help: The sampling frequency of the reverb, can only be set at initialisation.
-    max_room_size:
-      type: float
-      help: Sets the maximum size of the delay buffers, can only be set at initialisation.
     room_size:
       type: float
       help: How big the room is as a proportion of max_room_size. This sets delay line lengths and must be between 0 and 1.

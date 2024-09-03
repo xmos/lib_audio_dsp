@@ -362,7 +362,7 @@ class Pipeline:
             node.index: {
                 "name": node.name,
                 "yaml_dict": node.yaml_dict,
-                "constants": node._constants,
+                "constants": node.constants,
             }
             for node in self._graph.nodes
         }
