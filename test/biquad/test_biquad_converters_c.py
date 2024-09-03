@@ -11,6 +11,7 @@ from pathlib import Path
 import subprocess
 import itertools
 import time
+from enum import IntEnum
 
 import audio_dsp.dsp.biquad as bq
 from audio_dsp.dsp.generic import Q_SIG
@@ -39,17 +40,39 @@ def flt_to_bin_file(sig_fl, out_dir=bin_dir):
   return sig_fl32
 
 
-def get_c_wav(dir_name, conv_name, verbose=False, sim = True, dtype=np.float32):
-  app = "xsim" if sim else "xrun --io"
-  run_cmd = app + " " + str(bin_dir / f"{conv_name}.xe")
-  stdout = subprocess.check_output(run_cmd, cwd = dir_name, shell = True)
-  if verbose: print("run msg:\n", stdout)
+class bq_type(IntEnum):
+    allpass = 0
+    bandpass = 1
+    bandstop = 2
+    bypass = 3
+    constq = 4
+    gain = 5
+    high_shelf = 6
+    highpass = 7
+    linkwitz = 8
+    low_shelf = 9
+    lowpass = 10
+    mute = 11
+    notch = 12 
+    peaking = 13
 
-  sig_bin = dir_name / "out_vector.bin"
-  assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
-  sig_int = np.fromfile(sig_bin, dtype=dtype)
 
-  return sig_int
+def get_c_wav(dir_name, conv_name, verbose=True, sim = True, dtype=np.float32):
+
+    # get the enum from the name, assuming name starts with "coeffs_..."
+    bq_name = conv_name[7:]
+    enum = bq_type[bq_name].value
+
+    app = "xsim" if sim else "xrun --io"
+    run_cmd = app + " --args " + str(bin_dir / "coeffs_alltests.xe") + f" {enum}"
+    stdout = subprocess.check_output(run_cmd, cwd = dir_name, shell = True)
+    if verbose: print("run msg:\n", stdout)
+
+    sig_bin = dir_name / "out_vector.bin"
+    assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
+    sig_int = np.fromfile(sig_bin, dtype=dtype)
+
+    return sig_int
 
 
 def test_design_biquad_bypass():
