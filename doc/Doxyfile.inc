@@ -9,7 +9,8 @@ PROJECT_BRIEF = "Audio DSP for the xcore"
 INPUT += ../lib_audio_dsp/api/dsp \
          ../lib_audio_dsp/api/stages/adsp_control.h \
          ../lib_audio_dsp/api/stages/adsp_module.h \
-         ../lib_audio_dsp/api/stages/adsp_pipeline.h 
+         ../lib_audio_dsp/api/stages/adsp_pipeline.h \
+         ../lib_audio_dsp/api/control/helpers.h
 
 INCLUDE_PATH = ../lib_audio_dsp/api \
 

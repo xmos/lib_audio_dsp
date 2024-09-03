@@ -2,17 +2,32 @@ module:
   limiter_rms:
     attack_alpha:
       type: int32_t
-      help: The attack alpha in Q0.31 format.
+      help: >
+        The attack alpha in Q0.31 format. To convert an attack time in
+        seconds to an ``int32_t`` control value, use the function
+        ``calc_alpha(fs, attack_time)`` in ``control/helpers.h``.
     release_alpha:
       type: int32_t
-      help: The release alpha in Q0.31 format.
+      help: >
+        The release alpha in Q0.31 format. To convert a release time in
+        seconds to an ``int32_t`` control value, use the function
+        ``calc_alpha(fs, release_time)`` in ``control/helpers.h``.
     envelope:
       type: int32_t
-      help: The current RMS envelope of the signal in Q_SIG format.
+      help: > 
+        The current RMS² envelope of the signal in Q_SIG format. To read
+        the ``int32_t`` control value, use the function
+        ``qxx_to_db_pow(envelope, Q_SIG)`` in ``control/helpers.h``
     threshold:
       type: int32_t
-      help: The threshold in Q_SIG format above which limiting will occur.
+      help: >
+        The threshold in Q_SIG format above which limiting will occur.
+        To convert a threshold in dB to the ``int32_t`` control value, use the function
+        ``calculate_rms_threshold(x)`` in ``control/helpers.h``.
     gain:
       type: int32_t
-      help: The current gain applied by the limiter in Q_GAIN format.
+      help: >
+        The current gain applied by the limiter in Q0.31 format.
+        To read the ``int32_t`` control value, use the function
+        ``qxx_to_db(envelope, 31)`` in ``control/helpers.h``
 includes: []

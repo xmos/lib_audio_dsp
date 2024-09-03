@@ -16,10 +16,32 @@ FLT_MIN = np.finfo(float).tiny
 Q_alpha = 31
 
 
+def calculate_rms_threshold(threshold_db, Q_sig) -> tuple[float, int]:
+    """
+    Calculate the linear RMS threshold in floating and fixed point from a
+    target threshold in decibels.
+    If the threshold is higher than representable in the fixed point
+    format, it is saturated.
+    """
+    return calculate_threshold(threshold_db, Q_sig, power=True)
+
+
+def calculate_peak_threshold(threshold_db, Q_sig) -> tuple[float, int]:
+    """
+    Calculate the linear peak threshold in floating and fixed point from a
+    target threshold in decibels.
+    If the threshold is higher than representable in the fixed point
+    format, it is saturated.
+    """
+    return calculate_threshold(threshold_db, Q_sig, power=False)
+
+
 def calculate_threshold(threshold_db, Q_sig, power=False) -> tuple[float, int]:
     """
     Calculate the linear threshold in floating and fixed point from a
     target threshold in decibels.
+    If the threshold is higher than representable in the fixed point
+    format, it is saturated.
     """
     if power:
         threshold = utils.db_pow2gain(threshold_db)
@@ -35,7 +57,7 @@ def calculate_threshold(threshold_db, Q_sig, power=False) -> tuple[float, int]:
 
     if threshold_db != new_threshold_db:
         warnings.warn(
-            "Threshold %d not representable in Q format Q%d, saturating to %d"
+            "Threshold %.2f not representable in Q format Q%d, saturating to %.2f"
             % (threshold_db, Q_sig, new_threshold_db),
             UserWarning,
         )
@@ -62,21 +84,39 @@ def alpha_from_time(attack_or_release_time, fs):
     and `tau` is the time constant.
 
     attack/release time can't be faster than the length of 2
-    samples, and alpha can't be greater than 1.
+    samples, and alpha can't be greater than 1. This function will
+    saturate to those values.
     """
+    if attack_or_release_time < 0:
+        warnings.warn(
+            "Attack/release time must not be negative. For the fastest possible "
+            "attack/release time, use zero. Time set to zero",
+            UserWarning,
+        )
+        attack_or_release_time = 0
+
     T = 1 / fs
     alpha = 2 * T / (attack_or_release_time + FLT_MIN)
 
     if alpha > 1:
         alpha = 1
-        Warning("Attack or release time too fast for sample rate, setting as fast as possible.")
-
-    # This is possible if alpha > (2/fs)*(2**31), which is 24 hours @ 48kHz,
-    # in which case you should probably use a lower sample rate.
-    assert alpha > 0, "alpha not > 0, this is possible if attack/release time > (2/fs)*(2**31)."
+        warnings.warn(
+            "Attack or release time too fast for sample rate, setting as fast as possible.",
+            UserWarning,
+        )
 
     alpha_int = utils.int32(round(alpha * 2**31)) if alpha != 1.0 else utils.int32(2**31 - 1)
-    assert alpha_int > 0
+
+    # This is possible if alpha > (4/fs)*(2**31), which is 49.7 hours @ 48kHz,
+    # in which case you should probably use a lower sample rate.
+    if alpha_int <= 0:
+        warnings.warn(
+            "alpha not > 0, this is possible if attack/release time > (4/fs)*(2**31)."
+            "Setting alpha_int to 0 (no smoothing)",
+            UserWarning,
+        )
+        alpha_int = 0
+
     return alpha, alpha_int
 
 
@@ -85,6 +125,10 @@ def rms_compressor_slope_from_ratio(ratio):
     defined as (1 - 1 / ratio) / 2.0. The division by 2 compensates for
     the RMS envelope detector returning the RMS².
     """
+    if ratio < 1:
+        warnings.warn("Compressor ratio must be >= 1, setting ratio to 1", UserWarning)
+        ratio = 1
+
     slope = (1 - 1 / ratio) / 2.0
     slope_f32 = float32(slope)
     return slope, slope_f32
@@ -94,6 +138,10 @@ def peak_expander_slope_from_ratio(ratio):
     """Convert an expander ratio to the slope, where the slope is
     defined as (1 - ratio).
     """
+    if ratio < 1:
+        warnings.warn("Expander ratio must be >= 1, setting ratio to 1", UserWarning)
+        ratio = 1
+
     slope = 1 - ratio
     slope_f32 = float32(slope)
     return slope, slope_f32

@@ -6,7 +6,7 @@
 #include <xmath/types.h>
 
 /** Minimum wet/dry gain config for the reverb room in dB */
-#define ADSP_RVR_MIN_GAIN_DB (-186.0)
+#define ADSP_RVR_MIN_GAIN_DB (-186.0f)
 /** Maximum wet/dry gain config for the reverb room in dB */
 #define ADSP_RVR_MAX_GAIN_DB (0)
 
