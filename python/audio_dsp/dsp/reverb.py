@@ -2,11 +2,13 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """DSP blocks for reverb effects."""
 
+from audio_dsp import _deprecated
 import audio_dsp.dsp.generic as dspg
 import numpy as np
 import warnings
 import audio_dsp.dsp.utils as utils
 from copy import deepcopy
+from deprecation import deprecated
 
 Q_VERB = 31
 
@@ -386,6 +388,7 @@ class reverb_room(dspg.dsp_block):
             total_buffers += ap._max_delay
         return total_buffers
 
+    @_deprecated("1.0.0", "2.0.0", "Use the pre_gain property")
     def set_pre_gain(self, pre_gain):
         """
         Set the pre gain.

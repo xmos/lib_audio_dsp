@@ -26,7 +26,8 @@ dependencies = [
     "mako",
     "tabulate",
     "docstring-inheritance",
-    "filelock"
+    "filelock",
+    "packaging>=24.1"
 ]
 
 [tool.ruff]
