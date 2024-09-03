@@ -6,23 +6,11 @@
 #include <math.h>
 
 #include <xcore/assert.h>
+#include "control/helpers.h"
 
 #define Q_factor 30
 #define BOOST_BSHIFT 2
 
-static const float pi =    (float)M_PI;
-static const float log_2 = 0.69314718055f;
-
-static inline int32_t _float2fixed( float x, int32_t q )
-{
-  float max_val = (float)(1<<(31-q));
-  xassert(x < max_val && "Too much gain, biquad coefficient will overflow");
-  xassert(x >= -max_val && "Too much gain, biquad coefficient will overflow");
-
-  if     ( x < 0 ) return (((float)(1 << q))       * x - 0.5f);
-  else if( x > 0 ) return (((float)((1 << q) - 1)) * x + 0.5f);
-  return 0;
-}
 
 void adsp_design_biquad_bypass(q2_30 coeffs[5]) {
   coeffs[0] = 1 << Q_factor;

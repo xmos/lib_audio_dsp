@@ -5,16 +5,9 @@
 
 #include <xcore/assert.h>
 #include <math.h>
+#include <control/helpers.h>
 
 #define Q_factor 30
-static const float pi =    M_PI;
-
-static inline int32_t _float2fixed( float x, int32_t q )
-{
-  if     ( x < 0 ) return (((float)(1 << q))       * x - 0.5f);
-  else if( x > 0 ) return (((float)((1 << q) - 1)) * x + 0.5f);
-  return 0;
-}
 
 static inline void _get_pa(complex_float_t * pa, unsigned N) {
   unsigned n_filts = N / 2;

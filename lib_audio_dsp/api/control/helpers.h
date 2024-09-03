@@ -9,6 +9,25 @@
 #include <dsp/_helpers/generic_utils.h> // for Q_alpha
 #include <dsp/defines.h>
 
+static const float pi =    (float)M_PI;
+static const float log_2 = 0.69314718055f;
+
+
+/**
+ * @brief Convert a float value to a fixed point int32 number in
+ *        q format. If the value of x is outside the fixed point range,
+ *        this will overflow.
+ * 
+ * @param x A floating point value
+ * @param q Q format of the output
+ * @return int32_t x in q fixed point format
+ */
+static inline int32_t _float2fixed( float x, int32_t q )
+{
+  if     ( x < 0 ) return (((float)(1 << q))       * x - 0.5f);
+  else if( x > 0 ) return (((float)((1 << q) - 1)) * x + 0.5f);
+  return 0;
+}
 
 
 /**
@@ -16,7 +35,7 @@
  *        q format. If the value of x is outside the fixed point range,
  *        it is saturated.
  * 
- * @param x Level in db
+ * @param x A floating point value
  * @param q Q format of the output
  * @return int32_t x in q fixed point format
  */
@@ -35,7 +54,7 @@ static inline int32_t _float2fixed_saturate( float x, int32_t q )
  *        converted from decibels), negative cases can be ignored. If the
  *        value of x exceeds the fixed point maximum, it is saturated.
  * 
- * @param x Level in db
+ * @param x A positive floating point value
  * @return int32_t x in Q_SIG fixed point format
  */
 static inline int32_t _positive_float2fixed_qsig(float x)

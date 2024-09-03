@@ -27,7 +27,8 @@ int main(int argc, char* argv[])
   enum bq_type this_bq = atoi(argv[1]);
 
   int n_inputs = 0;
-  if (this_bq == allpass || this_bq == bandpass || this_bq == bandstop || this_bq == highpass || this_bq == notch){
+  if (this_bq == allpass || this_bq == bandpass || this_bq == bandstop || this_bq == highpass || 
+      this_bq == lowpass || this_bq == notch){
     n_inputs = 3;
   }
   else if (this_bq == constq || this_bq == high_shelf || this_bq == low_shelf || this_bq == peaking)
@@ -41,7 +42,10 @@ int main(int argc, char* argv[])
   else if (this_bq == linkwitz){
     n_inputs = 5;
   }
-
+  else {
+    printf("Unknown biquad type\n");
+    exit(1);
+    }
   FILE * in = _fopen("test_vector.bin", "rb");
   FILE * out = _fopen("out_vector.bin", "wb");
 
@@ -84,6 +88,9 @@ int main(int argc, char* argv[])
     else if (this_bq == linkwitz){
         adsp_design_biquad_linkwitz(coeffs, samp[0], samp[1], samp[2], samp[3], samp[4]);
     }
+    else if (this_bq == lowpass){
+        adsp_design_biquad_lowpass(coeffs, samp[0], samp[1], samp[2]);
+    }
     else if (this_bq == low_shelf){
         adsp_design_biquad_lowshelf(coeffs, samp[0], samp[1], samp[2], samp[3]);
     }
@@ -95,6 +102,10 @@ int main(int argc, char* argv[])
     }
     else if (this_bq == peaking){
         adsp_design_biquad_peaking(coeffs, samp[0], samp[1], samp[2], samp[3]);
+    }
+    else {
+    printf("Unknown biquad type\n");
+    exit(1);
     }
 
     fwrite(&coeffs, sizeof(int32_t), 5, out);
