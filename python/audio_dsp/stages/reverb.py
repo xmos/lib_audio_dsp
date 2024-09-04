@@ -61,7 +61,7 @@ class ReverbRoom(Stage):
         gain_db : float
             Wet gain in dB, less than 0 dB.
         """
-        self.dsp_block.set_wet_gain(gain_dB)
+        self.dsp_block.wet_db = gain_dB
 
     def set_dry_gain(self, gain_dB):
         """
@@ -73,7 +73,7 @@ class ReverbRoom(Stage):
         gain_db : float
             Dry gain in dB, less than 0 dB.
         """
-        self.dsp_block.set_dry_gain(gain_dB)
+        self.dsp_block.dry_db = gain_dB
 
     def set_pre_gain(self, pre_gain):
         """
@@ -86,7 +86,7 @@ class ReverbRoom(Stage):
         pre_gain : float
             Pre gain value. Must be less than 1 (default 0.015).
         """
-        self.dsp_block.set_pre_gain(pre_gain)
+        self.dsp_block.pregain = pre_gain
 
     def set_room_size(self, new_room_size):
         """
@@ -103,7 +103,7 @@ class ReverbRoom(Stage):
             How big the room is as a proportion of max_room_size. This
             sets delay line lengths and must be between 0 and 1.
         """
-        self.dsp_block.set_room_size(new_room_size)
+        self.dsp_block.room_size = new_room_size
 
     def set_damping(self, damping):
         """
@@ -116,7 +116,7 @@ class ReverbRoom(Stage):
         damping : float
             How much high frequency attenuation in the room, between 0 and 1.
         """
-        self.dsp_block.set_damping(damping)
+        self.dsp_block.damping = damping
 
     def set_decay(self, decay):
         """
@@ -129,4 +129,4 @@ class ReverbRoom(Stage):
         decay : float
             How long the reverberation of the room is, between 0 and 1.
         """
-        self.dsp_block.set_decay(decay)
+        self.dsp_block.decay = decay

@@ -2,6 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import numpy as np
 import pytest
+from functools import partial
 
 import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.signal_gen as gen
@@ -156,6 +157,90 @@ def test_reverb_frames(fs, max_room_size, q_format):
     assert np.all(output_int[0, :] == output_int)
     assert np.all(output_flt[0, :] == output_flt)
 
+def test_reverb_properties_decay():
+    """Basic tests to check for consistency when setting the properties."""
+    r = partial(rv.reverb_room, 48000, 1)
+
+    val = 0.1
+    a = r(decay=val)
+    b = r()
+    b.decay = val
+    c = r()
+    c.set_decay(val)
+
+    should_be_val = np.array([i.decay for i in (a, b, c)])
+    np.testing.assert_allclose(should_be_val, val)
+
+def test_reverb_properties_pregain():
+    """Basic tests to check for consistency when setting the properties."""
+    r = partial(rv.reverb_room, 48000, 1)
+
+    val = 0.1
+    a = r(pregain=val)
+    b = r()
+    b.pregain = val
+    c = r()
+    c.set_pre_gain(val)
+
+    should_be_val = np.array([i.pregain for i in (a, b, c)])
+    np.testing.assert_allclose(should_be_val, val)
+
+
+def test_reverb_properties_wet_db():
+    """Basic tests to check for consistency when setting the properties."""
+    r = partial(rv.reverb_room, 48000, 1)
+
+    val = -6
+    a = r(wet_gain_db=val)
+    b = r()
+    b.wet_db = val
+    c = r()
+    c.set_wet_gain(val)
+
+    should_be_val = np.array([i.wet_db for i in (a, b, c)])
+    np.testing.assert_allclose(should_be_val, val)
+
+def test_reverb_properties_dry_db():
+    """Basic tests to check for consistency when setting the properties."""
+    r = partial(rv.reverb_room, 48000, 1)
+
+    val = -6
+    a = r(dry_gain_db=val)
+    b = r()
+    b.dry_db = val
+    c = r()
+    c.set_dry_gain(val)
+
+    should_be_val = np.array([i.dry_db for i in (a, b, c)])
+    np.testing.assert_allclose(should_be_val, val)
+
+def test_reverb_properties_damping():
+    """Basic tests to check for consistency when setting the properties."""
+    r = partial(rv.reverb_room, 48000, 1)
+
+    val = 0.5
+    a = r(damping=val)
+    b = r()
+    b.damping = val
+    c = r()
+    c.set_damping(val)
+
+    should_be_val = np.array([i.damping for i in (a, b, c)])
+    np.testing.assert_allclose(should_be_val, val)
+
+def test_reverb_properties_room_size():
+    """Basic tests to check for consistency when setting the properties."""
+    r = partial(rv.reverb_room, 48000, 1)
+
+    val = 0.5
+    a = r(room_size=val)
+    b = r()
+    b.room_size = val
+    c = r()
+    c.set_room_size(val)
+
+    should_be_val = np.array([i.room_size for i in (a, b, c)])
+    np.testing.assert_allclose(should_be_val, val)
 
 if __name__ == "__main__":
     test_reverb_overflow("sine", 20, 0.01)
