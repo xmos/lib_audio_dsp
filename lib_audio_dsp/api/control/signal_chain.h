@@ -81,3 +81,14 @@ void adsp_set_delay(
   delay_t * delay,
   float delay_time,
   time_units_t units);
+
+/**
+ * @brief Convert a time in seconds/milliseconds/samples to samples for a
+ * given sampling frequency.
+ *
+ * @param fs                Sampling frequency
+ * @param time              New delay time in specified units
+ * @param units             Time units (SAMPLES, MILLISECONDS, SECONDS)
+ * @return uint32_t         Time in samples
+ */
+static inline uint32_t time_to_samples(float fs, float time, time_units_t units);

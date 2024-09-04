@@ -308,3 +308,40 @@ def frame_signal(signal, buffer_len, step_size):
         output.append(np.copy(signal[:, n * step_size : n * step_size + buffer_len]))
 
     return output
+
+
+def time_to_samples(fs, time: float, units: str) -> int:
+    """Convert a time in seconds/milliseconds/samples to samples for a
+    given sampling frequency.
+
+    Parameters
+    ----------
+    fs : float
+        sampling frequency
+    time : float
+        desired time in units
+    units : {"samples", "ms", "s"}
+        desired units of time
+    
+    Returns
+    -------
+    Time converted from ``units`` to samples at fs.
+
+    Raises
+    ------
+    ValueError
+        If time is negative or invalid time units are passed.
+
+    """
+    if time < 0:
+        raise ValueError("Delay must be positive")
+
+    if units == "ms":
+        time = int(time * fs / 1000)
+    elif units == "s":
+        time = int(time * fs)
+    elif units == "samples":
+        time = int(time)
+    else:
+        raise ValueError("Units must be 'samples', 'ms' or 's'")
+    return time
