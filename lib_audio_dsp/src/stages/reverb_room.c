@@ -18,6 +18,7 @@ void reverb_room_init(module_instance_t* instance,
     xassert(n_inputs == n_outputs && "Reverb should have the same number of inputs and outputs");
     reverb_room_state_t *state = instance->state;
     reverb_room_config_t *config = instance->control.config;
+    reverb_room_constants_t *constants = instance->constants;
 
     memset(state, 0, sizeof(reverb_room_state_t));
 
@@ -25,8 +26,8 @@ void reverb_room_init(module_instance_t* instance,
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    float fs = config->sampling_freq;
-    float max_room_size = config->max_room_size;
+    float fs = constants->sampling_freq;
+    float max_room_size = constants->max_room_size;
 
     float room_size = config->room_size;
     int32_t feedback = config->feedback;

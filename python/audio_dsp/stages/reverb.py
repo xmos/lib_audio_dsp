@@ -36,8 +36,6 @@ class ReverbRoom(Stage):
         self.create_outputs(self.n_in)
 
         self.dsp_block = rvrb.reverb_room(self.fs, self.n_in, max_room_size=max_room_size)
-        self["sampling_freq"] = self.fs
-        self["max_room_size"] = float(max_room_size)
         self.set_control_field_cb("room_size", lambda: self.dsp_block.room_size)
         self.set_control_field_cb("feedback", lambda: self.dsp_block.combs[0].feedback_int)
         self.set_control_field_cb("damping", lambda: self.dsp_block.combs[0].damp1_int)
@@ -45,7 +43,13 @@ class ReverbRoom(Stage):
         self.set_control_field_cb("pregain", lambda: self.dsp_block.pregain_int)
         self.set_control_field_cb("dry_gain", lambda: self.dsp_block.dry_int)
 
-        self.stage_memory_parameters = (self["sampling_freq"], self["max_room_size"])
+        self.set_constant("sampling_freq", self.fs, "int32_t")
+        self.set_constant("max_room_size", float(max_room_size), "float")
+
+        self.stage_memory_parameters = (
+            self.constants["sampling_freq"],
+            self.constants["max_room_size"],
+        )
 
     def set_wet_gain(self, gain_dB):
         """

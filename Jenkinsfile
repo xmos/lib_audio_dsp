@@ -15,7 +15,7 @@ def buildApps(appList) {
 def versionsPairs = [
     "python/pyproject.toml": /version[\s='\"]*([\d.]+)/,
     "settings.yml": /version[\s:'\"]*([\d.]+)/,
-    "CHANGELOG.rst": /([\d.]+)/,
+    "CHANGELOG.rst": /(\d+\.\d+\.\d+)/,
     "**/lib_build_info.cmake": /set\(LIB_VERSION \"?([\d.]+)/,
 ]
 
