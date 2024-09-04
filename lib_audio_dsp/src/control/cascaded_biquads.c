@@ -9,6 +9,9 @@
 
 #define Q_factor 30
 
+static const float pi =    (float)M_PI;
+
+
 static inline void _get_pa(complex_float_t * pa, unsigned N) {
   unsigned n_filts = N / 2;
   for (unsigned k = 0; k < n_filts; k++) {

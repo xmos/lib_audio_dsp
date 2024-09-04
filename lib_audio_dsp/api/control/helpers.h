@@ -9,10 +9,6 @@
 #include <dsp/_helpers/generic_utils.h> // for Q_alpha
 #include <dsp/defines.h>
 
-static const float pi =    (float)M_PI;
-static const float log_2 = 0.69314718055f;
-static const float db_2 = 6.02059991328f;  // 20*log10(2)
-
 
 /**
  * @brief Convert a float value to a fixed point int32 number in
