@@ -78,7 +78,7 @@ class allpass_fv(dspg.dsp_block):
             self.delay = delay
         else:
             self.delay = self._max_delay
-            Warning("Delay cannot be greater than max delay, setting to max delay")
+            warnings.warn("Delay cannot be greater than max delay, setting to max delay", UserWarning)
 
     def reset_state(self):
         """Reset all the delay line values to zero."""
@@ -173,7 +173,7 @@ class comb_fv(dspg.dsp_block):
             self.delay = delay
         else:
             self.delay = self._max_delay
-            Warning("Delay cannot be greater than max delay, setting to max delay")
+            warnings.warn("Delay cannot be greater than max delay, setting to max delay", UserWarning)
 
     def set_feedback(self, feedback):
         """Set the feedback of the comb filter, which controls the

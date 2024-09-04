@@ -831,8 +831,8 @@ class delay(dspg.dsp_block):
             self._delay = value
         else:
             self._delay = self._max_delay
-            Warning("Delay cannot be greater than max delay, setting to max delay")
 
+            warnings.warn("Delay cannot be greater than max delay, setting to max delay", UserWarning)
     def reset_state(self) -> None:
         """Reset all the delay line values to zero."""
         self.buffer = np.zeros((self.n_chans, self._max_delay))
