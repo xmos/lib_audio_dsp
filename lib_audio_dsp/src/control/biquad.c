@@ -52,14 +52,14 @@ void adsp_design_biquad_lowpass
   const float fs,
   const float filter_Q
 ) {
-  // float fc_sat = fc;
+  float fc_sat = fc;
   // saturate if > fs/2
-  // if (fc_sat >= fs / 2.0f){
-  //   fc_sat = fs / 2.0f;
-  // }
+  if (fc_sat >= fs / 2.0f){
+    fc_sat = fs / 2.0f;
+  }
   
   // Compute common factors
-  float K = tanf(pi * fc/fs);
+  float K = tanf(pi * fc_sat/fs);
   float KK = K * K;
   float KQ = K / filter_Q;
   float norm = 1.0f / (1.0f + KQ + KK);
