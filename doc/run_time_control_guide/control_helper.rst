@@ -28,3 +28,8 @@ DRC helpers
 
 .. doxygenfunction:: peak_expander_slope_from_ratio
 
+Reverb helpers
+==============
+
+.. doxygenfile:: control/reverb.h
+

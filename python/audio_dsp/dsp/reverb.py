@@ -11,6 +11,8 @@ from copy import deepcopy
 
 Q_VERB = 31
 
+# biggest number that is less than 1
+_LESS_THAN_1 = ((2**Q_VERB)-1)/(2**Q_VERB)
 
 def apply_gain_xcore(sample, gain):
     """Apply the gain to a sample using fixed-point math. Assumes that gain is in Q_VERB format."""
@@ -400,7 +402,9 @@ class reverb_room(dspg.dsp_block):
     @pregain.setter
     def pregain(self, x):
         if not (0 <= x < 1):
-            raise ValueError("Pre gain must be less than 1 and positive")
+            bad_x = x
+            x = np.clip(x, 0, _LESS_THAN_1)
+            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
 
         self._pregain = x
         self.pregain_int = utils.int32(x * 2**Q_VERB)
@@ -427,7 +431,8 @@ class reverb_room(dspg.dsp_block):
     @wet_db.setter
     def wet_db(self, x):
         if x > 0:
-            raise ValueError("Wet gain must be less than 0 dB")
+            warnings.warn(f"Wet gain {x} saturates to 0 dB", UserWarning)
+            x = 0
 
         self._wet_db = x
         self._wet = utils.db2gain(x)
@@ -464,7 +469,8 @@ class reverb_room(dspg.dsp_block):
     @dry_db.setter
     def dry_db(self, x):
         if x > 0:
-            raise ValueError("Dry gain must be less than 0 dB")
+            warnings.warn(f"Dry gain {x} saturates to 0 dB", UserWarning)
+            x = 0
 
         self._dry_db = x
         self._dry = utils.db2gain(x)
@@ -502,7 +508,9 @@ class reverb_room(dspg.dsp_block):
     @decay.setter
     def decay(self, x):
         if not (0 <= x <= 1):
-            raise ValueError("Decay must be between 0 and 1")
+            bad_x = x
+            x = np.clip(x, 0, _LESS_THAN_1)
+            warnings.warn(f"Decay {bad_x} saturates to {x}", UserWarning)
         self.feedback = x * 0.28 + 0.7
 
     @property
@@ -539,7 +547,9 @@ class reverb_room(dspg.dsp_block):
     @damping.setter
     def damping(self, x):
         if not (0 <= x <= 1):
-            raise ValueError("Damping must be between 0 and 1")
+            bad_x = x
+            x = np.clip(x, 0, 1)
+            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
         for cb in self.combs:
             cb.set_damping(x)
         self.damping_int = self.combs[0].damp1_int
