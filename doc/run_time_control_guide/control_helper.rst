@@ -18,29 +18,13 @@ Biquad helpers
 DRC helpers
 ===========
 
-
-.. Calculate alpha
-.. ---------------
-
 .. doxygenfunction:: calc_alpha
-
-.. Calculate peak threshold
-.. ------------------------
 
 .. doxygenfunction:: calculate_peak_threshold
 
-.. Calculate RMS threshold
-.. -----------------------
-
 .. doxygenfunction:: calculate_rms_threshold
 
-.. RMS compressor slope from ratio
-.. -------------------------------
-
 .. doxygenfunction:: rms_compressor_slope_from_ratio
-
-.. Peak expander slope from ratio
-.. ------------------------------
 
 .. doxygenfunction:: peak_expander_slope_from_ratio
 

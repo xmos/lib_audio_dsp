@@ -16,6 +16,24 @@ static const float pi =    (float)M_PI;
 static const float log_2 = 0.69314718055f;
 static const float db_2 = 6.02059991328f;  // 20*log10(2)
 
+static inline float _check_fc(float fc, float fs) {
+  float fc_sat = fc;
+  // saturate if > fs/2
+  if (fc_sat >= fs / 2.0f){
+    fc_sat = fs / 2.0f;
+  }
+  return fc_sat;
+}
+
+static inline float _check_gain(float gain, float max_gain) {
+  float gain_sat = gain;
+  // saturate if > fs/2
+  if (gain_sat >= max_gain){
+    gain_sat = max_gain;
+  }
+  return gain_sat;
+}
+
 void adsp_design_biquad_bypass(q2_30 coeffs[5]) {
   coeffs[0] = 1 << Q_factor;
   coeffs[1] = 0;
@@ -87,12 +105,8 @@ void adsp_design_biquad_highpass
   const float fs,
   const float filter_Q
 ) {
-  float fc_sat = fc;
-  // saturate if > fs/2
-  if (fc_sat >= fs / 2.0f){
-    fc_sat = fs / 2.0f;
-  }
-  
+  float fc_sat = _check_fc(fc, fs);
+
   // Compute common factors
   float K = tanf(pi * fc_sat/fs);
   float KK = K * K;
@@ -122,11 +136,7 @@ void adsp_design_biquad_bandpass
   const float fs,
   const float bandwidth
 ) {
-  float fc_sat = fc;
-  // saturate if > fs/2
-  if (fc_sat >= fs / 2.0f){
-    fc_sat = fs / 2.0f;
-  }
+  float fc_sat = _check_fc(fc, fs);
   
   // Compute common factors
   float w0    = 2.0f * pi * fc_sat / fs;
@@ -158,11 +168,7 @@ void adsp_design_biquad_bandstop
   const float fs,
   const float bandwidth
 ) {
-  float fc_sat = fc;
-  // saturate if > fs/2
-  if (fc_sat >= fs / 2.0f){
-    fc_sat = fs / 2.0f;
-  }
+  float fc_sat = _check_fc(fc, fs);
 
   // Compute common factors
   float w0    = 2.0f * pi * fc_sat / fs;
@@ -194,11 +200,7 @@ void adsp_design_biquad_notch
   const float fs,
   const float filter_Q
 ) {
-  float fc_sat = fc;
-  // saturate if > fs/2
-  if (fc_sat >= fs / 2.0f){
-    fc_sat = fs / 2.0f;
-  }
+  float fc_sat = _check_fc(fc, fs);
   
   // Compute common factors
   float K = tanf(pi * fc_sat/fs);
@@ -229,11 +231,7 @@ void adsp_design_biquad_allpass
   const float fs,
   const float filter_Q
 ) {
-  float fc_sat = fc;
-  // saturate if > fs/2
-  if (fc_sat >= fs / 2.0f){
-    fc_sat = fs / 2.0f;
-  }
+  float fc_sat = _check_fc(fc, fs);
 
   // Compute common factors
   float K = tanf(pi * fc_sat/fs);
@@ -265,16 +263,8 @@ left_shift_t adsp_design_biquad_peaking
   const float filter_Q,
   const float gain_db
 ) {
-  float gain_db_sat = gain_db;
-  // saturate to 12 dB
-  if (gain_db_sat > ((float)(BOOST_BSHIFT + 1)*db_2)){
-    gain_db_sat = ((float)(BOOST_BSHIFT + 1)*db_2);
-  }
-  float fc_sat = fc;
-  // saturate if > fs/2
-  if (fc_sat >= fs / 2.0f){
-    fc_sat = fs / 2.0f;
-  }
+  float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT + 1)*db_2);
+  float fc_sat = _check_fc(fc, fs);
 
   // Compute common factors
   float A  = powf(10.0f, (gain_db_sat * (1.0f / 40.0f)));
@@ -309,16 +299,8 @@ left_shift_t adsp_design_biquad_const_q
   const float filter_Q,
   const float gain_db
 ) {
-  float gain_db_sat = gain_db;
-  // saturate to 12 dB
-  if (gain_db_sat > ((float)(BOOST_BSHIFT + 1)*db_2)){
-    gain_db_sat = ((float)(BOOST_BSHIFT + 1)*db_2);
-  }
-  float fc_sat = fc;
-  // saturate if > fs/2
-  if (fc_sat >= fs / 2.0f){
-    fc_sat = fs / 2.0f;
-  }
+  float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT + 1)*db_2);
+  float fc_sat = _check_fc(fc, fs);
 
   // Compute common factors
   float V = powf(10.0f, (gain_db_sat * (1.0f/ 20.0f)));
@@ -365,16 +347,8 @@ left_shift_t adsp_design_biquad_lowshelf
   const float filter_Q,
   const float gain_db
 ) {
-  float gain_db_sat = gain_db;
-  // saturate to 12 dB
-  if (gain_db_sat > ((float)(BOOST_BSHIFT)*db_2)){
-    gain_db_sat = ((float)(BOOST_BSHIFT)*db_2);
-  }
-  float fc_sat = fc;
-  // saturate if > fs/2
-  if (fc_sat >= fs / 2.0f){
-    fc_sat = fs / 2.0f;
-  }
+  float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT)*db_2);
+  float fc_sat = _check_fc(fc, fs);
 
   // Compute common factors
   float A  = powf(10.0f, (gain_db_sat * (1.0f / 40.0f)));
@@ -414,16 +388,8 @@ left_shift_t adsp_design_biquad_highshelf
   const float filter_Q,
   const float gain_db
 ) {
-  float gain_db_sat = gain_db;
-  // saturate to 12 dB
-  if (gain_db_sat > ((float)(BOOST_BSHIFT)*db_2)){
-    gain_db_sat = ((float)(BOOST_BSHIFT)*db_2);
-  }
-  float fc_sat = fc;
-  // saturate if > fs/2
-  if (fc_sat >= fs / 2.0f){
-    fc_sat = fs / 2.0f;
-  }
+  float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT)*db_2);
+  float fc_sat = _check_fc(fc, fs);
 
   // Compute common factors
   float A  = powf(10.0f, (gain_db_sat * (1.0f / 40.0f)));
@@ -463,15 +429,9 @@ void adsp_design_biquad_linkwitz(
   const float fp,
   const float qp
 ) {
-  float f0_sat = f0;
-  float fp_sat = fp;
-  // saturate if > fs/2
-  if (f0_sat >= fs / 2.0f){
-    f0_sat = fs / 2.0f;
-  }
-  if (fp_sat >= fs / 2.0f){
-    fp_sat = fs / 2.0f;
-  }
+  float f0_sat = _check_fc(f0, fs);
+  float fp_sat = _check_fc(fp, fs);
+
   // Compute common factors
   float fc = (f0_sat + fp_sat) / 2.0f;
 
