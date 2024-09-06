@@ -9,31 +9,22 @@ from typical tuning units (e.g. decibels) to the correct fixed point
 format, the helper functions below have been provided.
 
 
+Biquad helpers
+==============
+
+.. doxygenfile:: control/biquad.h
+
+
 DRC helpers
 ===========
 
-Calculate alpha
----------------
-
 .. doxygenfunction:: calc_alpha
-
-Calculate peak threshold
-------------------------
 
 .. doxygenfunction:: calculate_peak_threshold
 
-Calculate RMS threshold
------------------------
-
 .. doxygenfunction:: calculate_rms_threshold
 
-RMS compressor slope from ratio
--------------------------------
-
 .. doxygenfunction:: rms_compressor_slope_from_ratio
-
-Peak expander slope from ratio
-------------------------------
 
 .. doxygenfunction:: peak_expander_slope_from_ratio
 

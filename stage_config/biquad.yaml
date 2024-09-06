@@ -13,7 +13,8 @@ module:
         The normalised biquad filter coefficients, in the order `[b0, b1, b2, -a1, -a2]/a0`. The
         coefficients should be in Q1.30 format. If the maximum b coefficient magnitude is greater
         than 2.0, the b coefficients should be right shifted to fit in Q1.30 format, and the shift
-        value passed as left_shift to correct the gain after filtering.
+        value passed as left_shift to correct the gain after filtering. Biquad coefficients can be
+        generated using the helper functions in ``control/biquad.h``.
     reserved:
       type: int32_t
       size: 3
