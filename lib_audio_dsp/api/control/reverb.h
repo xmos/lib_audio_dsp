@@ -13,7 +13,7 @@
 /// @param x A floating point number
 /// @return postive Q_VERB int32_t value
 static inline int32_t adsp_reverb_float2int(float x) {
-    return _float2fixed_saturate(x < 0 ? 0 : x, Q_RVR);
+    return _float2fixed_saturate(x < 0.0f ? 0.0f : x, Q_RVR);
 }
 
 /// Convert a floating point gain in decibels into a linear Q_VERB value
@@ -43,11 +43,11 @@ static inline int32_t adsp_reverb_calculate_damping(float damping) {
 /// @param decay The desired decay value.
 /// @return Calculated feedback as a Q_VERB fixed point integer.
 static inline int32_t adsp_reverb_calculate_feedback(float decay) {
-    if(decay < 0) {
-        decay = 0;
+    if(decay < 0.0f) {
+        decay = 0.0f;
     }
-    if(decay > 1) {
-        decay = 1;
+    if(decay > 1.0f) {
+        decay = 1.0f;
     }
     float feedback = (0.28f * decay) + 0.7f;
     return adsp_reverb_float2int(feedback);
