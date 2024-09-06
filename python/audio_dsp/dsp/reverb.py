@@ -12,7 +12,8 @@ from copy import deepcopy
 Q_VERB = 31
 
 # biggest number that is less than 1
-_LESS_THAN_1 = ((2**Q_VERB)-1)/(2**Q_VERB)
+_LESS_THAN_1 = ((2**Q_VERB) - 1) / (2**Q_VERB)
+
 
 def apply_gain_xcore(sample, gain):
     """Apply the gain to a sample using fixed-point math. Assumes that gain is in Q_VERB format."""
