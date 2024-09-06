@@ -772,8 +772,6 @@ class delay(dspg.dsp_block):
         self._delay_units = units
         if max_delay <= 0:
             raise ValueError("Max delay must be greater than zero")
-        # if starting_delay > max_delay:
-        #     raise ValueError("Starting delay cannot be greater than max delay")
 
         # max delay cannot be changed, or you'll overflow the buffer
         max_delay = utils.time_to_samples(self.fs, max_delay, units)
@@ -853,7 +851,8 @@ class delay(dspg.dsp_block):
             The units of the delay, can be 'samples', 'ms' or 's'.
             Default is 'samples'.
         """
-        self.delay_units = units
+        # update private units first to avoid recalculating old delay time
+        self._delay_units = units
         self.delay_time = delay
         return
 
