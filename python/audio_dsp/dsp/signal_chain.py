@@ -18,9 +18,8 @@ def db_to_qgain(db_in):
     target gain in decibels.
     If the gain is higher than 24 dB, it is saturated to that value.
     """
-    if db_in > 24:
-        warnings.warn("Maximum gain is +24 dB, saturating to that value.")
-        db_in = 24
+    db_in = _check_gain(db_in)
+
     gain = utils.db2gain(db_in)
     gain_int = utils.float_to_int32(gain, Q_GAIN)
 
@@ -29,7 +28,7 @@ def db_to_qgain(db_in):
 
 def _check_gain(value):
     if value > 24:
-        warnings.warn("Maximum gain is +24 dB, saturating to that value.")
+        warnings.warn("Maximum gain is +24 dB, saturating to that value.", UserWarning)
         value = 24
     return value
 
@@ -47,7 +46,6 @@ class mixer(dspg.dsp_block):
     Attributes
     ----------
     gain_db : float
-        Gain in decibels.
     gain : float
         Gain as a linear value.
     gain_int : int
@@ -348,6 +346,10 @@ class fixed_gain(dspg.dsp_block):
     ----------
     gain_db : float
         The gain in decibels. Maximum fixed gain is +24 dB.
+    
+    Attributes
+    ----------
+    gain_db : float
     gain : float
         Gain as a linear value.
     gain_int : int
@@ -491,7 +493,6 @@ class volume_control(dspg.dsp_block):
     Attributes
     ----------
     target_gain_db : float
-        The target gain in decibels.
     target_gain : float
         The target gain as a linear value.
     target_gain_int : int
@@ -542,7 +543,7 @@ class volume_control(dspg.dsp_block):
 
     @property
     def target_gain_db(self):
-        """The mixer gain in decibels."""
+        """The target gain in decibels."""
         return self._target_gain_db
 
     @target_gain_db.setter

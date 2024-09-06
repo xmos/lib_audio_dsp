@@ -6,6 +6,7 @@ from enum import IntEnum
 
 import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.drc.drc_utils as drcu
+import audio_dsp.dsp.signal_chain as sc
 from audio_dsp.dsp.generic import Q_SIG, HEADROOM_DB
 
 bin_dir = Path(__file__).parent / "bin"
@@ -131,6 +132,24 @@ def test_calc_alpha():
     np.testing.assert_allclose(out_c, alphas_python, rtol=2**-24, atol=0)
 
 
+def test_db_gain():
+
+    test_dir = bin_dir / "db_gain"
+    test_dir.mkdir(exist_ok = True, parents = True)
+
+    gain_dbs = [-2000, 0, 25]
+    flt_to_bin_file(gain_dbs, test_dir)
+
+    out_c = get_c_wav(test_dir, "db_gain", dtype=np.int32)
+
+    gain_python = np.zeros_like(gain_dbs, dtype=np.int32)
+
+    for n in range(len(gain_dbs)):
+        gain, gain_python[n] = sc.db_to_qgain(gain_dbs[n])
+
+    np.testing.assert_allclose(out_c, gain_python, rtol=2**-23, atol=0)
+
+
 class time_units_type(IntEnum):
     samples = 0
     ms = 1
@@ -163,4 +182,4 @@ if __name__ == "__main__":
     bin_dir.mkdir(exist_ok=True, parents=True)
     gen_dir.mkdir(exist_ok=True, parents=True)
 
-    test_time_samples()
+    test_db_gain()
