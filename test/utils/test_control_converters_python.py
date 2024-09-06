@@ -1,5 +1,6 @@
 import pytest
 
+import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.drc.drc_utils as drcu
 from audio_dsp.dsp.generic import Q_SIG, HEADROOM_DB
 
@@ -68,6 +69,22 @@ def test_calc_alpha(time, warning):
             alpha, alpha_int = drcu.alpha_from_time(time, 48000)
     else:
         alpha, alpha_int = drcu.alpha_from_time(time, 48000)
+
+
+@pytest.mark.parametrize("time, units, warning", [[10, "samples", None],
+                                                  [128, "samples", None],
+                                                  [1.7, "ms", None],
+                                                  [0.94, "s", None],
+                                                  [2, "s", None],
+                                                  [-2, "s", UserWarning],
+                                                  [2, "seconds", UserWarning]
+                                                  ])
+def test_time_to_samples(time, units, warning):
+    if warning:
+        with pytest.warns(warning):
+            utils.time_to_samples(48000, time, units)
+    else:
+        utils.time_to_samples(48000, time, units)
 
 
 if __name__ == "__main__":

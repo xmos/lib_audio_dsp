@@ -37,8 +37,8 @@ volume_control_t adsp_volume_control_init(
   return vol_ctl;
 }
 
-static inline uint32_t time_to_samples(float fs, float time, time_units_t units) {
-  xassert(time >= 0 && "Time has to be positive");
+uint32_t time_to_samples(float fs, float time, time_units_t units) {
+  time = MAX(time, 0); // Time has to be positive
   switch (units) {
     case MILLISECONDS:
       return (uint32_t)(time * fs / 1000);
@@ -47,7 +47,9 @@ static inline uint32_t time_to_samples(float fs, float time, time_units_t units)
     case SAMPLES:
       return (uint32_t)time;
     default:
-      xassert(0 && "Invalid time units");
+      //Invalid time units, assume samples
+      return (uint32_t)time;
+
   }
 }
 

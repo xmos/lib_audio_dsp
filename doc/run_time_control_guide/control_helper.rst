@@ -33,3 +33,8 @@ Reverb helpers
 
 .. doxygenfile:: control/reverb.h
 
+
+Signal chain helpers
+====================
+
+.. doxygenfunction:: time_to_samples

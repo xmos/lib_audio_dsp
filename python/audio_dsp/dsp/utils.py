@@ -322,7 +322,7 @@ def time_to_samples(fs, time: float, units: str) -> int:
         desired time in units
     units : {"samples", "ms", "s"}
         desired units of time
-    
+
     Returns
     -------
     Time converted from ``units`` to samples at fs.
@@ -334,7 +334,13 @@ def time_to_samples(fs, time: float, units: str) -> int:
 
     """
     if time < 0:
-        raise ValueError("Delay must be positive")
+        warnings.warn("Delay must be positive, setting delay to 0", UserWarning)
+        time = 0
+
+    units = units.lower()
+    if units not in ["samples", "ms", "s"]:
+        warnings.warn("Time units not recognised, assuming samples")
+        units = "samples"
 
     if units == "ms":
         time = int(time * fs / 1000)

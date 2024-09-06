@@ -91,4 +91,4 @@ void adsp_set_delay(
  * @param units             Time units (SAMPLES, MILLISECONDS, SECONDS)
  * @return uint32_t         Time in samples
  */
-static inline uint32_t time_to_samples(float fs, float time, time_units_t units);
+uint32_t time_to_samples(float fs, float time, time_units_t units);

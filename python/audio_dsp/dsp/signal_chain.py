@@ -792,7 +792,7 @@ class delay(dspg.dsp_block):
     def delay_time(self):
         """The delay time in delay_units."""
         return self._delay_time
-    
+
     @delay_time.setter
     def delay_time(self, value):
         self._delay_time = value
@@ -802,7 +802,7 @@ class delay(dspg.dsp_block):
     def delay_units(self):
         """The units for delay_time. This must be on of {"samples", "ms", "s"}."""
         return self._delay_units
-    
+
     @delay_units.setter
     def delay_units(self, value):
         if value.lower() not in ["samples", "ms", "s"]:
@@ -813,12 +813,12 @@ class delay(dspg.dsp_block):
         if self._delay_units == "samples":
             new_coeff = 1
         elif self._delay_units == "ms":
-            new_coeff = self.fs/1000
+            new_coeff = self.fs / 1000
         elif self._delay_units == "s":
             new_coeff = self.fs
 
         # keep the same delay in samples, but update delay_time for the new units
-        self._delay_time = (self.delay * new_coeff)
+        self._delay_time = self.delay * new_coeff
 
     @property
     def delay(self):
@@ -832,7 +832,10 @@ class delay(dspg.dsp_block):
         else:
             self._delay = self._max_delay
 
-            warnings.warn("Delay cannot be greater than max delay, setting to max delay", UserWarning)
+            warnings.warn(
+                "Delay cannot be greater than max delay, setting to max delay", UserWarning
+            )
+
     def reset_state(self) -> None:
         """Reset all the delay line values to zero."""
         self.buffer = np.zeros((self.n_chans, self._max_delay))

@@ -98,3 +98,20 @@ set(APP_C_SRCS src/calc_alpha.c)
 set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
 
 XMOS_REGISTER_APP()
+
+project(time_samples)
+
+set(APP_COMPILER_FLAGS
+    -O3
+    -g
+    -report
+    -Wall
+    -Werror
+    -fxscope)
+
+set(APP_DEPENDENT_MODULES lib_audio_dsp)
+set(APP_C_SRCS src/time_samples.c)
+
+set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
+
+XMOS_REGISTER_APP()
