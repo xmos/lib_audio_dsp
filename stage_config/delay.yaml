@@ -5,5 +5,7 @@ module:
       help: The maximum delay value in samples. This is only configurable at compile time.
     delay:
       type: uint32_t
-      help: The current delay value in samples.
+      help: >
+            The current delay value in samples. To convert a value in other units of time to
+            samples, use ``time_to_samples`` in ``control/signal_chain.h``
 includes: []

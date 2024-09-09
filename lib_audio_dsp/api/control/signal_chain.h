@@ -58,7 +58,8 @@ volume_control_t adsp_volume_control_init(
  * @param fs                Sampling frequency
  * @param max_delay         Maximum delay in specified units
  * @param starting_delay    Initial delay in specified units
- * @param units             Time units (SAMPLES, MILLISECONDS, SECONDS)
+ * @param units             Time units (SAMPLES, MILLISECONDS, SECONDS). If an invalid
+ *                          unit is passed, SAMPLES is used.
  * @param delay_heap        Pointer to the allocated delay memory
  * @return delay_t          Delay state object
  */
@@ -75,9 +76,22 @@ delay_t adsp_delay_init(
  *
  * @param delay             Delay object
  * @param delay_time        New delay time in specified units
- * @param units             Time units (SAMPLES, MILLISECONDS, SECONDS)
+ * @param units             Time units (SAMPLES, MILLISECONDS, SECONDS). If an invalid
+ *                          unit is passed, SAMPLES is used.
  */
 void adsp_set_delay(
   delay_t * delay,
   float delay_time,
   time_units_t units);
+
+/**
+ * @brief Convert a time in seconds/milliseconds/samples to samples for a
+ * given sampling frequency.
+ *
+ * @param fs                Sampling frequency
+ * @param time              New delay time in specified units
+ * @param units             Time units (SAMPLES, MILLISECONDS, SECONDS) . If an invalid
+ *                          unit is passed, SAMPLES is used.
+ * @return uint32_t         Time in samples
+ */
+uint32_t time_to_samples(float fs, float time, time_units_t units);

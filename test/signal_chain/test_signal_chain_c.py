@@ -178,8 +178,8 @@ def test_delay_c(in_signal, delay_spec):
   test_dir.mkdir(exist_ok = True, parents = True)
 
   delay_info = np.empty(0, dtype=np.int32)
-  delay_info = np.append(delay_info, filter.max_delay)
-  delay_info = np.append(delay_info, filter.delay)
+  delay_info = np.append(delay_info, filter._max_delay)
+  delay_info = np.append(delay_info, filter._delay)
   delay_info = np.array(delay_info, dtype=np.int32)
   print(delay_info)
   delay_info.tofile(test_dir / "delay.bin")

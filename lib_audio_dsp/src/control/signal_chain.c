@@ -37,8 +37,8 @@ volume_control_t adsp_volume_control_init(
   return vol_ctl;
 }
 
-static inline uint32_t _time_to_samples(float fs, float time, time_units_t units) {
-  xassert(time >= 0 && "Time has to be positive");
+uint32_t time_to_samples(float fs, float time, time_units_t units) {
+  time = MAX(time, 0); // Time has to be positive
   switch (units) {
     case MILLISECONDS:
       return (uint32_t)(time * fs / 1000);
@@ -47,7 +47,8 @@ static inline uint32_t _time_to_samples(float fs, float time, time_units_t units
     case SAMPLES:
       return (uint32_t)time;
     default:
-      xassert(0 && "Invalid time units");
+      xassert(0);  // Invalid time units
+
   }
 }
 
@@ -61,8 +62,8 @@ delay_t adsp_delay_init(
   delay_t delay;
   delay.fs = fs;
   xassert(delay.max_delay > 0 && "Max delay must be greater than 0");
-  delay.max_delay = _time_to_samples(fs, max_delay, units);
-  delay.delay = _time_to_samples(fs, starting_delay, units);
+  delay.max_delay = time_to_samples(fs, max_delay, units);
+  delay.delay = time_to_samples(fs, starting_delay, units);
   xassert(delay.delay <= delay.max_delay && "Starting delay must be less or equal to the max delay");
   xassert(delay_heap != NULL && "Delay heap must be allocated");
   delay.buffer_idx = 0;
@@ -75,6 +76,6 @@ void adsp_set_delay(
   float delay_time,
   time_units_t units
 ) {
-  uint32_t new_delay = _time_to_samples(delay->fs, delay_time, units);
+  uint32_t new_delay = time_to_samples(delay->fs, delay_time, units);
   delay->delay = (new_delay <= delay->max_delay) ? new_delay : delay->max_delay;
 }

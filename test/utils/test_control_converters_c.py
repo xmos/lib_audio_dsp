@@ -1,10 +1,10 @@
-import pytest
 import numpy as np
 from pathlib import Path
-import soundfile as sf
-import shutil
 import subprocess
+import itertools
+from enum import IntEnum
 
+import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.drc.drc_utils as drcu
 from audio_dsp.dsp.generic import Q_SIG, HEADROOM_DB
 
@@ -131,8 +131,36 @@ def test_calc_alpha():
     np.testing.assert_allclose(out_c, alphas_python, rtol=2**-24, atol=0)
 
 
+class time_units_type(IntEnum):
+    samples = 0
+    ms = 1
+    s = 2
+
+
+def test_time_samples():
+
+    test_dir = bin_dir / "time_samples"
+    test_dir.mkdir(exist_ok = True, parents = True)
+
+    times = [10, 128, 1.7, 0.94, 2, -2]
+    units = [time_units_type["samples"], time_units_type["s"], time_units_type["ms"]]
+
+    input_params = list(itertools.product(times, units))
+
+    flt_to_bin_file(input_params, test_dir)
+
+    out_c = get_c_wav(test_dir, "time_samples", dtype=np.int32)
+
+    delay_py = np.zeros(len(input_params), dtype=np.int32)
+    for n in range(len(input_params)):
+        delay_py[n] = utils.time_to_samples(48000, input_params[n][0], input_params[n][1].name)
+
+    # not exact due to float32 implementation differences
+    np.testing.assert_allclose(out_c, delay_py, rtol=2**-24, atol=0)
+
+
 if __name__ == "__main__":
     bin_dir.mkdir(exist_ok=True, parents=True)
     gen_dir.mkdir(exist_ok=True, parents=True)
 
-    test_calc_alpha()
+    test_time_samples()
