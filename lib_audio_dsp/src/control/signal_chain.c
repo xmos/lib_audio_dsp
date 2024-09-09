@@ -30,6 +30,9 @@ static inline int32_t _positive_float2fixed_qgain(float x)
 
 
 int32_t adsp_dB_to_gain(float dB_gain) {
+  // special case for -inf dB
+  if (dB_gain == -INFINITY){return 0;}
+  
   dB_gain = MIN(dB_gain, 24.0f);
   float gain_fl = powf(10.0f, (dB_gain / 20.0f));
   

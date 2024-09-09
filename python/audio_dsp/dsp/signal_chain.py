@@ -20,8 +20,12 @@ def db_to_qgain(db_in):
     """
     db_in = _check_gain(db_in)
 
-    gain = utils.db2gain(db_in)
-    gain_int = utils.float_to_int32(gain, Q_GAIN)
+    if db_in == -np.inf:
+        gain = 0
+        gain_int = utils.int32(0)
+    else:
+        gain = utils.db2gain(db_in)
+        gain_int = utils.float_to_int32(gain, Q_GAIN)
 
     return gain, gain_int
 
@@ -641,10 +645,7 @@ class volume_control(dspg.dsp_block):
         if not self.mute_state:
             self.mute_state = True
             self.saved_gain_db = self.target_gain_db
-            # avoid messy dB conversion for -inf
-            self._target_gain_db = -np.inf
-            self.target_gain = 0
-            self.target_gain_int = utils.int32(0)
+            self.target_gain_db = -np.inf
 
     def unmute(self) -> None:
         """Unmute the volume control."""

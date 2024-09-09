@@ -18,11 +18,12 @@ typedef enum{
 } time_units_t;
 
 /**
- * @brief Convert dB gain to linear gain
+ * @brief Convert dB gain to linear gain.
  *
  * @param dB_gain           Gain in dB
  * @return int32_t          Linear gain in Q_GAIN format
  * @note With the current Q_GAIN format, the maximum gain is +24 dB, dB_gain will be saturated to this value
+ * @note Passing -INFINITY to this function will give a linear gain of 0.
  */
 int32_t adsp_dB_to_gain(float dB_gain);
 

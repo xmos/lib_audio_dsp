@@ -137,7 +137,7 @@ def test_db_gain():
     test_dir = bin_dir / "db_gain"
     test_dir.mkdir(exist_ok = True, parents = True)
 
-    gain_dbs = [-2000, 0, 25]
+    gain_dbs = [-np.inf, -2000, 0, 25]
     flt_to_bin_file(gain_dbs, test_dir)
 
     out_c = get_c_wav(test_dir, "db_gain", dtype=np.int32)
