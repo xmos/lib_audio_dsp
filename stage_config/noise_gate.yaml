@@ -18,7 +18,7 @@ module:
         The current peak envelope of the signal in Q_SIG format. To read
         the ``int32_t`` control value, use the function
         ``qxx_to_db(envelope, Q_SIG)`` in ``control/helpers.h``
-      type: CMD_READ_ONLY
+      rw_type: CMD_READ_ONLY
     threshold:
       type: int32_t
       help: >
@@ -31,5 +31,5 @@ module:
         The current gain applied by the noise gate in Q0.31 format.
         To read the ``int32_t`` control value, use the function
         ``qxx_to_db(envelope, 31)`` in ``control/helpers.h``
-      type: CMD_READ_ONLY
+      rw_type: CMD_READ_ONLY
 includes: []

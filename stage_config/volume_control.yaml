@@ -11,7 +11,7 @@ module:
       help: >
         The current applied gain of the volume control in Q_GAIN format. 
         The volume control will slew the applied gain towards the target gain.
-      type: CMD_READ_ONLY
+      rw_type: CMD_READ_ONLY
     slew_shift:
       type: int32_t
       help: >

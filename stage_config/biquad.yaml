@@ -20,7 +20,7 @@ module:
       size: 3
       hidden: true
       help: Reserved memory to ensure the VPU receives 8 DWORD_ALIGNED coefficients.
-      type: CMD_READ_ONLY
+      rw_type: CMD_READ_ONLY
 
 includes:
   - "stdint.h"
