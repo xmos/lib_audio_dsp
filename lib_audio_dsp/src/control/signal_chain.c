@@ -47,8 +47,7 @@ uint32_t time_to_samples(float fs, float time, time_units_t units) {
     case SAMPLES:
       return (uint32_t)time;
     default:
-      //Invalid time units, assume samples
-      return (uint32_t)time;
+      xassert(0);  // Invalid time units
 
   }
 }

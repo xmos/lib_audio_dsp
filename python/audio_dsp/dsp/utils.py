@@ -326,7 +326,7 @@ def check_time_units(units: str) -> str:
     if units not in ["samples", "ms", "s"]:
         warnings.warn("Time units not recognised, assuming samples")
         units = "samples"
-    
+
     return units
 
 
@@ -358,7 +358,7 @@ def time_to_samples(fs, time: float, units: str) -> int:
         time = 0
 
     units = check_time_units(units)
-    
+
     if units == "ms":
         time = int(time * fs / 1000)
     elif units == "s":
