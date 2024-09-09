@@ -768,13 +768,13 @@ class delay(dspg.dsp_block):
         self, fs, n_chans, max_delay: float, starting_delay: float, units: str = "samples"
     ) -> None:
         super().__init__(fs, n_chans)
-
-        self._delay_units = units
+        
+        self._delay_units = check_time_units(units)
         if max_delay <= 0:
             raise ValueError("Max delay must be greater than zero")
 
         # max delay cannot be changed, or you'll overflow the buffer
-        max_delay = utils.time_to_samples(self.fs, max_delay, units)
+        max_delay = utils.time_to_samples(self.fs, max_delay, self.delay_units)
         self._max_delay = max_delay
 
         self.delay_time = starting_delay
@@ -803,10 +803,7 @@ class delay(dspg.dsp_block):
 
     @delay_units.setter
     def delay_units(self, value):
-        if value.lower() not in ["samples", "ms", "s"]:
-            raise ValueError("Delay unit not valid")
-
-        self._delay_units = value.lower()
+        self._delay_units = check_time_units(value)
 
         if self._delay_units == "samples":
             new_coeff = 1
@@ -852,7 +849,7 @@ class delay(dspg.dsp_block):
             Default is 'samples'.
         """
         # update private units first to avoid recalculating old delay time
-        self._delay_units = units
+        self._delay_units =  check_time_units(units)
         self.delay_time = delay
         return
 

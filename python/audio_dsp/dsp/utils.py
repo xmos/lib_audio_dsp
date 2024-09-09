@@ -310,6 +310,26 @@ def frame_signal(signal, buffer_len, step_size):
     return output
 
 
+def check_time_units(units: str) -> str:
+    """Check a time units in seconds/milliseconds/samples match the expected values.
+
+    Parameters
+    ----------
+    units : {"samples", "ms", "s"}
+        Desired units of time. If invalid units are given, samples are assumed
+
+    Returns
+    -------
+    Used ``units`` of time
+    """
+    units = units.lower()
+    if units not in ["samples", "ms", "s"]:
+        warnings.warn("Time units not recognised, assuming samples")
+        units = "samples"
+    
+    return units
+
+
 def time_to_samples(fs, time: float, units: str) -> int:
     """Convert a time in seconds/milliseconds/samples to samples for a
     given sampling frequency.
@@ -337,11 +357,8 @@ def time_to_samples(fs, time: float, units: str) -> int:
         warnings.warn("Delay must be positive, setting delay to 0", UserWarning)
         time = 0
 
-    units = units.lower()
-    if units not in ["samples", "ms", "s"]:
-        warnings.warn("Time units not recognised, assuming samples")
-        units = "samples"
-
+    units = check_time_units(units)
+    
     if units == "ms":
         time = int(time * fs / 1000)
     elif units == "s":
