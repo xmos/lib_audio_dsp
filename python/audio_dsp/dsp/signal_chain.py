@@ -5,6 +5,7 @@
 import numpy as np
 import warnings
 
+from audio_dsp import _deprecated
 from audio_dsp.dsp import generic as dspg
 from audio_dsp.dsp import utils
 
@@ -532,7 +533,7 @@ class volume_control(dspg.dsp_block):
 
         # set the initial target gains
         self.mute_state = False
-        self.set_gain(gain_db)
+        self.target_gain_db = gain_db
         if mute_state:
             self.mute()
 
@@ -542,8 +543,6 @@ class volume_control(dspg.dsp_block):
         self.gain_int = [self.target_gain_int] * self.n_chans
 
         self.slew_shift = slew_shift
-
-        self.gain_db = gain_db
 
     @property
     def target_gain_db(self):
@@ -623,6 +622,9 @@ class volume_control(dspg.dsp_block):
 
         return y_flt
 
+    @_deprecated(
+        "1.0.0", "2.0.0", "Replace `volume_control.set_gain(x)` with `volume_control.target_gain_db = x`"
+    )
     def set_gain(self, gain_db: float) -> None:
         """
         Set the gain of the volume control.
