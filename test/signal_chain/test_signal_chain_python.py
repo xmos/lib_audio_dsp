@@ -178,17 +178,17 @@ def test_mute(api):
             if api == "function":
                 filter.set_gain(start_gain)
             else:
-                filter.target_gain_db = start_gain
+                filter.user_gain_db = start_gain
         elif step_states[step] == "mute":
             if api == "function":
                 filter.mute()
             else:
-                filter.mute = True
+                filter.mute_state = True
         elif step_states[step] == "unmute":
             if api == "function":
                 filter.unmute()
             else:
-                filter.mute = False
+                filter.mute_state = False
 
         start = step*len(signal)//steps
         for n in range(len(signal)//steps):
@@ -331,6 +331,6 @@ def test_delay(fs, delay_spec, n_chans):
 
 
 if __name__ == "__main__":
-    test_combiners(["adder", 4], 48000)
-    # test_volume_change()
+    # test_combiners(["adder", 4], 48000)
+    test_mute("function")
     # test_gains(1, 48000, 1)
