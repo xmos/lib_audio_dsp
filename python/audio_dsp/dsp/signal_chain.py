@@ -569,6 +569,7 @@ class volume_control(dspg.dsp_block):
     def user_gain_db(self, value):
         value = _check_gain(value)
         self._user_gain_db = value
+        self.user_gain, self.user_gain_int = db_to_qgain(self.user_gain_db)
 
         if not self._mute_state:
             self._target_gain_db = self.user_gain_db
