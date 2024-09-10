@@ -32,7 +32,7 @@ static inline int32_t _positive_float2fixed_qgain(float x)
 int32_t adsp_dB_to_gain(float dB_gain) {
   // special case for -inf dB
   if (dB_gain == -INFINITY){return 0;}
-  
+
   dB_gain = MIN(dB_gain, 24.0f);
   float gain_fl = powf(10.0f, (dB_gain / 20.0f));
   
@@ -56,10 +56,17 @@ volume_control_t adsp_volume_control_init(
   uint8_t mute_state
 ) {
   volume_control_t vol_ctl;
+  
   vol_ctl.mute_state = mute_state;
+
+  // if starting muted, we need to set target_gain to 0.
+  if (mute_state){
+    adsp_volume_control_mute(&vol_ctl);
+  }
+
   adsp_volume_control_set_gain(&vol_ctl, adsp_dB_to_gain(gain_dB));
+
   vol_ctl.slew_shift = slew_shift;
-  vol_ctl.saved_gain = 0;
 
   return vol_ctl;
 }

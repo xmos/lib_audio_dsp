@@ -4,6 +4,7 @@ Audio DSP library change log
 Unreleased
 ----------
 
+  * CHANGED: Volume control Stage API exposes user_gain instead of target_gain, and renames saved_gain to user_gain.
   * FIXED: Removed configuration parameters from reverb that did not support being changed.
 
 1.0.0

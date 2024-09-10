@@ -44,10 +44,10 @@ void volume_control_init(module_instance_t* instance, adsp_bump_allocator_t* all
 
     for(int i=0; i<state->n_inputs; i++)
     {
-        state->vol_ctl[i].gain = config->target_gain;
-        state->vol_ctl[i].target_gain = config->target_gain;
+        state->vol_ctl[i].gain = config->user_gain;
+        state->vol_ctl[i].user_gain = config->user_gain;
+        state->vol_ctl[i].target_gain = config->user_gain;
         state->vol_ctl[i].slew_shift = config->slew_shift;
-        state->vol_ctl[i].saved_gain = 0;
         state->vol_ctl[i].mute_state = 0;
     }
 }
@@ -63,7 +63,7 @@ void volume_control_control(void *module_state, module_control_t *control)
     {
         // Finish the write by updating the working copy with the new config
         for (unsigned i=0; i < state->n_inputs; i++) {
-            adsp_volume_control_set_gain(&state->vol_ctl[i], config->target_gain);
+            adsp_volume_control_set_gain(&state->vol_ctl[i], config->user_gain);
             state->vol_ctl[i].slew_shift = config->slew_shift;
             if ((state->vol_ctl[i].mute_state != config->mute_state) && (config->mute_state)) {
                 adsp_volume_control_mute(&state->vol_ctl[i]);
@@ -75,7 +75,7 @@ void volume_control_control(void *module_state, module_control_t *control)
     }
     else if(control->config_rw_state == config_read_pending)
     {
-        config->target_gain = state->vol_ctl[0].target_gain;
+        config->user_gain = state->vol_ctl[0].user_gain;
         config->gain = state->vol_ctl[0].gain;
         config->slew_shift = state->vol_ctl[0].slew_shift;
         config->mute_state = state->vol_ctl[0].mute_state;

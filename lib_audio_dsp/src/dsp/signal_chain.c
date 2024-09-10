@@ -97,32 +97,25 @@ void adsp_volume_control_set_gain(
   volume_control_t * vol_ctl,
   int32_t new_gain
 ) {
+  vol_ctl->user_gain = new_gain;
+
   if(!vol_ctl->mute_state) {
     vol_ctl->target_gain = new_gain;
-  }
-  else
-  {
-    vol_ctl->saved_gain = new_gain;
   }
 }
 
 void adsp_volume_control_mute(
   volume_control_t * vol_ctl
 ) {
-  if (!vol_ctl->mute_state) {
     vol_ctl->mute_state = 1;
-    vol_ctl->saved_gain = vol_ctl->target_gain;
     vol_ctl->target_gain = 0;
-  }
 }
 
 void adsp_volume_control_unmute(
   volume_control_t * vol_ctl
 ) {
-  if (vol_ctl->mute_state) {
     vol_ctl->mute_state = 0;
-    vol_ctl->target_gain = vol_ctl->saved_gain;
-  }
+    vol_ctl->target_gain = vol_ctl->user_gain;
 }
 
 int32_t adsp_delay(
