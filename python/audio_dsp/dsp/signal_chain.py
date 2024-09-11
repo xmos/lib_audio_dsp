@@ -14,6 +14,7 @@ Q_GAIN = 27
 # Just a remainder
 assert Q_GAIN == 27, "Need to change the assert in the mixer and fixed_gain inits"
 
+
 def db_to_qgain(db_in):
     """Calculate the linear gain in floating and fixed point from a
     target gain in decibels.
@@ -74,7 +75,6 @@ class mixer(dspg.dsp_block):
         value = _check_gain(value)
         self._gain_db = value
         self.gain, self.gain_int = db_to_qgain(self._gain_db)
-    
 
     def process_channels(self, sample_list: list[float]) -> float:
         """
@@ -351,7 +351,7 @@ class fixed_gain(dspg.dsp_block):
     ----------
     gain_db : float
         The gain in decibels. Maximum fixed gain is +24 dB.
-    
+
     Attributes
     ----------
     gain_db : float
@@ -375,7 +375,7 @@ class fixed_gain(dspg.dsp_block):
         value = _check_gain(value)
         self._gain_db = value
         self.gain, self.gain_int = db_to_qgain(self._gain_db)
-    
+
     def process(self, sample: float, channel: int = 0) -> float:
         """Multiply the input sample by the gain, using floating point
         maths.
@@ -557,7 +557,6 @@ class volume_control(dspg.dsp_block):
             self.target_gain, self.target_gain_int = db_to_qgain(self._target_gain_db)
         else:
             self.saved_gain_db = value
-    
 
     def process(self, sample: float, channel: int = 0) -> float:
         """
@@ -623,7 +622,9 @@ class volume_control(dspg.dsp_block):
         return y_flt
 
     @_deprecated(
-        "1.0.0", "2.0.0", "Replace `volume_control.set_gain(x)` with `volume_control.target_gain_db = x`"
+        "1.0.0",
+        "2.0.0",
+        "Replace `volume_control.set_gain(x)` with `volume_control.target_gain_db = x`",
     )
     def set_gain(self, gain_db: float) -> None:
         """
@@ -645,9 +646,9 @@ class volume_control(dspg.dsp_block):
     def mute(self) -> None:
         """Mute the volume control."""
         if not self.mute_state:
-            self.mute_state = True
             self.saved_gain_db = self.target_gain_db
             self.target_gain_db = -np.inf
+            self.mute_state = True
 
     def unmute(self) -> None:
         """Unmute the volume control."""
