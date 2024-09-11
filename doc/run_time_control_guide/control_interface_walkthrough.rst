@@ -73,7 +73,7 @@ set of parameters.
 The format and type of the control parameters for each stage are chosen to optimise processing time on the
 DSP thread. For example, `CMD_VOLUME_CONTROL_TARGET_GAIN` is not a floating point value in decibels, but rather
 a linear fixed point value. For this example we can use the convenience function
-`adsp_dB_to_gain()` which is defined in `dsp/signal_chain.h`.
+`adsp_db_to_gain()` which is defined in `dsp/signal_chain.h`.
 
 In order to send a control command, the API defined in `stages/adsp_control.h` is used. This API is documented in the
 Tool User Guide, in the :ref:`pipeline_design_api` section. Complete the

@@ -7,7 +7,7 @@
 #include <math.h>
 
 #if Q_GAIN != 27
-#error "Need to change the assert value in adsp_dB_to_gain"
+#error "Need to change the assert value in adsp_db_to_gain"
 #endif
 
 #ifndef __XS3A__
@@ -29,7 +29,7 @@ static inline int32_t _positive_float2fixed_qgain(float x)
 #endif
 
 
-int32_t adsp_dB_to_gain(float dB_gain) {
+int32_t adsp_db_to_gain(float dB_gain) {
   // special case for -inf dB
   if (dB_gain == -INFINITY){return 0;}
 
@@ -64,7 +64,7 @@ volume_control_t adsp_volume_control_init(
     adsp_volume_control_mute(&vol_ctl);
   }
 
-  adsp_volume_control_set_gain(&vol_ctl, adsp_dB_to_gain(gain_dB));
+  adsp_volume_control_set_gain(&vol_ctl, adsp_db_to_gain(gain_dB));
 
   vol_ctl.slew_shift = slew_shift;
 
