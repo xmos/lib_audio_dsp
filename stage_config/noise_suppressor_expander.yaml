@@ -2,20 +2,39 @@ module:
   noise_suppressor_expander:
     attack_alpha:
       type: int32_t
-      help: The attack alpha in Q0.31 format.
+      help: >
+        The attack alpha in Q0.31 format. To convert an attack time in
+        seconds to an ``int32_t`` control value, use the function
+        ``calc_alpha(fs, attack_time)`` in ``control/helpers.h``.
     release_alpha:
       type: int32_t
-      help: The release alpha in Q0.31 format.
+      help: >
+        The release alpha in Q0.31 format. To convert a release time in
+        seconds to an ``int32_t`` control value, use the function
+        ``calc_alpha(fs, release_time)`` in ``control/helpers.h``.
     envelope:
       type: int32_t
-      help: The current peak envelope of the signal in Q_SIG format.
+      help: > 
+        The current peak envelope of the signal in Q_SIG format. To read
+        the ``int32_t`` control value, use the function
+        ``qxx_to_db(envelope, Q_SIG)`` in ``control/helpers.h``
     threshold:
       type: int32_t
-      help: The threshold in Q_SIG format below which suppression will occur.
+      help: >
+        The threshold in Q_SIG format below which suppression will occur.
+        To convert a threshold in dB to the ``int32_t`` control value, use the function
+        ``calculate_peak_threshold(x)`` in ``control/helpers.h``.
     gain:
       type: int32_t
-      help: The current gain applied by the noise suppressor in Q0.31 format.
+      help: >
+        The current gain applied by the noise suppressor in Q0.31 format.
+        To read the ``int32_t`` control value, use the function
+        ``qxx_to_db(envelope, 31)`` in ``control/helpers.h``
     slope:
       type: float
-      help: The expansion slope of the noise suppressor. This is calculated as `(1 - ratio)`.
+      help: >
+        The expansion slope of the noise suppressor. This is calculated
+        as `(1 - ratio)`.To convert a ratio to a slope, use
+        the function ``peak_expander_slope_from_ratio(ratio)`` in
+        ``control/helpers.h``.
 includes: []

@@ -289,12 +289,16 @@ def test_combiners_frames(filter_spec, fs, q_format):
 @pytest.mark.parametrize("delay_spec", [[15, 10, "samples"],
                                         [128, 128, "samples"],
                                         [2, 1.7, "ms"],
-                                        [1.056, 0.94, "s"]])
+                                        [1.056, 0.94, "s"],
+                                        [1, 2, "s"]])
 @pytest.mark.parametrize("n_chans", [1, 2, 4])
 def test_delay(fs, delay_spec, n_chans):
     filter = sc.delay(fs, n_chans, *delay_spec)
 
-    delay_samps = filter._get_delay_samples(delay_spec[1], delay_spec[2])
+    delay_samps = utils.time_to_samples(fs, delay_spec[1], delay_spec[2])
+    max_delay_samps = utils.time_to_samples(fs, delay_spec[0], delay_spec[2])
+    # delay can't be > max delay
+    delay_samps = min(delay_samps, max_delay_samps)
 
     length = 0.005
     sig_len = int(length * fs)

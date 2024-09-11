@@ -362,7 +362,7 @@ class Pipeline:
             node.index: {
                 "name": node.name,
                 "yaml_dict": node.yaml_dict,
-                "constants": node._constants,
+                "constants": node.constants,
             }
             for node in self._graph.nodes
         }
@@ -1090,12 +1090,6 @@ static adsp_controller_t* m_control;
     dsp_main += "}\n"
 
     (out_dir / f"adsp_generated_{resolved_pipe['identifier']}.c").write_text(dsp_main)
-
-    yaml_dir = out_dir / "yaml"
-    yaml_dir.mkdir(exist_ok=True)
-
-    for name, defintion in resolved_pipe["modules"].items():
-        (yaml_dir / f"{name}.yaml").write_text(yaml.dump(defintion))
 
 
 def profile_pipeline(pipeline: Pipeline):

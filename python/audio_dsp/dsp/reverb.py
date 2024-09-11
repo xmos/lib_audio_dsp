@@ -2,6 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """DSP blocks for reverb effects."""
 
+from audio_dsp import _deprecated
 import audio_dsp.dsp.generic as dspg
 import numpy as np
 import warnings
@@ -9,6 +10,9 @@ import audio_dsp.dsp.utils as utils
 from copy import deepcopy
 
 Q_VERB = 31
+
+# biggest number that is less than 1
+_LESS_THAN_1 = ((2**Q_VERB) - 1) / (2**Q_VERB)
 
 
 def apply_gain_xcore(sample, gain):
@@ -74,7 +78,9 @@ class allpass_fv(dspg.dsp_block):
             self.delay = delay
         else:
             self.delay = self._max_delay
-            Warning("Delay cannot be greater than max delay, setting to max delay")
+            warnings.warn(
+                "Delay cannot be greater than max delay, setting to max delay", UserWarning
+            )
 
     def reset_state(self):
         """Reset all the delay line values to zero."""
@@ -169,7 +175,9 @@ class comb_fv(dspg.dsp_block):
             self.delay = delay
         else:
             self.delay = self._max_delay
-            Warning("Delay cannot be greater than max delay, setting to max delay")
+            warnings.warn(
+                "Delay cannot be greater than max delay, setting to max delay", UserWarning
+            )
 
     def set_feedback(self, feedback):
         """Set the feedback of the comb filter, which controls the
@@ -264,7 +272,7 @@ class reverb_room(dspg.dsp_block):
         how big the room is as a proportion of max_room_size. This
         sets delay line lengths and must be between 0 and 1.
     decay : int, optional
-        how long the reverberation of the room is, between 0 and 1
+        The length of the reverberation of the room, between 0 and 1.
     damping : float, optional
         how much high frequency attenuation in the room, between 0 and 1
     wet_gain_db : int, optional
@@ -279,19 +287,15 @@ class reverb_room(dspg.dsp_block):
     Attributes
     ----------
     pregain : float
-        The pregain applied before the reverb as a floating point
-        number.
     pregain_int : int
         The pregain applied before the reverb as a fixed point number.
+    wet_db : float
     wet : float
-        The linear gain applied to the wet signal as a floating point
-        number.
     wet_int : int
         The linear gain applied to the wet signal as a fixed point
         number.
     dry : float
-        The linear gain applied to the dry signal as a floating point
-        number.
+    dry_db : float
     dry_int : int
         The linear gain applied to the dry signal as a fixed point
         number.
@@ -308,7 +312,13 @@ class reverb_room(dspg.dsp_block):
         A list of allpass_fv objects containing the all pass filters for
         the reverb.
     room_size : float
-        The room size as a proportion of the max_room_size.
+    decay: float
+    feedback: float
+    feedback_int: int
+        feedback as a fixed point integer.
+    damping: float
+    damping_int: int
+        damping as a fixed point integer.
     """
 
     def __init__(
@@ -329,9 +339,9 @@ class reverb_room(dspg.dsp_block):
         super().__init__(fs, 1, Q_sig)
 
         # gains
-        self.set_pre_gain(pregain)
-        self.set_wet_gain(wet_gain_db)
-        self.set_dry_gain(dry_gain_db)
+        self.pregain = pregain
+        self.wet_db = wet_gain_db
+        self.dry_db = dry_gain_db
 
         # the magic freeverb delay line lengths are for 44.1kHz, so
         # scale them with sample rate and room size
@@ -344,22 +354,20 @@ class reverb_room(dspg.dsp_block):
         self.ap_lengths = (default_ap_lengths * length_scaling).astype(int)
 
         # feedbacks
-        if not (0 <= decay <= 1):
-            raise ValueError("Decay must be between 0 and 1")
-        feedback_cb = decay * 0.28 + 0.7  # avoids too much or too little feedback
-        feedback_ap = 0.5
-
+        init_fb = 0.5
+        init_damping = 0.4
         self.combs = [
-            comb_fv(self.comb_lengths[0], feedback_cb, damping),
-            comb_fv(self.comb_lengths[1], feedback_cb, damping),
-            comb_fv(self.comb_lengths[2], feedback_cb, damping),
-            comb_fv(self.comb_lengths[3], feedback_cb, damping),
-            comb_fv(self.comb_lengths[4], feedback_cb, damping),
-            comb_fv(self.comb_lengths[5], feedback_cb, damping),
-            comb_fv(self.comb_lengths[6], feedback_cb, damping),
-            comb_fv(self.comb_lengths[7], feedback_cb, damping),
+            comb_fv(self.comb_lengths[0], init_fb, init_damping),
+            comb_fv(self.comb_lengths[1], init_fb, init_damping),
+            comb_fv(self.comb_lengths[2], init_fb, init_damping),
+            comb_fv(self.comb_lengths[3], init_fb, init_damping),
+            comb_fv(self.comb_lengths[4], init_fb, init_damping),
+            comb_fv(self.comb_lengths[5], init_fb, init_damping),
+            comb_fv(self.comb_lengths[6], init_fb, init_damping),
+            comb_fv(self.comb_lengths[7], init_fb, init_damping),
         ]
 
+        feedback_ap = 0.5
         self.allpasses = [
             allpass_fv(self.ap_lengths[0], feedback_ap),
             allpass_fv(self.ap_lengths[1], feedback_ap),
@@ -368,7 +376,9 @@ class reverb_room(dspg.dsp_block):
         ]
 
         # set filter delays
-        self.set_room_size(room_size)
+        self.decay = decay
+        self.damping = damping
+        self.room_size = room_size
 
     def reset_state(self):
         """Reset all the delay line values to zero."""
@@ -386,6 +396,27 @@ class reverb_room(dspg.dsp_block):
             total_buffers += ap._max_delay
         return total_buffers
 
+    @property
+    def pregain(self):
+        """
+        The pregain applied before the reverb as a floating point
+        number.
+        """
+        return self._pregain
+
+    @pregain.setter
+    def pregain(self, x):
+        if not (0 <= x < 1):
+            bad_x = x
+            x = np.clip(x, 0, _LESS_THAN_1)
+            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
+
+        self._pregain = x
+        self.pregain_int = utils.int32(x * 2**Q_VERB)
+
+    @_deprecated(
+        "1.0.0", "2.0.0", "Replace `reverb_room.set_pre_gain(x)` with `reverb_room.pregain = x`"
+    )
     def set_pre_gain(self, pre_gain):
         """
         Set the pre gain.
@@ -395,12 +426,35 @@ class reverb_room(dspg.dsp_block):
         pre_gain : float
             pre gain value, less than 1.
         """
-        if not (0 <= pre_gain < 1):
-            raise ValueError("Pre gain must be less than 1 and positive")
-
         self.pregain = pre_gain
-        self.pregain_int = utils.int32(self.pregain * 2**Q_VERB)
 
+    @property
+    def wet_db(self):
+        """The gain applied to the wet signal in dB."""
+        return self._wet_db
+
+    @wet_db.setter
+    def wet_db(self, x):
+        if x > 0:
+            warnings.warn(f"Wet gain {x} saturates to 0 dB", UserWarning)
+            x = 0
+
+        self._wet_db = x
+        self._wet = utils.db2gain(x)
+        self.wet_int = utils.int32((self._wet * 2**Q_VERB) - 1)
+
+    @property
+    def wet(self):
+        """The linear gain applied to the wet signal."""
+        return self._wet
+
+    @wet.setter
+    def wet(self, x):
+        self.wet_db = utils.db(x)
+
+    @_deprecated(
+        "1.0.0", "2.0.0", "Replace `reverb_room.set_wet_gain(x)` with `reverb_room.wet_db = x`"
+    )
     def set_wet_gain(self, wet_gain_db):
         """
         Set the wet gain.
@@ -410,12 +464,35 @@ class reverb_room(dspg.dsp_block):
         wet_gain_db : float
             Wet gain in dB, less than 0 dB.
         """
-        if wet_gain_db > 0:
-            raise ValueError("Wet gain must be less than 0 dB")
+        self.wet_db = wet_gain_db
 
-        self.wet = utils.db2gain(wet_gain_db)
-        self.wet_int = utils.int32((self.wet * 2**Q_VERB) - 1)
+    @property
+    def dry_db(self):
+        """The gain applied to the dry signal in dB."""
+        return self._dry_db
 
+    @dry_db.setter
+    def dry_db(self, x):
+        if x > 0:
+            warnings.warn(f"Dry gain {x} saturates to 0 dB", UserWarning)
+            x = 0
+
+        self._dry_db = x
+        self._dry = utils.db2gain(x)
+        self.dry_int = utils.int32((self.dry * 2**Q_VERB) - 1)
+
+    @property
+    def dry(self):
+        """The linear gain applied to the dry signal."""
+        return self._dry
+
+    @dry.setter
+    def dry(self, x):
+        self.dry_db = utils.db(x)
+
+    @_deprecated(
+        "1.0.0", "2.0.0", "Replace `reverb_room.set_dry_gain(x)` with `reverb_room.dry_db = x`"
+    )
     def set_dry_gain(self, dry_gain_db):
         """
         Set the dry gain.
@@ -425,12 +502,37 @@ class reverb_room(dspg.dsp_block):
         dry_gain_db : float
             Dry gain in dB, lees than 0 dB.
         """
-        if dry_gain_db > 0:
-            raise ValueError("Dry gain must be less than 0 dB")
+        self.dry_db = dry_gain_db
 
-        self.dry = utils.db2gain(dry_gain_db)
-        self.dry_int = utils.int32((self.dry * 2**Q_VERB) - 1)
+    @property
+    def decay(self):
+        """The length of the reverberation of the room, between 0 and 1."""
+        ret = (self.feedback - 0.7) / 0.28
+        return ret
 
+    @decay.setter
+    def decay(self, x):
+        if not (0 <= x <= 1):
+            bad_x = x
+            x = np.clip(x, 0, _LESS_THAN_1)
+            warnings.warn(f"Decay {bad_x} saturates to {x}", UserWarning)
+        self.feedback = x * 0.28 + 0.7
+
+    @property
+    def feedback(self):
+        """Gain of the feedback line in the reverb filters. Set decay to update this value."""
+        ret = float(self.combs[0].feedback)
+        return ret
+
+    @feedback.setter
+    def feedback(self, x):
+        for cb in self.combs:
+            cb.set_feedback(x)
+        self.feedback_int = self.combs[0].feedback_int
+
+    @_deprecated(
+        "1.0.0", "2.0.0", "Replace `reverb_room.set_decay(x)` with `reverb_room.decay = x`"
+    )
     def set_decay(self, decay):
         """
         Set the decay of the reverb.
@@ -440,13 +542,26 @@ class reverb_room(dspg.dsp_block):
         decay : float
             How long the reverberation of the room is, between 0 and 1.
         """
-        if not (0 <= decay <= 1):
-            raise ValueError("Decay must be between 0 and 1")
-        # avoids too much or too little feedback
-        feedback_cb = decay * 0.28 + 0.7
-        for cb in self.combs:
-            cb.set_feedback(feedback_cb)
+        self.decay = decay
 
+    @property
+    def damping(self):
+        """How much high frequency attenuation in the room, between 0 and 1."""
+        return self.combs[0].damp1
+
+    @damping.setter
+    def damping(self, x):
+        if not (0 <= x <= 1):
+            bad_x = x
+            x = np.clip(x, 0, 1)
+            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
+        for cb in self.combs:
+            cb.set_damping(x)
+        self.damping_int = self.combs[0].damp1_int
+
+    @_deprecated(
+        "1.0.0", "2.0.0", "Replace `reverb_room.set_damping(x)` with `reverb_room.damping = x`"
+    )
     def set_damping(self, damping):
         """
         Set the damping of the reverb.
@@ -456,11 +571,33 @@ class reverb_room(dspg.dsp_block):
         damping : float
             How much high frequency attenuation in the room, between 0 and 1.
         """
-        if not (0 <= damping <= 1):
-            raise ValueError("Damping must be between 0 and 1")
-        for cb in self.combs:
-            cb.set_damping(damping)
+        self.damping = damping
 
+    @property
+    def room_size(self):
+        """The room size as a proportion of the max_room_size."""
+        return self._room_size
+
+    @room_size.setter
+    def room_size(self, x):
+        if not (0 <= x <= 1):
+            raise ValueError(
+                "room_size must be between 0 and 1. For larger rooms, increase max_room size"
+            )
+        self._room_size = x
+
+        comb_delays = (self.comb_lengths * self._room_size).astype(int)
+        ap_delays = (self.ap_lengths * self._room_size).astype(int)
+
+        for n in range(len(self.combs)):
+            self.combs[n].set_delay(comb_delays[n])
+
+        for n in range(len(self.allpasses)):
+            self.allpasses[n].set_delay(ap_delays[n])
+
+    @_deprecated(
+        "1.0.0", "2.0.0", "Replace `reverb_room.set_room_size(x)` with `reverb_room.room_size = x`"
+    )
     def set_room_size(self, room_size):
         """
         Set the current room size; will adjust the delay line lengths accordingly.
@@ -471,20 +608,7 @@ class reverb_room(dspg.dsp_block):
             How big the room is as a proportion of max_room_size. This
             sets delay line lengths and must be between 0 and 1.
         """
-        if not (0 <= room_size <= 1):
-            raise ValueError(
-                "room_size must be between 0 and 1. For larger rooms, increase max_room size"
-            )
         self.room_size = room_size
-
-        comb_delays = (self.comb_lengths * self.room_size).astype(int)
-        ap_delays = (self.ap_lengths * self.room_size).astype(int)
-
-        for n in range(len(self.combs)):
-            self.combs[n].set_delay(comb_delays[n])
-
-        for n in range(len(self.allpasses)):
-            self.allpasses[n].set_delay(ap_delays[n])
 
     def process_frame(self, frame):
         """

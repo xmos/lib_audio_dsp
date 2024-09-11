@@ -768,41 +768,73 @@ class delay(dspg.dsp_block):
         self, fs, n_chans, max_delay: float, starting_delay: float, units: str = "samples"
     ) -> None:
         super().__init__(fs, n_chans)
-        # max delay cannot be changed, or you'll overflow the buffer
-        max_delay = self._get_delay_samples(max_delay, units)
-        starting_delay = self._get_delay_samples(starting_delay, units)
 
+        self._delay_units = utils.check_time_units(units)
         if max_delay <= 0:
             raise ValueError("Max delay must be greater than zero")
-        if starting_delay > max_delay:
-            raise ValueError("Starting delay cannot be greater than max delay")
 
-        self.max_delay = max_delay
-        self.delay = starting_delay
+        # max delay cannot be changed, or you'll overflow the buffer
+        max_delay = utils.time_to_samples(self.fs, max_delay, self.delay_units)
+        self._max_delay = max_delay
+
+        self.delay_time = starting_delay
+
         self.buffer_idx = 0
+        # don't need separate implementation for float/xcore
         self.process_channels_xcore = self.process_channels
         self.process_frame_xcore = self.process_frame
+
         self.reset_state()
+
+    @property
+    def delay_time(self):
+        """The delay time in delay_units."""
+        return self._delay_time
+
+    @delay_time.setter
+    def delay_time(self, value):
+        self._delay_time = value
+        self.delay = utils.time_to_samples(self.fs, value, self.delay_units)
+
+    @property
+    def delay_units(self):
+        """The units for delay_time. This must be on of {"samples", "ms", "s"}."""
+        return self._delay_units
+
+    @delay_units.setter
+    def delay_units(self, value):
+        self._delay_units = utils.check_time_units(value)
+
+        if self._delay_units == "samples":
+            new_coeff = 1
+        elif self._delay_units == "ms":
+            new_coeff = self.fs / 1000
+        elif self._delay_units == "s":
+            new_coeff = self.fs
+
+        # keep the same delay in samples, but update delay_time for the new units
+        self._delay_time = self.delay * new_coeff
+
+    @property
+    def delay(self):
+        """The delay in samples. This will saturate to max_delay."""
+        return self._delay
+
+    @delay.setter
+    def delay(self, value):
+        if value <= self._max_delay:
+            self._delay = value
+        else:
+            self._delay = self._max_delay
+
+            warnings.warn(
+                "Delay cannot be greater than max delay, setting to max delay", UserWarning
+            )
 
     def reset_state(self) -> None:
         """Reset all the delay line values to zero."""
-        self.buffer = np.zeros((self.n_chans, self.max_delay))
+        self.buffer = np.zeros((self.n_chans, self._max_delay))
         return
-
-    def _get_delay_samples(self, delay: float, units: str) -> int:
-        """Get the delay in samples from the specified units."""
-        if delay < 0:
-            raise ValueError("Delay must be positive")
-
-        if units == "ms":
-            delay = int(delay * self.fs / 1000)
-        elif units == "s":
-            delay = int(delay * self.fs)
-        elif units == "samples":
-            delay = int(delay)
-        else:
-            raise ValueError("Units must be 'samples', 'ms' or 's'")
-        return delay
 
     def set_delay(self, delay: float, units: str = "samples") -> None:
         """
@@ -816,13 +848,9 @@ class delay(dspg.dsp_block):
             The units of the delay, can be 'samples', 'ms' or 's'.
             Default is 'samples'.
         """
-        delay = self._get_delay_samples(delay, units)
-
-        if delay <= self.max_delay:
-            self.delay = delay
-        else:
-            self.delay = self.max_delay
-            Warning("Delay cannot be greater than max delay, setting to max delay")
+        # update private units first to avoid recalculating old delay time
+        self._delay_units = utils.check_time_units(units)
+        self.delay_time = delay
         return
 
     def process_channels(self, sample: list[float]) -> list[float]:
