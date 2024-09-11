@@ -18,6 +18,7 @@ module:
         The current RMS² envelope of the signal in Q_SIG format. To read
         the ``int32_t`` control value, use the function
         ``qxx_to_db_pow(envelope, Q_SIG)`` in ``control/helpers.h``
+      rw_type: CMD_READ_ONLY
     threshold:
       type: int32_t
       help: >
@@ -30,6 +31,7 @@ module:
         The current gain applied by the compressor in Q0.31 format.
         To read the ``int32_t`` control value, use the function
         ``qxx_to_db(envelope, 31)`` in ``control/helpers.h``
+      rw_type: CMD_READ_ONLY
     slope:
       type: float
       help: >

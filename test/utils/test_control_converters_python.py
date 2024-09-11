@@ -2,6 +2,7 @@ import pytest
 
 import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.drc.drc_utils as drcu
+import audio_dsp.dsp.signal_chain as sc
 from audio_dsp.dsp.generic import Q_SIG, HEADROOM_DB
 
 
@@ -69,6 +70,17 @@ def test_calc_alpha(time, warning):
             alpha, alpha_int = drcu.alpha_from_time(time, 48000)
     else:
         alpha, alpha_int = drcu.alpha_from_time(time, 48000)
+
+
+@pytest.mark.parametrize("gain_db, warning", [(-2000, None),
+                                                   (0, None),
+                                                   (25, UserWarning)])
+def test_db_gain(gain_db, warning):
+    if warning:
+        with pytest.warns(warning):
+            gain, gain_int = sc.db_to_qgain(gain_db)
+    else:
+            gain, gain_int = sc.db_to_qgain(gain_db)
 
 
 @pytest.mark.parametrize("time, units, warning", [[10, "samples", None],

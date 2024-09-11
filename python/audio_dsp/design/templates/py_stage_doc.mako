@@ -31,6 +31,8 @@ details on reading and writing these commands, see the Run-Time Control User Gui
     import re
     size_str = "*[" + str(field_data['size']) + "]" if "size" in field_data else ""
     help_str = f'{field_data["help"].strip()}' if "help" in field_data else ""
+    if "rw_type" in field_data and field_data["rw_type"] == "CMD_READ_ONLY":
+      help_str += " This command is read only. When sending a write control command, it will be ignored."
     safe_name = cl.replace("RMS", "Rms")
     snake_name = re.sub(r'(?<!^)(?=[A-Z])', '_', safe_name).upper()
     cmd_str = f"CMD_{snake_name}_{field_name.upper()}"

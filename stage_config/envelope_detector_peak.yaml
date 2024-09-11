@@ -18,4 +18,5 @@ module:
         The current peak envelope of the signal in Q_SIG format. To read
         the ``int32_t`` control value, use the function
         ``qxx_to_db(envelope, Q_SIG)`` in ``control/helpers.h``
+      rw_type: CMD_READ_ONLY
 includes: []

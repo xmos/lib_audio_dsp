@@ -5,6 +5,7 @@
 import numpy as np
 import warnings
 
+from audio_dsp import _deprecated
 from audio_dsp.dsp import generic as dspg
 from audio_dsp.dsp import utils
 
@@ -12,6 +13,30 @@ from audio_dsp.dsp import utils
 Q_GAIN = 27
 # Just a remainder
 assert Q_GAIN == 27, "Need to change the assert in the mixer and fixed_gain inits"
+
+
+def db_to_qgain(db_in):
+    """Calculate the linear gain in floating and fixed point from a
+    target gain in decibels.
+    If the gain is higher than 24 dB, it is saturated to that value.
+    """
+    db_in = _check_gain(db_in)
+
+    if db_in == -np.inf:
+        gain = 0
+        gain_int = utils.int32(0)
+    else:
+        gain = utils.db2gain(db_in)
+        gain_int = utils.float_to_int32(gain, Q_GAIN)
+
+    return gain, gain_int
+
+
+def _check_gain(value):
+    if value > 24:
+        warnings.warn("Maximum gain is +24 dB, saturating to that value.", UserWarning)
+        value = 24
+    return value
 
 
 class mixer(dspg.dsp_block):
@@ -27,7 +52,6 @@ class mixer(dspg.dsp_block):
     Attributes
     ----------
     gain_db : float
-        Gain in decibels.
     gain : float
         Gain as a linear value.
     gain_int : int
@@ -39,10 +63,18 @@ class mixer(dspg.dsp_block):
     ) -> None:
         super().__init__(fs, n_chans, Q_sig)
         self.num_channels = n_chans
-        assert gain_db <= 24, "Maximum mixer gain is +24 dB"
         self.gain_db = gain_db
-        self.gain = utils.db2gain(gain_db)
-        self.gain_int = utils.float_to_int32(self.gain, Q_GAIN)
+
+    @property
+    def gain_db(self):
+        """The mixer gain in decibels."""
+        return self._gain_db
+
+    @gain_db.setter
+    def gain_db(self, value):
+        value = _check_gain(value)
+        self._gain_db = value
+        self.gain, self.gain_int = db_to_qgain(self._gain_db)
 
     def process_channels(self, sample_list: list[float]) -> float:
         """
@@ -319,6 +351,10 @@ class fixed_gain(dspg.dsp_block):
     ----------
     gain_db : float
         The gain in decibels. Maximum fixed gain is +24 dB.
+
+    Attributes
+    ----------
+    gain_db : float
     gain : float
         Gain as a linear value.
     gain_int : int
@@ -327,10 +363,18 @@ class fixed_gain(dspg.dsp_block):
 
     def __init__(self, fs: float, n_chans: int, gain_db: float, Q_sig: int = dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
-        assert gain_db <= 24, "Maximum fixed gain is +24 dB"
         self.gain_db = gain_db
-        self.gain = utils.db2gain(gain_db)
-        self.gain_int = utils.float_to_int32(self.gain, Q_GAIN)
+
+    @property
+    def gain_db(self):
+        """The mixer gain in decibels."""
+        return self._gain_db
+
+    @gain_db.setter
+    def gain_db(self, value):
+        value = _check_gain(value)
+        self._gain_db = value
+        self.gain, self.gain_int = db_to_qgain(self._gain_db)
 
     def process(self, sample: float, channel: int = 0) -> float:
         """Multiply the input sample by the gain, using floating point
@@ -409,7 +453,7 @@ class fixed_gain(dspg.dsp_block):
 class volume_control(dspg.dsp_block):
     """
     A volume control class that allows setting the gain in decibels.
-    When the gain is updated, an exponential slew is applied to reduce
+    When the user_gain is updated, an exponential slew is applied to reduce
     artifacts.
 
     The slew is implemented as a shift operation. The slew rate can be
@@ -453,8 +497,8 @@ class volume_control(dspg.dsp_block):
 
     Attributes
     ----------
+    user_gain_db : float
     target_gain_db : float
-        The target gain in decibels.
     target_gain : float
         The target gain as a linear value.
     target_gain_int : int
@@ -489,17 +533,46 @@ class volume_control(dspg.dsp_block):
         super().__init__(fs, n_chans, Q_sig)
 
         # set the initial target gains
-        self.mute_state = False
-        self.set_gain(gain_db)
+        self._mute_state = False
+        self.user_gain_db = gain_db
         if mute_state:
             self.mute()
 
         # initial applied gain can be equal to target until target changes
-        self.gain_db = self.target_gain_db
+        self.gain_db = self._target_gain_db
         self.gain = [self.target_gain] * self.n_chans
         self.gain_int = [self.target_gain_int] * self.n_chans
 
         self.slew_shift = slew_shift
+
+    @property
+    def _target_gain_db(self):
+        """The target gain of the volume control in decibels. The applied gain is
+        slewed towards this value.
+        """
+        return self.__target_gain_db
+
+    @_target_gain_db.setter
+    def _target_gain_db(self, value):
+        value = _check_gain(value)
+        self.__target_gain_db = value
+        self.target_gain, self.target_gain_int = db_to_qgain(self._target_gain_db)
+
+    @property
+    def user_gain_db(self):
+        """The desired volume set by the user in decibels. If the volume control
+        is muted, the target gain is not updated.
+        """
+        return self._user_gain_db
+
+    @user_gain_db.setter
+    def user_gain_db(self, value):
+        value = _check_gain(value)
+        self._user_gain_db = value
+        self.user_gain, self.user_gain_int = db_to_qgain(self.user_gain_db)
+
+        if not self._mute_state:
+            self._target_gain_db = self.user_gain_db
 
     def process(self, sample: float, channel: int = 0) -> float:
         """
@@ -564,6 +637,11 @@ class volume_control(dspg.dsp_block):
 
         return y_flt
 
+    @_deprecated(
+        "1.0.0",
+        "2.0.0",
+        "Replace `volume_control.set_gain(x)` with `volume_control.user_gain_db = x`",
+    )
     def set_gain(self, gain_db: float) -> None:
         """
         Set the gain of the volume control.
@@ -579,30 +657,34 @@ class volume_control(dspg.dsp_block):
             If the gain_db parameter is greater than 24 dB.
 
         """
-        if gain_db > 24:
-            raise ValueError("Maximum volume control gain is +24 dB")
-        if not self.mute_state:
-            self.target_gain_db = gain_db
-            self.target_gain = utils.db2gain(gain_db)
-            self.target_gain_int = utils.float_to_int32(self.target_gain, Q_GAIN)
+        self.user_gain_db = gain_db
+
+    @property
+    def mute_state(self):
+        """Mutes the volume control if this is True. Setting to false
+        unmutes the volume control and returns the target_gain to the
+        user_gain value.
+        """
+        return self._mute_state
+
+    @mute_state.setter
+    def mute_state(self, value):
+        if value == True:
+            """Mute the volume control."""
+            self._target_gain_db = -np.inf
+            self._mute_state = True
         else:
-            self.saved_gain_db = gain_db
+            """Unmute the volume control."""
+            self._mute_state = False
+            self._target_gain_db = self.user_gain_db
 
     def mute(self) -> None:
         """Mute the volume control."""
-        if not self.mute_state:
-            self.mute_state = True
-            self.saved_gain_db = self.target_gain_db
-            # avoid messy dB conversion for -inf
-            self.target_gain_db = -np.inf
-            self.target_gain = 0
-            self.target_gain_int = utils.int32(0)
+        self.mute_state = True
 
     def unmute(self) -> None:
         """Unmute the volume control."""
-        if self.mute_state:
-            self.mute_state = False
-            self.set_gain(self.saved_gain_db)
+        self.mute_state = False
 
 
 class switch(dspg.dsp_block):

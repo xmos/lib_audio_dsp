@@ -22,7 +22,7 @@ void control_thread(adsp_controller_t* control) {
 
   adsp_stage_control_cmd_t command = {
     .instance_id = volume_stage_index,
-    .cmd_id = CMD_VOLUME_CONTROL_TARGET_GAIN,
+    .cmd_id = CMD_VOLUME_CONTROL_USER_GAIN,
     .payload_len = sizeof(desired_vol_raw),
     .payload = &desired_vol_raw
   };
