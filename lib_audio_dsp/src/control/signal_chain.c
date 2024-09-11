@@ -10,16 +10,43 @@
 #error "Need to change the assert value in adsp_dB_to_gain"
 #endif
 
+#ifndef __XS3A__
+/**
+ * @brief Convert a positive float value to a fixed point int32 number in
+ *        Q_SIG format. By assuming the value is positive (e.g. a gain value
+ *        converted from decibels), negative cases can be ignored. If the
+ *        value of x exceeds the fixed point maximum, it is saturated.
+ * 
+ * @param x A positive floating point value
+ * @return int32_t x in Q_SIG fixed point format
+ */
+static inline int32_t _positive_float2fixed_qgain(float x)
+{
+  if ( x >= 1 << (31-Q_GAIN)) return INT32_MAX;
+  else if( x > 0 ) return (((float)((1 << Q_GAIN) - 1)) * x + 0.5f);
+  return 0;
+}
+#endif
+
+
 int32_t adsp_dB_to_gain(float dB_gain) {
-  xassert(dB_gain <= 24 && "Maximum fixed gain is +24 dB");
-  float gain_fl = powf(10, (dB_gain / 20));
-  // gain_fl will always be positive
-  int32_t zero, exp; unsigned mant;
-  asm("fsexp %0, %1, %2": "=r" (zero), "=r" (exp): "r" (gain_fl));
-  asm("fmant %0, %1": "=r" (mant): "r" (gain_fl));
-  // mant to q27
-  right_shift_t shr = -Q_GAIN - exp + 23;
-  mant >>= shr;
+  // special case for -inf dB
+  if (dB_gain == -INFINITY){return 0;}
+  
+  dB_gain = MIN(dB_gain, 24.0f);
+  float gain_fl = powf(10.0f, (dB_gain / 20.0f));
+  
+  #ifdef __XS3A__
+    // gain_fl will always be positive
+    int32_t zero, exp; unsigned mant;
+    asm("fsexp %0, %1, %2": "=r" (zero), "=r" (exp): "r" (gain_fl));
+    asm("fmant %0, %1": "=r" (mant): "r" (gain_fl));
+    // mant to q27
+    right_shift_t shr = -Q_GAIN - exp + 23;
+    mant >>= shr;
+  #else
+    int32_t mant = _positive_float2fixed_qgain(A);
+  #endif
   return mant;
 }
 
