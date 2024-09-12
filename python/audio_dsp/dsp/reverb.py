@@ -7,6 +7,7 @@ import audio_dsp.dsp.generic as dspg
 import numpy as np
 import warnings
 import audio_dsp.dsp.utils as utils
+import audio_dsp.dsp.signal_chain as sc
 from copy import deepcopy
 
 Q_VERB = 31
@@ -74,7 +75,7 @@ class allpass_fv(dspg.dsp_block):
 
     def set_delay(self, delay):
         """Set the length of the delay line. Will saturate to max_delay."""
-        if delay < self._max_delay:
+        if delay <= self._max_delay:
             self.delay = delay
         else:
             self.delay = self._max_delay
@@ -171,7 +172,7 @@ class comb_fv(dspg.dsp_block):
 
     def set_delay(self, delay):
         """Set the length of the delay line. Will saturate to max_delay."""
-        if delay < self._max_delay:
+        if delay <= self._max_delay:
             self.delay = delay
         else:
             self.delay = self._max_delay
@@ -282,6 +283,10 @@ class reverb_room(dspg.dsp_block):
     pregain : float, optional
         the amount of gain applied to the signal before being passed
         into the reverb, less than 1.
+    predelay : float, optional
+        the delay applied to the wet channel in ms.
+    max_predelay : float, optional
+        the maximum predelay in ms.
 
 
     Attributes
@@ -319,6 +324,7 @@ class reverb_room(dspg.dsp_block):
     damping: float
     damping_int: int
         damping as a fixed point integer.
+    predelay: audio_dsp.dsp.signal_chain.delay
     """
 
     def __init__(
@@ -332,11 +338,17 @@ class reverb_room(dspg.dsp_block):
         wet_gain_db=-1,
         dry_gain_db=-1,
         pregain=0.015,
+        predelay=10,
+        max_predelay=None,
         Q_sig=dspg.Q_SIG,
     ):
         assert n_chans == 1, f"Reverb only supports 1 channel. {n_chans} specified"
 
         super().__init__(fs, 1, Q_sig)
+
+        # predelay
+        max_predelay = predelay if max_predelay == None else max_predelay
+        self.predelay = sc.delay(fs, n_chans, max_predelay, predelay, "ms")
 
         # gains
         self.pregain = pregain
@@ -386,6 +398,7 @@ class reverb_room(dspg.dsp_block):
             cb.reset_state()
         for ap in self.allpasses:
             ap.reset_state()
+        self.predelay.reset_state()
 
     def get_buffer_lens(self):
         """Get the total length of all the buffers used in the reverb."""
@@ -643,7 +656,8 @@ class reverb_room(dspg.dsp_block):
         Input should be scaled with 0 dB = 1.0.
 
         """
-        reverb_input = sample * self.pregain
+        delayed_input = self.predelay.process_channels([sample])[0]
+        reverb_input = delayed_input * self.pregain
 
         output = 0
         for cb in self.combs:
@@ -664,7 +678,8 @@ class reverb_room(dspg.dsp_block):
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
 
-        reverb_input = apply_gain_xcore(sample_int, self.pregain_int)
+        delayed_input = self.predelay.process_channels_xcore([sample_int])[0]
+        reverb_input = apply_gain_xcore(delayed_input, self.pregain_int)
 
         output = 0
         for cb in self.combs:
