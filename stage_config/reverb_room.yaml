@@ -17,6 +17,9 @@ module:
       help: Dry signal gain in Q0.31 format. Use the function ``adsp_reverb_db2int(float db)`` in ``control/reverb.h`` 
     pregain:
       type: int32_t
-      help: The pregain applied to the signal before reverb. Changing this value is not recommended. Use the function ``adsp_reverb_float2int(float x)`` in ``control/reverb.h`` 
+      help: The pregain applied to the signal before reverb. Changing this value is not recommended. Use the function ``adsp_reverb_float2int(float x)`` in ``control/reverb.h``
+    predelay:
+      type: uint32_t
+      help: Predelay applied to the wet channel in samples.  
 includes:
   - "stdint.h"

@@ -91,8 +91,9 @@ def test_reverb_room(in_signal, decay, damping, wet, dry, pregain):
     fs = FS
     max_room_size = 1.0
     room_size = 1.0
+    predelay = 10
 
-    uut = reverb.reverb_room(fs, n_chans, max_room_size, room_size, decay, damping, wet, dry, pregain)
+    uut = reverb.reverb_room(fs, n_chans, max_room_size, room_size, decay, damping, wet, dry, pregain, predelay)
     test_name = f"reverb_room_{decay}_{damping}_{wet}_{dry}_{pregain}"
 
     test_dir = BIN_DIR / test_name
