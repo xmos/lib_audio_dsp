@@ -17,6 +17,8 @@ static adsp_controller_t* m_control;
 #include <stages/dsp_thread.h>
 
 #include <stages/buffer.h>
+#include <stages/fft.h>
+#include <stages/ifft.h>
 
 // void buffer_process(int32_t **input, int32_t **output, void *app_data_state)
 // {
@@ -35,36 +37,36 @@ static adsp_controller_t* m_control;
 
 // }
 
-void fft_process(int32_t **input, int32_t **output, void *app_data_state)
-{
-    fft_state_t *state = app_data_state;
-    // put signal int32_t array into bfp
-    bfp_s32_init(state->signal, input[0], state->exp, state->nfft, 1);
-    // do the FFT
-    bfp_complex_s32_t * c = bfp_fft_forward_mono(state->signal);
+// void fft_process(int32_t **input, int32_t **output, void *app_data_state)
+// {
+//     fft_state_t *state = app_data_state;
+//     // put signal int32_t array into bfp
+//     bfp_s32_init(state->signal, input[0], state->exp, state->nfft, 1);
+//     // do the FFT
+//     bfp_complex_s32_t * c = bfp_fft_forward_mono(state->signal);
 
-    output[0] = c;
+//     output[0] = c;
 
-}
+// }
 
-void bfp_mult_process(int32_t **input, int32_t **output, void *app_data_state)
-{
-    // if everything is compatible, this should just work?
-    bfp_complex_s32_mul(output[0], input[0], input[1] );
+// void bfp_mult_process(int32_t **input, int32_t **output, void *app_data_state)
+// {
+//     // if everything is compatible, this should just work?
+//     bfp_complex_s32_mul(output[0], input[0], input[1] );
 
-    output[0] = c;
+//     output[0] = c;
 
-}
+// }
 
-void ifft_process(int32_t **input, int32_t **output, void *app_data_state)
-{
-    ifft_state_t *state = app_data_state;
-    bfp_s32_t *time_domain_result = bfp_fft_inverse_mono(input[0]);
+// void ifft_process(int32_t **input, int32_t **output, void *app_data_state)
+// {
+//     ifft_state_t *state = app_data_state;
+//     bfp_s32_t *time_domain_result = bfp_fft_inverse_mono(input[0]);
 
-    //denormalise and escape BFP domain
-    bfp_s32_use_exponent(time_domain_result, state->exp);
-    output[0] = time_domain_result->data;
-}
+//     //denormalise and escape BFP domain
+//     bfp_s32_use_exponent(time_domain_result, state->exp);
+//     output[0] = time_domain_result->data;
+// }
 
 
 void wola_rect_process(int32_t **input, int32_t **output, void *app_data_state)
@@ -145,17 +147,30 @@ void init_dsp(){
 
     static buffer_config_t config2 = {};
     static buffer_state_t state2;
-	static buffer_constants_t constants2 = {.shared_memory = &magic_shared_memory, .buffer_len = 512}
+	static buffer_constants_t constants2 = {.shared_memory = &magic_shared_memory[0], .buffer_len = 512};
 	static uint8_t memory2[_ADSP_MAX(1, BUFFER_REQUIRED_MEMORY(1))];
-	static adsp_bump_allocator_t allocator2 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory1);
+	static adsp_bump_allocator_t allocator2 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory2);
 	adsp_auto.modules[2].state = (void*)&state2;
 
-	buffer_init(&adsp_auto.modules[2], &allocator2, 2, 1, 1, 256)
+	buffer_init(&adsp_auto.modules[2], &allocator2, 2, 1, 1, 256);
 
     static fft_config_t config3 = {};
-    static fft_state_t state3 = {.nfft = 512, .data = &magic_shared_memory, .exp = 27};
+    static fft_state_t state3 = {};
+	static buffer_constants_t constants3 = {.shared_memory = &magic_shared_memory, .nfft = 512, .exp=27};
+	static uint8_t memory3[_ADSP_MAX(1, FFT_REQUIRED_MEMORY(1))];
+	static adsp_bump_allocator_t allocator3 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory3);
+	adsp_auto.modules[3].state = (void*)&state3;
 
+	fft_init(&adsp_auto.modules[3], &allocator3, 2, 1, 1, 256);
 
+    static ifft_config_t config4 = {};
+    static ifft_state_t state4 = {};
+	static ifft_constants_t constants4 = {.shared_memory = &magic_shared_memory, .nfft = 512, .exp=27};
+	static uint8_t memory4[_ADSP_MAX(1, IFFT_REQUIRED_MEMORY(1))];
+	static adsp_bump_allocator_t allocator4 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory4);
+	adsp_auto.modules[4].state = (void*)&state4;
+
+	ifft_init(&adsp_auto.modules[4], &allocator4, 2, 1, 1, 256);
 
 	// adsp_controller_init(&adsp_auto_controller, &adsp_auto);
 	return &adsp_auto;
