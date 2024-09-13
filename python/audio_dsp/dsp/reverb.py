@@ -20,6 +20,7 @@ def apply_gain_xcore(sample, gain):
     """Apply the gain to a sample using fixed-point math. Assumes that gain is in Q_VERB format."""
     acc = 1 << (Q_VERB - 1)
     acc += sample * gain
+    utils.int64(acc)
     y = utils.int32_mult_sat_extract(acc, 1, Q_VERB)
     return y
 
@@ -35,6 +36,7 @@ def scale_sat_int64_to_int32_floor(val):
     # up instead.
     if val < 0:
         val += (2**Q_VERB) - 1
+        utils.int64(val)
 
     # saturate
     if val > (2 ** (31 + Q_VERB) - 1):
@@ -282,7 +284,10 @@ class reverb_room(dspg.dsp_block):
         dry signal gain, less than 0 dB.
     pregain : float, optional
         the amount of gain applied to the signal before being passed
-        into the reverb, less than 1.
+        into the reverb, less than 1. If the reverb raises an
+        OverflowWarning, this value should be reduced until it does not.
+        The default value of 0.015 should be sufficient for most Q27
+        signals.
     predelay : float, optional
         the delay applied to the wet channel in ms.
     max_predelay : float, optional
