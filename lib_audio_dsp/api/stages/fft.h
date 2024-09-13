@@ -28,7 +28,8 @@ typedef struct
 typedef struct
 {
     int32_t* shared_memory;
-    int32_t fft_len;
+    int32_t nfft;
+    int32_t exp;
 }fft_constants_t;
 
 
@@ -44,6 +45,6 @@ void fft_init(module_instance_t* instance,
                  int n_outputs,
                  int frame_size);
 
-void fft_process(int32_t **input, int32_t **output, void *app_data_state);
+void fft_process(int32_t **input, bfp_complex_s32_t **output, void *app_data_state);
 
 void fft_control(void *state, module_control_t *control);

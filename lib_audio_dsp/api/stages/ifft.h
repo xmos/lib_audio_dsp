@@ -28,7 +28,8 @@ typedef struct
 typedef struct
 {
     int32_t* shared_memory;
-    int32_t ifft_len;
+    int32_t nfft;
+    int32_t exp;
 }ifft_constants_t;
 
 
@@ -44,6 +45,6 @@ void ifft_init(module_instance_t* instance,
                  int n_outputs,
                  int frame_size);
 
-void ifft_process(int32_t **input, int32_t **output, void *app_data_state);
+void ifft_process(bfp_complex_s32_t **input, int32_t **output, void *app_data_state);
 
 void ifft_control(void *state, module_control_t *control);
