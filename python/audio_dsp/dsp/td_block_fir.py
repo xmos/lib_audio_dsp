@@ -2,6 +2,20 @@ import numpy as np
 import argparse
 import os
 
+def quant(coefs, exp):
+    quantised = np.rint(np.ldexp(coefs, exp))
+    quantised = np.clip(quantised, np.iinfo(np.int32).min, np.iinfo(np.int32).max)
+    return np.array(quantised, dtype=np.int64)
+
+def calc_max_accu(quantised_coefs, VPU_shr = 30):
+    v = np.where(quantised_coefs > 0, np.iinfo(np.int32).max, np.iinfo(np.int32).min)
+    v = np.array(v, dtype=np.int64)
+    accu = 0
+    for x, y in zip(v, quantised_coefs):
+        accu += np.int64(np.rint((x*y)/2**VPU_shr))
+    return accu
+
+
 def emit_filter(fh, coefs_padded, name, block_length, bits_per_element = 32):
 
     VPU_shr = 30 #the CPU shifts the product before accumulation
@@ -12,37 +26,23 @@ def emit_filter(fh, coefs_padded, name, block_length, bits_per_element = 32):
 
     coef_data_name = 'coefs_' + name
 
-    max_float_accu = np.sum(np.abs(coefs_padded))
-    gain_dB = 20.*np.log10(max_float_accu)
-
-    print("Given filter has a max gain of", str(np.round(gain_dB, 2)), "dB")
-    if max_float_accu > 1.0:
-        print("Warning: given filter's max gain exceeds the accumulators capacity")
-
-
     max_val = np.max(np.abs(coefs_padded))
     _, e = np.frexp(max_val)
     exp = bits_per_element - 2 - e
 
-    max_accu_bit_growth = VPU_accu_bits - (2*bits_per_element - 1 - VPU_shr)
-    if max_float_accu > 2**max_accu_bit_growth:
-        print("Eeeeek")
-        exp_modify = int(np.ceil(np.log2(max_float_accu / max_accu_bit_growth)))
-        # print('exp_modify', exp_modify)
-        # scale the coefs down 
-        # and increase the shift left
-        # exp -= (exp_modify)
-        # TODO
-        pass
+    quantised_coefs = quant(coefs_padded, exp)
+    max_accu = calc_max_accu(quantised_coefs, VPU_shr)
+
+    # This guarentees no accu overflow
+    while max_accu > 2**(VPU_accu_bits-1) - 1:
+        exp -= 1
+        quantised_coefs = quant(coefs_padded, exp)
+        max_accu = calc_max_accu(quantised_coefs)
 
     fh.write('int32_t __attribute__((aligned (8))) ' + coef_data_name + '[' + str(len(coefs_padded)) + '] = {\n')
     counter = 1
-    quantised_coefs = []
-    for val in coefs_padded:
-        int_val = np.int32(np.rint(np.ldexp(val, exp)))
-        int_val = np.clip(int_val, np.iinfo(np.int32).min, np.iinfo(np.int32).max)
-        quantised_coefs.append(int_val)
-        fh.write('%12d'%(int_val))
+    for val in quantised_coefs:
+        fh.write('%12d'%(val))
         if counter != len(coefs_padded):
             fh.write(',\t')
         if counter % 4 == 0:
@@ -50,24 +50,12 @@ def emit_filter(fh, coefs_padded, name, block_length, bits_per_element = 32):
         counter += 1
     fh.write('};\n')
 
-    quantised_coefs = np.array(quantised_coefs, dtype=np.int64)
-
-    v = np.where(quantised_coefs > 0, np.iinfo(np.int32).max, np.iinfo(np.int32).min)
-    v = np.array(v, dtype=np.int64)
-
-    accu = 0
-    for x, y in zip(v, quantised_coefs):
-        accu += np.int64(np.rint((x*y)/2**VPU_shr))
-    print(accu)
-
     if VPU_shr-exp > 0:
         accu_shr = 0
         accu_shl = exp - VPU_shr
     else:
         accu_shr = exp - VPU_shr
         accu_shl = 0
-
-    print('accu_shr', accu_shr, 'accu_shl', accu_shl)
 
     # then emit the td_block_fir_filter_t struct
     filter_struct_name = "td_block_fir_filter_" + name
@@ -167,7 +155,9 @@ def process_array(coefs, filter_name, output_path, gain_dB = 0.0, debug = False,
         fh.write("//This is the count of int32_t words to allocate for one data channel.\n")
         fh.write("//i.e. int32_t channel_data[" + filter_name + "_DATA_BUFFER_ELEMENTS] = \{0\};\n")
         fh.write("#define " + filter_name + "_DATA_BUFFER_ELEMENTS (" + str(data_block_count*block_length) + ")\n\n")
-    pass
+    
+    return
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Optional app description')
