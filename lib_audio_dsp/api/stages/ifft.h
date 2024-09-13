@@ -10,6 +10,10 @@
 #include <xmath/xmath.h>
 
 typedef struct {
+} ifft_config_t;
+
+
+typedef struct {
     int32_t nfft;
     int32_t* data;
     int32_t exp;
@@ -35,8 +39,8 @@ typedef struct
 
 
 
-#define IFFT_STAGE_REQUIRED_MEMORY(N_CH, SAMPLES) \
-     + ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N_CH * sizeof(ifft_t)))
+#define IFFT_STAGE_REQUIRED_MEMORY(N_CH) \
+     + ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N_CH * sizeof(ifft_t))
 
 void ifft_init(module_instance_t* instance,
                  adsp_bump_allocator_t* allocator,

@@ -9,6 +9,9 @@
 #include "bump_allocator.h"
 
 typedef struct {
+} buffer_config_t;
+
+typedef struct {
     int32_t buffer_len;
     int32_t* buffer_data;
 } buffer_t;
@@ -30,8 +33,8 @@ typedef struct
 
 
 
-#define BUFFER_STAGE_REQUIRED_MEMORY(N_CH, SAMPLES) \
-     + ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N_CH * sizeof(buffer_t)))
+#define BUFFER_STAGE_REQUIRED_MEMORY(N_CH) \
+     + ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N_CH * sizeof(buffer_t))
 
 void buffer_init(module_instance_t* instance,
                  adsp_bump_allocator_t* allocator,

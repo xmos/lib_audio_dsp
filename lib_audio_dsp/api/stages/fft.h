@@ -10,6 +10,10 @@
 #include <xmath/xmath.h>
 
 typedef struct {
+} fft_config_t;
+
+
+typedef struct {
     int32_t nfft;
     int32_t* data;
     int32_t exp;
@@ -35,8 +39,8 @@ typedef struct
 
 
 
-#define FFT_STAGE_REQUIRED_MEMORY(N_CH, SAMPLES) \
-     + ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N_CH * sizeof(fft_t)))
+#define FFT_STAGE_REQUIRED_MEMORY(N_CH) \
+     + ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N_CH * sizeof(fft_t))
 
 void fft_init(module_instance_t* instance,
                  adsp_bump_allocator_t* allocator,

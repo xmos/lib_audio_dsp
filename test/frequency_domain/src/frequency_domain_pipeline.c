@@ -19,6 +19,7 @@ static adsp_controller_t* m_control;
 #include <stages/buffer.h>
 #include <stages/fft.h>
 #include <stages/ifft.h>
+#include <stages/wola_rect.h>
 
 // void buffer_process(int32_t **input, int32_t **output, void *app_data_state)
 // {
@@ -69,16 +70,16 @@ static adsp_controller_t* m_control;
 // }
 
 
-void wola_rect_process(int32_t **input, int32_t **output, void *app_data_state)
-{
-    wola_state_t *state = state;
-    // just point to the start of the valid data, length should just work out
-    output[0] = &(input[0][state->win_start]);
-}
+// void wola_rect_process(int32_t **input, int32_t **output, void *app_data_state)
+// {
+//     wola_state_t *state = state;
+//     // just point to the start of the valid data, length should just work out
+//     output[0] = &(input[0][state->win_start]);
+// }
 
 
 
-void init_dsp(){
+adsp_pipeline_t * adsp_auto_pipeline_init() {
 
 	// Copied from app_simple_audio_dsp_integration
 	static adsp_pipeline_t adsp_auto;
@@ -143,34 +144,48 @@ void init_dsp(){
 
 
 	// Exciting new stuff from here
-    int32_t __attribute__((aligned (8))) magic_shared_memory[512] = {0};
+    static int32_t __attribute__((aligned (8))) magic_shared_memory[512] = {0};
 
-    static buffer_config_t config2 = {};
+    // static buffer_config_t config2 = {};
     static buffer_state_t state2;
 	static buffer_constants_t constants2 = {.shared_memory = &magic_shared_memory[0], .buffer_len = 512};
-	static uint8_t memory2[_ADSP_MAX(1, BUFFER_REQUIRED_MEMORY(1))];
+	static uint8_t memory2[BUFFER_STAGE_REQUIRED_MEMORY(1)];
 	static adsp_bump_allocator_t allocator2 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory2);
 	adsp_auto.modules[2].state = (void*)&state2;
+	adsp_auto.modules[2].constants = (void*)&constants2;
 
 	buffer_init(&adsp_auto.modules[2], &allocator2, 2, 1, 1, 256);
 
-    static fft_config_t config3 = {};
+    // static fft_config_t config3 = {};
     static fft_state_t state3 = {};
-	static buffer_constants_t constants3 = {.shared_memory = &magic_shared_memory, .nfft = 512, .exp=27};
-	static uint8_t memory3[_ADSP_MAX(1, FFT_REQUIRED_MEMORY(1))];
+	static fft_constants_t constants3 = {.shared_memory = &magic_shared_memory[0], .nfft = 512, .exp=27};
+	static uint8_t memory3[FFT_STAGE_REQUIRED_MEMORY(1)];
 	static adsp_bump_allocator_t allocator3 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory3);
 	adsp_auto.modules[3].state = (void*)&state3;
+	adsp_auto.modules[3].constants = (void*)&constants3;
 
 	fft_init(&adsp_auto.modules[3], &allocator3, 2, 1, 1, 256);
 
-    static ifft_config_t config4 = {};
-    static ifft_state_t state4 = {};
-	static ifft_constants_t constants4 = {.shared_memory = &magic_shared_memory, .nfft = 512, .exp=27};
-	static uint8_t memory4[_ADSP_MAX(1, IFFT_REQUIRED_MEMORY(1))];
-	static adsp_bump_allocator_t allocator4 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory4);
-	adsp_auto.modules[4].state = (void*)&state4;
+    // static ifft_config_t config5 = {};
+    static ifft_state_t state5 = {};
+	static ifft_constants_t constants5 = {.shared_memory = &magic_shared_memory[0], .nfft = 512, .exp=27};
+	static uint8_t memory5[IFFT_STAGE_REQUIRED_MEMORY(1)];
+	static adsp_bump_allocator_t allocator5 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory5);
+	adsp_auto.modules[5].state = (void*)&state5;
+	adsp_auto.modules[5].constants = (void*)&constants5;
 
-	ifft_init(&adsp_auto.modules[4], &allocator4, 2, 1, 1, 256);
+	ifft_init(&adsp_auto.modules[5], &allocator5, 2, 1, 1, 256);
+
+
+    // static wola_rect_config_t config6 = {};
+    static wola_rect_state_t state6 = {};
+	static wola_rect_constants_t constants6 = {.win_start=0};
+	static uint8_t memory6[WOLA_RECT_STAGE_REQUIRED_MEMORY];
+	static adsp_bump_allocator_t allocator6 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory6);
+	adsp_auto.modules[6].state = (void*)&state6;
+	adsp_auto.modules[6].constants = (void*)&constants6;
+
+	wola_rect_init(&adsp_auto.modules[6], &allocator6, 2, 1, 1, 256);
 
 	// adsp_controller_init(&adsp_auto_controller, &adsp_auto);
 	return &adsp_auto;
@@ -181,24 +196,24 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 	local_thread_mode_set_bits(thread_mode_high_priority);
 
 	int32_t edge0[256] = {0}; // in
-    int32_t edge1[1] = {0}; //don't ask
+    // int32_t edge1[1] = {0}; //don't ask
 	int32_t edge2[512] = {0}; // buffered
-	bfp_complex_s32_t edge3[1] = {0}; // fft'd
+	bfp_complex_s32_t edge3; // fft'd
 	// bfp_complex_s32_t edge4[1] = {0}; // mult'd
 	int32_t edge5[512] = {0}; // ifft'd
 	int32_t edge6[256] = {0}; // wola'd
     // bfp_complex_s32_t edge7[1] = {0}; // saved filter
 
-    int32_t* stage_1_input[] = {edge0};  // buffer
-	int32_t* stage_1_output[] = {edge2};
-	int32_t* stage_2_input[] = {edge2}; // fft
-	int32_t* stage_2_output[] = {edge3};
+    int32_t* stage_2_input[] = {edge0};  // buffer
+	int32_t* stage_2_output[] = {edge2};
+	int32_t* stage_3_input[] = {edge2}; // fft
+	bfp_complex_s32_t* stage_3_output[] = {&edge3};
 	// int32_t* stage_3_input[] = {edge3, edge7}; //bfp mult
 	// int32_t* stage_3_output[] = {edge4};
-	int32_t* stage_4_input[] = {edge3}; // ifft
-	int32_t* stage_4_output[] = {edge5};
-	int32_t* stage_5_input[] = {edge5}; // wola
-	int32_t* stage_5_output[] = {edge6};
+	bfp_complex_s32_t* stage_5_input[] = {&edge3}; // ifft
+	int32_t* stage_5_output[] = {edge5};
+	int32_t* stage_6_input[] = {edge5}; // wola
+	int32_t* stage_6_output[] = {edge6};
 
 	while(1) {
 	int read_count = 1;
@@ -211,7 +226,9 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 			if(!--read_count) break;
 			else continue;
 		}
+		do_control: {
 		// no control
+		continue; }
 	}
 
 	buffer_process(

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 include($ENV{XMOS_CMAKE_PATH}/xcommon.cmake)
-project(app_simple_audio_dsp_integration)
+project(app_frequency_domain_test)
 
 set(APP_HW_TARGET XK-EVK-XU316)
 set(APP_DEPENDENT_MODULES
@@ -21,7 +21,7 @@ set(APP_COMPILER_FLAGS ${EXAMPLE_BUILD_FLAGS})
 
 file(GLOB C_SRC CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_LIST_DIR} src/*.c)
 
-set(DSP_DIR .)
+set(DSP_DIR src)
 set(DSP_MAIN ${DSP_DIR}/frequency_domain_pipeline.c)
 if(NOT EXISTS ${DSP_MAIN})
     write_file(${DSP_MAIN} "#error Generate pipeline before building or build with dsp_pipeline.ipynb")
