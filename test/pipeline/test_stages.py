@@ -582,7 +582,7 @@ def test_reverb(frame_size, pregain):
 
     do_test(make_p, tune_p, frame_size)
 
-@pytest.mark.parametrize("change_delay", [5, 2000000000])
+@pytest.mark.parametrize("change_delay", [5, 0])
 def test_delay(frame_size, change_delay):
     """
     Test Delay stage
