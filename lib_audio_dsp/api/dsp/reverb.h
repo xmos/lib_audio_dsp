@@ -106,7 +106,7 @@ typedef struct
  * @param rv                Reverb room object
  * @param fs                Sampling frequency
  * @param max_room_size     Maximum room size of delay filters
- * @param max_predealy      Maximum size of the predelay buffer in samples
+ * @param max_predelay      Maximum size of the predelay buffer in samples
  * @param predelay          Initial predelay in samples
  * @param feedback          Feedback gain for the comb filters in Q_RVR format
  * @param damping           Damping coefficient for the comb filters in Q_RVR format

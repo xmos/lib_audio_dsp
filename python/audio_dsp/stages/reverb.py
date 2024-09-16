@@ -48,11 +48,11 @@ class ReverbRoom(Stage):
         self.set_control_field_cb("wet_gain", lambda: self.dsp_block.wet_int)
         self.set_control_field_cb("pregain", lambda: self.dsp_block.pregain_int)
         self.set_control_field_cb("dry_gain", lambda: self.dsp_block.dry_int)
-        self.set_control_field_cb("predelay", lambda: self.dsp_block.predelay._delay)
+        self.set_control_field_cb("predelay", lambda: self.dsp_block._predelay._delay)
 
         self.set_constant("sampling_freq", self.fs, "int32_t")
         self.set_constant("max_room_size", float(max_room_size), "float")
-        self.set_constant("max_predelay", self.dsp_block.predelay._max_delay , "uint32_t")
+        self.set_constant("max_predelay", self.dsp_block._predelay._max_delay , "uint32_t")
 
         self.stage_memory_parameters = (
             self.constants["sampling_freq"],
@@ -69,7 +69,7 @@ class ReverbRoom(Stage):
         predelay : float
             Predelay in ms, less than max_predelay.
         """
-        self.dsp_block.predelay.set_delay(predelay, "ms")
+        self.dsp_block.predelay = predelay
 
     def set_wet_gain(self, gain_dB):
         """

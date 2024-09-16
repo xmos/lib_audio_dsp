@@ -76,7 +76,7 @@ int32_t adsp_reverb_room_calc_gain(float gain_db);
  * @param wet_gain        Wet gain in dB
  * @param dry_gain        Dry gain in dB
  * @param pregain         Linear pre-gain
- * @param max_predealy    Maximum size of the predelay buffer in ms
+ * @param max_predelay    Maximum size of the predelay buffer in ms
  * @param predelay        Initial predelay in ms
  * @param reverb_heap     Pointer to heap to allocate reverb memory
  * @return reverb_room_t  Initialised reverb room object
