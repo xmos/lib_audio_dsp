@@ -421,7 +421,7 @@ class reverb_room(dspg.dsp_block):
 
     @predelay.setter
     def predelay(self, delay):
-        self._predelay.set_gain(delay, "ms")
+        self._predelay.set_delay(delay, "ms")
 
     @property
     def pregain(self):
