@@ -144,7 +144,7 @@ adsp_pipeline_t * adsp_auto_pipeline_init() {
 
 
 	// Exciting new stuff from here
-    static int32_t __attribute__((aligned (8))) magic_shared_memory[1024] = {0};
+    static int32_t __attribute__((aligned (8))) magic_shared_memory[512] = {0};
 
 	printf("magic mem addr: %p\n", &magic_shared_memory[0]);
 
@@ -240,15 +240,15 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 		stage_2_input,
 		stage_2_output,
 		modules[2]->state);
-	printf("s2 out addr: %p\n", stage_2_output[0][0]);
-	printf("s3 in addr: %p\n", stage_3_input[0][0]);
+	// printf("s2 out addr: %p\n", stage_2_output[0][0]);
+	// printf("s3 in addr: %p\n", stage_3_input[0][0]);
 	printf("ffting\n");
 	fft_process(
 		stage_3_input,
 		stage_3_output,
 		modules[3]->state);
-    printf("s3 output data addr: %p\n", stage_3_output[0][0]->data);
-    printf("s5 in output data addr: %p\n", stage_5_input[0][0]->data);
+    // printf("s3 output data addr: %p\n", stage_3_output[0][0]->data);
+    // printf("s5 in output data addr: %p\n", stage_5_input[0][0]->data);
 
 	// bfp_mult_process(
 	// 	stage_3_input,
@@ -260,13 +260,13 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 		stage_5_output,
 		modules[5]->state);
 	printf("wolaing\n");
-	printf("edge6 0: %p\n", &edge6[0]);
+	// printf("edge6 0: %p\n", &edge6[0]);
 	wola_rect_process(
 		stage_6_input,
 		stage_6_output,
 		modules[6]->state);
 
-	printf("output %ld %ld %ld %ld %ld\n", edge6[0], edge6[1], edge6[2], edge6[3], edge6[4]);
+	printf("outpt %ld %ld %ld %ld %ld\n", edge6[0], edge6[1], edge6[2], edge6[3], edge6[4]);
 
 	for(int idx = 0; idx < 256; ++idx) edge6[idx] = adsp_to_q31(edge6[idx]); chan_out_buf_word(c_dest[0], (uint32_t*)edge6, 256);
 	printf("end of looop\n");
