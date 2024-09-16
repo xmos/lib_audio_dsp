@@ -418,7 +418,7 @@ class reverb_room(dspg.dsp_block):
     def predelay(self):
         """The delay applied to the wet channel in ms."""
         return self._predelay.delay_time
-    
+
     @predelay.setter
     def predelay(self, delay):
         self._predelay.set_gain(delay, "ms")

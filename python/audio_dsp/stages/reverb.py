@@ -41,7 +41,13 @@ class ReverbRoom(Stage):
 
         max_predelay = predelay if max_predelay == None else max_predelay
 
-        self.dsp_block = rvrb.reverb_room(self.fs, self.n_in, max_room_size=max_room_size, predelay=predelay, max_predelay=max_predelay)
+        self.dsp_block = rvrb.reverb_room(
+            self.fs,
+            self.n_in,
+            max_room_size=max_room_size,
+            predelay=predelay,
+            max_predelay=max_predelay,
+        )
         self.set_control_field_cb("room_size", lambda: self.dsp_block.room_size)
         self.set_control_field_cb("feedback", lambda: self.dsp_block.combs[0].feedback_int)
         self.set_control_field_cb("damping", lambda: self.dsp_block.combs[0].damp1_int)
@@ -52,12 +58,12 @@ class ReverbRoom(Stage):
 
         self.set_constant("sampling_freq", self.fs, "int32_t")
         self.set_constant("max_room_size", float(max_room_size), "float")
-        self.set_constant("max_predelay", self.dsp_block._predelay._max_delay , "uint32_t")
+        self.set_constant("max_predelay", self.dsp_block._predelay._max_delay, "uint32_t")
 
         self.stage_memory_parameters = (
             self.constants["sampling_freq"],
             self.constants["max_room_size"],
-            self.constants["max_predelay"]
+            self.constants["max_predelay"],
         )
 
     def set_predelay(self, predelay):
