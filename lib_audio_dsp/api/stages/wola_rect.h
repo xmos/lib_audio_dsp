@@ -42,6 +42,6 @@ void wola_rect_init(module_instance_t* instance,
                  int n_outputs,
                  int frame_size);
 
-void wola_rect_process(int32_t **input, int32_t **output, void *app_data_state);
+void wola_rect_process(int32_t ***input, int32_t **output, void *app_data_state);
 
 void wola_rect_control(void *state, module_control_t *control);

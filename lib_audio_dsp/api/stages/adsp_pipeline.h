@@ -97,7 +97,7 @@ static inline void adsp_pipeline_source(adsp_pipeline_t *adsp, int32_t **data)
 /// @param adsp The initialised pipeline.
 /// @param data An array of arrays that will be filled with processed samples from the pipeline.
 ///             The length of the array shall be the number
-///             of pipeline input channels. Each array contained within shall be contain a frame
+///             of pipeline output channels. Each array contained within shall be contain a frame
 ///             of samples large enough to pass to the stage that it is connected to.
 static inline void adsp_pipeline_sink(adsp_pipeline_t *adsp, int32_t **data)
 {
