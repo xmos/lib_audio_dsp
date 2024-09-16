@@ -43,6 +43,6 @@ void buffer_init(module_instance_t* instance,
                  int n_outputs,
                  int frame_size);
 
-void buffer_process(int32_t **input, int32_t **output, void *app_data_state);
+void buffer_process(int32_t **input, int32_t ***output, void *app_data_state);
 
 void buffer_control(void *state, module_control_t *control);
