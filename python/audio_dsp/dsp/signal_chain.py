@@ -794,6 +794,9 @@ class delay(dspg.dsp_block):
     """
     A simple delay line class.
 
+    Note the minimum delay provided by this block is 1 sample. Setting
+    the delay to 0 will still yield a 1 sample delay.
+
     Parameters
     ----------
     max_delay : float
