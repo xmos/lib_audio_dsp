@@ -21,6 +21,11 @@
 
 #define DEFAULT_AP_FEEDBACK 0x40000000 // 0.5 in Q0.31
 
+#define EFFECT_GAIN 424433723 // 10 dB linear in q27
+#if Q_GAIN != 27
+#error "Need to change the EFFECT_GAIN"
+#endif
+
 static inline int32_t scale_sat_int64_to_int32_floor(int32_t ah,
                                                      int32_t al,
                                                      int32_t shift)
@@ -351,7 +356,8 @@ int32_t adsp_reverb_room(
         acc = allpass_fv(&(rv->allpasses[ap]), output);
         output = (int32_t)acc; // We do not saturate here!
     }
-    acc = apply_gain_q31(output, rv->wet_gain);
+    output = apply_gain_q31(output, rv->wet_gain);
+    acc = adsp_fixed_gain(output, EFFECT_GAIN);
     acc += apply_gain_q31(new_samp, rv->dry_gain);
     output = adsp_saturate_32b(acc);
 
