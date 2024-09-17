@@ -16,11 +16,12 @@
 /** Default reverb room buffer length */
 #define ADSP_RVR_SUM_DEFAULT_BUF_LENS 12587
 /** Heap size to allocate for the reverb room */
-#define ADSP_RVR_HEAP_SZ(FS, ROOM_SZ) ((uint32_t)(sizeof(int32_t) *            \
+#define ADSP_RVR_HEAP_SZ(FS, ROOM_SZ, PD) ((uint32_t)((sizeof(int32_t) *            \
                                                  ADSP_RVR_SCALE(FS, ROOM_SZ) * \
-                                                 ADSP_RVR_SUM_DEFAULT_BUF_LENS))
+                                                 ADSP_RVR_SUM_DEFAULT_BUF_LENS) +\
+                                                 DELAY_DSP_REQUIRED_MEMORY_SAMPLES(PD)))
 /** External API for calculating memory to allocate for the reverb room */
-#define REVERB_ROOM_DSP_REQUIRED_MEMORY(FS, ROOM_SZ) ADSP_RVR_HEAP_SZ(FS, ROOM_SZ)
+#define REVERB_ROOM_DSP_REQUIRED_MEMORY(FS, ROOM_SZ, PD) ADSP_RVR_HEAP_SZ(FS, ROOM_SZ, PD)
 
 /** Number of comb filters used in the reverb room */
 #define ADSP_RVR_N_COMBS 8
@@ -88,6 +89,8 @@ typedef struct
     comb_fv_t combs[ADSP_RVR_N_COMBS];
     /** Allpass filters */
     allpass_fv_t allpasses[ADSP_RVR_N_APS];
+    /** Predelay applied to the wet channel */
+    delay_t predelay;
 } reverb_room_t;
 
 /**
@@ -103,6 +106,8 @@ typedef struct
  * @param rv                Reverb room object
  * @param fs                Sampling frequency
  * @param max_room_size     Maximum room size of delay filters
+ * @param max_predelay      Maximum size of the predelay buffer in samples
+ * @param predelay          Initial predelay in samples
  * @param feedback          Feedback gain for the comb filters in Q_RVR format
  * @param damping           Damping coefficient for the comb filters in Q_RVR format
  * @param reverb_heap       Pointer to heap to allocate reverb memory
@@ -111,6 +116,8 @@ void adsp_reverb_room_init_filters(
     reverb_room_t *rv,
     float fs,
     float max_room_size,
+    uint32_t max_predelay,
+    uint32_t predelay,
     int32_t feedback,
     int32_t damping,
     void * reverb_heap);

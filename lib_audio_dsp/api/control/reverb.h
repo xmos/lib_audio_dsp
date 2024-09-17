@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "dsp/reverb.h"
+#include "dsp/adsp.h"
 #include "helpers.h"
 #include <stdint.h>
 
@@ -76,6 +76,8 @@ int32_t adsp_reverb_room_calc_gain(float gain_db);
  * @param wet_gain        Wet gain in dB
  * @param dry_gain        Dry gain in dB
  * @param pregain         Linear pre-gain
+ * @param max_predelay    Maximum size of the predelay buffer in ms
+ * @param predelay        Initial predelay in ms
  * @param reverb_heap     Pointer to heap to allocate reverb memory
  * @return reverb_room_t  Initialised reverb room object
  */
@@ -88,4 +90,6 @@ reverb_room_t adsp_reverb_room_init(
     float wet_gain,
     float dry_gain,
     float pregain,
+    float max_predelay,
+    float predelay,
     void *reverb_heap);

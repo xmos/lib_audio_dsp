@@ -36,6 +36,8 @@ reverb_room_t adsp_reverb_room_init(
   float wet_gain,
   float dry_gain,
   float pregain,
+  float max_predelay,
+  float predelay,
   void *reverb_heap)
 {
   // For larger rooms, increase max_room_size. Don't forget to also increase
@@ -44,6 +46,9 @@ reverb_room_t adsp_reverb_room_init(
   xassert(decay >= 0 && decay <= 1);
   xassert(damping >= 0 && damping <= 1);
   xassert(pregain >= 0 && pregain < 1);
+  xassert(max_predelay > 0);
+  xassert(predelay <= max_predelay);
+  xassert(reverb_heap != NULL);
 
   reverb_room_t rv;
 
@@ -51,7 +56,9 @@ reverb_room_t adsp_reverb_room_init(
   const int32_t feedback_int = float_to_Q_RVR_pos((decay * 0.28) + 0.7);
   const int32_t damping_int = MAX(float_to_Q_RVR_pos(damping) - 1, 1);
 
-  adsp_reverb_room_init_filters(&rv, fs, max_room_size, feedback_int, damping_int, reverb_heap);
+  int32_t predelay_samps = predelay * fs / 1000;
+  int32_t max_predelay_samps = max_predelay * fs / 1000;
+  adsp_reverb_room_init_filters(&rv, fs, max_room_size, max_predelay_samps, predelay_samps, feedback_int, damping_int, reverb_heap);
   adsp_reverb_room_set_room_size(&rv, room_size);
 
   rv.pre_gain = float_to_Q_RVR_pos(pregain);
