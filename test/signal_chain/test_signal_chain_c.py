@@ -171,7 +171,8 @@ def test_volume_control_c(in_signal, gains_dB, slew, mute_test):
 
 @pytest.mark.parametrize("delay_spec", [[1, 0, "samples"],
                                         [0.5, 0.5, "ms"],
-                                        [0.02, 0.01, "s"]])
+                                        [0.02, 0.01, "s"],
+                                        [0.5, 0, "ms"]])
 def test_delay_c(in_signal, delay_spec):
   filter = sc.delay(fs, 1, *delay_spec)
   test_dir = bin_dir / f"delay_{delay_spec[0]}_{delay_spec[1]}_{delay_spec[2]}"
