@@ -575,6 +575,7 @@ def test_reverb(frame_size, pregain):
         p["control"].set_room_size(0.4)
         p["control"].set_damping(0.5)
         p["control"].set_decay(0.6)
+        p["control"].set_predelay(5)
 
         stage_config = p["control"].get_config()
         generate_test_param_file("REVERB_ROOM", stage_config)

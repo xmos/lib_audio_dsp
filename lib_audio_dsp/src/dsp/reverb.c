@@ -229,18 +229,20 @@ void adsp_reverb_room_init_filters(
     reverb_room_t *rv,
     float fs,
     float max_room_size,
+    uint32_t max_predelay,
+    uint32_t predelay,
     int32_t feedback,
     int32_t damping,
     void * reverb_heap)
 {
     mem_manager_t memory_manager = mem_manager_init(
         reverb_heap,
-        ADSP_RVR_HEAP_SZ(fs, max_room_size));
+        ADSP_RVR_HEAP_SZ(fs, max_room_size, max_predelay));
 
     const float rv_scale_fac = ADSP_RVR_SCALE(fs, max_room_size);
 
     // shift 2 insted of / sizeof(int32_t), to avoid division
-    rv->total_buffer_length = ADSP_RVR_HEAP_SZ(fs, max_room_size) >> 2;
+    rv->total_buffer_length = ADSP_RVR_HEAP_SZ(fs, max_room_size, max_predelay) >> 2;
 
     uint32_t comb_lengths[ADSP_RVR_N_COMBS] = DEFAULT_COMB_LENS;
     uint32_t ap_lengths[ADSP_RVR_N_APS] = DEFAULT_AP_LENS;
@@ -263,6 +265,12 @@ void adsp_reverb_room_init_filters(
             DEFAULT_AP_FEEDBACK,
             &memory_manager);
     }
+    // init predelay manually with memory_manager
+    rv->predelay.fs = fs;
+    rv->predelay.buffer_idx = 0;
+    rv->predelay.delay = predelay;
+    rv->predelay.max_delay = max_predelay;
+    rv->predelay.buffer = mem_manager_alloc(&memory_manager, DELAY_DSP_REQUIRED_MEMORY_SAMPLES(max_predelay));
 }
 
 void adsp_reverb_room_reset_state(reverb_room_t *rv)
@@ -328,7 +336,8 @@ int32_t adsp_reverb_room(
     reverb_room_t *rv,
     int32_t new_samp)
 {
-    int32_t reverb_input = apply_gain_q31(new_samp, rv->pre_gain);
+    int32_t delayed_input = adsp_delay(&rv->predelay, new_samp);
+    int32_t reverb_input = apply_gain_q31(delayed_input, rv->pre_gain);
     int32_t output = 0;
     int64_t acc = 0;
     for (int comb = 0; comb < ADSP_RVR_N_COMBS; comb++)

@@ -20,6 +20,7 @@ def apply_gain_xcore(sample, gain):
     """Apply the gain to a sample using fixed-point math. Assumes that gain is in Q_VERB format."""
     acc = 1 << (Q_VERB - 1)
     acc += sample * gain
+    utils.int64(acc)
     y = utils.int32_mult_sat_extract(acc, 1, Q_VERB)
     return y
 
@@ -35,6 +36,7 @@ def scale_sat_int64_to_int32_floor(val):
     # up instead.
     if val < 0:
         val += (2**Q_VERB) - 1
+        utils.int64(val)
 
     # saturate
     if val > (2 ** (31 + Q_VERB) - 1):
@@ -75,7 +77,7 @@ class allpass_fv(dspg.dsp_block):
 
     def set_delay(self, delay):
         """Set the length of the delay line. Will saturate to max_delay."""
-        if delay < self._max_delay:
+        if delay <= self._max_delay:
             self.delay = delay
         else:
             self.delay = self._max_delay
@@ -172,7 +174,7 @@ class comb_fv(dspg.dsp_block):
 
     def set_delay(self, delay):
         """Set the length of the delay line. Will saturate to max_delay."""
-        if delay < self._max_delay:
+        if delay <= self._max_delay:
             self.delay = delay
         else:
             self.delay = self._max_delay
@@ -282,7 +284,14 @@ class reverb_room(dspg.dsp_block):
         dry signal gain, less than 0 dB.
     pregain : float, optional
         the amount of gain applied to the signal before being passed
-        into the reverb, less than 1.
+        into the reverb, less than 1. If the reverb raises an
+        OverflowWarning, this value should be reduced until it does not.
+        The default value of 0.015 should be sufficient for most Q27
+        signals.
+    predelay : float, optional
+        the delay applied to the wet channel in ms.
+    max_predelay : float, optional
+        the maximum predelay in ms.
 
 
     Attributes
@@ -313,13 +322,14 @@ class reverb_room(dspg.dsp_block):
         A list of allpass_fv objects containing the all pass filters for
         the reverb.
     room_size : float
-    decay: float
-    feedback: float
-    feedback_int: int
+    decay : float
+    feedback : float
+    feedback_int : int
         feedback as a fixed point integer.
-    damping: float
-    damping_int: int
+    damping : float
+    damping_int : int
         damping as a fixed point integer.
+    predelay : float
     """
 
     def __init__(
@@ -333,11 +343,17 @@ class reverb_room(dspg.dsp_block):
         wet_gain_db=-1,
         dry_gain_db=-1,
         pregain=0.015,
+        predelay=10,
+        max_predelay=None,
         Q_sig=dspg.Q_SIG,
     ):
         assert n_chans == 1, f"Reverb only supports 1 channel. {n_chans} specified"
 
         super().__init__(fs, 1, Q_sig)
+
+        # predelay
+        max_predelay = predelay if max_predelay == None else max_predelay
+        self._predelay = sc.delay(fs, n_chans, max_predelay, predelay, "ms")
 
         # gains
         self.pregain = pregain
@@ -388,6 +404,7 @@ class reverb_room(dspg.dsp_block):
             cb.reset_state()
         for ap in self.allpasses:
             ap.reset_state()
+        self._predelay.reset_state()
 
     def get_buffer_lens(self):
         """Get the total length of all the buffers used in the reverb."""
@@ -397,6 +414,15 @@ class reverb_room(dspg.dsp_block):
         for ap in self.allpasses:
             total_buffers += ap._max_delay
         return total_buffers
+
+    @property
+    def predelay(self):
+        """The delay applied to the wet channel in ms."""
+        return self._predelay.delay_time
+
+    @predelay.setter
+    def predelay(self, delay):
+        self._predelay.set_delay(delay, "ms")
 
     @property
     def pregain(self):
@@ -664,7 +690,8 @@ class reverb_room(dspg.dsp_block):
         Input should be scaled with 0 dB = 1.0.
 
         """
-        reverb_input = sample * self.pregain
+        delayed_input = self._predelay.process_channels([sample])[0]
+        reverb_input = delayed_input * self.pregain
 
         output = 0
         for cb in self.combs:
@@ -686,7 +713,8 @@ class reverb_room(dspg.dsp_block):
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
 
-        reverb_input = apply_gain_xcore(sample_int, self.pregain_int)
+        delayed_input = self._predelay.process_channels_xcore([sample_int])[0]
+        reverb_input = apply_gain_xcore(delayed_input, self.pregain_int)
 
         output = 0
         for cb in self.combs:
