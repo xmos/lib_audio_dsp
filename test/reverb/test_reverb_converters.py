@@ -3,6 +3,7 @@ import numpy as np
 from audio_dsp.dsp.reverb import reverb_room, Q_VERB
 from subprocess import run
 from pathlib import Path
+import os
 
 CWD = Path(__file__).parent
 TOL_KWARGS = dict(rtol=2**-16, atol=0)
@@ -22,12 +23,14 @@ def new_reverb(**kwargs):
 
 
 def get_c(config, val):
-    out_dir = CWD / "bin" / config
+    bin_dir = CWD / "bin" / config
+    out_dir = CWD / "bin" / f"{config}_{val}"
+    os.makedirs(out_dir, exist_ok=True)
     sig_fl32 = np.array(val).astype(np.float32)
     name = "test_vector"
     sig_fl32.tofile(out_dir / f"{name}.bin")
 
-    xe = out_dir / f"reverb_converters_{config}.xe"
+    xe = bin_dir / f"reverb_converters_{config}.xe"
     run(["xsim", str(xe)], check=True, cwd=out_dir)
     print(out_dir)
     return np.fromfile(out_dir / "out_vector.bin", dtype=np.int32)[0]
