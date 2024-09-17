@@ -469,7 +469,12 @@ class reverb_room(dspg.dsp_block):
 
         self._wet_db = x
         self._wet = utils.db2gain(x)
-        self.wet_int = utils.int32((self._wet * 2**Q_VERB) - 1)
+        if self.wet == 1:
+            self.wet_int = utils.int32(2**31-1)
+        elif self.wet == 0:
+            self.wet_int = 0
+        else:
+            self.wet_int = utils.int32(self.wet * (2**Q_VERB))
 
     @property
     def wet(self):
@@ -507,7 +512,12 @@ class reverb_room(dspg.dsp_block):
 
         self._dry_db = x
         self._dry = utils.db2gain(x)
-        self.dry_int = utils.int32((self.dry * 2**Q_VERB) - 1)
+        if self.dry == 1:
+            self.dry_int = utils.int32(2**31-1)
+        elif self.dry == 0:
+            self.dry_int = 0
+        else:
+            self.dry_int = utils.int32(self.dry * (2**Q_VERB))
 
     @property
     def dry(self):
