@@ -7,6 +7,7 @@ import audio_dsp.dsp.generic as dspg
 import numpy as np
 import warnings
 import audio_dsp.dsp.utils as utils
+import audio_dsp.dsp.signal_chain as sc
 from copy import deepcopy
 
 Q_VERB = 31
@@ -342,6 +343,7 @@ class reverb_room(dspg.dsp_block):
         self.pregain = pregain
         self.wet_db = wet_gain_db
         self.dry_db = dry_gain_db
+        self._effect_gain = sc.fixed_gain(fs, 1, 10)
 
         # the magic freeverb delay line lengths are for 44.1kHz, so
         # scale them with sample rate and room size
@@ -610,6 +612,25 @@ class reverb_room(dspg.dsp_block):
         """
         self.room_size = room_size
 
+    def set_wet_dry_mix(self, mix):
+        """
+        Will mix wet and dry signal by adjusting wet and dry gains.
+        So that when the mix is 0, the output signal is fully dry,
+        when 1, the output signal is fully wet. Tries to maintain a
+        stable signal level using -4.5 dB Pan Law.
+        """
+        if not (0 <= mix <= 1):
+            raise ValueError("wet_dry_mix must be between 0 and 1")
+        # get an angle [0, pi /2]
+        omega = mix * np.pi / 2
+
+        # -4.5 dB
+        self.dry = np.sqrt((1 - mix) * np.cos(omega))
+        self.wet = np.sqrt(mix * np.sin(omega))
+        # there's an extra gain of 10 dB added to the wet channel to
+        # make it similar level to the dry, so that the mixing is smooth.
+        # Couldn't add it to the wet gain itself as it's in q31
+
     def process_frame(self, frame):
         """
         Take a list frames of samples and return the processed frames.
@@ -652,7 +673,8 @@ class reverb_room(dspg.dsp_block):
         for ap in self.allpasses:
             output = ap.process(output)
 
-        output = output * self.wet + sample * self.dry
+        output = self._effect_gain.process(output * self.wet) + sample * self.dry
+
         return output
 
     def process_xcore(self, sample, channel=0):
@@ -682,6 +704,7 @@ class reverb_room(dspg.dsp_block):
         # need an extra bit in this add, if wet/dry mix is badly set
         # output can saturate (users fault)
         output = apply_gain_xcore(output, self.wet_int)
+        output = self._effect_gain.process_xcore(output)
         output += apply_gain_xcore(sample_int, self.dry_int)
         utils.int64(output)
         output = utils.saturate_int64_to_int32(output)

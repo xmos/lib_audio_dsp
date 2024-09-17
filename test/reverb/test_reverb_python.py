@@ -157,6 +157,29 @@ def test_reverb_frames(fs, max_room_size, q_format):
     assert np.all(output_int[0, :] == output_int)
     assert np.all(output_flt[0, :] == output_flt)
 
+def test_reverb_wet_dry_mix():
+    fs = 48000
+    q_format = 27
+    max_room_sz = 1
+    room_sz = 1
+    damp = 0.22
+
+    a = utils.db2gain(-10)
+    sig = gen.pink_noise(fs, 1, a)
+
+    def _run_rv_mix(mix):
+        verb = rv.reverb_room(fs, 1, max_room_size=max_room_sz, damping=damp, room_size=room_sz, Q_sig=q_format)
+        verb.set_wet_dry_mix(mix)
+        sig_py = np.zeros_like(sig)
+        sig_xc = np.zeros_like(sig)
+        for i in range(len(sig)):
+            sig_py[i] = verb.process(sig[i])
+            sig_xc[i] = verb.process_xcore(sig[i])
+        np.testing.assert_allclose(sig_py, sig_xc, atol=2**-17)
+
+    _run_rv_mix(0.5)
+    _run_rv_mix(1)
+
 def test_reverb_properties_decay():
     """Basic tests to check for consistency when setting the properties."""
     r = partial(rv.reverb_room, 48000, 1)
@@ -184,7 +207,6 @@ def test_reverb_properties_pregain():
 
     should_be_val = np.array([i.pregain for i in (a, b, c)])
     np.testing.assert_allclose(should_be_val, val)
-
 
 def test_reverb_properties_wet_db():
     """Basic tests to check for consistency when setting the properties."""
@@ -243,6 +265,7 @@ def test_reverb_properties_room_size():
     np.testing.assert_allclose(should_be_val, val)
 
 if __name__ == "__main__":
-    test_reverb_overflow("sine", 20, 0.01)
+    # test_reverb_overflow("sine", 20, 0.01)
     # test_reverb_time(0.01, 1)
     # test_reverb_frames(48000, 1)
+    test_reverb_wet_dry_mix()

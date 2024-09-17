@@ -418,15 +418,22 @@ class fixed_gain(dspg.dsp_block):
         float
             The processed output sample.
         """
-        sample_int = utils.float_to_int32(sample, self.Q_sig)
+        if isinstance(sample, float):
+            sample_int = utils.float_to_int32(sample, self.Q_sig)
+        elif isinstance(sample, int):
+            sample_int = sample
+        else:
+            raise TypeError("input must be float or int")
+
         # for rounding
         acc = 1 << (Q_GAIN - 1)
         acc += sample_int * self.gain_int
         y = utils.int32_mult_sat_extract(acc, 1, Q_GAIN)
 
-        y_flt = float(y) * 2**-self.Q_sig
-
-        return y_flt
+        if isinstance(sample, float):
+            return float(y) * 2**-self.Q_sig
+        else:
+            return y
 
     def freq_response(self, nfft: int = 512) -> tuple[np.ndarray, np.ndarray]:
         """
