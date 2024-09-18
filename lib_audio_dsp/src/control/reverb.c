@@ -33,7 +33,8 @@ int32_t adsp_reverb_room_calc_gain(float gain_db)
 }
 
 void adsp_reverb_wet_dry_mix(int32_t gains[2], float mix) {
-  xassert(mix >= 0 && mix <= 1);
+  mix = mix > 1.0f ? 1.0f : mix;
+  mix = mix < 0.0f ? 0.0f : mix;
   const float pi_by_2 = 1.5707963f;
   // get an angle [0, pi / 2]
   float omega = mix * pi_by_2;

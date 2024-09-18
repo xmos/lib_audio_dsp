@@ -123,7 +123,7 @@ def test_reverb_damping(input, expected):
     )
 
 @pytest.mark.parametrize(
-    "input", [0, 0.07, 0.23, 0.5, 0.64, 0.92, 1]
+    "input", [-1, 0, 0.07, 0.23, 0.5, 0.64, 0.92, 1, 2]
 )
 def test_reverb_wet_dry_mix_conv(input):
     c_vals = get_c("WET_DRY_MIX", input)

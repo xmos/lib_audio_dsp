@@ -67,10 +67,12 @@ int32_t adsp_reverb_room_calc_gain(float gain_db);
 /**
  * @brief Calculate the wet and dry gains according to the mix amount.
  * 
- * When the mix is set to 0, the wet gain will be 0 and the dry gain will be max,
- * when 1, the wet gain is max, the dry gain is 0.
- * Tries to maintain the stable signal level by calculating the gains
- * by using the -4.5 dB Pan Law.
+ * When the mix is set to 0, only the dry signal will be output. 
+ * The wet gain will be 0 and the dry gain will be max.
+ * When the mic is set to 1, only they wet signal will be output. 
+ * The wet gain is max, the dry gain will be 0.
+ * In order to maintain a consistent signal level across all mix values, 
+ * the signals are panned with a -4.5 dB panning law.
  * 
  * @param gains           Output gains: [0] - Dry; [1] - Wet
  * @param mix             Mix applied from 0 to 1

@@ -661,7 +661,9 @@ class reverb_room(dspg.dsp_block):
             The wet/dry mix, must be [0, 1].
         """
         if not (0 <= mix <= 1):
-            raise ValueError("wet_dry_mix must be between 0 and 1")
+            bad_mix = mix
+            mix = np.clip(mix, 0, 1)
+            warnings.warn(f"Wet/dry mix {bad_mix} saturates to {mix}", UserWarning)
         # get an angle [0, pi /2]
         omega = mix * np.pi / 2
 

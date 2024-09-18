@@ -552,7 +552,7 @@ def test_fixed_gain(frame_size):
 @pytest.mark.parametrize("pregain, mix", [
     [0.01, False],
     [0.01, True],
-    pytest.param([0.3, False], marks=pytest.mark.xfail(reason="Reverb can overflow for large values of pregain, tracked at LCD-297"))
+    pytest.param(0.3, False, marks=pytest.mark.xfail(reason="Reverb can overflow for large values of pregain, tracked at LCD-297"))
      ])
 def test_reverb(frame_size, pregain, mix):
     """
