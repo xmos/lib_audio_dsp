@@ -55,8 +55,9 @@ def generate_ref(sig, ref_module, pipeline_channels, frame_size):
 
 def do_test_catch(make_p, tune_p, frame_size):
     try:
-        # do_test(make_p, tune_p, frame_size)
-        assert 0, f'\nERROR: host app exited with error code -15\n'
+        do_test(make_p, tune_p, frame_size)
+        # if xtag fails, raises a 
+        # assert 0, f'\nERROR: host app exited with error code -15\n'
     except Exception as e:
         if "ERROR: host app exited with error code -15" in e.args[0]:
             #reset xtag and try again
