@@ -103,8 +103,7 @@ pipeline {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/biquad") {
-                          runPytest("test_biquad_python.py --dist worksteal")
-                          runPytest("*_c.py --dist worksteal")
+                          runPytest("--dist worksteal")
                         }
                       }
                     }
@@ -119,8 +118,7 @@ pipeline {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/cascaded_biquads") {
-                          runPytest("test_cascaded_biquads_python.py --dist worksteal")
-                          runPytest("*_c.py --dist worksteal")
+                          runPytest("--dist worksteal")
                         }
                       }
                     }
@@ -137,8 +135,7 @@ pipeline {
                         withEnv(["hydra_audio_PATH=$hydra_audio_test_skype_PATH"]){
                           catchError(stageResult: 'FAILURE', catchInterruptions: false){
                             dir("test/drc") {
-                              runPytest("test_drc_python.py --dist worksteal")
-                              runPytest("*_c.py --dist worksteal")
+                              runPytest("--dist worksteal")
                             }
                           }
                         }
@@ -214,8 +211,7 @@ pipeline {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/fir") {
-                          runPytest("test_fir_python.py --dist worksteal")
-                          runPytest("*_c.py --dist worksteal")
+                          runPytest("--dist worksteal")
                         }
                       }
                     }
@@ -230,8 +226,7 @@ pipeline {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/signal_chain") {
-                          runPytest("test_signal_chain_python.py --dist worksteal")
-                          runPytest("*_c.py --dist worksteal")
+                          runPytest("--dist worksteal")
                         }
                       }
                     }
