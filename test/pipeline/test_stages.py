@@ -60,7 +60,7 @@ def do_test_catch(make_p, tune_p, frame_size):
     except Exception as e:
         if "ERROR: host app exited with error code -15" in e.args[0]:
             #reset xtag and try again
-            subprocess.check_output('xtagctl reset_all XCORE-AI-EXPLORER')
+            subprocess.check_output('xtagctl reset_all XCORE-AI-EXPLORER', shell=True)
             do_test(make_p, tune_p, frame_size)
 
 def do_test(make_p, tune_p, dut_frame_size):
@@ -429,7 +429,7 @@ def test_clipper(frame_size):
         generate_test_param_file("CLIPPER", stage_config)
         return p
 
-    do_test_catch_catch(make_p, tune_p, frame_size)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_compressor(frame_size):
