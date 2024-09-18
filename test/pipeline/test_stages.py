@@ -12,6 +12,7 @@ from audio_dsp.stages import *
 import audio_dsp.dsp.utils as utils
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
 
+import subprocess
 from pathlib import Path
 import numpy as np
 import struct
@@ -51,6 +52,16 @@ def generate_ref(sig, ref_module, pipeline_channels, frame_size):
 
     return out_py_int
 
+
+def do_test_catch(make_p, tune_p, frame_size):
+    try:
+        # do_test(make_p, tune_p, frame_size)
+        assert 0, f'\nERROR: host app exited with error code -15\n'
+    except Exception as e:
+        if "ERROR: host app exited with error code -15" in e.args[0]:
+            #reset xtag and try again
+            subprocess.check_output('xtagctl reset_all XCORE-AI-EXPLORER')
+            do_test(make_p, tune_p, frame_size)
 
 def do_test(make_p, tune_p, dut_frame_size):
     """
@@ -269,7 +280,7 @@ def test_biquad(method, args, frame_size):
         generate_test_param_file("BIQUAD", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 filter_spec = [
@@ -318,7 +329,7 @@ def test_cascaded_biquad(method, args, frame_size):
         generate_test_param_file("CASCADED_BIQUADS", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_limiter_rms(frame_size):
@@ -343,7 +354,7 @@ def test_limiter_rms(frame_size):
         generate_test_param_file("LIMITER_RMS", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_limiter_peak(frame_size):
@@ -368,7 +379,7 @@ def test_limiter_peak(frame_size):
         generate_test_param_file("LIMITER_PEAK", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_hard_limiter_peak(frame_size):
@@ -393,7 +404,7 @@ def test_hard_limiter_peak(frame_size):
         generate_test_param_file("HARD_LIMITER_PEAK", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_clipper(frame_size):
@@ -418,7 +429,7 @@ def test_clipper(frame_size):
         generate_test_param_file("CLIPPER", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test_catch_catch(make_p, tune_p, frame_size)
 
 
 def test_compressor(frame_size):
@@ -443,7 +454,7 @@ def test_compressor(frame_size):
         generate_test_param_file("COMPRESSOR_RMS", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_noise_gate(frame_size):
@@ -468,7 +479,7 @@ def test_noise_gate(frame_size):
         generate_test_param_file("NOISE_GATE", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_noise_suppressor_expander(frame_size):
@@ -493,7 +504,7 @@ def test_noise_suppressor_expander(frame_size):
         generate_test_param_file("NOISE_SUPPRESSOR_EXPANDER", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_volume(frame_size):
@@ -522,7 +533,7 @@ def test_volume(frame_size):
         generate_test_param_file("VOLUME_CONTROL", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_fixed_gain(frame_size):
@@ -547,7 +558,7 @@ def test_fixed_gain(frame_size):
         generate_test_param_file("FIXED_GAIN", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test_catch(make_p, tune_p, frame_size)
 
 @pytest.mark.parametrize("pregain", [
     0.01,
@@ -581,7 +592,7 @@ def test_reverb(frame_size, pregain):
         generate_test_param_file("REVERB_ROOM", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test_catch(make_p, tune_p, frame_size)
 
 @pytest.mark.parametrize("change_delay", [5, 0])
 def test_delay(frame_size, change_delay):
@@ -607,7 +618,7 @@ def test_delay(frame_size, change_delay):
         generate_test_param_file("DELAY", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -641,4 +652,8 @@ def test_fir(frame_size, filter_name):
         p.set_outputs(o)
         return p
 
-    do_test(make_p, None, frame_size)
+    do_test_catch(make_p, None, frame_size)
+
+
+if __name__ == "__main__":
+    test_clipper(1)
