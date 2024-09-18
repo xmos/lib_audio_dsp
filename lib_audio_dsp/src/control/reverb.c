@@ -10,6 +10,11 @@ static inline int32_t float_to_Q_RVR_pos(float val)
 {
   // only works for positive values
   xassert(val >= 0);
+  if (val == 1.0f) {
+    return INT32_MAX;
+  } else if (val == 0.0f) {
+    return 0;
+  }
   int32_t sign, exp, mant;
   asm("fsexp %0, %1, %2": "=r"(sign), "=r"(exp): "r"(val));
   asm("fmant %0, %1": "=r"(mant): "r"(val));
@@ -25,6 +30,19 @@ int32_t adsp_reverb_room_calc_gain(float gain_db)
             gain_db <= ADSP_RVR_MAX_GAIN_DB);
   int32_t gain = float_to_Q_RVR_pos(powf(10, gain_db / 20));
   return gain;
+}
+
+void adsp_reverb_wet_dry_mix(int32_t gains[2], float mix) {
+  xassert(mix >= 0 && mix <= 1);
+  const float pi_by_2 = 1.5707963f;
+  // get an angle [0, pi / 2]
+  float omega = mix * pi_by_2;
+
+  // -4.5 dB panning
+  float dry = sqrtf((1.0f - mix) * cosf(omega));
+  float wet = sqrtf(mix * sinf(omega));
+  gains[0] = float_to_Q_RVR_pos(dry);
+  gains[1] = float_to_Q_RVR_pos(wet);
 }
 
 reverb_room_t adsp_reverb_room_init(

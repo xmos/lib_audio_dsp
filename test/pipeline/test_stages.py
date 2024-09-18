@@ -549,10 +549,12 @@ def test_fixed_gain(frame_size):
 
     do_test(make_p, tune_p, frame_size)
 
-@pytest.mark.parametrize("pregain", [
-    0.01,
-    pytest.param(0.3, marks=pytest.mark.xfail(reason="Reverb can overflow for large values of pregain, tracked at LCD-297"))])
-def test_reverb(frame_size, pregain):
+@pytest.mark.parametrize("pregain, mix", [
+    [0.01, False],
+    [0.01, True],
+    [pytest.param(0.3, marks=pytest.mark.xfail(reason="Reverb can overflow for large values of pregain, tracked at LCD-297")), False],
+     ])
+def test_reverb(frame_size, pregain, mix):
     """
     Test Reverb stage
     """
@@ -569,8 +571,11 @@ def test_reverb(frame_size, pregain):
         p = make_p(fr)
 
         # Set initialization parameters of the stage
-        p["control"].set_wet_gain(-1)
-        p["control"].set_dry_gain(-2)
+        if mix:
+            p["control"].set_wet_dry_mix(0.5)
+        else:
+            p["control"].set_wet_gain(-1)
+            p["control"].set_dry_gain(-2)
         p["control"].set_pre_gain(pregain)
         p["control"].set_room_size(0.4)
         p["control"].set_damping(0.5)

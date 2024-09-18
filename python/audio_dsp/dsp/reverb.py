@@ -470,7 +470,7 @@ class reverb_room(dspg.dsp_block):
         self._wet_db = x
         self._wet = utils.db2gain(x)
         if self.wet == 1:
-            self.wet_int = utils.int32(2**31-1)
+            self.wet_int = utils.int32(2**31 - 1)
         elif self.wet == 0:
             self.wet_int = 0
         else:
@@ -513,7 +513,7 @@ class reverb_room(dspg.dsp_block):
         self._dry_db = x
         self._dry = utils.db2gain(x)
         if self.dry == 1:
-            self.dry_int = utils.int32(2**31-1)
+            self.dry_int = utils.int32(2**31 - 1)
         elif self.dry == 0:
             self.dry_int = 0
         else:
@@ -654,6 +654,11 @@ class reverb_room(dspg.dsp_block):
         So that when the mix is 0, the output signal is fully dry,
         when 1, the output signal is fully wet. Tries to maintain a
         stable signal level using -4.5 dB Pan Law.
+
+        Parameters
+        ----------
+        mix : float
+            The wet/dry mix, must be [0, 1].
         """
         if not (0 <= mix <= 1):
             raise ValueError("wet_dry_mix must be between 0 and 1")

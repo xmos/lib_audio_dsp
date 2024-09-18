@@ -29,8 +29,8 @@ def get_c(config, val):
 
     xe = out_dir / f"reverb_converters_{config}.xe"
     run(["xsim", str(xe)], check=True, cwd=out_dir)
-    print(out_dir)
-    return np.fromfile(out_dir / "out_vector.bin", dtype=np.int32)[0]
+    #print(out_dir)
+    return np.fromfile(out_dir / "out_vector.bin", dtype=np.int32)
 
 
 def db2int(db):
@@ -38,7 +38,7 @@ def db2int(db):
 
 
 def get_output(config, input, sattr, gattr):
-    c_val = get_c(config, input)
+    c_val = get_c(config, input)[0]
     r = new_reverb()
     setattr(r, sattr, input)
     p_val = getattr(r, gattr)
@@ -118,3 +118,14 @@ def test_reverb_damping(input, expected):
         expected,
         **TOL_KWARGS,
     )
+
+@pytest.mark.parametrize(
+    "input", [0, 0.07, 0.23, 0.5, 0.64, 0.92, 1]
+)
+def test_reverb_wet_dry_mix_conv(input):
+    c_vals = get_c("WET_DRY_MIX", input)
+    r = new_reverb()
+    r.set_wet_dry_mix(input)
+    p_vals = np.array([r.dry_int, r.wet_int], dtype=np.int32)
+    # -23 cause of the float to int conversion
+    np.testing.assert_allclose(c_vals, p_vals, rtol=2**-23, atol=0)
