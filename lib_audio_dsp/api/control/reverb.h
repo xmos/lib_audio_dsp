@@ -65,6 +65,21 @@ static inline int32_t adsp_reverb_calculate_feedback(float decay) {
 int32_t adsp_reverb_room_calc_gain(float gain_db);
 
 /**
+ * @brief Calculate the wet and dry gains according to the mix amount.
+ * 
+ * When the mix is set to 0, only the dry signal will be output. 
+ * The wet gain will be 0 and the dry gain will be max.
+ * When the mic is set to 1, only they wet signal will be output. 
+ * The wet gain is max, the dry gain will be 0.
+ * In order to maintain a consistent signal level across all mix values, 
+ * the signals are panned with a -4.5 dB panning law.
+ * 
+ * @param gains           Output gains: [0] - Dry; [1] - Wet
+ * @param mix             Mix applied from 0 to 1
+ */
+void adsp_reverb_wet_dry_mix(int32_t gains[2], float mix);
+
+/**
  * @brief Initialise a reverb room object
  * A room reverb effect based on Freeverb by Jezar at Dreampoint
  * 

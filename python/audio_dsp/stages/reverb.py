@@ -66,6 +66,18 @@ class ReverbRoom(Stage):
             self.constants["max_predelay"],
         )
 
+    def set_wet_dry_mix(self, mix):
+        """
+        Set the wet/dry gains so that the mix of 0 results in a
+        fully dry output, the mix of 1 results in a fully wet output.
+
+        Parameters
+        ----------
+        mix : float
+            The wet/dry mix, must be [0, 1].
+        """
+        self.dsp_block.set_wet_dry_mix(mix)
+
     def set_predelay(self, predelay):
         """
         Set the predelay of the wet channel.

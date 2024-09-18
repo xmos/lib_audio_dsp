@@ -197,6 +197,33 @@ def test_reverb_frames(fs, max_room_size, q_format):
     assert np.all(output_int[0, :] == output_int)
     assert np.all(output_flt[0, :] == output_flt)
 
+@pytest.mark.parametrize("ratio", [0, 0.5, 1])
+def test_reverb_wet_dry_mix(ratio):
+    fs = 48000
+    q_format = 27
+    max_room_sz = 1
+    room_sz = 1
+    damp = 0.22
+
+    a = utils.db2gain(-10)
+    sig = gen.pink_noise(fs, 1, a)
+
+    verb = rv.reverb_room(fs, 1, max_room_size=max_room_sz, damping=damp, room_size=room_sz, Q_sig=q_format)
+    verb.set_wet_dry_mix(ratio)
+    sig_py = np.zeros_like(sig)
+    sig_xc = np.zeros_like(sig)
+    for i in range(len(sig)):
+        sig_py[i] = verb.process(sig[i])
+        sig_xc[i] = verb.process_xcore(sig[i])
+
+    # small signals are always going to be ropey due to quantizing, so just check average error of top half
+    top_half = utils.db(sig_py) > -50
+    if np.any(top_half):
+        error_vpu = np.abs(utils.db(sig_py[top_half])-utils.db(sig_xc[top_half]))
+        mean_error_vpu = utils.db(np.nanmean(utils.db2gain(error_vpu)))
+        assert mean_error_vpu < 0.005
+
+
 def test_reverb_properties_decay():
     """Basic tests to check for consistency when setting the properties."""
     r = partial(rv.reverb_room, 48000, 1)
@@ -282,6 +309,7 @@ def test_reverb_properties_room_size():
     np.testing.assert_allclose(should_be_val, val)
 
 if __name__ == "__main__":
-    test_reverb_overflow("sine", 20, 0.01)
+    # test_reverb_overflow("sine", 20, 0.01)
     # test_reverb_time(0.01, 1)
     # test_reverb_frames(48000, 1)
+    test_reverb_wet_dry_mix(1.0)

@@ -359,6 +359,7 @@ class reverb_room(dspg.dsp_block):
         self.pregain = pregain
         self.wet_db = wet_gain_db
         self.dry_db = dry_gain_db
+        self._effect_gain = sc.fixed_gain(fs, 1, 10)
 
         # the magic freeverb delay line lengths are for 44.1kHz, so
         # scale them with sample rate and room size
@@ -468,7 +469,12 @@ class reverb_room(dspg.dsp_block):
 
         self._wet_db = x
         self._wet = utils.db2gain(x)
-        self.wet_int = utils.int32((self._wet * 2**Q_VERB) - 1)
+        if self.wet == 1:
+            self.wet_int = utils.int32(2**31 - 1)
+        elif self.wet == 0:
+            self.wet_int = 0
+        else:
+            self.wet_int = utils.int32(self.wet * (2**Q_VERB))
 
     @property
     def wet(self):
@@ -506,7 +512,12 @@ class reverb_room(dspg.dsp_block):
 
         self._dry_db = x
         self._dry = utils.db2gain(x)
-        self.dry_int = utils.int32((self.dry * 2**Q_VERB) - 1)
+        if self.dry == 1:
+            self.dry_int = utils.int32(2**31 - 1)
+        elif self.dry == 0:
+            self.dry_int = 0
+        else:
+            self.dry_int = utils.int32(self.dry * (2**Q_VERB))
 
     @property
     def dry(self):
@@ -637,6 +648,32 @@ class reverb_room(dspg.dsp_block):
         """
         self.room_size = room_size
 
+    def set_wet_dry_mix(self, mix):
+        """
+        Will mix wet and dry signal by adjusting wet and dry gains.
+        So that when the mix is 0, the output signal is fully dry,
+        when 1, the output signal is fully wet. Tries to maintain a
+        stable signal level using -4.5 dB Pan Law.
+
+        Parameters
+        ----------
+        mix : float
+            The wet/dry mix, must be [0, 1].
+        """
+        if not (0 <= mix <= 1):
+            bad_mix = mix
+            mix = np.clip(mix, 0, 1)
+            warnings.warn(f"Wet/dry mix {bad_mix} saturates to {mix}", UserWarning)
+        # get an angle [0, pi /2]
+        omega = mix * np.pi / 2
+
+        # -4.5 dB
+        self.dry = np.sqrt((1 - mix) * np.cos(omega))
+        self.wet = np.sqrt(mix * np.sin(omega))
+        # there's an extra gain of 10 dB added to the wet channel to
+        # make it similar level to the dry, so that the mixing is smooth.
+        # Couldn't add it to the wet gain itself as it's in q31
+
     def process_frame(self, frame):
         """
         Take a list frames of samples and return the processed frames.
@@ -680,7 +717,8 @@ class reverb_room(dspg.dsp_block):
         for ap in self.allpasses:
             output = ap.process(output)
 
-        output = output * self.wet + sample * self.dry
+        output = self._effect_gain.process(output * self.wet) + sample * self.dry
+
         return output
 
     def process_xcore(self, sample, channel=0):
@@ -711,6 +749,7 @@ class reverb_room(dspg.dsp_block):
         # need an extra bit in this add, if wet/dry mix is badly set
         # output can saturate (users fault)
         output = apply_gain_xcore(output, self.wet_int)
+        output = self._effect_gain.process_xcore(output)
         output += apply_gain_xcore(sample_int, self.dry_int)
         utils.int64(output)
         output = utils.saturate_int64_to_int32(output)

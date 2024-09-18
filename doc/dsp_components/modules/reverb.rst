@@ -43,6 +43,9 @@ For more details on the algorithm, see `Physical Audio Signal Processing
         .. automethod:: reset_state
             :noindex:
 
+        .. automethod:: set_wet_dry_mix
+            :noindex:
+
         .. automethod:: set_pre_gain
             :noindex:
 
