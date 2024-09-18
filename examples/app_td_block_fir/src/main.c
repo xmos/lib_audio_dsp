@@ -59,6 +59,7 @@ void worker(chanend_t c,
     }
 }
 
+
 void worker_tile(chanend_t c[WORKER_THREAD_COUNT]){
     int32_t mem_0[test_0_DATA_BUFFER_ELEMENTS];
     int32_t mem_1[test_1_DATA_BUFFER_ELEMENTS];
