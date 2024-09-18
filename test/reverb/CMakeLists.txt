@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.21)
 include($ENV{XMOS_CMAKE_PATH}/xcommon.cmake)
 
+set(CMAKE_OBJECT_PATH_MAX 128)
+set(CMAKE_OBJECT_NAME_MAX 1)
+
 project(reverb_test)
 
 set(APP_HW_TARGET XCORE-AI-EXPLORER)
