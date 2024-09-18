@@ -53,7 +53,8 @@ pipeline {
         }
       }
       steps {
-        stopPreviousBuilds()
+        // stopPreviousBuilds()
+        sleep(0.1)
       }
     } // Stop previous builds
     stage('CI') {
