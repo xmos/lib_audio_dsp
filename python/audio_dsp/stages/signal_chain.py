@@ -332,7 +332,7 @@ class Delay(Stage):
         self.create_outputs(self.n_in)
         self.dsp_block = sc.delay(self.fs, self.n_in, max_delay, starting_delay, units)
         self["max_delay"] = max_delay
-        self.set_control_field_cb("max_delay", lambda: self.dsp_block.max_delay)
+        self.set_control_field_cb("max_delay", lambda: self.dsp_block._max_delay)
         self.set_control_field_cb("delay", lambda: self.dsp_block.delay)
 
         self.stage_memory_parameters = (self.n_in, self["max_delay"])

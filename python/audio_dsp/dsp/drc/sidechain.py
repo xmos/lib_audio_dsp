@@ -12,11 +12,11 @@ from audio_dsp.dsp import generic as dspg
 import audio_dsp.dsp.drc.drc_utils as drcu
 from audio_dsp.dsp.types import float32
 
-from audio_dsp.dsp.drc.drc import compressor_limiter_base, envelope_detector_rms
-from audio_dsp.dsp.drc.stereo_compressor_limiter import compressor_limiter_stereo_base
+from audio_dsp.dsp.drc.drc import rms_compressor_limiter_base
+from audio_dsp.dsp.drc.stereo_compressor_limiter import rms_compressor_limiter_stereo_base
 
 
-class compressor_rms_sidechain_mono(compressor_limiter_base):
+class compressor_rms_sidechain_mono(rms_compressor_limiter_base):
     """
     A mono sidechain compressor based on the RMS value of the signal.
     When the RMS envelope of the signal exceeds the threshold, the
@@ -35,54 +35,40 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
     ratio : float
         Compression gain ratio applied when the signal is above the
         threshold
-    threshold_db : float
-        Threshold in decibels above which compression occurs.
 
     Attributes
     ----------
-    env_detector : envelope_detector_rms
-        Nested RMS envelope detector used to calculate the envelope of
-        the signal.
     ratio : float
-        Compression gain ratio applied when the signal is above the
-        threshold.
     slope : float
         The slope factor of the compressor, defined as
-        `slope = (1 - 1/ratio)`.
+        `slope = (1 - 1/ratio) / 2`.
     slope_f32 : float32
         The slope factor of the compressor, used for int32 to float32
         processing.
-    threshold : float
-        Value above which compression occurs for floating point
-        processing.
-    threshold_int : int
-        Value above which compression occurs for int32 fixed point
-        processing.
-
     """
 
     def __init__(self, fs, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, 1, attack_t, release_t, Q_sig)
+        super().__init__(fs, 1, threshold_db, attack_t, release_t, Q_sig)
 
-        # note rms comes as x**2, so use db_pow
-        self.threshold, self.threshold_int = drcu.calculate_threshold(
-            threshold_db, self.Q_sig, power=True
-        )
-
-        self.env_detector = envelope_detector_rms(
-            fs,
-            n_chans=1,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
-
-        self.slope = (1 - 1 / ratio) / 2.0
-        self.slope_f32 = float32(self.slope)
+        # property calculates the slopes as well
+        self.ratio = ratio
 
         # set the gain calculation function handles
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
+
+    @property
+    def ratio(self):
+        """Compression gain ratio applied when the signal is above the
+        threshold; changing this property also updates the slope used in
+        the fixed and floating point implementation.
+        """
+        return self._ratio
+
+    @ratio.setter
+    def ratio(self, value):
+        self._ratio = value
+        self.slope, self.slope_f32 = drcu.rms_compressor_slope_from_ratio(self.ratio)
 
     def reset_state(self):
         """Reset the envelope detectors to 0 and the gain to 1."""
@@ -219,7 +205,7 @@ class compressor_rms_sidechain_mono(compressor_limiter_base):
         return [output]
 
 
-class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
+class compressor_rms_sidechain_stereo(rms_compressor_limiter_stereo_base):
     """
     A stereo sidechain compressor based on the RMS value of the signal.
     When the RMS envelope of the signal exceeds the threshold, the
@@ -240,54 +226,41 @@ class compressor_rms_sidechain_stereo(compressor_limiter_stereo_base):
     ratio : float
         Compression gain ratio applied when the signal is above the
         threshold
-    threshold_db : float
-        Threshold in decibels above which compression occurs.
 
     Attributes
     ----------
-    env_detector : envelope_detector_rms
-        Nested RMS envelope detector used to calculate the envelope of
-        the signal.
     ratio : float
-        Compression gain ratio applied when the signal is above the
-        threshold.
     slope : float
         The slope factor of the compressor, defined as
         `slope = (1 - 1/ratio)`.
     slope_f32 : float32
         The slope factor of the compressor, used for int32 to float32
         processing.
-    threshold : float
-        Value above which compression occurs for floating point
-        processing.
-    threshold_int : int
-        Value above which compression occurs for int32 fixed point
-        processing.
-
     """
 
     def __init__(self, fs, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         n_chans = 2
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
-        self.threshold, self.threshold_int = drcu.calculate_threshold(
-            threshold_db, self.Q_sig, power=True
-        )
-
-        self.env_detector = envelope_detector_rms(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
-
-        self.slope = (1 - 1 / ratio) / 2.0
-        self.slope_f32 = float32(self.slope)
+        # property calculates the slopes as well
+        self.ratio = ratio
 
         # set the gain calculation function handles
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
+
+    @property
+    def ratio(self):
+        """Compression gain ratio applied when the signal is above the
+        threshold; changing this property also updates the slope used in
+        the fixed and floating point implementation.
+        """
+        return self._ratio
+
+    @ratio.setter
+    def ratio(self, value):
+        self._ratio = value
+        self.slope, self.slope_f32 = drcu.rms_compressor_slope_from_ratio(self.ratio)
 
     def process_channels(self, input_samples: list[float], detect_samples: list[float]):  # type: ignore : override base class
         """

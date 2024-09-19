@@ -15,7 +15,7 @@ def buildApps(appList) {
 def versionsPairs = [
     "python/pyproject.toml": /version[\s='\"]*([\d.]+)/,
     "settings.yml": /version[\s:'\"]*([\d.]+)/,
-    "CHANGELOG.rst": /([\d.]+)/,
+    "CHANGELOG.rst": /(\d+\.\d+\.\d+)/,
     "**/lib_build_info.cmake": /set\(LIB_VERSION \"?([\d.]+)/,
 ]
 
@@ -104,7 +104,7 @@ pipeline {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/biquad") {
                           runPytest("test_biquad_python.py --dist worksteal")
-                          runPytest("test_biquad_c.py --dist worksteal")
+                          runPytest("*_c.py --dist worksteal")
                         }
                       }
                     }
@@ -120,7 +120,7 @@ pipeline {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/cascaded_biquads") {
                           runPytest("test_cascaded_biquads_python.py --dist worksteal")
-                          runPytest("test_cascaded_biquads_c.py --dist worksteal")
+                          runPytest("*_c.py --dist worksteal")
                         }
                       }
                     }
@@ -184,7 +184,8 @@ pipeline {
                       buildApps([
                         "test/reverb",
                         "test/signal_chain",
-                        "test/fir"
+                        "test/fir",
+                        "test/utils"
                       ]) // buildApps
                     }
                   }
@@ -214,7 +215,7 @@ pipeline {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/fir") {
                           runPytest("test_fir_python.py --dist worksteal")
-                          runPytest("test_fir_c.py --dist worksteal")
+                          runPytest("*_c.py --dist worksteal")
                         }
                       }
                     }
@@ -230,7 +231,7 @@ pipeline {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/signal_chain") {
                           runPytest("test_signal_chain_python.py --dist worksteal")
-                          runPytest("test_signal_chain_c.py --dist worksteal")
+                          runPytest("*_c.py --dist worksteal")
                         }
                       }
                     }
@@ -245,8 +246,7 @@ pipeline {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/reverb") {
-                          runPytest("test_reverb_python.py --dist worksteal")
-                          runPytest("test_reverb_c.py --dist worksteal")
+                          runPytest("--dist worksteal")
                         }
                       }
                     }

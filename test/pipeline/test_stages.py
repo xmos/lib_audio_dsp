@@ -199,8 +199,13 @@ def generate_test_param_file(stage_name, stage_config):
                     "type"
                 ]
                 # Convert the values into bytearrays and compute the payload length
-                if data_type in ["int", "int32_t", "uint32_t"]:
-                    ba = bytearray(struct.pack("I", value & 0xFFFFFFFF))
+                if data_type in ["uint32_t"]:
+                    value = np.uint32(value)
+                    ba = bytearray(struct.pack("I", value))
+                    payload_size += 4
+                elif data_type in ["int", "int32_t"]:
+                    value = np.int32(value)
+                    ba = bytearray(struct.pack("i", value))
                     payload_size += 4
                 elif data_type in ["float"]:
                     ba = struct.unpack("4b", struct.pack("f", value))
@@ -544,12 +549,12 @@ def test_fixed_gain(frame_size):
 
     do_test(make_p, tune_p, frame_size)
 
-# The reverb test is expected to fail.
-# More details about this failure can be found in https://xmosjira.atlassian.net/browse/LCD-204?focusedCommentId=19048
-# The test passes if pregain is set lower than 0.015. Before we update the pregain,
-# we would like to investigate the root cause of the overflowing occurring with the current pregain value.
-@pytest.mark.xfail
-def test_reverb(frame_size):
+@pytest.mark.parametrize("pregain, mix", [
+    [0.01, False],
+    [0.01, True],
+    pytest.param(0.3, False, marks=pytest.mark.xfail(reason="Reverb can overflow for large values of pregain, tracked at LCD-297"))
+     ])
+def test_reverb(frame_size, pregain, mix):
     """
     Test Reverb stage
     """
@@ -566,12 +571,16 @@ def test_reverb(frame_size):
         p = make_p(fr)
 
         # Set initialization parameters of the stage
-        p["control"].set_wet_gain(-1)
-        p["control"].set_dry_gain(-2)
-        p["control"].set_pre_gain(0.3)
+        if mix:
+            p["control"].set_wet_dry_mix(0.5)
+        else:
+            p["control"].set_wet_gain(-1)
+            p["control"].set_dry_gain(-2)
+        p["control"].set_pre_gain(pregain)
         p["control"].set_room_size(0.4)
         p["control"].set_damping(0.5)
         p["control"].set_decay(0.6)
+        p["control"].set_predelay(5)
 
         stage_config = p["control"].get_config()
         generate_test_param_file("REVERB_ROOM", stage_config)
@@ -579,8 +588,8 @@ def test_reverb(frame_size):
 
     do_test(make_p, tune_p, frame_size)
 
-
-def test_delay(frame_size):
+@pytest.mark.parametrize("change_delay", [5, 0])
+def test_delay(frame_size, change_delay):
     """
     Test Delay stage
     """
@@ -597,7 +606,7 @@ def test_delay(frame_size):
         p = make_p(fr)
 
         # Set initialization parameters of the stage
-        p["control"].set_delay(5)
+        p["control"].set_delay(change_delay)
 
         stage_config = p["control"].get_config()
         generate_test_param_file("DELAY", stage_config)
@@ -638,4 +647,3 @@ def test_fir(frame_size, filter_name):
         return p
 
     do_test(make_p, None, frame_size)
-

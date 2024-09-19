@@ -1,6 +1,11 @@
 Audio DSP library change log
 ============================
 
+Unreleased
+----------
+
+  * FIXED: Removed configuration parameters from reverb that did not support being changed.
+
 1.0.0
 -----
 

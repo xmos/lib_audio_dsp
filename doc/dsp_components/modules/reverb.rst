@@ -10,8 +10,9 @@ Reverb Room
 
 The room reverb module imitates the reflections of a room. The algorithm is a 
 Schroeder style reverberation, based on `Freeverb by Jezar at Dreampoint <https://www.dsprelated.com/freebooks/pasp/Freeverb.html>`_.
-It consists of 8 parallel comb filters fed into 4 series all-pass filters,
+It consists of the wet predelay, 8 parallel comb filters fed into 4 series all-pass filters,
 with a wet and dry microphone control to set the effect level.
+
 
 For more details on the algorithm, see `Physical Audio Signal Processing
 <https://www.dsprelated.com/freebooks/pasp/Freeverb.html>`_ by Julius Smith.
@@ -40,6 +41,9 @@ For more details on the algorithm, see `Physical Audio Signal Processing
             :noindex:
 
         .. automethod:: reset_state
+            :noindex:
+
+        .. automethod:: set_wet_dry_mix
             :noindex:
 
         .. automethod:: set_pre_gain

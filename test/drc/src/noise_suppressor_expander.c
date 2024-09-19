@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "dsp/adsp.h"
+#include "control/adsp_control.h"
 
 FILE * _fopen(char * fname, char* mode) {
   FILE * fp = fopen(fname, mode);

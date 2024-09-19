@@ -24,13 +24,19 @@ class envelope_detector_peak(dspg.dsp_block):
 
     Parameters
     ----------
-    attack_t : float, optional
-        Attack time of the envelope detector in seconds.
-    release_t : float, optional
-        Release time of the envelope detector in seconds.
+    attack_t : float
+        Attack time of the envelope detector in seconds. This cannot be
+        faster than 2/fs seconds, and saturates to that
+        value. Exceptionally large attack times may converge to zero.
+    release_t: float
+        Release time of the envelope detector in seconds. This cannot
+        be faster than 2/fs seconds, and saturates to that
+        value. Exceptionally large release times may converge to zero.
 
     Attributes
     ----------
+    attack_t : float
+    release_t : float
     attack_alpha : float
         Attack time parameter used for exponential moving average in
         floating point processing.
@@ -52,12 +58,39 @@ class envelope_detector_peak(dspg.dsp_block):
     def __init__(self, fs, n_chans, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
-        # calculate EWM alpha from time constant
-        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
-        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(release_t, fs)
+        self.attack_t = attack_t
+        self.release_t = release_t
 
         # initialise envelope state
         self.reset_state()
+
+    @property
+    def attack_t(self):
+        """The attack time of the compressor/limiter in seconds;
+        changing this property also sets the EWM alpha values for fixed
+        and floating point implementations.
+        """
+        return self._attack_t
+
+    @attack_t.setter
+    def attack_t(self, value):
+        self._attack_t = value
+        # calculate EWM alpha from time constant
+        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(self._attack_t, self.fs)
+
+    @property
+    def release_t(self):
+        """The release time of the compressor/limiter in seconds;
+        changing this property also sets the EWM alpha values for fixed
+        and floating point implementations.
+        """
+        return self._release_t
+
+    @release_t.setter
+    def release_t(self, value):
+        self._release_t = value
+        # calculate EWM alpha from time constant
+        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(self._release_t, self.fs)
 
     def reset_state(self):
         """Reset the envelope to zero."""
@@ -220,6 +253,7 @@ class clipper(dspg.dsp_block):
 
     Attributes
     ----------
+    threshold_db : float
     threshold : float
         Value above which clipping occurs for floating point processing.
     threshold_int : int
@@ -231,7 +265,21 @@ class clipper(dspg.dsp_block):
     def __init__(self, fs, n_chans, threshold_db, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
-        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
+        self.threshold_db = threshold_db
+
+    @property
+    def threshold_db(self):
+        """The threshold in decibels; changing this property also
+        updates the fixed and floating point thresholds in linear gain.
+        """
+        return self._threshold_db
+
+    @threshold_db.setter
+    def threshold_db(self, value):
+        self._threshold_db = value
+        self.threshold, self.threshold_int = drcu.calculate_threshold(
+            self._threshold_db, self.Q_sig
+        )
 
     def process(self, sample, channel=0):
         """
@@ -275,19 +323,23 @@ class compressor_limiter_base(dspg.dsp_block):
     Parameters
     ----------
     n_chans : int
-        number of parallel channels the compressor/limiter runs on. The
+        Number of parallel channels the compressor/limiter runs on. The
         channels are limited/compressed separately, only the constant
         parameters are shared.
     attack_t : float
-        Attack time of the compressor/limiter in seconds.
+        Attack time of the compressor/limiter in seconds. This cannot be
+        faster than 2/fs seconds, and saturates to that
+        value. Exceptionally large attack times may converge to zero.
     release_t: float
-        Release time of the compressor/limiter in seconds.
+        Release time of the compressor/limiter in seconds. This cannot
+        be faster than 2/fs seconds, and saturates to that
+        value. Exceptionally large release times may converge to zero.
+
 
     Attributes
     ----------
-    env_detector : envelope_detector_peak
-        Nested envelope detector used to calculate the envelope of the
-        signal. Either a peak or RMS envelope detector can be used.
+    attack_t : float
+    release_t : float
     threshold : float
         Value above which compression/limiting occurs for floating point
         processing.
@@ -310,7 +362,10 @@ class compressor_limiter_base(dspg.dsp_block):
         attack_alpha in 32-bit int format.
     release_alpha_int : int
         release_alpha in 32-bit int format.
-
+    gain_calc : function
+        function pointer to floating point gain calculation function.
+    gain_calc_int : function
+        function pointer to fixed point gain calculation function.
     """
 
     # Limiter after Zolzer's DAFX & Guy McNally's "Dynamic Range Control
@@ -318,18 +373,15 @@ class compressor_limiter_base(dspg.dsp_block):
     def __init__(self, fs, n_chans, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
-        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(attack_t, fs)
-        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(release_t, fs)
         self.Q_alpha = drcu.Q_alpha
         assert self.Q_alpha == 31, "When changing this the reset value will have to be updated"
 
-        # These are defined differently for peak and RMS limiters
-        self.env_detector = None
+        # setting attack and release times sets the EWM coeffs in this and
+        # the envelope detector
+        self.attack_t = attack_t
+        self.release_t = release_t
 
-        self.threshold = None
-        self.threshold_int = None
-
-        # slope is used for compressors, not limiters
+        # slope only used by compressors, but needs to be set for gain_calc API
         self.slope = None
         self.slope_f32 = None
 
@@ -339,6 +391,38 @@ class compressor_limiter_base(dspg.dsp_block):
         # set the gain calculation function handles
         self.gain_calc = None
         self.gain_calc_xcore = None
+
+    @property
+    def attack_t(self):
+        """The attack time of the compressor/limiter in seconds;
+        changing this property also sets the EWM alpha values for fixed
+        and floating point implementations.
+        """
+        return self._attack_t
+
+    @attack_t.setter
+    def attack_t(self, value):
+        self._attack_t = value
+        # calculate EWM alpha from time constant
+        self.attack_alpha, self.attack_alpha_int = drcu.alpha_from_time(self._attack_t, self.fs)
+        # update the envelope detector
+        self.env_detector.attack_t = self.attack_t
+
+    @property
+    def release_t(self):
+        """The release time of the compressor/limiter in seconds;
+        changing this property also sets the EWM alpha values for fixed
+        and floating point implementations.
+        """
+        return self._release_t
+
+    @release_t.setter
+    def release_t(self, value):
+        self._release_t = value
+        # calculate EWM alpha from time constant
+        self.release_alpha, self.release_alpha_int = drcu.alpha_from_time(self._release_t, self.fs)
+        # update the envelope detector
+        self.env_detector.release_t = self.release_t
 
     def reset_state(self):
         """Reset the envelope detector to 0 and the gain to 1."""
@@ -406,13 +490,13 @@ class compressor_limiter_base(dspg.dsp_block):
 
         """
         # get envelope from envelope detector
-        envelope = self.env_detector.process(sample, channel)  # type: ignore : base inits to None
+        envelope = self.env_detector.process(sample, channel)
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
         # calculate the gain, this function should be defined by the
         # child class
-        new_gain = self.gain_calc(envelope, self.threshold, self.slope)  # pyright: ignore : base inits to None
+        new_gain = self.gain_calc(envelope, self.threshold, self.slope)
 
         # see if we're attacking or decaying
         if new_gain < self.gain[channel]:
@@ -445,7 +529,7 @@ class compressor_limiter_base(dspg.dsp_block):
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
         # get envelope from envelope detector
-        envelope_int = self.env_detector.process_xcore(sample_int, channel)  # pyright: ignore : base inits to None
+        envelope_int = self.env_detector.process_xcore(sample_int, channel)  # type: ignore : base inits to None
         # avoid /0
         envelope_int = max(envelope_int, 1)
 
@@ -517,16 +601,9 @@ class compressor_limiter_base(dspg.dsp_block):
         return output
 
 
-class limiter_peak(compressor_limiter_base):
+class peak_compressor_limiter_base(compressor_limiter_base):
     """
-    A limiter based on the peak value of the signal. When the peak
-    envelope of the signal exceeds the threshold, the signal amplitude
-    is reduced.
-
-    The threshold set the value above which limiting occurs. The attack
-    time sets how fast the limiter starts limiting. The release time
-    sets how long the signal takes to ramp up to its original level
-    after the envelope is below the threshold.
+    A compressor/limiter with a peak envelope detector.
 
     Parameters
     ----------
@@ -535,39 +612,49 @@ class limiter_peak(compressor_limiter_base):
 
     Attributes
     ----------
+    threshold_db : float
     env_detector : envelope_detector_peak
-        Nested peak envelope detector used to calculate the envelope of
+        Peak envelope detector object used to calculate the envelope of
         the signal.
-
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
-
-        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
         self.env_detector = envelope_detector_peak(
             fs,
             n_chans=n_chans,
             attack_t=attack_t,
             release_t=release_t,
-            Q_sig=self.Q_sig,
+            Q_sig=Q_sig,
         )
 
-        # set the gain calculation function handles
-        self.gain_calc = drcu.limiter_peak_gain_calc
-        self.gain_calc_xcore = drcu.limiter_peak_gain_calc_xcore
+        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
+
+        # threshold_db should be a property of the child class that sets
+        # threshold_int and threshold
+        self.threshold_db = threshold_db
+
+    @property
+    def threshold_db(self):
+        """The threshold in decibels; changing this property also
+        updates the fixed and floating point thresholds in linear
+        gain.
+        """
+        return self._threshold_db
+
+    @threshold_db.setter
+    def threshold_db(self, value):
+        self._threshold_db = value
+        self.threshold, self.threshold_int = drcu.calculate_threshold(
+            self._threshold_db, self.Q_sig
+        )
 
 
-class limiter_rms(compressor_limiter_base):
+class rms_compressor_limiter_base(compressor_limiter_base):
     """
-    A limiter based on the RMS value of the signal. When the RMS
-    envelope of the signal exceeds the threshold, the signal amplitude
-    is reduced.
+    A compressor/limiter with an RMS envelope detector.
 
-    The threshold set the value above which limiting occurs. The attack
-    time sets how fast the limiter starts limiting. The release time
-    sets how long the signal takes to ramp up to its original level
-    after the envelope is below the threshold.
+    Note the threshold is saved in the power domain, as the RMS envelope
+    detector returns x².
 
     Parameters
     ----------
@@ -577,30 +664,79 @@ class limiter_rms(compressor_limiter_base):
     Attributes
     ----------
     env_detector : envelope_detector_rms
-        Nested RMS envelope detector used to calculate the envelope of
+        RMS envelope detector object used to calculate the envelope of
         the signal.
     threshold : float
-        Value above which limiting occurs for floating point
-        processing. Note the threshold is saves in the power domain, as
-        the RMS envelope detector returns x²
-
+        Value above which compression/limiting occurs for floating point
+        processing. Note the threshold is saved in the power domain, as
+        the RMS envelope detector returns x².
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
-
-        # note rms comes as x**2, so use db_pow
-        self.threshold, self.threshold_int = drcu.calculate_threshold(
-            threshold_db, self.Q_sig, power=True
-        )
-
         self.env_detector = envelope_detector_rms(
             fs,
             n_chans=n_chans,
             attack_t=attack_t,
             release_t=release_t,
-            Q_sig=self.Q_sig,
+            Q_sig=Q_sig,
         )
+
+        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
+
+        # threshold_db should be a property of the child class that sets
+        # threshold_int and threshold
+        self.threshold_db = threshold_db
+
+    @property
+    def threshold_db(self):
+        """The threshold in decibels; changing this property also
+        updates the fixed and floating point thresholds in linear
+        gain.
+        """
+        return self._threshold_db
+
+    @threshold_db.setter
+    def threshold_db(self, value):
+        self._threshold_db = value
+        self.threshold, self.threshold_int = drcu.calculate_threshold(
+            self._threshold_db, self.Q_sig, power=True
+        )
+
+
+class limiter_peak(peak_compressor_limiter_base):
+    """
+    A limiter based on the peak value of the signal. When the peak
+    envelope of the signal exceeds the threshold, the signal amplitude
+    is reduced.
+
+    The threshold set the value above which limiting occurs. The attack
+    time sets how fast the limiter starts limiting. The release time
+    sets how long the signal takes to ramp up to its original level
+    after the envelope is below the threshold.
+    """
+
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
+
+        # set the gain calculation function handles
+        self.gain_calc = drcu.limiter_peak_gain_calc
+        self.gain_calc_xcore = drcu.limiter_peak_gain_calc_xcore
+
+
+class limiter_rms(rms_compressor_limiter_base):
+    """
+    A limiter based on the RMS value of the signal. When the RMS
+    envelope of the signal exceeds the threshold, the signal amplitude
+    is reduced.
+
+    The threshold set the value above which limiting occurs. The attack
+    time sets how fast the limiter starts limiting. The release time
+    sets how long the signal takes to ramp up to its original level
+    after the envelope is below the threshold.
+    """
+
+    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
         # set the gain calculation function handles
         self.gain_calc = drcu.limiter_rms_gain_calc
@@ -672,22 +808,13 @@ class hard_limiter_peak(limiter_peak):
             )
 
 
-class lookahead_limiter_peak(compressor_limiter_base):
+class lookahead_limiter_peak(peak_compressor_limiter_base):
     """Not implemented. Peak limiter with built in delay for avoiding
     clipping.
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
-
-        self.threshold = utils.db2gain(threshold_db)
-        self.env_detector = envelope_detector_peak(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
         self.delay = np.ceil(attack_t * fs)
         self.delay_line = np.zeros(self.delay)
@@ -702,22 +829,14 @@ class lookahead_limiter_peak(compressor_limiter_base):
         raise NotImplementedError
 
 
-class lookahead_limiter_rms(compressor_limiter_base):
+class lookahead_limiter_rms(rms_compressor_limiter_base):
     """Not implemented. RMS limiter with built in delay for avoiding
     clipping.
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, delay, Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
-        self.threshold = utils.db_pow2gain(threshold_db)
-        self.env_detector = envelope_detector_rms(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
         self.delay = np.ceil(attack_t * fs)
         self.delay_line = np.zeros(self.delay)
         raise NotImplementedError
@@ -738,7 +857,7 @@ class lookahead_limiter_rms(compressor_limiter_base):
 # TODO add lookup compressors w/ some magic interface
 
 
-class compressor_rms(compressor_limiter_base):
+class compressor_rms(rms_compressor_limiter_base):
     """
     A compressor based on the RMS value of the signal. When the RMS
     envelope of the signal exceeds the threshold, the signal amplitude
@@ -747,7 +866,7 @@ class compressor_rms(compressor_limiter_base):
     The threshold sets the value above which compression occurs. The
     ratio sets how much the signal is compressed. A ratio of 1 results
     in no compression, while a ratio of infinity results in the same
-    behaviour as a limiter. The attack time sets how fast the comressor
+    behaviour as a limiter. The attack time sets how fast the compressor
     starts compressing. The release time sets how long the signal takes
     to ramp up to it's original level after the envelope is below the
     threshold.
@@ -757,57 +876,44 @@ class compressor_rms(compressor_limiter_base):
     ratio : float
         Compression gain ratio applied when the signal is above the
         threshold
-    threshold_db : float
-        Threshold in decibels above which compression occurs.
 
     Attributes
     ----------
-    env_detector : envelope_detector_rms
-        Nested RMS envelope detector used to calculate the envelope of
-        the signal.
     ratio : float
-        Compression gain ratio applied when the signal is above the
-        threshold.
     slope : float
         The slope factor of the compressor, defined as
-        `slope = (1 - 1/ratio)`.
+        `slope = (1 - 1/ratio) / 2`.
     slope_f32 : float32
         The slope factor of the compressor, used for int32 to float32
-        processing.
-    threshold : float
-        Value above which compression occurs for floating point
-        processing.
-    threshold_int : int
-        Value above which compression occurs for int32 fixed point
         processing.
 
     """
 
     def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
-        # note rms comes as x**2, so use db_pow
-        self.threshold, self.threshold_int = drcu.calculate_threshold(
-            threshold_db, self.Q_sig, power=True
-        )
-
-        self.env_detector = envelope_detector_rms(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
-
-        self.slope = (1 - 1 / ratio) / 2.0
-        self.slope_f32 = float32(self.slope)
+        # property calculates the slopes as well
+        self.ratio = ratio
 
         # set the gain calculation function handles
         self.gain_calc = drcu.compressor_rms_gain_calc
         self.gain_calc_xcore = drcu.compressor_rms_gain_calc_xcore
 
+    @property
+    def ratio(self):
+        """Compression gain ratio applied when the signal is above the
+        threshold; changing this property also updates the slope used in
+        the fixed and floating point implementation.
+        """
+        return self._ratio
 
-class compressor_rms_softknee(compressor_limiter_base):
+    @ratio.setter
+    def ratio(self, value):
+        self._ratio = value
+        self.slope, self.slope_f32 = drcu.rms_compressor_slope_from_ratio(self.ratio)
+
+
+class compressor_rms_softknee(rms_compressor_limiter_base):
     """
     A soft knee compressor based on the RMS value of the signal. When
     the RMS envelope of the signal exceeds the threshold, the signal
@@ -817,7 +923,7 @@ class compressor_rms_softknee(compressor_limiter_base):
     The threshold sets the value above which compression occurs. The
     ratio sets how much the signal is compressed. A ratio of 1 results
     in no compression, while a ratio of infinity results in the same
-    behaviour as a limiter. The attack time sets how fast the comressor
+    behaviour as a limiter. The attack time sets how fast the compressor
     starts compressing. The release time sets how long the signal takes
     to ramp up to it's original level after the envelope is below the
     threshold.
@@ -830,26 +936,12 @@ class compressor_rms_softknee(compressor_limiter_base):
 
     Attributes
     ----------
-    env_detector : envelope_detector_rms
-        Nested RMS envelope detector used to calculate the envelope of
-        the signal.
     ratio : float
-        Compression gain ratio applied when the signal is above the
-        threshold.
     slope : float
         The slope factor of the compressor, defined as
-        `slope = (1 - 1/ratio)`.
+        `slope = (1 - 1/ratio) / 2`.
     slope_f32 : np.float32
         The slope factor of the compressor, used for int32 to float32
-        processing.
-    threshold : float
-        Value above which compression occurs for floating point
-        processing.
-    threshold_f32 : np.float32
-        Value above which compression occurs for floating point
-        processing.
-    threshold_int : int
-        Value above which compression occurs for int32 fixed point
         processing.
     w : float
         The width over which the soft knee extends.
@@ -857,36 +949,35 @@ class compressor_rms_softknee(compressor_limiter_base):
     References
     ----------
     [1] Giannoulis, D., Massberg, M., & Reiss, J. D. (2012). Digital
-    Dynamic Range Compressor Designâ€”A Tutorial and Analysis. Journal of
-    Audio Engineering Society, 60(6), 399â€“408.
+    Dynamic Range Compressor Design - A Tutorial and Analysis. Journal of
+    Audio Engineering Society, 60(6), 399-408.
     https://www.aes.org/e-lib/browse.cfm?elib=16354
     """
 
     def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
-
-        # note rms comes as x**2, so use db_pow
-        self.threshold_db = threshold_db
-        self.threshold, self.threshold_int = drcu.calculate_threshold(
-            threshold_db, self.Q_sig, power=True
-        )
-        self.env_detector = envelope_detector_rms(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
         self.ratio = ratio
-        self.slope = (1 - 1 / self.ratio) / 2.0
-        self.slope_f32 = float32(self.slope)
-        self.piecewise_calc()
 
         # this is a bit of a bodge, as the soft knee compressor needs
         # more inputs
         self.gain_calc = self.compressor_rms_softknee_gain_calc
         self.gain_calc_xcore = self.compressor_rms_softknee_gain_calc_xcore
+
+    @property
+    def ratio(self):
+        """Compression gain ratio applied when the signal is above the
+        threshold; changing this property also updates the slope used in
+        the fixed and floating point implementation, and the soft knee
+        fitting.
+        """
+        return self._ratio
+
+    @ratio.setter
+    def ratio(self, value):
+        self._ratio = value
+        self.slope, self.slope_f32 = drcu.rms_compressor_slope_from_ratio(self.ratio)
+        self.piecewise_calc()
 
     def piecewise_calc(self):
         """Calculate the piecewise linear approximation of the soft knee.

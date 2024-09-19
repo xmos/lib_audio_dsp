@@ -1,28 +1,25 @@
 module:
   reverb_room:
-    sampling_freq:
-      type: uint32_t
-      help: The sampling frequency of the reverb, can only be set at initialisation.
-    max_room_size:
-      type: float
-      help: Sets the maximum size of the delay buffers, can only be set at initialisation.
     room_size:
       type: float
       help: How big the room is as a proportion of max_room_size. This sets delay line lengths and must be between 0 and 1.
     feedback:
       type: int32_t
-      help: feedback gain in Q0.31 format. Feedback can be calculated from decay as `(0.28 decay) + 0.7`.
+      help: feedback gain in Q0.31 format. Feedback can be calculated from decay as `(0.28 decay) + 0.7`. Use the function ``adsp_reverb_calculate_feedback`` in ``control/reverb.h`` 
     damping:
       type: int32_t
-      help: High frequency attenuation in Q0.31 format.
+      help: High frequency attenuation in Q0.31 format. Use the function ``adsp_reverb_calculate_damping`` in ``control/reverb.h``. Alternatively, both wet and dry gains can be obtained from ``adsp_reverb_wet_dry_mix``
     wet_gain:
       type: int32_t
-      help: Gain applied to the wet signal in Q0.31 format
+      help: Gain applied to the wet signal in Q0.31 format. Use the function ``adsp_reverb_db2int`` in ``control/reverb.h``. Alternatively, both wet and dry gains can be obtained from ``adsp_reverb_wet_dry_mix``
     dry_gain:
       type: int32_t
-      help: Dry signal gain in Q0.31 format.
+      help: Dry signal gain in Q0.31 format. Use the function ``adsp_reverb_db2int`` in ``control/reverb.h`` 
     pregain:
       type: int32_t
-      help: The pregain applied to the signal before reverb. Changing this value is not recommended.
+      help: The pregain applied to the signal before reverb. Changing this value is not recommended. Use the function ``adsp_reverb_float2int`` in ``control/reverb.h``
+    predelay:
+      type: uint32_t
+      help: Predelay applied to the wet channel in samples. To convert a value in other units of time to samples, use ``time_to_samples`` in ``control/signal_chain.h``
 includes:
   - "stdint.h"

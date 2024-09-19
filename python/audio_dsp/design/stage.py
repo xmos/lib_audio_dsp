@@ -428,6 +428,12 @@ class Stage(Node):
 
         self._constants[field] = value
 
+    @property
+    def constants(self):
+        """Get a copy of the constants for this stage."""
+        # Copy so that the caller cannot modify
+        return {k: v for k, v in self._constants.items()}
+
     def get_config(self):
         """Get a dictionary containing the current value of the control
         fields which have been set.
