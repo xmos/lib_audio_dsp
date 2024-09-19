@@ -34,7 +34,11 @@ def get_sig_2ch(len=0.05):
   with FileLock(str(sig_path) + ".lock"):
     if not sig_path.is_file():
       sig_int.tofile(sig_path)
-      sf.write(gen_dir / str(name + ".wav"), sig_fl, int(fs), "PCM_24")
+
+  wav_path = gen_dir / str(name + ".wav")
+  with FileLock(str(wav_path) + ".lock"):
+    if not wav_path.is_file():
+      sf.write(wav_path, sig_fl_t, int(fs), "PCM_24")
   
   return sig_fl
 
