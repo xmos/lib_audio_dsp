@@ -179,10 +179,8 @@ pipeline {
                     withTools(params.TOOLS_VERSION) {
                       sh "pip install -r requirements.txt"
                       buildApps([
-                        "test/reverb",
-                        "test/signal_chain",
+                        "test/drc",
                         "test/fir",
-                        "test/utils"
                       ]) // buildApps
                     }
                   }
@@ -218,7 +216,50 @@ pipeline {
                   }
                 }
               }
-            } // test SC
+            } // test FIR
+          }
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          }
+        } // Build and test 2
+        stage ('Build & Test 3') {
+          agent {
+            label 'linux&&x86_64'
+          }
+          stages {
+            stage ('Build') {
+              steps {
+                runningOn(env.NODE_NAME)
+                dir("lib_audio_dsp") {
+                  checkout scm
+                  // try building a simple app without venv to check
+                  // build that doesn't use design tools won't
+                  // need Python
+                  withTools(params.TOOLS_VERSION) {
+                    dir("test/biquad") {
+                      sh "cmake -B build"
+                      sh "cmake --build build"
+                    } // dir
+                  } // tools
+                } // dir
+                createVenv("lib_audio_dsp/requirements.txt")
+                dir("lib_audio_dsp") {
+                  // build everything
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      sh "pip install -r requirements.txt"
+                      buildApps([
+                        "test/reverb",
+                        "test/signal_chain",
+                        "test/utils"
+                      ]) // buildApps
+                    }
+                  }
+                }
+              }
+            } // Build
             stage('Test SC') {
               steps {
                 dir("lib_audio_dsp") {
@@ -270,8 +311,7 @@ pipeline {
               xcoreCleanSandbox()
             }
           }
-        } // Build and test 2
-
+        } // Build and test 3
         stage('Style and docs') {
 
           agent {
