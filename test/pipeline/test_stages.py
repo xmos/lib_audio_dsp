@@ -58,10 +58,16 @@ def do_test_catch(make_p, tune_p, frame_size):
         do_test(make_p, tune_p, frame_size)
         # if xtag fails, raises a 
         # assert 0, f'\nERROR: host app exited with error code -15\n'
+
     except Exception as e:
         if "ERROR: host app exited with error code -15" in e.args[0]:
             #reset xtag and try again
             print("ERROR -15: resetting XTAG")
+            subprocess.check_output('xtagctl reset_all XCORE-AI-EXPLORER', shell=True)
+            do_test(make_p, tune_p, frame_size)
+        elif "xrun timed out - took more than" in e.args[0]:
+            #reset xtag and try again
+            print("ERROR xrun timeout: resetting XTAG")
             subprocess.check_output('xtagctl reset_all XCORE-AI-EXPLORER', shell=True)
             do_test(make_p, tune_p, frame_size)
 
