@@ -10,7 +10,7 @@ import audio_dsp.dsp.signal_gen as gen
 import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.generic as dspg
 import pytest
-
+from filelock import FileLock
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
@@ -27,9 +27,15 @@ def get_sig_2ch(len=0.05):
   sig_fl_t = utils.saturate_float_array(sig_fl_t, dspg.Q_SIG)
 
   sig_int = float_to_qxx(sig_fl_t)
-  sig_int.tofile(bin_dir / "sig_2ch_48k.bin")
 
-  sf.write(gen_dir / "sig_2ch_48k.wav", sig_fl_t, int(fs), "PCM_24")
+  name = "sig_2ch_48k"
+  sig_path = bin_dir /  str(name + ".bin")
+
+  with FileLock(str(sig_path) + ".lock"):
+    if not sig_path.is_file():
+      sig_int.tofile(sig_path)
+      sf.write(gen_dir / str(name + ".wav"), sig_fl, int(fs), "PCM_24")
+  
   return sig_fl
 
 @pytest.fixture(scope="module")

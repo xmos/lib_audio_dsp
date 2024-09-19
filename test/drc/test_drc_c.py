@@ -10,6 +10,8 @@ from audio_dsp.dsp.generic import Q_SIG
 from audio_dsp.dsp.signal_gen import quantize_signal
 import pytest
 
+from filelock import FileLock
+
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
 
@@ -33,8 +35,16 @@ def get_sig(len=0.05):
   sig_int = float_to_qxx(sig_fl)
 
   name = "sig_48k"
-  sig_int.tofile(bin_dir /  str(name + ".bin"))
-  sf.write(gen_dir / str(name + ".wav"), sig_fl, int(fs), "PCM_24")
+  sig_path = bin_dir /  str(name + ".bin")
+
+  with FileLock(str(sig_path) + ".lock"):
+    if not sig_path.is_file():
+      sig_int.tofile(sig_path)
+
+  wav_path = gen_dir / str(name + ".wav")
+  with FileLock(str(wav_path) + ".lock"):
+    if not wav_path.is_file():
+      sf.write(wav_path, sig_fl, int(fs), "PCM_24")
 
   return sig_fl
 
