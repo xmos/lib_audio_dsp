@@ -53,8 +53,7 @@ pipeline {
         }
       }
       steps {
-        // stopPreviousBuilds()
-        sleep(0.1)
+        stopPreviousBuilds()
       }
     } // Stop previous builds
     stage('CI') {
@@ -333,8 +332,7 @@ pipeline {
 
           post {
             cleanup {
-              println "no clean"
-              // xcoreCleanSandbox()
+              xcoreCleanSandbox()
             }
             always {
               dir("${WORKSPACE}/lib_audio_dsp/test/pipeline") {
