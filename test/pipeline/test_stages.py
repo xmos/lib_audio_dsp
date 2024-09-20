@@ -249,7 +249,7 @@ def generate_test_param_file(stage_name, stage_config):
             f_op.write(f"\t}},\n")
         f_op.write(f"}};\n")
 
-
+@pytest.mark.group0
 @pytest.mark.parametrize(
     "method, args",
     [
@@ -345,7 +345,7 @@ def test_cascaded_biquad(method, args, frame_size):
 
     do_test_catch(make_p, tune_p, frame_size)
 
-
+@pytest.mark.group0
 def test_limiter_rms(frame_size):
     """
     Test the limiter stage limits the same in Python and C
@@ -395,7 +395,7 @@ def test_limiter_peak(frame_size):
 
     do_test_catch(make_p, tune_p, frame_size)
 
-
+@pytest.mark.group0
 def test_hard_limiter_peak(frame_size):
     """
     Test the limiter stage limits the same in Python and C
@@ -445,7 +445,7 @@ def test_clipper(frame_size):
 
     do_test_catch(make_p, tune_p, frame_size)
 
-
+@pytest.mark.group0
 def test_compressor(frame_size):
     """
     Test the compressor stage compresses the same in Python and C
@@ -495,7 +495,7 @@ def test_noise_gate(frame_size):
 
     do_test_catch(make_p, tune_p, frame_size)
 
-
+@pytest.mark.group0
 def test_noise_suppressor_expander(frame_size):
     """
     Test the noise suppressor (expander) stage suppress the noise the same in Python and C
@@ -549,7 +549,7 @@ def test_volume(frame_size):
 
     do_test_catch(make_p, tune_p, frame_size)
 
-
+@pytest.mark.group0
 def test_fixed_gain(frame_size):
     """
     Test the volume stage amplifies the same in Python and C
@@ -608,6 +608,7 @@ def test_reverb(frame_size, pregain):
 
     do_test_catch(make_p, tune_p, frame_size)
 
+@pytest.mark.group0
 @pytest.mark.parametrize("change_delay", [5, 0])
 def test_delay(frame_size, change_delay):
     """

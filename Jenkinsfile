@@ -362,7 +362,7 @@ pipeline {
                     withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       sh "xtagctl reset ${adapterIDs[0]}"
                       dir("test/pipeline") {
-                        sh "python -m pytest --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
+                        sh "python -m pytest -m group0 --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
                         }
                     }
                 }
@@ -381,6 +381,47 @@ pipeline {
             }
           }
         } // Hardware test
+
+        stage ('Hardware Test 2') {
+          agent {
+            label 'xcore.ai && uhubctl'
+          }
+
+          steps {
+            runningOn(env.NODE_NAME)
+            sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
+            dir("lib_audio_dsp") {
+              checkout scm
+            }
+            createVenv("lib_audio_dsp/requirements.txt")
+
+            dir("lib_audio_dsp") {
+              withVenv {
+                withTools(params.TOOLS_VERSION) {
+                  sh "pip install -r requirements.txt"
+                  sh "pip install -e ${WORKSPACE}/xtagctl"
+                    withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
+                      sh "xtagctl reset ${adapterIDs[0]}"
+                      dir("test/pipeline") {
+                        sh "python -m pytest -m unmarked --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
+                        }
+                    }
+                }
+              }
+            }
+          }
+
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+            always {
+              dir("${WORKSPACE}/lib_audio_dsp/test/pipeline") {
+                junit "pytest_result.xml"
+              }
+            }
+          }
+        } // Hardware test 2
 
         // Host app on Windows
         stage ('Win32 Host Build & Test') {

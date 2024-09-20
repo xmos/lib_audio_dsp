@@ -70,7 +70,7 @@ def do_test(p):
 
     np.testing.assert_equal(out_py_int[0], out_data)
 
-
+@pytest.mark.group0
 def test_adder():
     """
     Test the adder stage adds the same in Python and C
@@ -95,7 +95,7 @@ def test_subtractor():
 
     do_test(p)
 
-
+@pytest.mark.group0
 @pytest.mark.parametrize("gain", ([-6, 0]))
 def test_mixer(gain):
     """
@@ -109,7 +109,7 @@ def test_mixer(gain):
 
     do_test(p)
 
-
+@pytest.mark.group0
 def test_compressor_sidechain():
     """
     Test the compressor stage compresses the same in Python and C
