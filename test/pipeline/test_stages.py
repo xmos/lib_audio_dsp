@@ -12,15 +12,11 @@ from audio_dsp.stages import *
 import audio_dsp.dsp.utils as utils
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
 
-import os
-import shutil
 import subprocess
 from pathlib import Path
 import numpy as np
 import struct
 import yaml
-
-
 
 PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
@@ -30,7 +26,6 @@ TEST_FRAME_SIZES = 1, 128
 
 fs = 48000
 channels = 2  # if this changes need to rewrite test signals
-
 
 
 @pytest.fixture(scope="module", params=TEST_FRAME_SIZES)
@@ -58,9 +53,9 @@ def generate_ref(sig, ref_module, pipeline_channels, frame_size):
     return out_py_int
 
 
-def do_test_catch(make_p, tune_p, frame_size, folder_name):
+def do_test_catch(make_p, tune_p, frame_size):
     try:
-        do_test(make_p, tune_p, frame_size, folder_name)
+        do_test(make_p, tune_p, frame_size)
         # if xtag fails, raises a 
         # assert 0, f'\nERROR: host app exited with error code -15\n'
 
@@ -75,13 +70,14 @@ def do_test_catch(make_p, tune_p, frame_size, folder_name):
                 #reset xtag and try again
                 print("ERROR xrun timeout: resetting XTAG")
                 subprocess.check_output('xtagctl reset_all XCORE-AI-EXPLORER', shell=True)
-                do_test(make_p, tune_p, frame_size, folder_name)
+                do_test(make_p, tune_p, frame_size)
             else:
                 raise e
         else:
             raise e
 
-def do_test(make_p, tune_p, dut_frame_size, folder_name):
+
+def do_test(make_p, tune_p, dut_frame_size):
     """
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
@@ -103,12 +99,6 @@ def do_test(make_p, tune_p, dut_frame_size, folder_name):
         The frame size to use for the pipeline that will run on the device.
     """
 
-    app_dir = PKG_DIR / folder_name
-    build_dir = app_dir / "build"
-
-    os.makedirs(app_dir, exist_ok=True)
-    shutil.copy(f"{PKG_DIR}/stage_CMakeLists.txt", f"{app_dir}/CMakeLists.txt")
-
     for func_p in [make_p, tune_p]:
         # Exit if tune_p is not defined
         if not func_p:
@@ -124,11 +114,11 @@ def do_test(make_p, tune_p, dut_frame_size, folder_name):
             out_dir = "dsp_pipeline_uninitialized"
         else:
             out_dir = "dsp_pipeline_initialized"
-        generate_dsp_main(dut_p, out_dir=build_dir / out_dir)
+        generate_dsp_main(dut_p, out_dir=BUILD_DIR / out_dir)
 
     n_samps, rate = 1024, 48000
-    infile = app_dir /"instage.wav"
-    outfile = app_dir /"outstage.wav"
+    infile = "instage.wav"
+    outfile = "outstage.wav"
 
     # The reference function should be always tune_p, it is make_p if tune_p is not defined
     ref_func_p = tune_p if tune_p else make_p
@@ -161,9 +151,9 @@ def do_test(make_p, tune_p, dut_frame_size, folder_name):
             continue
 
         # Build pipeline test executable. This will download xscope_fileio if not present
-        build_utils.build(app_dir, build_dir, target)
+        build_utils.build(APP_DIR, BUILD_DIR, target)
 
-        xe = app_dir / f"bin/{target}/pipeline_test_{target}.xe"
+        xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
         run_pipeline_xcoreai.run(xe, infile, outfile, pipeline_channels, 1)
 
         _, out_data = audio_helpers.read_wav(outfile)
@@ -304,8 +294,8 @@ def test_biquad(method, args, frame_size):
         generate_test_param_file("BIQUAD", stage_config)
         return p
 
-    folder_name = f"biquad_{frame_size}_{method[5:]}"
-    do_test_catch(make_p, tune_p, frame_size, folder_name)
+    do_test_catch(make_p, tune_p, frame_size)
+
 
 filter_spec = [
     ["lowpass", fs * 0.4, 0.707],
@@ -353,8 +343,7 @@ def test_cascaded_biquad(method, args, frame_size):
         generate_test_param_file("CASCADED_BIQUADS", stage_config)
         return p
 
-    folder_name = f"cascadedbiquad_{frame_size}_{method[5:]}"
-    do_test_catch(make_p, tune_p, frame_size, folder_name)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_limiter_rms(frame_size):
@@ -379,8 +368,7 @@ def test_limiter_rms(frame_size):
         generate_test_param_file("LIMITER_RMS", stage_config)
         return p
 
-    folder_name = f"limiterrms_{frame_size}"
-    do_test_catch(make_p, tune_p, frame_size, folder_name)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_limiter_peak(frame_size):
@@ -405,8 +393,7 @@ def test_limiter_peak(frame_size):
         generate_test_param_file("LIMITER_PEAK", stage_config)
         return p
 
-    folder_name = f"limiterpeak_{frame_size}"
-    do_test_catch(make_p, tune_p, frame_size, folder_name)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_hard_limiter_peak(frame_size):
@@ -431,8 +418,7 @@ def test_hard_limiter_peak(frame_size):
         generate_test_param_file("HARD_LIMITER_PEAK", stage_config)
         return p
 
-    folder_name = f"hardlimiterpeak_{frame_size}"
-    do_test_catch(make_p, tune_p, frame_size, folder_name)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_clipper(frame_size):
@@ -457,8 +443,7 @@ def test_clipper(frame_size):
         generate_test_param_file("CLIPPER", stage_config)
         return p
 
-    folder_name = f"clipper_{frame_size}"
-    do_test_catch(make_p, tune_p, frame_size, folder_name)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_compressor(frame_size):
@@ -483,8 +468,8 @@ def test_compressor(frame_size):
         generate_test_param_file("COMPRESSOR_RMS", stage_config)
         return p
 
-    folder_name = f"compressor_{frame_size}"
-    do_test_catch(make_p, tune_p, frame_size, folder_name)
+    do_test_catch(make_p, tune_p, frame_size)
+
 
 def test_noise_gate(frame_size):
     """
@@ -508,8 +493,7 @@ def test_noise_gate(frame_size):
         generate_test_param_file("NOISE_GATE", stage_config)
         return p
 
-    folder_name = f"noise_gate_{frame_size}"
-    do_test_catch(make_p, tune_p, frame_size, folder_name)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_noise_suppressor_expander(frame_size):
@@ -534,8 +518,7 @@ def test_noise_suppressor_expander(frame_size):
         generate_test_param_file("NOISE_SUPPRESSOR_EXPANDER", stage_config)
         return p
 
-    folder_name = f"noise_suppressor_{frame_size}"
-    do_test_catch(make_p, tune_p, frame_size, folder_name)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_volume(frame_size):
@@ -564,8 +547,7 @@ def test_volume(frame_size):
         generate_test_param_file("VOLUME_CONTROL", stage_config)
         return p
 
-    folder_name = f"volume_{frame_size}"
-    do_test_catch(make_p, tune_p, frame_size, folder_name)
+    do_test_catch(make_p, tune_p, frame_size)
 
 
 def test_fixed_gain(frame_size):
@@ -590,8 +572,7 @@ def test_fixed_gain(frame_size):
         generate_test_param_file("FIXED_GAIN", stage_config)
         return p
 
-    folder_name = f"fixed_gain_{frame_size}"
-    do_test_catch(make_p, tune_p, frame_size, folder_name)
+    do_test_catch(make_p, tune_p, frame_size)
 
 @pytest.mark.parametrize("pregain", [
     0.01,
@@ -600,7 +581,6 @@ def test_reverb(frame_size, pregain):
     """
     Test Reverb stage
     """
-
 
     def make_p(fr):
         reverb_test_channels = 1  # Reverb expects only 1 channel
@@ -626,8 +606,7 @@ def test_reverb(frame_size, pregain):
         generate_test_param_file("REVERB_ROOM", stage_config)
         return p
 
-    folder_name = f"reverb_{frame_size}_{pregain}"
-    do_test_catch(make_p, tune_p, frame_size, folder_name)
+    do_test_catch(make_p, tune_p, frame_size)
 
 @pytest.mark.parametrize("change_delay", [5, 0])
 def test_delay(frame_size, change_delay):
@@ -653,8 +632,8 @@ def test_delay(frame_size, change_delay):
         generate_test_param_file("DELAY", stage_config)
         return p
 
-    folder_name = f"delay_{frame_size}"
-    do_test_catch(make_p, tune_p, frame_size, folder_name)
+    do_test_catch(make_p, tune_p, frame_size)
+
 
 @pytest.fixture(scope="session", autouse=True)
 def make_coeffs():
@@ -687,8 +666,7 @@ def test_fir(frame_size, filter_name):
         p.set_outputs(o)
         return p
 
-    folder_name = f"fir_{frame_size}_{filter_name[:-3]}"
-    do_test_catch(make_p, None, frame_size, folder_name)
+    do_test_catch(make_p, None, frame_size)
 
 
 if __name__ == "__main__":
