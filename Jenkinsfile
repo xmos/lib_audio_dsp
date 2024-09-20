@@ -320,7 +320,7 @@ pipeline {
                 withTools(params.TOOLS_VERSION) {
                   sh "pip install -r requirements.txt"
                   sh "pip install -e ${WORKSPACE}/xtagctl"
-                    withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
+                    withXTAG(["XCORE-AI-EXPLORER", "XCORE-AI-EXPLORER"]) { adapterIDs ->
                       println adapterIDs[0] + adapterIDs[1]
                       sh "xtagctl reset ${adapterIDs[1]}"
                       dir("test/pipeline") {
