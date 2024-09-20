@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import scipy.io.wavfile
 import pathlib
+import time
 
 FORCE_ADAPTER_ID = None
 
@@ -69,6 +70,16 @@ def parse_arguments():
     args = parser.parse_args()
     return args
 
+def run_xscope(adapter_id, xe, return_stdout):
+    if return_stdout == False:
+        xscope_fileio.run_on_target(adapter_id, xe)
+    else:
+        with open("stdout.txt", "w+") as ff:
+            xscope_fileio.run_on_target(adapter_id, xe, stdout=ff)
+            ff.seek(0)
+            stdout = ff.readlines()
+        return stdout
+
 def run(xe, input_file, output_file, num_out_channels, pipeline_stages=1, return_stdout=False):
     """
     Run an xe on an xcore with fileio enabled.
@@ -98,14 +109,26 @@ def run(xe, input_file, output_file, num_out_channels, pipeline_stages=1, return
     adapter_id = get_adapter_id()
     print("Running on adapter_id ",adapter_id)
 
-    if return_stdout == False:
-        xscope_fileio.run_on_target(adapter_id, xe)
-    else:
-        with open("stdout.txt", "w+") as ff:
-            xscope_fileio.run_on_target(adapter_id, xe, stdout=ff)
-            ff.seek(0)
-            stdout = ff.readlines()
-        return stdout
+    try:
+        return run_xscope(adapter_id, xe, return_stdout)
+    except Exception as e:
+        if hasattr(e, "args") and isinstance(e.args, list):
+            if "ERROR: host app exited with error code -15" in e.args[0]:
+                #reset xtag and try again
+                print("ERROR -15: resetting XTAG")
+                subprocess.check_output(f'xtagctl reset {adapter_id}', shell=True)
+                time.sleep(2)
+                return run_xscope(adapter_id, xe, return_stdout)
+            elif "xrun timed out - took more than" in e.args[0]:
+                #reset xtag and try again
+                print("ERROR xrun timeout: resetting XTAG")
+                subprocess.check_output(f'xtagctl reset {adapter_id}', shell=True)
+                time.sleep(2)
+                return run_xscope(adapter_id, xe, return_stdout)
+            else:
+                raise e
+        else:
+            raise e
 
 if __name__ == "__main__":
     args = parse_arguments()
