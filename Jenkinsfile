@@ -88,7 +88,6 @@ pipeline {
                       buildApps([
                         "test/biquad",
                         "test/cascaded_biquads",
-                        "test/drc",
                       ]) // buildApps
                     } // tools
                   } // withVenv
@@ -126,25 +125,21 @@ pipeline {
                 }
               }
             } // test cascaded biquad
-            stage('Test DRC') {
+            stage('Unit tests') {
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      withMounts([["projects", "projects/hydra_audio", "hydra_audio_test_skype"]]) {
-                        withEnv(["hydra_audio_PATH=$hydra_audio_test_skype_PATH"]){
-                          catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                            dir("test/drc") {
-                              runPytest("--dist worksteal")
-                            }
-                          }
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/unit_tests") {
+                          runPytest("--dist worksteal")
                         }
                       }
                     }
                   }
                 }
               }
-            } // test drc
+            } // Unit tests
           }
           post {
             cleanup {
@@ -187,21 +182,25 @@ pipeline {
                 }
               }
             } // Build
-            stage('Unit tests') {
+            stage('Test DRC') {
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        dir("test/unit_tests") {
-                          runPytest("--dist worksteal")
+                      withMounts([["projects", "projects/hydra_audio", "hydra_audio_test_skype"]]) {
+                        withEnv(["hydra_audio_PATH=$hydra_audio_test_skype_PATH"]){
+                          catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                            dir("test/drc") {
+                              runPytest("--dist worksteal")
+                            }
+                          }
                         }
                       }
                     }
                   }
                 }
               }
-            } // Unit tests
+            } // test drc
             stage('Test FIR') {
               steps {
                 dir("lib_audio_dsp") {
