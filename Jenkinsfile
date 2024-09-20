@@ -540,7 +540,8 @@ pipeline {
 
           post {
             cleanup {
-              xcoreCleanSandbox()
+              println "no clean"
+              // xcoreCleanSandbox()
             }
             always {
               dir("${WORKSPACE}/lib_audio_dsp/test/pipeline") {
