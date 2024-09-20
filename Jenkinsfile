@@ -304,7 +304,7 @@ pipeline {
 
         stage ('Hardware Test') {
           agent {
-            label 'xcore.ai && uhubctl'
+            label 'xcore.ai && uhubctl && 3610-evk'
           }
 
           steps {
