@@ -65,7 +65,7 @@ def do_test_catch(make_p, tune_p, frame_size, folder_name):
         # assert 0, f'\nERROR: host app exited with error code -15\n'
 
     except Exception as e:
-        if hasattr(e, "args") and len(e.args) > 0:
+        if hasattr(e, "args") and isinstance(e.args, list):
             if "ERROR: host app exited with error code -15" in e.args[0]:
                 #reset xtag and try again
                 print("ERROR -15: resetting XTAG")
