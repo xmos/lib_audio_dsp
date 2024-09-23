@@ -18,6 +18,7 @@ void reverb_room_init(module_instance_t* instance,
     xassert(n_inputs == n_outputs && "Reverb should have the same number of inputs and outputs");
     reverb_room_state_t *state = instance->state;
     reverb_room_config_t *config = instance->control.config;
+    reverb_room_constants_t *constants = instance->constants;
 
     memset(state, 0, sizeof(reverb_room_state_t));
 
@@ -25,23 +26,25 @@ void reverb_room_init(module_instance_t* instance,
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    float fs = config->sampling_freq;
-    float max_room_size = config->max_room_size;
+    float fs = constants->sampling_freq;
+    float max_room_size = constants->max_room_size;
+    uint32_t max_predelay = constants->max_predelay;
 
     float room_size = config->room_size;
     int32_t feedback = config->feedback;
     int32_t damping = config->damping;
+    uint32_t predelay = config->predelay;
 
     xassert(n_inputs == 1); // Currently support only 1 channel reverb
 
-    uint8_t *reverb_heap = adsp_bump_allocator_malloc(allocator, REVERB_ROOM_STAGE_REQUIRED_MEMORY(fs, max_room_size));
-    memset(reverb_heap, 0, REVERB_ROOM_STAGE_REQUIRED_MEMORY(fs, max_room_size));
+    uint8_t *reverb_heap = adsp_bump_allocator_malloc(allocator, REVERB_ROOM_STAGE_REQUIRED_MEMORY(fs, max_room_size, max_predelay));
+    memset(reverb_heap, 0, REVERB_ROOM_STAGE_REQUIRED_MEMORY(fs, max_room_size, max_predelay));
 
     state->rv.pre_gain = config->pregain;
     state->rv.wet_gain = config->wet_gain;
     state->rv.dry_gain = config->dry_gain;
 
-    adsp_reverb_room_init_filters(&state->rv, fs, max_room_size, feedback, damping, reverb_heap);
+    adsp_reverb_room_init_filters(&state->rv, fs, max_room_size, max_predelay, predelay, feedback, damping, reverb_heap);
     adsp_reverb_room_set_room_size(&state->rv, room_size);
 }
 
@@ -72,6 +75,7 @@ void reverb_room_control(void *module_state, module_control_t *control)
         if (config->room_size != state->rv.room_size) {
             adsp_reverb_room_set_room_size(&state->rv, config->room_size);
         }
+        state->rv.predelay.delay = config->predelay;
         // damping is always at least 1
         int32_t damp2 = (uint32_t)(1<<31) - config->damping;
         for (unsigned i = 0; i < ADSP_RVR_N_COMBS; i ++) {
@@ -93,6 +97,7 @@ void reverb_room_control(void *module_state, module_control_t *control)
         config->room_size = state->rv.room_size;
         config->feedback = state->rv.combs[0].feedback;
         config->damping = state->rv.combs[0].damp_1;
+        config->predelay = state->rv.predelay.delay;
         control->config_rw_state = config_read_updated;
     }
     else {

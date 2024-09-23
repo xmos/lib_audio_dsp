@@ -62,9 +62,12 @@ void delay_control(void *state, module_control_t *control)
     delay_config_t *delay_config = control->config;
 
     if(control->config_rw_state == config_write_pending) {
+        // avoid overrunning delay buffer
+        uint32_t new_delay = (delay_config->delay <= delay_state->delay[0].max_delay) ? delay_config->delay : delay_state->delay[0].max_delay;
+
         for(int i = 0; i < delay_state->n_inputs; i++)
         {
-            delay_state->delay[i].delay = delay_config->delay;
+            delay_state->delay[i].delay = new_delay;
         }
         control->config_rw_state = config_none_pending;
     }
