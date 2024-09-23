@@ -24,9 +24,9 @@
 // EFFECT_GAIN is this reverb's "makeup gain". It is applied to the wet signal
 // after the wet gain. When set properly, the makeup gain should have the effect
 // of bringing the wet signal level up to match the dry signal, assuming the wet 
-// and dry signals are equal.
+// and dry gains are equal.
 //
-// This hardcoded value of 10dB was found to be correct for the default values for feedback
+// This hardcoded value of 10dB was found to be correct for the default values of feedback
 // and decay. It is set here and not by the user via wet-gain as it is out of range of the
 // Q31 wet gain configuration parameter. Possible future enhancement: make configurable.
 #define EFFECT_GAIN 424433723 // 10 dB linear in q27
