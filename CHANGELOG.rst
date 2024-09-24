@@ -1,10 +1,19 @@
 Audio DSP library change log
 ============================
 
-Unreleased
-----------
+1.1.0
+-----
 
+  * CHANGED: Moved control related DSP from api/dsp to api/control.
+  * CHANGED: Increased reverb wet signal level by 10 dB.
+  * CHANGED: Added pre-delay to reverb.
   * FIXED: Removed configuration parameters from reverb that did not support being changed.
+  * ADDED: Biquad design APIs for common filters.
+  * ADDED: Helper functions for converting control parameters to fixed point formats.
+  * ADDED: Improved documentation on control parameters.
+  * ADDED: Wet-dry mix helper for reverb.
+  * ADDED: Use Python properties for controllable parameters.
+  * ADDED: Separate Python base classes for peak and RMS DRC components.
 
 1.0.0
 -----

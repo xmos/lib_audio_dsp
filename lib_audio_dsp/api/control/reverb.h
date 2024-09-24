@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "dsp/reverb.h"
+#include "dsp/adsp.h"
 #include "helpers.h"
 #include <stdint.h>
 
@@ -65,6 +65,21 @@ static inline int32_t adsp_reverb_calculate_feedback(float decay) {
 int32_t adsp_reverb_room_calc_gain(float gain_db);
 
 /**
+ * @brief Calculate the wet and dry gains according to the mix amount.
+ * 
+ * When the mix is set to 0, only the dry signal will be output. 
+ * The wet gain will be 0 and the dry gain will be max.
+ * When the mic is set to 1, only they wet signal will be output. 
+ * The wet gain is max, the dry gain will be 0.
+ * In order to maintain a consistent signal level across all mix values, 
+ * the signals are panned with a -4.5 dB panning law.
+ * 
+ * @param gains           Output gains: [0] - Dry; [1] - Wet
+ * @param mix             Mix applied from 0 to 1
+ */
+void adsp_reverb_wet_dry_mix(int32_t gains[2], float mix);
+
+/**
  * @brief Initialise a reverb room object
  * A room reverb effect based on Freeverb by Jezar at Dreampoint
  * 
@@ -76,6 +91,8 @@ int32_t adsp_reverb_room_calc_gain(float gain_db);
  * @param wet_gain        Wet gain in dB
  * @param dry_gain        Dry gain in dB
  * @param pregain         Linear pre-gain
+ * @param max_predelay    Maximum size of the predelay buffer in ms
+ * @param predelay        Initial predelay in ms
  * @param reverb_heap     Pointer to heap to allocate reverb memory
  * @return reverb_room_t  Initialised reverb room object
  */
@@ -88,4 +105,6 @@ reverb_room_t adsp_reverb_room_init(
     float wet_gain,
     float dry_gain,
     float pregain,
+    float max_predelay,
+    float predelay,
     void *reverb_heap);

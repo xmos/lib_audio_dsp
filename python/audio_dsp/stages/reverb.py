@@ -20,6 +20,10 @@ class ReverbRoom(Stage):
         given time. For optimal memory usage, max_room_size should be
         set so that the longest reverb tail occurs when
         ``room_size=1.0``.
+    predelay : float, optional
+        The delay applied to the wet channel in ms.
+    max_predelay : float, optional
+        The maximum predelay in ms.
 
     Attributes
     ----------
@@ -28,28 +32,62 @@ class ReverbRoom(Stage):
         for implementation details.
     """
 
-    def __init__(self, max_room_size=1, **kwargs):
+    def __init__(self, max_room_size=1, predelay=10, max_predelay=None, **kwargs):
         super().__init__(config=find_config("reverb_room"), **kwargs)
         if self.fs is None:
             raise ValueError("Reverb requires inputs with a valid fs")
         self.fs = int(self.fs)
         self.create_outputs(self.n_in)
 
-        self.dsp_block = rvrb.reverb_room(self.fs, self.n_in, max_room_size=max_room_size)
+        max_predelay = predelay if max_predelay == None else max_predelay
+
+        self.dsp_block = rvrb.reverb_room(
+            self.fs,
+            self.n_in,
+            max_room_size=max_room_size,
+            predelay=predelay,
+            max_predelay=max_predelay,
+        )
         self.set_control_field_cb("room_size", lambda: self.dsp_block.room_size)
         self.set_control_field_cb("feedback", lambda: self.dsp_block.combs[0].feedback_int)
         self.set_control_field_cb("damping", lambda: self.dsp_block.combs[0].damp1_int)
         self.set_control_field_cb("wet_gain", lambda: self.dsp_block.wet_int)
         self.set_control_field_cb("pregain", lambda: self.dsp_block.pregain_int)
         self.set_control_field_cb("dry_gain", lambda: self.dsp_block.dry_int)
+        self.set_control_field_cb("predelay", lambda: self.dsp_block._predelay._delay)
 
         self.set_constant("sampling_freq", self.fs, "int32_t")
         self.set_constant("max_room_size", float(max_room_size), "float")
+        self.set_constant("max_predelay", self.dsp_block._predelay._max_delay, "uint32_t")
 
         self.stage_memory_parameters = (
             self.constants["sampling_freq"],
             self.constants["max_room_size"],
+            self.constants["max_predelay"],
         )
+
+    def set_wet_dry_mix(self, mix):
+        """
+        Set the wet/dry gains so that the mix of 0 results in a
+        fully dry output, the mix of 1 results in a fully wet output.
+
+        Parameters
+        ----------
+        mix : float
+            The wet/dry mix, must be [0, 1].
+        """
+        self.dsp_block.set_wet_dry_mix(mix)
+
+    def set_predelay(self, predelay):
+        """
+        Set the predelay of the wet channel.
+
+        Parameters
+        ----------
+        predelay : float
+            Predelay in ms, less than max_predelay.
+        """
+        self.dsp_block.predelay = predelay
 
     def set_wet_gain(self, gain_dB):
         """
