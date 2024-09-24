@@ -9,7 +9,6 @@ void foo(){
 
     int32_t __attribute__((aligned (8))) new_data[test_0_TD_BLOCK_LENGTH];
 
-
     //allocate a TD FIR for the example
     int32_t data[test_0_DATA_BUFFER_ELEMENTS];
     memset(data, 0, sizeof(data));
