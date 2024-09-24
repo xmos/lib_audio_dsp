@@ -333,7 +333,7 @@ pipeline {
                 // install this repo so that python autodoc works in sphinx
                 sh "pip install docstring-inheritance -e ./python"  // also extra package for docstrings
                 // pass the location of the venv to buildDocs so it knows to install/run xmosdoc from there
-                buildDocs archiveZip: true, archiveFiles: true, xmosdocVenvPath: "${WORKSPACE}"
+                buildDocs xmosdocVenvPath: "${WORKSPACE}"
               }
             }
           }
