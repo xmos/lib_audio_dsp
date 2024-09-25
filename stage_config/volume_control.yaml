@@ -2,11 +2,24 @@ module:
   volume_control:
     target_gain:
       type: int32_t
+      help: >
+        The target gain of the volume control in Q_GAIN format. To convert a value in decibels to
+        this format, the function ``adsp_dB_to_gain`` in ``control/signal_chain.h``
+        can be used.
     gain:
       type: int32_t
+      help: >
+        The current applied gain of the volume control in Q_GAIN format. 
+        The volume control will slew the applied gain towards the target gain.
+      rw_type: CMD_READ_ONLY
     slew_shift:
       type: int32_t
+      help: >
+        The shift value used to set the slew rate. See the volume
+        control documentation for conversions between slew_shift and
+        time constant.
     mute_state:
       type: uint8_t
+      help: Sets the mute state. 1 is muted and 0 is unmuted.
 includes:
   - "stdint.h"

@@ -1,6 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""The Noise gate stage."""
+"""Noise gate Stages remove quiet signals from the audio output."""
 
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
@@ -22,9 +22,8 @@ class NoiseGate(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.drc.expander.noise_gate
-        The DSP block class; see
-        :class:`audio_dsp.dsp.drc.expander.noise_gate` for implementation
+    dsp_block : :class:`audio_dsp.dsp.drc.expander.noise_gate`
+        The DSP block class; see :ref:`NoiseGate` for implementation
         details.
     """
 

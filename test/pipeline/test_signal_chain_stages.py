@@ -30,7 +30,7 @@ def do_test(p):
     outfile = "outadder.wav"
     n_samps, rate = 1024, 48000
 
-    # use the python dsp_block as a reference implementation
+    # use the Python dsp_block as a reference implementation
     ref_module = p.stages[2].dsp_block
 
     generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
@@ -61,7 +61,7 @@ def do_test(p):
     signal_frames = utils.frame_signal(sig_flt, frame_size, frame_size)
     out_py = np.zeros((1, sig.shape[0]))
 
-    # run through python bit exact implementation
+    # run through Python bit exact implementation
     for n in range(len(signal_frames)):
         out_py[:, n:n+frame_size] = ref_module.process_frame_xcore(signal_frames[n])
 
@@ -73,7 +73,7 @@ def do_test(p):
 
 def test_adder():
     """
-    Test the adder stage adds the same in python and C
+    Test the adder stage adds the same in Python and C
     """
     channels = 2
     p = Pipeline(channels)
@@ -86,7 +86,7 @@ def test_adder():
 
 def test_subtractor():
     """
-    Test the subtractor stage adds the same in python and C
+    Test the subtractor stage adds the same in Python and C
     """
     channels = 2
     p = Pipeline(channels)
@@ -99,7 +99,7 @@ def test_subtractor():
 @pytest.mark.parametrize("gain", ([-6, 0]))
 def test_mixer(gain):
     """
-    Test the mixer stage adds the same in python and C
+    Test the mixer stage adds the same in Python and C
     """
     channels = 2
     p = Pipeline(channels)
@@ -112,7 +112,7 @@ def test_mixer(gain):
 
 def test_compressor_sidechain():
     """
-    Test the compressor stage compresses the same in python and C
+    Test the compressor stage compresses the same in Python and C
     """
     channels = 2
     p = Pipeline(channels)
@@ -126,7 +126,7 @@ def test_compressor_sidechain():
 @pytest.mark.parametrize("position", ([0, 1]))
 def test_switch(position):
     """
-    Test the mixer stage adds the same in python and C
+    Test the mixer stage adds the same in Python and C
     """
     channels = 2
     p = Pipeline(channels)

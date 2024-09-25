@@ -2,11 +2,9 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include <xcore/assert.h>
-#include <math.h>
 #include <string.h>
 
 #include "dsp/adsp.h"
-#include "dsp/reverb.h"
 #include "dsp/_helpers/generic_utils.h"
 
 #define DEFAULT_COMB_LENS                              \
@@ -18,26 +16,23 @@
         556, 441, 341, 225 \
     }
 
-#define DBTOGAIN(x) (powf(10, (x / 20.0)))
-#define GAINTODB(x) (log10f(x) * 20.0)
 #define TWO_TO_31 0x80000000
 #define TWO_TO_31_MINUS_1 0x7FFFFFFF
 
-#define Q_RVR 31
-#define DEFAULT_AP_FEEDBACK 0x40000000 // 0.5 in Q31
+#define DEFAULT_AP_FEEDBACK 0x40000000 // 0.5 in Q0.31
 
-static inline int32_t float_to_Q_RVR_pos(float val)
-{
-    // only works for positive values
-    xassert(val >= 0);
-    int32_t sign, exp, mant;
-    asm("fsexp %0, %1, %2": "=r"(sign), "=r"(exp): "r"(val));
-    asm("fmant %0, %1": "=r"(mant): "r"(val));
-    // mant to q_rvr
-    right_shift_t shr = -Q_RVR - exp + 23;
-    mant >>= shr;
-    return mant;
-}
+// EFFECT_GAIN is this reverb's "makeup gain". It is applied to the wet signal
+// after the wet gain. When set properly, the makeup gain should have the effect
+// of bringing the wet signal level up to match the dry signal, assuming the wet 
+// and dry gains are equal.
+//
+// This hardcoded value of 10dB was found to be correct for the default config.
+// It is set here and not by the user via wet-gain as it is out of range of the
+// Q31 wet gain configuration parameter. Possible future enhancement: make configurable.
+#define EFFECT_GAIN 424433723 // 10 dB linear in q27
+#if Q_GAIN != 27
+#error "Need to change the EFFECT_GAIN"
+#endif
 
 static inline int32_t scale_sat_int64_to_int32_floor(int32_t ah,
                                                      int32_t al,
@@ -45,7 +40,7 @@ static inline int32_t scale_sat_int64_to_int32_floor(int32_t ah,
 {
     int32_t big_q = TWO_TO_31_MINUS_1, one = 1, shift_minus_one = shift - 1;
 
-    // If ah:al < 0, add just under 1 (represented in Q31)
+    // If ah:al < 0, add just under 1 (represented in Q0.31)
     if (ah < 0) // ah is sign extended, so this test is sufficient
     {
         asm volatile("maccs %0, %1, %2, %3"
@@ -243,30 +238,24 @@ static inline int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
     return output;
 }
 
-int32_t adsp_reverb_room_calc_gain(float gain_db)
-{
-    xassert(gain_db > ADSP_RVR_MIN_GAIN_DB &&
-            gain_db <= ADSP_RVR_MAX_GAIN_DB);
-    int32_t gain = float_to_Q_RVR_pos(DBTOGAIN(gain_db));
-    return gain;
-}
-
 void adsp_reverb_room_init_filters(
     reverb_room_t *rv,
     float fs,
     float max_room_size,
+    uint32_t max_predelay,
+    uint32_t predelay,
     int32_t feedback,
     int32_t damping,
     void * reverb_heap)
 {
     mem_manager_t memory_manager = mem_manager_init(
         reverb_heap,
-        ADSP_RVR_HEAP_SZ(fs, max_room_size));
+        ADSP_RVR_HEAP_SZ(fs, max_room_size, max_predelay));
 
     const float rv_scale_fac = ADSP_RVR_SCALE(fs, max_room_size);
 
     // shift 2 insted of / sizeof(int32_t), to avoid division
-    rv->total_buffer_length = ADSP_RVR_HEAP_SZ(fs, max_room_size) >> 2;
+    rv->total_buffer_length = ADSP_RVR_HEAP_SZ(fs, max_room_size, max_predelay) >> 2;
 
     uint32_t comb_lengths[ADSP_RVR_N_COMBS] = DEFAULT_COMB_LENS;
     uint32_t ap_lengths[ADSP_RVR_N_APS] = DEFAULT_AP_LENS;
@@ -289,46 +278,12 @@ void adsp_reverb_room_init_filters(
             DEFAULT_AP_FEEDBACK,
             &memory_manager);
     }
-}
-
-/**
- *
- * reverb_room class and methods
- *
- */
-
-reverb_room_t adsp_reverb_room_init(
-    float fs,
-    float max_room_size,
-    float room_size,
-    float decay,
-    float damping,
-    float wet_gain,
-    float dry_gain,
-    float pregain,
-    void *reverb_heap)
-{
-    // For larger rooms, increase max_room_size. Don't forget to also increase
-    // the size of reverb_heap
-    xassert(room_size >= 0 && room_size <= 1);
-    xassert(decay >= 0 && decay <= 1);
-    xassert(damping >= 0 && damping <= 1);
-    xassert(pregain >= 0 && pregain < 1);
-
-    reverb_room_t rv;
-
-    // Avoids too much or too little feedback
-    const int32_t feedback_int = float_to_Q_RVR_pos((decay * 0.28) + 0.7);
-    const int32_t damping_int = MAX(float_to_Q_RVR_pos(damping) - 1, 1);
-
-    adsp_reverb_room_init_filters(&rv, fs, max_room_size, feedback_int, damping_int, reverb_heap);
-    adsp_reverb_room_set_room_size(&rv, room_size);
-
-    rv.pre_gain = float_to_Q_RVR_pos(pregain);
-    rv.dry_gain = adsp_reverb_room_calc_gain(dry_gain);
-    rv.wet_gain = adsp_reverb_room_calc_gain(wet_gain);
-
-    return rv;
+    // init predelay manually with memory_manager
+    rv->predelay.fs = fs;
+    rv->predelay.buffer_idx = 0;
+    rv->predelay.delay = predelay;
+    rv->predelay.max_delay = max_predelay;
+    rv->predelay.buffer = mem_manager_alloc(&memory_manager, DELAY_DSP_REQUIRED_MEMORY_SAMPLES(max_predelay));
 }
 
 void adsp_reverb_room_reset_state(reverb_room_t *rv)
@@ -366,7 +321,7 @@ void adsp_reverb_room_set_room_size(reverb_room_t *rv,
 
     for (int comb = 0; comb < ADSP_RVR_N_COMBS; comb++)
     {
-        // Do comb length * new_room_size in UQ31
+        // Do comb length * new_room_size in UQ0.31
         uint32_t l = rv->combs[comb].max_delay;
         asm volatile("lmul %0, %1, %2, %3, %4, %5"
                      : "=r"(ah), "=r"(al)
@@ -378,7 +333,7 @@ void adsp_reverb_room_set_room_size(reverb_room_t *rv,
     }
     for (int ap = 0; ap < ADSP_RVR_N_APS; ap++)
     {
-        // Do ap length * new_room_size in UQ31
+        // Do ap length * new_room_size in UQ0.31
         uint32_t l = rv->allpasses[ap].max_delay;
         asm volatile("lmul %0, %1, %2, %3, %4, %5"
                      : "=r"(ah), "=r"(al)
@@ -394,7 +349,8 @@ int32_t adsp_reverb_room(
     reverb_room_t *rv,
     int32_t new_samp)
 {
-    int32_t reverb_input = apply_gain_q31(new_samp, rv->pre_gain);
+    int32_t delayed_input = adsp_delay(&rv->predelay, new_samp);
+    int32_t reverb_input = apply_gain_q31(delayed_input, rv->pre_gain);
     int32_t output = 0;
     int64_t acc = 0;
     for (int comb = 0; comb < ADSP_RVR_N_COMBS; comb++)
@@ -408,7 +364,8 @@ int32_t adsp_reverb_room(
         acc = allpass_fv(&(rv->allpasses[ap]), output);
         output = (int32_t)acc; // We do not saturate here!
     }
-    acc = apply_gain_q31(output, rv->wet_gain);
+    output = apply_gain_q31(output, rv->wet_gain);
+    acc = adsp_fixed_gain(output, EFFECT_GAIN);
     acc += apply_gain_q31(new_samp, rv->dry_gain);
     output = adsp_saturate_32b(acc);
 

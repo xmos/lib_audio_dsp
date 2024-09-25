@@ -1,6 +1,8 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""Cascaded biquad stage."""
+"""Cascaded biquad Stages consist of several biquad filters connected
+together in series.
+"""
 
 from ..design.stage import Stage, find_config
 from ..dsp import cascaded_biquads as casc_bq
@@ -32,7 +34,10 @@ def _parametric_eq_doc(wrapped):
 
 class CascadedBiquads(Stage):
     """8 cascaded biquad filters. This allows up to 8 second order
-    biquad filters to be run in series. This can be used for either:
+    biquad filters to be run in series.
+
+    This can be used for either:
+
     - an Nth order filter built out of cascaded second order sections
     - a parametric EQ, where several biquad filters are used at once.
 
@@ -42,9 +47,8 @@ class CascadedBiquads(Stage):
 
     Attributes
     ----------
-    dsp_block : audio_dsp.dsp.cascaded_biquad.cascaded_biquad
-        The DSP block class; see
-        :class:`audio_dsp.dsp.cascaded_biquad.cascaded_biquad` for
+    dsp_block : :class:`audio_dsp.dsp.cascaded_biquad.cascaded_biquad`
+        The DSP block class; see :ref:`CascadedBiquads` for
         implementation details.
 
     """

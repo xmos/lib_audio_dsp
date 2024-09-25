@@ -8,7 +8,7 @@ from audio_dsp.dsp import utils as utils
 from audio_dsp.dsp import generic as dspg
 import audio_dsp.dsp.drc.drc_utils as drcu
 from audio_dsp.dsp.types import float32
-from audio_dsp.dsp.drc import envelope_detector_peak, compressor_limiter_base
+from audio_dsp.dsp.drc.drc import compressor_limiter_base, peak_compressor_limiter_base
 
 FLT_MIN = np.finfo(float).tiny
 
@@ -18,9 +18,9 @@ class expander_base(compressor_limiter_base):
     A base class for expanders (including noise suppressors).
 
     Expanders differ from compressors in that they reduce the level of a
-    signal when it falls below a threshold (instead of above). This
-    means the attack and release times are swapped in the gain
-    calculation (i.e. release after going above the threshold).
+    signal when it falls below a threshold (instead of above). The
+    attack time is still defined as how quickly the gain is changed
+    after the envelope exceeds the threshold.
 
     Expanders, noise gates and noise suppressors have very similar
     structures, with differences in the gain calculation. All the shared
@@ -32,42 +32,28 @@ class expander_base(compressor_limiter_base):
         number of parallel channels the expander runs on. The
         channels are expanded separately, only the constant
         parameters are shared.
+    threshold_db : float
+        Threshold in decibels below which expansion occurs. This cannot
+        be greater than the maximum value representable in
+        Q_SIG format, and will saturate to that value.
     attack_t : float
-        Attack time of the expander in seconds.
-    release_t : float
-        Release time of the expander in seconds.
+        Attack time of the expander in seconds. This cannot be
+        faster than 2/fs seconds, and saturates to that
+        value. Exceptionally large attack times may converge to zero.
+    release_t: float
+        Release time of the expander in seconds. This cannot
+        be faster than 2/fs seconds, and saturates to that
+        value. Exceptionally large release times may converge to zero.
 
     Attributes
     ----------
-    env_detector : envelope_detector_peak
-        Nested envelope detector used to calculate the envelope of the
-        signal. Either a peak or RMS envelope detector can be used.
     threshold : float
         Value below which expanding occurs for floating point
         processing.
-    gain : list[float]
-        Current gain to be applied to the signal for each channel for
-        floating point processing.
-    attack_alpha : float
-        Attack time parameter used for exponential moving average in
-        floating point processing.
-    release_alpha : float
-        Release time parameter used for exponential moving average in
-        floating point processing.
     threshold_int : int
         Value below which expanding occurs for int32 fixed
         point processing.
-    gain_int : list[int]
-        Current gain to be applied to the signal for each channel for
-        int32 fixed point processing.
-    attack_alpha_int : int
-        attack_alpha in 32-bit int format.
-    release_alpha_int : int
-        release_alpha in 32-bit int format.
-    gain_calc : function
-        function pointer to floating point gain calculation function.
-    gain_calc_int : function
-        function pointer to fixed point gain calculation function.
+
     """
 
     def reset_state(self):
@@ -87,11 +73,11 @@ class expander_base(compressor_limiter_base):
         maths.
 
         Take one new sample and return the expanded sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         """
         # get envelope from envelope detector
-        envelope = self.env_detector.process(sample, channel)  # type: ignore : base inits to None
+        envelope = self.env_detector.process(sample, channel)
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
 
@@ -101,8 +87,10 @@ class expander_base(compressor_limiter_base):
 
         # see if we're attacking or decaying
         if new_gain < self.gain[channel]:
+            # below threshold, gain < unity
             alpha = self.release_alpha
         else:
+            # above threshold, gain = unity
             alpha = self.attack_alpha
 
         # do exponential moving average
@@ -119,12 +107,12 @@ class expander_base(compressor_limiter_base):
         maths.
 
         Take one new sample and return the expanded sample.
-        Input should be scaled with 0dB = 1.0.
+        Input should be scaled with 0 dB = 1.0.
 
         """
         sample_int = utils.float_to_int32(sample, self.Q_sig)
         # get envelope from envelope detector
-        envelope_int = self.env_detector.process_xcore(sample_int, channel)  # pyright: ignore : base inits to None
+        envelope_int = self.env_detector.process_xcore(sample_int, channel)
         # avoid /0
         envelope_int = max(envelope_int, 1)
 
@@ -134,8 +122,10 @@ class expander_base(compressor_limiter_base):
 
         # see if we're attacking or decaying
         if new_gain_int < self.gain_int[channel]:
+            # below threshold, gain < unity
             alpha = self.release_alpha_int
         else:
+            # above threshold, gain = unity
             alpha = self.attack_alpha_int
 
         # do exponential moving average
@@ -154,7 +144,16 @@ class expander_base(compressor_limiter_base):
             )
 
 
-class noise_gate(expander_base):
+class peak_expander_base(expander_base, peak_compressor_limiter_base):
+    """A generic expander base class that uses a peak envelope detector.
+
+    Inheritance from expander_base is prioritised over
+    peak_compressor_limiter_base due to the order in the definition. To
+    confirm this, peak_expander_base.__mro__ can be inspected.
+    """
+
+
+class noise_gate(peak_expander_base):
     """A noise gate that reduces the level of an audio signal when it
     falls below a threshold.
 
@@ -166,45 +165,17 @@ class noise_gate(expander_base):
     The initial state of the noise gate is with the gate open (no
     attenuation), assuming a full scale signal has been present before
     t = 0.
-
-    Parameters
-    ----------
-    threshold_db : float
-        The threshold level in decibels below which the audio signal is
-        attenuated.
-
-    Attributes
-    ----------
-    threshold : float
-        The threshold below which the signal is gated.
-    threshold_int : int
-        The threshold level as a 32-bit signed integer.
-    env_detector : envelope_detector_peak
-        An instance of the envelope_detector_peak class used for envelope detection.
-
     """
 
     def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
-
-        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
-
-        self.env_detector = envelope_detector_peak(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
         # set the gain calculation function handles
         self.gain_calc = drcu.noise_gate_gain_calc
         self.gain_calc_xcore = drcu.noise_gate_gain_calc_xcore
 
-        self.reset_state()
 
-
-class noise_suppressor_expander(expander_base):
+class noise_suppressor_expander(peak_expander_base):
     """A noise suppressor that reduces the level of an audio signal when
     it falls below a threshold. This is also known as an expander.
 
@@ -222,42 +193,40 @@ class noise_suppressor_expander(expander_base):
     ratio : float
         The expansion ratio applied to the signal when the envelope
         falls below the threshold.
-    threshold_db : float
-        The threshold level in decibels below which the audio signal is
-        attenuated.
 
     Attributes
     ----------
-    threshold : float
-        The threshold below which the signal is gated.
-    threshold_int : int
-        The threshold level as a 32-bit signed integer.
-    env_detector : envelope_detector_peak
-        An instance of the envelope_detector_peak class used for envelope detection.
-
+    ratio : float
+    slope : float
+        The slope factor of the expander, defined as
+        `slope = 1 - ratio`.
+    slope_f32 : float32
+        The slope factor of the expander, used for int32 to float32
+        processing.
     """
 
     def __init__(self, fs, n_chans, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, attack_t, release_t, Q_sig)
+        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
 
-        self.threshold, self.threshold_int = drcu.calculate_threshold(threshold_db, self.Q_sig)
-        self.threshold_int = max(1, self.threshold_int)
-        self.env_detector = envelope_detector_peak(
-            fs,
-            n_chans=n_chans,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=self.Q_sig,
-        )
-
-        self.slope = 1 - ratio
-        self.slope_f32 = float32(self.slope)
+        # property calculates the slopes as well
+        self.ratio = ratio
 
         # set the gain calculation function handles
         self.gain_calc = drcu.noise_suppressor_expander_gain_calc
         self.gain_calc_xcore = drcu.noise_suppressor_expander_gain_calc_xcore
 
-        self.reset_state()
+    @property
+    def ratio(self):
+        """Expansion gain ratio applied when the signal is below the
+        threshold; changing this property also updates the slope used in
+        the fixed and floating point implementation.
+        """
+        return self._ratio
+
+    @ratio.setter
+    def ratio(self, value):
+        self._ratio = value
+        self.slope, self.slope_f32 = drcu.peak_expander_slope_from_ratio(self.ratio)
 
 
 if __name__ == "__main__":

@@ -2,5 +2,9 @@ module:
   mixer:
     gain:
       type: int32_t
+      help: >
+        The current gain in Q_GAIN format. To convert a value in decibels to
+        this format, the function ``adsp_dB_to_gain`` in ``control/signal_chain.h``
+        can be used.
 includes:
   - "stdint.h"

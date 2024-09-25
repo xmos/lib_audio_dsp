@@ -2,4 +2,8 @@ module:
   clipper:
     threshold:
       type: int32_t
+      help: >
+        The threshold in Q_SIG format above which clipping will occur.
+        To convert a threshold in dB to the ``int32_t`` control value, use the function
+        ``calculate_peak_threshold(x)`` in ``control/helpers.h``.
 includes: []

@@ -84,10 +84,6 @@ class biquad(dspg.dsp_block):
         ----------
         new_coeffs : list[float]
             The new coefficients to be updated.
-
-        Returns
-        -------
-        None
         """
         self.coeffs, self.int_coeffs = _round_and_check(new_coeffs, self.b_shift)
 
@@ -240,7 +236,7 @@ class biquad(dspg.dsp_block):
         ----------
         nfft : int
             The number of points to compute in the frequency response,
-            by default 512.
+            by default 1024.
 
         Returns
         -------
@@ -390,7 +386,7 @@ def biquad_linkwitz(
 
 def _round_to_q30(coeffs: list[float]) -> tuple[list[float], list[int]]:
     """
-    Round a list of filter coefficients to Q30 format and int32
+    Round a list of filter coefficients to Q1.30 format and int32
     precision. The coefficients should already have any b_shift applied.
 
     Returns the rounded coefficients in float and int formats
@@ -401,7 +397,7 @@ def _round_to_q30(coeffs: list[float]) -> tuple[list[float], list[int]]:
 
     Q = 30
     for n in range(len(coeffs)):
-        # scale to Q30 ints, note this is intentionally not multiplied
+        # scale to Q1.30 ints, note this is intentionally not multiplied
         # (2**Q -1) to keep 1.0 as 1.0
         rounded_coeffs[n] = round(coeffs[n] * (2**Q))
         # check for overflow
@@ -433,7 +429,7 @@ def _apply_biquad_bshift(coeffs: list[float], b_shift: int) -> list[float]:
 
     This can be used for high gain shelf and peaking filters, where the
     filter coefficients are greater than 2, and so cannot be represented
-    in Q30 format.
+    in Q1.30 format.
 
     """
     gain = 2**-b_shift
@@ -485,6 +481,24 @@ def _round_and_check(coeffs: list[float], b_shift: int = 0) -> tuple[list[float]
         raise ValueError("Poles lie outside the unit circle, the filter is unstable")
 
     return coeffs, int_coeffs
+
+
+def _check_filter_freq(filter_freq, fs):
+    if filter_freq > fs / 2:
+        warnings.warn("filter_freq must be less than fs/2, saturating to fs/2", UserWarning)
+        filter_freq = fs / 2
+
+    return filter_freq
+
+
+def _check_max_gain(gain, max_gain):
+    if gain > max_gain:
+        warnings.warn(
+            f"gain_db must be less than {max_gain:.2f}, saturating to {max_gain:.2f}", UserWarning
+        )
+        gain = max_gain
+
+    return gain
 
 
 def make_biquad_bypass(fs: int) -> list[float]:
@@ -572,8 +586,8 @@ def make_biquad_lowpass(fs: int, filter_freq: float, q_factor: float) -> list[fl
         If the filter frequency is greater than fs/2.
 
     """
-    if filter_freq > fs / 2:
-        raise ValueError("filter_freq must be less than fs/2")
+    filter_freq = _check_filter_freq(filter_freq, fs)
+
     w0 = 2.0 * np.pi * filter_freq / fs
     alpha = np.sin(w0) / (2 * q_factor)
 
@@ -613,8 +627,8 @@ def make_biquad_highpass(fs: int, filter_freq: float, q_factor: float) -> list[f
         If the filter frequency is greater than fs/2.
 
     """
-    if filter_freq > fs / 2:
-        raise ValueError("filter_freq must be less than fs/2")
+    filter_freq = _check_filter_freq(filter_freq, fs)
+
     w0 = 2.0 * np.pi * filter_freq / fs
     alpha = np.sin(w0) / (2 * q_factor)
 
@@ -643,7 +657,7 @@ def make_biquad_bandpass(fs: int, filter_freq: float, BW) -> list[float]:
         The center frequency of the bandpass filter.
     BW : float
         The bandwidth of the bandpass filter in octaves, measured
-        between -3dB points.
+        between -3 dB points.
 
     Returns
     -------
@@ -657,8 +671,8 @@ def make_biquad_bandpass(fs: int, filter_freq: float, BW) -> list[float]:
         If filter_freq is greater than fs/2.
 
     """
-    if filter_freq > fs / 2:
-        raise ValueError("filter_freq must be less than fs/2")
+    filter_freq = _check_filter_freq(filter_freq, fs)
+
     w0 = 2.0 * np.pi * filter_freq / fs
     alpha = np.sin(w0) * np.sinh(np.log(2) / 2 * BW * w0 / np.sin(w0))
 
@@ -687,7 +701,7 @@ def make_biquad_bandstop(fs: int, filter_freq: float, BW: float) -> list[float]:
         The center frequency of the bandstop filter.
     BW : float
         The bandwidth of the bandstop filter in octaves, measured
-        between -3dB points
+        between -3 dB points
 
     Returns
     -------
@@ -700,8 +714,8 @@ def make_biquad_bandstop(fs: int, filter_freq: float, BW: float) -> list[float]:
         If the filter frequency is greater than half of the sample rate.
 
     """
-    if filter_freq > fs / 2:
-        raise ValueError("filter_freq must be less than fs/2")
+    filter_freq = _check_filter_freq(filter_freq, fs)
+
     w0 = 2.0 * np.pi * filter_freq / fs
     alpha = np.sin(w0) * np.sinh(np.log(2) / 2 * BW * w0 / np.sin(w0))
 
@@ -741,8 +755,8 @@ def make_biquad_notch(fs: int, filter_freq: float, q_factor: float) -> list[floa
         If the filter frequency is greater than half of the sample rate.
 
     """
-    if filter_freq > fs / 2:
-        raise ValueError("filter_freq must be less than fs/2")
+    filter_freq = _check_filter_freq(filter_freq, fs)
+
     w0 = 2.0 * np.pi * filter_freq / fs
     alpha = np.sin(w0) / (2.0 * q_factor)
 
@@ -783,8 +797,8 @@ def make_biquad_allpass(fs: int, filter_freq: float, q_factor: float) -> list[fl
         If the filter frequency is greater than half of the sample rate.
 
     """
-    if filter_freq > fs / 2:
-        raise ValueError("filter_freq must be less than fs/2")
+    filter_freq = _check_filter_freq(filter_freq, fs)
+
     w0 = 2.0 * np.pi * filter_freq / fs
     alpha = np.sin(w0) / (2.0 * q_factor)
 
@@ -828,8 +842,11 @@ def make_biquad_peaking(
     ValueError
         If the filter frequency is greater than half of the sample rate.
     """
-    if filter_freq > fs / 2:
-        raise ValueError("filter_freq must be less than fs/2")
+    filter_freq = _check_filter_freq(filter_freq, fs)
+
+    max_gain = (BOOST_BSHIFT + 1) * (20 * np.log10(2))
+    boost_db = _check_max_gain(boost_db, max_gain)
+
     A = np.sqrt(10 ** (boost_db / 20))
     w0 = 2.0 * np.pi * filter_freq / fs
     alpha = np.sin(w0) / (2.0 * q_factor)
@@ -883,8 +900,10 @@ def make_biquad_constant_q(
     - https://www.musicdsp.org/en/latest/Filters/37-zoelzer-biquad-filters.html
 
     """
-    if filter_freq > fs / 2:
-        raise ValueError("filter_freq must be less than fs/2")
+    filter_freq = _check_filter_freq(filter_freq, fs)
+
+    max_gain = (BOOST_BSHIFT + 1) * (20 * np.log10(2))
+    boost_db = _check_max_gain(boost_db, max_gain)
 
     V = 10 ** (boost_db / 20)
     w0 = 2.0 * np.pi * filter_freq / fs
@@ -944,8 +963,10 @@ def make_biquad_lowshelf(
         If the filter frequency is greater than half of the sample rate.
 
     """
-    if filter_freq > fs / 2:
-        raise ValueError("filter_freq must be less than fs/2")
+    filter_freq = _check_filter_freq(filter_freq, fs)
+
+    max_gain = (BOOST_BSHIFT) * (20 * np.log10(2))
+    gain_db = _check_max_gain(gain_db, max_gain)
 
     A = 10.0 ** (gain_db / 40.0)
     w0 = 2.0 * np.pi * filter_freq / fs
@@ -995,8 +1016,10 @@ def make_biquad_highshelf(
         If the filter frequency is greater than half of the sample rate.
 
     """
-    if filter_freq > fs / 2:
-        raise ValueError("filter_freq must be less than fs/2")
+    filter_freq = _check_filter_freq(filter_freq, fs)
+
+    max_gain = (BOOST_BSHIFT) * (20 * np.log10(2))
+    gain_db = _check_max_gain(gain_db, max_gain)
 
     A = 10.0 ** (gain_db / 40.0)
     w0 = 2.0 * np.pi * filter_freq / fs
@@ -1054,8 +1077,8 @@ def make_biquad_linkwitz(fs: int, f0: float, q0: float, fp: float, qp: float) ->
     - Linkwitz Transform in MiniDSP: https://www.minidsp.com/applications/advanced-tools/linkwitz-transform
 
     """
-    if max(f0, fp) > fs / 2:
-        raise ValueError("f0 and fp must be less than fs/2")
+    f0 = _check_filter_freq(f0, fs)
+    fp = _check_filter_freq(fp, fs)
 
     fc = (f0 + fp) / 2
 

@@ -2,6 +2,13 @@ module:
   delay:
     max_delay:
       type: uint32_t
+      help: The maximum delay value in samples. This is only configurable at compile time.
+      rw_type: CMD_READ_ONLY
     delay:
       type: uint32_t
+      help: >
+            The current delay value in samples. To convert a value in other units of time to
+            samples, use ``time_to_samples`` in ``control/signal_chain.h``. Note the minimum delay
+            provided by this stage is 1 sample. Setting the delay to 0 will still yield a 1 sample
+            delay.
 includes: []
