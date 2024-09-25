@@ -286,7 +286,7 @@ pipeline {
             createVenv("requirements.txt")
             withVenv {
               sh 'pip install -e ./python'
-              sh 'pip install "pyright < 2.0"'
+              sh 'pip install "pyright[all] < 2.0"'
               sh 'pip install "ruff < 0.4"'
               sh "pip install docstring-inheritance"
               buildDocs xmosdocVenvPath: "${WORKSPACE}"
