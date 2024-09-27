@@ -4,6 +4,7 @@
 
 from ..design.stage import Stage, find_config
 import audio_dsp.dsp.reverb as rvrb
+import audio_dsp.dsp.reverb_stereo as rvbs
 
 
 class ReverbRoom(Stage):
@@ -168,3 +169,41 @@ class ReverbRoom(Stage):
             How long the reverberation of the room is, between 0 and 1.
         """
         self.dsp_block.decay = decay
+
+
+class ReverbRoomStereo(ReverbRoom):
+    def __init__(self, max_room_size=1, predelay=10, max_predelay=None, **kwargs):
+        Stage.__init__(config=find_config("reverb_room_stereo"), **kwargs)
+        if self.fs is None:
+            raise ValueError("Reverb requires inputs with a valid fs")
+        self.fs = int(self.fs)
+        self.create_outputs(self.n_in)
+
+        max_predelay = predelay if max_predelay == None else max_predelay
+
+        self.dsp_block = rvbs.reverb_room_stereo(
+            self.fs,
+            self.n_in,
+            max_room_size=max_room_size,
+            predelay=predelay,
+            max_predelay=max_predelay,
+        )
+        self.set_control_field_cb("room_size", lambda: self.dsp_block.room_size)
+        self.set_control_field_cb("feedback", lambda: self.dsp_block.combs[0].feedback_int)
+        self.set_control_field_cb("damping", lambda: self.dsp_block.combs[0].damp1_int)
+        self.set_control_field_cb("wet_gain", lambda: self.dsp_block.wet_int)
+        self.set_control_field_cb("pregain", lambda: self.dsp_block.pregain_int)
+        self.set_control_field_cb("dry_gain", lambda: self.dsp_block.dry_int)
+        self.set_control_field_cb("predelay", lambda: self.dsp_block._predelay._delay)
+        self.set_control_field_cb("width", lambda: self.dsp_block.width)
+
+
+        self.set_constant("sampling_freq", self.fs, "int32_t")
+        self.set_constant("max_room_size", float(max_room_size), "float")
+        self.set_constant("max_predelay", self.dsp_block._predelay._max_delay, "uint32_t")
+
+        self.stage_memory_parameters = (
+            self.constants["sampling_freq"],
+            self.constants["max_room_size"],
+            self.constants["max_predelay"],
+        )
