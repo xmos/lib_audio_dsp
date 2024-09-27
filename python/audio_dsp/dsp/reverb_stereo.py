@@ -16,10 +16,10 @@ class reverb_room_stereo(rv.reverb_room):
         room_size=1,
         decay=0.5,
         damping=0.4,
-        stereo_width=1.0,
+        width=1.0,
         wet_gain_db=-1,
         dry_gain_db=-1,
-        pregain=0.015,
+        pregain=0.0075,
         predelay=10,
         max_predelay=None,
         Q_sig=dspg.Q_SIG,
@@ -32,7 +32,7 @@ class reverb_room_stereo(rv.reverb_room):
         max_predelay = predelay if max_predelay == None else max_predelay
         self._predelay = sc.delay(fs, n_chans, max_predelay, predelay, "ms")
 
-        self._width = stereo_width
+        self._width = width
 
         # gains
         self.pregain = pregain
@@ -97,6 +97,17 @@ class reverb_room_stereo(rv.reverb_room):
         self.damping = damping
         self.room_size = room_size
 
+    def reset_state(self):
+        """Reset all the delay line values to zero."""
+        for cb in self.combs_l:
+            cb.reset_state()
+        for cb in self.combs_r:
+            cb.reset_state()
+        for ap in self.allpasses_l:
+            ap.reset_state()
+        for ap in self.allpasses_r:
+            ap.reset_state()
+        self._predelay.reset_state()
 
     @property
     def wet_db(self):
@@ -185,6 +196,12 @@ class reverb_room_stereo(rv.reverb_room):
         # recalculate wet gains
         self.wet_db = self.wet_db
 
+    def process(self, sample):
+        raise NotImplementedError
+
+    def process_xcore(self, sample):
+        raise NotImplementedError
+
     def process_channels(self, sample_list: list[float]):
         """
         Add reverberation to a signal, using floating point maths.
@@ -222,9 +239,11 @@ class reverb_room_stereo(rv.reverb_room):
         Input should be scaled with 0 dB = 1.0.
 
         """
-        sample_list_int = utils.float_to_int32(sample, self.Q_sig)
+        sample_list_int = utils.float_list_to_int32(sample_list, self.Q_sig)
         delayed_input = self._predelay.process_channels_xcore(sample_list_int)
-        reverb_input = (delayed_input[0] + delayed_input[1]) * self.pregain_int
+        #TODO avoid overflow
+        reverb_input = (delayed_input[0] + delayed_input[1])
+        reverb_input = rv.apply_gain_xcore(reverb_input, self.pregain_int)
 
         output_l = 0
         output_r = 0
@@ -243,17 +262,17 @@ class reverb_room_stereo(rv.reverb_room):
             utils.int32(output_l)
             utils.int32(output_r)
 
-        output_l_final = apply_gain_xcore(output_l, self.wet_1_int)
-        output_l_final += apply_gain_xcore(output_r, self.wet_2_int)
+        output_l_final = rv.apply_gain_xcore(output_l, self.wet_1_int)
+        output_l_final += rv.apply_gain_xcore(output_r, self.wet_2_int)
         output_l_final = self._effect_gain.process_xcore(output_l_final)
-        output_l_final += apply_gain_xcore(sample_list_int[0], self.dry_int)
+        output_l_final += rv.apply_gain_xcore(sample_list_int[0], self.dry_int)
         utils.int64(output_l_final)
         output_l_final = utils.saturate_int64_to_int32(output_l_final)
 
-        output_r = apply_gain_xcore(output_r, self.wet_1_int)
-        output_r += apply_gain_xcore(output_l, self.wet_2_int)
+        output_r = rv.apply_gain_xcore(output_r, self.wet_1_int)
+        output_r += rv.apply_gain_xcore(output_l, self.wet_2_int)
         output_r = self._effect_gain.process_xcore(output_r)
-        output_r += apply_gain_xcore(sample_list_int[1], self.dry_int)
+        output_r += rv.apply_gain_xcore(sample_list_int[1], self.dry_int)
         utils.int64(output_r)
         output_r = utils.saturate_int64_to_int32(output_r)
 

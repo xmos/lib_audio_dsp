@@ -929,7 +929,7 @@ class delay(dspg.dsp_block):
         float
             List of delayed samples.
         """
-        y = self.buffer[:, self.buffer_idx].copy()
+        y = self.buffer[:, self.buffer_idx].copy().astype(type(sample[0]))
         self.buffer[:, self.buffer_idx] = sample
         # not using the modulo because it breaks for when delay = 0
         self.buffer_idx += 1

@@ -248,6 +248,13 @@ def float_to_int32(x, Q_sig=31) -> int:
     return int32(round(x * (2**Q_sig)))
 
 
+def float_list_to_int32(x, Q_sig=31) -> int:
+    """Round and scale a list of floating point numbers to a list of 
+    int32s in a given Q format.
+    """
+    return [int32(round(item * (2**Q_sig))) for item in x]
+
+
 def int32_to_float(x: int, Q_sig: int = 31) -> float:
     """Convert an int32 number to floating point, given its Q format."""
     # Note this means the max value is 0.99999999953
