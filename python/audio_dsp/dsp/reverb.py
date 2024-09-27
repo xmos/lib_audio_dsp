@@ -16,6 +16,16 @@ Q_VERB = 31
 _LESS_THAN_1 = ((2**Q_VERB) - 1) / (2**Q_VERB)
 
 
+def float_to_q_verb(x):
+    if x == 1:
+        x_int = utils.int32(2**31 - 1)
+    elif x == 0:
+        x_int = 0
+    else:
+        x_int = utils.int32(x * (2**Q_VERB))
+    
+    return x_int
+
 def apply_gain_xcore(sample, gain):
     """Apply the gain to a sample using fixed-point math. Assumes that gain is in Q_VERB format."""
     acc = 1 << (Q_VERB - 1)
@@ -469,12 +479,7 @@ class reverb_room(dspg.dsp_block):
 
         self._wet_db = x
         self._wet = utils.db2gain(x)
-        if self.wet == 1:
-            self.wet_int = utils.int32(2**31 - 1)
-        elif self.wet == 0:
-            self.wet_int = 0
-        else:
-            self.wet_int = utils.int32(self.wet * (2**Q_VERB))
+        self.wet_int = float_to_q_verb(self.wet)
 
     @property
     def wet(self):
@@ -512,12 +517,7 @@ class reverb_room(dspg.dsp_block):
 
         self._dry_db = x
         self._dry = utils.db2gain(x)
-        if self.dry == 1:
-            self.dry_int = utils.int32(2**31 - 1)
-        elif self.dry == 0:
-            self.dry_int = 0
-        else:
-            self.dry_int = utils.int32(self.dry * (2**Q_VERB))
+        self.dry_int = float_to_q_verb(self.dry)
 
     @property
     def dry(self):

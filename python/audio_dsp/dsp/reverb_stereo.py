@@ -114,12 +114,8 @@ class reverb_room_stereo(rv.reverb_room):
         self.wet_1 = self.wet*(self.width/2 + 0.5)
         self.wet_2 = self.wet*((1-self.width)/2)
 
-        if self.wet == 1:
-            self.wet_int = utils.int32(2**31 - 1)
-        elif self.wet == 0:
-            self.wet_int = 0
-        else:
-            self.wet_int = utils.int32(self.wet * (2**rv.Q_VERB))
+        self.wet_1_int = rv.float_to_q_verb(self.wet_1)
+        self.wet_2_int = rv.float_to_q_verb(self.wet_2)
 
     @property
     def feedback(self):
@@ -218,6 +214,54 @@ class reverb_room_stereo(rv.reverb_room):
 
         return [output_l_final, output_r]
 
+    def process_channels_xcore(self, sample_list: list[float]):
+        """
+        Add reverberation to a signal, using floating point maths.
+
+        Take one new sample and return the sample with reverb.
+        Input should be scaled with 0 dB = 1.0.
+
+        """
+        sample_list_int = utils.float_to_int32(sample, self.Q_sig)
+        delayed_input = self._predelay.process_channels_xcore(sample_list_int)
+        reverb_input = (delayed_input[0] + delayed_input[1]) * self.pregain_int
+
+        output_l = 0
+        output_r = 0
+        for n in range(len(self.combs_l)):
+            output_l += self.combs_l[n].process_xcore(reverb_input)
+            output_r += self.combs_r[n].process_xcore(reverb_input)
+            utils.int64(output_l)
+            utils.int64(output_r)
+
+        output_l = utils.saturate_int64_to_int32(output_l)
+        output_r = utils.saturate_int64_to_int32(output_r)
+
+        for n in range(len(self.allpasses_l)):
+            output_l = self.allpasses_l[n].process_xcore(output_l)
+            output_r = self.allpasses_r[n].process_xcore(output_r)
+            utils.int32(output_l)
+            utils.int32(output_r)
+
+        output_l_final = apply_gain_xcore(output_l, self.wet_1_int)
+        output_l_final += apply_gain_xcore(output_r, self.wet_2_int)
+        output_l_final = self._effect_gain.process_xcore(output_l_final)
+        output_l_final += apply_gain_xcore(sample_list_int[0], self.dry_int)
+        utils.int64(output_l_final)
+        output_l_final = utils.saturate_int64_to_int32(output_l_final)
+
+        output_r = apply_gain_xcore(output_r, self.wet_1_int)
+        output_r += apply_gain_xcore(output_l, self.wet_2_int)
+        output_r = self._effect_gain.process_xcore(output_r)
+        output_r += apply_gain_xcore(sample_list_int[1], self.dry_int)
+        utils.int64(output_r)
+        output_r = utils.saturate_int64_to_int32(output_r)
+
+        output_l_flt = utils.int32_to_float(output_l_final, self.Q_sig)
+        output_r_flt = utils.int32_to_float(output_r, self.Q_sig)
+
+        return [output_l_flt, output_r_flt]
+
     def process_frame(self, frame: list[np.ndarray]):
         """
         Take a list frames of samples and return the processed frames.
@@ -237,6 +281,28 @@ class reverb_room_stereo(rv.reverb_room):
             out_samples = self.process_channels([frame[0][sample], frame[1][sample]])
             output[0][sample] = out_samples[0]
             output[1][sample] = out_samples[1]
+        return output
+
+    def process_frame_xcore(self, frame: list[np.ndarray]):
+        """
+        Take a list frames of samples and return the processed frames,
+        using a bit exact xcore implementation.
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When calling self.process_channel_xcore only take the first output.
+
+        """
+        n_outputs = len(frame)
+        assert n_outputs == 2, "has to be stereo"
+        frame_size = frame[0].shape[0]
+        output = deepcopy(frame)
+        for sample in range(frame_size):
+            out_samples = self.process_channels_xcore([frame[0][sample], frame[1][sample]])
+            output[0][sample] = out_samples[0]
+            output[1][sample] = out_samples[1]
+
         return output
 
     def set_wet_dry_mix(self, mix):
