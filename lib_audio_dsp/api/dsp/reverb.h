@@ -23,6 +23,12 @@
 /** External API for calculating memory to allocate for the reverb room */
 #define REVERB_ROOM_DSP_REQUIRED_MEMORY(FS, ROOM_SZ, PD) ADSP_RVR_HEAP_SZ(FS, ROOM_SZ, PD)
 
+/** Heap size to allocate for the stereo reverb room */
+#define ADSP_RVRST_HEAP_SZ(FS, ROOM_SZ, PD) ((uint32_t)((sizeof(int32_t) *            \
+                                                 ADSP_RVR_SCALE(FS, ROOM_SZ) * \
+                                                 ADSP_RVR_SUM_DEFAULT_BUF_LENS * 2) +\
+                                                 DELAY_DSP_REQUIRED_MEMORY_SAMPLES(PD)))
+
 /** Number of comb filters used in the reverb room */
 #define ADSP_RVR_N_COMBS 8
 /** Number of allpass filters used in the reverb room */
@@ -94,6 +100,33 @@ typedef struct
 } reverb_room_t;
 
 /**
+ * @brief A stereo room reverb filter structure
+ */
+typedef struct
+{
+    /** Total buffer length */
+    uint32_t total_buffer_length;
+    /** Spread length */
+    uint32_t spread_length;
+    /** Room size */
+    float room_size;
+    /** Wet linear gain right */
+    int32_t wet_gain1;
+    /** Wet linear gain left */
+    int32_t wet_gain2;
+    /** Dry linear gain */
+    int32_t dry_gain;
+    /** Linear pre-gain */
+    int32_t pre_gain;
+    /** Comb filters, 0:left, 1:right */
+    comb_fv_t combs[2][ADSP_RVR_N_COMBS];
+    /** Allpass filters, 0:left, 1:right */
+    allpass_fv_t allpasses[2][ADSP_RVR_N_APS];
+    /** Predelay applied to the wet channel*/
+    delay_t predelay;
+} reverb_room_st_t;
+
+/**
  * @brief Lower level function to initialise the filters of a reverb room object
  * 
  * Will only initialise allpass, comb filters and set total buffer length.
@@ -158,3 +191,55 @@ int32_t adsp_reverb_room(
     reverb_room_t *rv,
     int32_t new_samp);
 
+/**
+ * @brief Lower level function to initialise the filters of a stereo reverb room object
+ * 
+ * Will only initialise allpass, comb filters and set total buffer length.
+ * Can be used before `adsp_room_reverb_st_set_room_size()` to
+ * initialise the filters and set the rooms size.
+ * 
+ * feedback can be calculated from the decay parameter as follows:
+ * `feedback = Q_RVR((decay * 0.28f) + 0.7f)`
+ * 
+ * @param rv                Stereo reverb room object
+ * @param fs                Sampling frequency
+ * @param max_room_size     Maximum room size of delay filters
+ * @param max_predelay      Maximum size of the predelay buffer in samples
+ * @param predelay          Initial predelay in samples
+ * @param feedback          Feedback gain for the comb filters in Q_RVR format
+ * @param damping           Damping coefficient for the comb filters in Q_RVR format
+ * @param reverb_heap       Pointer to heap to allocate reverb memory
+ */
+void adsp_reverb_room_st_init_filters(
+    reverb_room_st_t *rv,
+    float fs,
+    float max_room_size,
+    uint32_t max_predelay,
+    uint32_t predelay,
+    int32_t feedback,
+    int32_t damping,
+    void * reverb_heap);
+
+/**
+ * @brief Set the room size of a stereo reverb room object
+ * 
+ * @param rv                Stereo reverb room object
+ * @param new_room_size     New room size [0, 1]
+ */
+void adsp_reverb_room_st_set_room_size(
+    reverb_room_st_t *rv,
+    float new_room_size);
+
+/**
+ * @brief Process samples through a stereo reverb room object
+ * 
+ * @param rv                Stereo reverb room object
+ * @param outputs_lr        Pointer to the outputs 0:left, 1:right
+ * @param in_left           New left sample to process
+ * @param in_right          New right sample to process
+ */
+void adsp_reverb_room_st(
+    reverb_room_st_t *rv,
+    int32_t outputs_lr[2],
+    int32_t in_left,
+    int32_t in_right);
