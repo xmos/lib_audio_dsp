@@ -173,7 +173,7 @@ class ReverbRoom(Stage):
 
 class ReverbRoomStereo(ReverbRoom):
     def __init__(self, max_room_size=1, predelay=10, max_predelay=None, **kwargs):
-        Stage.__init__(config=find_config("reverb_room_stereo"), **kwargs)
+        Stage.__init__(self, config=find_config("reverb_room_stereo"), **kwargs)
         if self.fs is None:
             raise ValueError("Reverb requires inputs with a valid fs")
         self.fs = int(self.fs)
@@ -189,8 +189,8 @@ class ReverbRoomStereo(ReverbRoom):
             max_predelay=max_predelay,
         )
         self.set_control_field_cb("room_size", lambda: self.dsp_block.room_size)
-        self.set_control_field_cb("feedback", lambda: self.dsp_block.combs[0].feedback_int)
-        self.set_control_field_cb("damping", lambda: self.dsp_block.combs[0].damp1_int)
+        self.set_control_field_cb("feedback", lambda: self.dsp_block.combs_l[0].feedback_int)
+        self.set_control_field_cb("damping", lambda: self.dsp_block.combs_l[0].damp1_int)
         self.set_control_field_cb("wet_gain", lambda: self.dsp_block.wet_int)
         self.set_control_field_cb("pregain", lambda: self.dsp_block.pregain_int)
         self.set_control_field_cb("dry_gain", lambda: self.dsp_block.dry_int)
@@ -207,3 +207,16 @@ class ReverbRoomStereo(ReverbRoom):
             self.constants["max_room_size"],
             self.constants["max_predelay"],
         )
+
+    def set_width(self, width):
+        """
+        Set the decay of the reverb room stage. This sets how
+        reverberant the room is. Higher values will give a longer
+        reverberation time for a given room size.
+
+        Parameters
+        ----------
+        decay : float
+            How long the reverberation of the room is, between 0 and 1.
+        """
+        self.dsp_block.width = width

@@ -1,5 +1,9 @@
 import audio_dsp.dsp.reverb as rv
 import audio_dsp.dsp.generic as dspg
+import numpy as np
+import audio_dsp.dsp.signal_chain as sc
+import audio_dsp.dsp.utils as utils
+from copy import deepcopy
 
 class reverb_room_stereo(rv.reverb_room):
 
@@ -21,13 +25,13 @@ class reverb_room_stereo(rv.reverb_room):
     ):
         assert n_chans == 2, f"Reverb only supports 1 channel. {n_chans} specified"
 
-        dspg.dsp_block.__init__(fs, 1, Q_sig)
+        dspg.dsp_block.__init__(self, fs, 1, Q_sig)
 
         # predelay
         max_predelay = predelay if max_predelay == None else max_predelay
         self._predelay = sc.delay(fs, n_chans, max_predelay, predelay, "ms")
 
-        self.width = stereo_width
+        self._width = stereo_width
 
         # gains
         self.pregain = pregain
@@ -45,7 +49,7 @@ class reverb_room_stereo(rv.reverb_room):
         length_scaling = self.fs / 44100 * max_room_size
         self.comb_lengths = (default_comb_lengths * length_scaling).astype(int)
         self.ap_lengths = (default_ap_lengths * length_scaling).astype(int)
-        self.spread_length = (default_spread * length_scaling).astype(int)
+        self.spread_length = int(default_spread * length_scaling)
 
         # feedbacks
         init_fb = 0.5
@@ -114,7 +118,7 @@ class reverb_room_stereo(rv.reverb_room):
         elif self.wet == 0:
             self.wet_int = 0
         else:
-            self.wet_int = utils.int32(self.wet * (2**Q_VERB))
+            self.wet_int = utils.int32(self.wet * (2**rv.Q_VERB))
 
     @property
     def feedback(self):
@@ -163,7 +167,7 @@ class reverb_room_stereo(rv.reverb_room):
 
         comb_delays = (self.comb_lengths * self._room_size).astype(int)
         ap_delays = (self.ap_lengths * self._room_size).astype(int)
-        spread_delay = (self.spread_length * self._room_size).astype(int)
+        spread_delay = int(self.spread_length * self._room_size)
 
 
         for n in range(len(self.combs_l)):
@@ -173,6 +177,16 @@ class reverb_room_stereo(rv.reverb_room):
         for n in range(len(self.allpasses_l)):
             self.allpasses_l[n].set_delay(ap_delays[n])
             self.allpasses_r[n].set_delay(ap_delays[n] + spread_delay)
+
+    @property
+    def width(self):
+        return self._width
+    
+    @width.setter
+    def width(self, value):
+        self._width = value
+        # recalculate wet gains
+        self.wet_db = self.wet_db
 
     def process_channels(self, sample_list: list[float]):
         """
@@ -186,7 +200,7 @@ class reverb_room_stereo(rv.reverb_room):
         reverb_input = (delayed_input[0] + delayed_input[1]) * self.pregain
 
         output_l = 0
-        ouptut_r = 0
+        output_r = 0
         for n in range(len(self.combs_l)):
             output_l += self.combs_l[n].process(reverb_input)
             output_r += self.combs_r[n].process(reverb_input)
@@ -196,20 +210,30 @@ class reverb_room_stereo(rv.reverb_room):
             output_r = self.allpasses_r[n].process(output_r)
 
         output_l_final = output_l*self.wet_1 + output_r*self.wet_2
-        output_l_final = self._effect_gain.process(output_l_final) + sample * self.dry
+        output_l_final = self._effect_gain.process(output_l_final) + sample_list[0] * self.dry
 
         output_r = output_r*self.wet_1 + output_l*self.wet_2
-        output_r = self._effect_gain.process(output_r) + sample * self.dry
+        output_r = self._effect_gain.process(output_r) + sample_list[1] * self.dry
 
         return [output_l_final, output_r]
 
-    def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
-        """ 
+    def process_frame(self, frame: list[np.ndarray]):
         """
-        frame_np = np.array(frame)
-        frame_size = frame[0].shape[0]
-        output = np.zeros(frame_size)
-        for sample in range(frame_size):
-            output[sample] = self.process_channels(frame_np[:, sample].tolist())
+        Take a list frames of samples and return the processed frames.
 
-        return [output]
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When calling self.process_channels only take the first output.
+
+        """
+        n_outputs = len(frame)
+        assert n_outputs == 2, "has to be stereo"
+        frame_size = frame[0].shape[0]
+        output = deepcopy(frame)
+        for sample in range(frame_size):
+            out_samples = self.process_channels([frame[0][sample], frame[1][sample]])
+            output[0][sample] = out_samples[0]
+            output[1][sample] = out_samples[1]
+        return output
