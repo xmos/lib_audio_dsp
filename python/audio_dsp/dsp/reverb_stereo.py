@@ -24,9 +24,9 @@ class reverb_room_stereo(rv.reverb_room):
         max_predelay=None,
         Q_sig=dspg.Q_SIG,
     ):
-        assert n_chans == 2, f"Reverb only supports 1 channel. {n_chans} specified"
+        assert n_chans == 2, f"Stereo reverb only supports 2 channel. {n_chans} specified"
 
-        dspg.dsp_block.__init__(self, fs, 1, Q_sig)
+        dspg.dsp_block.__init__(self, fs, n_chans, Q_sig)
 
         # predelay
         max_predelay = predelay if max_predelay == None else max_predelay
@@ -38,7 +38,7 @@ class reverb_room_stereo(rv.reverb_room):
         self.pregain = pregain
         self.wet_db = wet_gain_db
         self.dry_db = dry_gain_db
-        self._effect_gain = sc.fixed_gain(fs, 1, 10)
+        self._effect_gain = sc.fixed_gain(fs, n_chans, 10)
 
         # the magic freeverb delay line lengths are for 44.1kHz, so
         # scale them with sample rate and room size
