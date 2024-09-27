@@ -187,7 +187,7 @@ def test_delay_c(in_signal, delay_spec):
 
   out_py = np.zeros((1, in_signal.shape[1]))
   for n in range(len(in_signal[0])):
-    out_py[:, n] = filter.process_channels_xcore(in_signal[0, n].tolist())
+    out_py[:, n] = filter.process_channels_xcore(in_signal[0, n:n+1].tolist())
 
   sf.write(gen_dir / "sig_py_int.wav", out_py[0], fs, "PCM_24")
 
