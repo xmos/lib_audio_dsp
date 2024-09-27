@@ -286,8 +286,8 @@ def test_reverb_wet_dry_mix(ratio, stereo):
     sig_xc = np.zeros_like(sig)
     if stereo:
         for i in range(sig.shape[1]):
-            sig_py[:, i] = verb.process(sig[:, i])
-            sig_xc[:, i] = verb.process_xcore(sig[:, i])
+            sig_py[:, i] = verb.process_channels(sig[:, i])
+            sig_xc[:, i] = verb.process_channels_xcore(sig[:, i])
     else:
         for i in range(len(sig)):
             sig_py[i] = verb.process(sig[i])
@@ -305,7 +305,7 @@ def test_reverb_wet_dry_mix(ratio, stereo):
 def test_reverb_properties_decay(stereo):
     """Basic tests to check for consistency when setting the properties."""
     if stereo:
-        r = partial(rvs.reverb_room_stereo, 48000, 1)
+        r = partial(rvs.reverb_room_stereo, 48000, 2)
     else:
         r = partial(rv.reverb_room, 48000, 1)
 
@@ -324,7 +324,7 @@ def test_reverb_properties_decay(stereo):
 def test_reverb_properties_pregain(stereo):
     """Basic tests to check for consistency when setting the properties."""
     if stereo:
-        r = partial(rvs.reverb_room_stereo, 48000, 1)
+        r = partial(rvs.reverb_room_stereo, 48000, 2)
     else:
         r = partial(rv.reverb_room, 48000, 1)
 
@@ -343,7 +343,7 @@ def test_reverb_properties_pregain(stereo):
 def test_reverb_properties_wet_db(stereo):
     """Basic tests to check for consistency when setting the properties."""
     if stereo:
-        r = partial(rvs.reverb_room_stereo, 48000, 1)
+        r = partial(rvs.reverb_room_stereo, 48000, 2)
     else:
         r = partial(rv.reverb_room, 48000, 1)
 
@@ -362,7 +362,7 @@ def test_reverb_properties_wet_db(stereo):
 def test_reverb_properties_dry_db(stereo):
     """Basic tests to check for consistency when setting the properties."""
     if stereo:
-        r = partial(rvs.reverb_room_stereo, 48000, 1)
+        r = partial(rvs.reverb_room_stereo, 48000, 2)
     else:
         r = partial(rv.reverb_room, 48000, 1)
 
@@ -381,7 +381,7 @@ def test_reverb_properties_dry_db(stereo):
 def test_reverb_properties_damping(stereo):
     """Basic tests to check for consistency when setting the properties."""
     if stereo:
-        r = partial(rvs.reverb_room_stereo, 48000, 1)
+        r = partial(rvs.reverb_room_stereo, 48000, 2)
     else:
         r = partial(rv.reverb_room, 48000, 1)
 
@@ -399,7 +399,7 @@ def test_reverb_properties_damping(stereo):
 def test_reverb_properties_room_size(stereo):
     """Basic tests to check for consistency when setting the properties."""
     if stereo:
-        r = partial(rvs.reverb_room_stereo, 48000, 1)
+        r = partial(rvs.reverb_room_stereo, 48000, 2)
     else:
         r = partial(rv.reverb_room, 48000, 1)
 
@@ -414,9 +414,11 @@ def test_reverb_properties_room_size(stereo):
     np.testing.assert_allclose(should_be_val, val)
 
 if __name__ == "__main__":
-    test_reverb_overflow("sine", 20, 0.01, True)
+    # test_reverb_overflow("sine", 20, 0.01, True)
     # test_reverb_time(0.01, 1)
     # test_reverb_frames(48000, 1, 27, True)
     # test_reverb_wet_dry_mix(1.0)
     # test_reverb_bypass_stereo()
     # test_reverb_noise_floor_stereo(1.0, 1.0, 0)
+    # test_reverb_time(0.01, 1, 0, 31, 0.001, 0.5)
+    test_reverb_properties_room_size(True)
