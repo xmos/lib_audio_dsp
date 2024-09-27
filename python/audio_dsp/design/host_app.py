@@ -18,12 +18,6 @@ class InvalidHostAppError(Exception):
     pass
 
 
-class DeviceConnectionError(Exception):
-    """Raised when the host app cannot connect to the device."""
-
-    pass
-
-
 def set_host_app(host_app, transport_protocol="usb"):
     """
     Set the host_app and the transport protocol to use for control.
