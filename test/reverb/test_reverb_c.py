@@ -84,7 +84,8 @@ def in_signal():
     GEN_DIR.mkdir(exist_ok=True, parents=True)
     return get_sig()
 
-@pytest.mark.parametrize("decay, damping", [[1.0, 1.0], [0.1, 0.5]])
+@pytest.mark.parametrize("decay, damping", [[1.0, 1.0], 
+                                            [0.1, 0.5]])
 @pytest.mark.parametrize("wet, dry, pregain", [[-1.0, -1.0, 0.015]]) 
 def test_reverb_room(in_signal, decay, damping, wet, dry, pregain):
     n_chans = 1

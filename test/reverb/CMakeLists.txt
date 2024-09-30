@@ -24,6 +24,26 @@ set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
 XMOS_REGISTER_APP()
 
 
+project(reverb_st_test)
+
+set(APP_HW_TARGET XCORE-AI-EXPLORER)
+
+set(APP_COMPILER_FLAGS
+    -O3
+    -g
+    -report
+    -Wall
+    -Werror
+    -fxscope)
+
+set(APP_DEPENDENT_MODULES lib_audio_dsp)
+set(APP_C_SRCS src/reverb_room_st.c)
+
+set(XMOS_SANDBOX_DIR ${CMAKE_SOURCE_DIR}/../../..)
+
+XMOS_REGISTER_APP()
+
+
 project(reverb_converters)
 set(APP_C_SRCS src/converters.c)
 set(APP_COMPILER_FLAGS_FLOAT2INT ${APP_COMPILER_FLAGS} -DFLOAT2INT)

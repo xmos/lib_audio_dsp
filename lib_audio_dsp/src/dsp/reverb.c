@@ -418,8 +418,6 @@ void adsp_reverb_room_st_init_filters(
             ap_lengths[i],
             DEFAULT_AP_FEEDBACK,
             &memory_manager);
-        // Scale maximum lengths by the scale factor (fs/44100 * max_room)
-        ap_lengths[i] *= rv_scale_fac;
         rv->allpasses[1][i] = allpass_fv_init(
             ap_lengths[i] + rv->spread_length,
             DEFAULT_AP_FEEDBACK,
@@ -484,10 +482,10 @@ void adsp_reverb_room_st_set_room_size(reverb_room_st_t *rv,
     }
 }
 
-static inline int32_t _get_stereo_out(reverb_room_st_t *rv, int32_t out_l, int32_t out_r, int32_t input) {
-    int32_t ah = 0, al = 0, q = 31, wet_sig;
-    asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (out_l), "r" (rv->wet_gain1), "0" (ah), "1" (al));
-    asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (out_r), "r" (rv->wet_gain2), "0" (ah), "1" (al));
+static inline int32_t _get_stereo_out(reverb_room_st_t *rv, int32_t out1, int32_t out2, int32_t input) {
+    int32_t q = 31, ah = 0, al = 1 << (q - 1), wet_sig;
+    asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (out1), "r" (rv->wet_gain1), "0" (ah), "1" (al));
+    asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (out2), "r" (rv->wet_gain2), "0" (ah), "1" (al));
     asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (q), "0" (ah), "1" (al));
     asm("lextract %0, %1, %2, %3, 32": "=r" (wet_sig): "r" (ah), "r" (al), "r" (q));
     int64_t acc;
@@ -503,7 +501,7 @@ void adsp_reverb_room_st(
     int32_t in_left,
     int32_t in_right)
 {
-    int32_t ah = 0, al = 0, q = 31, reverb_input;
+    int32_t q = 31, ah = 0, al = 1 << (q - 1), reverb_input;
     asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (in_left), "r" (rv->pre_gain), "0" (ah), "1" (al));
     asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (in_right), "r" (rv->pre_gain), "0" (ah), "1" (al));
     asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (q), "0" (ah), "1" (al));
@@ -531,5 +529,5 @@ void adsp_reverb_room_st(
     }
 
     outputs_lr[0] = _get_stereo_out(rv, out_l, out_r, in_left);
-    outputs_lr[1] = _get_stereo_out(rv, out_l, out_r, in_right);
+    outputs_lr[1] = _get_stereo_out(rv, out_r, out_l, in_right);
 }

@@ -14,19 +14,21 @@
 #define ADSP_RVR_SCALE(FS, MAX_ROOM_SZ) (((FS) / 44100.0f) * (MAX_ROOM_SZ))
 
 /** Default reverb room buffer length */
-#define ADSP_RVR_SUM_DEFAULT_BUF_LENS 12587
+#define ADSP_RVR_SUM_DEFAULT_BUF_LENS (12587)
 /** Heap size to allocate for the reverb room */
-#define ADSP_RVR_HEAP_SZ(FS, ROOM_SZ, PD) ((uint32_t)((sizeof(int32_t) *            \
+#define ADSP_RVR_HEAP_SZ(FS, ROOM_SZ, PD) ((uint32_t)((sizeof(int32_t) * \
                                                  ADSP_RVR_SCALE(FS, ROOM_SZ) * \
-                                                 ADSP_RVR_SUM_DEFAULT_BUF_LENS) +\
+                                                 ADSP_RVR_SUM_DEFAULT_BUF_LENS) + \
                                                  DELAY_DSP_REQUIRED_MEMORY_SAMPLES(PD)))
 /** External API for calculating memory to allocate for the reverb room */
 #define REVERB_ROOM_DSP_REQUIRED_MEMORY(FS, ROOM_SZ, PD) ADSP_RVR_HEAP_SZ(FS, ROOM_SZ, PD)
 
+/** Default stereo reverb room buffer length */
+#define ADSP_RVRST_SUM_DEFAULT_BUF_LENS (25450)
 /** Heap size to allocate for the stereo reverb room */
-#define ADSP_RVRST_HEAP_SZ(FS, ROOM_SZ, PD) ((uint32_t)((sizeof(int32_t) *            \
+#define ADSP_RVRST_HEAP_SZ(FS, ROOM_SZ, PD) ((uint32_t)((sizeof(int32_t) * \
                                                  ADSP_RVR_SCALE(FS, ROOM_SZ) * \
-                                                 ADSP_RVR_SUM_DEFAULT_BUF_LENS * 2) +\
+                                                 ADSP_RVRST_SUM_DEFAULT_BUF_LENS) + \
                                                  DELAY_DSP_REQUIRED_MEMORY_SAMPLES(PD)))
 
 /** Number of comb filters used in the reverb room */
