@@ -6,8 +6,8 @@ import audio_dsp.dsp.utils as utils
 from copy import deepcopy
 import warnings
 
-class reverb_room_stereo(rv.reverb_room):
 
+class reverb_room_stereo(rv.reverb_room):
     def __init__(
         self,
         fs,
@@ -30,7 +30,8 @@ class reverb_room_stereo(rv.reverb_room):
 
         # predelay
         max_predelay = predelay if max_predelay == None else max_predelay
-        self._predelay = sc.delay(fs, n_chans, max_predelay, predelay, "ms")
+        # single channel delay line, as input is shared
+        self._predelay = sc.delay(fs, 1, max_predelay, predelay, "ms")
 
         self._width = width
 
@@ -122,8 +123,8 @@ class reverb_room_stereo(rv.reverb_room):
 
         self._wet_db = x
         self._wet = utils.db2gain(x)
-        self.wet_1 = self.wet*(self.width/2 + 0.5)
-        self.wet_2 = self.wet*((1-self.width)/2)
+        self.wet_1 = self.wet * (self.width / 2 + 0.5)
+        self.wet_2 = self.wet * ((1 - self.width) / 2)
 
         self.wet_1_int = rv.float_to_q_verb(self.wet_1)
         self.wet_2_int = rv.float_to_q_verb(self.wet_2)
@@ -159,7 +160,6 @@ class reverb_room_stereo(rv.reverb_room):
 
         self.damping_int = self.combs_l[0].damp1_int
 
-
     @property
     def room_size(self):
         """The room size as a proportion of the max_room_size."""
@@ -177,7 +177,6 @@ class reverb_room_stereo(rv.reverb_room):
         ap_delays = (self.ap_lengths * self._room_size).astype(int)
         spread_delay = int(self.spread_length * self._room_size)
 
-
         for n in range(len(self.combs_l)):
             self.combs_l[n].set_delay(comb_delays[n])
             self.combs_r[n].set_delay(comb_delays[n] + spread_delay)
@@ -189,7 +188,7 @@ class reverb_room_stereo(rv.reverb_room):
     @property
     def width(self):
         return self._width
-    
+
     @width.setter
     def width(self, value):
         self._width = value
@@ -210,8 +209,8 @@ class reverb_room_stereo(rv.reverb_room):
         Input should be scaled with 0 dB = 1.0.
 
         """
-        delayed_input = self._predelay.process_channels(sample_list)
-        reverb_input = (delayed_input[0] + delayed_input[1]) * self.pregain
+        reverb_input = (sample_list[0] + sample_list[1]) * self.pregain
+        reverb_input = self._predelay.process_channels([reverb_input])
 
         output_l = 0
         output_r = 0
@@ -223,10 +222,10 @@ class reverb_room_stereo(rv.reverb_room):
             output_l = self.allpasses_l[n].process(output_l)
             output_r = self.allpasses_r[n].process(output_r)
 
-        output_l_final = output_l*self.wet_1 + output_r*self.wet_2
+        output_l_final = output_l * self.wet_1 + output_r * self.wet_2
         output_l_final = self._effect_gain.process(output_l_final) + sample_list[0] * self.dry
 
-        output_r = output_r*self.wet_1 + output_l*self.wet_2
+        output_r = output_r * self.wet_1 + output_l * self.wet_2
         output_r = self._effect_gain.process(output_r) + sample_list[1] * self.dry
 
         return [output_l_final, output_r]
@@ -240,10 +239,10 @@ class reverb_room_stereo(rv.reverb_room):
 
         """
         sample_list_int = utils.float_list_to_int32(sample_list, self.Q_sig)
-        delayed_input = self._predelay.process_channels_xcore(sample_list_int)
-        #TODO avoid overflow
-        reverb_input = (delayed_input[0] + delayed_input[1])
+        # TODO avoid overflow
+        reverb_input = sample_list_int[0] + sample_list_int[1]
         reverb_input = rv.apply_gain_xcore(reverb_input, self.pregain_int)
+        reverb_input = self._predelay.process_channels_xcore([reverb_input])[0]
 
         output_l = 0
         output_r = 0

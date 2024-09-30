@@ -197,7 +197,6 @@ class ReverbRoomStereo(ReverbRoom):
         self.set_control_field_cb("predelay", lambda: self.dsp_block._predelay._delay)
         self.set_control_field_cb("width", lambda: self.dsp_block.width)
 
-
         self.set_constant("sampling_freq", self.fs, "int32_t")
         self.set_constant("max_room_size", float(max_room_size), "float")
         self.set_constant("max_predelay", self.dsp_block._predelay._max_delay, "uint32_t")

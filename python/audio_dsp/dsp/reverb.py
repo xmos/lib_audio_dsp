@@ -23,8 +23,9 @@ def float_to_q_verb(x):
         x_int = 0
     else:
         x_int = utils.int32(x * (2**Q_VERB))
-    
+
     return x_int
+
 
 def apply_gain_xcore(sample, gain):
     """Apply the gain to a sample using fixed-point math. Assumes that gain is in Q_VERB format."""

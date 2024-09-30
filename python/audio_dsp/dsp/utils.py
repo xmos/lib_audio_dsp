@@ -249,7 +249,7 @@ def float_to_int32(x, Q_sig=31) -> int:
 
 
 def float_list_to_int32(x, Q_sig=31) -> int:
-    """Round and scale a list of floating point numbers to a list of 
+    """Round and scale a list of floating point numbers to a list of
     int32s in a given Q format.
     """
     return [int32(round(item * (2**Q_sig))) for item in x]
