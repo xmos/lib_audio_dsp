@@ -195,10 +195,10 @@ class reverb_room_stereo(rv.reverb_room):
         # recalculate wet gains
         self.wet_db = self.wet_db
 
-    def process(self, sample):
+    def process(self, sample, channel=0):
         raise NotImplementedError
 
-    def process_xcore(self, sample):
+    def process_xcore(self, sample, channel=0):
         raise NotImplementedError
 
     def process_channels(self, sample_list: list[float]):

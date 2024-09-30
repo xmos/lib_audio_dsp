@@ -6,6 +6,7 @@ import numpy as np
 import scipy.signal as spsig
 import math
 import warnings
+import typing
 
 from audio_dsp.dsp.types import float32, float_s32
 
@@ -248,7 +249,7 @@ def float_to_int32(x, Q_sig=31) -> int:
     return int32(round(x * (2**Q_sig)))
 
 
-def float_list_to_int32(x, Q_sig=31) -> int:
+def float_list_to_int32(x, Q_sig=31) -> typing.List[int]:
     """Round and scale a list of floating point numbers to a list of
     int32s in a given Q format.
     """
