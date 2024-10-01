@@ -1,15 +1,16 @@
-${"#"*len(title)}
-${title}
-${"#"*len(title)}
+
+${"#"*(len(title) + 7)}
+${title} Stages
+${"#"*(len(title) + 7)}
 
 ${docstring}
 
 % for cl in classes:
-% if len(classes) != 1:
+.. _${cl}_stage:
+
 ${"="*len(cl)}
 ${cl}
 ${"="*len(cl)}
-% endif
 
 .. autoclass:: ${module}.${cl}
     :noindex:

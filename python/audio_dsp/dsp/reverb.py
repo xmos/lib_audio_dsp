@@ -470,7 +470,7 @@ class reverb_room(dspg.dsp_block):
     @property
     def wet_db(self):
         """The gain applied to the wet signal in dB."""
-        return self._wet_db
+        return utils.db(self.wet)
 
     @wet_db.setter
     def wet_db(self, x):
@@ -479,8 +479,7 @@ class reverb_room(dspg.dsp_block):
             x = 0
 
         self._wet_db = x
-        self._wet = utils.db2gain(x)
-        self.wet_int = float_to_q_verb(self.wet)
+        self.wet = utils.db2gain(x)
 
     @property
     def wet(self):
@@ -489,7 +488,8 @@ class reverb_room(dspg.dsp_block):
 
     @wet.setter
     def wet(self, x):
-        self.wet_db = utils.db(x)
+        self._wet = x
+        self.wet_int = float_to_q_verb(self.wet)
 
     @_deprecated(
         "1.0.0", "2.0.0", "Replace `reverb_room.set_wet_gain(x)` with `reverb_room.wet_db = x`"
@@ -508,7 +508,7 @@ class reverb_room(dspg.dsp_block):
     @property
     def dry_db(self):
         """The gain applied to the dry signal in dB."""
-        return self._dry_db
+        return utils.db(self.dry)
 
     @dry_db.setter
     def dry_db(self, x):
@@ -517,8 +517,7 @@ class reverb_room(dspg.dsp_block):
             x = 0
 
         self._dry_db = x
-        self._dry = utils.db2gain(x)
-        self.dry_int = float_to_q_verb(self.dry)
+        self.dry = utils.db2gain(x)
 
     @property
     def dry(self):
@@ -527,7 +526,8 @@ class reverb_room(dspg.dsp_block):
 
     @dry.setter
     def dry(self, x):
-        self.dry_db = utils.db(x)
+        self._dry = x
+        self.dry_int = float_to_q_verb(self.dry)
 
     @_deprecated(
         "1.0.0", "2.0.0", "Replace `reverb_room.set_dry_gain(x)` with `reverb_room.dry_db = x`"

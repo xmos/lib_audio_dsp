@@ -120,18 +120,14 @@ class reverb_room_stereo(rv.reverb_room):
         self._predelay.reset_state()
 
     @property
-    def wet_db(self):
-        """The gain applied to the wet signal in dB."""
-        return self._wet_db
+    def wet(self):
+        """The linear gain applied to the wet signal."""
+        return self._wet
 
-    @wet_db.setter
-    def wet_db(self, x):
-        if x > 0:
-            warnings.warn(f"Wet gain {x} saturates to 0 dB", UserWarning)
-            x = 0
-
-        self._wet_db = x
-        self._wet = utils.db2gain(x)
+    # override wet setter to also set wet_1 and wet_2
+    @wet.setter
+    def wet(self, x):
+        self._wet = x
         self.wet_1 = self.wet * (self.width / 2 + 0.5)
         self.wet_2 = self.wet * ((1 - self.width) / 2)
 
@@ -202,7 +198,7 @@ class reverb_room_stereo(rv.reverb_room):
     def width(self, value):
         self._width = value
         # recalculate wet gains
-        self.wet_db = self.wet_db
+        self.wet = self.wet
 
     def process(self, sample, channel=0):
         raise NotImplementedError
@@ -353,8 +349,8 @@ class reverb_room_stereo(rv.reverb_room):
         omega = mix * np.pi / 2
 
         # -4.5 dB
-        self.dry_db = utils.db(np.sqrt((1 - mix) * np.cos(omega)))
-        self.wet_db = utils.db(np.sqrt(mix * np.sin(omega)))
+        self.dry = np.sqrt((1 - mix) * np.cos(omega))
+        self.wet = np.sqrt(mix * np.sin(omega))
         # there's an extra gain of 10 dB added to the wet channel to
         # make it similar level to the dry, so that the mixing is smooth.
         # Couldn't add it to the wet gain itself as it's in q31
