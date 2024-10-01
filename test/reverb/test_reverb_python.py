@@ -80,7 +80,7 @@ def calc_reverb_time(in_sig, reverb_output):
 @pytest.mark.parametrize("decay", [0, 0.5, 1])
 @pytest.mark.parametrize("damping", [0, 0.5])
 @pytest.mark.parametrize("q_format, pregain", [[27, 0.015],
-                                               [31, 0.001]])
+                                               [31, 0.0009375]])
 @pytest.mark.parametrize("width", [None, 0, 0.5, 1.0])
 def test_reverb_time(max_room_size, decay, damping, q_format, pregain, width):
     # measure reverb time with chirp
