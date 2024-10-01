@@ -48,6 +48,10 @@ int main(int argc, char* argv[])
     int32_t gains[2];
     adsp_reverb_wet_dry_mix(gains, samp);
     fwrite(gains, sizeof(int32_t), 2, out);
+#elif defined(WET_DRY_MIX_ST)
+    int32_t gains[3];
+    adsp_reverb_st_wet_dry_mix(gains, samp, 1.0);
+    fwrite(gains, sizeof(int32_t), 3, out);
 #else
 #error "config not defined"
 #endif

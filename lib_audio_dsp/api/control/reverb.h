@@ -108,3 +108,21 @@ reverb_room_t adsp_reverb_room_init(
     float max_predelay,
     float predelay,
     void *reverb_heap);
+
+void adsp_reverb_room_st_set_wet_gain(int32_t wet_gains[2], float wet_gain, float width);
+
+void adsp_reverb_st_wet_dry_mix(int32_t gains[3], float mix, float width);
+
+reverb_room_st_t adsp_reverb_room_st_init(
+  float fs,
+  float max_room_size,
+  float room_size,
+  float decay,
+  float damping,
+  float width,
+  float wet_gain,
+  float dry_gain,
+  float pregain,
+  float max_predelay,
+  float predelay,
+  void *reverb_heap);
