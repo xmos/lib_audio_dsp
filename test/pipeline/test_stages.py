@@ -594,7 +594,7 @@ def test_reverb(frame_size, pregain, mix):
 def test_stereo_reverb(frame_size):
 
     def make_p(fr):
-        reverb_test_channels = 1  # Reverb expects only 1 channel
+        reverb_test_channels = 2  # Stereo reverb expects 2 channels
         p = Pipeline(reverb_test_channels, frame_size=fr)
         o = p.stage(ReverbRoomStereo, p.i, label="control")
         p.set_outputs(o)
