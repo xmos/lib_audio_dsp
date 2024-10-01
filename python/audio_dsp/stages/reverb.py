@@ -191,11 +191,11 @@ class ReverbRoomStereo(ReverbRoom):
         self.set_control_field_cb("room_size", lambda: self.dsp_block.room_size)
         self.set_control_field_cb("feedback", lambda: self.dsp_block.combs_l[0].feedback_int)
         self.set_control_field_cb("damping", lambda: self.dsp_block.combs_l[0].damp1_int)
-        self.set_control_field_cb("wet_gain", lambda: self.dsp_block.wet_int)
+        self.set_control_field_cb("wet_gain1", lambda: self.dsp_block.wet_1_int)
+        self.set_control_field_cb("wet_gain2", lambda: self.dsp_block.wet_2_int)
         self.set_control_field_cb("pregain", lambda: self.dsp_block.pregain_int)
         self.set_control_field_cb("dry_gain", lambda: self.dsp_block.dry_int)
         self.set_control_field_cb("predelay", lambda: self.dsp_block._predelay._delay)
-        self.set_control_field_cb("width", lambda: self.dsp_block.width)
 
         self.set_constant("sampling_freq", self.fs, "int32_t")
         self.set_constant("max_room_size", float(max_room_size), "float")

@@ -30,6 +30,8 @@
                                                  ADSP_RVR_SCALE(FS, ROOM_SZ) * \
                                                  ADSP_RVRST_SUM_DEFAULT_BUF_LENS) + \
                                                  DELAY_DSP_REQUIRED_MEMORY_SAMPLES(PD)))
+/** External API for calculating memory to allocate for the stereo reverb room */
+#define REVERB_ROOM_ST_DSP_REQUIRED_MEMORY(FS, ROOM_SZ, PD) ADSP_RVRST_HEAP_SZ(FS, ROOM_SZ, PD)
 
 /** Number of comb filters used in the reverb room */
 #define ADSP_RVR_N_COMBS 8
