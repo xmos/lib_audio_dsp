@@ -172,6 +172,32 @@ class ReverbRoom(Stage):
 
 
 class ReverbRoomStereo(ReverbRoom):
+    """
+    The stereo room reverb stage. This is based on Freeverb by Jezar at
+    Dreampoint. Each channel consists of 8 parallel comb filters fed
+    into 4 series all-pass filters, and the reverberator outputs are mixed
+    according to the ``width`` parameter.
+
+    Parameters
+    ----------
+    max_room_size
+        Sets the maximum room size for this reverb. The ``room_size``
+        parameter sets the fraction of this value actually used at any
+        given time. For optimal memory usage, max_room_size should be
+        set so that the longest reverb tail occurs when
+        ``room_size=1.0``.
+    predelay : float, optional
+        The delay applied to the wet channel in ms.
+    max_predelay : float, optional
+        The maximum predelay in ms.
+
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.reverb.reverb_room_stereo`
+        The DSP block class; see :ref:`ReverbRoomStereo`
+        for implementation details.
+    """
+
     def __init__(self, max_room_size=1, predelay=10, max_predelay=None, **kwargs):
         Stage.__init__(self, config=find_config("reverb_room_stereo"), **kwargs)
         if self.fs is None:

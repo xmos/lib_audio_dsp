@@ -17,6 +17,9 @@ _LESS_THAN_1 = ((2**Q_VERB) - 1) / (2**Q_VERB)
 
 
 def float_to_q_verb(x):
+    """Convert a floating point numebr to Q_VERB format. As Q_VERB is
+    typically Q31, care must be taken to not overflow by scaling 1.0f*(2**31).
+    """
     if x == 1:
         x_int = utils.int32(2**31 - 1)
     elif x == 0:

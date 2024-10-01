@@ -15,6 +15,7 @@ ${"="*len(cl)}
 .. autoclass:: ${module}.${cl}
     :noindex:
     :members:
+    :inherited-members: Stage
 
 ${cl} Control
 ${"="*len(cl)}========
