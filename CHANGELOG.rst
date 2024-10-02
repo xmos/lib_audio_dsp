@@ -1,8 +1,8 @@
 Audio DSP library change log
 ============================
 
-1.2.0
------
+Unreleased
+----------
 
   * ADDED: Stereo reverb Stage
   * FIXED: Delay could return different type to input

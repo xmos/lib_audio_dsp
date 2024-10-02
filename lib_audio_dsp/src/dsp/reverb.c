@@ -457,6 +457,7 @@ void adsp_reverb_room_st_set_room_size(reverb_room_st_t *rv,
     right_shift_t shr = -q - exp + 23;
     room_size_int >>= shr;
 
+    // Do spread length * new_room_size in UQ0.31
     asm("lmul %0, %1, %2, %3, %4, %5"
         : "=r" (ah), "=r" (al)
         : "r" (room_size_int), "r" (rv->spread_length), "r" (zero), "r" (zero));
