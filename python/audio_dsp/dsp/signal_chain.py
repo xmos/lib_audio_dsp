@@ -125,7 +125,7 @@ class mixer(dspg.dsp_block):
             y += scaled_sample
 
         y = utils.int32_mult_sat_extract(y, 2, 1)
-        y_flt = float(y) * 2**-self.Q_sig
+        y_flt = utils.int32_to_float(y, self.Q_sig)
 
         return y_flt
 
@@ -278,7 +278,7 @@ class subtractor(dspg.dsp_block):
         acc += sample_int_1 * -2
         y = utils.int32_mult_sat_extract(acc, 1, 1)
 
-        y_flt = float(y) * 2**-self.Q_sig
+        y_flt = utils.int32_to_float(y, self.Q_sig)
 
         return y_flt
 
@@ -431,7 +431,7 @@ class fixed_gain(dspg.dsp_block):
         y = utils.int32_mult_sat_extract(acc, 1, Q_GAIN)
 
         if isinstance(sample, float):
-            return float(y) * 2**-self.Q_sig
+            return utils.int32_to_float(y, self.Q_sig)
         else:
             return y
 
@@ -624,7 +624,7 @@ class volume_control(dspg.dsp_block):
         acc += sample_int * self.gain_int[channel]
         y = utils.int32_mult_sat_extract(acc, 1, Q_GAIN)
 
-        y_flt = float(y) * 2**-self.Q_sig
+        y_flt = utils.int32_to_float(y, self.Q_sig)
 
         return y_flt
 
