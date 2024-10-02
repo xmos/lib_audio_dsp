@@ -110,7 +110,7 @@ reverb_room_t adsp_reverb_room_init(
     void *reverb_heap);
 
 /**
- * @brief Calculate the stereo wet gains on the stereo reverb room
+ * @brief Calculate the stereo wet gains of the stereo reverb room
  * 
  * @param wet_gains       Output linear wet_1 and wet_2 gains in Q_RVR
  * @param wet_gain        Input wet gain in dB

@@ -346,7 +346,8 @@ void adsp_reverb_room_set_room_size(reverb_room_t *rv,
     }
 }
 
-//only exists because the effect gain is not a part of the wet gain, so need to handle properly
+// only exists because the effect gain is not a part of the wet gain, so need to handle properly
+// will do: wet_sig * effect_gain + dry_sig but usign macc and with a hackery around lsats bug
 static inline int32_t _mix_wet_dry(int32_t wet_sig, int32_t dry_sig){
     int32_t ah = 0, al = 0, mul = 2, one = 1;
     asm("linsert %0, %1, %2, %3, 32": "=r" (ah), "=r" (al): "r" (adsp_fixed_gain(wet_sig, EFFECT_GAIN)), "r" (one), "0" (ah), "1" (al));
@@ -493,6 +494,7 @@ void adsp_reverb_room_st_set_room_size(reverb_room_st_t *rv,
     }
 }
 
+// will do out1 * gain1 + out2 * gain2, assumes that both gains are q31
 static inline int32_t _get_wet_signal(int32_t out1, int32_t out2, int32_t gain1, int32_t gain2) {
     int32_t q = 31, ah = 0, al = 1 << (q - 1);
     asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (out1), "r" (gain1), "0" (ah), "1" (al));

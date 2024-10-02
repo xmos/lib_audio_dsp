@@ -114,9 +114,9 @@ typedef struct
     uint32_t spread_length;
     /** Room size */
     float room_size;
-    /** Wet linear gain right */
+    /** Wet 1 linear gain */
     int32_t wet_gain1;
-    /** Wet linear gain left */
+    /** Wet 2 linear gain */
     int32_t wet_gain2;
     /** Dry linear gain */
     int32_t dry_gain;
@@ -133,7 +133,7 @@ typedef struct
 /**
  * @brief Lower level function to initialise the filters of a reverb room object
  * 
- * Will only initialise allpass, comb filters and set total buffer length.
+ * Will initialise allpasses, combs, predelay and set total buffer length.
  * Can be used before `adsp_room_reverb_set_room_size()` to
  * initialise the filters and set the rooms size.
  * 
@@ -198,7 +198,7 @@ int32_t adsp_reverb_room(
 /**
  * @brief Lower level function to initialise the filters of a stereo reverb room object
  * 
- * Will only initialise allpass, comb filters and set total buffer length.
+ * Will initialise allpasses, combs, predelay and set total buffer length.
  * Can be used before `adsp_room_reverb_st_set_room_size()` to
  * initialise the filters and set the rooms size.
  * 
