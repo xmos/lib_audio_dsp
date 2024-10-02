@@ -64,4 +64,9 @@ int main()
     adsp_reverb_room_st(&rv, samp_out, samp_l, samp_r);
     fwrite(samp_out, sizeof(int32_t), 2, out);
   }
+
+  fclose(in);
+  fclose(out);
+
+  return 0;
 }

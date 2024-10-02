@@ -69,7 +69,7 @@ def in_signal():
                                             [0.1, 0.5]
                                             ])
 @pytest.mark.parametrize("wet, dry, pregain", [[-1.0, -1.0, 0.015]]) 
-def test_reverb_room(in_signal, decay, damping, wet, dry, pregain):
+def test_reverb_room_st(in_signal, decay, damping, wet, dry, pregain):
   n_chans = 2
   max_room_size = 1.0
   room_size = 1.0
