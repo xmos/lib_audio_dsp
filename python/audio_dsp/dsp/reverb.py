@@ -21,7 +21,6 @@ def float_to_q_verb(x):
     be between 0 and 1. As Q_VERB is typically Q31, care must be taken
     to not overflow by scaling 1.0f*(2**31).
     """
-
     if x > 1 or x < 0:
         raise ValueError("input must be between 0 and 1")
 
