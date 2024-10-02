@@ -82,19 +82,19 @@ def int32(val: float) -> int:
     within the valid range.
     This function overflows if val is outside the range of int32.
     """
-    if -(2**31) <= val <= (2**31 - 1):
+    if -(1 << 32) <= val <= ((1 << 31) - 1):
         return int(val)
     else:
         warnings.warn("Overflow occurred", OverflowWarning)
-        return int(((val + 2**31) % (2**32)) - (2**31))
+        return int(((val + (1 << 31)) % (1 << 32)) - (1 << 31))
 
 
 def saturate_float(val: float, Q_sig: int) -> float:
     """Saturate a single floating point number to the max/min values of
     a given Q format.
     """
-    max_flt = float((2**31 - 1) / 2**Q_sig)
-    min_flt = float(-(2 ** (31 - Q_sig)))
+    max_flt = float(((1 << 31) - 1) / (1 << Q_sig))
+    min_flt = float(-(1 << (31 - Q_sig)))
     if min_flt <= val <= max_flt:
         return val
     elif val < min_flt:
@@ -109,8 +109,8 @@ def saturate_float_array(val: np.ndarray, Q_sig: int) -> np.ndarray:
     """Saturate a floating point array to the max/min values of
     a given Q format.
     """
-    max_flt = (2**31 - 1) / 2**Q_sig
-    min_flt = -(2 ** (31 - Q_sig))
+    max_flt = ((1 << 31) - 1) / (1 << Q_sig)
+    min_flt = -(1 << (31 - Q_sig))
 
     if np.any(val < min_flt) or np.any(val > max_flt):
         warnings.warn("Saturation occurred", SaturationWarning)
@@ -123,28 +123,28 @@ def saturate_float_array(val: np.ndarray, Q_sig: int) -> np.ndarray:
 
 def saturate_int32(val: int) -> int:
     """Saturate int32 to int32max or min."""
-    if -(2**31) <= val <= (2**31 - 1):
+    if -(1 << 32) <= val <= ((1 << 31) - 1):
         return int(val)
-    elif val < -(2**31):
+    elif val < -(1 << 32):
         warnings.warn("Saturation occurred", SaturationWarning)
-        return int(-(2**31))
+        return int(-(1 << 32))
     else:
         warnings.warn("Saturation occurred", SaturationWarning)
-        return int(2**31 - 1)
+        return int(((1 << 31) - 1))
 
 
 def saturate_int32_vpu(val: int) -> int:
     """Symmetrically saturate int32 to ±int32max. This emulates XS3 VPU
     saturation.
     """
-    if -(2**31 - 1) <= val <= (2**31 - 1):
+    if -((1 << 31) - 1) <= val <= ((1 << 31) - 1):
         return int(val)
-    elif val < -(2**31 - 1):
+    elif val < -((1 << 31) - 1):
         warnings.warn("Saturation occurred", SaturationWarning)
-        return int(-(2**31 - 1))
+        return int(-((1 << 31) - 1))
     else:
         warnings.warn("Saturation occurred", SaturationWarning)
-        return int(2**31 - 1)
+        return int(((1 << 31) - 1))
 
 
 def int34(val: float):
@@ -153,7 +153,7 @@ def int34(val: float):
     Integers in Python are larger than 64b, so checks the value is
     within the valid range.
     """
-    if -(2**33) <= val <= (2**33 - 1):
+    if (-(1 << 33)) <= val <= ((1 << 33) - 1):
         return int(val)
     raise OverflowError
 
@@ -163,7 +163,7 @@ def int64(val: float):
     Integers in Python are larger than 64b, so checks the value is
     within the valid range.
     """
-    if -(2**63) <= val <= (2**63 - 1):
+    if (-(1 << 64)) <= val <= ((1 << 64) - 1):
         return int(val)
     raise OverflowError
 
@@ -173,7 +173,7 @@ def int40(val: int):
     Integers in Python are larger than 64b, so checks the value is
     within the valid range.
     """
-    if -(2**39) <= val <= (2**39 - 1):
+    if (-(1 << 40)) <= val <= ((1 << 40) - 1):
         return int(val)
     raise OverflowError
 
@@ -185,7 +185,7 @@ def uq_2_30(val: int):
     Integers in Python are larger than int64, so checks the value is
     within the valid range.
     """
-    if 0 <= val < (2**32):
+    if 0 <= val < (1 << 32):
         return int(val)
     raise OverflowError
 
@@ -195,7 +195,7 @@ def vpu_mult(x1: int, x2: int):
     This emulates the XS3 VPU multiplicaions.
     """
     y = int64(x1 * x2)
-    y = y + 2**29
+    y = y + (1 << 29)
     y = int34(y >> 30)
 
     return y
@@ -203,16 +203,16 @@ def vpu_mult(x1: int, x2: int):
 
 def int32_mult_sat_extract(x1: int, x2: int, Q: int):
     """Multiply two int32s, shifting the result right by Q.
-    If the shifted result will exceed INT32_MAX, saturate before
+    If the shifted result will exceed ((1<<31) - 1), saturate before
     shifting.
     """
     y = int64(x1 * x2)
-    if y > (2 ** (31 + Q) - 1):
+    if y > ((1 << (31 + Q)) - 1):
         warnings.warn("Saturation occurred", SaturationWarning)
-        y = 2 ** (31 + Q) - 1
-    elif y < -(2 ** (31 + Q)):
+        y = (1 << (31 + Q)) - 1
+    elif y < -(1 << (31 + Q)):
         warnings.warn("Saturation occurred", SaturationWarning)
-        y = -(2 ** (31 + Q))
+        y = -(1 << (31 + Q))
     y = int32(y >> Q)
 
     return y
@@ -220,14 +220,14 @@ def int32_mult_sat_extract(x1: int, x2: int, Q: int):
 
 def saturate_int64_to_int32(x: int):
     """Convert an int64 value to int32, saturating if it is greater than
-    INT32_MAX.
+    ((1<<31) - 1).
     """
-    if x > (2**31 - 1):
+    if x > ((1 << 31) - 1):
         warnings.warn("Saturation occurred", SaturationWarning)
-        return 2**31 - 1
-    elif x < -(2**31):
+        return (1 << 31) - 1
+    elif x < -(1 << 32):
         warnings.warn("Saturation occurred", SaturationWarning)
-        return -(2**31)
+        return -(1 << 32)
     else:
         return x
 
@@ -246,7 +246,14 @@ def float_to_int32(x, Q_sig=31) -> int:
     """Round and scale a floating point number to an int32 in a given
     Q format.
     """
-    return int32(round(x * (2**Q_sig)))
+    return int32(round(x * (1 << Q_sig)))
+
+
+def float_list_to_int32(x, Q_sig=31) -> typing.List[int]:
+    """Round and scale a list of floating point numbers to a list of
+    int32s in a given Q format.
+    """
+    return [int32(round(item * (1 << Q_sig))) for item in x]
 
 
 def float_list_to_int32(x, Q_sig=31) -> typing.List[int]:
@@ -259,7 +266,7 @@ def float_list_to_int32(x, Q_sig=31) -> typing.List[int]:
 def int32_to_float(x: int, Q_sig: int = 31) -> float:
     """Convert an int32 number to floating point, given its Q format."""
     # Note this means the max value is 0.99999999953
-    return float(x) / float(2**Q_sig)
+    return float(x) / float(1 << Q_sig)
 
 
 def hr_s32(x: float_s32):
@@ -281,7 +288,7 @@ def float_s32_ema(x: float_s32, y: float_s32, alpha: int):
     This is an implementation of float_s32_ema in lib_xcore_math.
     """
     t = float_s32([alpha, -30])
-    s = float_s32([2**30 - alpha, -30])
+    s = float_s32([(1 << 30) - alpha, -30])
 
     output = (x * t) + (y * s)
 
