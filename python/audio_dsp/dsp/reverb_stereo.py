@@ -418,29 +418,3 @@ class reverb_room_stereo(rv.reverb_room):
             output[1][sample] = out_samples[1]
 
         return output
-
-    def set_wet_dry_mix(self, mix):
-        """
-        Will mix wet and dry signal by adjusting wet and dry gains.
-        So that when the mix is 0, the output signal is fully dry,
-        when 1, the output signal is fully wet. Tries to maintain a
-        stable signal level using -4.5 dB Pan Law.
-
-        Parameters
-        ----------
-        mix : float
-            The wet/dry mix, must be [0, 1].
-        """
-        if not (0 <= mix <= 1):
-            bad_mix = mix
-            mix = np.clip(mix, 0, 1)
-            warnings.warn(f"Wet/dry mix {bad_mix} saturates to {mix}", UserWarning)
-        # get an angle [0, pi /2]
-        omega = mix * np.pi / 2
-
-        # -4.5 dB
-        self.dry = np.sqrt((1 - mix) * np.cos(omega))
-        self.wet = np.sqrt(mix * np.sin(omega))
-        # there's an extra gain of 10 dB added to the wet channel to
-        # make it similar level to the dry, so that the mixing is smooth.
-        # Couldn't add it to the wet gain itself as it's in q31

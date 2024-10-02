@@ -86,7 +86,7 @@ void adsp_reverb_wet_dry_mix(int32_t gains[2], float mix);
  * @param fs              Sampling frequency
  * @param max_room_size   Maximum room size of delay filters
  * @param room_size       Room size compared to the maximum room size [0, 1]
- * @param decay           Lenght of the reverb tail [0, 1]
+ * @param decay           Length of the reverb tail [0, 1]
  * @param damping         High frequency attenuation
  * @param wet_gain        Wet gain in dB
  * @param dry_gain        Dry gain in dB
