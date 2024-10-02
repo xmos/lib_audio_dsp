@@ -477,7 +477,7 @@ class reverb_room(dspg.dsp_block):
     @property
     def wet_db(self):
         """The gain applied to the wet signal in dB."""
-        return self._wet_db
+        return utils.db(self.wet)
 
     @wet_db.setter
     def wet_db(self, x):
@@ -485,7 +485,6 @@ class reverb_room(dspg.dsp_block):
             warnings.warn(f"Wet gain {x} saturates to 0 dB", UserWarning)
             x = 0
 
-        self._wet_db = x
         self.wet = utils.db2gain(x)
 
     @property
@@ -515,7 +514,7 @@ class reverb_room(dspg.dsp_block):
     @property
     def dry_db(self):
         """The gain applied to the dry signal in dB."""
-        return self._dry_db
+        return utils.db(self.dry)
 
     @dry_db.setter
     def dry_db(self, x):
@@ -523,7 +522,6 @@ class reverb_room(dspg.dsp_block):
             warnings.warn(f"Dry gain {x} saturates to 0 dB", UserWarning)
             x = 0
 
-        self._dry_db = x
         self.dry = utils.db2gain(x)
 
     @property
