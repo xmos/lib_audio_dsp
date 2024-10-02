@@ -53,16 +53,16 @@ def scale_sat_int64_to_int32_floor(val):
     # this, but below 0 we truncate to -inf, so add just under 1 to go
     # up instead.
     if val < 0:
-        val += (2**Q_VERB) - 1
+        val += (1 << Q_VERB) - 1
         utils.int64(val)
 
     # saturate
-    if val > (2 ** (31 + Q_VERB) - 1):
+    if val > ((1 << (31 + Q_VERB)) - 1):
         warnings.warn("Saturation occurred", utils.SaturationWarning)
-        val = 2 ** (31 + Q_VERB) - 1
-    elif val < -(2 ** (31 + Q_VERB)):
+        val = (1 << (31 + Q_VERB)) - 1
+    elif val < -(1 << (31 + Q_VERB)):
         warnings.warn("Saturation occurred", utils.SaturationWarning)
-        val = -(2 ** (31 + Q_VERB))
+        val = -(1 << (31 + Q_VERB))
 
     # shift to int32
     y = utils.int32(val >> Q_VERB)
