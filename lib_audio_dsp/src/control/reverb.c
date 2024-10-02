@@ -143,7 +143,7 @@ reverb_room_st_t adsp_reverb_room_st_init(
   reverb_room_st_t rv;
 
   // Avoids too much or too little feedback
-  const int32_t feedback_int = float_to_Q_RVR_pos((decay * 0.28) + 0.7);
+  const int32_t feedback_int = float_to_Q_RVR_pos((decay * 0.28f) + 0.7f);
   const int32_t damping_int = MAX(float_to_Q_RVR_pos(damping) - 1, 1);
 
   int32_t predelay_samps = predelay * fs / 1000;

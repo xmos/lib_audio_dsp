@@ -127,7 +127,8 @@ void adsp_reverb_room_st_calc_wet_gains(int32_t wet_gains[2], float wet_gain, fl
  * The wet gain is max, the dry gain will be 0.
  * In order to maintain a consistent signal level across all mix values, 
  * the signals are panned with a -4.5 dB panning law.
- * 
+ * The width controls the mixing between the left and right wet channels 
+ *
  * @param gains           Output gains: [0] - Dry; [1] - Wet_1; [2] - Wet_2
  * @param mix             Mix applied from 0 to 1
  * @param width           Stereo separation of the room [0, 1]
@@ -141,7 +142,7 @@ void adsp_reverb_st_wet_dry_mix(int32_t gains[3], float mix, float width);
  * @param fs                Sampling frequency
  * @param max_room_size     Maximum room size of delay filters
  * @param room_size         Room size compared to the maximum room size [0, 1]
- * @param decay             Lenght of the reverb tail [0, 1]
+ * @param decay             Length of the reverb tail [0, 1]
  * @param damping           High frequency attenuation
  * @param width             Stereo separation of the room [0, 1]
  * @param wet_gain          Wet gain in dB

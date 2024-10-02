@@ -38,10 +38,11 @@ class reverb_room_stereo(rv.reverb_room):
         The length of the reverberation of the room, between 0 and 1.
     damping : float, optional
         how much high frequency attenuation in the room, between 0 and 1
-    width : how much stereo separation there is between the left and
-            right channels. Setting width to 0 will yield a mono signal,
-            whilst setting width to 1 will yield the most stereo
-            separation.
+    width : float, optional
+        how much stereo separation there is between the left and
+        right channels. Setting width to 0 will yield a mono signal,
+        whilst setting width to 1 will yield the most stereo
+        separation.
     wet_gain_db : int, optional
         wet signal gain, less than 0 dB.
     dry_gain_db : int, optional

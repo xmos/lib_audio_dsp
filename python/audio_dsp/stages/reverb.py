@@ -193,7 +193,7 @@ class ReverbRoomStereo(ReverbRoom):
 
     Attributes
     ----------
-    dsp_block : :class:`audio_dsp.dsp.reverb.reverb_room_stereo`
+    dsp_block : :class:`audio_dsp.dsp.reverb_stereo.reverb_room_stereo`
         The DSP block class; see :ref:`ReverbRoomStereo`
         for implementation details.
     """
@@ -241,7 +241,9 @@ class ReverbRoomStereo(ReverbRoom):
 
         Parameters
         ----------
-        decay : float
-            How long the reverberation of the room is, between 0 and 1.
+        width : float
+            How much stereo separation between the channels. A width of 0
+            indicates no stereo separation (i.e. mono). A width of 1 indicates
+            maximum stereo separation.
         """
         self.dsp_block.width = width
