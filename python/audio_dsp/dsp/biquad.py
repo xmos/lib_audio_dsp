@@ -108,7 +108,7 @@ class biquad(dspg.dsp_block):
         self._y2[channel] = self._y1[channel]
         self._y1[channel] = y
 
-        y = y * 2**self.b_shift
+        y = y * (1 << self.b_shift)
         y = utils.saturate_float(y, self.Q_sig)
 
         return y
@@ -136,7 +136,7 @@ class biquad(dspg.dsp_block):
         # the b_shift can be combined with the >> 30, which reduces
         # quantization noise, but this results  in saturation at an
         # earlier point, and so is not used here for consistency
-        y = utils.int64(y + 2**29)
+        y = utils.int64(y + (1 << 29))
 
         y = utils.int32_mult_sat_extract(y, 1, 30)
         # save states
@@ -399,16 +399,16 @@ def _round_to_q30(coeffs: list[float]) -> tuple[list[float], list[int]]:
     for n in range(len(coeffs)):
         # scale to Q1.30 ints, note this is intentionally not multiplied
         # (2**Q -1) to keep 1.0 as 1.0
-        rounded_coeffs[n] = round(coeffs[n] * (2**Q))
+        rounded_coeffs[n] = round(coeffs[n] * (1 << Q))
         # check for overflow
-        if not (-(2**31) <= rounded_coeffs[n] <= 2**31 - 1):
+        if not (-(1 << 31)) <= rounded_coeffs[n] <= ((1 << 31) - 1):
             raise ValueError(
                 "Filter coefficient will overflow (%.4f, %d), reduce gain" % (coeffs[n], n)
             )
 
         int_coeffs[n] = utils.int32(rounded_coeffs[n])
         # rescale to floats
-        rounded_coeffs[n] = rounded_coeffs[n] / 2**Q
+        rounded_coeffs[n] = rounded_coeffs[n] / (1 << Q)
 
     return rounded_coeffs, int_coeffs
 
