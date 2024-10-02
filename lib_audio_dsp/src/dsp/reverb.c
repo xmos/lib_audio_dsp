@@ -15,11 +15,10 @@
     {                      \
         556, 441, 341, 225 \
     }
+#define DEFAULT_SPREAD 23
 
 #define TWO_TO_31 0x80000000
 #define TWO_TO_31_MINUS_1 0x7FFFFFFF
-
-#define DEFAULT_SPREAD 23
 
 #define DEFAULT_AP_FEEDBACK 0x40000000 // 0.5 in Q0.31
 

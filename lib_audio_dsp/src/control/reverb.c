@@ -87,7 +87,7 @@ reverb_room_t adsp_reverb_room_init(
   return rv;
 }
 
-static void _get_wet_gains(int32_t wet_gains[2], float wet_gain, float width){
+static inline void _get_wet_gains(int32_t wet_gains[2], float wet_gain, float width){
   width = width > 1.0f ? 1.0f : width;
   width = width < 0.0f ? 0.0f : width;
   float wet1, wet2;
@@ -97,7 +97,7 @@ static void _get_wet_gains(int32_t wet_gains[2], float wet_gain, float width){
   wet_gains[1] = float_to_Q_RVR_pos(wet2);
 }
 
-void adsp_reverb_room_st_set_wet_gain(int32_t wet_gains[2], float wet_gain, float width) {
+void adsp_reverb_room_st_calc_wet_gains(int32_t wet_gains[2], float wet_gain, float width) {
   wet_gain = powf(10.0f, wet_gain / 20.0f);
   _get_wet_gains(wet_gains, wet_gain, width);
 }
@@ -154,7 +154,7 @@ reverb_room_st_t adsp_reverb_room_st_init(
   rv.pre_gain = float_to_Q_RVR_pos(pregain);
   rv.dry_gain = adsp_reverb_room_calc_gain(dry_gain);
   int32_t wet_gains[2];
-  adsp_reverb_room_st_set_wet_gain(wet_gains, wet_gain, width);
+  adsp_reverb_room_st_calc_wet_gains(wet_gains, wet_gain, width);
   rv.wet_gain1 = wet_gains[0];
   rv.wet_gain2 = wet_gains[1];
 
