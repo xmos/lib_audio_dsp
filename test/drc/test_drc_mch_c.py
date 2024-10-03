@@ -21,16 +21,14 @@ def get_sig_2ch(len=0.05):
   sig_l = []
   sig_l.append(gen.sin(fs, len, 997, 0.7))
   sig_l.append(gen.square(fs, len, 50, 0.5) + 0.5)
-  sig_fl = np.stack(sig_l, axis=0)
   sig_fl_t = np.stack(sig_l, axis=1)
-  sig_fl = utils.saturate_float_array(sig_fl, dspg.Q_SIG)
   sig_fl_t = utils.saturate_float_array(sig_fl_t, dspg.Q_SIG)
 
   sig_int = float_to_qxx(sig_fl_t)
   sig_int.tofile(bin_dir / "sig_2ch_48k.bin")
 
   sf.write(gen_dir / "sig_2ch_48k.wav", sig_fl_t, int(fs), "PCM_24")
-  return sig_fl
+  return sig_fl_t.T
 
 @pytest.fixture(scope="module")
 def in_signal():
