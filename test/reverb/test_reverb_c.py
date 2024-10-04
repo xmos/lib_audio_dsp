@@ -36,14 +36,14 @@ def get_sig(len=0.05):
     name = "rv_sig_48k"
     sig_path = BIN_DIR /  str(name + ".bin")
 
+    # note if changing the signal the .bin file will need to be manually deleted
     with FileLock(str(sig_path) + ".lock"):
         if not sig_path.is_file():
             sig_int.tofile(sig_path)
 
+    # wav file does not need to be locked as it is only used for debugging outside pytest
     wav_path = GEN_DIR / str(name + ".wav")
-    with FileLock(str(wav_path) + ".lock"):
-        if not wav_path.is_file():
-            sf.write(wav_path, sig_fl, int(FS), "PCM_32")
+    sf.write(wav_path, sig_fl, int(FS), "PCM_32")
     return sig_fl
 
 

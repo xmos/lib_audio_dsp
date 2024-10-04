@@ -29,14 +29,14 @@ def get_sig_2ch(len=0.05):
   name = "sig_2ch_48k"
   sig_path = bin_dir /  str(name + ".bin")
 
+  # note if changing the signal the .bin file will need to be manually deleted
   with FileLock(str(sig_path) + ".lock"):
     if not sig_path.is_file():
       sig_int.tofile(sig_path)
 
+  # wav file does not need to be locked as it is only used for debugging outside pytest
   wav_path = gen_dir / str(name + ".wav")
-  with FileLock(str(wav_path) + ".lock"):
-    if not wav_path.is_file():
-      sf.write(wav_path, sig_fl_t, int(fs), "PCM_24")
+  sf.write(wav_path, sig_fl_t, int(fs), "PCM_24")
   
   return sig_fl_t.T
 
