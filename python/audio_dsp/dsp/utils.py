@@ -82,7 +82,7 @@ def int32(val: float) -> int:
     within the valid range.
     This function overflows if val is outside the range of int32.
     """
-    if -(1 << 32) <= val <= ((1 << 31) - 1):
+    if -(1 << 31) <= val <= ((1 << 31) - 1):
         return int(val)
     else:
         warnings.warn("Overflow occurred", OverflowWarning)
@@ -123,11 +123,11 @@ def saturate_float_array(val: np.ndarray, Q_sig: int) -> np.ndarray:
 
 def saturate_int32(val: int) -> int:
     """Saturate int32 to int32max or min."""
-    if -(1 << 32) <= val <= ((1 << 31) - 1):
+    if -(1 << 31) <= val <= ((1 << 31) - 1):
         return int(val)
-    elif val < -(1 << 32):
+    elif val < -(1 << 31):
         warnings.warn("Saturation occurred", SaturationWarning)
-        return int(-(1 << 32))
+        return int(-(1 << 31))
     else:
         warnings.warn("Saturation occurred", SaturationWarning)
         return int(((1 << 31) - 1))
@@ -163,7 +163,7 @@ def int64(val: float):
     Integers in Python are larger than 64b, so checks the value is
     within the valid range.
     """
-    if (-(1 << 64)) <= val <= ((1 << 64) - 1):
+    if (-(1 << 63)) <= val <= ((1 << 63) - 1):
         return int(val)
     raise OverflowError
 
@@ -173,7 +173,7 @@ def int40(val: int):
     Integers in Python are larger than 64b, so checks the value is
     within the valid range.
     """
-    if (-(1 << 40)) <= val <= ((1 << 40) - 1):
+    if (-(1 << 39)) <= val <= ((1 << 39) - 1):
         return int(val)
     raise OverflowError
 
@@ -225,9 +225,9 @@ def saturate_int64_to_int32(x: int):
     if x > ((1 << 31) - 1):
         warnings.warn("Saturation occurred", SaturationWarning)
         return (1 << 31) - 1
-    elif x < -(1 << 32):
+    elif x < -(1 << 31):
         warnings.warn("Saturation occurred", SaturationWarning)
-        return -(1 << 32)
+        return -(1 << 31)
     else:
         return x
 
