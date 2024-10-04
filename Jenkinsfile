@@ -128,6 +128,21 @@ pipeline {
                 }
               }
             } // test cascaded biquad
+            stage('Unit tests') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/unit_tests") {
+                          runPytest("--dist worksteal")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // Unit tests
             stage('Test Utils') {
               steps {
                 dir("lib_audio_dsp") {
@@ -234,21 +249,6 @@ pipeline {
                 }
               }
             } // test drc
-            stage('Unit tests') {
-              steps {
-                dir("lib_audio_dsp") {
-                  withVenv {
-                    withTools(params.TOOLS_VERSION) {
-                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        dir("test/unit_tests") {
-                          runPytest("--dist worksteal")
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            } // Unit tests
             stage('Test Reverb') {
               steps {
                 dir("lib_audio_dsp") {
