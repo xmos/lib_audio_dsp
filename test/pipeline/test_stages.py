@@ -592,7 +592,6 @@ def test_reverb(frame_size, pregain, mix):
     do_test(make_p, tune_p, frame_size)
 
 
-@pytest.mark.group0
 def test_stereo_reverb(frame_size):
 
     def make_p(fr):
