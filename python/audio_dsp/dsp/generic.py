@@ -9,7 +9,7 @@ from audio_dsp.dsp import utils as utils
 from docstring_inheritance import NumpyDocstringInheritanceInitMeta
 
 # default Q format for the signal
-Q_SIG = 27
+Q_SIG = 31
 
 # number of bits for the headroom, this will set the maximum gain that
 # can be applied to the signal without overflowing.
