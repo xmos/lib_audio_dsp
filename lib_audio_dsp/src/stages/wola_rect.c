@@ -15,9 +15,9 @@ void wola_rect_process(int32_t *** input, int32_t ** output, void * app_data_sta
     wola_rect_state_t *state = app_data_state;
     // just point to the start of the valid data, length should just work out
     
-    // printf("wola start: %p\n", &input[0][0][0]);
-    // printf("win start: %p\n", &input[0][0][state->win_start]);
-    // printf("wola out: %p\n", &output[0][0]);
+    printf("wola start: %p\n", &input[0][0][0]);
+    printf("win start: %p\n", &input[0][0][state->win_start]);
+    printf("wola out: %p\n", &output[0][0]);
 
     memcpy(&output[0][0], &(input[0][0][state->win_start]), state->frame_size);
 }

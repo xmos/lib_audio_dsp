@@ -90,7 +90,7 @@ void signal_consumer(adsp_pipeline_t * m_dsp)
          * We assume single-channel with frame size of 1. */
         adsp_pipeline_sink(m_dsp, output_samples);
 
-        // printf("%ld\n", output_word);
+        printf("%ld\n", output_word);
         /* Place the output word in the output buffer, 
          * wrapping around when the buffer is full. */
         output_buffer[buffer_counter] = output_word;
