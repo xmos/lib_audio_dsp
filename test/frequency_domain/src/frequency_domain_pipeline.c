@@ -91,7 +91,7 @@ adsp_pipeline_t * adsp_auto_pipeline_init() {
     // static buffer_config_t config2 = {};
     static buffer_state_t state2;
 	static buffer_constants_t constants2 = {.buffer_len = 512};
-	static uint8_t memory2[BUFFER_STAGE_REQUIRED_MEMORY(1, 512)];
+	static uint8_t memory2[BUFFER_STAGE_REQUIRED_MEMORY(1, 512 - 256)]; // overlap = buf_len-frame_size
 	static adsp_bump_allocator_t allocator2 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory2);
 	adsp_auto.modules[2].state = (void*)&state2;
 	adsp_auto.modules[2].constants = (void*)&constants2;
@@ -122,7 +122,7 @@ adsp_pipeline_t * adsp_auto_pipeline_init() {
 
     // static wola_rect_config_t config6 = {};
     static wola_rect_state_t state6 = {};
-	static wola_rect_constants_t constants6 = {.win_start=256};
+	static wola_rect_constants_t constants6 = {.win_start=0};
 	static uint8_t memory6[WOLA_RECT_STAGE_REQUIRED_MEMORY];
 	static adsp_bump_allocator_t allocator6 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory6);
 	adsp_auto.modules[6].state = (void*)&state6;
@@ -140,7 +140,7 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 	local_thread_mode_set_bits(thread_mode_high_priority);
 
 	int32_t edge0[256] = {0}; // in
-	int32_t* edge2[1] = {NULL}; // buffered
+	int32_t edge2[512] = {0}; // buffered
 	bfp_complex_s32_t* edge3[1] = {NULL}; // fft'd
 	int32_t* edge5[1] = {NULL}; // ifft'd
 	int32_t edge6[256]; // wola'd -> last FD related stage so memcopy
@@ -149,8 +149,8 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
     // bfp_complex_s32_t edge7[1] = {0}; // saved filter
 
     int32_t* stage_2_input[] = {edge0};  // buffer
-	int32_t** stage_2_output[] = {edge2};
-	int32_t** stage_3_input[] = {edge2}; // fft
+	int32_t* stage_2_output[] = {edge2};
+	int32_t* stage_3_input[] = {edge2}; // fft
 	bfp_complex_s32_t** stage_3_output[] = {edge3};
 	bfp_complex_s32_t** stage_5_input[] = {edge3}; // ifft
 	int32_t** stage_5_output[] = {edge5};
@@ -181,8 +181,8 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 		stage_2_input,
 		stage_2_output,
 		modules[2]->state);
-	printf("s2 out addr: %p\n", stage_2_output[0][0]);
-	printf("s3 in addr: %p\n", stage_3_input[0][0]);
+	printf("s2 out addr: %p\n", &stage_2_output[0][0]);
+	printf("s3 in addr: %p\n", &stage_3_input[0][0]);
 	printf("ffting\n");
 	fft_process(
 		stage_3_input,
@@ -191,6 +191,12 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
     printf("s3 output data addr: %p\n", stage_3_output[0][0]->data);
     printf("s5 in output data addr: %p\n", stage_5_input[0][0]->data);
 
+	for(int i=0; i<256; i++)
+	{
+		stage_5_input[0][0]->data[i].re *= 0.1f;
+		stage_5_input[0][0]->data[i].im *= 0.1f;
+
+	}
 	// bfp_mult_process(
 	// 	stage_3_input,
 	// 	stage_3_output,

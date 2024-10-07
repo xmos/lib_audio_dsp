@@ -48,6 +48,6 @@ void fft_init(module_instance_t* instance,
                  int n_outputs,
                  int frame_size);
 
-void fft_process(int32_t ***input, bfp_complex_s32_t ***output, void *app_data_state);
+void fft_process(int32_t **input, bfp_complex_s32_t ***output, void *app_data_state);
 
 void fft_control(void *state, module_control_t *control);

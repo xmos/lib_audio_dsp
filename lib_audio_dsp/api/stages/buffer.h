@@ -12,8 +12,8 @@ typedef struct {
 } buffer_config_t;
 
 typedef struct {
-    int32_t buffer_len;
-    int32_t* buffer_data;
+    // int32_t buffer_len;
+    int32_t* overlap_data;
 } buffer_t;
 
 typedef struct
@@ -22,6 +22,8 @@ typedef struct
     int n_inputs;
     int n_outputs;
     int frame_size;
+    int buffer_len;
+    int overlap_len;
 }buffer_state_t;
 
 typedef struct
@@ -33,7 +35,7 @@ typedef struct
 
 #define BUFFER_STAGE_REQUIRED_MEMORY(N_CH, BUFF_LEN) \
      + ADSP_BUMP_ALLOCATOR_DWORD_N_BYTES(N_CH * sizeof(buffer_t)) \
-     + ADSP_BUMP_ALLOCATOR_DWORD_N_BYTES(N_CH * BUFF_LEN * sizeof(int32_t))
+     + ADSP_BUMP_ALLOCATOR_DWORD_N_BYTES(N_CH * (BUFF_LEN) * sizeof(int32_t))
 
 void buffer_init(module_instance_t* instance,
                  adsp_bump_allocator_t* allocator,
@@ -42,6 +44,6 @@ void buffer_init(module_instance_t* instance,
                  int n_outputs,
                  int frame_size);
 
-void buffer_process(int32_t **input, int32_t ***output, void *app_data_state);
+void buffer_process(int32_t **input, int32_t **output, void *app_data_state);
 
 void buffer_control(void *state, module_control_t *control);
