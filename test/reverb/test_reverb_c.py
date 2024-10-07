@@ -61,7 +61,6 @@ def get_c_wav(dir_name, app_name, verbose=False, sim=True):
 
 def run_py(uut: reverb.reverb_room, sig_fl, use_float_sig=True):
     out_int = np.zeros(sig_fl.size)
-    out_fl = np.zeros(sig_fl.size)
     sig_int = float_to_qxx(sig_fl)
 
     if use_float_sig:
@@ -72,13 +71,7 @@ def run_py(uut: reverb.reverb_room, sig_fl, use_float_sig=True):
             out_int[n] = uut.process_xcore(sig_int[n])
         out_int = qxx_to_float(out_int)
 
-    sf.write(GEN_DIR / "sig_py_int.wav", out_int, FS, "PCM_32")
-    uut.reset_state()
-
-    for n in range(sig_fl.size):
-        out_fl[n] = uut.process(sig_fl[n])
-
-    sf.write(GEN_DIR / "sig_py_flt.wav", out_fl, FS, "PCM_32")
+    # sf.write(GEN_DIR / "sig_py_int.wav", out_int, FS, "PCM_32")
 
     return out_int
 

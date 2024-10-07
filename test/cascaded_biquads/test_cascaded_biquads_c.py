@@ -67,15 +67,9 @@ def run_py(filt: casc_bq.cascaded_biquads_8, sig_fl):
   for n in range(sig_fl.size):
     out_int[n] = filt.process_xcore(sig_fl[n])
 
-  sf.write(gen_dir / "sig_py_int.wav", out_int, fs, "PCM_24")
-  filt.reset_state()
+  # sf.write(gen_dir / "sig_py_int.wav", out_int, fs, "PCM_24")
 
-  for n in range(sig_fl.size):
-    out_fl[n] = filt.process(sig_fl[n])
-
-  sf.write(gen_dir / "sig_py_flt.wav", out_fl, fs, "PCM_24")
-
-  return out_fl, out_int
+  return out_int
 
 
 def single_test(filt, tname, sig_fl):
@@ -91,7 +85,7 @@ def single_test(filt, tname, sig_fl):
 
   all_filt_info.tofile(test_dir / "coeffs.bin")
 
-  out_py_fl, out_py_int = run_py(filt, sig_fl)
+  out_py_int = run_py(filt, sig_fl)
   out_c = get_c_wav(test_dir)
   shutil.rmtree(test_dir)
 
