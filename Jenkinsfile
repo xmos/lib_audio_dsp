@@ -88,7 +88,9 @@ pipeline {
                       buildApps([
                         "test/biquad",
                         "test/cascaded_biquads",
-                        "test/drc",
+                        "test/signal_chain",
+                        "test/fir",
+                        "test/utils"
                       ]) // buildApps
                     } // tools
                   } // withVenv
@@ -103,8 +105,7 @@ pipeline {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/biquad") {
-                          runPytest("test_biquad_python.py --dist worksteal")
-                          runPytest("*_c.py --dist worksteal")
+                          runPytest("--dist worksteal")
                         }
                       }
                     }
@@ -119,8 +120,7 @@ pipeline {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/cascaded_biquads") {
-                          runPytest("test_cascaded_biquads_python.py --dist worksteal")
-                          runPytest("*_c.py --dist worksteal")
+                          runPytest("--dist worksteal")
                         }
                       }
                     }
@@ -128,26 +128,66 @@ pipeline {
                 }
               }
             } // test cascaded biquad
-            stage('Test DRC') {
+            stage('Unit tests') {
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      withMounts([["projects", "projects/hydra_audio", "hydra_audio_test_skype"]]) {
-                        withEnv(["hydra_audio_PATH=$hydra_audio_test_skype_PATH"]){
-                          catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                            dir("test/drc") {
-                              runPytest("test_drc_python.py --dist worksteal")
-                              runPytest("*_c.py --dist worksteal")
-                            }
-                          }
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/unit_tests") {
+                          runPytest("--dist worksteal")
                         }
                       }
                     }
                   }
                 }
               }
-            } // test drc
+            } // Unit tests
+            stage('Test Utils') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/utils") {
+                          runPytest("--dist worksteal")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test utils
+            stage('Test FIR') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/fir") {
+                          runPytest("--dist worksteal")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test SC
+            stage('Test SC') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/signal_chain") {
+                          runPytest("--dist worksteal")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test SC
           }
           post {
             cleanup {
@@ -182,63 +222,33 @@ pipeline {
                     withTools(params.TOOLS_VERSION) {
                       sh "pip install -r requirements.txt"
                       buildApps([
+                        "test/drc",
                         "test/reverb",
-                        "test/signal_chain",
-                        "test/fir",
-                        "test/utils"
                       ]) // buildApps
                     }
                   }
                 }
               }
             } // Build
-            stage('Unit tests') {
+            stage('Test DRC') {
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        dir("test/unit_tests") {
-                          runPytest("--dist worksteal")
+                      withMounts([["projects", "projects/hydra_audio", "hydra_audio_test_skype"]]) {
+                        withEnv(["hydra_audio_PATH=$hydra_audio_test_skype_PATH"]){
+                          catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                            dir("test/drc") {
+                              runPytest("--dist worksteal")
+                            }
+                          }
                         }
                       }
                     }
                   }
                 }
               }
-            } // Unit tests
-            stage('Test FIR') {
-              steps {
-                dir("lib_audio_dsp") {
-                  withVenv {
-                    withTools(params.TOOLS_VERSION) {
-                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        dir("test/fir") {
-                          runPytest("test_fir_python.py --dist worksteal")
-                          runPytest("*_c.py --dist worksteal")
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            } // test SC
-            stage('Test SC') {
-              steps {
-                dir("lib_audio_dsp") {
-                  withVenv {
-                    withTools(params.TOOLS_VERSION) {
-                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        dir("test/signal_chain") {
-                          runPytest("test_signal_chain_python.py --dist worksteal")
-                          runPytest("*_c.py --dist worksteal")
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            } // test SC
+            } // test drc
             stage('Test Reverb') {
               steps {
                 dir("lib_audio_dsp") {
@@ -254,21 +264,6 @@ pipeline {
                 }
               }
             } // test Reverb
-            stage('Test Utils') {
-              steps {
-                dir("lib_audio_dsp") {
-                  withVenv {
-                    withTools(params.TOOLS_VERSION) {
-                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        dir("test/utils") {
-                          runPytest("--dist worksteal")
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            } // test utils
           }
           post {
             cleanup {
@@ -327,7 +322,7 @@ pipeline {
                     withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       sh "xtagctl reset ${adapterIDs[0]}"
                       dir("test/pipeline") {
-                        sh "python -m pytest --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
+                        sh "python -m pytest -m group0 --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
                       }
                     }
                 }
@@ -346,6 +341,47 @@ pipeline {
             }
           }
         } // Hardware test
+
+        stage ('Hardware Test 2') {
+          agent {
+            label 'xcore.ai && uhubctl'
+          }
+
+          steps {
+            runningOn(env.NODE_NAME)
+            sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
+            dir("lib_audio_dsp") {
+              checkout scm
+            }
+            createVenv("lib_audio_dsp/requirements.txt")
+
+            dir("lib_audio_dsp") {
+              withVenv {
+                withTools(params.TOOLS_VERSION) {
+                  sh "pip install -r requirements.txt"
+                  sh "pip install -e ${WORKSPACE}/xtagctl"
+                    withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
+                      sh "xtagctl reset ${adapterIDs[0]}"
+                      dir("test/pipeline") {
+                        sh "python -m pytest -m unmarked --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
+                        }
+                    }
+                }
+              }
+            }
+          }
+
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+            always {
+              dir("${WORKSPACE}/lib_audio_dsp/test/pipeline") {
+                junit "pytest_result.xml"
+              }
+            }
+          }
+        } // Hardware test 2
 
         // Host app on Windows
         stage ('Win32 Host Build & Test') {

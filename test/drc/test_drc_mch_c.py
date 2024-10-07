@@ -4,13 +4,13 @@ import numpy as np
 import soundfile as sf
 from pathlib import Path
 import shutil
-from test_drc_c import float_to_qxx, get_c_wav
+from .test_drc_c import float_to_qxx, get_c_wav
 import audio_dsp.dsp.drc as drc
 import audio_dsp.dsp.signal_gen as gen
 import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.generic as dspg
 import pytest
-
+from .. import test_utils as tu
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
@@ -25,9 +25,16 @@ def get_sig_2ch(len=0.05):
   sig_fl_t = utils.saturate_float_array(sig_fl_t, dspg.Q_SIG)
 
   sig_int = float_to_qxx(sig_fl_t)
-  sig_int.tofile(bin_dir / "sig_2ch_48k.bin")
 
-  sf.write(gen_dir / "sig_2ch_48k.wav", sig_fl_t, int(fs), "PCM_24")
+  name = "sig_2ch_48k"
+  sig_path = bin_dir /  str(name + ".bin")
+
+  tu.xdist_safe_bin_write(sig_int, sig_path)
+
+  # wav file does not need to be locked as it is only used for debugging outside pytest
+  wav_path = gen_dir / str(name + ".wav")
+  sf.write(wav_path, sig_fl_t, int(fs), "PCM_24")
+  
   return sig_fl_t.T
 
 @pytest.fixture(scope="module")

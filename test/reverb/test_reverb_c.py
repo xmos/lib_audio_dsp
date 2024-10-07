@@ -10,6 +10,7 @@ import pytest
 import shutil
 import soundfile as sf
 import subprocess
+from .. import test_utils as tu
 
 BIN_DIR = Path(__file__).parent / "bin"
 GEN_DIR = Path(__file__).parent / "autogen"
@@ -33,9 +34,13 @@ def get_sig(len=0.05):
     sig_int = float_to_qxx(sig_fl)
 
     name = "rv_sig_48k"
-    sig_int.tofile(BIN_DIR / str(name + ".bin"))
-    sf.write(GEN_DIR / str(name + ".wav"), sig_fl, int(FS), "PCM_32")
+    sig_path = BIN_DIR /  str(name + ".bin")
 
+    tu.xdist_safe_bin_write(sig_int, sig_path)
+
+    # wav file does not need to be locked as it is only used for debugging outside pytest
+    wav_path = GEN_DIR / str(name + ".wav")
+    sf.write(wav_path, sig_fl, int(FS), "PCM_32")
     return sig_fl
 
 

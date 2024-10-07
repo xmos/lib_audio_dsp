@@ -10,6 +10,7 @@ from audio_dsp.dsp.generic import Q_SIG
 import audio_dsp.dsp.signal_gen as gen
 import pytest
 import random
+from ..test_utils import xdist_safe_bin_write
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
@@ -33,8 +34,13 @@ def get_sig(len=0.05):
   sig_int = float_to_qxx(sig_fl)
 
   name = "sig_48k"
-  sig_int.tofile(bin_dir /  str(name + ".bin"))
-  sf.write(gen_dir / str(name + ".wav"), sig_fl, int(fs), "PCM_24")
+  
+  sig_path = bin_dir /  str(name + ".bin")
+  xdist_safe_bin_write(sig_int, sig_path)
+
+  # wav file does not need to be locked as it is only used for debugging outside pytest
+  wav_path = gen_dir / str(name + ".wav")
+  sf.write(wav_path, sig_fl, int(fs), "PCM_24")
 
   return sig_fl
 
