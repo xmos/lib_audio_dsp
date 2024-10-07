@@ -141,7 +141,7 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 
 	int32_t edge0[256] = {0}; // in
 	int32_t edge2[512] = {0}; // buffered
-	bfp_complex_s32_t* edge3[1] = {NULL}; // fft'd
+	bfp_complex_s32_t edge3 = {0}; // fft'd
 	int32_t* edge5[1] = {NULL}; // ifft'd
 	int32_t edge6[256]; // wola'd -> last FD related stage so memcopy
     // int32_t edge1[1] = {0}; //don't ask
@@ -151,8 +151,8 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
     int32_t* stage_2_input[] = {edge0};  // buffer
 	int32_t* stage_2_output[] = {edge2};
 	int32_t* stage_3_input[] = {edge2}; // fft
-	bfp_complex_s32_t** stage_3_output[] = {edge3};
-	bfp_complex_s32_t** stage_5_input[] = {edge3}; // ifft
+	bfp_complex_s32_t* stage_3_output[] = {&edge3};
+	bfp_complex_s32_t* stage_5_input[] = {&edge3}; // ifft
 	int32_t** stage_5_output[] = {edge5};
 	int32_t** stage_6_input[] = {edge5}; // wola
 	int32_t* stage_6_output[] = {edge6};
@@ -188,13 +188,14 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 		stage_3_input,
 		stage_3_output,
 		modules[3]->state);
-    printf("s3 output data addr: %p\n", stage_3_output[0][0]->data);
-    printf("s5 in output data addr: %p\n", stage_5_input[0][0]->data);
+    printf("s3 output data addr: %p\n", stage_3_output[0]->data);
+    printf("s5 in output data addr: %p\n", stage_5_input[0]->data);
 
+	// temp lazy filter
 	for(int i=0; i<256; i++)
 	{
-		stage_5_input[0][0]->data[i].re *= 0.1f;
-		stage_5_input[0][0]->data[i].im *= 0.1f;
+		stage_5_input[0]->data[i].re *= 0.1f;
+		stage_5_input[0]->data[i].im *= 0.1f;
 
 	}
 	// bfp_mult_process(
