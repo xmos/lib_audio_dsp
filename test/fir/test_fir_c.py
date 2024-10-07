@@ -11,7 +11,7 @@ from audio_dsp.dsp.generic import Q_SIG
 import audio_dsp.dsp.signal_gen as gen
 import pytest
 import os 
-from filelock import FileLock
+from ..test_utils import xdist_safe_bin_write
 
 
 bin_dir = Path(__file__).parent / "bin"
@@ -38,10 +38,7 @@ def get_sig(len=0.05):
   name = "sig_48k"
   sig_path = bin_dir /  str(name + ".bin")
 
-  # note if changing the signal the .bin file will need to be manually deleted
-  with FileLock(str(sig_path) + ".lock"):
-    if not sig_path.is_file():
-      sig_int.tofile(sig_path)
+  xdist_safe_bin_write(sig_int, sig_path)
 
   # wav file does not need to be locked as it is only used for debugging outside pytest
   wav_path = gen_dir / str(name + ".wav")
