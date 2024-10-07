@@ -26,15 +26,14 @@ typedef struct
 
 typedef struct
 {
-    int32_t* shared_memory;
     int32_t buffer_len;
 }buffer_constants_t;
 
 
 
-
-#define BUFFER_STAGE_REQUIRED_MEMORY(N_CH) \
-     + ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N_CH * sizeof(buffer_t))
+#define BUFFER_STAGE_REQUIRED_MEMORY(N_CH, BUFF_LEN) \
+     + ADSP_BUMP_ALLOCATOR_DWORD_N_BYTES(N_CH * sizeof(buffer_t)) \
+     + ADSP_BUMP_ALLOCATOR_DWORD_N_BYTES(N_CH * BUFF_LEN * sizeof(int32_t))
 
 void buffer_init(module_instance_t* instance,
                  adsp_bump_allocator_t* allocator,

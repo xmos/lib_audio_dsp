@@ -21,63 +21,6 @@ static adsp_controller_t* m_control;
 #include <stages/ifft.h>
 #include <stages/wola_rect.h>
 
-// void buffer_process(int32_t **input, int32_t **output, void *app_data_state)
-// {
-//     buffer_state_t *state = app_data_state;
-
-//     int32_t* d = state->buffer_data;
-//     int32_t overlap = state->buffer_len - state->frame_size;
-
-//     // roll buffer
-//     memcpy(d, d[state->frame_size], overlap*sizeof(int32_t));
-
-//     // add new samples
-//     memcpy(d + state->frame_size, samples_in, state->frame_size*sizeof(int32_t));
-
-//     output[0] = d;
-
-// }
-
-// void fft_process(int32_t **input, int32_t **output, void *app_data_state)
-// {
-//     fft_state_t *state = app_data_state;
-//     // put signal int32_t array into bfp
-//     bfp_s32_init(state->signal, input[0], state->exp, state->nfft, 1);
-//     // do the FFT
-//     bfp_complex_s32_t * c = bfp_fft_forward_mono(state->signal);
-
-//     output[0] = c;
-
-// }
-
-// void bfp_mult_process(int32_t **input, int32_t **output, void *app_data_state)
-// {
-//     // if everything is compatible, this should just work?
-//     bfp_complex_s32_mul(output[0], input[0], input[1] );
-
-//     output[0] = c;
-
-// }
-
-// void ifft_process(int32_t **input, int32_t **output, void *app_data_state)
-// {
-//     ifft_state_t *state = app_data_state;
-//     bfp_s32_t *time_domain_result = bfp_fft_inverse_mono(input[0]);
-
-//     //denormalise and escape BFP domain
-//     bfp_s32_use_exponent(time_domain_result, state->exp);
-//     output[0] = time_domain_result->data;
-// }
-
-
-// void wola_rect_process(int32_t **input, int32_t **output, void *app_data_state)
-// {
-//     wola_state_t *state = state;
-//     // just point to the start of the valid data, length should just work out
-//     output[0] = &(input[0][state->win_start]);
-// }
-
-
 
 adsp_pipeline_t * adsp_auto_pipeline_init() {
 
@@ -142,25 +85,23 @@ adsp_pipeline_t * adsp_auto_pipeline_init() {
                 adsp_auto.modules[1].control.num_control_commands = NUM_CMDS_DSP_THREAD;
                 dsp_thread_init(&adsp_auto.modules[1], &allocator1, 1, 0, 0, 1);
 
-
+//#################################################################################################
 	// Exciting new stuff from here
-    static int32_t __attribute__((aligned (8))) magic_shared_memory[1024] = {0};
-
-	printf("magic mem addr: %p\n", &magic_shared_memory[0]);
 
     // static buffer_config_t config2 = {};
     static buffer_state_t state2;
-	static buffer_constants_t constants2 = {.shared_memory = &magic_shared_memory[0], .buffer_len = 512};
-	static uint8_t memory2[BUFFER_STAGE_REQUIRED_MEMORY(1)];
+	static buffer_constants_t constants2 = {.buffer_len = 512};
+	static uint8_t memory2[BUFFER_STAGE_REQUIRED_MEMORY(1, 512)];
 	static adsp_bump_allocator_t allocator2 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory2);
 	adsp_auto.modules[2].state = (void*)&state2;
 	adsp_auto.modules[2].constants = (void*)&constants2;
 
 	buffer_init(&adsp_auto.modules[2], &allocator2, 2, 1, 1, 256);
 
+
     // static fft_config_t config3 = {};
     static fft_state_t state3 = {};
-	static fft_constants_t constants3 = {.shared_memory = &magic_shared_memory[0], .nfft = 512, .exp=27};
+	static fft_constants_t constants3 = {.nfft = 512, .exp=27};
 	static uint8_t memory3[FFT_STAGE_REQUIRED_MEMORY(1)];
 	static adsp_bump_allocator_t allocator3 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory3);
 	adsp_auto.modules[3].state = (void*)&state3;
@@ -170,7 +111,7 @@ adsp_pipeline_t * adsp_auto_pipeline_init() {
 
     // static ifft_config_t config5 = {};
     static ifft_state_t state5 = {};
-	static ifft_constants_t constants5 = {.shared_memory = &magic_shared_memory[0], .nfft = 512, .exp=27};
+	static ifft_constants_t constants5 = {.nfft = 512, .exp=27};
 	static uint8_t memory5[IFFT_STAGE_REQUIRED_MEMORY(1)];
 	static adsp_bump_allocator_t allocator5 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory5);
 	adsp_auto.modules[5].state = (void*)&state5;

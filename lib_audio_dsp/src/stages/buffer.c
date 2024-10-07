@@ -45,11 +45,12 @@ void buffer_init(module_instance_t* instance,
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    state->buffer = ADSP_BUMP_ALLOCATOR_WORD_ALLIGNED_MALLOC(allocator, n_inputs * sizeof(buffer_t));
+    state->buffer = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, n_inputs * sizeof(buffer_t));
 
-    // point to shared memory
-    state->buffer->buffer_data = constants->shared_memory;
     state->buffer->buffer_len = constants->buffer_len;
+    // make the buffer DWORD aligned for FFT
+    state->buffer->buffer_data = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, constants->buffer_len * sizeof(int32_t));
+    printf("buff mem addr: %p\n", state->buffer->buffer_data);
 }
 
 void buffer_control(void *state, module_control_t *control)

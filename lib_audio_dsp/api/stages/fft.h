@@ -31,7 +31,6 @@ typedef struct
 
 typedef struct
 {
-    int32_t* shared_memory;
     int32_t nfft;
     int32_t exp;
 }fft_constants_t;
