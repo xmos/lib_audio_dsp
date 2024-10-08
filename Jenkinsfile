@@ -289,7 +289,7 @@ pipeline {
               sh 'pip install "pyright[all] < 2.0"'
               sh 'pip install "ruff < 0.4"'
               sh "pip install docstring-inheritance"
-              buildDocs xmosdocVenvPath: "${WORKSPACE}"
+              buildDocs xmosdocVenvPath: "${WORKSPACE}", archiveZipOnly: true
               sh "make -C python check"
               versionChecks checkReleased: false, versionsPairs: versionsPairs
             }
