@@ -48,6 +48,7 @@ def do_test(p, in_ch, out_ch):
         np.testing.assert_equal(sig[:, in_i], out_data[:, out_i])
         np.testing.assert_equal(sig[:, in_i], sim_out[:, out_i])
 
+@pytest.mark.group0
 @pytest.mark.parametrize("inputs, fork_output", [(2, 0),
                                                  (2, 1),
                                                  (1, 0)])
@@ -70,6 +71,7 @@ def test_fork(fork_output, inputs):
     else:
         do_test(p, (0, 1), (0, 1))
 
+@pytest.mark.group0
 def test_fork_copies():
     """
     Check we can duplicate a channel

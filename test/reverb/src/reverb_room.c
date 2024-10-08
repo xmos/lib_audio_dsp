@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include "dsp/adsp.h"
 
-#define PRINT_INIT 0
 #define FS 48000
 #define MAX_ROOM 1.0
 #define PD_MS 10

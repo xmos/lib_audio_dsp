@@ -4,6 +4,8 @@
 import numpy as np
 import scipy.signal as spsig
 from pathlib import Path
+from filelock import FileLock
+
 
 def pytest_sessionstart():
 
@@ -12,23 +14,41 @@ def pytest_sessionstart():
 
     coeffs = np.zeros(1000)
     coeffs[0] = 1
-    np.savetxt(Path(gen_dir, "passthrough_filter.txt"), coeffs)
+    out_dir = Path(gen_dir, "passthrough_filter.txt")
+    with FileLock(str(out_dir) + ".lock"):
+        if not out_dir.is_file():
+            np.savetxt(out_dir, coeffs)
 
     coeffs = np.arange(10, 0, -1)/10
-    np.savetxt(Path(gen_dir, "descending_coeffs.txt"), coeffs)
+    out_dir = Path(gen_dir, "descending_coeffs.txt")
+    with FileLock(str(out_dir) + ".lock"):
+        if not out_dir.is_file():
+            np.savetxt(out_dir, coeffs)
 
     coeffs = spsig.firwin2(512, [0.0, 0.5, 1.0], [1.0, 1.0, 0.0])
-    np.savetxt(Path(gen_dir, "simple_low_pass.txt"), coeffs)
+    out_dir = Path(gen_dir,"simple_low_pass.txt")
+    with FileLock(str(out_dir) + ".lock"):
+        if not out_dir.is_file():
+            np.savetxt(out_dir, coeffs)
 
     coeffs = spsig.firwin2(2048, [0.0, 20/48000, 1.0], [0.0, 1.0, 1.0], antisymmetric=True)
-    np.savetxt(Path(gen_dir, "aggressive_high_pass.txt"), coeffs)
+    out_dir = Path(gen_dir, "aggressive_high_pass.txt")
+    with FileLock(str(out_dir) + ".lock"):
+        if not out_dir.is_file():
+            np.savetxt(out_dir, coeffs)
 
     coeffs = spsig.firwin2(2047, [0.0, 0.5, 1.0], [0.5, 1.0, 2.0])
-    np.savetxt(Path(gen_dir, "tilt.txt"), coeffs)
+    out_dir = Path(gen_dir, "tilt.txt")
+    with FileLock(str(out_dir) + ".lock"):
+        if not out_dir.is_file():
+            np.savetxt(out_dir, coeffs)
 
     coeffs = np.zeros(10000)
     coeffs[::8] = 1
-    np.savetxt(Path(gen_dir, "comb.txt"), coeffs)
+    out_dir = Path(gen_dir, "comb.txt")
+    with FileLock(str(out_dir) + ".lock"):
+        if not out_dir.is_file():
+            np.savetxt(out_dir, coeffs)
 
 
 if __name__ == "__main__":

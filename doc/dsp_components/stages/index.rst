@@ -14,6 +14,7 @@ Most stages have parameters that can be changed at runtime, and the
 available parameters are outlined in the documentation.
 
 All the DSP stages can be imported into a Python file using:
+
 .. code-block:: console
 
   from audio_dsp.stages import *
@@ -22,5 +23,6 @@ The following DSP stages are available for use in the Python DSP pipeline design
 
 .. toctree::
     :glob:
+    :maxdepth: 2
 
     gen/*
