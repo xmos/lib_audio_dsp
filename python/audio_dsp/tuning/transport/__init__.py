@@ -1,33 +1,57 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
-from abc import ABC, abstractmethod
-from collections import namedtuple
+from __future__ import annotations
 
-CommandPayload = namedtuple("CommandPayload", [("index", int | None), ("command", str), ("value", str | list[str] | tuple[str, ...])])
+import abc
+import collections
+import contextlib
+
+CommandPayload = collections.namedtuple(
+    "CommandPayload",
+    [
+        ("index", int | None),
+        ("command", str),
+        ("value", str | list[str] | tuple[str, ...]),
+    ],
+)
+
 
 class DeviceConnectionError(Exception):
     """Raised when the host app cannot connect to the device."""
 
     pass
 
-class TuningTransport(ABC):
+
+class TuningTransport(abc.ABC, contextlib.AbstractContextManager):
     """Base class for different transport media for tuning commands."""
 
-    @abstractmethod
-    def connect(self):
-        pass
+    def __enter__(self):
+        return self.connect()
 
-    @abstractmethod
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: contextlib.TracebackType | None,
+    ) -> bool | None:
+        return self.disconnect()
+
+    @abc.abstractmethod
+    def connect(self) -> TuningTransport:
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def write(self, payload: CommandPayload):
-        pass
+        raise NotImplementedError
 
-    @abstractmethod
+    @abc.abstractmethod
     def read(self):
-        pass
+        raise NotImplementedError
 
-    @abstractmethod
+    @abc.abstractmethod
     def disconnect(self):
-        pass
+        raise NotImplementedError
+
 
 from .xscope import XScopeTransport

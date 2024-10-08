@@ -112,7 +112,7 @@ class Pipeline:
         pipeline level control commands
     """
 
-    def __init__(self, n_in, identifier="auto", frame_size=1, fs=48000):
+    def __init__(self, n_in, identifier="auto", frame_size=1, fs=48000, generate_xscope_task=True):
         self._graph = Graph()
         self.threads = []
         self._n_in = n_in
@@ -120,6 +120,7 @@ class Pipeline:
         self._id = identifier
         self.pipeline_stage: None
         self._labelled_stages = {}
+        self._generate_xscope_task = generate_xscope_task
 
         self.i = StageOutputList([StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)])
         self.o: StageOutputList | None = None
@@ -329,6 +330,7 @@ class Pipeline:
             "configs": list of dicts containing stage config for each stage.
             "modules": list of stage yaml configs for all types of stage that are present
             "labels": dictionary {label: instance_id} defining mapping between the user defined stage labels and the index of the stage
+            "xscope": bool indicating whether or not to create an xscope task for control
         """
         # 1. Order the graph
         sorted_nodes = self._graph.sort()
@@ -376,6 +378,7 @@ class Pipeline:
             "configs": node_configs,
             "modules": module_definitions,
             "labels": labels,
+            "xscope": self._generate_xscope_task,
         }
 
 
@@ -907,6 +910,64 @@ def _generate_dsp_muxes(resolved_pipeline):
 
     return ret
 
+def _generate_dsp_ctrl(resolved_pipeline) -> str:
+    ret = "\n// control function, remove by setting generate_xscope_task to False on Pipeline init\n"
+    if resolved_pipeline["xscope"]:
+        ret += """
+        #include <xscope.h>
+        #define XSCOPE_MAX_PACKET_LEN 256
+        #define READ_CMD(X) (X & 0x80)
+        #define WRITE_CMD(X) (~X & 0x80)
+        #define DSP_PROBE_ID 0
+
+        void xscope_user_init()
+        {
+            xscope_register(1, XSCOPE_DISCRETE, "ADSP Tuning Read API", XSCOPE_UINT, "Command Data");
+            xscope_config_io(XSCOPE_IO_BASIC);
+        }
+
+        DECLARE_JOB(dsp_ctrl, (void));
+        void dsp_ctrl() {
+            chanend_t c_dsp_ctrl = chanend_alloc();
+            xscope_connect_data_from_host(c_dsp_ctrl);
+            adsp_controller_t dsp_ctrl_controller;
+
+            SELECT_RES(
+                CASE_THEN(c_dsp_ctrl, host_transaction)
+            )
+            {
+                host_transaction:
+                {
+                    char from_host[XSCOPE_MAX_PACKET_LEN];
+                    int read;
+                    xscope_data_from_host(c_dsp_ctrl, (char *)from_host, &read);
+                    xassert(read <= XSCOPE_MAX_PACKET_LEN);
+
+                    // txfer format is {instance_id, cmd_id, payload_len, payload...}
+
+                    adsp_stage_control_cmd_t cmd = {
+                        .instance_id = from_host[0];
+                        .cmd_id = from_host[1];
+                        .payload_len = from_host[2];
+                        .payload = &from_host[3];
+                    };
+
+                    if (READ_CMD(cmd.cmd_id))
+                    {
+                        adsp_control_status_t ret = adsp_read_module_config(dsp_ctrl_controller, &cmd);
+                        xscope_bytes(DSP_PROBE_ID, cmd.payload_len, cmd.payload);
+                    }
+                    else
+                    {
+                        adsp_control_status_t ret = adsp_write_module_config(dsp_ctrl_controller, &cmd);
+                    }
+
+                    continue;
+                }
+            }
+        """
+    return ret
+
 
 def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
     """
@@ -959,6 +1020,7 @@ static adsp_controller_t* m_control;
     dsp_main += _generate_dsp_threads(resolved_pipe)
     dsp_main += _generate_dsp_init(resolved_pipe)
     dsp_main += _generate_dsp_max_thread_ticks(resolved_pipe)
+    dsp_main += _generate_dsp_ctrl(resolved_pipe)
 
     dsp_main += (
         f"void adsp_{resolved_pipe['identifier']}_pipeline_main(adsp_pipeline_t* adsp) {{\n"
