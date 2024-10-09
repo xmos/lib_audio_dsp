@@ -460,7 +460,7 @@ class fixed_gain(dspg.dsp_block):
 class volume_control(dspg.dsp_block):
     """
     A volume control class that allows setting the gain in decibels.
-    When the gain is updated, an exponential slew is applied to reduce
+    When the user_gain is updated, an exponential slew is applied to reduce
     artifacts.
 
     The slew is implemented as a shift operation. The slew rate can be
@@ -504,6 +504,7 @@ class volume_control(dspg.dsp_block):
 
     Attributes
     ----------
+    user_gain_db : float
     target_gain_db : float
     target_gain : float
         The target gain as a linear value.
@@ -539,31 +540,46 @@ class volume_control(dspg.dsp_block):
         super().__init__(fs, n_chans, Q_sig)
 
         # set the initial target gains
-        self.mute_state = False
-        self.target_gain_db = gain_db
+        self._mute_state = False
+        self.user_gain_db = gain_db
         if mute_state:
             self.mute()
 
         # initial applied gain can be equal to target until target changes
-        self.gain_db = self.target_gain_db
+        self.gain_db = self._target_gain_db
         self.gain = [self.target_gain] * self.n_chans
         self.gain_int = [self.target_gain_int] * self.n_chans
 
         self.slew_shift = slew_shift
 
     @property
-    def target_gain_db(self):
-        """The target gain in decibels."""
-        return self._target_gain_db
+    def _target_gain_db(self):
+        """The target gain of the volume control in decibels. The applied gain is
+        slewed towards this value.
+        """
+        return self.__target_gain_db
 
-    @target_gain_db.setter
-    def target_gain_db(self, value):
+    @_target_gain_db.setter
+    def _target_gain_db(self, value):
         value = _check_gain(value)
-        if not self.mute_state:
-            self._target_gain_db = value
-            self.target_gain, self.target_gain_int = db_to_qgain(self._target_gain_db)
-        else:
-            self.saved_gain_db = value
+        self.__target_gain_db = value
+        self.target_gain, self.target_gain_int = db_to_qgain(self._target_gain_db)
+
+    @property
+    def user_gain_db(self):
+        """The desired volume set by the user in decibels. If the volume control
+        is muted, the target gain is not updated.
+        """
+        return self._user_gain_db
+
+    @user_gain_db.setter
+    def user_gain_db(self, value):
+        value = _check_gain(value)
+        self._user_gain_db = value
+        self.user_gain, self.user_gain_int = db_to_qgain(self.user_gain_db)
+
+        if not self._mute_state:
+            self._target_gain_db = self.user_gain_db
 
     def process(self, sample: float, channel: int = 0) -> float:
         """
@@ -631,7 +647,7 @@ class volume_control(dspg.dsp_block):
     @_deprecated(
         "1.0.0",
         "2.0.0",
-        "Replace `volume_control.set_gain(x)` with `volume_control.target_gain_db = x`",
+        "Replace `volume_control.set_gain(x)` with `volume_control.user_gain_db = x`",
     )
     def set_gain(self, gain_db: float) -> None:
         """
@@ -648,20 +664,34 @@ class volume_control(dspg.dsp_block):
             If the gain_db parameter is greater than 24 dB.
 
         """
-        self.target_gain_db = gain_db
+        self.user_gain_db = gain_db
+
+    @property
+    def mute_state(self):
+        """Mutes the volume control if this is True. Setting to false
+        unmutes the volume control and returns the target_gain to the
+        user_gain value.
+        """
+        return self._mute_state
+
+    @mute_state.setter
+    def mute_state(self, value):
+        if value == True:
+            """Mute the volume control."""
+            self._target_gain_db = -np.inf
+            self._mute_state = True
+        else:
+            """Unmute the volume control."""
+            self._mute_state = False
+            self._target_gain_db = self.user_gain_db
 
     def mute(self) -> None:
         """Mute the volume control."""
-        if not self.mute_state:
-            self.saved_gain_db = self.target_gain_db
-            self.target_gain_db = -np.inf
-            self.mute_state = True
+        self.mute_state = True
 
     def unmute(self) -> None:
         """Unmute the volume control."""
-        if self.mute_state:
-            self.mute_state = False
-            self.target_gain_db = self.saved_gain_db
+        self.mute_state = False
 
 
 class switch(dspg.dsp_block):

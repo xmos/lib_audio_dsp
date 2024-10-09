@@ -23,8 +23,8 @@ typedef struct{
   int32_t gain;
   /** Slew shift */
   int32_t slew_shift;
-  /** Saved linear gain */
-  int32_t saved_gain;
+  /** User desired linear gain */
+  int32_t user_gain;
   /** Mute state: 0: unmuted, 1 muted */
   uint8_t mute_state;
 }volume_control_t;

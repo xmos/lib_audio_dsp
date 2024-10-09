@@ -157,8 +157,8 @@ def test_volume_change():
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
         assert mean_error_flt < 0.055
 
-
-def test_mute():
+@pytest.mark.parametrize("api", ["property", "function"])
+def test_mute(api):
     fs = 48000
     start_gain = -10
     filter = sc.volume_control(fs, 1, start_gain)
@@ -175,11 +175,20 @@ def test_mute():
     for step in range(len(step_states)):
         if step_states[step] == "gain":
             start_gain += 3
-            filter.set_gain(start_gain)
+            if api == "function":
+                filter.set_gain(start_gain)
+            else:
+                filter.user_gain_db = start_gain
         elif step_states[step] == "mute":
-            filter.mute()
+            if api == "function":
+                filter.mute()
+            else:
+                filter.mute_state = True
         elif step_states[step] == "unmute":
-            filter.unmute()
+            if api == "function":
+                filter.unmute()
+            else:
+                filter.mute_state = False
 
         start = step*len(signal)//steps
         for n in range(len(signal)//steps):
@@ -326,6 +335,6 @@ def test_delay(fs, delay_spec, n_chans):
 
 if __name__ == "__main__":
     # test_combiners(["adder", 4], 48000)
-    # test_volume_change()
+    test_mute("function")
     # test_gains(1, 48000, 1)
     test_delay(48000, [2, 0, "s"], 1)

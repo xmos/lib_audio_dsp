@@ -25,7 +25,7 @@ typedef enum{
  * @note With the current Q_GAIN format, the maximum gain is +24 dB, dB_gain will be saturated to this value
  * @note Passing -INFINITY to this function will give a linear gain of 0.
  */
-int32_t adsp_dB_to_gain(float dB_gain);
+int32_t adsp_db_to_gain(float dB_gain);
 
 /**
  * @brief Initialise volume control object.

@@ -31,7 +31,7 @@ int main()
     int32_t samp_out = 0;
     fread(&samp, sizeof(float), 1, in);
     //printf("%ld ", samp);
-    samp_out = adsp_dB_to_gain(samp);
+    samp_out = adsp_db_to_gain(samp);
     //printf("%ld ", samp_out);
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }
