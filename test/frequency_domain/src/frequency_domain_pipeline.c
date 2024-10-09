@@ -109,6 +109,7 @@ adsp_pipeline_t * adsp_auto_pipeline_init() {
 
 	fft_init(&adsp_auto.modules[3], &allocator3, 2, 1, 1, 256);
 
+
     // static ifft_config_t config5 = {};
     static ifft_state_t state5 = {};
 	static ifft_constants_t constants5 = {.nfft = 512, .exp=27};
@@ -122,7 +123,7 @@ adsp_pipeline_t * adsp_auto_pipeline_init() {
 
     // static wola_rect_config_t config6 = {};
     static wola_rect_state_t state6 = {};
-	static wola_rect_constants_t constants6 = {.win_start=0};
+	static wola_rect_constants_t constants6 = {.win_start=256};
 	static uint8_t memory6[WOLA_RECT_STAGE_REQUIRED_MEMORY];
 	static adsp_bump_allocator_t allocator6 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory6);
 	adsp_auto.modules[6].state = (void*)&state6;
@@ -140,12 +141,12 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 	local_thread_mode_set_bits(thread_mode_high_priority);
 
 	int32_t edge0[256] = {0}; // in
+    // int32_t edge1[1] = {0}; // spare
 	int32_t edge2[512] = {0}; // buffered
 	bfp_complex_s32_t edge3 = {0}; // fft'd
+	// bfp_complex_s32_t edge4[1] = {0}; // mult'd
 	int32_t* edge5[1] = {NULL}; // ifft'd
 	int32_t edge6[256]; // wola'd -> last FD related stage so memcopy
-    // int32_t edge1[1] = {0}; //don't ask
-	// bfp_complex_s32_t edge4[1] = {0}; // mult'd
     // bfp_complex_s32_t edge7[1] = {0}; // saved filter
 
     int32_t* stage_2_input[] = {edge0};  // buffer
@@ -157,8 +158,9 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 	int32_t** stage_6_input[] = {edge5}; // wola
 	int32_t* stage_6_output[] = {edge6};
 
-	// int32_t* stage_3_input[] = {edge3, edge7}; //bfp mult
-	// int32_t* stage_3_output[] = {edge4};
+	// bfp_complex_s32_t* stage_4_input[] = {edge3, edge7}; //bfp mult
+	// bfp_complex_s32_t* stage_4_output[] = {edge4};
+
 	while(1) {
 	int read_count = 1;
 	SELECT_RES(
@@ -199,9 +201,10 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 
 	}
 	// bfp_mult_process(
-	// 	stage_3_input,
-	// 	stage_3_output,
-	// 	modules[3]->state);
+	// 	stage_4_input,
+	// 	stage_4_output,
+	// 	modules[4]->state);
+
 	printf("iffting\n");
 	ifft_process(
 		stage_5_input,
