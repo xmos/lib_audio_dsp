@@ -12,7 +12,7 @@ void ifft_process(bfp_complex_s32_t ** input, int32_t *** output, void * app_dat
 {
     xassert(app_data_state != NULL);
     ifft_state_t *state = app_data_state;
-    printf("input[0] addr: %p\n", &(input[0]->data[0]));
+    // printf("input[0] addr: %p\n", &(input[0]->data[0]));
 
     bfp_s32_t *time_domain_result = bfp_fft_inverse_mono(input[0]);
 

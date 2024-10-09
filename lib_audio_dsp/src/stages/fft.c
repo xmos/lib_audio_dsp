@@ -15,17 +15,15 @@ void fft_process(int32_t ** input, bfp_complex_s32_t ** output, void * app_data_
     fft_state_t *state = app_data_state;
     // put signal int32_t array into bfp
 
-    printf("input[0] addr: %p\n", &input[0][0]);
     state->fft[0].data = &input[0][0];
-    printf("fft buffer addr: %p\n", state->fft[0].data);
 
     bfp_s32_init(&(state->fft[0].signal), &input[0][0], state->fft[0].exp, state->fft[0].nfft, 1);
 
-    printf("doing fft\n");
+    // printf("doing fft\n");
     // do the FFT
     bfp_complex_s32_t * c = bfp_fft_forward_mono(&(state->fft[0].signal));
 
-    printf("fft output data addr: %p\n", c->data);
+    // printf("fft output data addr: %p\n", c->data);
 
     output[0][0] = *c;
 }

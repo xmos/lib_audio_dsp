@@ -18,7 +18,7 @@ void buffer_process(int32_t ** input, int32_t ** output, void * app_data_state)
     // int32_t overlap = state->buffer[0].buffer_len - state->frame_size;
     printf("D addr: %p\n", d);
     // roll buffer
-    printf("rolling buffer by %d\n", state->frame_size);
+    // printf("rolling buffer by %d\n", state->frame_size);
     memcpy(d, state->buffer->overlap_data, state->overlap_len*sizeof(int32_t));
 
     // add new samples
@@ -28,7 +28,6 @@ void buffer_process(int32_t ** input, int32_t ** output, void * app_data_state)
     // update saved overlap samples
     memcpy(state->buffer->overlap_data, d + state->frame_size, state->overlap_len*sizeof(int32_t));
 
-    printf("buffer output addr: %p\n", d);
 }
 
 void buffer_init(module_instance_t* instance,
