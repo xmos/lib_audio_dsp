@@ -9,6 +9,7 @@ import audio_dsp.dsp.signal_chain as sc
 from audio_dsp.dsp.generic import Q_SIG
 import audio_dsp.dsp.signal_gen as gen
 import pytest
+from ..test_utils import xdist_safe_bin_write
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
@@ -34,12 +35,21 @@ def get_sig(len=0.05):
   sig_int = float_to_qxx(sig_fl)
 
   name = "sig_48k"
-  sig_int[0].tofile(bin_dir /  f"{name}.bin")
-  sf.write(gen_dir / f"{name}.wav", sig_fl[0], int(fs), "PCM_24")
+  sig_path = bin_dir /  str(name + ".bin")
+
+  xdist_safe_bin_write(sig_int[0], sig_path)
+
+  # wav file does not need to be locked as it is only used for debugging outside pytest
+  wav_path = gen_dir / str(name + ".wav")
+  sf.write(wav_path, sig_fl[0], int(fs), "PCM_24")
 
   name = "sig1_48k"
-  sig_int[1].tofile(bin_dir /  f"{name}.bin")
-  sf.write(gen_dir / f"{name}.wav", sig_fl[1], int(fs), "PCM_24")
+  sig_path = bin_dir /  str(name + ".bin")
+  xdist_safe_bin_write(sig_int[1], sig_path)
+
+  # wav file does not need to be locked as it is only used for debugging outside pytest
+  wav_path = gen_dir / str(name + ".wav")
+  sf.write(wav_path, sig_fl[1], int(fs), "PCM_24")
 
   return sig_fl
 
@@ -171,7 +181,8 @@ def test_volume_control_c(in_signal, gains_dB, slew, mute_test):
 
 @pytest.mark.parametrize("delay_spec", [[1, 0, "samples"],
                                         [0.5, 0.5, "ms"],
-                                        [0.02, 0.01, "s"]])
+                                        [0.02, 0.01, "s"],
+                                        [0.5, 0, "ms"]])
 def test_delay_c(in_signal, delay_spec):
   filter = sc.delay(fs, 1, *delay_spec)
   test_dir = bin_dir / f"delay_{delay_spec[0]}_{delay_spec[1]}_{delay_spec[2]}"
@@ -186,7 +197,7 @@ def test_delay_c(in_signal, delay_spec):
 
   out_py = np.zeros((1, in_signal.shape[1]))
   for n in range(len(in_signal[0])):
-    out_py[:, n] = filter.process_channels_xcore(in_signal[0, n].tolist())
+    out_py[:, n] = filter.process_channels_xcore(in_signal[0, n:n+1].tolist())
 
   sf.write(gen_dir / "sig_py_int.wav", out_py[0], fs, "PCM_24")
 

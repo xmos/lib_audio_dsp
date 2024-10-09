@@ -23,3 +23,8 @@ def pytest_addoption(parser):
     parser.addoption(
         "--adapter-id", action="store", default=None, help="Force tests to use specific adapter"
     )
+
+def pytest_collection_modifyitems(items, config):
+    for item in items:
+        if not any(item.iter_markers("group0")):
+            item.add_marker("unmarked")

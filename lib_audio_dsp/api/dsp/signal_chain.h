@@ -153,6 +153,9 @@ void adsp_volume_control_unmute(
 
 /**
  * @brief Process a new sample through a delay object
+ * 
+ * @note The minimum delay provided by this block is 1 sample. Setting
+ *       the delay to 0 will still yield a 1 sample delay.
  *
  * @param delay             Delay object
  * @param samp              New sample

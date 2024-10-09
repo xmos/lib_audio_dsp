@@ -1,8 +1,10 @@
 import pytest
 import numpy as np
 from audio_dsp.dsp.reverb import reverb_room, Q_VERB
+from audio_dsp.dsp.reverb_stereo import reverb_room_stereo
 from subprocess import run
 from pathlib import Path
+import os
 
 CWD = Path(__file__).parent
 TOL_KWARGS = dict(rtol=2**-16, atol=0)
@@ -22,15 +24,17 @@ def new_reverb(**kwargs):
 
 
 def get_c(config, val):
-    out_dir = CWD / "bin" / config
+    bin_dir = CWD / "bin" / config
+    out_dir = CWD / "bin" / f"{config}_{val}"
+    os.makedirs(out_dir, exist_ok=True)
     sig_fl32 = np.array(val).astype(np.float32)
     name = "test_vector"
     sig_fl32.tofile(out_dir / f"{name}.bin")
 
-    xe = out_dir / f"reverb_converters_{config}.xe"
+    xe = bin_dir / f"reverb_converters_{config}.xe"
     run(["xsim", str(xe)], check=True, cwd=out_dir)
-    print(out_dir)
-    return np.fromfile(out_dir / "out_vector.bin", dtype=np.int32)[0]
+    #print(out_dir)
+    return np.fromfile(out_dir / "out_vector.bin", dtype=np.int32)
 
 
 def db2int(db):
@@ -38,7 +42,7 @@ def db2int(db):
 
 
 def get_output(config, input, sattr, gattr):
-    c_val = get_c(config, input)
+    c_val = get_c(config, input)[0]
     r = new_reverb()
     setattr(r, sattr, input)
     p_val = getattr(r, gattr)
@@ -118,3 +122,25 @@ def test_reverb_damping(input, expected):
         expected,
         **TOL_KWARGS,
     )
+
+@pytest.mark.parametrize(
+    "input", [-1, 0, 0.07, 0.23, 0.5, 0.64, 0.92, 1, 2]
+)
+def test_reverb_wet_dry_mix_conv(input):
+    c_vals = get_c("WET_DRY_MIX", input)
+    r = new_reverb()
+    r.set_wet_dry_mix(input)
+    p_vals = np.array([r.dry_int, r.wet_int], dtype=np.int32)
+    # -23 cause of the float to int conversion
+    np.testing.assert_allclose(c_vals, p_vals, rtol=2**-23, atol=0)
+
+@pytest.mark.parametrize(
+    "input", [-1, 0, 0.07, 0.23, 0.5, 0.64, 0.92, 1, 2]
+)
+def test_reverb_st_wet_dry_mix_conv(input):
+    c_vals = get_c("WET_DRY_MIX_ST", input)
+    r = reverb_room_stereo(48000, 2)
+    r.set_wet_dry_mix(input)
+    p_vals = np.array([r.dry_int, r.wet_1_int, r.wet_2_int], dtype=np.int32)
+    # -23 cause of the float to int conversion
+    np.testing.assert_allclose(c_vals, p_vals, rtol=2**-23, atol=0)

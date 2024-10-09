@@ -6,9 +6,10 @@
 #include <stdlib.h>
 #include "dsp/adsp.h"
 
-#define PRINT_INIT 0
 #define FS 48000
 #define MAX_ROOM 1.0
+#define PD_MS 10
+#define PD_SAMPS (uint32_t)(PD_MS * FS / 1000)
 
 FILE *_fopen(char *fname, char *mode)
 {
@@ -44,13 +45,13 @@ int main()
     fread(&damping, sizeof(int32_t), 1, info);
     fclose(info);
 
-    uint8_t reverb_heap[ADSP_RVR_HEAP_SZ(FS, MAX_ROOM)] = {0};
+    uint8_t reverb_heap[ADSP_RVR_HEAP_SZ(FS, MAX_ROOM, PD_SAMPS)] = {0};
     reverb_room_t rv;
     rv.pre_gain = pregain;
     rv.wet_gain = wet;
     rv.dry_gain = dry;
 
-    adsp_reverb_room_init_filters(&rv, fs, max_room_size, feedback, damping, reverb_heap);
+    adsp_reverb_room_init_filters(&rv, fs, max_room_size, PD_SAMPS, PD_SAMPS, feedback, damping, reverb_heap);
     adsp_reverb_room_set_room_size(&rv, room_size);
 
     for (int i = 0; i < in_len; i++)

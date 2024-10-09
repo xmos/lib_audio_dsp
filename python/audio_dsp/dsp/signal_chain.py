@@ -125,7 +125,7 @@ class mixer(dspg.dsp_block):
             y += scaled_sample
 
         y = utils.int32_mult_sat_extract(y, 2, 1)
-        y_flt = float(y) * 2**-self.Q_sig
+        y_flt = utils.int32_to_float(y, self.Q_sig)
 
         return y_flt
 
@@ -278,7 +278,7 @@ class subtractor(dspg.dsp_block):
         acc += sample_int_1 * -2
         y = utils.int32_mult_sat_extract(acc, 1, 1)
 
-        y_flt = float(y) * 2**-self.Q_sig
+        y_flt = utils.int32_to_float(y, self.Q_sig)
 
         return y_flt
 
@@ -418,15 +418,22 @@ class fixed_gain(dspg.dsp_block):
         float
             The processed output sample.
         """
-        sample_int = utils.float_to_int32(sample, self.Q_sig)
+        if isinstance(sample, float):
+            sample_int = utils.float_to_int32(sample, self.Q_sig)
+        elif isinstance(sample, int):
+            sample_int = sample
+        else:
+            raise TypeError("input must be float or int")
+
         # for rounding
         acc = 1 << (Q_GAIN - 1)
         acc += sample_int * self.gain_int
         y = utils.int32_mult_sat_extract(acc, 1, Q_GAIN)
 
-        y_flt = float(y) * 2**-self.Q_sig
-
-        return y_flt
+        if isinstance(sample, float):
+            return utils.int32_to_float(y, self.Q_sig)
+        else:
+            return y
 
     def freq_response(self, nfft: int = 512) -> tuple[np.ndarray, np.ndarray]:
         """
@@ -633,7 +640,7 @@ class volume_control(dspg.dsp_block):
         acc += sample_int * self.gain_int[channel]
         y = utils.int32_mult_sat_extract(acc, 1, Q_GAIN)
 
-        y_flt = float(y) * 2**-self.Q_sig
+        y_flt = utils.int32_to_float(y, self.Q_sig)
 
         return y_flt
 
@@ -824,6 +831,9 @@ class delay(dspg.dsp_block):
     """
     A simple delay line class.
 
+    Note the minimum delay provided by this block is 1 sample. Setting
+    the delay to 0 will still yield a 1 sample delay.
+
     Parameters
     ----------
     max_delay : float
@@ -949,7 +959,7 @@ class delay(dspg.dsp_block):
         float
             List of delayed samples.
         """
-        y = self.buffer[:, self.buffer_idx].copy()
+        y = self.buffer[:, self.buffer_idx].copy().astype(type(sample[0]))
         self.buffer[:, self.buffer_idx] = sample
         # not using the modulo because it breaks for when delay = 0
         self.buffer_idx += 1

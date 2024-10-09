@@ -1,5 +1,5 @@
 module:
-  reverb_room:
+  reverb_room_st:
     room_size:
       type: float
       help: How big the room is as a proportion of max_room_size. This sets delay line lengths and must be between 0 and 1.
@@ -9,12 +9,15 @@ module:
     damping:
       type: int32_t
       help: High frequency attenuation in Q0.31 format. Use the function ``adsp_reverb_calculate_damping`` in ``control/reverb.h``. 
-    wet_gain:
+    wet_gain1:
       type: int32_t
-      help: Gain applied to the wet signal in Q0.31 format. Use the function ``adsp_reverb_db2int`` in ``control/reverb.h``. Alternatively, both wet and dry gains can be obtained from ``adsp_reverb_wet_dry_mix``.
+      help: Gain applied to obtain the wet signal in Q0.31 format. Use function ``adsp_reverb_room_st_calc_wet_gains`` in ``control/reverb.h``. Alternatively, all gains can be obtained from ``adsp_reverb_st_wet_dry_mix``.
+    wet_gain2:
+      type: int32_t
+      help: Gain applied to obtain the wet signal in Q0.31 format. Use function ``adsp_reverb_room_st_calc_wet_gains`` in ``control/reverb.h``. Alternatively, all gains can be obtained from ``adsp_reverb_st_wet_dry_mix``.
     dry_gain:
       type: int32_t
-      help: Dry signal gain in Q0.31 format. Use the function ``adsp_reverb_db2int`` in ``control/reverb.h``. Alternatively, both wet and dry gains can be obtained from ``adsp_reverb_wet_dry_mix``.
+      help: Dry signal gain in Q0.31 format. Use the function ``adsp_reverb_db2int`` in ``control/reverb.h``. Alternatively, all gains can be obtained from ``adsp_reverb_st_wet_dry_mix``.
     pregain:
       type: int32_t
       help: The pregain applied to the signal before the reverb. Changing this value is not recommended. Use the function ``adsp_reverb_float2int`` in ``control/reverb.h``.

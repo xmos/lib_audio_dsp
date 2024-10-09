@@ -330,10 +330,10 @@ def test_mono_vs_stereo(fs, component_mono, component_stereo, at, rt, threshold,
     # fed a dual mono signal
 
     signal = []
-    lenght = 0.1 + (rt + at) * 2
+    length = 0.1 + (rt + at) * 2
     f = 997
-    signal.append(gen.sin(fs, lenght, f, 1))
-    signal.append(gen.sin(fs, lenght, f, 1))
+    signal.append(gen.sin(fs, length, f, 1))
+    signal.append(gen.sin(fs, length, f, 1))
     signal = np.stack(signal, axis=0)
     signal = utils.saturate_float_array(signal, dspg.Q_SIG)
 
@@ -684,10 +684,10 @@ def test_stereo_components(fs, component, at, rt, threshold, ratio):
         drcut = component_handle(fs, threshold, at, rt)
 
     signal = []
-    lenght = 0.1 + (rt + at) * 2
+    length = 0.1 + (rt + at) * 2
     f = 997
-    signal.append(gen.sin(fs, lenght, f, 1))
-    signal.append(gen.sin(fs, lenght, f, 0.5))
+    signal.append(gen.sin(fs, length, f, 1))
+    signal.append(gen.sin(fs, length, f, 0.5))
     signal = np.stack(signal, axis=0)
     signal = utils.saturate_float_array(signal, dspg.Q_SIG)
 

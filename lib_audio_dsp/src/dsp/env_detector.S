@@ -62,6 +62,8 @@ adsp_env_detector_peak:
 .L_func_end_peak:
 .cc_bottom adsp_env_detector_peak.function;
 
+#undef al
+#define al r11
 
 .cc_top adsp_env_detector_rms.function,adsp_env_detector_rms
 adsp_env_detector_rms:
@@ -69,26 +71,27 @@ adsp_env_detector_rms:
     std r5, r4, sp[0]
 
     // calculate sample^2
-    { ldc r11, Q_SIG                ; ldw al, cp[q_sig_rnd_acc]     }
+    ldw al, cp[q_sig_rnd_acc]
+    { ldc r3, Q_SIG                 ;                               }
     maccs ah, al, sample, sample
-    lsats ah, al, r11
-    lextract sample, ah, al, r11, 32
+    lsats ah, al, r3
+    lextract sample, ah, al, r3, 32
     { ldc ah, 0                     ; ldw env, state[ED_ENV]        }
     
     // choose alpha
-    { lss r11, env, sample          ; ldw alpha, state[ED_ATT_AL]   }
-    { ldc al, 0                     ; bt r11, .alpha_if_rms_end     }
+    { lss r3, env, sample           ; ldw alpha, state[ED_ATT_AL]   }
+    { ldc al, 0                     ; bt r3, .alpha_if_rms_end      }
 
     {                               ; ldw alpha, state[ED_REL_AL]   }
     .alpha_if_rms_end:
 
-    { sub sample, sample, env       ; mkmsk r11, 5                  }
+    { sub sample, sample, env       ; mkmsk r3, 5                   }
 
     // run q31 ema
-    linsert ah, al, env, r11, 32
+    linsert ah, al, env, r3, 32
     maccs ah, al, alpha, sample
-    lsats ah, al, r11
-    lextract env, ah, al, r11, 32
+    lsats ah, al, r3
+    lextract env, ah, al, r3, 32
     {                               ; stw env, state[ED_ENV]        }
 
     ldd r5, r4, sp[0]
