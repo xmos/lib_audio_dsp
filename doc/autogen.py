@@ -3,20 +3,24 @@
 """
 Generate includes for all the APIs in this repo
 """
-from mako.template import Template
-from pathlib import Path
 import ast
 import re
 import yaml
+from mako.template import Template
+from pathlib import Path
+
+
+TOOLS_USER_GUIDE_DIR    = "01_tool_user_guide"
+DESIGN_GUIDE_DIR        = "02_design_guide"
+DSP_COMP_DIR_NAME       = "03_dsp_components"
 
 ROOT_DIR = Path(__file__).parents[1]
 PYTHON_ROOT = Path(ROOT_DIR, "python")
-CTRL_GEN_DIR = Path(__file__).parent / "dsp_components" / "runtime_control" / "gen"
-DSP_GEN_DIR = Path(__file__).parent / "dsp_components" / "stages" / "gen"
-PROG_GEN_DIR = Path(__file__).parent / "programming_guide" / "gen"
+CTRL_GEN_DIR = Path(__file__).parent / DSP_COMP_DIR_NAME / "runtime_control" / "gen"
+DSP_GEN_DIR = Path(__file__).parent / DSP_COMP_DIR_NAME / "stages" / "gen"
 PY_STAGE_MAKO = Path(PYTHON_ROOT, "audio_dsp", "design", "templates", "py_stage_doc.mako")
 YAML_DIR =  Path(ROOT_DIR, "stage_config")
-TOOL_USER_GEN_DIR = Path(__file__).parent / "tool_user_guide" / "gen"
+TOOL_USER_GEN_DIR = Path(__file__).parent / TOOLS_USER_GUIDE_DIR / "gen"
 
 def python_doc(src_dir, dst_dir):
     p_design = sorted(src_dir.glob("*.py"))
@@ -33,6 +37,7 @@ ${"="*len(module)}
 %endfor"""
 ).render(modules=p_design_modules)
     (dst_dir / f"{src_dir.parts[-2]}.{src_dir.parts[-1]}.inc").write_text(gen)
+
 
 def get_file_info(fname):
     class_list = []
@@ -95,8 +100,10 @@ ${"="*len(str(module))}
 """).render(modules=c_design_modules)
     (dst_dir / f"{src_dir.parts[-2]}.{src_dir.parts[-1]}.inc").write_text(gen)
 
-if __name__ == "__main__":
-	python_doc(ROOT_DIR / "python" / "audio_dsp" / "design", TOOL_USER_GEN_DIR)
-	python_doc_stages(ROOT_DIR / "python" / "audio_dsp" / "stages", DSP_GEN_DIR)
 
-	c_doc(ROOT_DIR / "lib_audio_dsp" / "api" / "stages", TOOL_USER_GEN_DIR, "adsp_*.h")
+if __name__ == "__main__":
+    
+    python_doc(ROOT_DIR / "python" / "audio_dsp" / "design", TOOL_USER_GEN_DIR)
+    python_doc_stages(ROOT_DIR / "python" / "audio_dsp" / "stages", DSP_GEN_DIR)
+    c_doc(ROOT_DIR / "lib_audio_dsp" / "api" / "stages", TOOL_USER_GEN_DIR, "adsp_*.h")
+    print("Done")
