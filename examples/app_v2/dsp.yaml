@@ -1,0 +1,93 @@
+settings:
+  name: auto
+stages:
+  mix:
+    type: mixer
+    thread: 0
+  filter:
+    type: biquad
+    thread: 0
+    tuning:
+      type: allpass
+      q: 0.707
+      f: 2000
+  reverb:
+    thread: 1
+    type: reverb
+    tuning:
+      decay: 0.2
+    constants:
+      max_predelay: 30
+edges:
+  - destination: 
+      name: input
+      index: 0
+    source:
+      index: 0
+    type: 
+      name: int
+      shape: {n: 1}
+      config: {}
+    dsp_input: True
+  - source:
+      name: input
+      index: 0
+    destination:
+      name: filter
+      index: 0
+  - source:
+      name: filter
+      index: 0
+    destination:
+      name: mix
+      index: 0
+  - source:
+      name: mix
+      index: 0
+    destination:
+      name: b
+      index: 0
+  - source:
+      name: b
+      index: 0
+    destination:
+      name: mix
+      index: 1
+  - source:
+      name: mix
+      index: 0
+    destination:
+      name: a
+      index: 0
+  - source:
+      name: a
+      index: 0
+    destination:
+      name: reverb
+      index: 0
+  - source:
+      name: reverb
+      index: 0
+    destination:
+      name: output
+      index: 0
+  - source: 
+      name: output
+      index: 0
+    destination:
+      index: 0
+    dsp_output: True
+buffers:
+  input: {}
+  b:
+    ratio:
+      input: 1
+      output: 1
+  a: 
+    ratio:
+      input: 1
+      output: 4
+  output:
+    ratio:
+      input: 4
+      output: 1

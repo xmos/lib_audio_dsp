@@ -1,0 +1,11 @@
+---
+stage_definitions:
+  biquad:
+    location: audio_dsp.v2.stages:biquad
+  reverb:
+    location: audio_dsp.v2.stages:reverb
+  mixer:
+    location: audio_dsp.v2.stages:mixer
+edge_definitions:
+  int:
+    location: audio_dsp.v2.edges:int_edge

@@ -25,7 +25,8 @@ dependencies = [
     "mako",
     "tabulate",
     "docstring-inheritance",
-    "packaging>=24.1"
+    "packaging>=24.1",
+    "pydantic"
 ]
 
 [tool.ruff]
