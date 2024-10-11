@@ -5,6 +5,8 @@
 
 from audio_dsp.design.pipeline import Pipeline
 from audio_dsp.tuning.transport import *
+from audio_dsp.design.stage import Stage
+import numpy as np
 import tabulate
 
 
@@ -20,11 +22,11 @@ class TuningInterface:
     ) -> None:
         # If there isn't a custom transport specified,
         # is the selected protocol string supported by the library?
-        if custom_transport is None and protocol not in self.lib_protocols.keys():
+        if custom_transport is None and protocol not in self._lib_protocols.keys():
             raise NotImplementedError(
                 (
                     f"{protocol} is not a supported protocol. "
-                    f"Supported protocols: {*self.lib_protocols.keys(),}"
+                    f"Supported protocols: {*self._lib_protocols.keys(),}"
                 )
             )
         # Use one of the library's inbuilt protocols
@@ -32,8 +34,25 @@ class TuningInterface:
         self._protocol = (
             custom_transport
             if custom_transport is not None
-            else self.lib_protocols[protocol]
+            else self._lib_protocols[protocol]
         )
+
+    def _construct_payload(self, stage: Stage, command: str, value: MultiValType) -> CommandPayload:
+        assert stage.index is not None
+        assert stage.yaml_dict is not None
+
+        stage_index = stage.index
+        name = stage.name
+        full_yaml: dict[str, dict] = stage.yaml_dict
+        try:
+            cmd_index = list(full_yaml['module'][name].keys()).index(command) + 1
+            cmd_type = full_yaml['module'][name][command]['type']
+            cmd_size = full_yaml['module'][name][command].get('size', 1)
+        except ValueError as e:
+            print(f"Command {command} not valid for stage {name}")
+            raise e from None
+        return CommandPayload(stage_index, cmd_index, value, cmd_size, cmd_type)
+
 
     def _validate_pipeline_checksum(self, pipeline: Pipeline, proto: TuningTransport):
         """
@@ -47,13 +66,8 @@ class TuningInterface:
         """
         assert pipeline.pipeline_stage is not None  # To stop ruff from complaining
 
-        payload = CommandPayload(
-            pipeline.pipeline_stage.index, "pipeline_checksum", None
-        )
-        ret = proto.write(payload)
-
-        stdout = ret.stdout.decode().splitlines()
-        device_pipeline_checksum = [int(x) for x in stdout]
+        payload = self._construct_payload(pipeline.pipeline_stage, "checksum", None)
+        device_pipeline_checksum = proto.read(payload)
         equal = np.array_equal(
             np.array(device_pipeline_checksum),
             np.array(pipeline.pipeline_stage["checksum"]),
@@ -78,16 +92,11 @@ class TuningInterface:
             A designed and optionally tuned pipeline
         """
         with self._protocol() as proto:
-            self.validate_pipeline_checksum(pipeline, proto)
+            self._validate_pipeline_checksum(pipeline, proto)
 
             for stage in pipeline.stages:
                 for command, value in stage.get_config().items():
-                    command = f"{stage.name}_{command}"
-                    if isinstance(value, list) or isinstance(value, tuple):
-                        value = " ".join(str(v) for v in value)
-                    else:
-                        value = str(value)
-                    payload = CommandPayload(stage.index, command, *value.split())
+                    payload = self._construct_payload(stage, command, value)
                     proto.write(payload)
 
     def profile_pipeline(self, pipeline: Pipeline):
@@ -100,7 +109,7 @@ class TuningInterface:
             A designed and optionally tuned pipeline
         """
         with self._protocol() as proto:
-            self.validate_pipeline_checksum(pipeline, proto)
+            self._validate_pipeline_checksum(pipeline, proto)
 
             # print("Thread Index     Max Cycles")
             profile_info = []

@@ -21,7 +21,7 @@ RECORD_CALLBACK = ctypes.CFUNCTYPE(
     ctypes.c_ulonglong,     # timestamp
     ctypes.c_uint,          # length
     ctypes.c_ulonglong,     # dataval
-    ctypes.c_char_p)        # databytes
+    ctypes.POINTER(ctypes.c_char))        # databytes
 
 REGISTER_CALLBACK = ctypes.CFUNCTYPE(
     None,
@@ -139,7 +139,7 @@ class Endpoint(object):
         data_val = np.int32(np.uint32(data_val & 0xFFFFFFFF))
         def notify_consumers(consumers, probe_name):
             for cb in consumers:
-                cb(timestamp, probe_name, data_val)
+                cb(timestamp, probe_name, length, data_val, data_bytes)
 
         probe_info = self._probe_info[id_]
         probe_name =  probe_info['name']
@@ -182,7 +182,7 @@ class Endpoint(object):
         probe_name = probe_name or '*'
         self._consumers[probe_name].add(callback)
 
-    def publish(self, data):
+    def publish(self, data: bytes):
         """Publish message to endpoint.
 
         The length of data must be <= 255.
@@ -234,14 +234,18 @@ if __name__ == '__main__':
 
 class QueueConsumer(object):
 
-  def __init__(self, ep, probe, /, probe_timeout=10.0):
+  def __init__(self, ep, probe, /, probe_timeout=10.0, mode="bytes"):
     self.ep = ep
     self.probe_timeout = probe_timeout
     self.ep.consume(self._consume, probe)
     self.queue = queue.Queue()
+    self.mode = mode
 
-  def _consume(self, timestamp, probe_name, value):
-    self.queue.put(value)
+  def _consume(self, timestamp, probe_name, length, value, byte):
+    if self.mode == "values":
+        self.queue.put(value)
+    elif self.mode == "bytes":
+        self.queue.put(byte[:length])
 
   def next(self, count=1):
     # If the queue Empty exception is raised from here it's because the probes

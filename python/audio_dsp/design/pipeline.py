@@ -915,6 +915,7 @@ def _generate_dsp_ctrl(resolved_pipeline) -> str:
     if resolved_pipeline["xscope"]:
         ret += """
         #include <xscope.h>
+        #include <string.h>
         #define XSCOPE_MAX_PACKET_LEN 256
         #define READ_CMD(X) (X & 0x80)
         #define WRITE_CMD(X) (~X & 0x80)
@@ -922,15 +923,17 @@ def _generate_dsp_ctrl(resolved_pipeline) -> str:
 
         void xscope_user_init()
         {
-            xscope_register(1, XSCOPE_DISCRETE, "ADSP Tuning Read API", XSCOPE_UINT, "Command Data");
+            xscope_mode_lossless();
+            xscope_register(1, XSCOPE_DISCRETE, "ADSP", XSCOPE_UINT, "Data");
             xscope_config_io(XSCOPE_IO_BASIC);
         }
 
-        DECLARE_JOB(dsp_ctrl, (void));
-        void dsp_ctrl() {
+        DECLARE_JOB(dsp_ctrl, (adsp_pipeline_t*));
+        void dsp_ctrl(adsp_pipeline_t*adsp) {
             chanend_t c_dsp_ctrl = chanend_alloc();
             xscope_connect_data_from_host(c_dsp_ctrl);
             adsp_controller_t dsp_ctrl_controller;
+            adsp_controller_init(&dsp_ctrl_controller, adsp);
 
             SELECT_RES(
                 CASE_THEN(c_dsp_ctrl, host_transaction)
@@ -946,25 +949,35 @@ def _generate_dsp_ctrl(resolved_pipeline) -> str:
                     // txfer format is {instance_id, cmd_id, payload_len, payload...}
 
                     adsp_stage_control_cmd_t cmd = {
-                        .instance_id = from_host[0];
-                        .cmd_id = from_host[1];
-                        .payload_len = from_host[2];
-                        .payload = &from_host[3];
+                        .instance_id = from_host[0],
+                        .cmd_id = from_host[1],
+                        .payload_len = from_host[2],
+                        .payload = &from_host[3]
                     };
 
                     if (READ_CMD(cmd.cmd_id))
                     {
-                        adsp_control_status_t ret = adsp_read_module_config(dsp_ctrl_controller, &cmd);
+                        cmd.cmd_id &= 0x7f; // clear top bit
+                        adsp_control_status_t ret = ADSP_CONTROL_BUSY;
+                        while (ret != ADSP_CONTROL_SUCCESS)
+                        {
+                            ret = adsp_read_module_config(&dsp_ctrl_controller, &cmd);
+                        }
                         xscope_bytes(DSP_PROBE_ID, cmd.payload_len, cmd.payload);
                     }
                     else
                     {
-                        adsp_control_status_t ret = adsp_write_module_config(dsp_ctrl_controller, &cmd);
+                        adsp_control_status_t ret = ADSP_CONTROL_BUSY;
+                        while (ret != ADSP_CONTROL_SUCCESS)
+                        {
+                            ret = adsp_write_module_config(&dsp_ctrl_controller, &cmd);
+                        }
                     }
 
                     continue;
                 }
             }
+        }
         """
     return ret
 
@@ -1089,6 +1102,8 @@ static adsp_controller_t* m_control;
         f"PJOB(dsp_{resolved_pipe['identifier']}_thread{ti}, (thread_{ti}_inputs, thread_{ti}_outputs, thread_{ti}_modules))"
         for ti in range(len(threads))
     )
+    if resolved_pipe['xscope']:
+        dsp_main += ",\n\t\tPJOB(dsp_ctrl, ())"
     dsp_main += "\n\t);\n"
 
     dsp_main += "}\n"

@@ -1,18 +1,23 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
-from __future__ import annotations
-
 import abc
-import collections
+import typing
+import types
 import contextlib
+import numpy as np
 
-CommandPayload = collections.namedtuple(
+ValType = int | float | str | np.integer
+MultiValType = ValType | list[ValType] | tuple[ValType, ...] | None
+
+CommandPayload = typing.NamedTuple(
     "CommandPayload",
     [
-        ("index", int | None),
-        ("command", str),
-        ("value", str | list[str] | tuple[str, ...]),
+        ("index", int),
+        ("command", int),
+        ("value", MultiValType),
+        ("size", int),
+        ("cmd_type", str),
     ],
 )
 
@@ -23,30 +28,31 @@ class DeviceConnectionError(Exception):
     pass
 
 
-class TuningTransport(abc.ABC, contextlib.AbstractContextManager):
+class TuningTransport(contextlib.AbstractContextManager["TuningTransport"], abc.ABC):
     """Base class for different transport media for tuning commands."""
 
-    def __enter__(self):
+    def __enter__(self) -> "TuningTransport":
         return self.connect()
 
     def __exit__(
         self,
         exc_type: type[BaseException] | None,
         exc_value: BaseException | None,
-        traceback: contextlib.TracebackType | None,
+        traceback: types.TracebackType | None,
     ) -> bool | None:
         return self.disconnect()
 
     @abc.abstractmethod
-    def connect(self) -> TuningTransport:
+    def connect(self) -> "TuningTransport":
+        raise NotImplementedError
+        return self
+
+    @abc.abstractmethod
+    def write(self, payload: CommandPayload) -> int:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def write(self, payload: CommandPayload):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def read(self):
+    def read(self, payload: CommandPayload) -> str:
         raise NotImplementedError
 
     @abc.abstractmethod
