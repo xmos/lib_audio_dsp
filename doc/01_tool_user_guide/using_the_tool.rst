@@ -26,7 +26,7 @@ amplitude to protect the output device.
 
 The DSP pipeline will perform the following processes:
 
-.. figure:: images/bass_treble_limit.drawio.png
+.. figure:: ../images/bass_treble_limit.drawio.png
    :width: 100%
 
    The target pipeline
@@ -80,7 +80,7 @@ the limiter use :py:class:`LimiterPeak <audio_dsp.stages.limiter.LimiterPeak>`.
 When running the above snippet in a Jupyter Notebook it will output the following 
 image which illustrates the pipeline which has been designed:
 
-.. figure:: images/pipeline_diagram.png
+.. figure:: ../images/pipeline_diagram.png
    :width: 25%
 
    Generated pipeline diagram
@@ -109,7 +109,7 @@ labels that were assigned to them when the stage was added to the pipeline.
    p["highshelf"].plot_frequency_response()
 
 
-.. figure:: images/frequency_response.png
+.. figure:: ../images/frequency_response.png
    :width: 100%
 
    Frequency response of the biquads (low shelf left, high shelf right)
@@ -193,4 +193,3 @@ processor.
     # thread 2
     p.next_thread()
     i = p.stage(Biquad, i)
-

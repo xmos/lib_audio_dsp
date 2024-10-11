@@ -1,10 +1,9 @@
 # The following patterns are to be excluded from the documentation build
 
-**readme*
-**README*
 **CHANGELOG*
 **LICENSE*
 
+host/dsp_host/README.rst
 .doc_venv/*
 test/*
 build/*

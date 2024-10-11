@@ -32,7 +32,7 @@ pipeline {
   } // parameters
 
   environment {
-    XMOSDOC_VERSION = "v5.5.1"
+    XMOSDOC_VERSION = "v6.6.1"
   } // environment
 
   options {
@@ -286,7 +286,7 @@ pipeline {
               sh 'pip install "ruff < 0.4"'
               sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${XMOSDOC_VERSION}"
               sh 'xmosdoc'
-              sh "make -C python check"
+              sh "make -C python check" // ruff check
               versionChecks checkReleased: false, versionsPairs: versionsPairs
             }
           }

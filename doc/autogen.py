@@ -1,7 +1,12 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
 """
 Generate includes for all the APIs in this repo
+
+WARNING: Linux, WSL recommended as Windows path autogeneration (backslashes) 
+can cause conflicts with xmosdoc build
+
 """
 import ast
 import re
@@ -22,22 +27,13 @@ PY_STAGE_MAKO = Path(PYTHON_ROOT, "audio_dsp", "design", "templates", "py_stage_
 YAML_DIR =  Path(ROOT_DIR, "stage_config")
 TOOL_USER_GEN_DIR = Path(__file__).parent / TOOLS_USER_GUIDE_DIR / "gen"
 
-def python_doc(src_dir, dst_dir):
-    p_design = sorted(src_dir.glob("*.py"))
-    p_design_modules = [".".join(p.parts[-3:])[:-3] for p in p_design if not p.name.startswith("_")]
-    gen = Template("""
-% for module in modules:
-${module}
-${"="*len(module)}
 
-.. automodule:: ${module}
-   :noindex:
-   :members:
-
-%endfor"""
-).render(modules=p_design_modules)
-    (dst_dir / f"{src_dir.parts[-2]}.{src_dir.parts[-1]}.inc").write_text(gen)
-
+def get_module_from_path(paths):
+    # ex: manipulates path to get a module, ex: a/b/c.py -> a.b.c
+    for path in paths:
+        if not path.name.startswith("_"):
+            path = path.with_suffix("").relative_to(PYTHON_ROOT)
+            yield '.'.join(path.parts)
 
 def get_file_info(fname):
     class_list = []
@@ -54,6 +50,24 @@ def get_file_info(fname):
             class_list.append(i.name)
 
     return docstring, class_list
+
+
+def python_doc(src_dir, dst_dir):
+    p_design = sorted(src_dir.glob("*.py"))
+    p_design_modules = list(get_module_from_path(p_design))
+    gen = Template("""
+% for module in modules:
+${module}
+${"="*len(module)}
+
+.. automodule:: ${module}
+   :noindex:
+   :members:
+
+%endfor"""
+).render(modules=p_design_modules)
+    (dst_dir / f"{src_dir.parts[-2]}.{src_dir.parts[-1]}.inc").write_text(gen)
+
 
 def python_doc_stages(src_dir, dst_dir):
     p_design = sorted(src_dir.glob("*.py"))

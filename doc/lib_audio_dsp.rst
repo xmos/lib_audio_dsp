@@ -23,16 +23,21 @@ These can be combined together to make complex audio pipelines for many
 different applications, such as home audio, music production, voice
 processing, and AI feature extraction.
 
-Documentation
-=============
+*****************
+Table of Contents
+*****************
 
-* :ref:`dsp_components_section`: Details all DSP components provided by this library.
-* :ref:`tool_user_guide_section`: Beginners guide to installing and using the DSP design and generation Python library.
-* :ref:`design_guide_section`: Advanced guidance on designing and debugging generated DSP pipelines.
-* :ref:`run_time_control_guide_section`: Adding run time control to a DSP application.
+.. toctree::
+    :maxdepth: 2
 
+    01_tool_user_guide/index
+    02_design_guide/index
+    03_dsp_components/index    
+    04_run_time_control_guide/index
+
+**********************
 Copyright & Disclaimer
-======================
+**********************
 
 |XMOS copyright|
 |XMOS disclaimer|
