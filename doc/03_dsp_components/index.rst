@@ -8,7 +8,7 @@ for xcore. These can be combined together to make complex audio pipelines
 for many different applications, such as home audio, music production,
 voice processing and AI feature extraction.
 
-The library is split into 2 levels of API, DSP stages and DSP modules.
+The library is split into 2 levels of API: DSP stages and DSP modules.
 Both APIs provide similar DSP functionality, but are suited to different
 use cases.
 
