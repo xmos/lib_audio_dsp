@@ -4,6 +4,7 @@ Audio DSP library change log
 Unreleased
 ----------
 
+  * CHANGED: Documentation restructured to improve readability.
   * ADDED: Stereo reverb Stage
   * FIXED: Delay could return different type to input
 
@@ -60,4 +61,3 @@ Unreleased
 -----
 
   * Initial release.
-

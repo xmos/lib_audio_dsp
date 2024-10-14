@@ -2,6 +2,10 @@
 Lib Audio DSP
 #############
 
+************
+Introduction
+************
+
 lib_audio_dsp is a DSP library for the XMOS xcore architecture. It facilitates the creation of
 multithreaded audio DSP pipelines that efficiently utilise the xcore architecture.
 
