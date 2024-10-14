@@ -22,7 +22,7 @@ These can be combined together to make complex audio pipelines for many
 different applications, such as home audio, music production, voice
 processing, and AI feature extraction.
 
-This document cover the following topics:
+This document covers the following topics:
 
 #. :ref:`tool_user_guide_section`: Beginners Guide to installing and using the DSP design and generation Python library.
 #. :ref:`design_guide_section`: Advanced guidance on designing and debugging generated DSP pipelines.
