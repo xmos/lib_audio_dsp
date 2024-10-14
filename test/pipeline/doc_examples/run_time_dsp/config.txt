@@ -1,1 +1,0 @@
-{'target_gain': 134217728, 'slew_shift': 7, 'mute_state': np.int32(0)}
