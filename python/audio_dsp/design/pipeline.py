@@ -18,7 +18,6 @@ import json
 import numpy as np
 from uuid import uuid4
 from ._draw import new_record_digraph
-from .host_app import send_control_cmd
 from functools import wraps
 from typing import NamedTuple, Type
 

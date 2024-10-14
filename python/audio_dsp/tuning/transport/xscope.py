@@ -1,7 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
-from __future__ import annotations
 from . import (
     CommandPayload,
     TuningTransport,
@@ -12,7 +11,6 @@ from . import (
 from .xscope_endpoint import Endpoint, QueueConsumer
 import struct
 import numpy as np
-from time import sleep
 
 
 class SilentEndpoint(Endpoint):
@@ -110,7 +108,7 @@ class XScopeTransport(TuningTransport):
             # ???
             raise ValueError
 
-    def connect(self) -> XScopeTransport:
+    def connect(self) -> "XScopeTransport":
         if not self.connected:
             ret = self.ep.connect(self.hostname, self.port)
             if ret == 0:
