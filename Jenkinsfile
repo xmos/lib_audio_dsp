@@ -14,7 +14,7 @@ def buildApps(appList) {
 
 def buildDocs(String zipFileName) {
     withVenv {
-        sh 'pip install git+ssh://git@github.com/xmos/xmosdoc@v6.1.1'
+        sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${env.XMOSDOC_VERSION}"
         sh 'xmosdoc'
         zip zipFile: zipFileName, archive: true, dir: 'doc/_build'
     }
@@ -25,6 +25,7 @@ def versionsPairs = [
     "settings.yml": /version[\s:'\"]*([\d.]+)/,
     "CHANGELOG.rst": /(\d+\.\d+\.\d+)/,
     "**/lib_build_info.cmake": /set\(LIB_VERSION \"?([\d.]+)/,
+    "README.rst": /:\s*version:\s*([\d.]+)/
 ]
 
 getApproval()
