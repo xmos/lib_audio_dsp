@@ -12,6 +12,14 @@ def buildApps(appList) {
   }
 }
 
+def buildDocs(String zipFileName) {
+    withVenv {
+        sh 'pip install git+ssh://git@github.com/xmos/xmosdoc@v6.1.1'
+        sh 'xmosdoc'
+        zip zipFile: zipFileName, archive: true, dir: 'doc/_build'
+    }
+}
+
 def versionsPairs = [
     "python/pyproject.toml": /version[\s='\"]*([\d.]+)/,
     "settings.yml": /version[\s:'\"]*([\d.]+)/,
@@ -284,17 +292,12 @@ pipeline {
               sh 'pip install -e ./python'
               sh 'pip install "pyright < 2.0"'
               sh 'pip install "ruff < 0.4"'
-              sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${XMOSDOC_VERSION}"
-              sh 'xmosdoc'
               sh "make -C python check" // ruff check
               versionChecks checkReleased: false, versionsPairs: versionsPairs
             }
+            buildDocs("lib_audio_dsp_docs.zip")
           }
           post {
-            always {
-              archiveArtifacts artifacts: "doc/_out/**"
-              zip zipFile: "lib_audio_dsp_docs.zip", archive: true, dir: "doc/_out"
-            }
             cleanup {
               xcoreCleanSandbox()
             }
