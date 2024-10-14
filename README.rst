@@ -1,8 +1,8 @@
 :orphan:
 
-##########################################
-lib_audio_dsp: Audio DSP Library for xcore
-##########################################
+#############################################
+lib_audio_dsp: Audio DSP Library for xcore.ai
+#############################################
 
 :vendor: XMOS
 :version: 1.0.1
