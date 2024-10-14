@@ -139,12 +139,9 @@ class TuningInterface:
                 ticks_per_sample_time_s = ticks_per_sample_time_s
 
                 # TODO Implement a generic way of reading all config from the stage
-                payload = CommandPayload(
-                    thread.thread_stage.index, "dsp_thread_max_cycles", None
-                )
-                proto.write(payload)
-
-                cycles = 0  # int(ret.stdout.splitlines()[0].decode("utf-8"))
+                payload = self._construct_payload(thread.thread_stage, "max_cycles", None)
+                cycles = proto.read(payload)
+                
                 percentage_used = (cycles / ticks_per_sample_time_s) * 100
                 profile_info.append(
                     [

@@ -24,7 +24,7 @@ class XScopeTransport(TuningTransport):
     """Manages all methods required to communicate tuning over xscope."""
 
     def __init__(self, hostname: str = "localhost", port: str = "12345") -> None:
-        self.ep = Endpoint()
+        self.ep = SilentEndpoint()
         self.hostname = hostname
         self.port = port
         self.connected = False
@@ -97,7 +97,7 @@ class XScopeTransport(TuningTransport):
 
         target_type = (cmd_type, self.cmd_types_byte_lengths[cmd_type])
 
-        if isinstance(values, (int, float, str)):
+        if isinstance(values, (int, float, str, np.integer)):
             # Single argument
             return self._transform_single_value(values, target_type)
         elif isinstance(values, (list, tuple)):
@@ -123,11 +123,13 @@ class XScopeTransport(TuningTransport):
         if not self.connected:
             raise DeviceConnectionError
 
-        # Target schema is instance_id, cmd_id, payload_len, payload.
-        # Extract the first three from payload to start with
+        # Target schema is "ADSP", instance_id, cmd_id, payload_len, payload.
+        # Start with the header
+        payload_bytes = b'ADSP'
+        # Extract the instance_id, cmd_id, payload_len from payload
         command_id = payload.command | (0x80 if read_cmd else 0x00)
         command_size = payload.size * self.cmd_types_byte_lengths[payload.cmd_type]
-        payload_bytes = bytes([payload.index, command_id, command_size])
+        payload_bytes += bytes([payload.index, command_id, command_size])
         # Add on the transformed values
         transformed_values = self._transform_values(payload.value, payload.cmd_type)
         if transformed_values is not None:
@@ -137,7 +139,7 @@ class XScopeTransport(TuningTransport):
                 )
                 raise ValueError
             payload_bytes += transformed_values
-        print(f"sent: {payload_bytes}")
+        # print(f"sent: {payload_bytes}")
         return self.ep.publish(payload_bytes)
 
     def read(self, payload: CommandPayload) -> tuple[ValType, ...]:
@@ -147,10 +149,10 @@ class XScopeTransport(TuningTransport):
 
         # Device returns raw bytes. Cast to a tuple of whatever return value we need
         struct_code = f"{payload.size}{self.cmd_types_struct_map[payload.cmd_type]}"
-        print(f"recieved: {data}")
         ret = struct.unpack(struct_code, data)
 
-
+        if len(ret) == 1:
+            ret = ret[0]
         return ret
 
     def disconnect(self):

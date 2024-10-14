@@ -146,13 +146,34 @@ class XCommonCMakeHelper:
         widget = widgets.HTML(value="")
         accordion = widgets.Accordion(children=[widget])
         accordion.set_title(0, title)
-        IPython.display.display(accordion)  # pyright: ignore [reportAttributeAccessIssue]
+        IPython.display.display(
+            accordion
+        )  # pyright: ignore [reportAttributeAccessIssue]
         output = ""
         for line in process.stdout:  # pyright: ignore [reportOptionalIterable]
             output += line
             widget.value = XCommonCMakeHelper.log_str.format(output=output)
         process.wait()
         if process.returncode:
+            accordion.set_title(0, title + "  Failed ❌ (click for details)")
+        else:
+            accordion.set_title(0, title + "  ✔")
+
+    def _log_poll(self, process, title=""):
+        """
+        Log the run status of a process that isn't expected to finish, for example, xrun --xscope-port.
+        If the process does finish, log the stdout and indicate fail, otherwise indicate pass.
+        """
+        widget = widgets.HTML(value="")
+        accordion = widgets.Accordion(children=[widget])
+        accordion.set_title(0, title)
+        IPython.display.display(accordion)
+        time.sleep(4)
+        if process.poll():  # Process has ended when we don't expect it to
+            output = ""
+            for line in process.stdout:
+                output += line
+                widget.value = XCommonCMakeHelper.log_str.format(output=output)
             accordion.set_title(0, title + "  Failed ❌ (click for details)")
         else:
             accordion.set_title(0, title + "  ✔")
@@ -225,34 +246,65 @@ class XCommonCMakeHelper:
         self._log(ret, "Compiling...")
         return ret.returncode
 
-    def run(self) -> int:
+    def run(
+        self, xscope: bool = True, hostname: str = "localhost", port: str = "12345"
+    ) -> int:
         """
         Invoke xrun with the options specified in this class instance.
         Invokation will be of the form
         "xrun <binary>", where the path to the binary is constructed as per this
         class' docstring.
 
+        Parameters
+        ----------
+        xscope : bool
+            Specify whether to also pass "--xscope-port {hostname}:{port} as
+            an option to the call to xrun.
+
+        hostname : str
+            Hostname to pass to xrun for the xscope server, if xscope is True
+
+        port : str
+            Port to pass to xrun for the xscope server, if xscope is True
+
         Returns
         -------
         returncode
             Return code from the invokation of xrun. 0 if success.
         """
-        app = self.bin_dir / self.config_name / (self.project_name + self.config_suffix + ".xe")
+        app = (
+            self.bin_dir
+            / self.config_name
+            / (self.project_name + self.config_suffix + ".xe")
+        )
+        cmd = "xrun "
+        if xscope:
+            cmd += f"--xscope-port {hostname}:{port} "
+        cmd += f"{app}"
         ret = subprocess.Popen(
-            f"xrun {app}".split(),
+            cmd.split(),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
         )
-        self._log(ret, f"Running...")
+        if xscope:
+            self._log_poll(ret, f"Running...")
+        else:
+            self._log(ret, f"Running...")
         return ret.returncode
 
-    def configure_build_run(self) -> None:
+    def configure_build_run(self, xscope: bool = True) -> None:
         """
         Run, in order, this class' .configure(), .build(), and .run() methods.
         If any return code from any of the three is nonzero, returns early.
         Otherwise, sleeps for 5 seconds after the .run() stage and prints
         "Done!".
+
+        Parameters
+        ----------
+        xscope : bool
+            Passed directly to the call to .run(); determines whether to start
+            an xscope server or not.
         """
         returncode = self.configure()
         if returncode:
@@ -260,7 +312,7 @@ class XCommonCMakeHelper:
         returncode = self.build()
         if returncode:
             return
-        returncode = self.run()
+        returncode = self.run(xscope=xscope)
         if returncode:
             return
         time.sleep(5)

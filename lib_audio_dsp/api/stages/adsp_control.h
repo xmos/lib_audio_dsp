@@ -89,3 +89,35 @@ adsp_control_status_t adsp_write_module_config(
         adsp_stage_control_cmd_t *cmd
 );
 
+/// Process an xscope buffer containing a control command from the host.
+///
+/// Assumes that the buffer still contains the ADSP header string.
+///
+/// @param ctrl An instance of adsp_controller_t which has been initialised to control the DSP pipeline.
+/// @param data The data buffer populated by a call to xscope_data_from_host.
+/// @param tx_probe_id The probe ID over which to transmit data back to the host. 
+///                    This must have the name ADSP, type XSCOPE_CONTINUOUS, and datatype XSCOPE_UINT.
+/// @return @ref adsp_control_status_t
+adsp_control_status_t adsp_control_xscope_process(
+    adsp_controller_t *ctrl, 
+    char *data, 
+    int tx_probe_id
+);
+
+
+/// Default xscope setup function. 
+/// 
+/// Sets up a single xscope probe with name ADSP, type XSCOPE_CONTINUOUS, and datatype XSCOPE_UINT.
+/// Should be called within xscope_user_init(), but should not be called if the application intends
+/// to use xscope outside of this library.
+void adsp_control_xscope_init();
+
+/// Creates an xscope handler thread for ADSP control.
+///
+/// Handles all xscope traffic and calls to @ref adsp_read_module_config and 
+/// @ref adsp_write_module_config. If the application already uses xscope, do 
+/// not call this function; instead, identify host-to-device packets by the ADSP
+/// header and pass them to @ref adsp_control_xscope_process manually.
+///
+/// @param adsp The DSP pipeline that will be controlled with this xscope thread.
+DECLARE_JOB(adsp_control_xscope, (adsp_pipeline_t *));
