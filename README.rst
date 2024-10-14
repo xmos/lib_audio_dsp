@@ -61,7 +61,8 @@ Related Application Notes
 
 The following application notes use this library:
 
-  * `AN02014: Integrating DSP Into The XMOS USB Reference Design <https://www.xmos.com/file/an02014-integrating-dsp-into-the-xmos-usb-reference-design/>`_
+  * `AN02014: Integrating DSP Into The XMOS USB Reference Design <https://www.xmos.com/file/an02014-integrating-dsp-into-the-xmos-usb-reference-design/>`_.
+  * `AN02015: Run-time DSP control in a USB Audio Application <https://www.xmos.com/file/an02015-run-time-dsp-control-in-a-usb-audio-application/>`_.
 
 Support
 *******
