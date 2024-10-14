@@ -5,7 +5,7 @@ Finite Impulse Response Filters
 Finite impulse response (FIR) filters allow the use of arbitrary filters
 with a finite number of taps. This library does not provide FIR filter
 design tools, but allows for coefficients to be imported from other design
-tools, such as `SciPy/filer_design`_.
+tools, such as `SciPy/filter_design`_.
 
 .. _FirDirect:
 
