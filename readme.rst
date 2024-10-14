@@ -47,10 +47,14 @@ Host System Requirements
 Required Tools
 **************
 
+  * XMOS XTC Tools: 15.3.0
 
 Required Libraries (dependencies)
 *********************************
 
+  * lib_xcore_math (www.github.com/xmos/lib_xcore_math)
+  * lib_logging (www.github.com/xmos/lib_logging)
+  * lib_locks (www.github.com/xmos/lib_locks)
 
 Related Application Notes
 *************************

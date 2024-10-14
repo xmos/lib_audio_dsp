@@ -3,26 +3,25 @@
 
 """
 Generate includes for all the APIs in this repo
-
-WARNING: Linux, WSL recommended as Windows path autogeneration (backslashes) 
-can cause conflicts with xmosdoc build
-
 """
+import os
 import ast
 import re
 import yaml
 from mako.template import Template
 from pathlib import Path
 
-
+# Load folders
 TOOLS_USER_GUIDE_DIR    = "01_tool_user_guide"
 DESIGN_GUIDE_DIR        = "02_design_guide"
-DSP_COMP_DIR_NAME       = "03_dsp_components"
+DSP_COMP_DIR            = "03_dsp_components"
+RUNTIME_CTRL_DIR        = "04_run_time_control_guide"
 
+# Define paths
 ROOT_DIR = Path(__file__).parents[1]
 PYTHON_ROOT = Path(ROOT_DIR, "python")
-CTRL_GEN_DIR = Path(__file__).parent / DSP_COMP_DIR_NAME / "runtime_control" / "gen"
-DSP_GEN_DIR = Path(__file__).parent / DSP_COMP_DIR_NAME / "stages" / "gen"
+CTRL_GEN_DIR = Path(__file__).parent / DSP_COMP_DIR / "runtime_control" / "gen"
+DSP_GEN_DIR = Path(__file__).parent / DSP_COMP_DIR / "stages" / "gen"
 PY_STAGE_MAKO = Path(PYTHON_ROOT, "audio_dsp", "design", "templates", "py_stage_doc.mako")
 YAML_DIR =  Path(ROOT_DIR, "stage_config")
 TOOL_USER_GEN_DIR = Path(__file__).parent / TOOLS_USER_GUIDE_DIR / "gen"
@@ -112,7 +111,10 @@ ${"="*len(str(module))}
 
 %endfor
 """).render(modules=c_design_modules)
-    (dst_dir / f"{src_dir.parts[-2]}.{src_dir.parts[-1]}.inc").write_text(gen)
+    output_file = (dst_dir / f"{src_dir.parts[-2]}.{src_dir.parts[-1]}.inc")
+    if os.name == "nt": # if windows replace backslashes so we can reference later in docs
+        gen = gen.replace("\\", "/")
+    output_file.write_text(gen)
 
 
 if __name__ == "__main__":

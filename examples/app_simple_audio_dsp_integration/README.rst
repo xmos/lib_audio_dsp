@@ -1,5 +1,5 @@
 app_simple_audio_dsp_integration
----
+================================
 
 This minimal example shows how to integrate a DSP pipeline into an
 xcore application. Two application threads are spawned, a "signal producer" and

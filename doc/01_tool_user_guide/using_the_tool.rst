@@ -119,7 +119,7 @@ For this tutorial the default settings for the limiter will provide adequate per
 
 
 Code Generation
----------------
+===============
 
 With an initial pipeline complete, it is time to generate the xcore source code
 and run it on a device. The code can be generated using the

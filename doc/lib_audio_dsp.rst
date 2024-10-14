@@ -1,4 +1,4 @@
-#############
+
 Lib Audio DSP
 #############
 
@@ -22,10 +22,6 @@ lib_audio_dsp includes common signal processing functions optimised for the xcor
 These can be combined together to make complex audio pipelines for many
 different applications, such as home audio, music production, voice
 processing, and AI feature extraction.
-
-*****************
-Table of Contents
-*****************
 
 .. toctree::
     :maxdepth: 2

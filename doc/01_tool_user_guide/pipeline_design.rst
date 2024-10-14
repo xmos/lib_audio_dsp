@@ -15,11 +15,11 @@ Once the code is generated use the functions defined in `stages/adsp_pipeline.h`
 configuration fields.
 
 C Design API
-============
+************
 
 .. include:: gen/api.stages.inc
 
 Python Design API
-=================
+*****************
 
 .. include:: gen/audio_dsp.design.inc
