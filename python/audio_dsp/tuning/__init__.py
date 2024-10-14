@@ -11,6 +11,26 @@ import tabulate
 
 
 class TuningInterface:
+    """A class representing a tuning interface for the DSP pipeline.
+
+    This class may be instantiated at any time. However, its methods will only
+    run correctly while a device with a running DSP pipeline has been connected.
+
+    Parameters
+    ----------
+    protocol : str
+        Specifies which of the natively supported transports to use for the
+        interface. Defaults to "xscope", currently the only supported transport.
+
+    custom_transport : type[TuningTransport] | None
+        If desired, the user may write a custom subclass of TuningTransport to
+        implement a new transport for the tuning interface. This class should
+        then be supplied here.
+        See the ABC :class:`audio_dsp.tuning.transport.TuningTransport` for
+        information on the required methods of such a custom class.
+
+
+    """
 
     # List of protocols currently supported by this library natively
     _lib_protocols: dict[str, type[TuningTransport]] = {"xscope": XScopeTransport}
@@ -32,12 +52,12 @@ class TuningInterface:
         # Use one of the library's inbuilt protocols
         # if a custom one isn't specified
         self._protocol = (
-            custom_transport
-            if custom_transport is not None
-            else self._lib_protocols[protocol]
+            custom_transport if custom_transport is not None else self._lib_protocols[protocol]
         )
 
-    def _construct_payload(self, stage: Stage, command: str, value: MultiValType) -> CommandPayload:
+    def _construct_payload(
+        self, stage: Stage, command: str, value: MultiValType
+    ) -> CommandPayload:
         assert stage.index is not None
         assert stage.yaml_dict is not None
 
@@ -45,14 +65,13 @@ class TuningInterface:
         name = stage.name
         full_yaml: dict[str, dict] = stage.yaml_dict
         try:
-            cmd_index = list(full_yaml['module'][name].keys()).index(command) + 1
-            cmd_type = full_yaml['module'][name][command]['type']
-            cmd_size = full_yaml['module'][name][command].get('size', 1)
+            cmd_index = list(full_yaml["module"][name].keys()).index(command) + 1
+            cmd_type = full_yaml["module"][name][command]["type"]
+            cmd_size = full_yaml["module"][name][command].get("size", 1)
         except ValueError as e:
             print(f"Command {command} not valid for stage {name}")
             raise e from None
         return CommandPayload(stage_index, cmd_index, value, cmd_size, cmd_type)
-
 
     def _validate_pipeline_checksum(self, pipeline: Pipeline, proto: TuningTransport):
         """
@@ -141,7 +160,7 @@ class TuningInterface:
                 # TODO Implement a generic way of reading all config from the stage
                 payload = self._construct_payload(thread.thread_stage, "max_cycles", None)
                 cycles = proto.read(payload)
-                
+
                 percentage_used = (cycles / ticks_per_sample_time_s) * 100
                 profile_info.append(
                     [

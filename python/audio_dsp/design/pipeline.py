@@ -909,6 +909,7 @@ def _generate_dsp_muxes(resolved_pipeline):
 
     return ret
 
+
 def _generate_dsp_ctrl() -> str:
     ret = """
 
@@ -974,7 +975,7 @@ static adsp_controller_t* m_control;
         for node_index in resolved_pipe["modules"].keys()
         if resolved_pipe["modules"][node_index]["yaml_dict"] is not None
     )
-    if resolved_pipe['xscope']:
+    if resolved_pipe["xscope"]:
         dsp_main += _generate_dsp_ctrl()
     dsp_main += _generate_dsp_threads(resolved_pipe)
     dsp_main += _generate_dsp_init(resolved_pipe)
@@ -1047,7 +1048,7 @@ static adsp_controller_t* m_control;
         f"PJOB(dsp_{resolved_pipe['identifier']}_thread{ti}, (thread_{ti}_inputs, thread_{ti}_outputs, thread_{ti}_modules))"
         for ti in range(len(threads))
     )
-    if resolved_pipe['xscope']:
+    if resolved_pipe["xscope"]:
         dsp_main += ",\n\t\tPJOB(adsp_control_xscope, (adsp))"
     dsp_main += "\n\t);\n"
 

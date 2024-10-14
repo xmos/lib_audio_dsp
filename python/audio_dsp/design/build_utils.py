@@ -146,9 +146,7 @@ class XCommonCMakeHelper:
         widget = widgets.HTML(value="")
         accordion = widgets.Accordion(children=[widget])
         accordion.set_title(0, title)
-        IPython.display.display(
-            accordion
-        )  # pyright: ignore [reportAttributeAccessIssue]
+        IPython.display.display(accordion)  # pyright: ignore [reportAttributeAccessIssue]
         output = ""
         for line in process.stdout:  # pyright: ignore [reportOptionalIterable]
             output += line
@@ -246,9 +244,7 @@ class XCommonCMakeHelper:
         self._log(ret, "Compiling...")
         return ret.returncode
 
-    def run(
-        self, xscope: bool = True, hostname: str = "localhost", port: str = "12345"
-    ) -> int:
+    def run(self, xscope: bool = True, hostname: str = "localhost", port: str = "12345") -> int:
         """
         Invoke xrun with the options specified in this class instance.
         Invokation will be of the form
@@ -272,11 +268,7 @@ class XCommonCMakeHelper:
         returncode
             Return code from the invokation of xrun. 0 if success.
         """
-        app = (
-            self.bin_dir
-            / self.config_name
-            / (self.project_name + self.config_suffix + ".xe")
-        )
+        app = self.bin_dir / self.config_name / (self.project_name + self.config_suffix + ".xe")
         cmd = "xrun "
         if xscope:
             cmd += f"--xscope-port {hostname}:{port} "
