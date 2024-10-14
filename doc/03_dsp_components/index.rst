@@ -21,7 +21,7 @@ ideal for rapid prototyping and development.
 
 The lower-level APIs are called :ref:`dsp_modules_section`. They are meant to be
 used as an API directly in cases where the Python DSP pipeline tool is 
-not used. These modules can be useful when integrating DSP function into an
+not used. These modules can be useful when integrating DSP functionality into an
 existing system, or as a starting point for creating bespoke DSP
 functions.
 
