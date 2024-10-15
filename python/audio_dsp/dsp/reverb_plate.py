@@ -167,7 +167,7 @@ class reverb_plate_stereo(dspg.dsp_block):
         diffusion=0.70,
         width=1.0,
         wet_gain_db=-1,
-        dry_gain_db=-100,
+        dry_gain_db=-1,
         pregain=0.0075,
         predelay=10,
         max_predelay=None,

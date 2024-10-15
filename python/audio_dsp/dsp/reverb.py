@@ -88,7 +88,7 @@ class allpass_fv(dspg.dsp_block):
         self._buffer = np.zeros(self._max_delay)
         self._buffer_int = [0] * self._max_delay
 
-        self.delay = 0
+        self.delay = max_delay
         self.feedback = feedback_gain
         self.feedback_int = utils.int32(self.feedback * 2**Q_VERB)
         self._buffer_idx = 0
