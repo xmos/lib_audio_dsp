@@ -163,7 +163,7 @@ class reverb_plate_stereo(dspg.dsp_block):
         fs,
         n_chans,
         decay=0.5,
-        damping=0.05,
+        damping=0.5,
         diffusion=0.70,
         width=1.0,
         wet_gain_db=-1,
@@ -190,15 +190,15 @@ class reverb_plate_stereo(dspg.dsp_block):
         self.dry_db = dry_gain_db
         self._effect_gain = sc.fixed_gain(fs, n_chans, 10)
 
-        # the magic freeverb delay line lengths are for 44.1kHz, so
-        # scale them with sample rate and room size
-        default_ap_lengths = np.array([210, 158, 561, 410, 3931, 2664])
-        default_delay_lengths = np.array([6241, 6590, 4641, 5505])
-        default_mod_ap_lengths = np.array([1343, 995])
-        default_mod_rate = 12
+        # the dattoro delay line lengths are for 29761Hz, so
+        # scale them with sample rate
+        default_ap_lengths = np.array([142, 107, 379, 277, 2656, 1800])
+        default_delay_lengths = np.array([4217, 4453, 3136, 3720])
+        default_mod_ap_lengths = np.array([908, 672])
+        default_mod_rate = 8
 
         # buffer lengths
-        length_scaling = self.fs / 44100
+        length_scaling = self.fs / 29761
         self.ap_lengths = (default_ap_lengths * length_scaling).astype(int)
         self.delay_lengths = (default_delay_lengths * length_scaling).astype(int)
         self.mod_ap_lengths = (default_mod_ap_lengths * length_scaling).astype(int)
@@ -243,8 +243,8 @@ class reverb_plate_stereo(dspg.dsp_block):
             rv.allpass_fv(self.mod_ap_lengths[1], feedback_mod_ap),
         ]
 
-        default_taps_l = np.array([394, 4401, 2831, 2954, 2945, 277, 1578])
-        default_taps_r = np.array([522, 5368, 1817, 3956, 3124, 496, 179])
+        default_taps_l = np.array([266, 2974, 1913, 1996, 1990, 187, 1066])
+        default_taps_r = np.array([353, 3627, 1228, 2673, 2111, 335, 121])
 
         self.taps_l = (default_taps_l * length_scaling).astype(int)
         self.taps_r = (default_taps_r * length_scaling).astype(int)
@@ -468,7 +468,7 @@ class reverb_plate_stereo(dspg.dsp_block):
         reverb_input = (sample_list[0] + sample_list[1]) * self.pregain
         reverb_input = self._predelay.process_channels([reverb_input])[0]
 
-        reverb_output = self.lowpasses[0].process(reverb_input)
+        reverb_input = self.lowpasses[0].process(reverb_input)
 
         for n in range(4):
             reverb_input = self.allpasses[n].process(reverb_input)
