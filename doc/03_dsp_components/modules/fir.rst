@@ -15,7 +15,7 @@ FIR Direct
 
 The direct FIR implements the filter as a convolution in the time domain.
 This library uses FIR ``filter_fir_s32`` implementation from ``lib_xcore_math`` to run on xcore.
-More information on implementation can be found in `XS3 Math Library`_ documentation.
+More information on implementation can be found in `XCORE Math Library`_ documentation.
 
 .. autoclass:: audio_dsp.dsp.fir.fir_direct
     :noindex:

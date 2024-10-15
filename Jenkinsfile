@@ -12,14 +12,6 @@ def buildApps(appList) {
   }
 }
 
-def buildDocs(String zipFileName) {
-    withVenv {
-        sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${env.XMOSDOC_VERSION}"
-        sh 'xmosdoc'
-        zip zipFile: zipFileName, archive: true, dir: 'doc/_build'
-    }
-}
-
 def versionsPairs = [
     "python/pyproject.toml": /version[\s='\"]*([\d.]+)/,
     "settings.yml": /version[\s:'\"]*([\d.]+)/,
@@ -296,7 +288,9 @@ pipeline {
               sh "make -C python check" // ruff check
               versionChecks checkReleased: false, versionsPairs: versionsPairs
             }
-            buildDocs("lib_audio_dsp_docs.zip")
+            warnError("Docs") {
+              buildDocs()
+            } // warnError("Docs")
           }
           post {
             cleanup {

@@ -15,6 +15,7 @@ documentation:
     - ".*lib_audio_dsp"  # this repo is private
   root_doc: doc/lib_audio_dsp.rst
   cognidox_part_number: XM-015103-UG
+  use_numpydoc: true
   doxygen_projects:
     lib_audio_dsp:
       doxyfile_path: doc/Doxyfile.inc
