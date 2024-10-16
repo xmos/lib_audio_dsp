@@ -80,6 +80,76 @@ class lowpass_1ord(dspg.dsp_block):
         return output
 
 
+class allpass_2(rv.allpass_fv):
+    """A freeverb style all-pass filter, for use in the reverb_room block.
+
+    Parameters
+    ----------
+    max_delay : int
+        Maximum delay of the all-pass.
+    feedback_gain : float
+        Gain applied to the delayed feedback path in the all-pass. Sets
+        the reverb time.
+    """
+
+
+    def process(self, sample):  # type: ignore : overloads base class
+        """
+        Apply an all pass filter to a signal, using floating point maths.
+
+        Take one new sample and return the filtered sample.
+        Input should be scaled with 0 dB = 1.0.
+
+        """
+        output = sample
+        buff_out = self._buffer[self._buffer_idx]
+        output -= buff_out * self.feedback
+
+        self._buffer[self._buffer_idx] = output
+
+        self._buffer_idx += 1
+        if self._buffer_idx >= self.delay:
+            self._buffer_idx = 0
+
+        output = buff_out + sample*self.feedback
+
+        return output
+
+    def process_xcore(self, sample_int):  # type: ignore : overloads base class
+        """
+        Apply an all pass filter to a signal, using fixed point maths.
+
+        Take one new sample and return the filtered sample.
+        Input should be scaled with 0 dB = 2**Q_SIG.
+
+        Parameters
+        ----------
+        sample_int : int
+            Input sample as an integer.
+
+        """
+        raise NotImplementedError
+        assert isinstance(sample_int, int), "Input sample must be an integer"
+
+        buff_out = self._buffer_int[self._buffer_idx]
+
+        # reverb pregain should be scaled so this doesn't overflow, but
+        # catch it if it does
+        output = utils.int64(-sample_int + buff_out)
+        output = utils.saturate_int64_to_int32(output)
+
+        # do buffer calculation in int64 accumulator so we only quantize once
+        new_buff = utils.int64((sample_int << Q_VERB) + buff_out * self.feedback_int)
+        self._buffer_int[self._buffer_idx] = scale_sat_int64_to_int32_floor(new_buff)
+
+        # move buffer head
+        self._buffer_idx += 1
+        if self._buffer_idx >= self.delay:
+            self._buffer_idx = 0
+
+        return output
+
+
 class reverb_plate_stereo(dspg.dsp_block):
     """Generate a stereo room reverb effect. This is based on Freeverb by
     Jezar at Dreampoint. Each channel consists of 8 parallel comb filters fed
@@ -222,12 +292,12 @@ class reverb_plate_stereo(dspg.dsp_block):
             ]
 
         self.allpasses = [
-            rv.allpass_fv(self.ap_lengths[0], self.input_diffusion_1),
-            rv.allpass_fv(self.ap_lengths[1], self.input_diffusion_1),
-            rv.allpass_fv(self.ap_lengths[2], self.input_diffusion_2),
-            rv.allpass_fv(self.ap_lengths[3], self.input_diffusion_2),
-            rv.allpass_fv(self.ap_lengths[4], self.decay_diffusion_2),
-            rv.allpass_fv(self.ap_lengths[5], self.decay_diffusion_2),
+            allpass_2(self.ap_lengths[0], self.input_diffusion_1),
+            allpass_2(self.ap_lengths[1], self.input_diffusion_1),
+            allpass_2(self.ap_lengths[2], self.input_diffusion_2),
+            allpass_2(self.ap_lengths[3], self.input_diffusion_2),
+            allpass_2(self.ap_lengths[4], self.decay_diffusion_2),
+            allpass_2(self.ap_lengths[5], self.decay_diffusion_2),
         ]
 
         self.delays = [
@@ -238,8 +308,8 @@ class reverb_plate_stereo(dspg.dsp_block):
         ]
 
         self.mod_allpasses = [
-            rv.allpass_fv(self.mod_ap_lengths[0], self.diffusion),
-            rv.allpass_fv(self.mod_ap_lengths[1], self.diffusion),
+            allpass_2(self.mod_ap_lengths[0], -self.diffusion),
+            allpass_2(self.mod_ap_lengths[1], -self.diffusion),
         ]
 
         default_taps_l = np.array([266, 2974, 1913, 1996, 1990, 187, 1066])
@@ -405,8 +475,8 @@ class reverb_plate_stereo(dspg.dsp_block):
             x = np.clip(x, 0, 1)
             warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
         self._diffusion = x
-        self.mod_allpasses[0].feedback = self.diffusion
-        self.mod_allpasses[1].feedback = self.diffusion
+        self.mod_allpasses[0].feedback = -self.diffusion
+        self.mod_allpasses[1].feedback = -self.diffusion
 
     @property
     def input_diffusion_1(self):
