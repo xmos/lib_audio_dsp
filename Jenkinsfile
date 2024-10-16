@@ -289,7 +289,7 @@ pipeline {
               versionChecks checkReleased: false, versionsPairs: versionsPairs
             }
             warnError("Docs") {
-              buildDocs()
+              buildDocs(archiveZipOnly: true)
             } // warnError("Docs")
           }
           post {
