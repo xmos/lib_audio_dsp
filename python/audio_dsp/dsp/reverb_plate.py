@@ -649,6 +649,48 @@ class reverb_plate_stereo(dspg.dsp_block):
 
         return [output_l_flt, output_r_flt]
 
+    def process_frame(self, frame: list[np.ndarray]):
+        """
+        Take a list frames of samples and return the processed frames.
+
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When calling self.process_channels only take the first output.
+
+        """
+        n_outputs = len(frame)
+        assert n_outputs == 2, "has to be stereo"
+        frame_size = frame[0].shape[0]
+        output = deepcopy(frame)
+        for sample in range(frame_size):
+            out_samples = self.process_channels([frame[0][sample], frame[1][sample]])
+            output[0][sample] = out_samples[0]
+            output[1][sample] = out_samples[1]
+        return output
+
+    def process_frame_xcore(self, frame: list[np.ndarray]):
+        """
+        Take a list frames of samples and return the processed frames,
+        using a bit exact xcore implementation.
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When calling self.process_channel_xcore only take the first output.
+
+        """
+        n_outputs = len(frame)
+        assert n_outputs == 2, "has to be stereo"
+        frame_size = frame[0].shape[0]
+        output = deepcopy(frame)
+        for sample in range(frame_size):
+            out_samples = self.process_channels_xcore([frame[0][sample], frame[1][sample]])
+            output[0][sample] = out_samples[0]
+            output[1][sample] = out_samples[1]
+
+        return output
 
 if __name__ == "__main__":
     import soundfile as sf
