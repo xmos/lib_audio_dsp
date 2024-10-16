@@ -1,11 +1,23 @@
 module:
   reverb_plate_st:
-    feedback:
+    decay:
       type: int32_t
-      help: feedback gain in Q0.31 format. Feedback can be calculated from decay as `(0.28 decay) + 0.7`. Use the function ``adsp_reverb_calculate_feedback`` in ``control/reverb.h``.
+      help: help!
     damping:
       type: int32_t
       help: High frequency attenuation in Q0.31 format. Use the function ``adsp_reverb_calculate_damping`` in ``control/reverb.h``. 
+    diffusion:
+      type: int32_t
+      help: help!
+    bandwidth:
+      type: int32_t
+      help: help!
+    input_diffusion_1:
+      type: int32_t
+      help: help!
+    input_diffusion_2:
+      type: int32_t
+      help: help!
     wet_gain1:
       type: int32_t
       help: Gain applied to obtain the wet signal in Q0.31 format. Use function ``adsp_reverb_room_st_calc_wet_gains`` in ``control/reverb.h``. Alternatively, all gains can be obtained from ``adsp_reverb_st_wet_dry_mix``.

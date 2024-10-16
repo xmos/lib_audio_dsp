@@ -297,7 +297,8 @@ class ReverbPlateStereo(Stage):
         self.set_control_field_cb("input_diffusion_1", lambda: self.dsp_block.input_diffusion_1)
         self.set_control_field_cb("input_diffusion_2", lambda: self.dsp_block.input_diffusion_2)
 
-        self.set_control_field_cb("wet_gain", lambda: self.dsp_block.wet_int)
+        self.set_control_field_cb("wet_gain1", lambda: self.dsp_block.wet_1_int)
+        self.set_control_field_cb("wet_gain2", lambda: self.dsp_block.wet_2_int)
         self.set_control_field_cb("pregain", lambda: self.dsp_block.pregain_int)
         self.set_control_field_cb("dry_gain", lambda: self.dsp_block.dry_int)
         self.set_control_field_cb("predelay", lambda: self.dsp_block._predelay._delay)
