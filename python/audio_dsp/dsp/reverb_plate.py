@@ -405,8 +405,8 @@ class reverb_plate_stereo(dspg.dsp_block):
             x = np.clip(x, 0, 1)
             warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
         self._diffusion = x
-        self.mod_allpasses[0].feedback(self.diffusion)
-        self.mod_allpasses[1].feedback(self.diffusion)
+        self.mod_allpasses[0].feedback = self.diffusion
+        self.mod_allpasses[1].feedback = self.diffusion
 
     @property
     def input_diffusion_1(self):
@@ -420,8 +420,8 @@ class reverb_plate_stereo(dspg.dsp_block):
             x = np.clip(x, 0, 1)
             warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
         self._input_diffusion_1 = x
-        self.allpasses[0].feedback(self.input_diffusion_1)
-        self.allpasses[1].feedback(self.input_diffusion_1)
+        self.allpasses[0].feedback = self.input_diffusion_1
+        self.allpasses[1].feedback = self.input_diffusion_1
 
     @property
     def input_diffusion_2(self):
@@ -435,8 +435,8 @@ class reverb_plate_stereo(dspg.dsp_block):
             x = np.clip(x, 0, 1)
             warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
         self._input_diffusion_2 = x
-        self.allpasses[2].feedback(self.input_diffusion_2)
-        self.allpasses[3].feedback(self.input_diffusion_2)
+        self.allpasses[2].feedback = self.input_diffusion_2
+        self.allpasses[3].feedback = self.input_diffusion_2
 
     @property
     def wet(self):
