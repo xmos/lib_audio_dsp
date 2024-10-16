@@ -162,12 +162,12 @@ class reverb_plate_stereo(dspg.dsp_block):
         self,
         fs,
         n_chans,
-        decay=0.5,
-        damping=0.5,
-        diffusion=0.70,
-        bandwidth=0.5,
-        input_diffusion_1=0.75,
-        input_diffusion_2=0.625,
+        decay=0.4,
+        damping=0.75,
+        diffusion=0.50,
+        bandwidth=0.4,
+        input_diffusion_1=0.5,
+        input_diffusion_2=0.5,
         width=1.0,
         wet_gain_db=-3,
         dry_gain_db=-3,
@@ -594,6 +594,8 @@ class reverb_plate_stereo(dspg.dsp_block):
         utils.int64(acc)
         reverb_input = utils.int32_mult_sat_extract(acc, 1, rv.Q_VERB)
         reverb_input = self._predelay.process_channels_xcore([reverb_input])[0]
+
+        raise NotImplementedError
 
         output_l = 0
         output_r = 0
