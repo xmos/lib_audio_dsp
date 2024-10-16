@@ -165,10 +165,13 @@ class reverb_plate_stereo(dspg.dsp_block):
         decay=0.5,
         damping=0.5,
         diffusion=0.70,
+        bandwidth=0.5,
+        input_diffusion_1=0.75,
+        input_diffusion_2=0.625,
         width=1.0,
-        wet_gain_db=-1,
-        dry_gain_db=-1,
-        pregain=0.0075,
+        wet_gain_db=-3,
+        dry_gain_db=-3,
+        pregain=0.005,
         predelay=10,
         max_predelay=None,
         Q_sig=dspg.Q_SIG,
@@ -202,31 +205,29 @@ class reverb_plate_stereo(dspg.dsp_block):
         self.ap_lengths = (default_ap_lengths * length_scaling).astype(int)
         self.delay_lengths = (default_delay_lengths * length_scaling).astype(int)
         self.mod_ap_lengths = (default_mod_ap_lengths * length_scaling).astype(int)
-
         self.mod_length = int(default_mod_rate * length_scaling)
 
-        # self.delay_taps = []
-
-        # # feedbacks
-        # init_fb = 0.5
-        # init_damping = 0.4
-        
-        self.damping = damping
+        self._bandwidth = bandwidth
+        self._damping = damping
+        self._decay = decay
+        self._diffusion = diffusion
+        self._decay_diffusion_2 = np.clip(decay + 0.15, 0.25, 0.5)
+        self._input_diffusion_1 = input_diffusion_1
+        self._input_diffusion_2 = input_diffusion_2
 
         self.lowpasses = [
-            lowpass_1ord(0.995),
+            lowpass_1ord(self.bandwidth),
             lowpass_1ord(1-self.damping),
             lowpass_1ord(1-self.damping),
             ]
 
-        feedback_ap = [0.75, 0.625, 0.5]
         self.allpasses = [
-            rv.allpass_fv(self.ap_lengths[0], feedback_ap[0]),
-            rv.allpass_fv(self.ap_lengths[1], feedback_ap[0]),
-            rv.allpass_fv(self.ap_lengths[2], feedback_ap[1]),
-            rv.allpass_fv(self.ap_lengths[3], feedback_ap[1]),
-            rv.allpass_fv(self.ap_lengths[4], feedback_ap[2]),
-            rv.allpass_fv(self.ap_lengths[5], feedback_ap[2]),
+            rv.allpass_fv(self.ap_lengths[0], self.input_diffusion_1),
+            rv.allpass_fv(self.ap_lengths[1], self.input_diffusion_1),
+            rv.allpass_fv(self.ap_lengths[2], self.input_diffusion_2),
+            rv.allpass_fv(self.ap_lengths[3], self.input_diffusion_2),
+            rv.allpass_fv(self.ap_lengths[4], self.decay_diffusion_2),
+            rv.allpass_fv(self.ap_lengths[5], self.decay_diffusion_2),
         ]
 
         self.delays = [
@@ -236,11 +237,9 @@ class reverb_plate_stereo(dspg.dsp_block):
             sc.delay(fs, 1, self.delay_lengths[3], self.delay_lengths[3], "samples"),
         ]
 
-
-        feedback_mod_ap = 0.7
         self.mod_allpasses = [
-            rv.allpass_fv(self.mod_ap_lengths[0], feedback_mod_ap),
-            rv.allpass_fv(self.mod_ap_lengths[1], feedback_mod_ap),
+            rv.allpass_fv(self.mod_ap_lengths[0], self.diffusion),
+            rv.allpass_fv(self.mod_ap_lengths[1], self.diffusion),
         ]
 
         default_taps_l = np.array([266, 2974, 1913, 1996, 1990, 187, 1066])
@@ -248,16 +247,6 @@ class reverb_plate_stereo(dspg.dsp_block):
 
         self.taps_l = (default_taps_l * length_scaling).astype(int)
         self.taps_r = (default_taps_r * length_scaling).astype(int)
-
-        # a b c d e f 
-        # self.tap_lens_l = [
-        #     self.delay_lengths[0],
-        #     self.delay_lengths[0],
-        #     self.ap_lengths[4],
-        #     self.delay_lengths[1],
-        #     self.delay_lengths[2],
-        #     self.ap_lengths[5],
-        #     self.delay_lengths[3]]
 
         # get left output tap buffer lends [a, a, b, c, d, e, f]
         self.tap_lens_l = [
@@ -268,15 +257,6 @@ class reverb_plate_stereo(dspg.dsp_block):
             self.delays[2]._max_delay,
             self.allpasses[5]._max_delay,
             self.delays[3]._max_delay]
-
-        # self.tap_lens_r = [
-        #     self.delay_lengths[2],
-        #     self.delay_lengths[2],
-        #     self.ap_lengths[5],
-        #     self.delay_lengths[3],
-        #     self.delay_lengths[0],
-        #     self.ap_lengths[4],
-        #     self.delay_lengths[1]]
 
         # get right output tap buffer lends [d, d, e, f, a, b, c]
         self.tap_lens_r = [
@@ -295,20 +275,15 @@ class reverb_plate_stereo(dspg.dsp_block):
 
 
         # set filter delays
-        self.decay = decay
         # self.damping = damping
         # self.room_size = room_size
 
     def reset_state(self):
         """Reset all the delay line values to zero."""
-        for cb in self.combs_l:
-            cb.reset_state()
-        for cb in self.combs_r:
-            cb.reset_state()
-        for ap in self.allpasses_l:
+        for ap in self.allpasses:
             ap.reset_state()
-        for ap in self.allpasses_r:
-            ap.reset_state()
+        for de in self.delays:
+            de.reset_state()
         self._predelay.reset_state()
 
     @property
@@ -362,60 +337,106 @@ class reverb_plate_stereo(dspg.dsp_block):
         self.wet_2_int = rv.float_to_q_verb(self.wet_2)
 
     @property
-    def feedback(self):
-        """Gain of the feedback line in the reverb filters. Set decay to update this value."""
-        ret = float(self.combs_l[0].feedback)
-        return ret
+    def decay(self):
+        """The length of the reverberation of the room, between 0 and 1."""
+        return self._decay
 
-    @feedback.setter
-    def feedback(self, x):
-        for n in range(len(self.combs_l)):
-            self.combs_l[n].set_feedback(x)
-            self.combs_r[n].set_feedback(x)
 
-        self.feedback_int = self.combs_r[0].feedback_int
-
-    # @property
-    # def damping(self):
-    #     """How much high frequency attenuation in the room, between 0 and 1."""
-    #     return self.combs_l[0].damp1
-
-    # @damping.setter
-    # def damping(self, x):
-    #     if not (0 <= x <= 1):
-    #         bad_x = x
-    #         x = np.clip(x, 0, 1)
-    #         warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
-    #     # for n in range(len(self.combs_l)):
-    #     #     self.combs_l[n].set_damping(x)
-    #     #     self.combs_r[n].set_damping(x)
-
-    #     # self.damping_int = self.combs_l[0].damp1_int
+    @decay.setter
+    def decay(self, x):
+        if not (0 <= x <= 1):
+            bad_x = x
+            x = np.clip(x, 0, _LESS_THAN_1)
+            warnings.warn(f"Decay {bad_x} saturates to {x}", UserWarning)
+        self._decay = x
+        self.decay_diffusion_2 = x + 0.15
 
     @property
-    def room_size(self):
-        """The room size as a proportion of the max_room_size."""
-        return self._room_size
+    def decay_diffusion_2(self):
+        """The length of the reverberation of the room, between 0 and 1."""
+        return self._decay_diffusion_2
 
-    @room_size.setter
-    def room_size(self, x):
+
+    @decay_diffusion_2.setter
+    def decay_diffusion_2(self, x):
+        x = np.clip(x, 0.25, 0.5)
+        self._decay_diffusion_2 = x
+        self.allpasses[4].feedback = x
+        self.allpasses[5].feedback = x
+
+    @property
+    def bandwidth(self):
+        """How much high frequency attenuation in the room, between 0 and 1."""
+        return self._bandwidth
+
+    @bandwidth.setter
+    def bandwidth(self, x):
         if not (0 <= x <= 1):
-            raise ValueError(
-                "room_size must be between 0 and 1. For larger rooms, increase max_room size"
-            )
-        self._room_size = x
+            bad_x = x
+            x = np.clip(x, 0, 1)
+            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
+        self._bandwidth = x
+        self.lowpasses[0].set_damping(self.bandwidth)
 
-        comb_delays = (self.comb_lengths * self._room_size).astype(int)
-        ap_delays = (self.ap_lengths * self._room_size).astype(int)
-        spread_delay = int(self.spread_length * self._room_size)
+    @property
+    def damping(self):
+        """How much high frequency attenuation in the room, between 0 and 1."""
+        return self._damping
 
-        for n in range(len(self.combs_l)):
-            self.combs_l[n].set_delay(comb_delays[n])
-            self.combs_r[n].set_delay(comb_delays[n] + spread_delay)
+    @damping.setter
+    def damping(self, x):
+        if not (0 <= x <= 1):
+            bad_x = x
+            x = np.clip(x, 0, 1)
+            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
+        self._damping = x
+        self.lowpasses[1].set_damping(1-self.damping)
+        self.lowpasses[2].set_damping(1-self.damping)
 
-        for n in range(len(self.allpasses_l)):
-            self.allpasses_l[n].set_delay(ap_delays[n])
-            self.allpasses_r[n].set_delay(ap_delays[n] + spread_delay)
+    @property
+    def diffusion(self):
+        """How much high frequency attenuation in the room, between 0 and 1."""
+        return self._diffusion
+
+    @diffusion.setter
+    def diffusion(self, x):
+        if not (0 <= x <= 1):
+            bad_x = x
+            x = np.clip(x, 0, 1)
+            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
+        self._diffusion = x
+        self.mod_allpasses[0].feedback(self.diffusion)
+        self.mod_allpasses[1].feedback(self.diffusion)
+
+    @property
+    def input_diffusion_1(self):
+        """How much high frequency attenuation in the room, between 0 and 1."""
+        return self._input_diffusion_1
+
+    @input_diffusion_1.setter
+    def input_diffusion_1(self, x):
+        if not (0 <= x <= 1):
+            bad_x = x
+            x = np.clip(x, 0, 1)
+            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
+        self._input_diffusion_1 = x
+        self.allpasses[0].feedback(self.input_diffusion_1)
+        self.allpasses[1].feedback(self.input_diffusion_1)
+
+    @property
+    def input_diffusion_2(self):
+        """How much high frequency attenuation in the room, between 0 and 1."""
+        return self._input_diffusion_2
+
+    @input_diffusion_2.setter
+    def input_diffusion_2(self, x):
+        if not (0 <= x <= 1):
+            bad_x = x
+            x = np.clip(x, 0, 1)
+            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
+        self._input_diffusion_2 = x
+        self.allpasses[2].feedback(self.input_diffusion_2)
+        self.allpasses[3].feedback(self.input_diffusion_2)
 
     @property
     def wet(self):
@@ -444,6 +465,32 @@ class reverb_plate_stereo(dspg.dsp_block):
         self._width = value
         # recalculate wet gains
         self.wet = self.wet
+
+    def set_wet_dry_mix(self, mix):
+        """
+        Will mix wet and dry signal by adjusting wet and dry gains.
+        So that when the mix is 0, the output signal is fully dry,
+        when 1, the output signal is fully wet. Tries to maintain a
+        stable signal level using -4.5 dB Pan Law.
+
+        Parameters
+        ----------
+        mix : float
+            The wet/dry mix, must be [0, 1].
+        """
+        if not (0 <= mix <= 1):
+            bad_mix = mix
+            mix = np.clip(mix, 0, 1)
+            warnings.warn(f"Wet/dry mix {bad_mix} saturates to {mix}", UserWarning)
+        # get an angle [0, pi /2]
+        omega = mix * np.pi / 2
+
+        # -4.5 dB
+        self.dry = np.sqrt((1 - mix) * np.cos(omega))
+        self.wet = np.sqrt(mix * np.sin(omega))
+        # there's an extra gain of 10 dB added to the wet channel to
+        # make it similar level to the dry, so that the mixing is smooth.
+        # Couldn't add it to the wet gain itself as it's in q31
 
     def process(self, sample, channel=0):
         """Process is not implemented for the stereo reverb, as it needs
@@ -480,7 +527,6 @@ class reverb_plate_stereo(dspg.dsp_block):
         path_2 = deepcopy(reverb_input)
         idx = self.delays[1].buffer_idx
         path_2 += self.decay * self.delays[1].buffer[0, idx]
-
 
         path_1 = self.mod_allpasses[0].process(path_1)
         path_1 = self.delays[0].process_channels([path_1])[0]
@@ -523,12 +569,12 @@ class reverb_plate_stereo(dspg.dsp_block):
                 self.taps_r[n] = 0
 
         # stereo width control
-        # output_l_final = output_l * self.wet_1 + output_r * self.wet_2
-        # output_l_final = self._effect_gain.process(output_l_final) + sample_list[0] * self.dry
-        output_l_final = output_l*self.wet + sample_list[0] * self.dry
-        # output_r = output_r * self.wet_1 + output_l * self.wet_2
-        # output_r = self._effect_gain.process(output_r) + sample_list[1] * self.dry
-        output_r = output_r*self.wet + sample_list[1] * self.dry
+        output_l_final = output_l * self.wet_1 + output_r * self.wet_2
+        output_l_final = self._effect_gain.process(output_l_final) + sample_list[0] * self.dry
+        # output_l_final = output_l*self.wet + sample_list[0] * self.dry
+        output_r = output_r * self.wet_1 + output_l * self.wet_2
+        output_r = self._effect_gain.process(output_r) + sample_list[1] * self.dry
+        # output_r = output_r*self.wet + sample_list[1] * self.dry
 
         return [output_l_final, output_r]
 

@@ -93,6 +93,15 @@ class allpass_fv(dspg.dsp_block):
         self.feedback_int = utils.int32(self.feedback * 2**Q_VERB)
         self._buffer_idx = 0
 
+    @property
+    def feedback(self):
+        return self._feedback
+
+    @feedback.setter
+    def feedback(self, x):
+        self._feedback = x
+        self.feedback_int = utils.int32(self.feedback * 2**Q_VERB)
+
     def set_delay(self, delay):
         """Set the length of the delay line. Will saturate to max_delay."""
         if delay <= self._max_delay:
