@@ -466,6 +466,24 @@ class reverb_plate_stereo(dspg.dsp_block):
         # recalculate wet gains
         self.wet = self.wet
 
+    @property
+    def pregain(self):
+        """
+        The pregain applied before the reverb as a floating point
+        number.
+        """
+        return self._pregain
+
+    @pregain.setter
+    def pregain(self, x):
+        if not (0 <= x < 1):
+            bad_x = x
+            x = np.clip(x, 0, _LESS_THAN_1)
+            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
+
+        self._pregain = x
+        self.pregain_int = utils.int32(x * 2**Q_VERB)
+
     def set_wet_dry_mix(self, mix):
         """
         Will mix wet and dry signal by adjusting wet and dry gains.
