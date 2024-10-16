@@ -1,0 +1,25 @@
+module:
+  reverb_plate_st:
+    feedback:
+      type: int32_t
+      help: feedback gain in Q0.31 format. Feedback can be calculated from decay as `(0.28 decay) + 0.7`. Use the function ``adsp_reverb_calculate_feedback`` in ``control/reverb.h``.
+    damping:
+      type: int32_t
+      help: High frequency attenuation in Q0.31 format. Use the function ``adsp_reverb_calculate_damping`` in ``control/reverb.h``. 
+    wet_gain1:
+      type: int32_t
+      help: Gain applied to obtain the wet signal in Q0.31 format. Use function ``adsp_reverb_room_st_calc_wet_gains`` in ``control/reverb.h``. Alternatively, all gains can be obtained from ``adsp_reverb_st_wet_dry_mix``.
+    wet_gain2:
+      type: int32_t
+      help: Gain applied to obtain the wet signal in Q0.31 format. Use function ``adsp_reverb_room_st_calc_wet_gains`` in ``control/reverb.h``. Alternatively, all gains can be obtained from ``adsp_reverb_st_wet_dry_mix``.
+    dry_gain:
+      type: int32_t
+      help: Dry signal gain in Q0.31 format. Use the function ``adsp_reverb_db2int`` in ``control/reverb.h``. Alternatively, all gains can be obtained from ``adsp_reverb_st_wet_dry_mix``.
+    pregain:
+      type: int32_t
+      help: The pregain applied to the signal before the reverb. Changing this value is not recommended. Use the function ``adsp_reverb_float2int`` in ``control/reverb.h``.
+    predelay:
+      type: uint32_t
+      help: Predelay applied to the wet channel in samples. To convert a value in other units of time to samples, use ``time_to_samples`` in ``control/signal_chain.h``.
+includes:
+  - "stdint.h"
