@@ -482,7 +482,7 @@ class reverb_plate_stereo(dspg.dsp_block):
             warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
 
         self._pregain = x
-        self.pregain_int = utils.int32(x * 2**Q_VERB)
+        self.pregain_int = utils.int32(x * 2**rv.Q_VERB)
 
     def set_wet_dry_mix(self, mix):
         """
