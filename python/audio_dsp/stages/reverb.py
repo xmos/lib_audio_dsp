@@ -275,7 +275,7 @@ class ReverbPlateStereo(Stage):
         for implementation details.
     """
 
-    def __init__(self, max_room_size=1, predelay=10, max_predelay=None, **kwargs):
+    def __init__(self, predelay=10, max_predelay=None, **kwargs):
         super().__init__(config=find_config("reverb_plate_stereo"), **kwargs)
         if self.fs is None:
             raise ValueError("Reverb requires inputs with a valid fs")
@@ -287,7 +287,6 @@ class ReverbPlateStereo(Stage):
         self.dsp_block = rvp.reverb_plate_stereo(
             self.fs,
             self.n_in,
-            max_room_size=max_room_size,
             predelay=predelay,
             max_predelay=max_predelay,
         )
