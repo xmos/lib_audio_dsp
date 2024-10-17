@@ -21,7 +21,7 @@ This code snippet will generate the pipeline diagram shown in :numref:`run_time_
 
 .. _run_time_example_fig:
 
-.. figure:: run_time_control.gv.png
+.. figure:: ../images/run_time_control.gv.png
    :width: 20%
 
    The example pipeline diagram

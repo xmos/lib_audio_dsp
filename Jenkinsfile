@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.33.0')
+@Library('xmos_jenkins_shared_library@v0.34.0')
 
 def runningOn(machine) {
   println "Stage running on:"
@@ -17,6 +17,7 @@ def versionsPairs = [
     "settings.yml": /version[\s:'\"]*([\d.]+)/,
     "CHANGELOG.rst": /(\d+\.\d+\.\d+)/,
     "**/lib_build_info.cmake": /set\(LIB_VERSION \"?([\d.]+)/,
+    "README.rst": /:\s*version:\s*([\d.]+)/
 ]
 
 getApproval()
@@ -32,7 +33,7 @@ pipeline {
   } // parameters
 
   environment {
-    XMOSDOC_VERSION = "v5.5.1"
+    XMOSDOC_VERSION = "v6.1.2"
   } // environment
 
   options {
@@ -284,17 +285,12 @@ pipeline {
               sh 'pip install -e ./python'
               sh 'pip install "pyright < 2.0"'
               sh 'pip install "ruff < 0.4"'
-              sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${XMOSDOC_VERSION}"
-              sh 'xmosdoc'
-              sh "make -C python check"
+              sh "make -C python check" // ruff check
               versionChecks checkReleased: false, versionsPairs: versionsPairs
+              buildDocs xmosdocVenvPath: "${WORKSPACE}", archiveZipOnly: true // needs python run
             }
           }
           post {
-            always {
-              archiveArtifacts artifacts: "doc/_out/**"
-              zip zipFile: "lib_audio_dsp_docs.zip", archive: true, dir: "doc/_out"
-            }
             cleanup {
               xcoreCleanSandbox()
             }

@@ -156,7 +156,7 @@ Setup Steps
    "http://127.0.0.1/" from the terminal into the browser. The following page
    should open:
 
-   .. figure:: images/jupyter_notebook_top_level.png
+   .. figure:: ../images/jupyter_notebook_top_level.png
       :width: 25%
 
       Top-level page of the Jupyter Notebook
@@ -164,7 +164,7 @@ Setup Steps
 #. Run all the cells from the browser. From the menu at the top of the page
    click *Run -> Run all cells*:
 
-   .. figure:: images/jupyter_notebook_run_tests.png
+   .. figure:: ../images/jupyter_notebook_run_tests.png
       :width: 100%
 
       Run menu of the Jupyter Notebook
@@ -175,7 +175,7 @@ Setup Steps
    Any configuration or compilation errors will be displayed in the notebook in
    the *Build and run* cell, as in the example below:
 
-   .. figure:: images/config_error.png
+   .. figure:: ../images/config_error.png
       :width: 100%
 
       Run error of the Jupyter Notebook
@@ -187,7 +187,7 @@ Setup Steps
 
       .. _pipeline_diagram:
 
-      .. figure:: images/pipeline_diagram.png
+      .. figure:: ../images/pipeline_diagram.png
          :width: 25%
 
          Diagram of a simple audio pipeline

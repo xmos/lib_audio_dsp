@@ -1,19 +1,5 @@
-.. _design_guide_section:
-
-Design Guide
-============
-
-Introduction
-^^^^^^^^^^^^
-
-This guide will cover the details of how the xcore DSP pipeline is generated from the Python description. This should
-enable the reader to debug their pipeline when issues arise and understand the resource usage of a generated DSP
-pipeline. This is an advanced guide intended for users who wish for a deeper understanding of the generated DSP pipeline
-that they have created. The accompanying tool and component guides should be consulted for the basic process of using
-this tool.
-
 Summary of the xcore.ai architecture
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+====================================
 
 A basic understanding of the xcore architecture is required in order to understand the consequences of various design
 choices that can be made in the DSP pipeline.
@@ -46,14 +32,14 @@ For more information about the xcore architecture, consult `The XMOS XS3 Archite
 package.
 
 The Architecture of the Generated Pipeline
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+==========================================
 
 :numref:`dsp-class-label` shows the relationship between the classes in an application with a generated DSP pipeline. A
 class in this context refers to a C struct and the functions that operate on it.
 
 .. _dsp-class-label:
 
-.. figure:: dsp_class.drawio.png
+.. figure:: ../images/dsp_class.drawio.png
    :width: 100%
 
    Class diagram of a lib_audio_dsp application
@@ -83,15 +69,15 @@ object.
 To summarise, the generated DSP pipeline will consume the number of threads specified in the design (at least 1). At
 least one other thread on the same tile must be available to exchange audio with the DSP pipeline.
 
-Understanding the Resource usage of the Generated Pipeline
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Resource usage of the Generated Pipeline
+========================================
 
 The resources that are consumed by the generated DSP pipeline are threads, chanends, and memory. Each DSP thread also has a finite number of instructions per sample that are available for DSP. It is the responsibility of the DSP designer to ensure that this limit is not exceeded on any of the threads.
 
 .. _design_chanend_usage_section:
 
 Chanend Usage
-*************
+-------------
 
 The following snippet of Python shows a DSP design; the pipeline diagram for the snippet is shown
 in :numref:`design_resources_gv_label`. This design splits 4 DSP stages amongst 3 threads. Threads 0 and 1 operate
@@ -107,7 +93,7 @@ The generated DSP threads and the APIs for exchanging inputs with the pipeline a
 
 .. _design_resources_gv_label:
 
-.. figure:: design_guide_resources.gv.png
+.. figure:: ../images/design_guide_resources.gv.png
    :width: 20%
 
    Output of `Pipeline.draw()` for the example pipeline
@@ -125,7 +111,7 @@ used for 3 DSP threads.
 
 .. _design_resources_chanends_label:
 
-.. figure:: chanends.drawio.png
+.. figure:: ../images/chanends.drawio.png
    :width: 100%
 
    Chanend usage for the example pipeline
@@ -133,7 +119,7 @@ used for 3 DSP threads.
 .. _design_thread_usage_section:
 
 Thread Usage
-************
+------------
 
 Thread usage of the DSP pipeline is discussed in the sections above. Understanding the thread usage of your application
 is a manual process. The application designer must have an understanding of how many threads are in use in their
@@ -143,7 +129,7 @@ xcore will trap when the application attempts to fork a ninth thread.
 .. _design_memory_usage_section:
 
 Memory Usage
-************
+------------
 
 All memory used in the generated DSP pipeline is statically allocated and therefore known at compile time. The Python
 design API cannot assist in understanding the memory usage of your application. The memory report which is displayed
@@ -153,7 +139,7 @@ pipeline as well as any other application code that is running on the tile.
 .. _design_mips_usage_section:
 
 MIPS Usage
-**********
+----------
 
 In order to operate in a real time audio system it is critical that each thread in the DSP pipeline can complete
 execution in less time than the sample period (or frame period if the frame size is greater than 1). It is this
@@ -185,10 +171,10 @@ case as some stages have data dependent execution time. Therefore, it is recomme
 pipeline with varying amplitude and frequencies before measuring the thread MIPS.
 
 Troubleshooting resource issues
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+===============================
 
 Tile exceeds memory limit
-*************************
+-------------------------
 
 Memory available check will report "FAILED" during linking. The :ref:`design_memory_usage_section` section describes how
 memory is allocated in the DSP pipeline. Recommended steps:
@@ -200,7 +186,7 @@ memory is allocated in the DSP pipeline. Recommended steps:
 Moving stages between threads will not impact the memory usage as all threads are on the same tile.
 
 Tile exceeds available chanends
-*******************************
+-------------------------------
 
 If a tile attempts to allocate too many chanends it will raise an illegal resource exception and cease execution. This
 can be detected easily with xgdb or xrun as it will print the following message::
@@ -211,14 +197,14 @@ The :ref:`design_chanend_usage_section` section describes how chanends are used 
 problem will require either redesigning the DSP or the application that runs on the same tile to use fewer chanends.
 
 Exchanging audio with the DSP pipeline blocks for too long
-**********************************************************
+==========================================================
 
 `adsp_pipeline_sink` or `adsp_pipeline_source` will block until data is available. The :ref:`design_mips_usage_section`
 section describes how to ensure the DSP pipeline meets timing. Identifying this particular issue will depend on the rest
 of the application. The result could be either dropped samples that are audible in the output or a complete application crash.
 
 Tile exceeds available threads
-*******************************
+------------------------------
 
 If a tile attempts to fork too many threads it will raise an illegal resource exception and cease execution. This can be
 detected easily with xgdb or xrun as it will print the following message::

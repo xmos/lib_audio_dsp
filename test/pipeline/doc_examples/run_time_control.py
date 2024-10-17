@@ -14,9 +14,10 @@ p.set_outputs(edge)
 # end example
 
 from pathlib import Path
-mod = Path(__file__)
-run_time_dir = mod.parents[3]/"doc"/"run_time_control_guide"
-p.draw(run_time_dir/f"{mod.stem}.gv")
+from utils import IMGS_PATH
+output_dir = IMGS_PATH / Path(__file__).with_suffix(".gv").name
+p.draw(output_dir)
+
 from audio_dsp.design.pipeline import generate_dsp_main
 generate_dsp_main(p, Path(__file__).parent/"run_time_dsp/src/dsp")
 

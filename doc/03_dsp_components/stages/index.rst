@@ -1,8 +1,7 @@
 .. _dsp_stages_section:
 
-##########
 DSP Stages
-##########
+==========
 
 DSP stages are high level blocks for use in the Python DSP
 pipeline tool. Each Stage has a Python and C implementation, allowing
