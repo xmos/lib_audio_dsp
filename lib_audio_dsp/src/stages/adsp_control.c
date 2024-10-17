@@ -46,9 +46,9 @@ adsp_control_status_t adsp_control_xscope_process(chanend_t c_xscope,
                                                   adsp_controller_t *ctrl
 )
 {
-    char from_host[XSCOPE_MAX_PACKET_LEN];
+    char data[XSCOPE_MAX_PACKET_LEN];
     int read;
-    xscope_data_from_host(c_xscope, (char *)from_host, &read);
+    xscope_data_from_host(c_xscope, (char *)data, &read);
     xassert(read <= XSCOPE_MAX_PACKET_LEN);
 
     adsp_control_status_t ret = ADSP_CONTROL_BUSY;
