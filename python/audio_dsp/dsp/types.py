@@ -123,7 +123,7 @@ class float_s32:
     def __init__(self, value, Q_sig=None):
         self.Q_sig = Q_sig
         if Q_sig and isinstance(value, float):
-            self.mant = utils.int32(round(value * 2**Q_sig))
+            self.mant = utils.int32(round(value * (1 << int(Q_sig))))
             self.exp = -Q_sig
         elif isinstance(value, (float, np.float32)):
             self.mant, self.exp = math.frexp(value)

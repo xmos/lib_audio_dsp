@@ -16,6 +16,24 @@ Q_VERB = 31
 _LESS_THAN_1 = ((2**Q_VERB) - 1) / (2**Q_VERB)
 
 
+def float_to_q_verb(x):
+    """Convert a floating point number to Q_VERB format. The input must
+    be between 0 and 1. As Q_VERB is typically Q31, care must be taken
+    to not overflow by scaling 1.0f*(2**31).
+    """
+    if x > 1 or x < 0:
+        raise ValueError("input must be between 0 and 1")
+
+    if x == 1:
+        x_int = utils.int32(2**31 - 1)
+    elif x == 0:
+        x_int = 0
+    else:
+        x_int = utils.int32(x * (2**Q_VERB))
+
+    return x_int
+
+
 def apply_gain_xcore(sample, gain):
     """Apply the gain to a sample using fixed-point math. Assumes that gain is in Q_VERB format."""
     acc = 1 << (Q_VERB - 1)
@@ -35,16 +53,16 @@ def scale_sat_int64_to_int32_floor(val):
     # this, but below 0 we truncate to -inf, so add just under 1 to go
     # up instead.
     if val < 0:
-        val += (2**Q_VERB) - 1
+        val += (1 << Q_VERB) - 1
         utils.int64(val)
 
     # saturate
-    if val > (2 ** (31 + Q_VERB) - 1):
+    if val > ((1 << (31 + Q_VERB)) - 1):
         warnings.warn("Saturation occurred", utils.SaturationWarning)
-        val = 2 ** (31 + Q_VERB) - 1
-    elif val < -(2 ** (31 + Q_VERB)):
+        val = (1 << (31 + Q_VERB)) - 1
+    elif val < -(1 << (31 + Q_VERB)):
         warnings.warn("Saturation occurred", utils.SaturationWarning)
-        val = -(2 ** (31 + Q_VERB))
+        val = -(1 << (31 + Q_VERB))
 
     # shift to int32
     y = utils.int32(val >> Q_VERB)
@@ -459,7 +477,7 @@ class reverb_room(dspg.dsp_block):
     @property
     def wet_db(self):
         """The gain applied to the wet signal in dB."""
-        return self._wet_db
+        return utils.db(self.wet)
 
     @wet_db.setter
     def wet_db(self, x):
@@ -467,14 +485,7 @@ class reverb_room(dspg.dsp_block):
             warnings.warn(f"Wet gain {x} saturates to 0 dB", UserWarning)
             x = 0
 
-        self._wet_db = x
-        self._wet = utils.db2gain(x)
-        if self.wet == 1:
-            self.wet_int = utils.int32(2**31 - 1)
-        elif self.wet == 0:
-            self.wet_int = 0
-        else:
-            self.wet_int = utils.int32(self.wet * (2**Q_VERB))
+        self.wet = utils.db2gain(x)
 
     @property
     def wet(self):
@@ -483,7 +494,8 @@ class reverb_room(dspg.dsp_block):
 
     @wet.setter
     def wet(self, x):
-        self.wet_db = utils.db(x)
+        self._wet = x
+        self.wet_int = float_to_q_verb(self.wet)
 
     @_deprecated(
         "1.0.0", "2.0.0", "Replace `reverb_room.set_wet_gain(x)` with `reverb_room.wet_db = x`"
@@ -502,7 +514,7 @@ class reverb_room(dspg.dsp_block):
     @property
     def dry_db(self):
         """The gain applied to the dry signal in dB."""
-        return self._dry_db
+        return utils.db(self.dry)
 
     @dry_db.setter
     def dry_db(self, x):
@@ -510,14 +522,7 @@ class reverb_room(dspg.dsp_block):
             warnings.warn(f"Dry gain {x} saturates to 0 dB", UserWarning)
             x = 0
 
-        self._dry_db = x
-        self._dry = utils.db2gain(x)
-        if self.dry == 1:
-            self.dry_int = utils.int32(2**31 - 1)
-        elif self.dry == 0:
-            self.dry_int = 0
-        else:
-            self.dry_int = utils.int32(self.dry * (2**Q_VERB))
+        self.dry = utils.db2gain(x)
 
     @property
     def dry(self):
@@ -526,7 +531,8 @@ class reverb_room(dspg.dsp_block):
 
     @dry.setter
     def dry(self, x):
-        self.dry_db = utils.db(x)
+        self._dry = x
+        self.dry_int = float_to_q_verb(self.dry)
 
     @_deprecated(
         "1.0.0", "2.0.0", "Replace `reverb_room.set_dry_gain(x)` with `reverb_room.dry_db = x`"

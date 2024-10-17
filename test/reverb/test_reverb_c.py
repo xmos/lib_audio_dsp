@@ -10,6 +10,7 @@ import pytest
 import shutil
 import soundfile as sf
 import subprocess
+from .. import test_utils as tu
 
 BIN_DIR = Path(__file__).parent / "bin"
 GEN_DIR = Path(__file__).parent / "autogen"
@@ -33,9 +34,13 @@ def get_sig(len=0.05):
     sig_int = float_to_qxx(sig_fl)
 
     name = "rv_sig_48k"
-    sig_int.tofile(BIN_DIR / str(name + ".bin"))
-    sf.write(GEN_DIR / str(name + ".wav"), sig_fl, int(FS), "PCM_32")
+    sig_path = BIN_DIR /  str(name + ".bin")
 
+    tu.xdist_safe_bin_write(sig_int, sig_path)
+
+    # wav file does not need to be locked as it is only used for debugging outside pytest
+    wav_path = GEN_DIR / str(name + ".wav")
+    sf.write(wav_path, sig_fl, int(FS), "PCM_32")
     return sig_fl
 
 
@@ -56,7 +61,6 @@ def get_c_wav(dir_name, app_name, verbose=False, sim=True):
 
 def run_py(uut: reverb.reverb_room, sig_fl, use_float_sig=True):
     out_int = np.zeros(sig_fl.size)
-    out_fl = np.zeros(sig_fl.size)
     sig_int = float_to_qxx(sig_fl)
 
     if use_float_sig:
@@ -67,13 +71,7 @@ def run_py(uut: reverb.reverb_room, sig_fl, use_float_sig=True):
             out_int[n] = uut.process_xcore(sig_int[n])
         out_int = qxx_to_float(out_int)
 
-    sf.write(GEN_DIR / "sig_py_int.wav", out_int, FS, "PCM_32")
-    uut.reset_state()
-
-    for n in range(sig_fl.size):
-        out_fl[n] = uut.process(sig_fl[n])
-
-    sf.write(GEN_DIR / "sig_py_flt.wav", out_fl, FS, "PCM_32")
+    # sf.write(GEN_DIR / "sig_py_int.wav", out_int, FS, "PCM_32")
 
     return out_int
 
@@ -84,7 +82,8 @@ def in_signal():
     GEN_DIR.mkdir(exist_ok=True, parents=True)
     return get_sig()
 
-@pytest.mark.parametrize("decay, damping", [[1.0, 1.0], [0.1, 0.5]])
+@pytest.mark.parametrize("decay, damping", [[1.0, 1.0], 
+                                            [0.1, 0.5]])
 @pytest.mark.parametrize("wet, dry, pregain", [[-1.0, -1.0, 0.015]]) 
 def test_reverb_room(in_signal, decay, damping, wet, dry, pregain):
     n_chans = 1
