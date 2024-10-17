@@ -89,3 +89,37 @@ adsp_control_status_t adsp_write_module_config(
         adsp_stage_control_cmd_t *cmd
 );
 
+
+/// Default xscope setup function. 
+/// 
+/// Sets up a single xscope probe with name ADSP, type XSCOPE_CONTINUOUS, and datatype XSCOPE_UINT.
+/// Should be called within xscope_user_init().
+void adsp_control_xscope_register_probe();
+
+/// Creates an xscope chanend and connects it to the host. Must be called on the same tile as the DSP pipeline.
+/// @return chanend_t
+chanend_t adsp_control_xscope_init();
+
+/// Process an xscope chanend containing a control command from the host.
+///
+/// @param c_xscope A chanend which has been connected to the host.
+/// @param ctrl An instance of adsp_controller_t which has been initialised to control the DSP pipeline.
+/// @return @ref adsp_control_status_t
+adsp_control_status_t adsp_control_xscope_process(
+    chanend_t c_xscope,
+    adsp_controller_t *ctrl
+);
+
+/// Creates an xscope handler thread for ADSP control.
+///
+/// Handles all xscope traffic and calls to @ref adsp_read_module_config and 
+/// @ref adsp_write_module_config. If the application already uses xscope, do 
+/// not call this function; instead, identify host-to-device packets by the ADSP
+/// header and pass them to @ref adsp_control_xscope_process manually.
+///
+/// @param adsp The DSP pipeline that will be controlled with this xscope thread.
+#ifndef __DOXYGEN__
+DECLARE_JOB(adsp_control_xscope, (adsp_pipeline_t *));
+#else
+void adsp_control_xscope(adsp_pipeline_t * adsp);
+#endif
