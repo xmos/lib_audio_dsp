@@ -118,7 +118,9 @@ class Pipeline:
         pipeline level control commands
     """
 
-    def __init__(self, n_in, identifier="auto", frame_size=1, fs=48000, generate_xscope_task=False):
+    def __init__(
+        self, n_in, identifier="auto", frame_size=1, fs=48000, generate_xscope_task=False
+    ):
         self._graph = Graph()
         self.threads = []
         self._n_in = n_in

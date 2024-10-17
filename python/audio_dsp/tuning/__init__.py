@@ -8,6 +8,7 @@ from audio_dsp.tuning.transport import *
 import numpy as np
 import tabulate
 
+
 def _validate_pipeline_checksum(pipeline: Pipeline, proto: TuningTransport):
     """
     Check if Python and device pipeline checksums match.
@@ -35,6 +36,7 @@ def _validate_pipeline_checksum(pipeline: Pipeline, proto: TuningTransport):
             )
         )
 
+
 def send_config_to_device(pipeline: Pipeline, protocol: TuningTransport):
     """
     Send the current config for all stages to the device.
@@ -54,6 +56,7 @@ def send_config_to_device(pipeline: Pipeline, protocol: TuningTransport):
             for command, value in stage.get_config().items():
                 payload = CommandPayload(stage, command, value)
                 proto.write(payload)
+
 
 def profile_pipeline(pipeline: Pipeline, protocol: TuningTransport):
     """

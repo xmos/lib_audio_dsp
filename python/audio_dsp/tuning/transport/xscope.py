@@ -13,6 +13,7 @@ from . import (
 )
 from .xscope_endpoint import Endpoint, QueueConsumer
 
+
 class SilentEndpoint(Endpoint):
     """Subclass of Endpoint which silences the on_register callback.
     Consequently, this subclass does not generate any print() statements
@@ -110,7 +111,7 @@ class XScopeTransport(TuningTransport):
         payload_bytes = bytes([payload.stage_index, command_id, n_bytes])
         if values is not None:
             payload_bytes += values
-        
+
         # print(f"sent: {payload_bytes}")
         return self.ep.publish(payload_bytes)
 

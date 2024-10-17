@@ -15,6 +15,8 @@ MultiValType = ValType | list[ValType] | tuple[ValType, ...] | None
 
 
 class CommandPayload:
+    """Class for holding all relevant information regarding a command."""
+
     cmd_types_byte_lengths = {
         "uint8_t": 1,
         "int8_t": 1,
@@ -62,6 +64,7 @@ class CommandPayload:
         self.command: str = command
 
     def to_bytes(self) -> tuple[int, bytes | None]:
+        """Convert this commands' values into a set of raw bytes."""
         retnum = 0
         retvals = None
 
@@ -125,8 +128,11 @@ class CommandPayload:
         if self.cmd_type in ("float", "float_s32_t"):
             raise DevicePayloadError
         return value.tobytes()
-    
+
     def from_bytes(self, data: bytes) -> "CommandPayload":
+        """Convert bytes received from the device on issue of this command to
+        bytes and return a valid CommandPayload object.
+        """
         struct_code = f"{self.cmd_n_values}{self.cmd_types_struct_map[self.cmd_type]}"
         ret: MultiValType = struct.unpack(struct_code, data)
 
@@ -182,7 +188,7 @@ class TuningTransport(contextlib.AbstractContextManager["TuningTransport"], abc.
         raise NotImplementedError
 
     @abc.abstractmethod
-    def read(self, payload: CommandPayload) -> tuple[ValType, ...]:
+    def read(self, payload: CommandPayload) -> MultiValType:
         """
         Read data from the device. This is expected to perform a write operation
         with no payload to request the device make ready the requested data,
