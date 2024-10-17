@@ -78,7 +78,7 @@ class CommandPayload:
             if isinstance(self.values, (int, float, str, np.integer)):
                 # Single argument
                 retvals = self._transform_single_value(self.values)
-                retnum = 1
+                retnum = len(retvals)
             elif isinstance(self.values, (list, tuple)):
                 # Multiple arguments
                 concat = bytes()
