@@ -287,7 +287,7 @@ pipeline {
               sh 'pip install "ruff < 0.4"'
               sh "make -C python check" // ruff check
               versionChecks checkReleased: false, versionsPairs: versionsPairs
-              buildDocs xmosdocVenvPath: "${WORKSPACE}", archiveZipOnly: true, xmosdocArgs: "-dvvv" // needs python run
+              buildDocs xmosdocVenvPath: "${WORKSPACE}", archiveZipOnly: true // needs python run
             }
           }
           post {
