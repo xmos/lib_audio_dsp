@@ -2,14 +2,7 @@ import numpy as np
 import argparse
 import math
 import os
-
-# TODO move to common code
-def quant(coefs, exp):
-    quantised = np.rint(np.ldexp(coefs, exp))
-    quantised_and_clipped = np.clip(quantised, np.iinfo(np.int32).min, np.iinfo(np.int32).max)
-    assert np.allclose(quantised, quantised_and_clipped)
-    return np.array(quantised_and_clipped, dtype=np.int64)
-
+import ref_fir as rf
 
 def emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_element = 32):
 
@@ -48,7 +41,7 @@ def emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_elem
         e = max(exponents)
         exp = bits_per_element - e - 1
 
-        quantised_coefs = quant(flat_fd_block, exp)
+        quantised_coefs = rf.quant(flat_fd_block, exp)
         block_properties.append([offset, exp])
 
         for quantised_coef in quantised_coefs:
@@ -75,8 +68,8 @@ def emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_elem
         counter += 1
     file_handle.write("};\n")
 
-    # then emit the fd_FIR_data_t struct
-    file_handle.write("fd_FIR_filter_t fd_fir_filter_" + name + ' = {\n')
+    # then emit the fd_fir_data_t struct
+    file_handle.write("fd_fir_filter_t fd_fir_filter_" + name + ' = {\n')
     file_handle.write('\t.coef_blocks = '+coef_blocks_name+',\n')
     file_handle.write('\t.td_block_length = ' + str(fd_block_length*2) +',\n')
     file_handle.write('\t.block_count = ' + str(phases) + ',\n')
@@ -84,90 +77,103 @@ def emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_elem
     file_handle.write("};\n")
 
 
-# TODO put this in a library for tb_block_fir and this to share
-# emit the debug filter coefs
-def emit_debug_filter(fh, coefs, name):
-    filter_length = len(coefs)
-    
-    max_val = np.max(np.abs(coefs))
-    _, e = np.frexp(max_val)
-    exp = 31 - e
-
-    quantised_filter = np.int32(np.rint(np.ldexp(coefs, exp)))
-    quantised_filter = np.clip(quantised_filter, np.iinfo(np.int32).min, np.iinfo(np.int32).max)
-    v = np.where(quantised_filter>0, np.iinfo(np.int32).max, np.iinfo(np.int32).min)
-
-    # Convert to pythons arb precision ints
-    max_accu = sum([a * b for a, b in zip(quantised_filter.tolist(), v.tolist())])
-
-    prod_shr = int(np.ceil(np.log2(max_accu / np.iinfo(np.int64).max)))
-    if prod_shr < 0:
-        prod_shr = 0
-
-    accu_shr = exp - prod_shr
-    coef_data_name = 'debug_' + name + '_filter_taps'
-    fh.write('int32_t __attribute__((aligned (8))) ' + coef_data_name + '[' + str(filter_length) + '] = {\n')
-    
-    counter = 1
-    for val in coefs:
-        int_val = np.int32(np.rint(np.ldexp(val, exp)))
-        fh.write('%12d'%(int_val))
-        if counter != filter_length:
-            fh.write(',\t')
-        if counter % 4 == 0:
-            fh.write('\n')
-        counter += 1
-    fh.write('};\n\n')
-
-    struct_name = "td_block_debug_fir_filter_" + name
-
-    fh.write("td_block_debug_fir_filter_t " + struct_name + ' = {\n')
-    fh.write('\t.coefs = '+ coef_data_name +',\n')
-    fh.write('\t.length = ' + str(filter_length) +',\n')
-    fh.write('\t.exponent = ' + str(-exp) + ',\n')
-    fh.write('\t.accu_shr = ' + str(accu_shr) + ',\n')
-    fh.write('\t.prod_shr = ' + str(prod_shr) + ',\n')
-    fh.write("};\n")
-    fh.write("\n")
-
-    return struct_name
 
 def process_array(td_coefs, filter_name, output_path, 
-                    frame_advance, frame_overlap, td_block_length, gain_dB = 0.0, debug = False):
-    
+                    frame_advance, frame_overlap, td_block_length, gain_dB = 0.0, 
+                    debug = False, warn = False, error = True, verbose = False):
+    td_coefs = np.array(td_coefs, dtype=np.float64)
+
     if not math.log2(td_block_length).is_integer():
-        print("Error: td_block_length is not a power of two")
-        exit(1)
+        if error: print("Error: td_block_length is not a power of two")
+        raise ValueError('Bad config')
 
     output_file_name = os.path.join(output_path, filter_name + '.h')
 
     original_td_filter_length = len(td_coefs)
+    if frame_advance < 1:
+        if error: print("Error: cannot have a zero or negative frame_advance")
+        raise ValueError('Bad config')
 
-    taps_per_block = td_block_length//2 + 1 - frame_overlap
+    if frame_overlap == None:
+        frame_overlap = 0
 
-    # the taps_per_block cannot exceed the frame_advance as this would result in
-    # outputting the same samples multiple times.
-    if taps_per_block > frame_advance:
-        taps_per_block = frame_advance
+    if frame_overlap < 0:
+        if error: print("Error: cannot have a negative frame_overlap")
+        raise ValueError('Bad config')
 
-    print('frame_advance', frame_advance)
-    print('td_block_length', td_block_length)
-    print('frame_overlap', frame_overlap)
-    print('taps_per_block', taps_per_block)
+    # for every frame advance we must output at least frame_advance samples plus the requested frame_overlap samples
+    minimum_output_samples = frame_overlap + frame_advance
+
+    if verbose: print('original_td_filter_length:', original_td_filter_length, 'frame_overlap', frame_overlap, 'minimum_output_samples', minimum_output_samples)
+
+    if minimum_output_samples <= td_block_length + 1 - original_td_filter_length:
+        # This is a single-phase FIR 
+        if verbose: print('This is a single-phase FIR')
+
+        taps_per_phase = original_td_filter_length
+        actual_output_sample_count = td_block_length + 1 - original_td_filter_length
+
+        phases = 1
+
+        # update the frame_overlap
+        new_frame_overlap = actual_output_sample_count - frame_advance 
+
+    else:
+        # This is a multi-phase FIR
+        if verbose: print('This is a multi-phase FIR')
+
+        # want to work out the minimum number of phases that provides the required 
+        # (frame_overlap+frame_advance) output samples, with the constraint of the 
+        # taps_per_phase must be no greater than frame_advance.
+
+        # these must be true for a multi-phase implementation 
+        taps_per_phase = frame_advance
+        actual_output_sample_count = td_block_length + 1 - taps_per_phase
+
+        if actual_output_sample_count < minimum_output_samples:
+            achievable_frame_overlap = actual_output_sample_count - frame_advance
+            if error: 
+                print('Error: frame_overlap of', frame_overlap, 'is unachievable.')
+                print('\tOption 1: reduce frame_overlap to', achievable_frame_overlap)
+                print('\tOption 2: decrease the frame_advance to ...')
+                print('\tOption 3: increase the td_block_length to ...')
+            raise ValueError('Unachievable config')
+
+        phases = (original_td_filter_length + taps_per_phase - 1) // taps_per_phase
+
+        assert phases > 1
+
+        new_frame_overlap = td_block_length + 1 - taps_per_phase - frame_advance
+
+    if new_frame_overlap != frame_overlap:
+        if warn:
+            print("Warning: requested a frame overlap of", frame_overlap, "but will get ", new_frame_overlap)
+            print("To increase efficiency, try increasing the length of the filter by", (new_frame_overlap - frame_overlap)*phases)
+        assert new_frame_overlap > frame_overlap
+        frame_overlap = new_frame_overlap
+
+    if verbose: print('actual_output_sample_count', actual_output_sample_count)
+    if verbose: print('frame_advance', frame_advance)
+    if verbose: print('td_block_length', td_block_length)
+    if verbose: print('frame_overlap', frame_overlap)
+    if verbose: print('taps_per_phase', taps_per_phase)
+    if verbose: print('phases', phases)
 
     # Calc the length the filter need to be to fill all blocks when zero padded
-    adjusted_td_length = ((original_td_filter_length + (taps_per_block - 1))//taps_per_block)*taps_per_block 
+    adjusted_td_length = taps_per_phase * phases
+    if verbose: print('adjusted_td_length', adjusted_td_length)
+    assert adjusted_td_length >= original_td_filter_length
 
-    print('adjusted_td_length', adjusted_td_length)
     # check length is efficient for td_block_length
-    if original_td_filter_length % taps_per_block != 0:
-        print("Warning: Chosen td_block_length and frame_overlap is not maximally efficient for filter of length", original_td_filter_length)
-        print("         Better would be:", adjusted_td_length, 'taps, currently it will be padded with', adjusted_td_length-original_td_filter_length, 'zeros.')
+    if original_td_filter_length % taps_per_phase != 0:
+        if warn:
+            print("Warning: Chosen td_block_length and frame_overlap is not maximally efficient for filter of length", original_td_filter_length)
+            print("         Better would be:", adjusted_td_length, 'taps, currently it will be padded with', adjusted_td_length-original_td_filter_length, 'zeros.')
     
     # pad filters
-    phases = adjusted_td_length//taps_per_block
-    assert adjusted_td_length%taps_per_block == 0
-    print('phases', phases)
+    assert adjusted_td_length%taps_per_phase == 0
+
+    # if phases is 1 then we can have an extra tap
 
     if adjusted_td_length != original_td_filter_length:
         padding = np.zeros(adjusted_td_length - original_td_filter_length)
@@ -178,33 +184,33 @@ def process_array(td_coefs, filter_name, output_path,
     # Apply the gains
     prepared_coefs *= 10.**(gain_dB/20.)
 
-    assert len(prepared_coefs)%taps_per_block == 0
+    assert len(prepared_coefs)%taps_per_phase == 0
 
     # split into blocks
-    blocked = np.reshape(prepared_coefs, (-1, taps_per_block))
-    print('blocked', blocked.shape)
+    blocked = np.reshape(prepared_coefs, (-1, taps_per_phase))
+    # print('blocked', blocked.shape)
 
-    padding_per_block = td_block_length - taps_per_block
-    print('padding_per_block', padding_per_block)
+    padding_per_block = td_block_length - taps_per_phase
+    # print('padding_per_block', padding_per_block)
 
     # zero pad the filter taps
     blocked_and_padded = np.concatenate((blocked, np.zeros((phases, padding_per_block))), axis = 1)
 
-    print('blocked_and_padded', blocked_and_padded.shape)
+    # print('blocked_and_padded', blocked_and_padded)
     # transform to the frequency domain
     Blocked_and_padded = np.fft.rfft(blocked_and_padded)
 
-    print('Blocked_and_padded', Blocked_and_padded.shape)
+    # print('Blocked_and_padded', Blocked_and_padded)
 
     with open(output_file_name, 'w') as fh:
         fh.write('#include "dsp/fd_block_fir.h"\n\n')
 
-        emit_filter(Blocked_and_padded, filter_name, fh, taps_per_block)
+        emit_filter(Blocked_and_padded, filter_name, fh, taps_per_phase)
 
         if debug:
-            emit_debug_filter(fh, coefs, filter_name)
+            rf.emit_debug_filter(fh, td_coefs, filter_name)
 
-            fh.write("#define debug_" + filter_name + "_DATA_BUFFER_ELEMENTS (" + str(len(coefs)) + ")\n")
+            fh.write("#define debug_" + filter_name + "_DATA_BUFFER_ELEMENTS (" + str(len(td_coefs)) + ")\n")
             fh.write("\n")
 
         prev_buffer_length = td_block_length - frame_advance
@@ -214,19 +220,19 @@ def process_array(td_coefs, filter_name, output_path,
         data_memory += ' + ('  + str(frame_overlap) + ')'
         data_memory += ' + ('  + str(prev_buffer_length) + ')'
         data_memory += ' + ('  + str(data_buffer_length) + ')'
+        data_memory += ' + 2'
 
         # emit the data define
         fh.write("//This is the count of int32_t words to allocate for one data channel.\n")
         fh.write("//i.e. int32_t channel_data[" + filter_name + "_DATA_BUFFER_ELEMENTS] = \{0\};\n")
         fh.write("#define " + filter_name + "_DATA_BUFFER_ELEMENTS (" + str(data_memory) + ")\n\n")
 
-
         fh.write("#define " + filter_name + "_TD_BLOCK_LENGTH (" + str(td_block_length) + ")\n")
         fh.write("#define " + filter_name + "_BLOCK_COUNT (" + str(phases) + ")\n")
         fh.write("#define " + filter_name + "_FRAME_ADVANCE (" + str(frame_advance) + ")\n")
-            
-
-    return
+        fh.write("#define " + filter_name + "_FRAME_OVERLAP (" + str(frame_overlap) + ")\n")
+        
+    return 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Optional app description')
@@ -253,8 +259,6 @@ if __name__ == '__main__':
 
     if args.frame_advance == None:
         frame_advance = args.block_length//2
-    if args.frame_overlap == None:
-        frame_overlap = 0
 
     output_path = os.path.realpath(args.output)
     filter_path = os.path.realpath(args.filter)
@@ -273,4 +277,4 @@ if __name__ == '__main__':
         filter_name = p.split('.')[0]
 
     process_array(coefs, filter_name, output_path, frame_advance, 
-                    frame_overlap, args.block_length, gain_dB = gain_dB, debug = args.debug)
+                    args.frame_overlap, args.block_length, gain_dB = gain_dB, debug = args.debug)

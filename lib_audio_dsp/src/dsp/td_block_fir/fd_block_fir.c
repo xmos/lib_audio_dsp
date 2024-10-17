@@ -25,14 +25,14 @@ void bfp_complex_s32_macc2(
         acc->hr = hr;
 }
 
-static unsigned get_tail(fd_FIR_data_t * fir_data){
+static unsigned get_tail(fd_fir_data_t * fir_data){
     unsigned tail = fir_data->head_index + 1;//TODO
     if(tail == fir_data->block_count)
         tail = 0;
     return tail;
 }
 
-static void advance_head(fd_FIR_data_t * fir_data){
+static void advance_head(fd_fir_data_t * fir_data){
     fir_data->head_index = get_tail(fir_data);
 }
 
@@ -40,7 +40,7 @@ static void advance_head(fd_FIR_data_t * fir_data){
 This adds fir_data->frame_advance samples to a FIFO of blocks within fir_data. 
 Blocks wll have overlapping data within them. This also performs a mono FFT.
 */
-void add_data(fd_FIR_data_t * fir_data, int32_t * samples_in, exponent_t exp){
+static void add_data(fd_fir_data_t * fir_data, int32_t * samples_in, exponent_t exp){
 
     //Calc the block to evict, i.e. the oldest one 
     unsigned head_tail_idx = get_tail(fir_data);
@@ -52,7 +52,7 @@ void add_data(fd_FIR_data_t * fir_data, int32_t * samples_in, exponent_t exp){
     memcpy(d, fir_data->prev_td_data, prev_len*sizeof(int32_t));
     memcpy(d + prev_len, samples_in, fir_data->frame_advance*sizeof(int32_t));
 
-    //Update the prev_td_datas
+    //Update the prev_td_data
     memcpy(fir_data->prev_td_data, d + fir_data->frame_advance, 
         prev_len*sizeof(int32_t));
 
@@ -69,7 +69,7 @@ void add_data(fd_FIR_data_t * fir_data, int32_t * samples_in, exponent_t exp){
 
 void fd_block_fir_add_data(
     int32_t * samples_in,
-    fd_FIR_data_t * fir_data)
+    fd_fir_data_t * fir_data)
 {
     exponent_t exp = INTERNAL_EXP;
     add_data(fir_data, samples_in, exp);
@@ -79,13 +79,13 @@ void fd_block_fir_add_data(
 __attribute__((noinline)) //bug workaround
 void fd_block_fir_compute(
     int32_t * samples_out, // must be int32_t samples_out[BLOCK_LENGTH];
-    fd_FIR_data_t * fir_data,
-    fd_FIR_filter_t * fir_filter)
+    fd_fir_data_t * fir_data,
+    fd_fir_filter_t * fir_filter)
 {
     assert(fir_data->td_block_length == fir_filter->td_block_length);
 
     bfp_complex_s32_t result;
-    // data_in does not need clearing as a massivly negative exponent takes care of it
+    // data_in does not need clearing as a massively negative exponent takes care of it
     // to make it represent a zero array.
     bfp_complex_s32_init(&result, (complex_s32_t*)samples_out, ZERO_EXP, fir_data->td_block_length / 2, 0); 
 
@@ -108,13 +108,14 @@ void fd_block_fir_compute(
     bfp_s32_use_exponent(time_domain_result, exp);
 
     // copy out the result
-    memcpy(samples_out, 
-        time_domain_result->data + fir_filter->taps_per_block, 
-        fir_data->frame_advance * sizeof(int32_t));
-
+    int output_samples = fir_filter->td_block_length + 1 - fir_filter->taps_per_block;
+    
+    for(int i=0;i<output_samples;i++){
+        samples_out[i] = time_domain_result->data[fir_filter->taps_per_block - 1 + i];
+    }
 }
 
-void fd_block_fir_data_init(fd_FIR_data_t * d, int32_t *data_blob, 
+void fd_block_fir_data_init(fd_fir_data_t * d, int32_t *data_blob, 
     uint32_t frame_advance, uint32_t td_block_length, uint32_t block_count){
 
     // These are the three properties
@@ -126,16 +127,21 @@ void fd_block_fir_data_init(fd_FIR_data_t * d, int32_t *data_blob,
     bfp_complex_s32_t * bfp_data_blocks = (bfp_complex_s32_t *)data_blob;
 
     int32_t * data_buffer = (int32_t*)(bfp_data_blocks + d->block_count);
+    
+    //if data_buffer isn't double word aligned then force it to be
+    if (((int)data_buffer)&0x7)
+        data_buffer += 1;
+
     for(int i=0;i<d->block_count;i++){
         bfp_data_blocks[i].data = (complex_s32_t *)data_buffer;
         bfp_data_blocks[i].exp = ZERO_EXP;
         bfp_data_blocks[i].length = d->td_block_length/2; 
         bfp_data_blocks[i].hr = 32;
         bfp_data_blocks[i].flags = 0;
-        data_buffer += d->td_block_length;
+        data_buffer += d->td_block_length;  //will always be 8 byte aligned
     }
     d->data_blocks = bfp_data_blocks;
-    d->prev_td_data = data_buffer;
+    d->prev_td_data = data_buffer;          //will always be 8 byte  aligned
     d->overlapping_frame_data = d->prev_td_data + prev_data_length;
     d->head_index = 0;
 }

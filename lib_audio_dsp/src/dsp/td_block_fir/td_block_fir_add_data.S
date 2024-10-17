@@ -10,8 +10,8 @@
 /*  
 
 void td_block_fir_add_data_asm( 
-    td_block_fir_data_t * data_struct,
-    int32_t input_block[TD_BLOCK_FIR_LENGTH]
+    int32_t samples_in[TD_BLOCK_FIR_LENGTH],
+    td_block_fir_data_t * fir_data
 );
 
 typedef struct td_block_FIR_data_t {
@@ -24,8 +24,8 @@ typedef struct td_block_FIR_data_t {
 #define FUNCTION_NAME   td_block_fir_add_data
 #define NSTACKWORDS     4
 
-#define data_struct_p       r0
-#define input_block_p       r1
+#define input_block_p       r0
+#define data_struct_p       r1
 
 .cc_top FUNCTION_NAME.function,FUNCTION_NAME
 FUNCTION_NAME:
@@ -33,13 +33,13 @@ FUNCTION_NAME:
   std r4, r5, sp[0]
   std r6, r7, sp[1]
 
-  {vldd input_block_p[0]; ldc r1, 32}
+  {vldd input_block_p[0]; ldc r0, 32}
   {ldw r3, data_struct_p[1]; nop} //load index
-  {ldw r7, data_struct_p[0]; add r6, r3, r1} //load data_stride
+  {ldw r7, data_struct_p[0]; add r6, r3, r0} //load data_stride
   {ldw r2, data_struct_p[2]; add r11, r7, r3} //load data_stride
   {vstd r11[0]; sub r3, r2, r3}
   {bt r3, td_block_fir_add_data_skip; nop}
-    {vstd r7[0]; mov r6, r1}
+    {vstd r7[0]; mov r6, r0}
 td_block_fir_add_data_skip:  
   stw r6, data_struct_p[1]
 

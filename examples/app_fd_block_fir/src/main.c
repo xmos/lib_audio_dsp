@@ -12,7 +12,7 @@ void foo(){
     //allocate a TD FIR for the example
     int32_t data[test_0_DATA_BUFFER_ELEMENTS];
     memset(data, 0, sizeof(data));
-    fd_FIR_data_t fd_fir_data_test_0;
+    fd_fir_data_t fd_fir_data_test_0;
 
     fd_block_fir_data_init(&fd_fir_data_test_0, data, 
         test_0_FRAME_ADVANCE, 

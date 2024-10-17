@@ -4,17 +4,17 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include "dsp/td_block_fir.h"
+#include "../autogen/dut.h"
 
-#define EXTRA_DATA_BLOCKS 8
+#define EXTRA_DATA_BLOCKS 2
 
-void bar(){
+int run_test(void){
     //allocate a TD FIR for reference
     int32_t __attribute__((aligned (8))) data_debug[debug_dut_DATA_BUFFER_ELEMENTS];
     
     //allocate a TD BLOCK FIR for reference
-    //one extra block for making the indexing easier and one as we are making TD_BLOCK_LENGTH outputs
-    int32_t __attribute__((aligned (8))) block_data_td[dut_DATA_BUFFER_ELEMENTS+TD_BLOCK_LENGTH*EXTRA_DATA_BLOCKS];
+    //one extra block for making the indexing easier and one as we are making TD_BLOCK_FIR_LENGTH outputs
+    int32_t __attribute__((aligned (8))) block_data_td[dut_DATA_BUFFER_ELEMENTS+TD_BLOCK_FIR_LENGTH*EXTRA_DATA_BLOCKS];
 
     for( int b=0;b<EXTRA_DATA_BLOCKS;b++){
 
@@ -24,31 +24,33 @@ void bar(){
 
         td_block_fir_data_t data;
 
-        td_block_fir_data_init(&data, block_data_td, (dut_DATA_BUFFER_ELEMENTS + TD_BLOCK_LENGTH*b)* sizeof(int32_t));
+        td_block_fir_data_init(&data, block_data_td, (dut_DATA_BUFFER_ELEMENTS + TD_BLOCK_FIR_LENGTH*b)* sizeof(int32_t));
 
         memset(block_data_td, 0, sizeof(block_data_td));
         memset(data_debug, 0, sizeof(data_debug));
 
-        for(int j=0;j<16;j++)
+        int phases = td_block_fir_filter_dut.block_count;
+
+        for(int j=0;j<phases+1;j++)
         {
-            int32_t new_data[TD_BLOCK_LENGTH];
-            for(int i=0;i<TD_BLOCK_LENGTH;i++)
+            int32_t new_data[TD_BLOCK_FIR_LENGTH];
+            for(int i=0;i<TD_BLOCK_FIR_LENGTH;i++)
                 new_data[i] = (rand()-rand())>>1;
 
-            int32_t td_processed[TD_BLOCK_LENGTH] = {0};
-            int32_t fd_processed[TD_BLOCK_LENGTH] = {0};
+            int32_t td_processed[TD_BLOCK_FIR_LENGTH] = {0};
+            int32_t fd_processed[TD_BLOCK_FIR_LENGTH] = {0};
 
-            for(int i=0;i<TD_BLOCK_LENGTH;i++)
-                td_processed[i] = td_fir_core_ref(new_data[i], &td_block_debug_fir_filter_dut, data_debug);
+            for(int i=0;i<TD_BLOCK_FIR_LENGTH;i++)
+                td_processed[i] = td_reference_fir(new_data[i], &td_block_debug_fir_filter_dut, data_debug);
 
-            td_block_fir_add_data(&data, new_data);
+            td_block_fir_add_data(new_data, &data);
 
-            td_block_fir_core(
+            td_block_fir_compute(
                 fd_processed,
                 &data,
                 &td_block_fir_filter_dut);
 
-            for(int i=0;i<TD_BLOCK_LENGTH;i++){
+            for(int i=0;i<TD_BLOCK_FIR_LENGTH;i++){
                 int error = td_processed[i] - fd_processed[i];
                 // printf("%ld %ld %.2f\n", td_processed[i], fd_processed[i], (float)td_processed[i] / (float)fd_processed[i]);
                 error_sum += error;
@@ -58,11 +60,20 @@ void bar(){
             }
 
         }
-        printf("avg error:%f avg abs error:%f\n", (float)error_sum / count, (float)abs_error_sum / count);
-        printf("\n");
+        float error_ave_abs =  (float)error_sum / count;
+        if(error_ave_abs<0)error_ave_abs=-error_ave_abs;
+        if (error_ave_abs > 4.0){
+            printf("avg error:%f avg abs error:%f\n", (float)error_sum / count, (float)abs_error_sum / count);
+            return 1;
+        }
+        if(((float)abs_error_sum / count) > 4.0){
+            printf("avg error:%f avg abs error:%f\n", (float)error_sum / count, (float)abs_error_sum / count);
+            return 1;
+        }
     }
+    return 0;
 }
 
-int main(){
-    bar();
+int main(void){
+    return run_test();
 }

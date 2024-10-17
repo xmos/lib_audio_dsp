@@ -48,10 +48,10 @@ void worker(chanend_t c,
         chan_in_buf_word(c, audio_channel_0, TD_BLOCK_FIR_LENGTH);
         chan_in_buf_word(c, audio_channel_1, TD_BLOCK_FIR_LENGTH);
 
-        td_block_fir_add_data(&d0, audio_channel_0);
+        td_block_fir_add_data(audio_channel_0, &d0);
         td_block_fir_compute(audio_channel_0, &d0, f0);
 
-        td_block_fir_add_data(&d1, audio_channel_1);
+        td_block_fir_add_data(audio_channel_1, &d1);
         td_block_fir_compute(audio_channel_1, &d1, f1);
 
         chan_out_buf_word(c, audio_channel_0, TD_BLOCK_FIR_LENGTH);

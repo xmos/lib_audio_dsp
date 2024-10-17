@@ -12,22 +12,22 @@ void td_block_fir_data_init(td_block_fir_data_t * d,
 #ifdef BUILD_TD_BLOCK_FIR_REF
 
 void td_block_fir_add_data_ref(
-    td_block_fir_data_t * data_struct,
-    int32_t input_block[TD_BLOCK_FIR_LENGTH]){
+    int32_t samples_in[TD_BLOCK_FIR_LENGTH],
+    td_block_fir_data_t * fir_data){
     
     int head;
 
     // if this is the end of the buffer then paste it onto the front too
-    memcpy((void*)data_struct->data + data_struct->index, input_block, sizeof(int32_t)*TD_BLOCK_FIR_LENGTH);
+    memcpy((void*)fir_data->data + fir_data->index, samples_in, sizeof(int32_t)*TD_BLOCK_FIR_LENGTH);
 
-    if(data_struct->index == data_struct->data_stride) {
-        memcpy(data_struct->data + 0, input_block, sizeof(int32_t)*TD_BLOCK_FIR_LENGTH);
+    if(fir_data->index == fir_data->data_stride) {
+        memcpy(fir_data->data + 0, samples_in, sizeof(int32_t)*TD_BLOCK_FIR_LENGTH);
         head = 32;
     } else {
-        head = data_struct->index + 32;
+        head = fir_data->index + 32;
     }
 
-    data_struct->index = head;
+    fir_data->index = head;
 }
 #if 0
 #include "vpu_scalar_ops.h"
@@ -61,27 +61,27 @@ static int64_t vlmaccr32(
 
 void td_block_fir_compute_ref(
     int32_t output_block[TD_BLOCK_FIR_LENGTH],
-    td_block_fir_data_t * data_struct, 
-    td_block_fir_filter_t * filter_struct
+    td_block_fir_data_t * fir_data, 
+    td_block_fir_filter_t * fir_filter
 ){
 
     int64_t accu[TD_BLOCK_FIR_LENGTH];
     memset(accu, 0, sizeof(accu));
 
-    void * data_p = (void*)data_struct->data 
-                        + data_struct->index 
-                        + data_struct->data_stride 
-                        - filter_struct->block_count*32;
+    void * data_p = (void*)fir_data->data 
+                        + fir_data->index 
+                        + fir_data->data_stride 
+                        - fir_filter->block_count*32;
     
-    int t = (data_struct->index - 32) / 32;
-    int s = filter_struct->block_count - t;
+    int t = (fir_data->index - 32) / 32;
+    int s = fir_filter->block_count - t;
 
     if(s <= 0) {
         t += s;
         s = 0;
     }
 
-    void * filter_p = filter_struct->coefs;
+    void * filter_p = fir_filter->coefs;
     while(s != 0) {
         for(int b=0;b<TD_BLOCK_FIR_LENGTH;b++){
             accu[TD_BLOCK_FIR_LENGTH - 1 - b] = vlmaccr32(accu[TD_BLOCK_FIR_LENGTH - 1 - b], data_p, filter_p);
@@ -91,7 +91,7 @@ void td_block_fir_compute_ref(
         filter_p += 32;
         s--;
     }
-    data_p -= data_struct->data_stride;
+    data_p -= fir_data->data_stride;
     while(t != 0) {
         for(int b=0;b<TD_BLOCK_FIR_LENGTH;b++){
             accu[TD_BLOCK_FIR_LENGTH - 1 - b] = vlmaccr32(accu[TD_BLOCK_FIR_LENGTH - 1 - b], data_p, filter_p);
@@ -102,8 +102,8 @@ void td_block_fir_compute_ref(
         t--;
     }
 
-    uint32_t accu_shr = filter_struct->accu_shr;
-    uint32_t accu_shl = filter_struct->accu_shl;
+    uint32_t accu_shr = fir_filter->accu_shr;
+    uint32_t accu_shl = fir_filter->accu_shl;
     
     for(int i=0;i<TD_BLOCK_FIR_LENGTH;i++){
         int64_t t = (accu[i] + (1 << (accu_shr-1))) >> accu_shr;

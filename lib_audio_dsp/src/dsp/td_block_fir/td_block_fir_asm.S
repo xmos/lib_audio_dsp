@@ -10,8 +10,8 @@
 /*  
 void td_block_fir_compute(
     int32_t output_block[TD_BLOCK_FIR_LENGTH],
-    td_block_fir_data_t * data_struct, 
-    td_block_fir_filter_t * filter_struct, 
+    td_block_fir_data_t * fir_data, 
+    td_block_fir_filter_t * fir_filter, 
 );
 
 typedef struct td_block_fir_data_t {

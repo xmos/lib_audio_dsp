@@ -1,11 +1,7 @@
 import numpy as np
 import argparse
 import os
-
-def quant(coefs, exp):
-    quantised = np.rint(np.ldexp(coefs, exp))
-    quantised = np.clip(quantised, np.iinfo(np.int32).min, np.iinfo(np.int32).max)
-    return np.array(quantised, dtype=np.int64)
+import ref_fir as rf
 
 def calc_max_accu(quantised_coefs, VPU_shr = 30):
     v = np.where(quantised_coefs > 0, np.iinfo(np.int32).max, np.iinfo(np.int32).min)
@@ -14,7 +10,6 @@ def calc_max_accu(quantised_coefs, VPU_shr = 30):
     for x, y in zip(v, quantised_coefs):
         accu += np.int64(np.rint((x*y)/2**VPU_shr))
     return accu
-
 
 def emit_filter(fh, coefs_padded, name, block_length, bits_per_element = 32):
 
@@ -30,13 +25,13 @@ def emit_filter(fh, coefs_padded, name, block_length, bits_per_element = 32):
     _, e = np.frexp(max_val)
     exp = bits_per_element - 2 - e
 
-    quantised_coefs = quant(coefs_padded, exp)
+    quantised_coefs = rf.quant(coefs_padded, exp)
     max_accu = calc_max_accu(quantised_coefs, VPU_shr)
 
     # This guarentees no accu overflow
     while max_accu > 2**(VPU_accu_bits-1) - 1:
         exp -= 1
-        quantised_coefs = quant(coefs_padded, exp)
+        quantised_coefs = rf.quant(coefs_padded, exp)
         max_accu = calc_max_accu(quantised_coefs)
 
     fh.write('int32_t __attribute__((aligned (8))) ' + coef_data_name + '[' + str(len(coefs_padded)) + '] = {\n')
@@ -69,55 +64,7 @@ def emit_filter(fh, coefs_padded, name, block_length, bits_per_element = 32):
     
     return filter_struct_name
 
-# emit the debug filter coefs
-def emit_debug_filter(fh, coefs, name):
-    filter_length = len(coefs)
-    
-    max_val = np.max(np.abs(coefs))
-    _, e = np.frexp(max_val)
-    exp = 31 - e
-
-    quantised_filter = np.int32(np.rint(np.ldexp(coefs, exp)))
-    quantised_filter = np.clip(quantised_filter, np.iinfo(np.int32).min, np.iinfo(np.int32).max)
-    v = np.where(quantised_filter>0, np.iinfo(np.int32).max, np.iinfo(np.int32).min)
-
-    # Convert to pythons arb precision ints
-    max_accu = sum([a * b for a, b in zip(quantised_filter.tolist(), v.tolist())])
-
-    prod_shr = int(np.ceil(np.log2(max_accu / np.iinfo(np.int64).max)))
-    if prod_shr < 0:
-        prod_shr = 0
-
-    accu_shr = exp - prod_shr
-    coef_data_name = 'debug_' + name + '_filter_taps'
-    fh.write('int32_t __attribute__((aligned (8))) ' + coef_data_name + '[' + str(filter_length) + '] = {\n')
-    
-    counter = 1
-    for val in coefs:
-        int_val = np.int32(np.rint(np.ldexp(val, exp)))
-        fh.write('%12d'%(int_val))
-        if counter != filter_length:
-            fh.write(',\t')
-        if counter % 4 == 0:
-            fh.write('\n')
-        counter += 1
-    fh.write('};\n\n')
-
-    struct_name = "td_block_debug_fir_filter_" + name
-
-    fh.write("td_block_debug_fir_filter_t " + struct_name + ' = {\n')
-    fh.write('\t.coefs = '+ coef_data_name +',\n')
-    fh.write('\t.length = ' + str(filter_length) +',\n')
-    fh.write('\t.exponent = ' + str(-exp) + ',\n')
-    fh.write('\t.accu_shr = ' + str(accu_shr) + ',\n')
-    fh.write('\t.prod_shr = ' + str(prod_shr) + ',\n')
-    fh.write("};\n")
-    fh.write("\n")
-
-    return struct_name
-
-
-def process_array(coefs, filter_name, output_path, gain_dB = 0.0, debug = False, block_length = 8):
+def process_array(coefs, filter_name, output_path, gain_dB = 0.0, debug = False, block_length = 8, silent = False):
 
     output_file_name = os.path.join(output_path, filter_name + '.h')
 
@@ -127,7 +74,7 @@ def process_array(coefs, filter_name, output_path, gain_dB = 0.0, debug = False,
     target_filter_bank_length = ((original_filter_length + block_length - 1)//block_length)*block_length
 
     if original_filter_length != target_filter_bank_length:
-        print("Warning: ", filter_name, " will be zero padded to length ", target_filter_bank_length)
+        if not silent: print("Warning: ", filter_name, " will be zero padded to length ", target_filter_bank_length)
         padding = np.zeros(target_filter_bank_length - original_filter_length)
         prepared_coefs = np.concatenate((coefs, padding))
     else:
@@ -145,7 +92,7 @@ def process_array(coefs, filter_name, output_path, gain_dB = 0.0, debug = False,
         emit_filter(fh, prepared_coefs, filter_name, block_length)
 
         if debug:
-            emit_debug_filter(fh, coefs, filter_name)
+            rf.emit_debug_filter(fh, coefs, filter_name)
 
             fh.write("#define debug_" + filter_name + "_DATA_BUFFER_ELEMENTS (" + str(len(coefs)) + ")\n")
             fh.write("\n")

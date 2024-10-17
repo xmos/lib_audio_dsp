@@ -7,15 +7,11 @@ from scipy.signal import firwin
 
 build_dir_name = "build"
 
-bin_dir = Path(__file__).parent / "bin"
-gen_dir = Path(__file__).parent / "autogen"
-build_dir = Path(__file__).parent / build_dir_name
-
 # I dont know how to do this properly
 sys.path.append('../../python/audio_dsp/dsp/')
-from td_block_fir import process_array
+from fd_block_fir import process_array
 
-def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_length = 8, frame_overlap = 0, sim = True, gain_dB = 0.0):
+def build_and_run_tests(dir_name, coefficients, frame_advance = None, td_block_length = 32, frame_overlap = 0, sim = True, gain_dB = 0.0):
 
     local_build_dir_name = build_dir_name
 
@@ -25,9 +21,14 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
 
     bin_dir.mkdir(exist_ok=True, parents=True)
     gen_dir.mkdir(exist_ok=True, parents=True)
+
+    if frame_advance == None:
+        frame_advance = max(td_block_length//2, 1)
+
     # run the filter_generator on the coefs
     try:
-        process_array(coefficients, "dut", gen_dir, gain_dB, debug = True, silent = True)
+        process_array(coefficients, "dut", gen_dir, frame_advance, frame_overlap, td_block_length, 
+                      gain_dB = gain_dB, debug = True, warn = False, error = False, verbose = False)
     except ValueError as ve:
         # print('Success (Expected Fail)')
         print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
@@ -36,15 +37,15 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
         # print('Fail', repr(error))
         print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
         return 1
-    
+
     # build the project
-    subprocess.check_output("cmake -B " + build_dir_name, cwd = dir_name, shell = True, stderr = subprocess.DEVNULL)
-    subprocess.check_output("xmake -C " + build_dir_name, cwd = dir_name, shell = True)
+    subprocess.check_output("cmake -B " + local_build_dir_name, cwd = dir_name, shell = True, stderr = subprocess.DEVNULL)
+    subprocess.check_output("xmake -C " + local_build_dir_name, cwd = dir_name, shell = True)
     
     app = "xsim" if sim else "xrun --io"
-    run_cmd = app + " --args " + str(bin_dir / "td_fir_test.xe") 
+    run_cmd = app + " --args " + str(bin_dir / "fd_fir_test.xe") 
     
-    proc = subprocess.run(run_cmd, capture_output=True, cwd = dir_name, shell = True)
+    proc = subprocess.run(run_cmd,  cwd = dir_name, shell = True)
 
     sig_int = proc.returncode
 
@@ -64,18 +65,28 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
 dir_name = '.'
 
 def test_trivial():
-    build_and_run_tests(dir_name, np.ones(1))
+    build_and_run_tests(dir_name, np.random.uniform(-0.125, 0.125, 34))
 
 def test_constant_value_variable_length():
-    for length in range(2, 17):
-        build_and_run_tests(dir_name, np.ones(length))
+    for td_block_length in [16, 32]:
+        for filter_length_mul in [1, 2, 3]:
+            for filter_length_mod in [-2, -1, 0, 1, 2, 3]:
+                filter_length = (td_block_length*filter_length_mul)//2 + filter_length_mod
+                for frame_overlap in range(0, 4):
+                    for frame_advance_mod in [-2, -1, 0, 1]:
+                        frame_advance = td_block_length//2 + frame_advance_mod
+                        build_and_run_tests(dir_name, 
+                                            np.ones(filter_length)/filter_length, 
+                                            td_block_length = td_block_length, 
+                                            frame_overlap = frame_overlap,
+                                            frame_advance = frame_advance)
 
 def test_random_value_variable_length():
-    for length in range(2, 17):
-        build_and_run_tests(dir_name, np.random.uniform(-1, 1, length))
+    for length in range(15, 19):
+        build_and_run_tests(dir_name, 0.125*np.random.uniform(-1, 1, length))
 
 def test_extreme_value_variable_length():
-    for length in range(2, 17):
+    for length in range(1, 18):
         c = np.random.randint(0, 2, length)*2 - 1
         build_and_run_tests(dir_name, c)
 
@@ -93,13 +104,12 @@ def test_random_neg_value_variable_length():
         build_and_run_tests(dir_name, np.abs(np.random.uniform(-1, 1, length)))
 
 def test_long_lengths():
-    for length in [128, 1024, 4096]:
-        for length_mod in [-1, 0, 1]:
-            build_and_run_tests(dir_name, np.random.uniform(-1, 1, length+length_mod))
+    for length in [1024, 4096]:
+        build_and_run_tests(dir_name, np.random.uniform(-1, 1, length))
 
 def test_real_filter():
-    for length in [127, 128, 129]:
-            build_and_run_tests(dir_name, firwin(length, 0.5))
+    for length in [16, 17, 18, 32, 33, 34, 127, 128, 129]:
+        build_and_run_tests(dir_name, firwin(length, 0.5))
             
 if __name__ == "__main__":
 
@@ -119,4 +129,3 @@ if __name__ == "__main__":
     test_extreme_value_variable_length()
     print("test_random_value_variable_length")
     test_random_value_variable_length()
-s
