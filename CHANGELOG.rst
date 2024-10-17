@@ -8,6 +8,7 @@ Unreleased
   * FIXED: Delay could return different type to input.
   * CHANGED: Removed host app.
   * ADDED: Tuning API added to Python library.
+  * CHANGED: Documentation restructured to improve readability.
 
 1.1.0
 -----
@@ -62,4 +63,3 @@ Unreleased
 -----
 
   * Initial release.
-

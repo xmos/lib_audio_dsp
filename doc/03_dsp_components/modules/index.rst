@@ -1,8 +1,7 @@
 .. _dsp_modules_section:
 
-###########
 DSP Modules
-###########
+===========
 
 In lib_audio_dsp, DSP modules are the lower level functions and APIs.
 These can be used directly without the pipeline building tool. The

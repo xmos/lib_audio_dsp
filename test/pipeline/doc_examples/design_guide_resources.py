@@ -23,7 +23,6 @@ p.set_outputs(e)
 # end example
 
 from pathlib import Path
-mod = Path(__file__)
-design_guide_dir = mod.parents[3]/"doc"/"design_guide"
-p.draw(design_guide_dir/f"{mod.stem}.gv")
-
+from utils import IMGS_PATH
+output_dir = IMGS_PATH / Path(__file__).with_suffix(".gv").name
+p.draw(output_dir)
