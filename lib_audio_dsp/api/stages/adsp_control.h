@@ -89,28 +89,26 @@ adsp_control_status_t adsp_write_module_config(
         adsp_stage_control_cmd_t *cmd
 );
 
-/// Process an xscope buffer containing a control command from the host.
-///
-/// Assumes that the buffer still contains the ADSP header string.
-///
-/// @param ctrl An instance of adsp_controller_t which has been initialised to control the DSP pipeline.
-/// @param data The data buffer populated by a call to xscope_data_from_host.
-/// @param tx_probe_id The probe ID over which to transmit data back to the host. 
-///                    This must have the name ADSP, type XSCOPE_CONTINUOUS, and datatype XSCOPE_UINT.
-/// @return @ref adsp_control_status_t
-adsp_control_status_t adsp_control_xscope_process(
-    adsp_controller_t *ctrl, 
-    char *data, 
-    int tx_probe_id
-);
-
 
 /// Default xscope setup function. 
 /// 
 /// Sets up a single xscope probe with name ADSP, type XSCOPE_CONTINUOUS, and datatype XSCOPE_UINT.
-/// Should be called within xscope_user_init(), but should not be called if the application intends
-/// to use xscope outside of this library.
-void adsp_control_xscope_init();
+/// Should be called within xscope_user_init().
+void adsp_control_xscope_register_probe();
+
+/// Creates an xscope chanend and connects it to the host. Must be called on the same tile as the DSP pipeline.
+/// @return chanend_t
+chanend_t adsp_control_xscope_init();
+
+/// Process an xscope chanend containing a control command from the host.
+///
+/// @param c_xscope A chanend which has been connected to the host.
+/// @param ctrl An instance of adsp_controller_t which has been initialised to control the DSP pipeline.
+/// @return @ref adsp_control_status_t
+adsp_control_status_t adsp_control_xscope_process(
+    chanend_t c_xscope,
+    adsp_controller_t *ctrl
+);
 
 /// Creates an xscope handler thread for ADSP control.
 ///

@@ -920,7 +920,7 @@ def _generate_dsp_ctrl() -> str:
 
 void xscope_user_init()
 {
-    adsp_control_xscope_init();
+    adsp_control_xscope_register_probe();
 }
 
     """

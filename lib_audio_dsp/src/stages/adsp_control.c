@@ -18,7 +18,7 @@
 #define WRITE_CMD(X) (~X & 0x80)
 #define CLEAR_TOP_BIT(X) (X & 0x7f)
 
-#define HEADER_SIZE 4 // bytes, currently ADSP
+#define HEADER_SIZE 0 // bytes, currently no header
 
 #define INSTANCE_IDX HEADER_SIZE
 #define CMD_IDX      HEADER_SIZE + 1
@@ -28,17 +28,29 @@
 #define DEFAULT_DSP_PROBE_ID 0
 #define XSCOPE_MAX_PACKET_LEN 256
 
-void adsp_control_xscope_init()
+void adsp_control_xscope_register_probe()
 {
     xscope_mode_lossless();
     xscope_register(1, XSCOPE_CONTINUOUS, "ADSP", XSCOPE_UINT, "Data");
     xscope_config_io(XSCOPE_IO_BASIC);
 }
 
-adsp_control_status_t adsp_control_xscope_process(adsp_controller_t *ctrl, 
-                                                  char *data, 
-                                                  int tx_probe_id)
+chanend_t adsp_control_xscope_init()
 {
+    chanend_t c_dsp_ctrl = chanend_alloc();
+    xscope_connect_data_from_host(c_dsp_ctrl);
+    return c_dsp_ctrl;
+}
+
+adsp_control_status_t adsp_control_xscope_process(chanend_t c_xscope,
+                                                  adsp_controller_t *ctrl
+)
+{
+    char from_host[XSCOPE_MAX_PACKET_LEN];
+    int read;
+    xscope_data_from_host(c_xscope, (char *)from_host, &read);
+    xassert(read <= XSCOPE_MAX_PACKET_LEN);
+
     adsp_control_status_t ret = ADSP_CONTROL_BUSY;
 
     // txfer format is {ADSP, instance_id, cmd_id, payload_len, payload...}
@@ -55,7 +67,7 @@ adsp_control_status_t adsp_control_xscope_process(adsp_controller_t *ctrl,
         {
             ret = adsp_read_module_config(ctrl, &cmd);
         }
-        xscope_bytes(tx_probe_id, cmd.payload_len, cmd.payload);
+        xscope_bytes(DEFAULT_DSP_PROBE_ID, cmd.payload_len, cmd.payload);
     }
     else
     {
@@ -70,25 +82,18 @@ adsp_control_status_t adsp_control_xscope_process(adsp_controller_t *ctrl,
 
 void adsp_control_xscope(adsp_pipeline_t *adsp)
 {
-    chanend_t c_dsp_ctrl = chanend_alloc();
-    xscope_connect_data_from_host(c_dsp_ctrl);
-
-    adsp_controller_t dsp_ctrl_controller;
-    adsp_controller_init(&dsp_ctrl_controller, adsp);
+    chanend_t c_dsp_ctrl = adsp_control_xscope_init();
+    adsp_controller_t ctrl;
+    adsp_controller_init(&ctrl, adsp);
 
     SELECT_RES(
         CASE_THEN(c_dsp_ctrl, host_transaction))
     {
-    host_transaction:
+    host_transaction: 
     {
-        char from_host[XSCOPE_MAX_PACKET_LEN];
-        int read;
-        xscope_data_from_host(c_dsp_ctrl, (char *)from_host, &read);
-        xassert(read <= XSCOPE_MAX_PACKET_LEN);
-
-        adsp_control_xscope_process(&dsp_ctrl_controller, 
-                                    from_host, 
-                                    DEFAULT_DSP_PROBE_ID);
+        adsp_control_status_t ret = adsp_control_xscope_process(c_dsp_ctrl,
+                                                                &ctrl);
+        xassert(ret == ADSP_CONTROL_SUCCESS);
 
         SELECT_CONTINUE_NO_RESET;
     }

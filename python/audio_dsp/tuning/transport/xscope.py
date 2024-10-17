@@ -185,13 +185,11 @@ class XScopeTransport(TuningTransport):
         if not self.connected:
             raise DeviceConnectionError
 
-        # Target schema is "ADSP", instance_id, cmd_id, payload_len, payload.
-        # Start with the header
-        payload_bytes = b"ADSP"
+        # Target schema is instance_id, cmd_id, payload_len, payload.
         # Extract the instance_id, cmd_id, payload_len from payload
         command_id = payload.command | (0x80 if read_cmd else 0x00)
         command_size = payload.size * self.cmd_types_byte_lengths[payload.cmd_type]
-        payload_bytes += bytes([payload.index, command_id, command_size])
+        payload_bytes = bytes([payload.index, command_id, command_size])
         # Add on the transformed values
         transformed_values = self._transform_values(payload.value, payload.cmd_type)
         if transformed_values is not None:
