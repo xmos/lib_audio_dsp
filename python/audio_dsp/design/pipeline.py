@@ -98,6 +98,13 @@ class Pipeline:
         Size of the input frame of all input channels
     fs : int
         Sample rate of the input channels
+    generate_xscope_task : bool
+        Determines whether the generated pipeline automatically instantiates a
+        task to handle tuning over xscope. False by default. If False, the
+        application code will need to explicitly call the
+        "adsp_control_xscope_*" functions defined in adsp_control.h in order to
+        handle tuning over xscope, such as that undertaken by the
+        XScopeTransport() class.
 
     Attributes
     ----------
@@ -111,7 +118,7 @@ class Pipeline:
         pipeline level control commands
     """
 
-    def __init__(self, n_in, identifier="auto", frame_size=1, fs=48000, generate_xscope_task=True):
+    def __init__(self, n_in, identifier="auto", frame_size=1, fs=48000, generate_xscope_task=False):
         self._graph = Graph()
         self.threads = []
         self._n_in = n_in
