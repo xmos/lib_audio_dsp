@@ -12,14 +12,6 @@ def buildApps(appList) {
   }
 }
 
-def buildDocsInt(String zipFileName) { // for now we dont use Jenkis plugin due to autodoc issues
-    withVenv {
-        sh 'pip install git+ssh://git@github.com/xmos/xmosdoc@${XMOSDOC_VERSION}'
-        sh 'xmosdoc'
-        zip zipFile: zipFileName, archive: true, dir: 'doc/_build'
-    }
-}
-
 def versionsPairs = [
     "python/pyproject.toml": /version[\s='\"]*([\d.]+)/,
     "settings.yml": /version[\s:'\"]*([\d.]+)/,
@@ -295,8 +287,8 @@ pipeline {
               sh 'pip install "ruff < 0.4"'
               sh "make -C python check" // ruff check
               versionChecks checkReleased: false, versionsPairs: versionsPairs
+              buildDocs(xmosdocVenvPath: "${WORKSPACE}", archiveZipOnly: true) // needs python run
             }
-            buildDocsInt("lib_audio_dsp_docs.zip")
           }
           post {
             cleanup {
