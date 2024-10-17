@@ -118,4 +118,8 @@ adsp_control_status_t adsp_control_xscope_process(
 /// header and pass them to @ref adsp_control_xscope_process manually.
 ///
 /// @param adsp The DSP pipeline that will be controlled with this xscope thread.
+#ifndef __DOXYGEN__
 DECLARE_JOB(adsp_control_xscope, (adsp_pipeline_t *));
+#else
+void adsp_control_xscope(adsp_pipeline_t * adsp);
+#endif
