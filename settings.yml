@@ -1,41 +1,20 @@
-project: lib_audio_dsp
+# This file relates to internal XMOS infrastructure and should be ignored by external users
+
+lib_name: lib_audio_dsp
+project: '{{lib_name}}'
+title: '{{lib_name}}: Audio DSP Library'
 version: 1.1.0
 
-## example of overridable setting
-# watermarks is redefined in documentation and again for a specific product
-# eg different products might have different setting but we'd like to provide defaults
-watermarks: []
-
-products:
-  lib_audio_dsp:
-    documentation:
-      build_path: doc/_build
-      output_path: doc/_out
-
 documentation:
-  title: Audio DSP Library
-  root_doc: index.rst
+  run_before: |
+    python doc/autogen.py
   exclude_patterns_path: doc/exclude_patterns.inc
   substitutions_path: doc/substitutions.inc
   linkcheck_ignore_regex: 
     - ".*127\\.0\\.0\\.1.*"
     - ".*lib_audio_dsp"  # this repo is private
-  doc_dirname: doc
-  build_path: doc/_build
-  output_path: doc/_out
-  doxygen_dirname: _doxygen
-  doctrees_dirname: _doctrees
-  watermarks: []
-  autosection_label_depth: 3
-  latex_toc_depth: 3
-  latex_secnum_depth: 3
-  enable_latex_index: false
-  custom_ref_directives:
-    my-special-thing: A special thing for a special project
-  cognidox_part_number: XM-015034-PC
-  run_before: |
-    python doc/autogen.py
-  extra_sphinx_opts: [-W]
+  root_doc: doc/lib_audio_dsp.rst
+  cognidox_part_number: XM-015103-UG
   use_numpydoc: true
   doxygen_projects:
     lib_audio_dsp:
@@ -45,17 +24,14 @@ documentation:
         GENERATE_LATEX = yes
         WARN_AS_ERROR = yes
         WARN_IF_UNDOCUMENTED = no
-
   pdfs:
-    doc/tool_user_guide/index:
-      pdf_title: '{{product}} - Tool User Guide'
-      pdf_filename: '{{product}}_tool_user_guide_v{{version}}'
-    doc/dsp_components/index:
-      pdf_title: '{{product}} - DSP Components'
-      pdf_filename: '{{product}}_dsp_components_v{{version}}'
-    doc/design_guide/index:
-      pdf_title: '{{product}} - DSP Design Guide'
-      pdf_filename: '{{product}}_design_guide_v{{version}}'
-    doc/run_time_control_guide/index:
-      pdf_title: '{{product}} - DSP Run-time Control guide'
-      pdf_filename: '{{product}}_run_time_control_guide_v{{version}}'
+    doc/lib_audio_dsp:
+      pdf_title: '{{title}}'
+      pdf_filename: '{{lib_name}}_v{{version}}'
+    README.rst:
+      pdf_title: '{{title}} (README)'
+      pdf_filename: '{{lib_name}}_v{{version}}_readme'
+      pdf_short: yes
+
+software:
+  cognidox_part_number: XM-015102-SM
