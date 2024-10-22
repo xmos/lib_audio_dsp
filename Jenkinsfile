@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.33.0')
+@Library('xmos_jenkins_shared_library@v0.34.0')
 
 def runningOn(machine) {
   println "Stage running on:"
@@ -17,6 +17,7 @@ def versionsPairs = [
     "settings.yml": /version[\s:'\"]*([\d.]+)/,
     "CHANGELOG.rst": /(\d+\.\d+\.\d+)/,
     "**/lib_build_info.cmake": /set\(LIB_VERSION \"?([\d.]+)/,
+    "README.rst": /:\s*version:\s*([\d.]+)/
 ]
 
 getApproval()
@@ -32,7 +33,7 @@ pipeline {
   } // parameters
 
   environment {
-    XMOSDOC_VERSION = "v5.5.1"
+    XMOSDOC_VERSION = "v6.1.2"
   } // environment
 
   options {
@@ -284,17 +285,12 @@ pipeline {
               sh 'pip install -e ./python'
               sh 'pip install "pyright < 2.0"'
               sh 'pip install "ruff < 0.4"'
-              sh "pip install git+ssh://git@github.com/xmos/xmosdoc@${XMOSDOC_VERSION}"
-              sh 'xmosdoc'
-              sh "make -C python check"
+              sh "make -C python check" // ruff check
               versionChecks checkReleased: false, versionsPairs: versionsPairs
+              buildDocs xmosdocVenvPath: "${WORKSPACE}", archiveZipOnly: true // needs python run
             }
           }
           post {
-            always {
-              archiveArtifacts artifacts: "doc/_out/**"
-              zip zipFile: "lib_audio_dsp_docs.zip", archive: true, dir: "doc/_out"
-            }
             cleanup {
               xcoreCleanSandbox()
             }
@@ -382,164 +378,6 @@ pipeline {
             }
           }
         } // Hardware test 2
-
-        // Host app on Windows
-        stage ('Win32 Host Build & Test') {
-          agent {
-            label 'sw-bld-win0'
-          }
-          stages {
-            stage ('Build') {
-              steps {
-                runningOn(env.NODE_NAME)
-                // build
-                dir("lib_audio_dsp") {
-                  checkout scm
-                }
-                dir('lib_audio_dsp/host/dsp_host') {
-                  // Enable the XTC tools for xSCOPE
-                  withTools('15.2.1') { //TODO fix endpoint issue to upgrade to 15.3.1
-                    withVS('vcvars32.bat') {
-                      bat 'cmake -G "Ninja" -B build -DTESTING=ON'
-                      bat 'cd build && ninja'
-                    }
-                  }
-                }
-              }
-            }
-            stage ('Test') {
-              steps {
-                dir("lib_audio_dsp") {
-                  createVenv("requirements.txt")
-                  withVenv{
-                    // Enable the XTC tools for xSCOPE
-                    withTools('15.2.1') { //TODO fix endpoint issue to upgrade to 15.3.1
-                      bat 'pip install -r requirements.txt'
-                      bat 'pip install jinja2'
-                    }
-                  }
-                  withVenv{
-                    dir('test/host') {
-                      bat 'pytest -s'
-                    }
-                  }
-                }
-              }
-            }
-          } // stages
-          post {
-            cleanup {
-              xcoreCleanSandbox()
-            }
-          }
-        }// Windows
-
-        // Host app on Linux
-        stage ('Linux x86_64 Host Build & Test') {
-          agent {
-            label 'linux&&x86_64'
-            }
-          stages {
-            stage ('Build') {
-              steps {
-                runningOn(env.NODE_NAME)
-                // build
-                dir("lib_audio_dsp") {
-                  checkout scm
-                }
-                dir('lib_audio_dsp/host/dsp_host') {
-                  // Enable the XTC tools for xSCOPE
-                  withTools(params.TOOLS_VERSION) {
-                    sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
-                  }
-                }
-              }
-            }
-            stage ('Test') {
-              steps {
-                dir("lib_audio_dsp") {
-                  createVenv("requirements.txt")
-                  withVenv{
-                    // Enable the XTC tools for xSCOPE
-                    withTools(params.TOOLS_VERSION) {
-                      sh 'pip install -r requirements.txt'
-                      sh 'pip install jinja2'
-                    }
-                  }
-                  withVenv{
-                    dir('test/host') {
-                      sh 'pytest -s'
-                    }
-                  }
-                }
-              }
-            }
-          } // stages
-          post {
-            cleanup {
-              xcoreCleanSandbox()
-            }
-          }
-        } // Linux x86_64
-
-        // Host app on Max x86_64
-        stage ('Mac x86_64 Host Build & Test') {
-          agent {
-            label 'macos&&x86_64'
-          }
-          stages {
-            stage ('Build') {
-              steps {
-                runningOn(env.NODE_NAME)
-                // build
-                dir("lib_audio_dsp") {
-                  checkout scm
-                }
-                dir('lib_audio_dsp/host/dsp_host') {
-                  // Enable the XTC tools for xSCOPE
-                  withTools(params.TOOLS_VERSION) {
-                    sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
-                  }
-                }
-              }
-            }
-            // The stage for the tests has not been added, see https://xmosjira.atlassian.net/browse/LCD-294 for more details.
-          } // stages
-          post {
-            cleanup {
-              xcoreCleanSandbox()
-            }
-          }
-        } // Mac x86_64
-
-        // Host app on Max arm64
-        stage ('Mac arm64 Host Build & Test') {
-          agent {
-            label 'macos&&arm64'
-          }
-          stages {
-            stage ('Build') {
-              steps {
-                runningOn(env.NODE_NAME)
-                // build
-                dir("lib_audio_dsp") {
-                  checkout scm
-                }
-                dir('lib_audio_dsp/host/dsp_host') {
-                  withTools(params.TOOLS_VERSION) {
-                    sh 'cmake -B build -DTESTING=ON && cd build && make -j4'
-                  }
-                }
-              }
-            }
-            // The stage for the tests has not been added, see https://xmosjira.atlassian.net/browse/LCD-294 for more details.
-          } // stages
-          post {
-            cleanup {
-              xcoreCleanSandbox()
-            }
-          }
-        } // Mac arm64
       } // parallel
     } // CI
   } // stages
