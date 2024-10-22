@@ -129,4 +129,4 @@ def test_reverb_plate_c(in_signal, decay, damping, wet, dry, pregain):
 
   # try switch then we have process_xcore
   #np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
-  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=1e-6)
+  np.testing.assert_allclose(out_c, out_py, rtol=0, atol=1e-6)

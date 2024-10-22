@@ -480,21 +480,6 @@ class reverb_plate_stereo(dspg.dsp_block):
         self.allpasses[3].feedback = self.input_diffusion_2
 
     @property
-    def wet(self):
-        """The linear gain applied to the wet signal."""
-        return self._wet
-
-    # override wet setter to also set wet_1 and wet_2
-    @wet.setter
-    def wet(self, x):
-        self._wet = x
-        self.wet_1 = self.wet * (self.width / 2 + 0.5)
-        self.wet_2 = self.wet * ((1 - self.width) / 2)
-
-        self.wet_1_int = rv.float_to_q_verb(self.wet_1)
-        self.wet_2_int = rv.float_to_q_verb(self.wet_2)
-
-    @property
     def width(self):
         """Stereo separation of the reverberated signal."""
         return self._width
