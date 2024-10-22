@@ -251,18 +251,10 @@ class ReverbRoomStereo(ReverbRoom):
 
 class ReverbPlateStereo(Stage):
     """
-    The room reverb stage. This is based on Freeverb by Jezar at
-    Dreampoint, and consists of 8 parallel comb filters fed into 4
-    series all-pass filters.
+    The streo room plate stage.
 
     Parameters
     ----------
-    max_room_size
-        Sets the maximum room size for this reverb. The ``room_size``
-        parameter sets the fraction of this value actually used at any
-        given time. For optimal memory usage, max_room_size should be
-        set so that the longest reverb tail occurs when
-        ``room_size=1.0``.
     predelay : float, optional
         The delay applied to the wet channel in ms.
     max_predelay : float, optional
@@ -270,8 +262,8 @@ class ReverbPlateStereo(Stage):
 
     Attributes
     ----------
-    dsp_block : :class:`audio_dsp.dsp.reverb.reverb_room`
-        The DSP block class; see :ref:`ReverbRoom`
+    dsp_block : :class:`audio_dsp.dsp.reverb.reverb_plate_streo`
+        The DSP block class; see :ref:`ReverbPlateStereo`
         for implementation details.
     """
 
@@ -290,12 +282,12 @@ class ReverbPlateStereo(Stage):
             predelay=predelay,
             max_predelay=max_predelay,
         )
-        self.set_control_field_cb("decay", lambda: self.dsp_block.decay)
-        self.set_control_field_cb("damping", lambda: self.dsp_block.damping)
-        self.set_control_field_cb("diffusion", lambda: self.dsp_block.diffusion)
-        self.set_control_field_cb("bandwidth", lambda: self.dsp_block.bandwidth)
-        self.set_control_field_cb("input_diffusion_1", lambda: self.dsp_block.input_diffusion_1)
-        self.set_control_field_cb("input_diffusion_2", lambda: self.dsp_block.input_diffusion_2)
+        self.set_control_field_cb("decay", lambda: self.dsp_block.allpasses[4].feedback_int)
+        self.set_control_field_cb("damping", lambda: self.dsp_block.lowpasses[1].damp1_int)
+        self.set_control_field_cb("diffusion", lambda: self.dsp_block.mod_allpasses[0].feedback_int)
+        self.set_control_field_cb("bandwidth", lambda: self.dsp_block.lowpasses[0].damp1_int)
+        self.set_control_field_cb("input_diffusion_1", lambda: self.dsp_block.allpasses[0].feedback_int)
+        self.set_control_field_cb("input_diffusion_2", lambda: self.dsp_block.allpasses[2].feedback_int)
 
         self.set_control_field_cb("wet_gain1", lambda: self.dsp_block.wet_1_int)
         self.set_control_field_cb("wet_gain2", lambda: self.dsp_block.wet_2_int)

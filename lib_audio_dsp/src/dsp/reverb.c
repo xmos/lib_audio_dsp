@@ -116,7 +116,7 @@ static inline allpass_fv_t allpass_fv_init(
 {
     allpass_fv_t ap;
     ap.max_delay = max_delay;
-    ap.delay = 0;
+    ap.delay = max_delay;
     ap.feedback = feedback_gain;
     ap.buffer_idx = 0;
     ap.buffer = mem_manager_alloc(mem, max_delay * sizeof(int32_t));

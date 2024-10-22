@@ -151,19 +151,11 @@ class allpass_2(rv.allpass_fv):
 
 
 class reverb_plate_stereo(dspg.dsp_block):
-    """Generate a stereo room reverb effect. This is based on Freeverb by
-    Jezar at Dreampoint. Each channel consists of 8 parallel comb filters fed
-    into 4 series all-pass filters, and the reverberator outputs are mixed
+    """Generate a stereo plate reverb effect. The reverberator outputs are mixed
     according to the ``width`` parameter.
 
     Parameters
     ----------
-    max_room_size : float, optional
-        sets the maximum size of the delay buffers, can only be set
-        at initialisation.
-    room_size : float, optional
-        how big the room is as a proportion of max_room_size. This
-        sets delay line lengths and must be between 0 and 1.
     decay : int, optional
         The length of the reverberation of the room, between 0 and 1.
     damping : float, optional
@@ -204,23 +196,10 @@ class reverb_plate_stereo(dspg.dsp_block):
     dry_int : int
         The linear gain applied to the dry signal as a fixed point
         number.
-    comb_lengths : np.ndarray
-        An array of the comb filter delay line lengths, scaled by
-        max_room_size.
-    ap_length : np.ndarray
-        An array of the all pass filter delay line lengths, scaled by
-        max_room_size.
-    combs : list
-        A list of comb_fv objects containing the comb filters for the
-        reverb.
     allpasses : list
         A list of allpass_fv objects containing the all pass filters for
         the reverb.
-    room_size : float
     decay : float
-    feedback : float
-    feedback_int : int
-        feedback as a fixed point integer.
     damping : float
     damping_int : int
         damping as a fixed point integer.
@@ -268,14 +247,12 @@ class reverb_plate_stereo(dspg.dsp_block):
         default_ap_lengths = np.array([142, 107, 379, 277, 2656, 1800])
         default_delay_lengths = np.array([4217, 4453, 3136, 3720])
         default_mod_ap_lengths = np.array([908, 672])
-        default_mod_rate = 8
 
         # buffer lengths
         length_scaling = self.fs / 29761
-        self.ap_lengths = (default_ap_lengths * length_scaling).astype(int)
-        self.delay_lengths = (default_delay_lengths * length_scaling).astype(int)
-        self.mod_ap_lengths = (default_mod_ap_lengths * length_scaling).astype(int)
-        self.mod_length = int(default_mod_rate * length_scaling)
+        ap_lengths = (default_ap_lengths * length_scaling).astype(int)
+        delay_lengths = (default_delay_lengths * length_scaling).astype(int)
+        mod_ap_lengths = (default_mod_ap_lengths * length_scaling).astype(int)
 
         self._bandwidth = bandwidth
         self._damping = damping
@@ -292,24 +269,24 @@ class reverb_plate_stereo(dspg.dsp_block):
             ]
 
         self.allpasses = [
-            allpass_2(self.ap_lengths[0], self.input_diffusion_1),
-            allpass_2(self.ap_lengths[1], self.input_diffusion_1),
-            allpass_2(self.ap_lengths[2], self.input_diffusion_2),
-            allpass_2(self.ap_lengths[3], self.input_diffusion_2),
-            allpass_2(self.ap_lengths[4], self.decay_diffusion_2),
-            allpass_2(self.ap_lengths[5], self.decay_diffusion_2),
+            allpass_2(ap_lengths[0], self.input_diffusion_1),
+            allpass_2(ap_lengths[1], self.input_diffusion_1),
+            allpass_2(ap_lengths[2], self.input_diffusion_2),
+            allpass_2(ap_lengths[3], self.input_diffusion_2),
+            allpass_2(ap_lengths[4], self.decay_diffusion_2),
+            allpass_2(ap_lengths[5], self.decay_diffusion_2),
         ]
 
         self.delays = [
-            sc.delay(fs, 1, self.delay_lengths[0], self.delay_lengths[0], "samples"),
-            sc.delay(fs, 1, self.delay_lengths[1], self.delay_lengths[1], "samples"),
-            sc.delay(fs, 1, self.delay_lengths[2], self.delay_lengths[2], "samples"),
-            sc.delay(fs, 1, self.delay_lengths[3], self.delay_lengths[3], "samples"),
+            sc.delay(fs, 1, delay_lengths[0], delay_lengths[0], "samples"),
+            sc.delay(fs, 1, delay_lengths[1], delay_lengths[1], "samples"),
+            sc.delay(fs, 1, delay_lengths[2], delay_lengths[2], "samples"),
+            sc.delay(fs, 1, delay_lengths[3], delay_lengths[3], "samples"),
         ]
 
         self.mod_allpasses = [
-            allpass_2(self.mod_ap_lengths[0], -self.diffusion),
-            allpass_2(self.mod_ap_lengths[1], -self.diffusion),
+            allpass_2(mod_ap_lengths[0], -self.diffusion),
+            allpass_2(mod_ap_lengths[1], -self.diffusion),
         ]
 
         default_taps_l = np.array([266, 2974, 1913, 1996, 1990, 187, 1066])
@@ -343,11 +320,6 @@ class reverb_plate_stereo(dspg.dsp_block):
             self.taps_l[n] = self.tap_lens_l[n] - self.taps_l[n]
             self.taps_r[n] = self.tap_lens_r[n] - self.taps_r[n]
 
-
-        # set filter delays
-        # self.damping = damping
-        # self.room_size = room_size
-
     def reset_state(self):
         """Reset all the delay line values to zero."""
         for ap in self.allpasses:
@@ -378,6 +350,7 @@ class reverb_plate_stereo(dspg.dsp_block):
     def dry(self, x):
         self._dry = x
         self.dry_int = rv.float_to_q_verb(self.dry)
+
     @property
     def wet_db(self):
         """The gain applied to the wet signal in dB."""
@@ -411,7 +384,6 @@ class reverb_plate_stereo(dspg.dsp_block):
         """The length of the reverberation of the room, between 0 and 1."""
         return self._decay
 
-
     @decay.setter
     def decay(self, x):
         if not (0 <= x <= 1):
@@ -425,7 +397,6 @@ class reverb_plate_stereo(dspg.dsp_block):
     def decay_diffusion_2(self):
         """The length of the reverberation of the room, between 0 and 1."""
         return self._decay_diffusion_2
-
 
     @decay_diffusion_2.setter
     def decay_diffusion_2(self, x):
