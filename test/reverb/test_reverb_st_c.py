@@ -107,8 +107,8 @@ def test_reverb_plate_c(in_signal, decay, damping, wet, dry, pregain):
   rv = rvp.reverb_plate_stereo(fs, n_chans, decay = decay, damping = damping, predelay = predelay, pregain = pregain, wet_gain_db = wet, dry_gain_db = dry)
   test_name = f"reverb_plate_{decay}_{damping}_{wet}_{dry}_{pregain}"
 
-  # [pregain, we1, we2, dry, decay, damp, diffusion, bandwidth, in_dif1, in_dif2]
-  rv_info = [rv.pregain_int, rv.wet_1_int, rv.wet_2_int, rv.dry_int, rv.allpasses[4].feedback_int, rv.lowpasses[1].damp1_int,
+  # [pregain, we1, we2, dry, decay, decay_dif, damp, diffusion, bandwidth, in_dif1, in_dif2]
+  rv_info = [rv.pregain_int, rv.wet_1_int, rv.wet_2_int, rv.dry_int, rv.decay_int, rv.allpasses[4].feedback_int, rv.lowpasses[1].damp1_int,
             rv.mod_allpasses[0].feedback_int, rv.lowpasses[0].damp1_int, rv.allpasses[0].feedback_int, rv.allpasses[2].feedback_int]
   rv_info = np.array(rv_info, dtype=np.int32)
 

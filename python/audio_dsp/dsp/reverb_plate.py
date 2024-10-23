@@ -256,7 +256,6 @@ class reverb_plate_stereo(dspg.dsp_block):
 
         self._bandwidth = bandwidth
         self._damping = damping
-        self._decay = decay
         self._diffusion = diffusion
         self._decay_diffusion_2 = np.clip(decay + 0.15, 0.25, 0.5)
         self._input_diffusion_1 = input_diffusion_1
@@ -288,6 +287,8 @@ class reverb_plate_stereo(dspg.dsp_block):
             allpass_2(mod_ap_lengths[0], -self.diffusion),
             allpass_2(mod_ap_lengths[1], -self.diffusion),
         ]
+
+        self.decay = decay
 
         default_taps_l = np.array([266, 2974, 1913, 1996, 1990, 187, 1066])
         default_taps_r = np.array([353, 3627, 1228, 2673, 2111, 335, 121])
@@ -391,6 +392,7 @@ class reverb_plate_stereo(dspg.dsp_block):
             x = np.clip(x, 0, _LESS_THAN_1)
             warnings.warn(f"Decay {bad_x} saturates to {x}", UserWarning)
         self._decay = x
+        self.decay_int = rv.float_to_q_verb(x)
         self.decay_diffusion_2 = x + 0.15
 
     @property

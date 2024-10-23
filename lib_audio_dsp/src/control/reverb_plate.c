@@ -56,16 +56,17 @@ reverb_plate_t adsp_reverb_plate_init(
   rv.wet_gain1 = wet_gains[0];
   rv.wet_gain2 = wet_gains[1];
 
+  rv.decay = float_to_Q_RVP_pos(decay);
   decay += 0.15;
   decay = (decay < 0.25) ? 0.25 : decay;
   decay = (decay > 0.5) ? 0.5 : decay;
-  int32_t decay_int = float_to_Q_RVP_pos(decay);
+  int32_t decay_diff = float_to_Q_RVP_pos(decay);
   int32_t diffusion_int = -float_to_Q_RVP_pos(diffusion);
   int32_t in_dif1 = float_to_Q_RVP_pos(in_diffusion_1);
   int32_t in_dif2 = float_to_Q_RVP_pos(in_diffusion_2);
   int32_t predelay_samps = predelay * fs / 1000;
   int32_t max_predelay_samps = max_predelay * fs / 1000;
 
-  adsp_reverb_plate_init_filters(&rv, fs, decay_int, diffusion_int, in_dif1, in_dif2, max_predelay_samps, predelay_samps, reverb_heap);
+  adsp_reverb_plate_init_filters(&rv, fs, decay_diff, diffusion_int, in_dif1, in_dif2, max_predelay_samps, predelay_samps, reverb_heap);
   return rv;
 }

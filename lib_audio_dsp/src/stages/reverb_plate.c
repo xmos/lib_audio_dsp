@@ -29,7 +29,7 @@ void reverb_plate_init(module_instance_t* instance,
     float fs = constants->sampling_freq;
     uint32_t max_predelay = constants->max_predelay;
     uint32_t predelay = config->predelay;
-    int32_t decay = config->decay;
+    int32_t decay_diff = config->decay_diffusion_2;
     int32_t diff = config->diffusion;
     int32_t in_diff1 = config->input_diffusion_1;
     int32_t in_diff2 = config->input_diffusion_2;
@@ -43,12 +43,13 @@ void reverb_plate_init(module_instance_t* instance,
     uint8_t *reverb_heap = adsp_bump_allocator_malloc(allocator, REVERB_PLATE_STAGE_REQUIRED_MEMORY(fs, max_predelay));
     memset(reverb_heap, 0, REVERB_PLATE_STAGE_REQUIRED_MEMORY(fs, max_predelay));
 
+    state->rv.decay = config->decay;
     state->rv.pre_gain = config->pregain;
     state->rv.wet_gain1 = config->wet_gain1;
     state->rv.wet_gain2 = config->wet_gain2;
     state->rv.dry_gain = config->dry_gain;
 
-    adsp_reverb_plate_init_filters(&state->rv, fs, decay, diff, in_diff1, in_diff2, max_predelay, predelay, reverb_heap);
+    adsp_reverb_plate_init_filters(&state->rv, fs, decay_diff, diff, in_diff1, in_diff2, max_predelay, predelay, reverb_heap);
 }
 
 void reverb_plate_process(int32_t **input, int32_t **output, void *app_data_state)
@@ -82,6 +83,7 @@ void reverb_plate_control(void *module_state, module_control_t *control)
         state->rv.wet_gain1 = config->wet_gain1;
         state->rv.wet_gain2 = config->wet_gain2;
         state->rv.dry_gain = config->dry_gain;
+        state->rv.decay = config->decay;
         state->rv.predelay.delay = config->predelay;
         // damping is always at least 1
         int32_t damp2 = (uint32_t)(1<<31) - config->bandwidth;
@@ -94,7 +96,7 @@ void reverb_plate_control(void *module_state, module_control_t *control)
             state->rv.lowpasses[i + 1].damp_1 = config->damping;
             state->rv.lowpasses[i + 1].damp_2 = damp2;
             state->rv.allpasses[i + 2].feedback = config->input_diffusion_2;
-            state->rv.allpasses[i + 4].feedback = config->decay;
+            state->rv.allpasses[i + 4].feedback = config->decay_diffusion_2;
         }
         control->config_rw_state = config_none_pending;
     }
@@ -108,13 +110,14 @@ void reverb_plate_control(void *module_state, module_control_t *control)
         config->wet_gain1 = state->rv.wet_gain1;
         config->wet_gain2 = state->rv.wet_gain2;
         config->dry_gain = state->rv.dry_gain;
+        config->decay = state->rv.decay;
         config->bandwidth = state->rv.lowpasses[0].damp_1;
         config->damping = state->rv.lowpasses[1].damp_1;
         config->predelay = state->rv.predelay.delay;
         config->diffusion = state->rv.mod_allpasses[0].feedback;
         config->input_diffusion_1 = state->rv.allpasses[0].feedback;
         config->input_diffusion_2 = state->rv.allpasses[2].feedback;
-        config->decay = state->rv.allpasses[4].feedback;
+        config->decay_diffusion_2 = state->rv.allpasses[4].feedback;
         control->config_rw_state = config_read_updated;
     }
     else {

@@ -35,13 +35,14 @@ int main()
   int in_len = (ftell(in) / sizeof(int32_t)) / 2; // stereo
   fseek(in, 0, SEEK_SET);
 
-  int32_t pregain, wet1, wet2, dry, decay, damp, diff, bw, diff1, diff2;
+  int32_t pregain, wet1, wet2, dry, decay, dc_diff, damp, diff, bw, diff1, diff2;
 
   fread(&pregain, sizeof(int32_t), 1, info);
   fread(&wet1, sizeof(int32_t), 1, info);
   fread(&wet2, sizeof(int32_t), 1, info);
   fread(&dry, sizeof(int32_t), 1, info);
   fread(&decay, sizeof(int32_t), 1, info);
+  fread(&dc_diff, sizeof(int32_t), 1, info);
   fread(&damp, sizeof(int32_t), 1, info);
   fread(&diff, sizeof(int32_t), 1, info);
   fread(&bw, sizeof(int32_t), 1, info);
@@ -55,11 +56,12 @@ int main()
   rv.wet_gain1 = wet1;
   rv.wet_gain2 = wet2;
   rv.dry_gain = dry;
+  rv.decay = decay;
   rv.lowpasses[0] = lowpass_1ord_init(bw);
   rv.lowpasses[1] = lowpass_1ord_init(damp);
   rv.lowpasses[2] = lowpass_1ord_init(damp);
 
-  adsp_reverb_plate_init_filters(&rv, fs, decay, diff, diff1, diff2, PD_SAMPS, PD_SAMPS, reverb_heap);
+  adsp_reverb_plate_init_filters(&rv, fs, dc_diff, diff, diff1, diff2, PD_SAMPS, PD_SAMPS, reverb_heap);
 
   for (int i = 0; i < in_len; i++)
   {
