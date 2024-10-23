@@ -5,6 +5,7 @@ import audio_dsp.dsp.signal_chain as sc
 import audio_dsp.dsp.utils as utils
 from copy import deepcopy
 import warnings
+from reverb_base import reverb_stereo_base
 
 
 class lowpass_1ord(dspg.dsp_block):
@@ -150,7 +151,7 @@ class allpass_2(rv.allpass_fv):
         return output
 
 
-class reverb_plate_stereo(dspg.dsp_block):
+class reverb_plate_stereo(reverb_stereo_base):
     """Generate a stereo plate reverb effect. The reverberator outputs are mixed
     according to the ``width`` parameter.
 
@@ -160,42 +161,10 @@ class reverb_plate_stereo(dspg.dsp_block):
         The length of the reverberation of the room, between 0 and 1.
     damping : float, optional
         how much high frequency attenuation in the room, between 0 and 1
-    width : float, optional
-        how much stereo separation there is between the left and
-        right channels. Setting width to 0 will yield a mono signal,
-        whilst setting width to 1 will yield the most stereo
-        separation.
-    wet_gain_db : int, optional
-        wet signal gain, less than 0 dB.
-    dry_gain_db : int, optional
-        dry signal gain, less than 0 dB.
-    pregain : float, optional
-        the amount of gain applied to the signal before being passed
-        into the reverb, less than 1. If the reverb raises an
-        OverflowWarning, this value should be reduced until it does not.
-        The default value of 0.015 should be sufficient for most Q27
-        signals.
-    predelay : float, optional
-        the delay applied to the wet channel in ms.
-    max_predelay : float, optional
-        the maximum predelay in ms.
 
 
     Attributes
     ----------
-    pregain : float
-    pregain_int : int
-        The pregain applied before the reverb as a fixed point number.
-    wet_db : float
-    wet : float
-    wet_int : int
-        The linear gain applied to the wet signal as a fixed point
-        number.
-    dry : float
-    dry_db : float
-    dry_int : int
-        The linear gain applied to the dry signal as a fixed point
-        number.
     allpasses : list
         A list of allpass_fv objects containing the all pass filters for
         the reverb.
@@ -203,8 +172,6 @@ class reverb_plate_stereo(dspg.dsp_block):
     damping : float
     damping_int : int
         damping as a fixed point integer.
-    predelay : float
-    width : float
     """
 
     def __init__(
@@ -226,20 +193,10 @@ class reverb_plate_stereo(dspg.dsp_block):
         Q_sig=dspg.Q_SIG,
     ):
         assert n_chans == 2, f"Stereo reverb only supports 2 channel. {n_chans} specified"
+        
+        # initalise wet/dry gains, width, and predelay
+        super().__init__(fs, n_chans, width, wet_gain_db, dry_gain_db, pregain, predelay, max_predelay, Q_sig)
 
-        dspg.dsp_block.__init__(self, fs, n_chans, Q_sig)
-
-        # predelay
-        max_predelay = predelay if max_predelay == None else max_predelay
-        # single channel delay line, as input is shared
-        self._predelay = sc.delay(fs, 1, max_predelay, predelay, "ms")
-
-        self._width = width
-
-        # gains
-        self.pregain = pregain
-        self.wet_db = wet_gain_db
-        self.dry_db = dry_gain_db
         self._effect_gain = sc.fixed_gain(fs, n_chans, 10)
 
         # the dattoro delay line lengths are for 29761Hz, so
@@ -328,57 +285,6 @@ class reverb_plate_stereo(dspg.dsp_block):
         for de in self.delays:
             de.reset_state()
         self._predelay.reset_state()
-
-    @property
-    def dry_db(self):
-        """The gain applied to the dry signal in dB."""
-        return utils.db(self.dry)
-
-    @dry_db.setter
-    def dry_db(self, x):
-        if x > 0:
-            warnings.warn(f"Dry gain {x} saturates to 0 dB", UserWarning)
-            x = 0
-
-        self.dry = utils.db2gain(x)
-
-    @property
-    def dry(self):
-        """The linear gain applied to the dry signal."""
-        return self._dry
-
-    @dry.setter
-    def dry(self, x):
-        self._dry = x
-        self.dry_int = rv.float_to_q_verb(self.dry)
-
-    @property
-    def wet_db(self):
-        """The gain applied to the wet signal in dB."""
-        return utils.db(self.wet)
-
-    @wet_db.setter
-    def wet_db(self, x):
-        if x > 0:
-            warnings.warn(f"Wet gain {x} saturates to 0 dB", UserWarning)
-            x = 0
-
-        self.wet = utils.db2gain(x)
-
-    @property
-    def wet(self):
-        """The linear gain applied to the wet signal."""
-        return self._wet
-
-    # override wet setter to also set wet_1 and wet_2
-    @wet.setter
-    def wet(self, x):
-        self._wet = x
-        self.wet_1 = self.wet * (self.width / 2 + 0.5)
-        self.wet_2 = self.wet * ((1 - self.width) / 2)
-
-        self.wet_1_int = rv.float_to_q_verb(self.wet_1)
-        self.wet_2_int = rv.float_to_q_verb(self.wet_2)
 
     @property
     def decay(self):
@@ -480,63 +386,6 @@ class reverb_plate_stereo(dspg.dsp_block):
         self._input_diffusion_2 = x
         self.allpasses[2].feedback = self.input_diffusion_2
         self.allpasses[3].feedback = self.input_diffusion_2
-
-    @property
-    def width(self):
-        """Stereo separation of the reverberated signal."""
-        return self._width
-
-    @width.setter
-    def width(self, value):
-        if not (0 <= value <= 1):
-            raise ValueError("width must be between 0 and 1.")
-        self._width = value
-        # recalculate wet gains
-        self.wet = self.wet
-
-    @property
-    def pregain(self):
-        """
-        The pregain applied before the reverb as a floating point
-        number.
-        """
-        return self._pregain
-
-    @pregain.setter
-    def pregain(self, x):
-        if not (0 <= x < 1):
-            bad_x = x
-            x = np.clip(x, 0, _LESS_THAN_1)
-            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
-
-        self._pregain = x
-        self.pregain_int = utils.int32(x * 2**rv.Q_VERB)
-
-    def set_wet_dry_mix(self, mix):
-        """
-        Will mix wet and dry signal by adjusting wet and dry gains.
-        So that when the mix is 0, the output signal is fully dry,
-        when 1, the output signal is fully wet. Tries to maintain a
-        stable signal level using -4.5 dB Pan Law.
-
-        Parameters
-        ----------
-        mix : float
-            The wet/dry mix, must be [0, 1].
-        """
-        if not (0 <= mix <= 1):
-            bad_mix = mix
-            mix = np.clip(mix, 0, 1)
-            warnings.warn(f"Wet/dry mix {bad_mix} saturates to {mix}", UserWarning)
-        # get an angle [0, pi /2]
-        omega = mix * np.pi / 2
-
-        # -4.5 dB
-        self.dry = np.sqrt((1 - mix) * np.cos(omega))
-        self.wet = np.sqrt(mix * np.sin(omega))
-        # there's an extra gain of 10 dB added to the wet channel to
-        # make it similar level to the dry, so that the mixing is smooth.
-        # Couldn't add it to the wet gain itself as it's in q31
 
     def process(self, sample, channel=0):
         """Process is not implemented for the stereo reverb, as it needs

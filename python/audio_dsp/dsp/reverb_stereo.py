@@ -9,18 +9,20 @@ import audio_dsp.dsp.signal_chain as sc
 import audio_dsp.dsp.utils as utils
 from copy import deepcopy
 import warnings
+import audio_dsp.dsp.reverb_base as rvb
+
 
 
 def _2maccs_sat_xcore(in1, in2, gain1, gain2):
-    acc = 1 << (rv.Q_VERB - 1)
+    acc = 1 << (rvb.Q_VERB - 1)
     acc += in1 * gain1
     acc += in2 * gain2
     utils.int64(acc)
-    y = utils.int32_mult_sat_extract(acc, 1, rv.Q_VERB)
+    y = utils.int32_mult_sat_extract(acc, 1, rvb.Q_VERB)
     return y
 
 
-class reverb_room_stereo(rv.reverb_room):
+class reverb_room_stereo(rvb.reverb_stereo_base):
     """Generate a stereo room reverb effect. This is based on Freeverb by
     Jezar at Dreampoint. Each channel consists of 8 parallel comb filters fed
     into 4 series all-pass filters, and the reverberator outputs are mixed
@@ -38,42 +40,9 @@ class reverb_room_stereo(rv.reverb_room):
         The length of the reverberation of the room, between 0 and 1.
     damping : float, optional
         how much high frequency attenuation in the room, between 0 and 1
-    width : float, optional
-        how much stereo separation there is between the left and
-        right channels. Setting width to 0 will yield a mono signal,
-        whilst setting width to 1 will yield the most stereo
-        separation.
-    wet_gain_db : int, optional
-        wet signal gain, less than 0 dB.
-    dry_gain_db : int, optional
-        dry signal gain, less than 0 dB.
-    pregain : float, optional
-        the amount of gain applied to the signal before being passed
-        into the reverb, less than 1. If the reverb raises an
-        OverflowWarning, this value should be reduced until it does not.
-        The default value of 0.015 should be sufficient for most Q27
-        signals.
-    predelay : float, optional
-        the delay applied to the wet channel in ms.
-    max_predelay : float, optional
-        the maximum predelay in ms.
-
 
     Attributes
     ----------
-    pregain : float
-    pregain_int : int
-        The pregain applied before the reverb as a fixed point number.
-    wet_db : float
-    wet : float
-    wet_int : int
-        The linear gain applied to the wet signal as a fixed point
-        number.
-    dry : float
-    dry_db : float
-    dry_int : int
-        The linear gain applied to the dry signal as a fixed point
-        number.
     comb_lengths : np.ndarray
         An array of the comb filter delay line lengths, scaled by
         max_room_size.
@@ -94,8 +63,6 @@ class reverb_room_stereo(rv.reverb_room):
     damping : float
     damping_int : int
         damping as a fixed point integer.
-    predelay : float
-    width : float
     """
 
     def __init__(
@@ -115,20 +82,10 @@ class reverb_room_stereo(rv.reverb_room):
         Q_sig=dspg.Q_SIG,
     ):
         assert n_chans == 2, f"Stereo reverb only supports 2 channel. {n_chans} specified"
+        
+        # initalise wet/dry gains, width, and predelay
+        super().__init__(fs, n_chans, width, wet_gain_db, dry_gain_db, pregain, predelay, max_predelay, Q_sig)
 
-        dspg.dsp_block.__init__(self, fs, n_chans, Q_sig)
-
-        # predelay
-        max_predelay = predelay if max_predelay == None else max_predelay
-        # single channel delay line, as input is shared
-        self._predelay = sc.delay(fs, 1, max_predelay, predelay, "ms")
-
-        self._width = width
-
-        # gains
-        self.pregain = pregain
-        self.wet_db = wet_gain_db
-        self.dry_db = dry_gain_db
         self._effect_gain = sc.fixed_gain(fs, n_chans, 10)
 
         # the magic freeverb delay line lengths are for 44.1kHz, so
@@ -201,21 +158,6 @@ class reverb_room_stereo(rv.reverb_room):
         self._predelay.reset_state()
 
     @property
-    def wet(self):
-        """The linear gain applied to the wet signal."""
-        return self._wet
-
-    # override wet setter to also set wet_1 and wet_2
-    @wet.setter
-    def wet(self, x):
-        self._wet = x
-        self.wet_1 = self.wet * (self.width / 2 + 0.5)
-        self.wet_2 = self.wet * ((1 - self.width) / 2)
-
-        self.wet_1_int = rv.float_to_q_verb(self.wet_1)
-        self.wet_2_int = rv.float_to_q_verb(self.wet_2)
-
-    @property
     def feedback(self):
         """Gain of the feedback line in the reverb filters. Set decay to update this value."""
         ret = float(self.combs_l[0].feedback)
@@ -271,19 +213,6 @@ class reverb_room_stereo(rv.reverb_room):
             self.allpasses_l[n].set_delay(ap_delays[n])
             self.allpasses_r[n].set_delay(ap_delays[n] + spread_delay)
 
-    @property
-    def width(self):
-        """Stereo separation of the reverberated signal."""
-        return self._width
-
-    @width.setter
-    def width(self, value):
-        if not (0 <= value <= 1):
-            raise ValueError("width must be between 0 and 1.")
-        self._width = value
-        # recalculate wet gains
-        self.wet = self.wet
-
     def process(self, sample, channel=0):
         """Process is not implemented for the stereo reverb, as it needs
         2 channels at once.
@@ -335,11 +264,11 @@ class reverb_room_stereo(rv.reverb_room):
         """
         sample_list_int = utils.float_list_to_int32(sample_list, self.Q_sig)
 
-        acc = 1 << (rv.Q_VERB - 1)
+        acc = 1 << (rvb.Q_VERB - 1)
         acc += sample_list_int[0] * self.pregain_int
         acc += sample_list_int[1] * self.pregain_int
         utils.int64(acc)
-        reverb_input = utils.int32_mult_sat_extract(acc, 1, rv.Q_VERB)
+        reverb_input = utils.int32_mult_sat_extract(acc, 1, rvb.Q_VERB)
         reverb_input = self._predelay.process_channels_xcore([reverb_input])[0]
 
         output_l = 0
@@ -361,13 +290,13 @@ class reverb_room_stereo(rv.reverb_room):
 
         output_l_final = _2maccs_sat_xcore(output_l, output_r, self.wet_1_int, self.wet_2_int)
         output_l_final = self._effect_gain.process_xcore(output_l_final)
-        output_l_final += rv.apply_gain_xcore(sample_list_int[0], self.dry_int)
+        output_l_final += rvb.apply_gain_xcore(sample_list_int[0], self.dry_int)
         utils.int64(output_l_final)
         output_l_final = utils.saturate_int64_to_int32(output_l_final)
 
         output_r = _2maccs_sat_xcore(output_r, output_l, self.wet_1_int, self.wet_2_int)
         output_r = self._effect_gain.process_xcore(output_r)
-        output_r += rv.apply_gain_xcore(sample_list_int[1], self.dry_int)
+        output_r += rvb.apply_gain_xcore(sample_list_int[1], self.dry_int)
         utils.int64(output_r)
         output_r = utils.saturate_int64_to_int32(output_r)
 

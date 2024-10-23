@@ -313,10 +313,8 @@ def test_reverb_properties_decay(stereo):
     a = r(decay=val)
     b = r()
     b.decay = val
-    c = r()
-    c.set_decay(val)
 
-    should_be_val = np.array([i.decay for i in (a, b, c)])
+    should_be_val = np.array([i.decay for i in (a, b)])
     np.testing.assert_allclose(should_be_val, val)
 
 
@@ -332,10 +330,8 @@ def test_reverb_properties_pregain(stereo):
     a = r(pregain=val)
     b = r()
     b.pregain = val
-    c = r()
-    c.set_pre_gain(val)
 
-    should_be_val = np.array([i.pregain for i in (a, b, c)])
+    should_be_val = np.array([i.pregain for i in (a, b)])
     np.testing.assert_allclose(should_be_val, val)
 
 
@@ -351,10 +347,8 @@ def test_reverb_properties_wet_db(stereo):
     a = r(wet_gain_db=val)
     b = r()
     b.wet_db = val
-    c = r()
-    c.set_wet_gain(val)
 
-    should_be_val = np.array([i.wet_db for i in (a, b, c)])
+    should_be_val = np.array([i.wet_db for i in (a, b)])
     np.testing.assert_allclose(should_be_val, val)
 
 
@@ -370,10 +364,8 @@ def test_reverb_properties_dry_db(stereo):
     a = r(dry_gain_db=val)
     b = r()
     b.dry_db = val
-    c = r()
-    c.set_dry_gain(val)
 
-    should_be_val = np.array([i.dry_db for i in (a, b, c)])
+    should_be_val = np.array([i.dry_db for i in (a, b)])
     np.testing.assert_allclose(should_be_val, val)
 
 
@@ -389,10 +381,8 @@ def test_reverb_properties_damping(stereo):
     a = r(damping=val)
     b = r()
     b.damping = val
-    c = r()
-    c.set_damping(val)
 
-    should_be_val = np.array([i.damping for i in (a, b, c)])
+    should_be_val = np.array([i.damping for i in (a, b)])
     np.testing.assert_allclose(should_be_val, val)
 
 @pytest.mark.parametrize("stereo", [True, False])
@@ -407,10 +397,8 @@ def test_reverb_properties_room_size(stereo):
     a = r(room_size=val)
     b = r()
     b.room_size = val
-    c = r()
-    c.set_room_size(val)
 
-    should_be_val = np.array([i.room_size for i in (a, b, c)])
+    should_be_val = np.array([i.room_size for i in (a, b)])
     np.testing.assert_allclose(should_be_val, val)
 
 if __name__ == "__main__":
