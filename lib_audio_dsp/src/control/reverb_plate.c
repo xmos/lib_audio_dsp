@@ -6,7 +6,7 @@
 
 #include <math.h>
 
-static inline int32_t float_to_Q_RVR_pos(float val)
+static inline int32_t float_to_Q_RVP_pos(float val)
 {
   // only works for positive values
   xassert(val >= 0);
@@ -19,7 +19,7 @@ static inline int32_t float_to_Q_RVR_pos(float val)
   asm("fsexp %0, %1, %2": "=r"(sign), "=r"(exp): "r"(val));
   asm("fmant %0, %1": "=r"(mant): "r"(val));
   // mant to q_rvr
-  right_shift_t shr = -Q_RVR - exp + 23;
+  right_shift_t shr = -Q_RVP - exp + 23;
   mant >>= shr;
   return mant;
 }
@@ -43,13 +43,13 @@ reverb_plate_t adsp_reverb_plate_init(
   xassert(reverb_heap != NULL);
   reverb_plate_t rv;
   // lowpasses
-  int32_t bandwidth_int = float_to_Q_RVR_pos(bandwidth);
+  int32_t bandwidth_int = float_to_Q_RVP_pos(bandwidth);
   rv.lowpasses[0] = lowpass_1ord_init(bandwidth_int);
-  int32_t damping_int = float_to_Q_RVR_pos(damping);
+  int32_t damping_int = float_to_Q_RVP_pos(damping);
   rv.lowpasses[1] = lowpass_1ord_init(INT32_MAX - damping_int);
   rv.lowpasses[2] = lowpass_1ord_init(INT32_MAX - damping_int);
 
-  rv.pre_gain = float_to_Q_RVR_pos(pregain);
+  rv.pre_gain = float_to_Q_RVP_pos(pregain);
   rv.dry_gain = adsp_reverb_room_calc_gain(dry_gain);
   int32_t wet_gains[2];
   adsp_reverb_room_st_calc_wet_gains(wet_gains, wet_gain, width);
@@ -59,10 +59,10 @@ reverb_plate_t adsp_reverb_plate_init(
   decay += 0.15;
   decay = (decay < 0.25) ? 0.25 : decay;
   decay = (decay > 0.5) ? 0.5 : decay;
-  int32_t decay_int = float_to_Q_RVR_pos(decay);
-  int32_t diffusion_int = -float_to_Q_RVR_pos(diffusion);
-  int32_t in_dif1 = float_to_Q_RVR_pos(in_diffusion_1);
-  int32_t in_dif2 = float_to_Q_RVR_pos(in_diffusion_2);
+  int32_t decay_int = float_to_Q_RVP_pos(decay);
+  int32_t diffusion_int = -float_to_Q_RVP_pos(diffusion);
+  int32_t in_dif1 = float_to_Q_RVP_pos(in_diffusion_1);
+  int32_t in_dif2 = float_to_Q_RVP_pos(in_diffusion_2);
   int32_t predelay_samps = predelay * fs / 1000;
   int32_t max_predelay_samps = max_predelay * fs / 1000;
 
