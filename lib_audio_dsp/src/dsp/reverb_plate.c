@@ -2,6 +2,7 @@
 #include <xcore/assert.h>
 #include "dsp/adsp.h"
 #include "dsp/_helpers/generic_utils.h"
+#include "dsp/_helpers/reverb_utils.h"
 
 #define DEFAULT_AP_LENS {142, 107, 379, 277, 2656, 1800}
 #define DEFAULT_DELAY_LENS {4217, 4453, 3136, 3720}
@@ -23,7 +24,6 @@
 #error "Need to change the EFFECT_GAIN"
 #endif
 
-#define TWO_TO_31_MINUS_1 0x7FFFFFFF
 #define TWO_TO_31 0x80000000
 
 typedef struct
@@ -58,36 +58,6 @@ static inline void *mem_manager_alloc(mem_manager_t *mem, size_t size)
   return ret_address;
 }
 
-static inline int32_t scale_sat_int64_to_int32_floor(int32_t ah,
-                                                     int32_t al,
-                                                     int32_t shift)
-{
-  int32_t big_q = TWO_TO_31_MINUS_1, one = 1, shift_minus_one = shift - 1;
-
-  // If ah:al < 0, add just under 1 (represented in Q0.31)
-  if (ah < 0) // ah is sign extended, so this test is sufficient
-  {
-    asm volatile("maccs %0, %1, %2, %3"
-                 : "=r"(ah), "=r"(al)
-                 : "r"(one), "r"(big_q), "0"(ah), "1"(al));
-  }
-  // Saturate ah:al. Implements the following:
-  // if (val > (2 ** (31 + shift) - 1))
-  //     val = 2 ** (31 + shift) - 1
-  // else if (val < -(2 ** (31 + shift)))
-  //     val = -(2 ** (31 + shift))
-  // Note the use of 31, rather than 32 - hence here we subtract 1 from shift.
-  asm volatile("lsats %0, %1, %2"
-               : "=r"(ah), "=r"(al)
-               : "r"(shift_minus_one), "0"(ah), "1"(al));
-  // then we return (ah:al >> shift)
-  asm volatile("lextract %0, %1, %2, %3, 32"
-               : "=r"(ah)
-               : "r"(ah), "r"(al), "r"(shift));
-
-  return ah;
-}
-
 lowpass_1ord_t lowpass_1ord_init(int32_t feedback) {
   lowpass_1ord_t lp;
   lp.filterstore = 0;
@@ -104,7 +74,7 @@ static inline int32_t lowpass_1ord(lowpass_1ord_t * lp, int32_t new_samp) {
   return output
   */
 
-  int32_t ah = 0, al = 0, shift = 31;
+  int32_t ah = 0, al = 0, shift = Q_RVP;
   int32_t fstore = lp->filterstore, d1 = lp->damp_1, d2 = lp->damp_2;
 
   asm volatile("maccs %0, %1, %2, %3"
@@ -116,21 +86,6 @@ static inline int32_t lowpass_1ord(lowpass_1ord_t * lp, int32_t new_samp) {
 
   al = scale_sat_int64_to_int32_floor(ah, al, shift);
   lp->filterstore = al;
-  return al;
-}
-
-static inline int32_t add_with_fb(int32_t samp1, int32_t samp2, int32_t fb) {
-  // samp1 + (samp2 * feedback)
-  int32_t ah, al, shift = Q_RVR;
-  int64_t a = (int64_t)samp1 << shift;
-  ah = (int32_t)(a >> 32);
-  al = (int32_t)a;
-
-  asm volatile("maccs %0, %1, %2, %3"
-               : "=r"(ah), "=r"(al)
-               : "r"(samp2), "r"(fb), "0"(ah), "1"(al));
-
-  al = scale_sat_int64_to_int32_floor(ah, al, shift);
   return al;
 }
 
@@ -161,7 +116,7 @@ int32_t allpass_2(allpass_fv_t * ap, int32_t new_samp) {
   return out
   */
   int32_t buf_out = ap->buffer[ap->buffer_idx];
-  int32_t buf_in = add_with_fb(new_samp, buf_out, -ap->feedback);
+  int32_t buf_in = add_with_fb(new_samp, buf_out, -ap->feedback, Q_RVP);
 
   ap->buffer[ap->buffer_idx] = buf_in;
   ap->buffer_idx += 1;
@@ -170,30 +125,8 @@ int32_t allpass_2(allpass_fv_t * ap, int32_t new_samp) {
     ap->buffer_idx = 0;
   }
 
-  int32_t output = add_with_fb(buf_out, new_samp, ap->feedback);
+  int32_t output = add_with_fb(buf_out, new_samp, ap->feedback, Q_RVP);
   return output;
-}
-
-// only exists because the effect gain is not a part of the wet gain, so need to handle properly
-// will do: wet_sig * effect_gain + dry_sig
-static inline int32_t _mix_wet_dry(int32_t wet_sig, int32_t dry_sig){
-  int32_t ah = 0, al = 0, q = Q_GAIN;
-  asm("linsert %0, %1, %2, %3, 32": "=r" (ah), "=r" (al): "r" (dry_sig), "r" (q), "0" (ah), "1" (al));
-  asm("sext %0, %1": "=r" (ah): "r" (q), "0" (ah));
-  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (wet_sig), "r" (EFFECT_GAIN), "0" (ah), "1" (al));
-  asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (q), "0" (ah), "1" (al));
-  asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (q));
-  return ah;
-}
-
-// will do out1 * gain1 + out2 * gain2, assumes that both gains are q31
-static inline int32_t _get_wet_signal(int32_t out1, int32_t out2, int32_t gain1, int32_t gain2) {
-  int32_t q = 31, ah = 0, al = 1 << (q - 1);
-  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (out1), "r" (gain1), "0" (ah), "1" (al));
-  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (out2), "r" (gain2), "0" (ah), "1" (al));
-  asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (q), "0" (ah), "1" (al));
-  asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (q));
-  return ah;
 }
 
 // 0.6 * 2 ** 29 = 322122547.2
@@ -208,12 +141,7 @@ void adsp_reverb_plate(
   int32_t in_left,
   int32_t in_right)
 {
-  int32_t q = 31, ah = 0, al = 1 << (q - 1), reverb_input;
-  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (in_left), "r" (rv->pre_gain), "0" (ah), "1" (al));
-  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (in_right), "r" (rv->pre_gain), "0" (ah), "1" (al));
-  asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (q), "0" (ah), "1" (al));
-  asm("lextract %0, %1, %2, %3, 32": "=r" (reverb_input): "r" (ah), "r" (al), "r" (q));
-
+  int32_t reverb_input = mix_with_pregain(in_left, in_right, rv->pre_gain, Q_RVP);
   reverb_input = adsp_delay(&rv->predelay, reverb_input);
   reverb_input = lowpass_1ord(&rv->lowpasses[0], reverb_input);
 
@@ -222,8 +150,8 @@ void adsp_reverb_plate(
   }
 
   int32_t path_1 = reverb_input, path_2 = reverb_input;
-  path_1 = add_with_fb(path_1, rv->paths[0], rv->decay);
-  path_2 = add_with_fb(path_2, rv->paths[1], rv->decay);
+  path_1 = add_with_fb(path_1, rv->paths[0], rv->decay, Q_RVP);
+  path_2 = add_with_fb(path_2, rv->paths[1], rv->decay, Q_RVP);
 
   path_1 = allpass_2(&rv->mod_allpasses[0], path_1);
   path_1 = adsp_delay(&rv->delays[0], path_1);
@@ -239,9 +167,8 @@ void adsp_reverb_plate(
   path_2 = allpass_2(&rv->allpasses[5], path_2);
   rv->paths[0] = adsp_delay(&rv->delays[3], path_2);
 
-  int32_t out_l, out_r;
-  q = SCALE_Q;
-  ah = 0; al = 1 << (q - 1);
+  int32_t out_l, out_r, q = SCALE_Q, ah = 0, al = 1 << (q - 1);
+
   asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (rv->delays[0].buffer[rv->taps_l[0]]), "r" (SCALE), "0" (ah), "1" (al));
   asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (rv->delays[0].buffer[rv->taps_l[1]]), "r" (SCALE), "0" (ah), "1" (al));
   asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (rv->allpasses[4].buffer[rv->taps_l[2]]), "r" (-SCALE), "0" (ah), "1" (al));
@@ -276,12 +203,12 @@ void adsp_reverb_plate(
     }
   }
 
-  int32_t out = _get_wet_signal(out_l, out_r, rv->wet_gain1, rv->wet_gain2);
-  out = _mix_wet_dry(out, apply_gain_q31(in_left, rv->dry_gain));
+  int32_t out = mix_wet_chans(out_l, out_r, rv->wet_gain1, rv->wet_gain2, Q_RVP);
+  out = mix_wet_dry(out, apply_gain_q31(in_left, rv->dry_gain), EFFECT_GAIN, Q_GAIN);
   outputs_lr[0] = out;
 
-  out = _get_wet_signal(out_r, out_l, rv->wet_gain1, rv->wet_gain2);
-  out = _mix_wet_dry(out, apply_gain_q31(in_right, rv->dry_gain));
+  out = mix_wet_chans(out_r, out_l, rv->wet_gain1, rv->wet_gain2, Q_RVP);
+  out = mix_wet_dry(out, apply_gain_q31(in_right, rv->dry_gain), EFFECT_GAIN, Q_GAIN);
   outputs_lr[1] = out;
 }
 
@@ -296,8 +223,6 @@ void adsp_reverb_plate_init_filters(
   uint32_t predelay, 
   void * reverb_heap)
 {
-  rv->paths[0] = 0;
-  rv->paths[1] = 0;
   // init all memory stuff
   mem_manager_t mem = mem_manager_init(reverb_heap, ADSP_RVP_HEAP_SZ(fs, max_predelay));
   const float rv_scale_fac = ADSP_RVP_SCALE(fs);
@@ -305,6 +230,7 @@ void adsp_reverb_plate_init_filters(
   uint32_t ap_lens[ADSP_RVP_N_APS] = DEFAULT_AP_LENS;
   uint32_t delay_lens[ADSP_RVP_N_DELAYS] = DEFAULT_DELAY_LENS;
   uint32_t mod_ap_lens[ADSP_RVP_N_PATHS] = DEFAULT_MOD_AP_LENS;
+  memset(rv->paths, 0, ADSP_RVP_N_PATHS * sizeof(int32_t));
 
   // predelay
   void * delay_mem = mem_manager_alloc(&mem, DELAY_DSP_REQUIRED_MEMORY_SAMPLES(max_predelay));
