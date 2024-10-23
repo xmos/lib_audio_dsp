@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
-from audio_dsp.dsp.reverb import reverb_room, Q_VERB
+from audio_dsp.dsp.reverb_base import Q_VERB
+from audio_dsp.dsp.reverb import reverb_room
 from audio_dsp.dsp.reverb_stereo import reverb_room_stereo
 from subprocess import run
 from pathlib import Path

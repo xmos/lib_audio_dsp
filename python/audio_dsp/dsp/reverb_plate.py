@@ -5,6 +5,7 @@ import audio_dsp.dsp.utils as utils
 from copy import deepcopy
 import warnings
 import audio_dsp.dsp.reverb_base as rvb
+import audio_dsp.dsp.reverb as rv
 
 
 class lowpass_1ord(dspg.dsp_block):
@@ -150,7 +151,7 @@ class allpass_2(rv.allpass_fv):
         return output
 
 
-class reverb_plate_stereo(reverb_stereo_base):
+class reverb_plate_stereo(rvb.reverb_stereo_base):
     """Generate a stereo plate reverb effect. The reverberator outputs are mixed
     according to the ``width`` parameter.
 
