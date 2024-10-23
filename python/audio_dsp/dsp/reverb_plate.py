@@ -1,11 +1,10 @@
-import audio_dsp.dsp.reverb as rv
 import audio_dsp.dsp.generic as dspg
 import numpy as np
 import audio_dsp.dsp.signal_chain as sc
 import audio_dsp.dsp.utils as utils
 from copy import deepcopy
 import warnings
-from reverb_base import reverb_stereo_base
+import audio_dsp.dsp.reverb_base as rvb
 
 
 class lowpass_1ord(dspg.dsp_block):
@@ -31,7 +30,7 @@ class lowpass_1ord(dspg.dsp_block):
         self.damp1 = damping
         self.damp2 = 1 - self.damp1
         # super critical these add up, but also don't overflow int32...
-        self.damp1_int = max(utils.int32(self.damp1 * 2**rv.Q_VERB - 1), 1)
+        self.damp1_int = max(utils.int32(self.damp1 * 2**rvb.Q_VERB - 1), 1)
         self.damp2_int = utils.int32((2**31 - 1) - self.damp1_int + 1)
 
     def reset_state(self):
@@ -298,7 +297,7 @@ class reverb_plate_stereo(reverb_stereo_base):
             x = np.clip(x, 0, _LESS_THAN_1)
             warnings.warn(f"Decay {bad_x} saturates to {x}", UserWarning)
         self._decay = x
-        self.decay_int = rv.float_to_q_verb(x)
+        self.decay_int = rvb.float_to_q_verb(x)
         self.decay_diffusion_2 = x + 0.15
 
     @property
@@ -483,11 +482,11 @@ class reverb_plate_stereo(reverb_stereo_base):
         """
         sample_list_int = utils.float_list_to_int32(sample_list, self.Q_sig)
 
-        acc = 1 << (rv.Q_VERB - 1)
+        acc = 1 << (rvb.Q_VERB - 1)
         acc += sample_list_int[0] * self.pregain_int
         acc += sample_list_int[1] * self.pregain_int
         utils.int64(acc)
-        reverb_input = utils.int32_mult_sat_extract(acc, 1, rv.Q_VERB)
+        reverb_input = utils.int32_mult_sat_extract(acc, 1, rvb.Q_VERB)
         reverb_input = self._predelay.process_channels_xcore([reverb_input])[0]
 
         raise NotImplementedError
@@ -511,13 +510,13 @@ class reverb_plate_stereo(reverb_stereo_base):
 
         output_l_final = _2maccs_sat_xcore(output_l, output_r, self.wet_1_int, self.wet_2_int)
         output_l_final = self._effect_gain.process_xcore(output_l_final)
-        output_l_final += rv.apply_gain_xcore(sample_list_int[0], self.dry_int)
+        output_l_final += rvb.apply_gain_xcore(sample_list_int[0], self.dry_int)
         utils.int64(output_l_final)
         output_l_final = utils.saturate_int64_to_int32(output_l_final)
 
         output_r = _2maccs_sat_xcore(output_r, output_l, self.wet_1_int, self.wet_2_int)
         output_r = self._effect_gain.process_xcore(output_r)
-        output_r += rv.apply_gain_xcore(sample_list_int[1], self.dry_int)
+        output_r += rvb.apply_gain_xcore(sample_list_int[1], self.dry_int)
         utils.int64(output_r)
         output_r = utils.saturate_int64_to_int32(output_r)
 
