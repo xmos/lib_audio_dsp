@@ -6,7 +6,7 @@
 #include "dsp/fd_block_fir.h"
 
 __attribute__((noinline)) //bug workaround
-void bfp_complex_s32_macc2(
+static void bfp_complex_s32_macc2(
     bfp_complex_s32_t* acc,
     const bfp_complex_s32_t* b,
     const bfp_complex_s32_t* c)
