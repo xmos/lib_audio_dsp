@@ -74,6 +74,7 @@ class CommandPayload:
             print(f"Command type {self.cmd_type} size unknown, please add to class")
             raise e from None
 
+        retnum = cmd_n_bytes
         if self.values is not None:
             if isinstance(self.values, (int, float, str, np.integer)):
                 # Single argument
