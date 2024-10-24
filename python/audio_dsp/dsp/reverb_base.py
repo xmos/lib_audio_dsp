@@ -9,6 +9,13 @@ Q_VERB = 31
 # biggest number that is less than 1
 _LESS_THAN_1 = ((2**Q_VERB) - 1) / (2**Q_VERB)
 
+def _2maccs_sat_xcore(in1, in2, gain1, gain2):
+    acc = 1 << (Q_VERB - 1)
+    acc += in1 * gain1
+    acc += in2 * gain2
+    utils.int64(acc)
+    y = utils.int32_mult_sat_extract(acc, 1, Q_VERB)
+    return y
 
 def float_to_q_verb(x):
     """Convert a floating point number to Q_VERB format. The input must
@@ -101,7 +108,7 @@ class reverb_base(dspg.dsp_block):
         number.
     predelay : float
     """
-    
+
     def __init__(self,
         fs,
         n_chans,

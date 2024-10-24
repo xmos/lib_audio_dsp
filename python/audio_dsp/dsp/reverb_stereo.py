@@ -12,16 +12,6 @@ import warnings
 import audio_dsp.dsp.reverb_base as rvb
 
 
-
-def _2maccs_sat_xcore(in1, in2, gain1, gain2):
-    acc = 1 << (rvb.Q_VERB - 1)
-    acc += in1 * gain1
-    acc += in2 * gain2
-    utils.int64(acc)
-    y = utils.int32_mult_sat_extract(acc, 1, rvb.Q_VERB)
-    return y
-
-
 class reverb_room_stereo(rvb.reverb_stereo_base):
     """Generate a stereo room reverb effect. This is based on Freeverb by
     Jezar at Dreampoint. Each channel consists of 8 parallel comb filters fed
@@ -288,13 +278,13 @@ class reverb_room_stereo(rvb.reverb_stereo_base):
             utils.int32(output_l)
             utils.int32(output_r)
 
-        output_l_final = _2maccs_sat_xcore(output_l, output_r, self.wet_1_int, self.wet_2_int)
+        output_l_final = rvb._2maccs_sat_xcore(output_l, output_r, self.wet_1_int, self.wet_2_int)
         output_l_final = self._effect_gain.process_xcore(output_l_final)
         output_l_final += rvb.apply_gain_xcore(sample_list_int[0], self.dry_int)
         utils.int64(output_l_final)
         output_l_final = utils.saturate_int64_to_int32(output_l_final)
 
-        output_r = _2maccs_sat_xcore(output_r, output_l, self.wet_1_int, self.wet_2_int)
+        output_r = rvb._2maccs_sat_xcore(output_r, output_l, self.wet_1_int, self.wet_2_int)
         output_r = self._effect_gain.process_xcore(output_r)
         output_r += rvb.apply_gain_xcore(sample_list_int[1], self.dry_int)
         utils.int64(output_r)
