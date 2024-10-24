@@ -1,3 +1,6 @@
+# Copyright 2024 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
 import numpy as np
 
 def quant(coefs, exp):
@@ -14,7 +17,7 @@ def emit_debug_filter(fh, coefs, name):
     _, e = np.frexp(max_val)
     exp = 31 - e
 
-    quantised_filter = np.int32(np.rint(np.ldexp(coefs, exp)))
+    quantised_filter = np.array(np.rint(np.ldexp(coefs, exp)), dtype=np.int32)
     quantised_filter = np.clip(quantised_filter, np.iinfo(np.int32).min, np.iinfo(np.int32).max)
     v = np.where(quantised_filter>0, np.iinfo(np.int32).max, np.iinfo(np.int32).min)
 

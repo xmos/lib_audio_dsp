@@ -1,3 +1,6 @@
+# Copyright 2024 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
 import numpy as np
 import argparse
 import math
@@ -259,7 +262,9 @@ if __name__ == '__main__':
 
     if args.frame_advance == None:
         frame_advance = args.block_length//2
-
+    else:
+        frame_advance = None
+        
     output_path = os.path.realpath(args.output)
     filter_path = os.path.realpath(args.filter)
     gain_dB = args.gain
