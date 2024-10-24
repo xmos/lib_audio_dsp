@@ -95,11 +95,11 @@ def calc_reverb_time(in_sig, reverb_output):
 @pytest.mark.parametrize("damping", [0, 0.5])
 @pytest.mark.parametrize("q_format, pregain", [[27, 0.015],
                                                [31, 0.0009]])
-# @pytest.mark.parametrize("algo, width", [["mono_room", None],
-#                                          ["stereo_room", 0],
-#                                          ["stereo_room", 0.5],
-#                                          ["stereo_room", 1.0],
-@pytest.mark.parametrize("algo, width", [["stereo_plate", 0],
+@pytest.mark.parametrize("algo, width", [["mono_room", None],
+                                         ["stereo_room", 0],
+                                         ["stereo_room", 0.5],
+                                         ["stereo_room", 1.0],
+                                         ["stereo_plate", 0],
                                          ["stereo_plate", 0.5],
                                          ["stereo_plate", 1.0],]
                                          )
@@ -119,26 +119,21 @@ def test_reverb_time(max_room_size_diffusion, decay, damping, q_format, pregain,
         reverb = rv.reverb_room(fs, 1, max_room_size=max_room_size_diffusion, room_size=1, decay=decay, damping=damping, Q_sig=q_format, pregain=pregain)
     elif algo =="stereo_plate":
         sig = np.tile(sig, [2, 1])
-        reverb = rvp.reverb_plate_stereo(fs, 2, diffusion=max_room_size_diffusion, decay=decay, damping=damping, Q_sig=q_format, pregain=pregain, width=width)
-        reverb.set_wet_dry_mix(1)
+        reverb = rvp.reverb_plate_stereo(fs, 2, diffusion=max_room_size_diffusion, decay=decay, damping=damping, Q_sig=q_format, pregain=pregain, width=width, predelay=0)
+
     output_xcore = np.zeros_like(sig)
     output_flt = np.zeros_like(sig)
 
     if "stereo" in algo:
-        # for n in range(sig.shape[1]):
-        #     output_flt[:, n] = reverb.process_channels(sig[:, n])
+        for n in range(sig.shape[1]):
+            output_flt[:, n] = reverb.process_channels(sig[:, n])
 
-        # reverb.reset_state()
+        reverb.reset_state()
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always', utils.SaturationWarning)
             for n in range(sig.shape[1]):
                 output_xcore[:, n] = reverb.process_channels_xcore(sig[:, n])
-
-        reverb.reset_state()
-
-        for n in range(sig.shape[1]):
-            output_flt[:, n] = reverb.process_channels(sig[:, n])
 
     else:
         for n in range(len(sig)):
@@ -453,7 +448,7 @@ def test_reverb_properties_room_size(stereo):
     np.testing.assert_allclose(should_be_val, val)
 
 if __name__ == "__main__":
-    test_reverb_time(0.5, 0.5, 0.35, 27, 0.15, 1, "stereo_plate")
+    test_reverb_time(0.5, 0.25, 0.35, 27, 0.015, 1, "stereo_plate")
     # test_reverb_overflow("sine", 20, "stereo_plate", 0.1)
     # test_reverb_time(0.01, 1)
     # test_reverb_frames(48000, 27, "stereo_plate", 0.5)

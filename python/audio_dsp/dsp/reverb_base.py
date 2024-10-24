@@ -122,7 +122,13 @@ class reverb_base(dspg.dsp_block):
         super().__init__(fs, n_chans, Q_sig)
 
         # predelay
-        max_predelay = predelay if max_predelay == None else max_predelay
+        if max_predelay == None:
+            if predelay == 0:
+                # single sample delay line
+                max_predelay = 1/fs * 1000
+            else:
+                max_predelay = predelay
+
         # single channel delay line, as input is shared
         self._predelay = sc.delay(fs, 1, max_predelay, predelay, "ms")
 
