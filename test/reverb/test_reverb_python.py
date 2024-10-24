@@ -339,10 +339,14 @@ def test_reverb_wet_dry_mix(ratio, algo):
     if "stereo" in algo:
         for i in range(sig.shape[1]):
             sig_py[:, i] = verb.process_channels(sig[:, i])
+        verb.reset_state()
+        for i in range(sig.shape[1]):
             sig_xc[:, i] = verb.process_channels_xcore(sig[:, i])
     else:
         for i in range(len(sig)):
             sig_py[i] = verb.process(sig[i])
+        verb.reset_state()
+        for i in range(len(sig)):
             sig_xc[i] = verb.process_xcore(sig[i])
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
