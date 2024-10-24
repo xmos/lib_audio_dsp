@@ -128,7 +128,7 @@ int32_t allpass_2(allpass_fv_t * ap, int32_t new_samp) {
     ap->buffer_idx = 0;
   }
 
-  int32_t output = add_with_fb(buf_out, new_samp, ap->feedback, Q_RVP);
+  int32_t output = add_with_fb(buf_out, buf_in, ap->feedback, Q_RVP);
   return output;
 }
 
