@@ -13,7 +13,6 @@ import audio_dsp.dsp.reverb_stereo as rvs
 import audio_dsp.dsp.reverb_plate as rvp
 
 
-# @pytest.mark.parametrize("max_room_size", [0.1, 0.5, 1, 2, 4])
 @pytest.mark.parametrize("signal, freq", [["sine", 20],
                                           ["sine", 1000],
                                           ["sine", 1000],
@@ -33,7 +32,7 @@ import audio_dsp.dsp.reverb_plate as rvp
 def test_reverb_overflow(signal, freq, algo, param):
     # check no overflow errors occur
     fs = 48000
-    q_format = 27
+    q_format = 31
 
     if signal == "sine":
         sig = gen.sin(fs, 5, freq, 1)
@@ -72,7 +71,6 @@ def test_reverb_overflow(signal, freq, algo, param):
         for n in range(len(sig)):
             output_flt[n] = reverb.process(sig[n])
 
-    pass
 
 def calc_reverb_time(in_sig, reverb_output):
     # extend by 2x
@@ -93,11 +91,6 @@ def calc_reverb_time(in_sig, reverb_output):
 @pytest.mark.parametrize("max_room_size_diffusion", [0.5, 0.9])
 @pytest.mark.parametrize("decay", [0.5, 1])
 @pytest.mark.parametrize("damping", [0, 0.35])
-# @pytest.mark.parametrize("q_format, pregain", [[27, 0.015],
-#                                                [31, 0.0009]])
-# @pytest.mark.parametrize("q_format, pregain", [[27, 0.5],
-#                                                [29, 0.125],
-#                                                [31, 0.03125]])
 @pytest.mark.parametrize("q_format", [27, 29, 31])
 @pytest.mark.parametrize("algo, width", [["mono_room", None],
                                          ["stereo_room", 0],
@@ -108,8 +101,7 @@ def calc_reverb_time(in_sig, reverb_output):
                                          ["stereo_plate", 1.0],]
                                          )
 @pytest.mark.parametrize("wdmix", [0, 0.5, 1.0])
-
-def test_reverb_time(max_room_size_diffusion, decay, damping, q_format, pregain, width, algo, wdmix):
+def test_reverb_time(max_room_size_diffusion, decay, damping, q_format, width, algo, wdmix):
     # measure reverb time with chirp
     fs = 48000
 
@@ -117,7 +109,6 @@ def test_reverb_time(max_room_size_diffusion, decay, damping, q_format, pregain,
         pregain = 0.5**(q_format - 26)
     else:
         pregain = 0.015 * 2**(27 - q_format)
-
 
     sig = np.zeros(int(fs*max_room_size_diffusion*6) + fs)
     sig[:1*fs] = gen.log_chirp(fs, 1, 1, 20, 20000)
@@ -173,7 +164,6 @@ def test_reverb_time(max_room_size_diffusion, decay, damping, q_format, pregain,
         error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
         assert mean_error_flt < 0.055
-
 
 
 @pytest.mark.parametrize("max_room_size", [0.5])

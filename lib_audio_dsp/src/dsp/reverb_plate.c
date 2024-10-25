@@ -19,10 +19,10 @@
 // of bringing the wet signal level up to match the dry signal, assuming the wet 
 // and dry gains are equal.
 //
-// This hardcoded value of 10dB was found to be correct for the default config.
-// It is set here and not by the user via wet-gain as it is out of range of the
+// This hardcoded value of -1dB was found to be correct for the default config.
+// It is set here and not by the user via wet-gain as it could be out of range of the
 // Q31 wet gain configuration parameter. Possible future enhancement: make configurable.
-#define EFFECT_GAIN 424433723 // 10 dB linear in q27
+#define EFFECT_GAIN 119621676 // -1 dB linear in q27
 #if Q_GAIN != 27
 #error "Need to change the EFFECT_GAIN"
 #endif
