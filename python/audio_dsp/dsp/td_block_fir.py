@@ -106,6 +106,11 @@ def process_array(coefs, filter_name, output_path, gain_dB = 0.0, debug = False,
         fh.write("//i.e. int32_t channel_data[" + filter_name + "_DATA_BUFFER_ELEMENTS] = \{0\};\n")
         fh.write("#define " + filter_name + "_DATA_BUFFER_ELEMENTS (" + str(data_block_count*block_length) + ")\n\n")
     
+        fh.write("#define " + filter_name + "_TD_BLOCK_LENGTH (" + str(block_length) + ")\n")
+        fh.write("#define " + filter_name + "_BLOCK_COUNT (" + str(filter_block_count) + ")\n")
+        fh.write("#define " + filter_name + "_FRAME_ADVANCE (" + str(block_length) + ")\n")
+        fh.write("#define " + filter_name + "_FRAME_OVERLAP (" + str(0) + ")\n")
+     
     return
 
 
