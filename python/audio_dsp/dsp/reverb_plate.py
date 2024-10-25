@@ -158,7 +158,13 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         The length of the reverberation of the room, between 0 and 1.
     damping : float, optional
         how much high frequency attenuation in the room, between 0 and 1
-
+    pregain : float, optional
+        the amount of gain applied to the signal before being passed
+        into the reverb, less than 1. If the reverb raises an
+        OverflowWarning, this value should be reduced until it does not.
+        The default value of 0.5 should be sufficient for most Q27
+        signals, and should be reduced by 1 bit per increase in Q format,
+        e.g. 0.25 for Q28, 0.125 for Q29 etc.
 
     Attributes
     ----------
@@ -184,7 +190,7 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         width=1.0,
         wet_gain_db=-3,
         dry_gain_db=-3,
-        pregain=0.005,
+        pregain=0.5,
         predelay=10,
         max_predelay=None,
         Q_sig=dspg.Q_SIG,
@@ -194,7 +200,7 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         # initalise wet/dry gains, width, and predelay
         super().__init__(fs, n_chans, width, wet_gain_db, dry_gain_db, pregain, predelay, max_predelay, Q_sig)
 
-        self._effect_gain = sc.fixed_gain(fs, n_chans, 10)
+        self._effect_gain = sc.fixed_gain(fs, n_chans, -1)
 
         # the dattoro delay line lengths are for 29761Hz, so
         # scale them with sample rate
