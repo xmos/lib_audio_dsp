@@ -90,11 +90,15 @@ def calc_reverb_time(in_sig, reverb_output):
     return h_xcore
 
 
-@pytest.mark.parametrize("max_room_size_diffusion", [0.01, 0.1, 0.5])
-@pytest.mark.parametrize("decay", [0, 0.5, 1])
-@pytest.mark.parametrize("damping", [0, 0.5])
-@pytest.mark.parametrize("q_format, pregain", [[27, 0.015],
-                                               [31, 0.0009]])
+@pytest.mark.parametrize("max_room_size_diffusion", [0.5, 0.9])
+@pytest.mark.parametrize("decay", [0.5, 1])
+@pytest.mark.parametrize("damping", [0, 0.35])
+# @pytest.mark.parametrize("q_format, pregain", [[27, 0.015],
+#                                                [31, 0.0009]])
+# @pytest.mark.parametrize("q_format, pregain", [[27, 0.5],
+#                                                [29, 0.125],
+#                                                [31, 0.03125]])
+@pytest.mark.parametrize("q_format", [27, 29, 31])
 @pytest.mark.parametrize("algo, width", [["mono_room", None],
                                          ["stereo_room", 0],
                                          ["stereo_room", 0.5],
@@ -103,10 +107,17 @@ def calc_reverb_time(in_sig, reverb_output):
                                          ["stereo_plate", 0.5],
                                          ["stereo_plate", 1.0],]
                                          )
+@pytest.mark.parametrize("wdmix", [0, 0.5, 1.0])
 
-def test_reverb_time(max_room_size_diffusion, decay, damping, q_format, pregain, width, algo):
+def test_reverb_time(max_room_size_diffusion, decay, damping, q_format, pregain, width, algo, wdmix):
     # measure reverb time with chirp
     fs = 48000
+
+    if "plate" in algo:
+        pregain = 0.5**(q_format - 26)
+    else:
+        pregain = 0.015 * 2**(27 - q_format)
+
 
     sig = np.zeros(int(fs*max_room_size_diffusion*6) + fs)
     sig[:1*fs] = gen.log_chirp(fs, 1, 1, 20, 20000)
@@ -119,7 +130,11 @@ def test_reverb_time(max_room_size_diffusion, decay, damping, q_format, pregain,
         reverb = rv.reverb_room(fs, 1, max_room_size=max_room_size_diffusion, room_size=1, decay=decay, damping=damping, Q_sig=q_format, pregain=pregain)
     elif algo =="stereo_plate":
         sig = np.tile(sig, [2, 1])
-        reverb = rvp.reverb_plate_stereo(fs, 2, diffusion=max_room_size_diffusion, decay=decay, damping=damping, Q_sig=q_format, pregain=pregain, width=width, predelay=0)
+        reverb = rvp.reverb_plate_stereo(fs, 2, diffusion=max_room_size_diffusion,
+        input_diffusion_1=max_room_size_diffusion, input_diffusion_2=max_room_size_diffusion,
+        decay=decay, damping=damping, Q_sig=q_format,
+        pregain=pregain, width=width)
+    reverb.set_wet_dry_mix(wdmix)
 
     output_xcore = np.zeros_like(sig)
     output_flt = np.zeros_like(sig)
@@ -147,10 +162,10 @@ def test_reverb_time(max_room_size_diffusion, decay, damping, q_format, pregain,
                 output_xcore[n] = reverb.process_xcore(sig[n])
 
     # if we triggered a saturation warning, can't guarantee arrays are the same
-    sat_warn_flag = all([wi.category is utils.SaturationWarning for wi in w])
+    sat_warn_flag = any([wi.category is utils.SaturationWarning for wi in w])
 
     # # in this case, pregain should be adjusted
-    # if sat_warn_flag: assert False
+    if sat_warn_flag: assert False
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
     top_half = np.logical_and(utils.db(output_flt) > -50, utils.db(output_flt) < (6*(31-q_format)))
@@ -182,7 +197,6 @@ def test_reverb_noise_floor(max_room_size, decay, damping, algo):
     elif algo == "stereo_plate":
         sig = np.tile(sig, [2, 1])
         reverb = rvp.reverb_plate_stereo(fs, 2, decay=decay, damping=damping, Q_sig=q_format)
-
     #print(reverb.get_buffer_lens())
     
     output_xcore = np.zeros_like(sig)
