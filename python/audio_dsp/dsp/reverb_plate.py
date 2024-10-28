@@ -531,24 +531,32 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         path_2 = self.allpasses[5].process_xcore(path_2)
         path_2 = self.delays[3].process_channels_xcore([path_2])[0]
 
-        # 0.6 in int32 is 322122547
-        output_l =  rvb.apply_gain_xcore(self.delays[0].buffer[0, self.taps_l[0]], 322122547*4)
-        output_l += rvb.apply_gain_xcore(self.delays[0].buffer[0, self.taps_l[1]], 322122547*4)
-        output_l -= rvb.apply_gain_xcore(self.allpasses[4]._buffer_int[self.taps_l[2]], 322122547*4)
-        output_l += rvb.apply_gain_xcore(self.delays[1].buffer[0, self.taps_l[3]], 322122547*4)
-        output_l -= rvb.apply_gain_xcore(self.delays[2].buffer[0, self.taps_l[4]], 322122547*4)
-        output_l -= rvb.apply_gain_xcore(self.allpasses[5]._buffer_int[self.taps_l[5]], 322122547*4)
-        output_l -= rvb.apply_gain_xcore(self.delays[3].buffer[0, self.taps_l[6]], 322122547*4)
-        output_l = utils.saturate_int64_to_int32(output_l)
+        # 0.6 * 2 ** 29 = 322122547.2
+        # chosen as one of the closest ot the whole number
+        # and to give extra headroom for maccs
+        scale = 322122547
+        scale_q = 29
+        output_l = 1 << (scale_q - 1)
+        output_l += self.delays[0].buffer[0, self.taps_l[0]] * scale
+        output_l += self.delays[0].buffer[0, self.taps_l[1]] * scale
+        output_l -= self.allpasses[4]._buffer_int[self.taps_l[2]] * scale
+        output_l += self.delays[1].buffer[0, self.taps_l[3]] * scale
+        output_l -= self.delays[2].buffer[0, self.taps_l[4]] * scale
+        output_l -= self.allpasses[5]._buffer_int[self.taps_l[5]] * scale
+        output_l -= self.delays[3].buffer[0, self.taps_l[6]] * scale
+        utils.int64(output_l)
+        output_l = utils.int32_mult_sat_extract(output_l, 1, scale_q)
 
-        output_r =  rvb.apply_gain_xcore(self.delays[2].buffer[0, self.taps_r[0]], 322122547*4)
-        output_r += rvb.apply_gain_xcore(self.delays[2].buffer[0, self.taps_r[1]], 322122547*4)
-        output_r -= rvb.apply_gain_xcore(self.allpasses[5]._buffer_int[self.taps_r[2]], 322122547*4)
-        output_r += rvb.apply_gain_xcore(self.delays[3].buffer[0, self.taps_r[3]], 322122547*4)
-        output_r -= rvb.apply_gain_xcore(self.delays[0].buffer[0, self.taps_r[4]], 322122547*4)
-        output_r -= rvb.apply_gain_xcore(self.allpasses[4]._buffer_int[self.taps_r[5]], 322122547*4)
-        output_r -= rvb.apply_gain_xcore(self.delays[1].buffer[0, self.taps_r[6]], 322122547*4)
-        output_r = utils.saturate_int64_to_int32(output_r)
+        output_r = 1 << (scale_q - 1)
+        output_r += self.delays[2].buffer[0, self.taps_r[0]] * scale
+        output_r += self.delays[2].buffer[0, self.taps_r[1]] * scale
+        output_r -= self.allpasses[5]._buffer_int[self.taps_r[2]] * scale
+        output_r += self.delays[3].buffer[0, self.taps_r[3]] * scale
+        output_r -= self.delays[0].buffer[0, self.taps_r[4]] * scale
+        output_r -= self.allpasses[4]._buffer_int[self.taps_r[5]] * scale
+        output_r -= self.delays[1].buffer[0, self.taps_r[6]] * scale
+        utils.int64(output_r)
+        output_r = utils.int32_mult_sat_extract(output_r, 1, scale_q)
 
         # move output taps
         for n in range(7):
