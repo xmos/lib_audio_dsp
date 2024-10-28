@@ -117,12 +117,12 @@ def test_reverb_plate_c(in_signal, decay, damping, wet, dry, pregain):
 
   rv_info.tofile(test_dir / "rv_info.bin")
 
-  out_py = np.zeros_like(in_signal)
+  out_py_int = np.zeros_like(in_signal)
 
   # for now, runs the float implementation
   for n in range(in_signal.shape[1]):
     out_py_int[:,n] = rv.process_channels_xcore(in_signal[:,n])
-  sf.write(gen_dir / "sig_py_flt.wav", out_py.T, fs, "PCM_24")
+  sf.write(gen_dir / "sig_py_int.wav", out_py_int.T, fs, "PCM_24")
 
   out_c = get_c_wav(test_dir, "reverb_plate_test.xe")
   shutil.rmtree(test_dir)
