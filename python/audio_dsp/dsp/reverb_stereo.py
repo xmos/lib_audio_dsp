@@ -166,7 +166,7 @@ class reverb_room_stereo(rvb.reverb_stereo_base):
     @property
     def damping(self):
         """How much high frequency attenuation in the room, between 0 and 1."""
-        return self.combs_l[0].coeff_1
+        return self.combs_l[0].damp1
 
     @damping.setter
     def damping(self, x):
@@ -178,7 +178,7 @@ class reverb_room_stereo(rvb.reverb_stereo_base):
             self.combs_l[n].set_damping(x)
             self.combs_r[n].set_damping(x)
 
-        self.damping_int = self.combs_l[0].coeff_1_int
+        self.damping_int = self.combs_l[0].damp1_int
 
     @property
     def room_size(self):

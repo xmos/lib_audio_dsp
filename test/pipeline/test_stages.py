@@ -641,9 +641,8 @@ def test_stereo_reverb_plate(frame_size):
         p["control"].set_damping(0.5)
         p["control"].set_decay(0.6)
         p["control"].set_predelay(5)
-        p["control"].set_diffusion(0.5)
-        p["control"].set_input_diffusion_1(0.5)
-        p["control"].set_input_diffusion_2(0.5)
+        p["control"].set_early_diffusion(0.5)
+        p["control"].set_late_diffusion(0.5)
         p["control"].set_bandwidth(0.35)
         p["control"].set_width(1.0)
 

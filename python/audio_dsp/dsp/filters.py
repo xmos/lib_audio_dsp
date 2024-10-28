@@ -85,8 +85,10 @@ class lowpass_1ord(dspg.dsp_block):
 
 
 class allpass(dspg.dsp_block):
-    """An all-pass filter, with flat frequency response but varying
-    phase response.
+    """An Nth order all-pass filter, with flat frequency response but varying
+    phase response. The delay sets the order of the all-pass filter,
+    with 90 degrees of phase shift per order at f0 = fs/(2*N). The feedback
+    gain controls the steepness of the phase shift.
 
     Parameters
     ----------

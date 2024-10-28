@@ -25,7 +25,14 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
     decay : int, optional
         The length of the reverberation of the room, between 0 and 1.
     damping : float, optional
-        how much high frequency attenuation in the room, between 0 and 1
+        How much high frequency attenuation in the room, between 0 and 1
+    bandwidth : float, optional
+        Controls the low pass filter cutoff frequency at the start of the
+        reverb.
+    early_diffusion : float, optional
+        Controls how much diffusion the early echoes have.
+    late_diffusion : float, optional
+        Controls how much diffusion the late echoes have.
     pregain : float, optional
         the amount of gain applied to the signal before being passed
         into the reverb, less than 1. If the reverb raises an
