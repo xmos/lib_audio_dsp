@@ -618,15 +618,3 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
             output[1][sample] = out_samples[1]
 
         return output
-
-if __name__ == "__main__":
-    import soundfile as sf
-    import numpy as np
-    in_wav, fs = sf.read(r"C:\Users\allanskellett\Documents\046_FRJ\sing_test (1).wav")
-    rvp  = reverb_plate_stereo(fs, 2)
-    in_wav = np.stack((in_wav, in_wav), 1)
-    output_flt = np.zeros_like(in_wav)
-    for n in range(in_wav.shape[0]):
-        output_flt[n] = rvp.process_channels_xcore(in_wav[n])
-
-    sf.write("plate.wav", output_flt, fs)
