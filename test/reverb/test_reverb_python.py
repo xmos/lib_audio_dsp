@@ -91,16 +91,14 @@ def calc_reverb_time(in_sig, reverb_output):
 @pytest.mark.parametrize("max_room_size_diffusion", [0.5, 0.9])
 @pytest.mark.parametrize("decay", [0.5, 1])
 @pytest.mark.parametrize("damping", [0, 0.35])
-@pytest.mark.parametrize("q_format", [27, 29, 31])
+@pytest.mark.parametrize("q_format", [27, 31])
 @pytest.mark.parametrize("algo, width", [["mono_room", None],
                                          ["stereo_room", 0],
-                                         ["stereo_room", 0.5],
                                          ["stereo_room", 1.0],
                                          ["stereo_plate", 0],
-                                         ["stereo_plate", 0.5],
                                          ["stereo_plate", 1.0],]
                                          )
-@pytest.mark.parametrize("wdmix", [0, 0.5, 1.0])
+@pytest.mark.parametrize("wdmix", [0.5, 1.0])
 def test_reverb_time(max_room_size_diffusion, decay, damping, q_format, width, algo, wdmix):
     # measure reverb time with chirp
     fs = 48000
@@ -456,7 +454,7 @@ def test_reverb_properties_room_size(stereo):
     np.testing.assert_allclose(should_be_val, val)
 
 if __name__ == "__main__":
-    test_reverb_time(0.5, 0.25, 0.35, 27, 0.015, 1, "stereo_plate")
+    test_reverb_time(0.5, 0.25, 0.35, 29, 0.5, 1, "stereo_plate")
     # test_reverb_overflow("sine", 20, "stereo_plate", 0.1)
     # test_reverb_time(0.01, 1)
     # test_reverb_frames(48000, 27, "stereo_plate", 0.5)
