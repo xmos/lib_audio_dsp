@@ -1,3 +1,7 @@
+# Copyright 2024 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""DSP blocks for plate reverb effects."""
+
 import audio_dsp.dsp.generic as dspg
 import numpy as np
 import audio_dsp.dsp.signal_chain as sc
@@ -18,7 +22,6 @@ class lowpass_1ord(dspg.dsp_block):
     """
 
     def __init__(self, damping):
-
         self._filterstore = 0.0
         self._filterstore_int = 0
         self.set_damping(damping)
@@ -47,7 +50,6 @@ class lowpass_1ord(dspg.dsp_block):
         Input should be scaled with 0 dB = 1.0.
 
         """
-
         output = (sample * self.damp1) + (self._filterstore * self.damp2)
 
         self._filterstore = output
@@ -70,9 +72,7 @@ class lowpass_1ord(dspg.dsp_block):
         assert isinstance(sample_int, int), "Input sample must be an integer"
 
         # do state calculation in int64 accumulator so we only quantize once
-        output = utils.int64(
-            sample_int * self.damp1_int + self._filterstore_int * self.damp2_int
-        )
+        output = utils.int64(sample_int * self.damp1_int + self._filterstore_int * self.damp2_int)
         output = rvb.scale_sat_int64_to_int32_floor(output)
         self._filterstore_int = output
 
@@ -90,7 +90,6 @@ class allpass_2(rv.allpass_fv):
         Gain applied to the delayed feedback path in the all-pass. Sets
         the reverb time.
     """
-
 
     def process(self, sample):  # type: ignore : overloads base class
         """
@@ -110,7 +109,7 @@ class allpass_2(rv.allpass_fv):
         if self._buffer_idx >= self.delay:
             self._buffer_idx = 0
 
-        output = buff_out + output*self.feedback
+        output = buff_out + output * self.feedback
 
         return output
 
@@ -196,9 +195,11 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         Q_sig=dspg.Q_SIG,
     ):
         assert n_chans == 2, f"Stereo reverb only supports 2 channel. {n_chans} specified"
-        
+
         # initalise wet/dry gains, width, and predelay
-        super().__init__(fs, n_chans, width, wet_gain_db, dry_gain_db, pregain, predelay, max_predelay, Q_sig)
+        super().__init__(
+            fs, n_chans, width, wet_gain_db, dry_gain_db, pregain, predelay, max_predelay, Q_sig
+        )
 
         self._effect_gain = sc.fixed_gain(fs, n_chans, -1)
 
@@ -223,9 +224,9 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
 
         self.lowpasses = [
             lowpass_1ord(self.bandwidth),
-            lowpass_1ord(1-self.damping),
-            lowpass_1ord(1-self.damping),
-            ]
+            lowpass_1ord(1 - self.damping),
+            lowpass_1ord(1 - self.damping),
+        ]
 
         self.allpasses = [
             allpass_2(ap_lengths[0], self.input_diffusion_1),
@@ -264,7 +265,8 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
             self.delays[1]._max_delay,
             self.delays[2]._max_delay,
             self.allpasses[5]._max_delay,
-            self.delays[3]._max_delay]
+            self.delays[3]._max_delay,
+        ]
 
         # get right output tap buffer lends [d, d, e, f, a, b, c]
         self.tap_lens_r = [
@@ -274,7 +276,8 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
             self.delays[3]._max_delay,
             self.delays[0]._max_delay,
             self.allpasses[4]._max_delay,
-            self.delays[1]._max_delay]
+            self.delays[1]._max_delay,
+        ]
 
         # buffer heads increment forwards, so set the tap starting positions to [len - tap - 1]
         for n in range(7):
@@ -286,7 +289,6 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         self.diffusion = diffusion
         self.input_diffusion_1 = input_diffusion_1
         self.input_diffusion_2 = input_diffusion_2
-
 
     def reset_state(self):
         """Reset all the delay line values to zero."""
@@ -353,8 +355,8 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
             x = np.clip(x, 0, 1)
             warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
         self._damping = x
-        self.lowpasses[1].set_damping(1-self.damping)
-        self.lowpasses[2].set_damping(1-self.damping)
+        self.lowpasses[1].set_damping(1 - self.damping)
+        self.lowpasses[2].set_damping(1 - self.damping)
 
     @property
     def diffusion(self):
@@ -452,21 +454,21 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         path_2 = self.delays[3].process_channels([path_2])[0]
 
         # get the output taps
-        output_l = 0.6*self.delays[0].buffer[0, self.taps_l[0]]
-        output_l += 0.6* self.delays[0].buffer[0, self.taps_l[1]]
-        output_l -= 0.6* self.allpasses[4]._buffer[self.taps_l[2]]
-        output_l += 0.6* self.delays[1].buffer[0, self.taps_l[3]]
-        output_l -= 0.6* self.delays[2].buffer[0, self.taps_l[4]]
-        output_l -= 0.6* self.allpasses[5]._buffer[self.taps_l[5]]
-        output_l -= 0.6* self.delays[3].buffer[0, self.taps_l[6]]
+        output_l = 0.6 * self.delays[0].buffer[0, self.taps_l[0]]
+        output_l += 0.6 * self.delays[0].buffer[0, self.taps_l[1]]
+        output_l -= 0.6 * self.allpasses[4]._buffer[self.taps_l[2]]
+        output_l += 0.6 * self.delays[1].buffer[0, self.taps_l[3]]
+        output_l -= 0.6 * self.delays[2].buffer[0, self.taps_l[4]]
+        output_l -= 0.6 * self.allpasses[5]._buffer[self.taps_l[5]]
+        output_l -= 0.6 * self.delays[3].buffer[0, self.taps_l[6]]
 
-        output_r = 0.6*self.delays[2].buffer[0, self.taps_r[0]]
-        output_r += 0.6*self.delays[2].buffer[0, self.taps_r[1]]
-        output_r -= 0.6*self.allpasses[5]._buffer[self.taps_r[2]]
-        output_r += 0.6*self.delays[3].buffer[0, self.taps_r[3]]
-        output_r -= 0.6*self.delays[0].buffer[0, self.taps_r[4]]
-        output_r -= 0.6*self.allpasses[4]._buffer[self.taps_r[5]]
-        output_r -= 0.6*self.delays[1].buffer[0, self.taps_r[6]]
+        output_r = 0.6 * self.delays[2].buffer[0, self.taps_r[0]]
+        output_r += 0.6 * self.delays[2].buffer[0, self.taps_r[1]]
+        output_r -= 0.6 * self.allpasses[5]._buffer[self.taps_r[2]]
+        output_r += 0.6 * self.delays[3].buffer[0, self.taps_r[3]]
+        output_r -= 0.6 * self.delays[0].buffer[0, self.taps_r[4]]
+        output_r -= 0.6 * self.allpasses[4]._buffer[self.taps_r[5]]
+        output_r -= 0.6 * self.delays[1].buffer[0, self.taps_r[6]]
 
         # move output taps
         for n in range(7):
@@ -510,11 +512,15 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
             reverb_input = self.allpasses[n].process_xcore(reverb_input)
 
         idx = self.delays[3].buffer_idx
-        path_1 = utils.int64((reverb_input << rvb.Q_VERB) + self.decay_int * self.delays[3].buffer[0, idx])
+        path_1 = utils.int64(
+            (reverb_input << rvb.Q_VERB) + self.decay_int * self.delays[3].buffer[0, idx]
+        )
         path_1 = rvb.scale_sat_int64_to_int32_floor(path_1)
 
         idx = self.delays[1].buffer_idx
-        path_2 = utils.int64((reverb_input << rvb.Q_VERB) + self.decay_int * self.delays[1].buffer[0, idx])
+        path_2 = utils.int64(
+            (reverb_input << rvb.Q_VERB) + self.decay_int * self.delays[1].buffer[0, idx]
+        )
         path_2 = rvb.scale_sat_int64_to_int32_floor(path_2)
 
         path_1 = self.mod_allpasses[0].process_xcore(path_1)
@@ -626,15 +632,3 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
             output[1][sample] = out_samples[1]
 
         return output
-
-if __name__ == "__main__":
-    import soundfile as sf
-    import numpy as np
-    in_wav, fs = sf.read(r"C:\Users\allanskellett\Documents\046_FRJ\sing_test (1).wav")
-    rvp  = reverb_plate_stereo(fs, 2)
-    in_wav = np.stack((in_wav, in_wav), 1)
-    output_flt = np.zeros_like(in_wav)
-    for n in range(in_wav.shape[0]):
-        output_flt[n] = rvp.process_channels_xcore(in_wav[n])
-
-    sf.write("plate.wav", output_flt, fs)

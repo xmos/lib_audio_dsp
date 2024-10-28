@@ -1,3 +1,8 @@
+# Copyright 2024 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
+"""Base classes and functions for reverb effects."""
+
 import audio_dsp.dsp.generic as dspg
 import audio_dsp.dsp.signal_chain as sc
 import audio_dsp.dsp.utils as utils
@@ -9,6 +14,7 @@ Q_VERB = 31
 # biggest number that is less than 1
 _LESS_THAN_1 = ((2**Q_VERB) - 1) / (2**Q_VERB)
 
+
 def _2maccs_sat_xcore(in1, in2, gain1, gain2):
     acc = 1 << (Q_VERB - 1)
     acc += in1 * gain1
@@ -16,6 +22,7 @@ def _2maccs_sat_xcore(in1, in2, gain1, gain2):
     utils.int64(acc)
     y = utils.int32_mult_sat_extract(acc, 1, Q_VERB)
     return y
+
 
 def float_to_q_verb(x):
     """Convert a floating point number to Q_VERB format. The input must
@@ -70,6 +77,7 @@ def scale_sat_int64_to_int32_floor(val):
 
     return y
 
+
 class reverb_base(dspg.dsp_block):
     """
     The base reverb class, containing pre-delay, wet-dry mix and gains.
@@ -109,7 +117,8 @@ class reverb_base(dspg.dsp_block):
     predelay : float
     """
 
-    def __init__(self,
+    def __init__(
+        self,
         fs,
         n_chans,
         wet_gain_db=-3,
@@ -117,15 +126,15 @@ class reverb_base(dspg.dsp_block):
         pregain=0.005,
         predelay=10,
         max_predelay=None,
-        Q_sig=dspg.Q_SIG,):
-
+        Q_sig=dspg.Q_SIG,
+    ):
         super().__init__(fs, n_chans, Q_sig)
 
         # predelay
         if max_predelay == None:
             if predelay == 0:
                 # single sample delay line
-                max_predelay = 1/fs * 1000
+                max_predelay = 1 / fs * 1000
             else:
                 max_predelay = predelay
 
@@ -159,7 +168,7 @@ class reverb_base(dspg.dsp_block):
     def dry(self, x):
         self._dry = x
         self.dry_int = float_to_q_verb(self.dry)
-        
+
     @property
     def wet_db(self):
         """The gain applied to the wet signal in dB."""
@@ -228,7 +237,6 @@ class reverb_base(dspg.dsp_block):
         # Couldn't add it to the wet gain itself as it's in q31
 
 
-
 class reverb_stereo_base(reverb_base):
     """
     The base stereo reverb class, containing stereo width. This inherits
@@ -241,14 +249,15 @@ class reverb_stereo_base(reverb_base):
         right channels. Setting width to 0 will yield a mono signal,
         whilst setting width to 1 will yield the most stereo
         separation.
-    
+
     Attributes
     ----------
     width : float
 
     """
 
-    def __init__(self,
+    def __init__(
+        self,
         fs,
         n_chans,
         width=1.0,
@@ -257,11 +266,13 @@ class reverb_stereo_base(reverb_base):
         pregain=0.005,
         predelay=10,
         max_predelay=None,
-        Q_sig=dspg.Q_SIG,):
-
+        Q_sig=dspg.Q_SIG,
+    ):
         assert n_chans == 2, f"Stereo reverb only supports 2 channel. {n_chans} specified"
         self._width = width
-        super().__init__(fs, n_chans, wet_gain_db, dry_gain_db, pregain, predelay, max_predelay, Q_sig)
+        super().__init__(
+            fs, n_chans, wet_gain_db, dry_gain_db, pregain, predelay, max_predelay, Q_sig
+        )
 
     @property
     def wet(self):
@@ -290,4 +301,3 @@ class reverb_stereo_base(reverb_base):
         self._width = value
         # recalculate wet gains
         self.wet = self.wet
-    

@@ -37,6 +37,7 @@ class allpass_fv(dspg.dsp_block):
 
     @property
     def feedback(self):
+        """Allpass gain coefficient."""
         return self._feedback
 
     @feedback.setter
@@ -220,7 +221,9 @@ class comb_fv(dspg.dsp_block):
         self._filterstore_int = rvb.scale_sat_int64_to_int32_floor(filtstore_64)
 
         # do buffer calculation in int64 accumulator so we only quantize once
-        new_buff = utils.int64((sample_int << rvb.Q_VERB) + self._filterstore_int * self.feedback_int)
+        new_buff = utils.int64(
+            (sample_int << rvb.Q_VERB) + self._filterstore_int * self.feedback_int
+        )
         self._buffer_int[self._buffer_idx] = rvb.scale_sat_int64_to_int32_floor(new_buff)
 
         self._buffer_idx += 1
@@ -290,7 +293,9 @@ class reverb_room(rvb.reverb_base):
         assert n_chans == 1, f"Reverb room only supports 1 channel. {n_chans} specified"
 
         # initalise wet/dry gains and predelay
-        super().__init__(fs, n_chans, wet_gain_db, dry_gain_db, pregain, predelay, max_predelay, Q_sig)
+        super().__init__(
+            fs, n_chans, wet_gain_db, dry_gain_db, pregain, predelay, max_predelay, Q_sig
+        )
 
         self._effect_gain = sc.fixed_gain(fs, 1, 10)
 

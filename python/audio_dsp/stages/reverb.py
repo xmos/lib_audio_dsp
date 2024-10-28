@@ -249,6 +249,7 @@ class ReverbRoomStereo(ReverbRoom):
         """
         self.dsp_block.width = width
 
+
 class ReverbPlateStereo(Stage):
     """
     The streo room plate stage.
@@ -283,11 +284,19 @@ class ReverbPlateStereo(Stage):
             max_predelay=max_predelay,
         )
         self.set_control_field_cb("damping", lambda: self.dsp_block.lowpasses[1].damp1_int)
-        self.set_control_field_cb("diffusion", lambda: self.dsp_block.mod_allpasses[0].feedback_int)
+        self.set_control_field_cb(
+            "diffusion", lambda: self.dsp_block.mod_allpasses[0].feedback_int
+        )
         self.set_control_field_cb("bandwidth", lambda: self.dsp_block.lowpasses[0].damp1_int)
-        self.set_control_field_cb("input_diffusion_1", lambda: self.dsp_block.allpasses[0].feedback_int)
-        self.set_control_field_cb("input_diffusion_2", lambda: self.dsp_block.allpasses[2].feedback_int)
-        self.set_control_field_cb("decay_diffusion_2", lambda: self.dsp_block.allpasses[4].feedback_int)
+        self.set_control_field_cb(
+            "input_diffusion_1", lambda: self.dsp_block.allpasses[0].feedback_int
+        )
+        self.set_control_field_cb(
+            "input_diffusion_2", lambda: self.dsp_block.allpasses[2].feedback_int
+        )
+        self.set_control_field_cb(
+            "decay_diffusion_2", lambda: self.dsp_block.allpasses[4].feedback_int
+        )
 
         self.set_control_field_cb("decay", lambda: self.dsp_block.decay_int)
         self.set_control_field_cb("wet_gain1", lambda: self.dsp_block.wet_1_int)
