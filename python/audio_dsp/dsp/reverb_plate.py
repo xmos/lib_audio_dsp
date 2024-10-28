@@ -46,10 +46,33 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
     allpasses : list
         A list of allpass objects containing the all pass filters for
         the reverb.
+    lowpasses : list
+        A list of lowpass objects containing the low pass filters for
+        the reverb.
+    delays : list
+        A list of delay objects containing the delay lines for the reverb.
+    mod_allpasses : list
+        A list of allpass objects containing the modulated all pass
+        objects for the reverb.
+    taps_l : list
+        A list of the current output tap locations for the left output.
+    taps_r : list
+        A list of the current output tap locations for the right output.
+    tap_lens_l : list
+        A list of the buffer lengths used by taps_l, to aid wrapping the
+        read head at the end of the buffer
+    tap_lens_r : list
+        As tap lens_l, but for the right output channel.
     decay : float
+    decay_int : int
+        decay as a fixed point integer.
     damping : float
     damping_int : int
         damping as a fixed point integer.
+    bandwidth : float
+    early_diffusion : float
+    late_diffusion : float
+
     """
 
     def __init__(
@@ -195,15 +218,15 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
 
     @property
     def bandwidth(self):
-        """How much high frequency attenuation in the room, between 0 and 1."""
+        """The bandwidth of the reverb input signal, between 0 and 1."""
         return self._bandwidth
 
     @bandwidth.setter
     def bandwidth(self, x):
         if not (0 <= x <= 1):
             bad_x = x
-            x = np.clip(x, 0, 1)
-            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
+            x = np.clip(x, 0, _LESS_THAN_1)
+            warnings.warn(f"bandwidth {bad_x} saturates to {x}", UserWarning)
         self._bandwidth = x
         self.lowpasses[0].set_bandwidth(self.bandwidth)
 
@@ -217,14 +240,14 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         if not (0 <= x <= 1):
             bad_x = x
             x = np.clip(x, 0, 1)
-            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
+            warnings.warn(f"damping {bad_x} saturates to {x}", UserWarning)
         self._damping = x
         self.lowpasses[1].set_bandwidth(1 - self.damping)
         self.lowpasses[2].set_bandwidth(1 - self.damping)
 
     @property
     def late_diffusion(self):
-        """How much high frequency attenuation in the room, between 0 and 1."""
+        """How much late diffusion in the reverb, between 0 and 1."""
         return self._decay_diffusion_1
 
     @late_diffusion.setter
@@ -232,14 +255,14 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         if not (0 <= x <= 1):
             bad_x = x
             x = np.clip(x, 0, 1)
-            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
+            warnings.warn(f"late_diffusion {bad_x} saturates to {x}", UserWarning)
         self._decay_diffusion_1 = x
         self.mod_allpasses[0].feedback = -self.late_diffusion
         self.mod_allpasses[1].feedback = -self.late_diffusion
 
     @property
     def early_diffusion(self):
-        """How much high frequency attenuation in the room, between 0 and 1."""
+        """How much early diffusion in the reverb, between 0 and 1."""
         return self._input_diffusion_1
 
     @early_diffusion.setter
@@ -247,7 +270,7 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         if not (0 <= x <= 1):
             bad_x = x
             x = np.clip(x, 0, 1)
-            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
+            warnings.warn(f"early_diffusion {bad_x} saturates to {x}", UserWarning)
         self._input_diffusion_1 = x
         self.allpasses[0].feedback = self._input_diffusion_1
         self.allpasses[1].feedback = self._input_diffusion_1
@@ -441,46 +464,3 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         output_r_flt = utils.int32_to_float(output_r, self.Q_sig)
 
         return [output_l_flt, output_r_flt]
-
-    def process_frame(self, frame: list[np.ndarray]):
-        """
-        Take a list frames of samples and return the processed frames.
-
-        A frame is defined as a list of 1-D numpy arrays, where the
-        number of arrays is equal to the number of channels, and the
-        length of the arrays is equal to the frame size.
-
-        When calling self.process_channels only take the first output.
-
-        """
-        n_outputs = len(frame)
-        assert n_outputs == 2, "has to be stereo"
-        frame_size = frame[0].shape[0]
-        output = deepcopy(frame)
-        for sample in range(frame_size):
-            out_samples = self.process_channels([frame[0][sample], frame[1][sample]])
-            output[0][sample] = out_samples[0]
-            output[1][sample] = out_samples[1]
-        return output
-
-    def process_frame_xcore(self, frame: list[np.ndarray]):
-        """
-        Take a list frames of samples and return the processed frames,
-        using a bit exact xcore implementation.
-        A frame is defined as a list of 1-D numpy arrays, where the
-        number of arrays is equal to the number of channels, and the
-        length of the arrays is equal to the frame size.
-
-        When calling self.process_channel_xcore only take the first output.
-
-        """
-        n_outputs = len(frame)
-        assert n_outputs == 2, "has to be stereo"
-        frame_size = frame[0].shape[0]
-        output = deepcopy(frame)
-        for sample in range(frame_size):
-            out_samples = self.process_channels_xcore([frame[0][sample], frame[1][sample]])
-            output[0][sample] = out_samples[0]
-            output[1][sample] = out_samples[1]
-
-        return output
