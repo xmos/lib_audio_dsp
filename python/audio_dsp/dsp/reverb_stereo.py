@@ -72,9 +72,11 @@ class reverb_room_stereo(rvb.reverb_stereo_base):
         Q_sig=dspg.Q_SIG,
     ):
         assert n_chans == 2, f"Stereo reverb only supports 2 channel. {n_chans} specified"
-        
+
         # initalise wet/dry gains, width, and predelay
-        super().__init__(fs, n_chans, width, wet_gain_db, dry_gain_db, pregain, predelay, max_predelay, Q_sig)
+        super().__init__(
+            fs, n_chans, width, wet_gain_db, dry_gain_db, pregain, predelay, max_predelay, Q_sig
+        )
 
         self._effect_gain = sc.fixed_gain(fs, n_chans, 10)
 

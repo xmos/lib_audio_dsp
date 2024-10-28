@@ -215,7 +215,7 @@ class PipelineExecutor:
 
         if data.shape[0] % frame_size:
             # truncate data to a multiple of frame size
-            datalen = (data.shape[0]//frame_size)*frame_size
+            datalen = (data.shape[0] // frame_size) * frame_size
             data = data[:datalen, :]
 
         ret = numpy.zeros((data.shape[0], n_o_chans))
