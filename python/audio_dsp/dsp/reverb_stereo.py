@@ -7,7 +7,6 @@ import audio_dsp.dsp.generic as dspg
 import numpy as np
 import audio_dsp.dsp.signal_chain as sc
 import audio_dsp.dsp.utils as utils
-from copy import deepcopy
 import warnings
 import audio_dsp.dsp.reverb_base as rvb
 

@@ -8,6 +8,7 @@ import audio_dsp.dsp.signal_chain as sc
 import audio_dsp.dsp.utils as utils
 import warnings
 import numpy as np
+from copy import deepcopy
 
 Q_VERB = 31
 
