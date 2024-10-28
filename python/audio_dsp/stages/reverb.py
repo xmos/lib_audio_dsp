@@ -283,11 +283,11 @@ class ReverbPlateStereo(Stage):
             predelay=predelay,
             max_predelay=max_predelay,
         )
-        self.set_control_field_cb("damping", lambda: self.dsp_block.lowpasses[1].damp1_int)
+        self.set_control_field_cb("damping", lambda: self.dsp_block.lowpasses[1].coeff_1_int)
         self.set_control_field_cb(
             "diffusion", lambda: self.dsp_block.mod_allpasses[0].feedback_int
         )
-        self.set_control_field_cb("bandwidth", lambda: self.dsp_block.lowpasses[0].damp1_int)
+        self.set_control_field_cb("bandwidth", lambda: self.dsp_block.lowpasses[0].coeff_1_int)
         self.set_control_field_cb(
             "input_diffusion_1", lambda: self.dsp_block.allpasses[0].feedback_int
         )
