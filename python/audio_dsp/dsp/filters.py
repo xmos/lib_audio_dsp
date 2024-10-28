@@ -110,7 +110,7 @@ class allpass(dspg.dsp_block):
 
         self.delay = max_delay
         self.feedback = feedback_gain
-        self.feedback_int = utils.int32(self.feedback * 2**rvb.Q_VERB)
+
         self._buffer_idx = 0
 
     @property
@@ -121,7 +121,11 @@ class allpass(dspg.dsp_block):
     @feedback.setter
     def feedback(self, x):
         self._feedback = x
-        self.feedback_int = utils.int32(self.feedback * 2**rvb.Q_VERB)
+        if self.feedback < 0:
+            # if negative, ensure we cap to -INT32_MAX
+            self.feedback_int = -rvb.float_to_q_verb(-self.feedback)
+        else:
+            self.feedback_int = rvb.float_to_q_verb(self.feedback)
 
     def set_delay(self, delay):
         """Set the length of the delay line. Will saturate to max_delay."""

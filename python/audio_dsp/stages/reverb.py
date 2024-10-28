@@ -252,7 +252,8 @@ class ReverbRoomStereo(ReverbRoom):
 
 class ReverbPlateStereo(Stage):
     """
-    The streo room plate stage.
+    The stereo room plate stage. This is based on Dattorro's 1997
+    paper.
 
     Parameters
     ----------

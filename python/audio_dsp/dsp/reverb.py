@@ -29,7 +29,6 @@ class allpass_fv(fltr.allpass):
 
         self.delay = max_delay
         self.feedback = feedback_gain
-        self.feedback_int = utils.int32(self.feedback * 2**rvb.Q_VERB)
         self._buffer_idx = 0
 
     def process(self, sample):  # type: ignore : overloads base class
@@ -130,7 +129,7 @@ class comb_fv(dspg.dsp_block):
         reverberation time.
         """
         self.feedback = feedback
-        self.feedback_int = utils.int32(self.feedback * 2**rvb.Q_VERB)
+        self.feedback_int = rvb.float_to_q_verb(self.feedback)
 
     def set_damping(self, damping):
         """Set the damping of the reverb, which controls how much high

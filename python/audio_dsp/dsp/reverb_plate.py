@@ -18,7 +18,7 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
     paper. This reverb consists of 4 allpass filters for input diffusion,
     followed by a figure of 8 reverb tank of allpasses, low-pass filters,
     and delays. The output is taken from multiple taps in the delay lines
-    to get a good echo density.
+    to get a desirable echo density.
 
     Parameters
     ----------
