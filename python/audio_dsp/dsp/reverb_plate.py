@@ -10,146 +10,15 @@ from copy import deepcopy
 import warnings
 import audio_dsp.dsp.reverb_base as rvb
 import audio_dsp.dsp.reverb as rv
-
-
-class lowpass_1ord(dspg.dsp_block):
-    """A first order lowpass filter.
-
-    Parameters
-    ----------
-    damping : float
-        Sets the low pass feedback coefficient.
-    """
-
-    def __init__(self, damping):
-        self._filterstore = 0.0
-        self._filterstore_int = 0
-        self.set_damping(damping)
-
-    def set_damping(self, damping):
-        """Set the damping of the reverb, which controls how much high
-        frequency damping is in the room. Higher damping will give
-        shorter reverberation times at high frequencies.
-        """
-        self.damp1 = damping
-        self.damp2 = 1 - self.damp1
-        # super critical these add up, but also don't overflow int32...
-        self.damp1_int = max(utils.int32(self.damp1 * 2**rvb.Q_VERB - 1), 1)
-        self.damp2_int = utils.int32((2**31 - 1) - self.damp1_int + 1)
-
-    def reset_state(self):
-        """Reset all the filterstore values to zero."""
-        self._filterstore = 0.0
-        self._filterstore_int = 0
-
-    def process(self, sample):  # type: ignore : overloads base class
-        """
-        Apply a low pass filter to a signal, using floating point maths.
-
-        Take one new sample and return the filtered sample.
-        Input should be scaled with 0 dB = 1.0.
-
-        """
-        output = (sample * self.damp1) + (self._filterstore * self.damp2)
-
-        self._filterstore = output
-
-        return output
-
-    def process_xcore(self, sample_int):  # type: ignore : overloads base class
-        """
-        Apply a low pass filter to a signal, using fixed point maths.
-
-        Take one new sample and return the filtered sample.
-        Input should be scaled with 0 dB = 2**Q_SIG.
-
-        Parameters
-        ----------
-        sample_int : int
-            Input sample as an integer.
-
-        """
-        assert isinstance(sample_int, int), "Input sample must be an integer"
-
-        # do state calculation in int64 accumulator so we only quantize once
-        output = utils.int64(sample_int * self.damp1_int + self._filterstore_int * self.damp2_int)
-        output = rvb.scale_sat_int64_to_int32_floor(output)
-        self._filterstore_int = output
-
-        return output
-
-
-class allpass_2(rv.allpass_fv):
-    """A freeverb style all-pass filter, for use in the reverb_room block.
-
-    Parameters
-    ----------
-    max_delay : int
-        Maximum delay of the all-pass.
-    feedback_gain : float
-        Gain applied to the delayed feedback path in the all-pass. Sets
-        the reverb time.
-    """
-
-    def process(self, sample):  # type: ignore : overloads base class
-        """
-        Apply an all pass filter to a signal, using floating point maths.
-
-        Take one new sample and return the filtered sample.
-        Input should be scaled with 0 dB = 1.0.
-
-        """
-        output = sample
-        buff_out = self._buffer[self._buffer_idx]
-        output -= buff_out * self.feedback
-
-        self._buffer[self._buffer_idx] = output
-
-        self._buffer_idx += 1
-        if self._buffer_idx >= self.delay:
-            self._buffer_idx = 0
-
-        output = buff_out + output * self.feedback
-
-        return output
-
-    def process_xcore(self, sample_int):  # type: ignore : overloads base class
-        """
-        Apply an all pass filter to a signal, using fixed point maths.
-
-        Take one new sample and return the filtered sample.
-        Input should be scaled with 0 dB = 2**Q_SIG.
-
-        Parameters
-        ----------
-        sample_int : int
-            Input sample as an integer.
-
-        """
-        assert isinstance(sample_int, int), "Input sample must be an integer"
-
-        buff_out = self._buffer_int[self._buffer_idx]
-
-        # do buffer calculation in int64 accumulator so we only quantize once
-        output = utils.int64((sample_int << rvb.Q_VERB) - buff_out * self.feedback_int)
-        output = rvb.scale_sat_int64_to_int32_floor(output)
-
-        self._buffer_int[self._buffer_idx] = output
-
-        # move buffer head
-        self._buffer_idx += 1
-        if self._buffer_idx >= self.delay:
-            self._buffer_idx = 0
-
-        output = utils.int64((buff_out << rvb.Q_VERB) + output * self.feedback_int)
-        output = rvb.scale_sat_int64_to_int32_floor(output)
-
-        return output
+import audio_dsp.dsp.filters as fltr
 
 
 class reverb_plate_stereo(rvb.reverb_stereo_base):
-    """Generate a stereo plate reverb effect. The reverberator outputs are mixed
-    according to the ``width`` parameter.
+    """Generate a stereo plate reverb effect, based on Dattorro's 1997
+    paper. This reverb consists of 4 allpass filters for input diffusion,
+    followed by a figure of 8 reverb tank of allpasses, low-pass filters,
+    and delays. The output is taken from multiple taps in the delay lines
+    to get a good echo density.
 
     Parameters
     ----------
@@ -168,7 +37,7 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
     Attributes
     ----------
     allpasses : list
-        A list of allpass_fv objects containing the all pass filters for
+        A list of allpass objects containing the all pass filters for
         the reverb.
     decay : float
     damping : float
@@ -222,18 +91,18 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         self._input_diffusion_2 = early_diffusion * 5 / 6
 
         self.lowpasses = [
-            lowpass_1ord(self.bandwidth),
-            lowpass_1ord(1 - self.damping),
-            lowpass_1ord(1 - self.damping),
+            fltr.lowpass_1ord(fs, 1, self.bandwidth),
+            fltr.lowpass_1ord(fs, 1, 1 - self.damping),
+            fltr.lowpass_1ord(fs, 1, 1 - self.damping),
         ]
 
         self.allpasses = [
-            allpass_2(ap_lengths[0], self._input_diffusion_1),
-            allpass_2(ap_lengths[1], self._input_diffusion_1),
-            allpass_2(ap_lengths[2], self._input_diffusion_2),
-            allpass_2(ap_lengths[3], self._input_diffusion_2),
-            allpass_2(ap_lengths[4], _decay_diffusion_2),
-            allpass_2(ap_lengths[5], _decay_diffusion_2),
+            fltr.allpass(fs, 1, ap_lengths[0], self._input_diffusion_1),
+            fltr.allpass(fs, 1, ap_lengths[1], self._input_diffusion_1),
+            fltr.allpass(fs, 1, ap_lengths[2], self._input_diffusion_2),
+            fltr.allpass(fs, 1, ap_lengths[3], self._input_diffusion_2),
+            fltr.allpass(fs, 1, ap_lengths[4], _decay_diffusion_2),
+            fltr.allpass(fs, 1, ap_lengths[5], _decay_diffusion_2),
         ]
 
         self.delays = [
@@ -244,8 +113,8 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         ]
 
         self.mod_allpasses = [
-            allpass_2(mod_ap_lengths[0], -self.late_diffusion),
-            allpass_2(mod_ap_lengths[1], -self.late_diffusion),
+            fltr.allpass(fs, 1, mod_ap_lengths[0], -self.late_diffusion),
+            fltr.allpass(fs, 1, mod_ap_lengths[1], -self.late_diffusion),
         ]
 
         self.decay = decay
@@ -329,7 +198,7 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
             x = np.clip(x, 0, 1)
             warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
         self._bandwidth = x
-        self.lowpasses[0].set_damping(self.bandwidth)
+        self.lowpasses[0].set_bandwidth(self.bandwidth)
 
     @property
     def damping(self):
@@ -343,8 +212,8 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
             x = np.clip(x, 0, 1)
             warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
         self._damping = x
-        self.lowpasses[1].set_damping(1 - self.damping)
-        self.lowpasses[2].set_damping(1 - self.damping)
+        self.lowpasses[1].set_bandwidth(1 - self.damping)
+        self.lowpasses[2].set_bandwidth(1 - self.damping)
 
     @property
     def late_diffusion(self):

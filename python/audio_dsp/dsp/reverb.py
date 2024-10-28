@@ -1,6 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""DSP blocks for reverb effects."""
+"""DSP blocks for room reverb effects."""
 
 from audio_dsp import _deprecated
 import audio_dsp.dsp.generic as dspg
@@ -10,18 +10,15 @@ import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.signal_chain as sc
 from copy import deepcopy
 import audio_dsp.dsp.reverb_base as rvb
+import audio_dsp.dsp.filters as fltr
 
 
-class allpass_fv(dspg.dsp_block):
-    """A freeverb style all-pass filter, for use in the reverb_room block.
+class allpass_fv(fltr.allpass):
+    """A freeverb style all-pass filter, for use in the reverb_room
+    block.
 
-    Parameters
-    ----------
-    max_delay : int
-        Maximum delay of the all-pass.
-    feedback_gain : float
-        Gain applied to the delayed feedback path in the all-pass. Sets
-        the reverb time.
+    This is only designed to be called inside reverb_room algorithms.
+
     """
 
     def __init__(self, max_delay, feedback_gain):
@@ -34,32 +31,6 @@ class allpass_fv(dspg.dsp_block):
         self.feedback = feedback_gain
         self.feedback_int = utils.int32(self.feedback * 2**rvb.Q_VERB)
         self._buffer_idx = 0
-
-    @property
-    def feedback(self):
-        """Allpass gain coefficient."""
-        return self._feedback
-
-    @feedback.setter
-    def feedback(self, x):
-        self._feedback = x
-        self.feedback_int = utils.int32(self.feedback * 2**rvb.Q_VERB)
-
-    def set_delay(self, delay):
-        """Set the length of the delay line. Will saturate to max_delay."""
-        if delay <= self._max_delay:
-            self.delay = delay
-        else:
-            self.delay = self._max_delay
-            warnings.warn(
-                "Delay cannot be greater than max delay, setting to max delay", UserWarning
-            )
-
-    def reset_state(self):
-        """Reset all the delay line values to zero."""
-        self._buffer = np.zeros(self._max_delay)
-        self._buffer_int = [0] * self._max_delay
-        return
 
     def process(self, sample):  # type: ignore : overloads base class
         """
@@ -116,6 +87,8 @@ class allpass_fv(dspg.dsp_block):
 
 class comb_fv(dspg.dsp_block):
     """A freeverb style comb filter for use in the reverb_room block.
+
+    This is only designed to be called inside reverb_room algorithms.
 
     Parameters
     ----------

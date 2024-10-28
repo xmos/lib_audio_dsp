@@ -257,7 +257,7 @@ pipeline {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/reverb") {
-                          runPytest("test_reverb_st_c.py --dist worksteal")
+                          runPytest("--dist worksteal")
                         }
                       }
                     }
