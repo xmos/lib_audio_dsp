@@ -29,8 +29,8 @@ void reverb_plate_init(module_instance_t* instance,
     float fs = constants->sampling_freq;
     uint32_t max_predelay = constants->max_predelay;
     uint32_t predelay = config->predelay;
-    int32_t decay_diff = config->decay_diffusion_2;
-    int32_t diff = config->diffusion;
+    int32_t decay_diff2 = config->decay_diffusion_2;
+    int32_t decay_diff1 = config->decay_diffusion_1;
     int32_t in_diff1 = config->input_diffusion_1;
     int32_t in_diff2 = config->input_diffusion_2;
 
@@ -49,7 +49,7 @@ void reverb_plate_init(module_instance_t* instance,
     state->rv.wet_gain2 = config->wet_gain2;
     state->rv.dry_gain = config->dry_gain;
 
-    adsp_reverb_plate_init_filters(&state->rv, fs, decay_diff, diff, in_diff1, in_diff2, max_predelay, predelay, reverb_heap);
+    adsp_reverb_plate_init_filters(&state->rv, fs, decay_diff1, decay_diff2, in_diff1, in_diff2, max_predelay, predelay, reverb_heap);
 }
 
 void reverb_plate_process(int32_t **input, int32_t **output, void *app_data_state)
@@ -91,7 +91,7 @@ void reverb_plate_control(void *module_state, module_control_t *control)
         state->rv.lowpasses[0].damp_2 = damp2;
         damp2 = (uint32_t)(1<<31) - config->damping;
         for (unsigned i = 0; i < 2; i ++) {
-            state->rv.mod_allpasses[i].feedback = config->diffusion;
+            state->rv.mod_allpasses[i].feedback = config->decay_diffusion_1;
             state->rv.allpasses[i].feedback = config->input_diffusion_1;
             state->rv.lowpasses[i + 1].damp_1 = config->damping;
             state->rv.lowpasses[i + 1].damp_2 = damp2;
@@ -114,7 +114,7 @@ void reverb_plate_control(void *module_state, module_control_t *control)
         config->bandwidth = state->rv.lowpasses[0].damp_1;
         config->damping = state->rv.lowpasses[1].damp_1;
         config->predelay = state->rv.predelay.delay;
-        config->diffusion = state->rv.mod_allpasses[0].feedback;
+        config->decay_diffusion_1 = state->rv.mod_allpasses[0].feedback;
         config->input_diffusion_1 = state->rv.allpasses[0].feedback;
         config->input_diffusion_2 = state->rv.allpasses[2].feedback;
         config->decay_diffusion_2 = state->rv.allpasses[4].feedback;

@@ -13,10 +13,9 @@
  * @param fs                Sampling frequency
  * @param decay             Length of the reverb tail [0, 1]
  * @param damping           High frequency attenuation
- * @param diffusion         Diffusion
  * @param bandwidth         Pre lowpass
- * @param in_diffusion_1    Early diffusion 1
- * @param in_diffusion_2    Early diffusion 2
+ * @param early_diffusion   Early diffusion
+ * @param late_diffusion    Late diffusion
  * @param width             Stereo separation of the room [0, 1]
  * @param wet_gain          Wet gain in dB
  * @param dry_gain          Dry gain in dB
@@ -30,10 +29,9 @@ reverb_plate_t adsp_reverb_plate_init(
   float fs,
   float decay,
   float damping,
-  float diffusion,
   float bandwidth,
-  float in_diffusion_1,
-  float in_diffusion_2,
+  float early_diffusion,
+  float late_diffusion,
   float width,
   float wet_gain,
   float dry_gain,

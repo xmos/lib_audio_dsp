@@ -9,7 +9,7 @@ module:
     damping:
       type: int32_t
       help: High frequency attenuation in Q0.31 format. Use the function ``adsp_reverb_calculate_damping`` in ``control/reverb.h``. 
-    diffusion:
+    decay_diffusion_1:
       type: int32_t
       help: help!
     bandwidth:

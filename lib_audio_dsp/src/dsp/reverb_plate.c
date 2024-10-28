@@ -218,8 +218,8 @@ void adsp_reverb_plate(
 void adsp_reverb_plate_init_filters(
   reverb_plate_t * rv,
   float fs,
-  int32_t decay_diffusion,
-  int32_t diffusion,
+  int32_t decay_diffusion_1,
+  int32_t decay_diffusion_2,
   int32_t in_diffusion_1,
   int32_t in_diffusion_2,
   uint32_t max_predelay, 
@@ -259,14 +259,14 @@ void adsp_reverb_plate_init_filters(
   for (unsigned i = 4; i < 6; i++) {
     ap_lens[i] *= rv_scale_fac;
     void * ap_mem = mem_manager_alloc(&mem, ap_lens[i]<<2);
-    rv->allpasses[i] = allpass_fv_init(ap_lens[i], decay_diffusion, ap_mem);
+    rv->allpasses[i] = allpass_fv_init(ap_lens[i], decay_diffusion_2, ap_mem);
   }
 
   // mod allpasses
   for (unsigned i = 0; i < ADSP_RVP_N_PATHS; i++) {
     mod_ap_lens[i] *= rv_scale_fac;
     void * ap_mem = mem_manager_alloc(&mem, mod_ap_lens[i]<<2);
-    rv->mod_allpasses[i] = allpass_fv_init(mod_ap_lens[i], diffusion, ap_mem);
+    rv->mod_allpasses[i] = allpass_fv_init(mod_ap_lens[i], decay_diffusion_1, ap_mem);
   }
 
   // delays

@@ -94,8 +94,8 @@ lowpass_1ord_t lowpass_1ord_init(int32_t feedback);
  * 
  * @param rv                Reverb plate object
  * @param fs                Sampling frequency
- * @param decay_diffusion   Late diffusion
- * @param diffusion         Diffusion
+ * @param decay_diffusion_1 Late diffusion
+ * @param decay_diffusion_2 Diffusion
  * @param in_diffusion_1    Early diffusion 1
  * @param in_diffusion_2    Early diffusion 2
  * @param max_predelay      Maximum size of the predelay buffer in samples
@@ -105,8 +105,8 @@ lowpass_1ord_t lowpass_1ord_init(int32_t feedback);
 void adsp_reverb_plate_init_filters(
   reverb_plate_t * rv,
   float fs,
-  int32_t decay_diffusion,
-  int32_t diffusion,
+  int32_t decay_diffusion_1,
+  int32_t decay_diffusion_2,
   int32_t in_diffusion_1,
   int32_t in_diffusion_2,
   uint32_t max_predelay,

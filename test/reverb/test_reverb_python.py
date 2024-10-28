@@ -121,8 +121,8 @@ def test_reverb_time(max_room_size_diffusion, decay, damping, q_format, width, a
         reverb = rv.reverb_room(fs, 1, max_room_size=max_room_size_diffusion, room_size=1, decay=decay, damping=damping, Q_sig=q_format, pregain=pregain)
     elif algo =="stereo_plate":
         sig = np.tile(sig, [2, 1])
-        reverb = rvp.reverb_plate_stereo(fs, 2, diffusion=max_room_size_diffusion,
-        input_diffusion_1=max_room_size_diffusion, input_diffusion_2=max_room_size_diffusion,
+        reverb = rvp.reverb_plate_stereo(fs, 2, early_diffusion=max_room_size_diffusion,
+        late_diffusion=max_room_size_diffusion,
         decay=decay, damping=damping, Q_sig=q_format,
         pregain=pregain, width=width)
     reverb.set_wet_dry_mix(wdmix)

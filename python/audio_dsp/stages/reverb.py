@@ -285,7 +285,7 @@ class ReverbPlateStereo(Stage):
         )
         self.set_control_field_cb("damping", lambda: self.dsp_block.lowpasses[1].damp1_int)
         self.set_control_field_cb(
-            "diffusion", lambda: self.dsp_block.mod_allpasses[0].feedback_int
+            "decay_diffusion_1", lambda: self.dsp_block.mod_allpasses[0].feedback_int
         )
         self.set_control_field_cb("bandwidth", lambda: self.dsp_block.lowpasses[0].damp1_int)
         self.set_control_field_cb(
@@ -414,7 +414,7 @@ class ReverbPlateStereo(Stage):
         """
         self.dsp_block.decay = decay
 
-    def set_diffusion(self, diffusion):
+    def set_early_diffusion(self, diffusion):
         """
         Set the diffusion of the reverb room stage. This sets how
         diffuse the room is. Higher values will give a longer
@@ -425,9 +425,9 @@ class ReverbPlateStereo(Stage):
         decay : float
             How long the reverberation of the room is, between 0 and 1.
         """
-        self.dsp_block.diffusion = diffusion
+        self.dsp_block.early_diffusion = diffusion
 
-    def set_input_diffusion_1(self, diffusion):
+    def set_late_diffusion(self, diffusion):
         """
         Set the diffusion of the reverb room stage. This sets how
         diffuse the room is. Higher values will give a longer
@@ -438,20 +438,7 @@ class ReverbPlateStereo(Stage):
         decay : float
             How long the reverberation of the room is, between 0 and 1.
         """
-        self.dsp_block.input_diffusion_1 = diffusion
-
-    def set_input_diffusion_2(self, diffusion):
-        """
-        Set the diffusion of the reverb room stage. This sets how
-        diffuse the room is. Higher values will give a longer
-        reverberation time for a given room size.
-
-        Parameters
-        ----------
-        decay : float
-            How long the reverberation of the room is, between 0 and 1.
-        """
-        self.dsp_block.input_diffusion_2 = diffusion
+        self.dsp_block.late_diffusion = diffusion
 
     def set_bandwidth(self, bandwidth):
         """

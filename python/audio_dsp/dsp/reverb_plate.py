@@ -182,10 +182,9 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         n_chans,
         decay=0.4,
         damping=0.75,
-        diffusion=0.50,
         bandwidth=0.4,
-        input_diffusion_1=0.5,
-        input_diffusion_2=0.5,
+        early_diffusion=0.75,
+        late_diffusion=0.7,
         width=1.0,
         wet_gain_db=-3,
         dry_gain_db=-3,
@@ -217,10 +216,10 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
 
         self._bandwidth = bandwidth
         self._damping = damping
-        self._diffusion = diffusion
-        self._decay_diffusion_2 = np.clip(decay + 0.15, 0.25, 0.5)
-        self._input_diffusion_1 = input_diffusion_1
-        self._input_diffusion_2 = input_diffusion_2
+        self._decay_diffusion_1 = late_diffusion
+        _decay_diffusion_2 = np.clip(decay + 0.15, 0.25, 0.5)
+        self._input_diffusion_1 = early_diffusion
+        self._input_diffusion_2 = early_diffusion * 5 / 6
 
         self.lowpasses = [
             lowpass_1ord(self.bandwidth),
@@ -229,12 +228,12 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         ]
 
         self.allpasses = [
-            allpass_2(ap_lengths[0], self.input_diffusion_1),
-            allpass_2(ap_lengths[1], self.input_diffusion_1),
-            allpass_2(ap_lengths[2], self.input_diffusion_2),
-            allpass_2(ap_lengths[3], self.input_diffusion_2),
-            allpass_2(ap_lengths[4], self.decay_diffusion_2),
-            allpass_2(ap_lengths[5], self.decay_diffusion_2),
+            allpass_2(ap_lengths[0], self._input_diffusion_1),
+            allpass_2(ap_lengths[1], self._input_diffusion_1),
+            allpass_2(ap_lengths[2], self._input_diffusion_2),
+            allpass_2(ap_lengths[3], self._input_diffusion_2),
+            allpass_2(ap_lengths[4], _decay_diffusion_2),
+            allpass_2(ap_lengths[5], _decay_diffusion_2),
         ]
 
         self.delays = [
@@ -245,8 +244,8 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         ]
 
         self.mod_allpasses = [
-            allpass_2(mod_ap_lengths[0], -self.diffusion),
-            allpass_2(mod_ap_lengths[1], -self.diffusion),
+            allpass_2(mod_ap_lengths[0], -self.late_diffusion),
+            allpass_2(mod_ap_lengths[1], -self.late_diffusion),
         ]
 
         self.decay = decay
@@ -286,9 +285,8 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
 
         self.bandwidth = bandwidth
         self.damping = damping
-        self.diffusion = diffusion
-        self.input_diffusion_1 = input_diffusion_1
-        self.input_diffusion_2 = input_diffusion_2
+        self.early_diffusion = early_diffusion
+        self.late_diffusion = late_diffusion
 
     def reset_state(self):
         """Reset all the delay line values to zero."""
@@ -315,17 +313,7 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
             warnings.warn(f"Decay {bad_x} saturates to {x}", UserWarning)
         self._decay = x
         self.decay_int = rvb.float_to_q_verb(x)
-        self.decay_diffusion_2 = x + 0.15
-
-    @property
-    def decay_diffusion_2(self):
-        """The length of the reverberation of the room, between 0 and 1."""
-        return self._decay_diffusion_2
-
-    @decay_diffusion_2.setter
-    def decay_diffusion_2(self, x):
-        x = np.clip(x, 0.25, 0.5)
-        self._decay_diffusion_2 = x
+        x = np.clip(x + 0.15, 0.25, 0.5)
         self.allpasses[4].feedback = x
         self.allpasses[5].feedback = x
 
@@ -359,49 +347,37 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         self.lowpasses[2].set_damping(1 - self.damping)
 
     @property
-    def diffusion(self):
+    def late_diffusion(self):
         """How much high frequency attenuation in the room, between 0 and 1."""
-        return self._diffusion
+        return self._decay_diffusion_1
 
-    @diffusion.setter
-    def diffusion(self, x):
+    @late_diffusion.setter
+    def late_diffusion(self, x):
         if not (0 <= x <= 1):
             bad_x = x
             x = np.clip(x, 0, 1)
             warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
-        self._diffusion = x
-        self.mod_allpasses[0].feedback = -self.diffusion
-        self.mod_allpasses[1].feedback = -self.diffusion
+        self._decay_diffusion_1 = x
+        self.mod_allpasses[0].feedback = -self.late_diffusion
+        self.mod_allpasses[1].feedback = -self.late_diffusion
 
     @property
-    def input_diffusion_1(self):
+    def early_diffusion(self):
         """How much high frequency attenuation in the room, between 0 and 1."""
         return self._input_diffusion_1
 
-    @input_diffusion_1.setter
-    def input_diffusion_1(self, x):
+    @early_diffusion.setter
+    def early_diffusion(self, x):
         if not (0 <= x <= 1):
             bad_x = x
             x = np.clip(x, 0, 1)
             warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
         self._input_diffusion_1 = x
-        self.allpasses[0].feedback = self.input_diffusion_1
-        self.allpasses[1].feedback = self.input_diffusion_1
-
-    @property
-    def input_diffusion_2(self):
-        """How much high frequency attenuation in the room, between 0 and 1."""
-        return self._input_diffusion_2
-
-    @input_diffusion_2.setter
-    def input_diffusion_2(self, x):
-        if not (0 <= x <= 1):
-            bad_x = x
-            x = np.clip(x, 0, 1)
-            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
-        self._input_diffusion_2 = x
-        self.allpasses[2].feedback = self.input_diffusion_2
-        self.allpasses[3].feedback = self.input_diffusion_2
+        self.allpasses[0].feedback = self._input_diffusion_1
+        self.allpasses[1].feedback = self._input_diffusion_1
+        self._input_diffusion_2 = x * 5 / 6
+        self.allpasses[2].feedback = self._input_diffusion_2
+        self.allpasses[3].feedback = self._input_diffusion_2
 
     def process(self, sample, channel=0):
         """Process is not implemented for the stereo reverb, as it needs
