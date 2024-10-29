@@ -9,6 +9,24 @@
 #include "stages/reverb_plate.h"
 #include "dsp/_helpers/generic_utils.h"
 
+
+static inline int32_t _calc_decay_diffusion_2(int32_t decay)
+{
+    // decay_diffusion_2 = clip(decay+0.15, 0.25, 0.5), 
+    // if decay > 0.35, clip to 0.5 before adding 0.15 to avoid overflow if decay > 0.85
+    // otherwise, add 0.15 and clip the lower limit
+    int32_t decay_diffusion_2 = (decay > 751619276) ? 1073741824 : decay + 322122547;
+    decay_diffusion_2 = decay_diffusion_2 < 536870912 ? 536870912 : decay_diffusion_2;
+    return decay_diffusion_2;
+}
+
+static inline int32_t _calc_input_diffusion_2(int32_t early_diffusion)
+{
+    // input_diffusion_2 = 5/6*early_diffusion
+    int32_t input_diffusion_2 = apply_gain_q31(early_diffusion, 1789569707);
+    return input_diffusion_2;
+}
+
 void reverb_plate_init(module_instance_t* instance,
                  adsp_bump_allocator_t* allocator,
                  uint8_t id,
@@ -30,12 +48,12 @@ void reverb_plate_init(module_instance_t* instance,
     float fs = constants->sampling_freq;
     uint32_t max_predelay = constants->max_predelay;
     uint32_t predelay = config->predelay;
-    int32_t decay_diff2 = config->late_diffusion;
+    int32_t decay_diff2 = _calc_decay_diffusion_2(config->decay);
     int32_t decay_diff1 = config->late_diffusion;
     int32_t in_diff1 = config->early_diffusion;
-    int32_t in_diff2 = config->early_diffusion;
+    int32_t in_diff2 = _calc_input_diffusion_2(config->early_diffusion);
 
-    xassert(n_inputs == 2); // Streo only implementation
+    xassert(n_inputs == 2); // Stereo only implementation
 
     state->rv.lowpasses[0] = lowpass_1ord_init(config->bandwidth);
     state->rv.lowpasses[1] = lowpass_1ord_init(config->damping);
@@ -92,22 +110,13 @@ void reverb_plate_control(void *module_state, module_control_t *control)
         state->rv.lowpasses[0].damp_2 = damp2;
         damp2 = (uint32_t)(1<<31) - config->damping;
 
-        // input_diffusion_2 = 5/6*early_diffusion
-        int32_t input_diffusion_2 = apply_gain_q31(config->early_diffusion, 1789569707);
-
-        // decay_diffusion_2 = clip(decay+0.15, 0.25, 0.5), 
-        // if decay > 0.35, clip to 0.5 before adding 0.15 to avoid overflow if decay > 0.85
-        // otherwise, add 0.15 and clip the lower limit
-        int32_t decay_diffusion_2 = (config->decay > 751619276) ? 1073741824 : config->decay + 322122547;
-        decay_diffusion_2 = decay_diffusion_2 < 536870912 ? 536870912 : decay_diffusion_2;
-
         for (unsigned i = 0; i < 2; i ++) {
             state->rv.mod_allpasses[i].feedback = config->late_diffusion;
             state->rv.allpasses[i].feedback = config->early_diffusion;
             state->rv.lowpasses[i + 1].damp_1 = config->damping;
             state->rv.lowpasses[i + 1].damp_2 = damp2;
-            state->rv.allpasses[i + 2].feedback = input_diffusion_2;
-            state->rv.allpasses[i + 4].feedback = decay_diffusion_2;
+            state->rv.allpasses[i + 2].feedback = _calc_input_diffusion_2(config->early_diffusion);
+            state->rv.allpasses[i + 4].feedback = _calc_decay_diffusion_2(config->decay);
         }
         control->config_rw_state = config_none_pending;
     }
