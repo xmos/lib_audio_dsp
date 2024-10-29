@@ -204,18 +204,6 @@ class reverb_room_stereo(rvb.reverb_stereo_base):
             self.allpasses_l[n].set_delay(ap_delays[n])
             self.allpasses_r[n].set_delay(ap_delays[n] + spread_delay)
 
-    def process(self, sample, channel=0):
-        """Process is not implemented for the stereo reverb, as it needs
-        2 channels at once.
-        """
-        raise NotImplementedError
-
-    def process_xcore(self, sample, channel=0):
-        """process_xcore is not implemented for the stereo reverb, as it needs
-        2 channels at once.
-        """
-        raise NotImplementedError
-
     def process_channels(self, sample_list: list[float]):
         """
         Add reverberation to a signal, using floating point maths.

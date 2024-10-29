@@ -303,6 +303,30 @@ class reverb_stereo_base(reverb_base):
         # recalculate wet gains
         self.wet = self.wet
 
+    def process(self, sample, channel=0):
+        """Process is not implemented for the stereo reverb, as it needs
+        2 channels at once.
+        """
+        raise NotImplementedError
+
+    def process_xcore(self, sample, channel=0):
+        """process_xcore is not implemented for the stereo reverb, as it needs
+        2 channels at once.
+        """
+        raise NotImplementedError
+
+    def process_channels(self, sample_list: list[float]):
+        """Process_channels is should be implemented for the stereo reverb,
+        but depends on the algorithm.
+        """
+        raise NotImplementedError
+
+    def process_channels_xcore(self, sample_list: list[float]):
+        """Process_channels is should be implemented for the stereo reverb,
+        but depends on the algorithm.
+        """
+        raise NotImplementedError
+
     def process_frame(self, frame: list[np.ndarray]):
         """
         Take a list frames of samples and return the processed frames.

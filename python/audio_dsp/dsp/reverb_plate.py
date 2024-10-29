@@ -274,21 +274,9 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         self._input_diffusion_1 = x
         self.allpasses[0].feedback = self._input_diffusion_1
         self.allpasses[1].feedback = self._input_diffusion_1
-        self._input_diffusion_2 = x * 54613/(2**16) # 5/6 quantized to 16b
+        self._input_diffusion_2 = x * 54613 / (2**16)  # 5/6 quantized to 16b
         self.allpasses[2].feedback = self._input_diffusion_2
         self.allpasses[3].feedback = self._input_diffusion_2
-
-    def process(self, sample, channel=0):
-        """Process is not implemented for the stereo reverb, as it needs
-        2 channels at once.
-        """
-        raise NotImplementedError
-
-    def process_xcore(self, sample, channel=0):
-        """process_xcore is not implemented for the stereo reverb, as it needs
-        2 channels at once.
-        """
-        raise NotImplementedError
 
     def process_channels(self, sample_list: list[float]):
         """
