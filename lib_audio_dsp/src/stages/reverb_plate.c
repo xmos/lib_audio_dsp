@@ -17,13 +17,16 @@ static inline int32_t _calc_decay_diffusion_2(int32_t decay)
     // otherwise, add 0.15 and clip the lower limit
     int32_t decay_diffusion_2 = (decay > 751619276) ? 1073741824 : decay + 322122547;
     decay_diffusion_2 = decay_diffusion_2 < 536870912 ? 536870912 : decay_diffusion_2;
+    // printf("decay: %ld, dd2: %ld\n", decay, decay_diffusion_2);
     return decay_diffusion_2;
 }
 
 static inline int32_t _calc_input_diffusion_2(int32_t early_diffusion)
 {
-    // input_diffusion_2 = 5/6*early_diffusion
-    int32_t input_diffusion_2 = apply_gain_q31(early_diffusion, 1789569707);
+    // input_diffusion_2 = 5/6*early_diffusion 
+    // 1789558784 = 5/6 quantized to 16b
+    int32_t input_diffusion_2 = apply_gain_q31(early_diffusion, 1789558784);
+    // printf("early: %ld, id2: %ld\n", early_diffusion, input_diffusion_2);
     return input_diffusion_2;
 }
 

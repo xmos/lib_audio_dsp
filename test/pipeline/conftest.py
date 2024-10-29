@@ -27,4 +27,4 @@ def pytest_addoption(parser):
 def pytest_collection_modifyitems(items, config):
     for item in items:
         if not any(item.iter_markers("group0")):
-            item.add_marker("unmarked")
+            item.add_marker("group1")

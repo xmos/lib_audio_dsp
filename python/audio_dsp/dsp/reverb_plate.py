@@ -274,7 +274,7 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         self._input_diffusion_1 = x
         self.allpasses[0].feedback = self._input_diffusion_1
         self.allpasses[1].feedback = self._input_diffusion_1
-        self._input_diffusion_2 = x * 5 / 6
+        self._input_diffusion_2 = x * 54613/(2**16) # 5/6 quantized to 16b
         self.allpasses[2].feedback = self._input_diffusion_2
         self.allpasses[3].feedback = self._input_diffusion_2
 
