@@ -8,7 +8,69 @@ import audio_dsp.dsp.reverb_stereo as rvbs
 import audio_dsp.dsp.reverb_plate as rvp
 
 
-class ReverbRoom(Stage):
+
+class ReverbBase(Stage):
+
+    def set_wet_dry_mix(self, mix):
+        """
+        Set the wet/dry gains so that the mix of 0 results in a
+        fully dry output, the mix of 1 results in a fully wet output.
+
+        Parameters
+        ----------
+        mix : float
+            The wet/dry mix, must be [0, 1].
+        """
+        self.dsp_block.set_wet_dry_mix(mix)
+
+    def set_predelay(self, predelay):
+        """
+        Set the predelay of the wet channel.
+
+        Parameters
+        ----------
+        predelay : float
+            Predelay in ms, less than max_predelay.
+        """
+        self.dsp_block.predelay = predelay
+
+    def set_wet_gain(self, gain_dB):
+        """
+        Set the wet gain of the reverb room stage. This sets the level
+        of the reverberated signal.
+
+        Parameters
+        ----------
+        gain_db : float
+            Wet gain in dB, less than 0 dB.
+        """
+        self.dsp_block.wet_db = gain_dB
+
+    def set_dry_gain(self, gain_dB):
+        """
+        Set the dry gain of the reverb room stage. This sets the level
+        of the unprocessed signal.
+
+        Parameters
+        ----------
+        gain_db : float
+            Dry gain in dB, less than 0 dB.
+        """
+        self.dsp_block.dry_db = gain_dB
+
+    def set_pre_gain(self, pre_gain):
+        """
+        Set the pre gain of the reverb room stage.
+
+        Parameters
+        ----------
+        pre_gain : float
+            Pre gain value. Must be less than 1.
+        """
+        self.dsp_block.pregain = pre_gain
+
+
+class ReverbRoom(ReverbBase):
     """
     The room reverb stage. This is based on Freeverb by Jezar at
     Dreampoint, and consists of 8 parallel comb filters fed into 4
@@ -67,66 +129,6 @@ class ReverbRoom(Stage):
             self.constants["max_room_size"],
             self.constants["max_predelay"],
         )
-
-    def set_wet_dry_mix(self, mix):
-        """
-        Set the wet/dry gains so that the mix of 0 results in a
-        fully dry output, the mix of 1 results in a fully wet output.
-
-        Parameters
-        ----------
-        mix : float
-            The wet/dry mix, must be [0, 1].
-        """
-        self.dsp_block.set_wet_dry_mix(mix)
-
-    def set_predelay(self, predelay):
-        """
-        Set the predelay of the wet channel.
-
-        Parameters
-        ----------
-        predelay : float
-            Predelay in ms, less than max_predelay.
-        """
-        self.dsp_block.predelay = predelay
-
-    def set_wet_gain(self, gain_dB):
-        """
-        Set the wet gain of the reverb room stage. This sets the level
-        of the reverberated signal.
-
-        Parameters
-        ----------
-        gain_db : float
-            Wet gain in dB, less than 0 dB.
-        """
-        self.dsp_block.wet_db = gain_dB
-
-    def set_dry_gain(self, gain_dB):
-        """
-        Set the dry gain of the reverb room stage. This sets the level
-        of the unprocessed signal.
-
-        Parameters
-        ----------
-        gain_db : float
-            Dry gain in dB, less than 0 dB.
-        """
-        self.dsp_block.dry_db = gain_dB
-
-    def set_pre_gain(self, pre_gain):
-        """
-        Set the pre gain of the reverb room stage. It is not advised to
-        increase this value above the default 0.015, as it can result in
-        saturation inside the reverb delay lines.
-
-        Parameters
-        ----------
-        pre_gain : float
-            Pre gain value. Must be less than 1 (default 0.015).
-        """
-        self.dsp_block.pregain = pre_gain
 
     def set_room_size(self, new_room_size):
         """
@@ -250,10 +252,13 @@ class ReverbRoomStereo(ReverbRoom):
         self.dsp_block.width = width
 
 
-class ReverbPlateStereo(Stage):
+class ReverbPlateStereo(ReverbBase):
     """
     The stereo room plate stage. This is based on Dattorro's 1997
-    paper.
+    paper. This reverb consists of 4 allpass filters for input diffusion,
+    followed by a figure of 8 reverb tank of allpasses, low-pass filters,
+    and delays. The output is taken from multiple taps in the delay lines
+    to get a desirable echo density.
 
     Parameters
     ----------
@@ -285,19 +290,9 @@ class ReverbPlateStereo(Stage):
             max_predelay=max_predelay,
         )
         self.set_control_field_cb("damping", lambda: self.dsp_block.lowpasses[1].coeff_1_int)
-        self.set_control_field_cb(
-            "decay_diffusion_1", lambda: self.dsp_block.mod_allpasses[0].feedback_int
-        )
+        self.set_control_field_cb("late_diffusion", lambda: self.dsp_block.mod_allpasses[0].feedback_int)
         self.set_control_field_cb("bandwidth", lambda: self.dsp_block.lowpasses[0].coeff_1_int)
-        self.set_control_field_cb(
-            "input_diffusion_1", lambda: self.dsp_block.allpasses[0].feedback_int
-        )
-        self.set_control_field_cb(
-            "input_diffusion_2", lambda: self.dsp_block.allpasses[2].feedback_int
-        )
-        self.set_control_field_cb(
-            "decay_diffusion_2", lambda: self.dsp_block.allpasses[4].feedback_int
-        )
+        self.set_control_field_cb("early_diffusion", lambda: self.dsp_block.allpasses[0].feedback_int)
 
         self.set_control_field_cb("decay", lambda: self.dsp_block.decay_int)
         self.set_control_field_cb("wet_gain1", lambda: self.dsp_block.wet_1_int)
@@ -314,18 +309,6 @@ class ReverbPlateStereo(Stage):
             self.constants["max_predelay"],
         )
 
-    def set_wet_dry_mix(self, mix):
-        """
-        Set the wet/dry gains so that the mix of 0 results in a
-        fully dry output, the mix of 1 results in a fully wet output.
-
-        Parameters
-        ----------
-        mix : float
-            The wet/dry mix, must be [0, 1].
-        """
-        self.dsp_block.set_wet_dry_mix(mix)
-
     def set_width(self, width):
         """
         Set the decay of the reverb room stage. This sets how
@@ -341,115 +324,67 @@ class ReverbPlateStereo(Stage):
         """
         self.dsp_block.width = width
 
-    def set_predelay(self, predelay):
-        """
-        Set the predelay of the wet channel.
-
-        Parameters
-        ----------
-        predelay : float
-            Predelay in ms, less than max_predelay.
-        """
-        self.dsp_block.predelay = predelay
-
-    def set_wet_gain(self, gain_dB):
-        """
-        Set the wet gain of the reverb room stage. This sets the level
-        of the reverberated signal.
-
-        Parameters
-        ----------
-        gain_db : float
-            Wet gain in dB, less than 0 dB.
-        """
-        self.dsp_block.wet_db = gain_dB
-
-    def set_dry_gain(self, gain_dB):
-        """
-        Set the dry gain of the reverb room stage. This sets the level
-        of the unprocessed signal.
-
-        Parameters
-        ----------
-        gain_db : float
-            Dry gain in dB, less than 0 dB.
-        """
-        self.dsp_block.dry_db = gain_dB
-
-    def set_pre_gain(self, pre_gain):
-        """
-        Set the pre gain of the reverb room stage. It is not advised to
-        increase this value above the default 0.015, as it can result in
-        saturation inside the reverb delay lines.
-
-        Parameters
-        ----------
-        pre_gain : float
-            Pre gain value. Must be less than 1 (default 0.015).
-        """
-        self.dsp_block.pregain = pre_gain
-
     def set_damping(self, damping):
         """
-        Set the damping of the reverb room stage. This controls how much
-        high frequency attenuation is in the room. Higher values yield
+        Set the damping of the plate reverb stage. This controls how much
+        high frequency attenuation is in the plate. Higher values yield
         shorter reverberation times at high frequencies.
 
         Parameters
         ----------
         damping : float
-            How much high frequency attenuation in the room, between 0 and 1.
+            How much high frequency attenuation in the plate, between 0 and 1.
         """
         self.dsp_block.damping = damping
 
     def set_decay(self, decay):
         """
-        Set the decay of the reverb room stage. This sets how
-        reverberant the room is. Higher values will give a longer
-        reverberation time for a given room size.
+        Set the decay of the plate reverb stage. This sets how
+        reverberant the plate is. Higher values will give a longer
+        reverberation time.
 
         Parameters
         ----------
         decay : float
-            How long the reverberation of the room is, between 0 and 1.
+            How long the reverberation of the plate is, between 0 and 1.
         """
         self.dsp_block.decay = decay
 
     def set_early_diffusion(self, diffusion):
         """
-        Set the diffusion of the reverb room stage. This sets how
-        diffuse the room is. Higher values will give a longer
-        reverberation time for a given room size.
+        Set the early diffusion of the plate reverb stage. This sets how
+        much diffusion is present in the first part of the reverberation.
+        Higher values will give more diffusion.
 
         Parameters
         ----------
-        decay : float
-            How long the reverberation of the room is, between 0 and 1.
+        diffusion : float
+            How diffuse the plate is, between 0 and 1.
         """
         self.dsp_block.early_diffusion = diffusion
 
     def set_late_diffusion(self, diffusion):
         """
-        Set the diffusion of the reverb room stage. This sets how
-        diffuse the room is. Higher values will give a longer
-        reverberation time for a given room size.
+        Set the late diffusion of the plate reverb stage. This sets how
+        much diffusion is present in the latter part of the reverberation.
+        Higher values will give more diffusion.
 
         Parameters
         ----------
-        decay : float
-            How long the reverberation of the room is, between 0 and 1.
+        diffusion : float
+            How diffuse the plate is, between 0 and 1.
         """
         self.dsp_block.late_diffusion = diffusion
 
     def set_bandwidth(self, bandwidth):
         """
-        Set the diffusion of the reverb room stage. This sets how
-        diffuse the room is. Higher values will give a longer
-        reverberation time for a given room size.
+        Set the bandwidth of the plate reverb stage. This sets the low
+        pass cutoff frequency of the reverb input. Higher values will
+        give a higher cutoff frequency.
 
         Parameters
         ----------
-        decay : float
-            How long the reverberation of the room is, between 0 and 1.
+        bandwidth : float
+            The bandwidth of the plate input signal, between 0 and 1.
         """
         self.dsp_block.bandwidth = bandwidth
