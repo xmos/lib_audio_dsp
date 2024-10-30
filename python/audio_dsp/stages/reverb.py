@@ -272,7 +272,7 @@ class ReverbPlateStereo(ReverbBase):
 
     Attributes
     ----------
-    dsp_block : :class:`audio_dsp.dsp.reverb.reverb_plate_streo`
+    dsp_block : :class:`audio_dsp.dsp.reverb.reverb_plate_stereo`
         The DSP block class; see :ref:`ReverbPlateStereo`
         for implementation details.
     """
@@ -292,11 +292,11 @@ class ReverbPlateStereo(ReverbBase):
             predelay=predelay,
             max_predelay=max_predelay,
         )
-        self.set_control_field_cb("damping", lambda: self.dsp_block.lowpasses[1].coeff_1_int)
+        self.set_control_field_cb("damping", lambda: self.dsp_block.lowpasses[1].coeff_b0_int)
         self.set_control_field_cb(
             "late_diffusion", lambda: self.dsp_block.mod_allpasses[0].feedback_int
         )
-        self.set_control_field_cb("bandwidth", lambda: self.dsp_block.lowpasses[0].coeff_1_int)
+        self.set_control_field_cb("bandwidth", lambda: self.dsp_block.lowpasses[0].coeff_b0_int)
         self.set_control_field_cb(
             "early_diffusion", lambda: self.dsp_block.allpasses[0].feedback_int
         )

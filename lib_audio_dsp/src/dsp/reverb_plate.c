@@ -72,7 +72,7 @@ lowpass_1ord_t lowpass_1ord_init(int32_t feedback) {
 
 static inline int32_t lowpass_1ord(lowpass_1ord_t * lp, int32_t new_samp) {
   /*
-  output = (sample * self.coeff_1) + (self._filterstore * self.coeff_2)
+  output = (sample * self.coeff_b0_int) + (self._filterstore * self.coeff_a1_int)
   self._filterstore = output
   return output
   */

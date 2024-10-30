@@ -149,6 +149,20 @@ class reverb_room_stereo(rvb.reverb_stereo_base):
         self._predelay.reset_state()
 
     @property
+    def decay(self):
+        """The length of the reverberation of the room, between 0 and 1."""
+        ret = (self.feedback - 0.7) / 0.28
+        return ret
+
+    @decay.setter
+    def decay(self, x):
+        if not (0 <= x <= 1):
+            bad_x = x
+            x = np.clip(x, 0, rvb._LESS_THAN_1)
+            warnings.warn(f"Decay {bad_x} saturates to {x}", UserWarning)
+        self.feedback = x * 0.28 + 0.7
+
+    @property
     def feedback(self):
         """Gain of the feedback line in the reverb filters. Set decay to update this value."""
         ret = float(self.combs_l[0].feedback)

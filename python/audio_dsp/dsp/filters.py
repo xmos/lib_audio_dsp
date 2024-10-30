@@ -34,11 +34,11 @@ class lowpass_1ord(dspg.dsp_block):
         """Set the bandwith of the low pass filter, as a ratio. Higher
         bandwidth will result in a higher filter cutoff frequency.
         """
-        self.coeff_1 = bandwidth
-        self.coeff_2 = 1 - self.coeff_1
+        self.coeff_b0 = bandwidth
+        self.coeff_a1 = 1 - self.coeff_b0
         # super critical these add up, but also don't overflow int32...
-        self.coeff_1_int = max(utils.int32(self.coeff_1 * 2**rvb.Q_VERB - 1), 1)
-        self.coeff_2_int = utils.int32((2**31 - 1) - self.coeff_1_int + 1)
+        self.coeff_b0_int = max(utils.int32(self.coeff_b0 * 2**rvb.Q_VERB - 1), 1)
+        self.coeff_a1_int = utils.int32((2**31 - 1) - self.coeff_b0_int + 1)
 
     def reset_state(self):
         """Reset all the filterstore values to zero."""
@@ -53,7 +53,7 @@ class lowpass_1ord(dspg.dsp_block):
         Input should be scaled with 0 dB = 1.0.
 
         """
-        output = (sample * self.coeff_1) + (self._filterstore * self.coeff_2)
+        output = (sample * self.coeff_b0) + (self._filterstore * self.coeff_a1)
 
         self._filterstore = output
 
@@ -76,7 +76,7 @@ class lowpass_1ord(dspg.dsp_block):
 
         # do state calculation in int64 accumulator so we only quantize once
         output = utils.int64(
-            sample_int * self.coeff_1_int + self._filterstore_int * self.coeff_2_int
+            sample_int * self.coeff_b0_int + self._filterstore_int * self.coeff_a1_int
         )
         output = rvb.scale_sat_int64_to_int32_floor(output)
         self._filterstore_int = output

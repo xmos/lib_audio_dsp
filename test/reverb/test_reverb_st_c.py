@@ -108,8 +108,8 @@ def test_reverb_plate_c(in_signal, decay, damping, wet, dry, pregain):
   test_name = f"reverb_plate_{decay}_{damping}_{wet}_{dry}_{pregain}"
 
   # [pregain, we1, we2, dry, decay, decay_dif, damp, diffusion, bandwidth, in_dif1, in_dif2]
-  rv_info = [rv.pregain_int, rv.wet_1_int, rv.wet_2_int, rv.dry_int, rv.decay_int, rv.allpasses[4].feedback_int, rv.lowpasses[1].coeff_1_int,
-            rv.mod_allpasses[0].feedback_int, rv.lowpasses[0].coeff_1_int, rv.allpasses[0].feedback_int, rv.allpasses[2].feedback_int]
+  rv_info = [rv.pregain_int, rv.wet_1_int, rv.wet_2_int, rv.dry_int, rv.decay_int, rv.allpasses[4].feedback_int, rv.lowpasses[1].coeff_b0_int,
+            rv.mod_allpasses[0].feedback_int, rv.lowpasses[0].coeff_b0_int, rv.allpasses[0].feedback_int, rv.allpasses[2].feedback_int]
   rv_info = np.array(rv_info, dtype=np.int32)
 
   test_dir = bin_dir / test_name
