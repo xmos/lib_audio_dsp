@@ -219,7 +219,8 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
     @property
     def bandwidth(self):
         """The bandwidth of the reverb input signal, in Hertz. This
-        should be less than fs/2."""
+        should be less than fs/2.
+        """
         return self._bandwidth
 
     @bandwidth.setter

@@ -23,7 +23,7 @@ reverb_plate_t adsp_reverb_plate_init(
   xassert(reverb_heap != NULL);
   reverb_plate_t rv;
   // lowpasses
-  int32_t bandwidth_int = adsp_reverb_plate_calc_bandwidth(bandwidth);
+  int32_t bandwidth_int = adsp_reverb_plate_calc_bandwidth(bandwidth, fs);
   rv.lowpasses[0] = lowpass_1ord_init(bandwidth_int);
   int32_t damping_int = adsp_reverb_plate_calc_damping(damping);
   rv.lowpasses[1] = lowpass_1ord_init(damping_int);

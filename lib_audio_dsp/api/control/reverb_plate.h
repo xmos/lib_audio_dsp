@@ -35,13 +35,15 @@ static inline int32_t adsp_reverb_plate_calc_damping(float damping) {
 }
 
 /**
- * @brief Convert a user bandwidth value into a Q_RVP fixed point value suitable
+ * @brief Convert a user bandwidth value in Hz into a Q_RVP fixed point value suitable
  * for passing to a reverb.
  *
  * @param bandwidth The chose value of bandwidth.
  * @return Bandwidth as a Q_RVP fixed point integer, clipped to the accepted range.
  */
-static inline int32_t adsp_reverb_plate_calc_bandwidth(float bandwidth) {
+static inline int32_t adsp_reverb_plate_calc_bandwidth(float bandwidth, float fs) {
+  bandwidth = cosf(2.0f * (float)M_PI * (bandwidth/fs));
+  bandwidth = bandwidth - 1 + sqrtf((bandwidth*bandwidth) - (4.0f * bandwidth) + 3.0f);
   int32_t band = _positive_float2fixed_saturate(bandwidth, Q_RVP);
   return (band < 1) ? 1 : band;
 }

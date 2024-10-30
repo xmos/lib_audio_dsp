@@ -38,21 +38,20 @@ class lowpass_1ord(dspg.dsp_block):
         else:
             raise ValueError("Cutoff or coeff must be used to initialise the filter.")
 
-
     def set_cutoff(self, cutoff_hz):
         """Set the cutoff frequency of the lowpass filter. This
         calculates the filter coefficient using the exact equation from
         https://www.dsprelated.com/showarticle/182.php.
         """
-        if cutoff_hz > self.fs/2:
+        if cutoff_hz > self.fs / 2:
             warnings.warn("Filter cutoff cannot be higher than fs/2, setting to fs/2", UserWarning)
             sef.set_coeffs(1.0)
         elif cutoff_hz < 0:
             warnings.warn("Filter cutoff cannot be less than 0, setting to 0", UserWarning)
             sef.set_coeffs(0.0)
         else:
-            cos_w = np.cos(2*np.pi*(cutoff_hz/self.fs))
-            b0 = cos_w - 1 + np.sqrt(cos_w**2 - 4*cos_w + 3)
+            cos_w = np.cos(2 * np.pi * (cutoff_hz / self.fs))
+            b0 = cos_w - 1 + np.sqrt(cos_w**2 - 4 * cos_w + 3)
             self.set_coeffs(b0)
 
     def set_coeffs(self, coeff_b0):
@@ -64,7 +63,9 @@ class lowpass_1ord(dspg.dsp_block):
         if not (0 <= coeff_b0 <= 1):
             bad_x = coeff_b0
             coeff_b0 = np.clip(coeff_b0, 0, 1)
-            warnings.warn(f"coeff must be in range 0:1 {bad_x} saturates to {coeff_b0}", UserWarning)
+            warnings.warn(
+                f"coeff must be in range 0:1 {bad_x} saturates to {coeff_b0}", UserWarning
+            )
 
         self.coeff_b0 = coeff_b0
         self.coeff_a1 = 1 - self.coeff_b0

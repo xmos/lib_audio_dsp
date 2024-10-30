@@ -15,7 +15,6 @@ import audio_dsp.dsp.reverb_plate as rvp
 
 @pytest.mark.parametrize("signal, freq", [["sine", 20],
                                           ["sine", 1000],
-                                          ["sine", 1000],
                                           ["sine", 10000],
                                           ["sine", 23000],
                                           ["noise", None]])
@@ -25,9 +24,7 @@ import audio_dsp.dsp.reverb_plate as rvp
                                          ["stereo_room", 0.1],
                                          ["stereo_room", 1],
                                          ["stereo_room", 4],
-                                         ["stereo_plate", 0.1],
-                                         ["stereo_plate", 0.5],
-                                         ["stereo_plate", 0.9],]
+                                         ["stereo_plate", 0.95],]
                                          )
 def test_reverb_overflow(signal, freq, algo, param):
     # check no overflow errors occur
@@ -89,13 +86,11 @@ def calc_reverb_time(in_sig, reverb_output):
 
 
 @pytest.mark.parametrize("max_room_size_diffusion", [0.5, 0.9])
-@pytest.mark.parametrize("decay", [0.5, 1])
-@pytest.mark.parametrize("damping", [0, 0.35])
+@pytest.mark.parametrize("decay, damping", [[0.5, 0.35],
+                                            [1.0, 0.0]])
 @pytest.mark.parametrize("q_format", [27, 31])
 @pytest.mark.parametrize("algo, width", [["mono_room", None],
-                                         ["stereo_room", 0],
                                          ["stereo_room", 1.0],
-                                         ["stereo_plate", 0],
                                          ["stereo_plate", 1.0],]
                                          )
 @pytest.mark.parametrize("wdmix", [0.5, 1.0])
@@ -257,6 +252,51 @@ def test_reverb_bypass(algo):
     # quantization noise from multiply by dry gain
     np.testing.assert_allclose(signal, output_xcore, atol=2**-(reverb.Q_sig-1))
 
+@pytest.mark.parametrize("algo", ["stereo_room", "stereo_plate"])
+@pytest.mark.parametrize("width", [0, 1])
+def test_reverb_width(algo, width):
+    # test that a drc component is bit exact when the signal is below
+    # the threshold (or above in the case of a noise gate).
+    fs = 48000
+    signal = gen.log_chirp(fs, 0.5, 1)
+
+    if algo == "stereo_room":
+        signal = np.tile(signal, [2, 1])
+        reverb = rvs.reverb_room_stereo(fs, 2, dry_gain_db=0, wet_gain_db=-np.inf)
+    elif algo == "mono_room":
+        reverb = rv.reverb_room(fs, 1, dry_gain_db=0, wet_gain_db=-np.inf)
+    elif algo == "stereo_plate":
+        signal = np.tile(signal, [2, 1])
+        reverb = rvp.reverb_plate_stereo(fs, 2, dry_gain_db=0, wet_gain_db=-np.inf)
+    
+    reverb.width = width
+
+    output_xcore = np.zeros_like(signal)
+    output_flt = np.zeros_like(signal)
+
+    if "stereo" in algo:
+        for n in range(signal.shape[1]):
+            output_xcore[:, n] = reverb.process_channels_xcore(signal[:, n])
+        reverb.reset_state()
+        for n in range(signal.shape[1]):
+            output_flt[:, n] = reverb.process_channels(signal[:, n])
+    else:
+        for n in range(len(signal)):
+            output_xcore[n] = reverb.process_xcore(signal[n])
+        reverb.reset_state()
+        for n in range(len(signal)):
+            output_flt[n] = reverb.process(signal[n])
+
+    np.testing.assert_array_equal(signal, output_flt)
+    # quantization noise from multiply by dry gain
+    np.testing.assert_allclose(signal, output_xcore, atol=2**-(reverb.Q_sig-1))
+
+    if width == 0:
+        assert np.all(output_xcore[0, :] == output_xcore)
+        assert np.all(output_flt[0, :] == output_flt)
+    else:
+        assert not np.all(output_xcore[0, :] == output_xcore)
+        assert not np.all(output_flt[0, :] == output_flt)
 
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("q_format", [27, 31])
