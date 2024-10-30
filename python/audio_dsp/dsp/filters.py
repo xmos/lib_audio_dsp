@@ -22,19 +22,51 @@ class lowpass_1ord(dspg.dsp_block):
         Set the low pass bandwidth.
     """
 
-    def __init__(self, fs, n_chans, bandwidth, Q_sig=dspg.Q_SIG):
+    def __init__(self, fs, n_chans, cutoff=None, coeff=None, Q_sig=dspg.Q_SIG):
         assert n_chans == 1
         super().__init__(fs, n_chans, Q_sig)
 
+        if cutoff and coeff:
+            raise ValueError("Setting cutoff and coeff not possible, please use one or the other.")
+
         self._filterstore = 0.0
         self._filterstore_int = 0
-        self.set_bandwidth(bandwidth)
+        if cutoff:
+            self.set_cutoff(cutoff)
+        elif coeff:
+            self.set_coeffs(coeff)
+        else:
+            raise ValueError("Cutoff or coeff must be used to initialise the filter.")
 
-    def set_bandwidth(self, bandwidth):
-        """Set the bandwith of the low pass filter, as a ratio. Higher
-        bandwidth will result in a higher filter cutoff frequency.
+
+    def set_cutoff(self, cutoff_hz):
+        """Set the cutoff frequency of the lowpass filter. This
+        calculates the filter coefficient using the exact equation from
+        https://www.dsprelated.com/showarticle/182.php.
         """
-        self.coeff_b0 = bandwidth
+        if cutoff_hz > self.fs/2:
+            warnings.warn("Filter cutoff cannot be higher than fs/2, setting to fs/2", UserWarning)
+            sef.set_coeffs(1.0)
+        elif cutoff_hz < 0:
+            warnings.warn("Filter cutoff cannot be less than 0, setting to 0", UserWarning)
+            sef.set_coeffs(0.0)
+        else:
+            cos_w = np.cos(2*np.pi*(cutoff_hz/self.fs))
+            b0 = cos_w - 1 + np.sqrt(cos_w**2 - 4*cos_w + 3)
+            self.set_coeffs(b0)
+
+    def set_coeffs(self, coeff_b0):
+        """Set the coefficients of the low pass filter. The given b0 value
+        should be between 0 and 1, and the feedback coefficient will be
+        calculated as 1 - coeff_b0. Higher values of b0 will result in a
+        higher filter cutoff frequency.
+        """
+        if not (0 <= coeff_b0 <= 1):
+            bad_x = coeff_b0
+            coeff_b0 = np.clip(coeff_b0, 0, 1)
+            warnings.warn(f"coeff must be in range 0:1 {bad_x} saturates to {coeff_b0}", UserWarning)
+
+        self.coeff_b0 = coeff_b0
         self.coeff_a1 = 1 - self.coeff_b0
         # super critical these add up, but also don't overflow int32...
         self.coeff_b0_int = max(utils.int32(self.coeff_b0 * 2**rvb.Q_VERB - 1), 1)

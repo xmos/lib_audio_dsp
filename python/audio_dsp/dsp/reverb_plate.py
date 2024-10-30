@@ -28,7 +28,7 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         How much high frequency attenuation in the room, between 0 and 1
     bandwidth : float, optional
         Controls the low pass filter cutoff frequency at the start of the
-        reverb.
+        reverb, in Hz.
     early_diffusion : float, optional
         Controls how much diffusion the early echoes have.
     late_diffusion : float, optional
@@ -81,7 +81,7 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         n_chans,
         decay=0.4,
         damping=0.75,
-        bandwidth=0.4,
+        bandwidth=8000,
         early_diffusion=0.75,
         late_diffusion=0.7,
         width=1.0,
@@ -121,9 +121,9 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         self._input_diffusion_2 = early_diffusion * 5 / 6
 
         self.lowpasses = [
-            fltr.lowpass_1ord(fs, 1, self.bandwidth),
-            fltr.lowpass_1ord(fs, 1, 1 - self.damping),
-            fltr.lowpass_1ord(fs, 1, 1 - self.damping),
+            fltr.lowpass_1ord(fs, 1, cutoff=self.bandwidth),
+            fltr.lowpass_1ord(fs, 1, coeff=(1 - self.damping)),
+            fltr.lowpass_1ord(fs, 1, coeff=(1 - self.damping)),
         ]
 
         self.allpasses = [
@@ -218,17 +218,14 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
 
     @property
     def bandwidth(self):
-        """The bandwidth of the reverb input signal, between 0 and 1."""
+        """The bandwidth of the reverb input signal, in Hertz. This
+        should be less than fs/2."""
         return self._bandwidth
 
     @bandwidth.setter
     def bandwidth(self, x):
-        if not (0 <= x <= 1):
-            bad_x = x
-            x = np.clip(x, 0, _LESS_THAN_1)
-            warnings.warn(f"bandwidth {bad_x} saturates to {x}", UserWarning)
         self._bandwidth = x
-        self.lowpasses[0].set_bandwidth(self.bandwidth)
+        self.lowpasses[0].set_cutoff(self.bandwidth)
 
     @property
     def damping(self):
@@ -242,8 +239,8 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
             x = np.clip(x, 0, 1)
             warnings.warn(f"damping {bad_x} saturates to {x}", UserWarning)
         self._damping = x
-        self.lowpasses[1].set_bandwidth(1 - self.damping)
-        self.lowpasses[2].set_bandwidth(1 - self.damping)
+        self.lowpasses[1].set_coeffs(1 - self.damping)
+        self.lowpasses[2].set_coeffs(1 - self.damping)
 
     @property
     def late_diffusion(self):
