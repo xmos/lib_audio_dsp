@@ -8,8 +8,11 @@ import audio_dsp.dsp.reverb_stereo as rvbs
 import audio_dsp.dsp.reverb_plate as rvp
 
 
-
 class ReverbBase(Stage):
+    """
+    The base class for reverb stages, containing pre delays, and wet/dry
+    mixes and pregain.
+    """
 
     def set_wet_dry_mix(self, mix):
         """
@@ -290,9 +293,13 @@ class ReverbPlateStereo(ReverbBase):
             max_predelay=max_predelay,
         )
         self.set_control_field_cb("damping", lambda: self.dsp_block.lowpasses[1].coeff_1_int)
-        self.set_control_field_cb("late_diffusion", lambda: self.dsp_block.mod_allpasses[0].feedback_int)
+        self.set_control_field_cb(
+            "late_diffusion", lambda: self.dsp_block.mod_allpasses[0].feedback_int
+        )
         self.set_control_field_cb("bandwidth", lambda: self.dsp_block.lowpasses[0].coeff_1_int)
-        self.set_control_field_cb("early_diffusion", lambda: self.dsp_block.allpasses[0].feedback_int)
+        self.set_control_field_cb(
+            "early_diffusion", lambda: self.dsp_block.allpasses[0].feedback_int
+        )
 
         self.set_control_field_cb("decay", lambda: self.dsp_block.decay_int)
         self.set_control_field_cb("wet_gain1", lambda: self.dsp_block.wet_1_int)
