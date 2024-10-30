@@ -9,7 +9,6 @@
 #include <dsp/_helpers/generic_utils.h> // for Q_alpha
 #include <dsp/defines.h>
 
-
 /**
  * @brief Convert a float value to a fixed point int32 number in
  *        q format. If the value of x is outside the fixed point range,
@@ -21,11 +20,43 @@
  */
 static inline int32_t _float2fixed( float x, int32_t q )
 {
-  if     ( x < 0 ) return (((float)(1 << q))       * x - 0.5f);
-  else if( x > 0 ) return (((float)((1 << q) - 1)) * x + 0.5f);
+#ifdef __XS3A__
+  int32_t sign, exp, mant;
+  asm("fsexp %0, %1, %2": "=r" (sign), "=r" (exp): "r" (x));
+  asm("fmant %0, %1": "=r" (mant): "r" (x));
+  if(sign){mant = -mant;}
+  // mant to q
+  right_shift_t shr = -q - exp + 23;
+  return mant >>= shr;
+#else
+  if ( x < 0.0f ) return (((float)(1u << q))       * x - 0.5f);
+  if ( x > 0.0f ) return (((float)((1u << q) - 1)) * x + 0.5f);
   return 0;
+#endif
 }
 
+/**
+ * @brief Convert a float value to a fixed point int32 number in
+ *        q format. If the value of x is outside the positive 
+ *        fixed point range,this will overflow.
+ * 
+ * @param x A floating point value
+ * @param q Q format of the output
+ * @return int32_t x in q fixed point format
+ */
+static inline int32_t _positive_float2fixed(float x, int32_t q)
+{
+#ifdef __XS3A__
+  int32_t sign, exp, mant;
+  asm("fsexp %0, %1, %2": "=r" (sign), "=r" (exp): "r" (x));
+  asm("fmant %0, %1": "=r" (mant): "r" (x));
+  // mant to q
+  right_shift_t shr = -q - exp + 23;
+  return mant >>= shr;
+#else
+  return ((float)((1u << q) - 1)) * x + 0.5f
+#endif
+}
 
 /**
  * @brief Convert a float value to a fixed point int32 number in
@@ -39,14 +70,30 @@ static inline int32_t _float2fixed( float x, int32_t q )
 static inline int32_t _float2fixed_assert( float x, int32_t q )
 {
   float max_val = (float)(1<<(31-q));
-  xassert(x < max_val); // Too much gain, cannot be represented in desired number format
-  xassert(x >= -max_val);
+  xassert(x <= max_val); // Too much gain, cannot be represented in desired number format
+  xassert(x > -max_val);
 
-  if     ( x < 0 ) return (((float)(1 << q))       * x - 0.5f);
-  else if( x > 0 ) return (((float)((1 << q) - 1)) * x + 0.5f);
-  return 0;
+  return _float2fixed(x, q);
 }
 
+
+/**
+ * @brief Convert a float value to a fixed point int32 number in
+ *        q format. Negative input will result in the output of zero.
+ *        If the value of x is outside the fixed point range,
+ *        it is saturated.
+ * 
+ * @param x A floating point value
+ * @param q Q format of the output
+ * @return int32_t x in q fixed point format
+ */
+static inline int32_t _float2fixed_saturate( float x, int32_t q )
+{
+  if (x < -(1 << (31-q))) return INT32_MIN;
+  if (x >= (1 << (31-q))) return INT32_MAX;
+
+  return _float2fixed(x, q);
+}
 
 /**
  * @brief Convert a float value to a fixed point int32 number in
@@ -57,13 +104,12 @@ static inline int32_t _float2fixed_assert( float x, int32_t q )
  * @param q Q format of the output
  * @return int32_t x in q fixed point format
  */
-static inline int32_t _float2fixed_saturate( float x, int32_t q )
+static inline int32_t _positive_float2fixed_saturate(float x, int32_t q)
 {
-  if (x < -(1 << (31-q))) return INT32_MIN;
-  else if ( x < 0 ) return (((float)(1 << q)) * x - 0.5f);
-  else if ( x >= 1 << (31-q)) return INT32_MAX;
-  else if( x > 0 ) return (((float)((1 << q) - 1)) * x + 0.5f);
-  return 0;
+  if ( x <= 0.0f ) return 0;
+  if ( x >= (1 << (31-q))) return INT32_MAX;
+
+  return _positive_float2fixed(x, q);
 }
 
 /**
@@ -77,11 +123,23 @@ static inline int32_t _float2fixed_saturate( float x, int32_t q )
  */
 static inline int32_t _positive_float2fixed_qsig(float x)
 {
-  if ( x >= 1 << (31-Q_SIG)) return INT32_MAX;
-  else if( x > 0 ) return (((float)((1 << Q_SIG) - 1)) * x + 0.5f);
-  return 0;
+  return _positive_float2fixed_saturate(x, Q_SIG);
 }
 
+/**
+ * @brief Convert a value in decibels to a fixed point int32 number in
+ *        a given q format. If the level exceeds the fixed point maximum,
+ *        it is saturated.
+ * 
+ * @param level_db Level in db
+ * @param q Q format of the output
+ * @return int32_t level_db as an int32_t
+ */
+static inline int32_t db_to_qxx(float level_db, int32_t q) {
+  float A  = powf(10.0f, (level_db / 20.0f));
+  int32_t out = _positive_float2fixed_saturate(A, q);
+  return out;
+}
 
 /**
  * @brief Convert a value in decibels to a fixed point int32 number in
@@ -92,11 +150,23 @@ static inline int32_t _positive_float2fixed_qsig(float x)
  * @return int32_t level_db as an int32_t
  */
 static inline int32_t db_to_q_sig(float level_db) {
-  float A  = powf(10.0f, (level_db / 20.0f));
-  int32_t out = _positive_float2fixed_qsig(A);
-  return out;
+  return db_to_qxx(level_db, Q_SIG);
 }
 
+/**
+ * @brief Convert a power level in decibels to a fixed point int32 number in
+ *        a given q format. If the level exceeds the fixed point maximum,
+ *        it is saturated.
+ * 
+ * @param level_db Power level in db
+ * @param q Q format of the output
+ * @return int32_t level_db as an int32_t
+ */
+static inline int32_t db_pow_to_qxx(float level_db, int32_t q) {
+  float A  = powf(10.0f, (level_db / 10.0f));
+  int32_t out = _positive_float2fixed_saturate(A, q);
+  return out;
+}
 
 /**
  * @brief Convert a power level in decibels to a fixed point int32 number in
@@ -107,9 +177,7 @@ static inline int32_t db_to_q_sig(float level_db) {
  * @return int32_t level_db in Q_SIG fixed point format
  */
 static inline int32_t db_pow_to_q_sig(float level_db) {
-  float A  = powf(10.0f, (level_db / 10.0f));
-  int32_t out = _positive_float2fixed_qsig(A);
-  return out;
+  return db_pow_to_qxx(level_db, Q_SIG);
 }
 
 
@@ -164,17 +232,7 @@ static inline int32_t calc_alpha(float fs, float time) {
     mant = INT32_MAX;
   }
   else{
-  #ifdef __XS3A__
-    // multiply alpha by 2**31 and convert to an int32
-    int32_t sign, exp;
-    asm("fsexp %0, %1, %2": "=r" (sign), "=r" (exp): "r" (alpha));
-    asm("fmant %0, %1": "=r" (mant): "r" (alpha));
-    // mant to q31
-    right_shift_t shr = -Q_alpha - exp + 23;
-    mant >>= shr;
-  #else
-    mant = (int32_t)(alpha * (float)(1u << 31));
-  #endif
+    mant = _positive_float2fixed_saturate(alpha, Q_alpha);
   }
 
   return mant;

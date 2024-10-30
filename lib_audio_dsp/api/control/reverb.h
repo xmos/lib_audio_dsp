@@ -7,50 +7,54 @@
 #include "helpers.h"
 #include <stdint.h>
 
-/// Convert a floating point value to the Q_VERB format, saturate out of
-/// range values. Accepted range is 0 to 1
-///
-/// @param x A floating point number
-/// @return postive Q_VERB int32_t value
+/** 
+ * @brief Convert a floating point value to the Q_RVR format, saturate out of
+ * range values. Accepted range is 0 to 1
+ *
+ * @param x A floating point number, will be capped to [0, 1]
+ * @return Q_RVR int32_t value
+ */
 static inline int32_t adsp_reverb_float2int(float x) {
-    return _float2fixed_saturate(x < 0.0f ? 0.0f : x, Q_RVR);
+    return _positive_float2fixed_saturate(x, Q_RVR);
 }
 
-/// Convert a floating point gain in decibels into a linear Q_VERB value
-/// for use in controlling the reverb gains. 
-/// 
-/// @param db Floating point value in dB, values above 0 will be clipped.
-/// @return Q_VERB fixed point linear gain.
+/** 
+ * @brief Convert a floating point gain in decibels into a linear Q_RVR value
+ * for use in controlling the reverb gains. 
+ * 
+ * @param db Floating point value in dB, values above 0 will be clipped.
+ * @return Q_RVR fixed point linear gain.
+ */
 static inline int32_t adsp_reverb_db2int(float db) {
-    float a  = powf(10.0f, (db / 20.0f));
-    int32_t out = adsp_reverb_float2int(a);
-    return out;
+    return db_to_qxx(db, Q_RVR);
 }
 
-/// Convert a user damping value into a Q_VERB fixed point value suitable
-/// for passing to a reverb.
-///
-/// @param damping The chose value of damping.
-/// @return Damping as a Q_VERB fixed point integer, clipped to the accepted range.
+/** 
+ * @brief Convert a user damping value into a Q_RVR fixed point value suitable
+ * for passing to a reverb.
+ *
+ * @param damping The chose value of damping.
+ * @return Damping as a Q_RVR fixed point integer, clipped to the accepted range.
+ */
 static inline int32_t adsp_reverb_calculate_damping(float damping) {
     int32_t ret = adsp_reverb_float2int(damping);
     return ret < 1 ? 1 : ret;
 }
 
-/// Calculate a Q_VERB feedback value for a given decay. Use to calculate 
-/// the feedback parameter in reverb_room.
-///
-/// @param decay The desired decay value.
-/// @return Calculated feedback as a Q_VERB fixed point integer.
+/** 
+ * @brief Calculate a Q_RVR feedback value for a given decay. Use to calculate 
+ * the feedback parameter in reverb_room.
+ *
+ * @param decay The desired decay value.
+ * @return Calculated feedback as a Q_RVR fixed point integer.
+ */
 static inline int32_t adsp_reverb_calculate_feedback(float decay) {
-    if(decay < 0.0f) {
-        decay = 0.0f;
-    }
-    if(decay > 1.0f) {
-        decay = 1.0f;
-    }
+    decay = decay < 0.0f ? 0.0f : decay;
+    decay = decay > 1.0f ? 1.0f : decay;
+
     float feedback = (0.28f * decay) + 0.7f;
-    return adsp_reverb_float2int(feedback);
+    // always [0.7, 0.98] so no need to saturate
+    return _positive_float2fixed(feedback, Q_RVR);
 }
 
 /**
@@ -62,7 +66,9 @@ static inline int32_t adsp_reverb_calculate_feedback(float decay) {
  * @param gain_db           Gain in dB 
  * @return int32_t          Linear gain in a Q_RVR format
  */
-int32_t adsp_reverb_room_calc_gain(float gain_db);
+static inline int32_t adsp_reverb_room_calc_gain(float gain_db) {
+    return adsp_reverb_db2int(gain_db);
+}
 
 /**
  * @brief Calculate the wet and dry gains according to the mix amount.

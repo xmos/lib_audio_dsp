@@ -30,20 +30,3 @@ static inline int32_t q31_ema(int32_t x, int32_t y, q1_31 alpha) {
   asm("lextract %0,%1,%2,%3,32":"=r"(x):"r"(ah),"r"(al),"r"(Q_alpha));
   return x;
 }
-
-/**
- * @brief Positive IEEE 754 float to Q_sig conversion
- * 
- * @param val       Positive IEEE 754 float
- * @return int32_t  Q_SIG fixed-point
- */
-static inline int32_t from_float_pos(float val) {
-  // assumes that val is positive
-  int32_t sign, exp, mant;
-  asm("fsexp %0, %1, %2": "=r" (sign), "=r" (exp): "r" (val));
-  asm("fmant %0, %1": "=r" (mant): "r" (val));
-  // mant to SIG_EXP
-  right_shift_t shr = SIG_EXP - exp + 23;
-  mant >>= shr;
-  return mant;
-}
