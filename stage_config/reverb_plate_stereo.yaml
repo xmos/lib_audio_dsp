@@ -11,7 +11,7 @@ module:
       help: >
         The amount of high frequency attenuation in Q0.31 format.
         To convert a damping value between 0 and 1 to an ``int32_t``
-        control value, use the function ``adsp_reverb_calculate_damping``
+        control value, use the function ``adsp_reverb_plate_calculate_damping``
         in ``control/reverb.h``. 
     early_diffusion:
       type: int32_t
@@ -25,7 +25,7 @@ module:
       help: >
         The amount of diffusion in the late part of the reverb. To
         convert a diffusion value between 0 and 1 to an ``int32_t``
-        control value, use the function `adsp_reverb_float2int`` in
+        control value, use the function `adsp_reverb_plate_calc_late_diffusion`` in
         ``control/reverb.h``.
     bandwidth:
       type: int32_t
@@ -34,7 +34,7 @@ module:
         Hertz can be converted to an ``int32_t`` control value using the
         function xxxxx.
         Alternatively, a bandwidth between 0 and 1 can be converted
-        using the function `adsp_reverb_float2int``.
+        using the function `adsp_reverb_plate_calc_bandwidth``.
     wet_gain1:
       type: int32_t
       help: >
