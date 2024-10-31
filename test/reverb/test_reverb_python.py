@@ -262,12 +262,12 @@ def test_reverb_width(algo, width):
 
     if algo == "stereo_room":
         signal = np.tile(signal, [2, 1])
-        reverb = rvs.reverb_room_stereo(fs, 2, dry_gain_db=0, wet_gain_db=-np.inf)
+        reverb = rvs.reverb_room_stereo(fs, 2)
     elif algo == "mono_room":
-        reverb = rv.reverb_room(fs, 1, dry_gain_db=0, wet_gain_db=-np.inf)
+        reverb = rv.reverb_room(fs, 1)
     elif algo == "stereo_plate":
         signal = np.tile(signal, [2, 1])
-        reverb = rvp.reverb_plate_stereo(fs, 2, dry_gain_db=0, wet_gain_db=-np.inf)
+        reverb = rvp.reverb_plate_stereo(fs, 2)
     
     reverb.width = width
 
@@ -287,9 +287,13 @@ def test_reverb_width(algo, width):
         for n in range(len(signal)):
             output_flt[n] = reverb.process(signal[n])
 
-    np.testing.assert_array_equal(signal, output_flt)
-    # quantization noise from multiply by dry gain
-    np.testing.assert_allclose(signal, output_xcore, atol=2**-(reverb.Q_sig-1))
+    # small signals are always going to be ropey due to quantizing, so just check average error of top half
+    q_format = 27
+    top_half = np.logical_and(utils.db(output_flt) > -50, utils.db(output_flt) < (6*(31-q_format)))
+    if np.any(top_half):
+        error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
+        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        assert mean_error_flt < 0.055
 
     if width == 0:
         assert np.all(output_xcore[0, :] == output_xcore)
@@ -297,6 +301,7 @@ def test_reverb_width(algo, width):
     else:
         assert not np.all(output_xcore[0, :] == output_xcore[1:, :])
         assert not np.all(output_flt[0, :] == output_flt[1:, :])
+
 
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("q_format", [27, 31])
@@ -494,7 +499,8 @@ def test_reverb_properties_room_size(stereo):
     np.testing.assert_allclose(should_be_val, val)
 
 if __name__ == "__main__":
-    test_reverb_time(0.5, 0.25, 0.35, 29, 0.5, 1, "stereo_plate")
+    test_reverb_width("stereo_plate", 1)
+    # test_reverb_time(0.5, 0.25, 0.35, 29, 0.5, 1, "stereo_plate")
     # test_reverb_overflow("sine", 20, "stereo_plate", 0.1)
     # test_reverb_time(0.01, 1)
     # test_reverb_frames(48000, 27, "stereo_plate", 0.5)
