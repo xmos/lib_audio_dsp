@@ -31,9 +31,9 @@ class lowpass_1ord(dspg.dsp_block):
 
         self._filterstore = 0.0
         self._filterstore_int = 0
-        if cutoff:
+        if cutoff is not None:
             self.set_cutoff(cutoff)
-        elif coeff:
+        elif coeff is not None:
             self.set_coeffs(coeff)
         else:
             raise ValueError("Cutoff or coeff must be used to initialise the filter.")

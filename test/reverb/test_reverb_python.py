@@ -295,8 +295,8 @@ def test_reverb_width(algo, width):
         assert np.all(output_xcore[0, :] == output_xcore)
         assert np.all(output_flt[0, :] == output_flt)
     else:
-        assert not np.all(output_xcore[0, :] == output_xcore)
-        assert not np.all(output_flt[0, :] == output_flt)
+        assert not np.all(output_xcore[0, :] == output_xcore[1:, :])
+        assert not np.all(output_flt[0, :] == output_flt[1:, :])
 
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("q_format", [27, 31])
