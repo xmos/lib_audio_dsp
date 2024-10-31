@@ -42,8 +42,11 @@ static inline int32_t adsp_reverb_plate_calc_damping(float damping) {
  * @return Bandwidth as a Q_RVP fixed point integer, clipped to the accepted range.
  */
 static inline int32_t adsp_reverb_plate_calc_bandwidth(float bandwidth, float fs) {
-  bandwidth = cosf(2.0f * (float)M_PI * (bandwidth/fs));
-  bandwidth = bandwidth - 1 + sqrtf((bandwidth*bandwidth) - (4.0f * bandwidth) + 3.0f);
+  if (bandwidth >= fs / 2.0f){
+    return INT32_MAX;
+    }
+  float f_bandwidth = cosf(2.0f * (float)M_PI * bandwidth / fs);
+  bandwidth = (f_bandwidth - 1.0f) + sqrtf((f_bandwidth - 1.0f) * (f_bandwidth - 3.0f));
   int32_t band = _positive_float2fixed_saturate(bandwidth, Q_RVP);
   return (band < 1) ? 1 : band;
 }

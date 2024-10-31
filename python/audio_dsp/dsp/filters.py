@@ -45,10 +45,10 @@ class lowpass_1ord(dspg.dsp_block):
         """
         if cutoff_hz > self.fs / 2:
             warnings.warn("Filter cutoff cannot be higher than fs/2, setting to fs/2", UserWarning)
-            sef.set_coeffs(1.0)
+            self.set_coeffs(1.0)
         elif cutoff_hz < 0:
             warnings.warn("Filter cutoff cannot be less than 0, setting to 0", UserWarning)
-            sef.set_coeffs(0.0)
+            self.set_coeffs(0.0)
         else:
             cos_w = np.cos(2 * np.pi * (cutoff_hz / self.fs))
             b0 = cos_w - 1 + np.sqrt(cos_w**2 - 4 * cos_w + 3)
