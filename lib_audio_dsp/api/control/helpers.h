@@ -79,8 +79,7 @@ static inline int32_t _float2fixed_assert( float x, int32_t q )
 
 /**
  * @brief Convert a float value to a fixed point int32 number in
- *        q format. Negative input will result in the output of zero.
- *        If the value of x is outside the fixed point range,
+ *        q format. If the value of x is outside the fixed point range,
  *        it is saturated.
  * 
  * @param x A floating point value
@@ -97,7 +96,8 @@ static inline int32_t _float2fixed_saturate( float x, int32_t q )
 
 /**
  * @brief Convert a float value to a fixed point int32 number in
- *        q format. If the value of x is outside the fixed point range,
+ *        q format. Negative input will result in the output of zero.
+ *        If the value of x is outside the fixed point range,
  *        it is saturated.
  * 
  * @param x A floating point value

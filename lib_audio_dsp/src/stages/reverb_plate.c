@@ -37,6 +37,7 @@ void reverb_plate_init(module_instance_t* instance,
                  int n_outputs,
                  int frame_size)
 {
+    xassert(n_inputs == 2 && "Reverb should have 2 inputs and outputs");
     xassert(n_inputs == n_outputs && "Reverb should have the same number of inputs and outputs");
     reverb_plate_state_t *state = instance->state;
     reverb_plate_config_t *config = instance->control.config;

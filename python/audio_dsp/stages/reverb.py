@@ -105,7 +105,7 @@ class ReverbRoom(ReverbBase):
             raise ValueError("Reverb requires inputs with a valid fs")
         self.fs = int(self.fs)
         if self.n_in != 1:
-                raise ValueError(...)
+                raise ValueError("ReverbRoom must have 1 channel")
         self.create_outputs(self.n_in)
 
         max_predelay = predelay if max_predelay == None else max_predelay
@@ -210,6 +210,8 @@ class ReverbRoomStereo(ReverbRoom):
         Stage.__init__(self, config=find_config("reverb_room_stereo"), **kwargs)
         if self.fs is None:
             raise ValueError("Reverb requires inputs with a valid fs")
+        if self.n_in != 2:
+                raise ValueError("ReverbRoomStereo must have 2 channels")
         self.fs = int(self.fs)
         self.create_outputs(self.n_in)
 
@@ -284,6 +286,8 @@ class ReverbPlateStereo(ReverbBase):
         if self.fs is None:
             raise ValueError("Reverb requires inputs with a valid fs")
         self.fs = int(self.fs)
+        if self.n_in != 2:
+                raise ValueError("ReverbPlateStereo must have 2 channels")
         self.create_outputs(self.n_in)
 
         max_predelay = predelay if max_predelay == None else max_predelay
