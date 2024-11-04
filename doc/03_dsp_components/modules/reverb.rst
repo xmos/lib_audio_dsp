@@ -129,7 +129,7 @@ Reverb Plate Stereo
 ===================
 
 The plate reverb module imitates the reflections of a plate reverb,
-which has more early reflections than the room reverb. Tha algorithm is
+which has more early reflections than the room reverb. The algorithm is
 based on Dattorro's 1997 paper. This reverb consists of 4 allpass
 filters for input diffusion, followed by a figure of 8 reverb tank of
 allpasses, low-pass filters, and delays. The output is taken from

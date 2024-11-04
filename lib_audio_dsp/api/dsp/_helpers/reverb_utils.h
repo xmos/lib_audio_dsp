@@ -4,7 +4,7 @@
 #pragma once
 
 /**
- * @brief Quanitze an int64 to int32, saturating and quantizing to zero
+ * @brief Quantize an int64 to int32, saturating and quantizing to zero
  * in the process. This is useful for feedback paths, where limit
  * cycles can occur if you don't round to zero.
  *

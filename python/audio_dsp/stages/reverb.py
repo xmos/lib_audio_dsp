@@ -104,6 +104,8 @@ class ReverbRoom(ReverbBase):
         if self.fs is None:
             raise ValueError("Reverb requires inputs with a valid fs")
         self.fs = int(self.fs)
+        if self.n_in != 1:
+                raise ValueError(...)
         self.create_outputs(self.n_in)
 
         max_predelay = predelay if max_predelay == None else max_predelay
