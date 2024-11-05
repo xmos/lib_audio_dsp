@@ -13,3 +13,4 @@
 #include "control/reverb.h"
 #include "control/signal_chain.h"
 #include "control/helpers.h"
+#include "control/reverb_plate.h"
