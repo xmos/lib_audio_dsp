@@ -39,7 +39,7 @@ optimized for execution on the vector-unit of XCORE.AI. The advantage with this 
 the efficiency of the lib_xcore_math. This block will generate C code for the block time domain FIR
 filter.
 More information on implementation can be found in
-`AN02027: Efficient computation of FIR filters on the Xcore <https://www.xmos.com/file/an02027-efficient-computation-of-fir-filters-on-the-xcore/>`_.
+`AN02027: Efficient computation of FIR filters on the Xcore <https://www.xmos.com/application-notes/>`_.
 
 .. autofunction:: audio_dsp.dsp.td_block_fir.process_array
 
@@ -54,6 +54,6 @@ with the Xcore. The main cost to using this implementation is the memory require
 compared to the previous two time-domain versions. This block will generate C code for the block 
 frequency domain FIR filter.
 More information on implementation can be found in
-`AN02027: Efficient computation of FIR filters on the Xcore <https://www.xmos.com/file/an02027-efficient-computation-of-fir-filters-on-the-xcore/>`_.
+`AN02027: Efficient computation of FIR filters on the Xcore <https://www.xmos.com/application-notes/>`_.
 
 .. autofunction:: audio_dsp.dsp.fd_block_fir.process_array
