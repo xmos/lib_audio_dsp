@@ -91,7 +91,7 @@ def process_array(
     Parameters
     ----------
     td_coefs : np.ndarray
-        This is a 1D numpy float array of the coefficients of the filter.   
+        This is a 1D numpy float array of the coefficients of the filter.
     filter_name : str
         For use in identification of the filter from within the C code. All structs and defiens that pertain to this filter will contain this identifier.
     output_path : str

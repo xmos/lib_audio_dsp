@@ -98,13 +98,14 @@ def _emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_ele
     file_handle.write("\t.taps_per_block = " + str(taps_per_block) + ",\n")
     file_handle.write("};\n")
 
+
 def process_array(
-    td_coefs : np.ndarray,
-    filter_name : str,
-    output_path : str,
-    frame_advance : int,
-    frame_overlap : int,
-    td_block_length : int,
+    td_coefs: np.ndarray,
+    filter_name: str,
+    output_path: str,
+    frame_advance: int,
+    frame_overlap: int,
+    td_block_length: int,
     gain_dB=0.0,
     debug=False,
     warn=False,
@@ -112,12 +113,12 @@ def process_array(
     verbose=False,
 ):
     """
-    Convert the input array into a header to be included in a C project. 
+    Convert the input array into a header to be included in a C project.
 
     Parameters
     ----------
     td_coefs : np.ndarray
-        This is a 1D numpy float array of the coefficients of the filter.   
+        This is a 1D numpy float array of the coefficients of the filter.
     filter_name : str
         For use in identification of the filter from within the C code. All structs and defiens that pertain to this filter will contain this identifier.
     output_path : str
