@@ -214,7 +214,9 @@ class PipelineExecutor:
         fs = i_edges[0].fs
 
         if data.shape[0] % frame_size:
-            raise ValueError(f"Data length must be a multiple of frame size {frame_size}")
+            # truncate data to a multiple of frame size
+            datalen = (data.shape[0] // frame_size) * frame_size
+            data = data[:datalen, :]
 
         ret = numpy.zeros((data.shape[0], n_o_chans))
 

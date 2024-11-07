@@ -20,7 +20,7 @@ from .signal_chain import (
     Mixer,
 )
 from .compressor import CompressorRMS
-from .reverb import ReverbRoom, ReverbRoomStereo
+from .reverb import ReverbRoom, ReverbRoomStereo, ReverbPlateStereo
 from .fir import FirDirect
 from .compressor import CompressorRMS
 from .compressor_sidechain import CompressorSidechain

@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 from .test_reverb_c import float_to_qxx, qxx_to_float
 import audio_dsp.dsp.reverb_stereo as rvs
+import audio_dsp.dsp.reverb_plate as rvp
 import audio_dsp.dsp.signal_gen as gen
 import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.generic as dspg
@@ -71,7 +72,7 @@ def in_signal():
                                             [0.1, 0.5]
                                             ])
 @pytest.mark.parametrize("wet, dry, pregain", [[-1.0, -1.0, 0.015]]) 
-def test_reverb_room_st(in_signal, decay, damping, wet, dry, pregain):
+def test_reverb_room_st_c(in_signal, decay, damping, wet, dry, pregain):
   n_chans = 2
   max_room_size = 1.0
   room_size = 1.0
@@ -80,16 +81,45 @@ def test_reverb_room_st(in_signal, decay, damping, wet, dry, pregain):
 
   rv = rvs.reverb_room_stereo(fs, n_chans, max_room_size, room_size, decay, damping, width, wet, dry, pregain, predelay)
   test_name = f"reverb_room_stereo_{decay}_{damping}_{wet}_{dry}_{pregain}"
+  rv_info = [rv.pregain_int, rv.wet_1_int, rv.wet_2_int, rv.dry_int, rv.combs_l[0].feedback_int, rv.combs_l[0].damp1_int]
+  rv_info = np.array(rv_info, dtype=np.int32)
 
   test_dir = bin_dir / test_name
   test_dir.mkdir(exist_ok = True, parents = True)
 
-  rv_info = [rv.pregain_int, rv.wet_1_int, rv.wet_2_int, rv.dry_int, rv.combs_l[0].feedback_int, rv.combs_l[0].damp1_int]
-  rv_info = np.array(rv_info, dtype=np.int32)
   rv_info.tofile(test_dir / "rv_info.bin")
 
   out_py_int = run_py(rv, in_signal)
   out_c = get_c_wav(test_dir, "reverb_st_test.xe")
+  shutil.rmtree(test_dir)
+
+  np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
+
+@pytest.mark.parametrize("decay, damping", [[1.0, 1.0],
+                                            [0.1, 0.5]
+                                            ])
+@pytest.mark.parametrize("wet, dry, pregain", [[-1.0, -1.0, 0.015]]) 
+def test_reverb_plate_c(in_signal, decay, damping, wet, dry, pregain):
+  n_chans = 2
+  predelay = 1
+  #width = 1.0
+
+  rv = rvp.reverb_plate_stereo(fs, n_chans, decay = decay, damping = damping, predelay = predelay, pregain = pregain, wet_gain_db = wet, dry_gain_db = dry)
+  test_name = f"reverb_plate_{decay}_{damping}_{wet}_{dry}_{pregain}"
+
+  # [pregain, we1, we2, dry, decay, decay_dif, damp, diffusion, bandwidth, in_dif1, in_dif2]
+  rv_info = [rv.pregain_int, rv.wet_1_int, rv.wet_2_int, rv.dry_int, rv.decay_int, rv.allpasses[4].feedback_int, rv.lowpasses[1].coeff_b0_int,
+            rv.mod_allpasses[0].feedback_int, rv.lowpasses[0].coeff_b0_int, rv.allpasses[0].feedback_int, rv.allpasses[2].feedback_int]
+  rv_info = np.array(rv_info, dtype=np.int32)
+
+  test_dir = bin_dir / test_name
+  test_dir.mkdir(exist_ok = True, parents = True)
+
+  rv_info.tofile(test_dir / "rv_info.bin")
+
+  out_py_int = run_py(rv, in_signal)
+
+  out_c = get_c_wav(test_dir, "reverb_plate_test.xe")
   shutil.rmtree(test_dir)
 
   np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)

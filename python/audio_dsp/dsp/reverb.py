@@ -1,6 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""DSP blocks for reverb effects."""
+"""DSP blocks for room reverb effects."""
 
 from audio_dsp import _deprecated
 import audio_dsp.dsp.generic as dspg
@@ -9,77 +9,16 @@ import warnings
 import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.signal_chain as sc
 from copy import deepcopy
-
-Q_VERB = 31
-
-# biggest number that is less than 1
-_LESS_THAN_1 = ((2**Q_VERB) - 1) / (2**Q_VERB)
+import audio_dsp.dsp.reverb_base as rvb
+import audio_dsp.dsp.filters as fltr
 
 
-def float_to_q_verb(x):
-    """Convert a floating point number to Q_VERB format. The input must
-    be between 0 and 1. As Q_VERB is typically Q31, care must be taken
-    to not overflow by scaling 1.0f*(2**31).
-    """
-    if x > 1 or x < 0:
-        raise ValueError("input must be between 0 and 1")
+class allpass_fv(fltr.allpass):
+    """A freeverb style all-pass filter, for use in the reverb_room
+    block.
 
-    if x == 1:
-        x_int = utils.int32(2**31 - 1)
-    elif x == 0:
-        x_int = 0
-    else:
-        x_int = utils.int32(x * (2**Q_VERB))
+    This is only designed to be called inside reverb_room algorithms.
 
-    return x_int
-
-
-def apply_gain_xcore(sample, gain):
-    """Apply the gain to a sample using fixed-point math. Assumes that gain is in Q_VERB format."""
-    acc = 1 << (Q_VERB - 1)
-    acc += sample * gain
-    utils.int64(acc)
-    y = utils.int32_mult_sat_extract(acc, 1, Q_VERB)
-    return y
-
-
-def scale_sat_int64_to_int32_floor(val):
-    """Quanitze an int64 to int32, saturating and quantizing to zero
-    in the process. This is useful for feedback paths, where limit
-    cycles can occur if you don't round to zero.
-    """
-    # force the comb filter/all pass feedback to converge to zero and
-    # avoid limit noise by rounding to zero. Above 0, truncation does
-    # this, but below 0 we truncate to -inf, so add just under 1 to go
-    # up instead.
-    if val < 0:
-        val += (1 << Q_VERB) - 1
-        utils.int64(val)
-
-    # saturate
-    if val > ((1 << (31 + Q_VERB)) - 1):
-        warnings.warn("Saturation occurred", utils.SaturationWarning)
-        val = (1 << (31 + Q_VERB)) - 1
-    elif val < -(1 << (31 + Q_VERB)):
-        warnings.warn("Saturation occurred", utils.SaturationWarning)
-        val = -(1 << (31 + Q_VERB))
-
-    # shift to int32
-    y = utils.int32(val >> Q_VERB)
-
-    return y
-
-
-class allpass_fv(dspg.dsp_block):
-    """A freeverb style all-pass filter, for use in the reverb_room block.
-
-    Parameters
-    ----------
-    max_delay : int
-        Maximum delay of the all-pass.
-    feedback_gain : float
-        Gain applied to the delayed feedback path in the all-pass. Sets
-        the reverb time.
     """
 
     def __init__(self, max_delay, feedback_gain):
@@ -88,26 +27,9 @@ class allpass_fv(dspg.dsp_block):
         self._buffer = np.zeros(self._max_delay)
         self._buffer_int = [0] * self._max_delay
 
-        self.delay = 0
+        self.delay = max_delay
         self.feedback = feedback_gain
-        self.feedback_int = utils.int32(self.feedback * 2**Q_VERB)
         self._buffer_idx = 0
-
-    def set_delay(self, delay):
-        """Set the length of the delay line. Will saturate to max_delay."""
-        if delay <= self._max_delay:
-            self.delay = delay
-        else:
-            self.delay = self._max_delay
-            warnings.warn(
-                "Delay cannot be greater than max delay, setting to max delay", UserWarning
-            )
-
-    def reset_state(self):
-        """Reset all the delay line values to zero."""
-        self._buffer = np.zeros(self._max_delay)
-        self._buffer_int = [0] * self._max_delay
-        return
 
     def process(self, sample):  # type: ignore : overloads base class
         """
@@ -151,8 +73,8 @@ class allpass_fv(dspg.dsp_block):
         output = utils.saturate_int64_to_int32(output)
 
         # do buffer calculation in int64 accumulator so we only quantize once
-        new_buff = utils.int64((sample_int << Q_VERB) + buff_out * self.feedback_int)
-        self._buffer_int[self._buffer_idx] = scale_sat_int64_to_int32_floor(new_buff)
+        new_buff = utils.int64((sample_int << rvb.Q_VERB) + buff_out * self.feedback_int)
+        self._buffer_int[self._buffer_idx] = rvb.scale_sat_int64_to_int32_floor(new_buff)
 
         # move buffer head
         self._buffer_idx += 1
@@ -164,6 +86,8 @@ class allpass_fv(dspg.dsp_block):
 
 class comb_fv(dspg.dsp_block):
     """A freeverb style comb filter for use in the reverb_room block.
+
+    This is only designed to be called inside reverb_room algorithms.
 
     Parameters
     ----------
@@ -205,7 +129,7 @@ class comb_fv(dspg.dsp_block):
         reverberation time.
         """
         self.feedback = feedback
-        self.feedback_int = utils.int32(self.feedback * 2**Q_VERB)
+        self.feedback_int = rvb.float_to_q_verb(self.feedback)
 
     def set_damping(self, damping):
         """Set the damping of the reverb, which controls how much high
@@ -215,7 +139,7 @@ class comb_fv(dspg.dsp_block):
         self.damp1 = damping
         self.damp2 = 1 - self.damp1
         # super critical these add up, but also don't overflow int32...
-        self.damp1_int = max(utils.int32(self.damp1 * 2**Q_VERB - 1), 1)
+        self.damp1_int = max(utils.int32(self.damp1 * 2**rvb.Q_VERB - 1), 1)
         self.damp2_int = utils.int32((2**31 - 1) - self.damp1_int + 1)
 
     def reset_state(self):
@@ -266,11 +190,13 @@ class comb_fv(dspg.dsp_block):
         filtstore_64 = utils.int64(
             output * self.damp2_int + self._filterstore_int * self.damp1_int
         )
-        self._filterstore_int = scale_sat_int64_to_int32_floor(filtstore_64)
+        self._filterstore_int = rvb.scale_sat_int64_to_int32_floor(filtstore_64)
 
         # do buffer calculation in int64 accumulator so we only quantize once
-        new_buff = utils.int64((sample_int << Q_VERB) + self._filterstore_int * self.feedback_int)
-        self._buffer_int[self._buffer_idx] = scale_sat_int64_to_int32_floor(new_buff)
+        new_buff = utils.int64(
+            (sample_int << rvb.Q_VERB) + self._filterstore_int * self.feedback_int
+        )
+        self._buffer_int[self._buffer_idx] = rvb.scale_sat_int64_to_int32_floor(new_buff)
 
         self._buffer_idx += 1
         if self._buffer_idx >= self.delay:
@@ -279,7 +205,7 @@ class comb_fv(dspg.dsp_block):
         return output
 
 
-class reverb_room(dspg.dsp_block):
+class reverb_room(rvb.reverb_base):
     """Generate a room reverb effect. This is based on Freeverb by
     Jezar at Dreampoint, and consists of 8 parallel comb filters fed
     into 4 series all-pass filters.
@@ -296,37 +222,9 @@ class reverb_room(dspg.dsp_block):
         The length of the reverberation of the room, between 0 and 1.
     damping : float, optional
         how much high frequency attenuation in the room, between 0 and 1
-    wet_gain_db : int, optional
-        wet signal gain, less than 0 dB.
-    dry_gain_db : int, optional
-        dry signal gain, less than 0 dB.
-    pregain : float, optional
-        the amount of gain applied to the signal before being passed
-        into the reverb, less than 1. If the reverb raises an
-        OverflowWarning, this value should be reduced until it does not.
-        The default value of 0.015 should be sufficient for most Q27
-        signals.
-    predelay : float, optional
-        the delay applied to the wet channel in ms.
-    max_predelay : float, optional
-        the maximum predelay in ms.
-
 
     Attributes
     ----------
-    pregain : float
-    pregain_int : int
-        The pregain applied before the reverb as a fixed point number.
-    wet_db : float
-    wet : float
-    wet_int : int
-        The linear gain applied to the wet signal as a fixed point
-        number.
-    dry : float
-    dry_db : float
-    dry_int : int
-        The linear gain applied to the dry signal as a fixed point
-        number.
     comb_lengths : np.ndarray
         An array of the comb filter delay line lengths, scaled by
         max_room_size.
@@ -347,7 +245,6 @@ class reverb_room(dspg.dsp_block):
     damping : float
     damping_int : int
         damping as a fixed point integer.
-    predelay : float
     """
 
     def __init__(
@@ -365,18 +262,13 @@ class reverb_room(dspg.dsp_block):
         max_predelay=None,
         Q_sig=dspg.Q_SIG,
     ):
-        assert n_chans == 1, f"Reverb only supports 1 channel. {n_chans} specified"
+        assert n_chans == 1, f"Reverb room only supports 1 channel. {n_chans} specified"
 
-        super().__init__(fs, 1, Q_sig)
+        # initalise wet/dry gains and predelay
+        super().__init__(
+            fs, n_chans, wet_gain_db, dry_gain_db, pregain, predelay, max_predelay, Q_sig
+        )
 
-        # predelay
-        max_predelay = predelay if max_predelay == None else max_predelay
-        self._predelay = sc.delay(fs, n_chans, max_predelay, predelay, "ms")
-
-        # gains
-        self.pregain = pregain
-        self.wet_db = wet_gain_db
-        self.dry_db = dry_gain_db
         self._effect_gain = sc.fixed_gain(fs, 1, 10)
 
         # the magic freeverb delay line lengths are for 44.1kHz, so
@@ -433,33 +325,6 @@ class reverb_room(dspg.dsp_block):
             total_buffers += ap._max_delay
         return total_buffers
 
-    @property
-    def predelay(self):
-        """The delay applied to the wet channel in ms."""
-        return self._predelay.delay_time
-
-    @predelay.setter
-    def predelay(self, delay):
-        self._predelay.set_delay(delay, "ms")
-
-    @property
-    def pregain(self):
-        """
-        The pregain applied before the reverb as a floating point
-        number.
-        """
-        return self._pregain
-
-    @pregain.setter
-    def pregain(self, x):
-        if not (0 <= x < 1):
-            bad_x = x
-            x = np.clip(x, 0, _LESS_THAN_1)
-            warnings.warn(f"Pregain {bad_x} saturates to {x}", UserWarning)
-
-        self._pregain = x
-        self.pregain_int = utils.int32(x * 2**Q_VERB)
-
     @_deprecated(
         "1.0.0", "2.0.0", "Replace `reverb_room.set_pre_gain(x)` with `reverb_room.pregain = x`"
     )
@@ -474,29 +339,6 @@ class reverb_room(dspg.dsp_block):
         """
         self.pregain = pre_gain
 
-    @property
-    def wet_db(self):
-        """The gain applied to the wet signal in dB."""
-        return utils.db(self.wet)
-
-    @wet_db.setter
-    def wet_db(self, x):
-        if x > 0:
-            warnings.warn(f"Wet gain {x} saturates to 0 dB", UserWarning)
-            x = 0
-
-        self.wet = utils.db2gain(x)
-
-    @property
-    def wet(self):
-        """The linear gain applied to the wet signal."""
-        return self._wet
-
-    @wet.setter
-    def wet(self, x):
-        self._wet = x
-        self.wet_int = float_to_q_verb(self.wet)
-
     @_deprecated(
         "1.0.0", "2.0.0", "Replace `reverb_room.set_wet_gain(x)` with `reverb_room.wet_db = x`"
     )
@@ -510,29 +352,6 @@ class reverb_room(dspg.dsp_block):
             Wet gain in dB, less than 0 dB.
         """
         self.wet_db = wet_gain_db
-
-    @property
-    def dry_db(self):
-        """The gain applied to the dry signal in dB."""
-        return utils.db(self.dry)
-
-    @dry_db.setter
-    def dry_db(self, x):
-        if x > 0:
-            warnings.warn(f"Dry gain {x} saturates to 0 dB", UserWarning)
-            x = 0
-
-        self.dry = utils.db2gain(x)
-
-    @property
-    def dry(self):
-        """The linear gain applied to the dry signal."""
-        return self._dry
-
-    @dry.setter
-    def dry(self, x):
-        self._dry = x
-        self.dry_int = float_to_q_verb(self.dry)
 
     @_deprecated(
         "1.0.0", "2.0.0", "Replace `reverb_room.set_dry_gain(x)` with `reverb_room.dry_db = x`"
@@ -558,7 +377,7 @@ class reverb_room(dspg.dsp_block):
     def decay(self, x):
         if not (0 <= x <= 1):
             bad_x = x
-            x = np.clip(x, 0, _LESS_THAN_1)
+            x = np.clip(x, 0, rvb._LESS_THAN_1)
             warnings.warn(f"Decay {bad_x} saturates to {x}", UserWarning)
         self.feedback = x * 0.28 + 0.7
 
@@ -654,32 +473,6 @@ class reverb_room(dspg.dsp_block):
         """
         self.room_size = room_size
 
-    def set_wet_dry_mix(self, mix):
-        """
-        Will mix wet and dry signal by adjusting wet and dry gains.
-        So that when the mix is 0, the output signal is fully dry,
-        when 1, the output signal is fully wet. Tries to maintain a
-        stable signal level using -4.5 dB Pan Law.
-
-        Parameters
-        ----------
-        mix : float
-            The wet/dry mix, must be [0, 1].
-        """
-        if not (0 <= mix <= 1):
-            bad_mix = mix
-            mix = np.clip(mix, 0, 1)
-            warnings.warn(f"Wet/dry mix {bad_mix} saturates to {mix}", UserWarning)
-        # get an angle [0, pi /2]
-        omega = mix * np.pi / 2
-
-        # -4.5 dB
-        self.dry = np.sqrt((1 - mix) * np.cos(omega))
-        self.wet = np.sqrt(mix * np.sin(omega))
-        # there's an extra gain of 10 dB added to the wet channel to
-        # make it similar level to the dry, so that the mixing is smooth.
-        # Couldn't add it to the wet gain itself as it's in q31
-
     def process_frame(self, frame):
         """
         Take a list frames of samples and return the processed frames.
@@ -737,7 +530,7 @@ class reverb_room(dspg.dsp_block):
         sample_int = utils.float_to_int32(sample, self.Q_sig)
 
         delayed_input = self._predelay.process_channels_xcore([sample_int])[0]
-        reverb_input = apply_gain_xcore(delayed_input, self.pregain_int)
+        reverb_input = rvb.apply_gain_xcore(delayed_input, self.pregain_int)
 
         output = 0
         for cb in self.combs:
@@ -754,9 +547,9 @@ class reverb_room(dspg.dsp_block):
 
         # need an extra bit in this add, if wet/dry mix is badly set
         # output can saturate (users fault)
-        output = apply_gain_xcore(output, self.wet_int)
+        output = rvb.apply_gain_xcore(output, self.wet_int)
         output = self._effect_gain.process_xcore(output)
-        output += apply_gain_xcore(sample_int, self.dry_int)
+        output += rvb.apply_gain_xcore(sample_int, self.dry_int)
         utils.int64(output)
         output = utils.saturate_int64_to_int32(output)
 

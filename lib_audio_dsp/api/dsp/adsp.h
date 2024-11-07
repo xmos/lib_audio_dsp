@@ -11,3 +11,4 @@
 #include "dsp/cascaded_biquads.h"
 #include "dsp/drc.h"
 #include "dsp/reverb.h"
+#include "dsp/reverb_plate.h"

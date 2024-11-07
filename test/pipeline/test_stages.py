@@ -622,6 +622,37 @@ def test_stereo_reverb(frame_size):
     do_test(make_p, tune_p, frame_size)
 
 
+def test_stereo_reverb_plate(frame_size):
+
+    def make_p(fr):
+        reverb_test_channels = 2  # Stereo reverb expects 2 channels
+        p = Pipeline(reverb_test_channels, frame_size=fr)
+        o = p.stage(ReverbPlateStereo, p.i, label="control")
+        p.set_outputs(o)
+
+        return p
+
+    def tune_p(fr):
+        p = make_p(fr)
+
+        # Set initialization parameters of the stage
+        p["control"].set_wet_dry_mix(0.5)
+        p["control"].set_pre_gain(0.5)
+        p["control"].set_damping(0.5)
+        p["control"].set_decay(0.6)
+        p["control"].set_predelay(5)
+        p["control"].set_early_diffusion(0.5)
+        p["control"].set_late_diffusion(0.5)
+        p["control"].set_bandwidth(10000)
+        p["control"].set_width(1.0)
+
+        stage_config = p["control"].get_config()
+        generate_test_param_file("REVERB_PLATE_STEREO", stage_config)
+        return p
+
+    do_test(make_p, tune_p, frame_size)
+
+
 @pytest.mark.parametrize("change_delay", [5, 0])
 def test_delay(frame_size, change_delay):
     """

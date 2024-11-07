@@ -6,6 +6,7 @@
 
 #include "dsp/adsp.h"
 #include "dsp/_helpers/generic_utils.h"
+#include "dsp/_helpers/reverb_utils.h"
 
 #define DEFAULT_COMB_LENS                              \
     {                                                  \
@@ -18,7 +19,6 @@
 #define DEFAULT_SPREAD 23
 
 #define TWO_TO_31 0x80000000
-#define TWO_TO_31_MINUS_1 0x7FFFFFFF
 
 #define DEFAULT_AP_FEEDBACK 0x40000000 // 0.5 in Q0.31
 
@@ -34,36 +34,6 @@
 #if Q_GAIN != 27
 #error "Need to change the EFFECT_GAIN"
 #endif
-
-static inline int32_t scale_sat_int64_to_int32_floor(int32_t ah,
-                                                     int32_t al,
-                                                     int32_t shift)
-{
-    int32_t big_q = TWO_TO_31_MINUS_1, one = 1, shift_minus_one = shift - 1;
-
-    // If ah:al < 0, add just under 1 (represented in Q0.31)
-    if (ah < 0) // ah is sign extended, so this test is sufficient
-    {
-        asm volatile("maccs %0, %1, %2, %3"
-                     : "=r"(ah), "=r"(al)
-                     : "r"(one), "r"(big_q), "0"(ah), "1"(al));
-    }
-    // Saturate ah:al. Implements the following:
-    // if (val > (2 ** (31 + shift) - 1))
-    //     val = 2 ** (31 + shift) - 1
-    // else if (val < -(2 ** (31 + shift)))
-    //     val = -(2 ** (31 + shift))
-    // Note the use of 31, rather than 32 - hence here we subtract 1 from shift.
-    asm volatile("lsats %0, %1, %2"
-                 : "=r"(ah), "=r"(al)
-                 : "r"(shift_minus_one), "0"(ah), "1"(al));
-    // then we return (ah:al >> shift)
-    asm volatile("lextract %0, %1, %2, %3, 32"
-                 : "=r"(ah)
-                 : "r"(ah), "r"(al), "r"(shift));
-
-    return ah;
-}
 
 /**
  *
@@ -116,7 +86,7 @@ static inline allpass_fv_t allpass_fv_init(
 {
     allpass_fv_t ap;
     ap.max_delay = max_delay;
-    ap.delay = 0;
+    ap.delay = max_delay;
     ap.feedback = feedback_gain;
     ap.buffer_idx = 0;
     ap.buffer = mem_manager_alloc(mem, max_delay * sizeof(int32_t));
@@ -137,22 +107,12 @@ static inline void allpass_fv_reset_state(allpass_fv_t *ap)
 
 int32_t allpass_fv(allpass_fv_t *ap, int32_t new_sample)
 {
-    int32_t ah = 0, al = 0, shift = Q_RVR;
     int32_t buf_out = ap->buffer[ap->buffer_idx];
 
     // Do (buf_out - new_sample) and saturate
     int32_t retval = adsp_subtractor(buf_out, new_sample);
 
-    // Do (new_sample << shift) into a double word ah:al
-    int64_t a = (int64_t)new_sample << shift;
-    ah = (int32_t)(a >> 32);
-    al = (int32_t)a;
-    // Then do ah:al + (buf_out * feedback)
-    asm volatile("maccs %0, %1, %2, %3"
-                 : "=r"(ah), "=r"(al)
-                 : "r"(buf_out), "r"(ap->feedback), "0"(ah), "1"(al));
-
-    ap->buffer[ap->buffer_idx] = scale_sat_int64_to_int32_floor(ah, al, shift);
+    ap->buffer[ap->buffer_idx] = add_with_fb(new_sample, buf_out, ap->feedback, Q_RVR);
     ap->buffer_idx += 1;
     if (ap->buffer_idx >= ap->delay)
     {
@@ -218,18 +178,7 @@ static inline int32_t comb_fv(comb_fv_t *comb, int32_t new_sample)
     comb->filterstore = scale_sat_int64_to_int32_floor(ah, al, shift);
     fstore = comb->filterstore;
 
-    // Do (new_sample << shift) into a 64b word ah:al
-    int64_t a = (int64_t)new_sample << shift;
-    ah = (int32_t)(a >> 32);
-    al = (int32_t)a;
-
-    // Then do ah:al + (fstore * feedback)
-    asm volatile("maccs %0, %1, %2, %3"
-                 : "=r"(ah), "=r"(al)
-                 : "r"(fstore), "r"(comb->feedback), "0"(ah), "1"(al));
-
-    comb->buffer[comb->buffer_idx] = scale_sat_int64_to_int32_floor(ah, al,
-                                                                    shift);
+    comb->buffer[comb->buffer_idx] = add_with_fb(new_sample, fstore, comb->feedback, Q_RVR);                                                                
     comb->buffer_idx += 1;
     if (comb->buffer_idx >= comb->delay)
     {
@@ -346,18 +295,6 @@ void adsp_reverb_room_set_room_size(reverb_room_t *rv,
     }
 }
 
-// only exists because the effect gain is not a part of the wet gain, so need to handle properly
-// will do: wet_sig * effect_gain + dry_sig but usign macc and with a hackery around lsats bug
-static inline int32_t _mix_wet_dry(int32_t wet_sig, int32_t dry_sig){
-    int32_t ah = 0, al = 0, mul = 2, one = 1;
-    asm("linsert %0, %1, %2, %3, 32": "=r" (ah), "=r" (al): "r" (adsp_fixed_gain(wet_sig, EFFECT_GAIN)), "r" (one), "0" (ah), "1" (al));
-    asm("sext %0, %1": "=r" (ah): "r" (one), "0" (ah));
-    asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (dry_sig), "r" (mul), "0" (ah), "1" (al));
-    asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (one), "0" (ah), "1" (al));
-    asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (one));
-    return ah;
-}
-
 int32_t adsp_reverb_room(
     reverb_room_t *rv,
     int32_t new_samp)
@@ -380,7 +317,7 @@ int32_t adsp_reverb_room(
         output = allpass_fv(&(rv->allpasses[ap]), output);
     }
     output = apply_gain_q31(output, rv->wet_gain);
-    output = _mix_wet_dry(output, apply_gain_q31(new_samp, rv->dry_gain));
+    output = mix_wet_dry(output, apply_gain_q31(new_samp, rv->dry_gain), EFFECT_GAIN, Q_GAIN);
 
     return output;
 }
@@ -494,28 +431,13 @@ void adsp_reverb_room_st_set_room_size(reverb_room_st_t *rv,
     }
 }
 
-// will do out1 * gain1 + out2 * gain2, assumes that both gains are q31
-static inline int32_t _get_wet_signal(int32_t out1, int32_t out2, int32_t gain1, int32_t gain2) {
-    int32_t q = 31, ah = 0, al = 1 << (q - 1);
-    asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (out1), "r" (gain1), "0" (ah), "1" (al));
-    asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (out2), "r" (gain2), "0" (ah), "1" (al));
-    asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (q), "0" (ah), "1" (al));
-    asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (q));
-    return ah;
-}
-
 void adsp_reverb_room_st(
     reverb_room_st_t *rv,
     int32_t outputs_lr[2],
     int32_t in_left,
     int32_t in_right)
 {
-    int32_t q = 31, ah = 0, al = 1 << (q - 1), reverb_input;
-    asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (in_left), "r" (rv->pre_gain), "0" (ah), "1" (al));
-    asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (in_right), "r" (rv->pre_gain), "0" (ah), "1" (al));
-    asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (q), "0" (ah), "1" (al));
-    asm("lextract %0, %1, %2, %3, 32": "=r" (reverb_input): "r" (ah), "r" (al), "r" (q));
-
+    int32_t reverb_input = mix_with_pregain(in_left, in_right, rv->pre_gain, Q_RVR);
     int32_t delayed_input = adsp_delay(&rv->predelay, reverb_input);
     int32_t out_r = 0, out_l = 0, ahl = 0, all = 0, ahr = 0, alr = 0, mul = 2, one = 1;
 
@@ -538,8 +460,8 @@ void adsp_reverb_room_st(
         out_r = allpass_fv(&(rv->allpasses[1][ap]), out_r);
     }
 
-    int32_t out = _get_wet_signal(out_l, out_r, rv->wet_gain1, rv->wet_gain2);
-    outputs_lr[0] = _mix_wet_dry(out, apply_gain_q31(in_left, rv->dry_gain));
-    out = _get_wet_signal(out_r, out_l, rv->wet_gain1, rv->wet_gain2);
-    outputs_lr[1] = _mix_wet_dry(out, apply_gain_q31(in_right, rv->dry_gain));
+    int32_t out = mix_wet_chans(out_l, out_r, rv->wet_gain1, rv->wet_gain2, Q_RVR);
+    outputs_lr[0] = mix_wet_dry(out, apply_gain_q31(in_left, rv->dry_gain), EFFECT_GAIN, Q_GAIN);
+    out = mix_wet_chans(out_r, out_l, rv->wet_gain1, rv->wet_gain2, Q_RVR);
+    outputs_lr[1] = mix_wet_dry(out, apply_gain_q31(in_right, rv->dry_gain), EFFECT_GAIN, Q_GAIN);
 }

@@ -109,20 +109,63 @@ For more details on the algorithm, see `Physical Audio Signal Processing
         .. automethod:: set_wet_dry_mix
             :noindex:
 
-        .. automethod:: set_pre_gain
+        .. autoproperty:: wet_db
             :noindex:
 
-        .. automethod:: set_wet_gain
+        .. autoproperty:: dry_db
             :noindex:
 
-        .. automethod:: set_dry_gain
+        .. autoproperty:: decay
             :noindex:
 
-        .. automethod:: set_decay
+        .. autoproperty:: damping
             :noindex:
 
-        .. automethod:: set_damping
+
+.. _ReverbPlateStereo:
+
+===================
+Reverb Plate Stereo
+===================
+
+The plate reverb module imitates the reflections of a plate reverb,
+which has more early reflections than the room reverb. The algorithm is
+based on Dattorro's 1997 paper. This reverb consists of 4 allpass
+filters for input diffusion, followed by a figure of 8 reverb tank of
+allpasses, low-pass filters, and delays. The output is taken from
+multiple taps in the delay lines to get a desirable echo density.
+The left and right output can be mixed with various widths.
+
+For more details on the algorithm, see
+`Effect Design, Part 1: Reverberator and Other Filters
+<https://aes2.org/publications/elibrary-page/?id=10160>`_ by Jon Dattorro.
+
+
+.. doxygenstruct:: reverb_plate_t
+    :members:
+
+.. tab:: C API
+
+    .. only:: latex
+
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_reverb_plate
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.reverb_plate.reverb_plate_stereo
+        :noindex:
+
+        .. automethod:: process
             :noindex:
 
-        .. automethod:: set_room_size
+        .. automethod:: reset_state
+            :noindex:
+
+        .. automethod:: set_wet_dry_mix
             :noindex:
