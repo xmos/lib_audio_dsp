@@ -4,6 +4,9 @@ import subprocess
 import sys
 import shutil
 from scipy.signal import firwin
+# I dont know how to do this properly
+sys.path.append('../../python/audio_dsp/dsp/')
+from td_block_fir import process_array
 
 build_dir_name = "build"
 
@@ -11,9 +14,6 @@ bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
 build_dir = Path(__file__).parent / build_dir_name
 
-# I dont know how to do this properly
-sys.path.append('../../python/audio_dsp/dsp/')
-from td_block_fir import process_array
 
 def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_length = 8, frame_overlap = 0, sim = True, gain_dB = 0.0):
 
@@ -28,11 +28,11 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
     # run the filter_generator on the coefs
     try:
         process_array(coefficients, "dut", gen_dir, gain_dB, debug = True, silent = True)
-    except ValueError as ve:
+    except ValueError:
         # print('Success (Expected Fail)')
         print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
         return 1
-    except Exception as error:
+    except Exception:
         # print('Fail', repr(error))
         print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
         return 1
@@ -119,4 +119,3 @@ if __name__ == "__main__":
     test_extreme_value_variable_length()
     print("test_random_value_variable_length")
     test_random_value_variable_length()
-s

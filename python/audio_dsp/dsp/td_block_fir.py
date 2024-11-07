@@ -1,12 +1,13 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""Time domain block FIR generator."""
 
 import numpy as np
 import argparse
 import os
 import ref_fir as rf
 
-def calc_max_accu(quantised_coefs, VPU_shr = 30):
+def _calc_max_accu(quantised_coefs, VPU_shr = 30):
     v = np.where(quantised_coefs > 0, np.iinfo(np.int32).max, np.iinfo(np.int32).min)
     v = np.array(v, dtype=np.int64)
     accu = 0
@@ -14,7 +15,7 @@ def calc_max_accu(quantised_coefs, VPU_shr = 30):
         accu += np.int64(np.rint((x*y)/2**VPU_shr))
     return accu
 
-def emit_filter(fh, coefs_padded, name, block_length, bits_per_element = 32):
+def _emit_filter(fh, coefs_padded, name, block_length, bits_per_element = 32):
 
     VPU_shr = 30 #the CPU shifts the product before accumulation
     VPU_accu_bits = 40
@@ -29,13 +30,13 @@ def emit_filter(fh, coefs_padded, name, block_length, bits_per_element = 32):
     exp = bits_per_element - 2 - e
 
     quantised_coefs = rf.quant(coefs_padded, exp)
-    max_accu = calc_max_accu(quantised_coefs, VPU_shr)
+    max_accu = _calc_max_accu(quantised_coefs, VPU_shr)
 
     # This guarentees no accu overflow
     while max_accu > 2**(VPU_accu_bits-1) - 1:
         exp -= 1
         quantised_coefs = rf.quant(coefs_padded, exp)
-        max_accu = calc_max_accu(quantised_coefs)
+        max_accu = _calc_max_accu(quantised_coefs)
 
     fh.write('int32_t __attribute__((aligned (8))) ' + coef_data_name + '[' + str(len(coefs_padded)) + '] = {\n')
     counter = 1
@@ -67,8 +68,29 @@ def emit_filter(fh, coefs_padded, name, block_length, bits_per_element = 32):
     
     return filter_struct_name
 
-def process_array(coefs, filter_name, output_path, gain_dB = 0.0, debug = False, block_length = 8, silent = False):
+def process_array(coefs : np.ndarray, filter_name:str, 
+                  output_path:str, gain_dB = 0.0, 
+                  debug = False, block_length = 8, silent = False):
+    """
+    Convert the input array into a header to be included in a C project.
 
+    Parameters
+    ----------
+    coefs : np.ndarray
+        _description_
+    filter_name : str
+        _description_
+    output_path : str
+        _description_
+    gain_dB : float, optional
+        _description_, by default 0.0
+    debug : bool, optional
+        _description_, by default False
+    block_length : int, optional
+        _description_, by default 8
+    silent : bool, optional
+        _description_, by default False
+    """
     output_file_name = os.path.join(output_path, filter_name + '.h')
 
     original_filter_length = len(coefs)
@@ -92,7 +114,7 @@ def process_array(coefs, filter_name, output_path, gain_dB = 0.0, debug = False,
         # The count of blocks in the filter ( the data is at least 2 more)
         filter_block_count = target_filter_bank_length // block_length
 
-        emit_filter(fh, prepared_coefs, filter_name, block_length)
+        _emit_filter(fh, prepared_coefs, filter_name, block_length)
 
         if debug:
             rf.emit_debug_filter(fh, coefs, filter_name)
@@ -103,7 +125,7 @@ def process_array(coefs, filter_name, output_path, gain_dB = 0.0, debug = False,
         # emit the data define
         data_block_count = filter_block_count + 2
         fh.write("//This is the count of int32_t words to allocate for one data channel.\n")
-        fh.write("//i.e. int32_t channel_data[" + filter_name + "_DATA_BUFFER_ELEMENTS] = \{0\};\n")
+        fh.write("//i.e. int32_t channel_data[" + filter_name + "_DATA_BUFFER_ELEMENTS] = { 0 };\n")
         fh.write("#define " + filter_name + "_DATA_BUFFER_ELEMENTS (" + str(data_block_count*block_length) + ")\n\n")
     
         fh.write("#define " + filter_name + "_TD_BLOCK_LENGTH (" + str(block_length) + ")\n")

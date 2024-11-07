@@ -4,12 +4,12 @@ import subprocess
 import sys
 import shutil
 from scipy.signal import firwin
-
-build_dir_name = "build"
-
 # I dont know how to do this properly
 sys.path.append('../../python/audio_dsp/dsp/')
 from fd_block_fir import process_array
+
+build_dir_name = "build"
+
 
 def build_and_run_tests(dir_name, coefficients, frame_advance = None, td_block_length = 32, frame_overlap = 0, sim = True, gain_dB = 0.0):
 
@@ -22,18 +22,18 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = None, td_block_l
     bin_dir.mkdir(exist_ok=True, parents=True)
     gen_dir.mkdir(exist_ok=True, parents=True)
 
-    if frame_advance == None:
+    if frame_advance is None:
         frame_advance = max(td_block_length//2, 1)
 
     # run the filter_generator on the coefs
     try:
         process_array(coefficients, "dut", gen_dir, frame_advance, frame_overlap, td_block_length, 
                       gain_dB = gain_dB, debug = True, warn = False, error = False, verbose = False)
-    except ValueError as ve:
+    except ValueError:
         # print('Success (Expected Fail)')
         print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
         return 1
-    except Exception as error:
+    except Exception:
         # print('Fail', repr(error))
         print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
         return 1

@@ -1,16 +1,51 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""Common code for time and frequency domain block FIR generator."""
 
 import numpy as np
+import io
 
-def quant(coefs, exp):
+def quant(coefs : np.ndarray, exp: float):
+    """
+    Quantise an nnp.ndarray with exponent exp.
+
+    Parameters
+    ----------
+    coefs : np.ndarray
+        Array of floats to be quanntised
+    exp : float
+        Exponent to use for the quantisation
+
+    Returns
+    -------
+    np.array
+         Array of ints
+    """
     quantised = np.rint(np.ldexp(coefs, exp))
     quantised_and_clipped = np.clip(quantised, np.iinfo(np.int32).min, np.iinfo(np.int32).max)
     assert np.allclose(quantised, quantised_and_clipped)
     return np.array(quantised_and_clipped, dtype=np.int64)
 
 # emit the debug filter coefs
-def emit_debug_filter(fh, coefs, name):
+def emit_debug_filter(fh: io.TextIOWrapper, coefs: np.ndarray, name : str):
+    """
+    Emit a deug section describing the filter to the header.
+
+    Parameters
+    ----------
+    fh : io.TextIOWrapper
+        File handle of the header to write to.
+    coefs : np.ndarray
+        Array of floats describing the filter. 
+    name : str
+        Name of the filter.
+
+    Returns
+    -------
+    str
+        Name of the structure contining the deubg info.
+
+    """
     filter_length = len(coefs)
     
     max_val = np.max(np.abs(coefs))

@@ -1,5 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""Frequency domain block FIR generator."""
 
 import numpy as np
 import argparse
@@ -7,7 +8,7 @@ import math
 import os
 import ref_fir as rf
 
-def emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_element = 32):
+def _emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_element = 32):
 
     assert len(fd_block_coefs.shape) == 2
     phases, fd_block_length = fd_block_coefs.shape
@@ -84,6 +85,28 @@ def emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_elem
 def process_array(td_coefs, filter_name, output_path, 
                     frame_advance, frame_overlap, td_block_length, gain_dB = 0.0, 
                     debug = False, warn = False, error = True, verbose = False):
+    """
+    Convert the input array into a header to be included in a C project. 
+
+    Args:
+        td_coefs (_type_): _description_
+        filter_name (_type_): _description_
+        output_path (_type_): _description_
+        frame_advance (_type_): _description_
+        frame_overlap (_type_): _description_
+        td_block_length (_type_): _description_
+        gain_dB (float, optional): _description_. Defaults to 0.0.
+        debug (bool, optional): _description_. Defaults to False.
+        warn (bool, optional): _description_. Defaults to False.
+        error (bool, optional): _description_. Defaults to True.
+        verbose (bool, optional): _description_. Defaults to False.
+
+    Raises
+    ------
+        ValueError: Bad config - Should be fixed
+        ValueError: Unachievable config - MUST be fixed
+
+    """
     td_coefs = np.array(td_coefs, dtype=np.float64)
 
     if not math.log2(td_block_length).is_integer():
@@ -208,7 +231,7 @@ def process_array(td_coefs, filter_name, output_path,
     with open(output_file_name, 'w') as fh:
         fh.write('#include "dsp/fd_block_fir.h"\n\n')
 
-        emit_filter(Blocked_and_padded, filter_name, fh, taps_per_phase)
+        _emit_filter(Blocked_and_padded, filter_name, fh, taps_per_phase)
 
         if debug:
             rf.emit_debug_filter(fh, td_coefs, filter_name)
@@ -227,7 +250,7 @@ def process_array(td_coefs, filter_name, output_path,
 
         # emit the data define
         fh.write("//This is the count of int32_t words to allocate for one data channel.\n")
-        fh.write("//i.e. int32_t channel_data[" + filter_name + "_DATA_BUFFER_ELEMENTS] = \{0\};\n")
+        fh.write("//i.e. int32_t channel_data[" + filter_name + '_DATA_BUFFER_ELEMENTS] = { 0 };\n')
         fh.write("#define " + filter_name + "_DATA_BUFFER_ELEMENTS (" + str(data_memory) + ")\n\n")
 
         fh.write("#define " + filter_name + "_TD_BLOCK_LENGTH (" + str(td_block_length) + ")\n")
