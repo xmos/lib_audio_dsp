@@ -6,7 +6,7 @@ import numpy as np
 import argparse
 import math
 import os
-import ref_fir as rf
+import audio_dsp.dsp.ref_fir as rf
 
 
 def _emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_element=32):
@@ -115,18 +115,30 @@ def process_array(
     """
     Convert the input array into a header to be included in a C project.
 
-    Args:
-        td_coefs (_type_): _description_
-        filter_name (_type_): _description_
-        output_path (_type_): _description_
-        frame_advance (_type_): _description_
-        frame_overlap (_type_): _description_
-        td_block_length (_type_): _description_
-        gain_dB (float, optional): _description_. Defaults to 0.0.
-        debug (bool, optional): _description_. Defaults to False.
-        warn (bool, optional): _description_. Defaults to False.
-        error (bool, optional): _description_. Defaults to True.
-        verbose (bool, optional): _description_. Defaults to False.
+    Parameters
+    ----------
+        td_coefs : _type_
+            _description_
+        filter_name : _type_
+            _description_
+        output_path : _type_
+            _description_
+        frame_advance : _type_
+            _description_
+        frame_overlap : _type_
+            _description_
+        td_block_length : _type_
+            _description_
+        gain_dB : float, optional
+            _description_. Defaults to 0.0.
+        debug : bool, optional
+            _description_. Defaults to False.
+        warn : bool, optional
+            _description_. Defaults to False.
+        error : bool, optional
+            _description_. Defaults to True.
+        verbose : bool, optional
+            _description_. Defaults to False.
 
     Raises
     ------

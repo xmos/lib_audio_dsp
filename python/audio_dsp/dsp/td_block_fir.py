@@ -5,7 +5,7 @@
 import numpy as np
 import argparse
 import os
-import ref_fir as rf
+import audio_dsp.dsp.ref_fir as rf
 
 
 def _calc_max_accu(quantised_coefs, VPU_shr=30):
