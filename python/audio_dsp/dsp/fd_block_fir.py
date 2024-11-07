@@ -98,14 +98,13 @@ def _emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_ele
     file_handle.write("\t.taps_per_block = " + str(taps_per_block) + ",\n")
     file_handle.write("};\n")
 
-
 def process_array(
-    td_coefs,
-    filter_name,
-    output_path,
-    frame_advance,
-    frame_overlap,
-    td_block_length,
+    td_coefs : np.ndarray,
+    filter_name : str,
+    output_path : str,
+    frame_advance : int,
+    frame_overlap : int,
+    td_block_length : int,
     gain_dB=0.0,
     debug=False,
     warn=False,
@@ -113,38 +112,37 @@ def process_array(
     verbose=False,
 ):
     """
-    Convert the input array into a header to be included in a C project.
+    Convert the input array into a header to be included in a C project. 
 
     Parameters
     ----------
-        td_coefs : _type_
-            _description_
-        filter_name : _type_
-            _description_
-        output_path : _type_
-            _description_
-        frame_advance : _type_
-            _description_
-        frame_overlap : _type_
-            _description_
-        td_block_length : _type_
-            _description_
-        gain_dB : float, optional
-            _description_. Defaults to 0.0.
-        debug : bool, optional
-            _description_. Defaults to False.
-        warn : bool, optional
-            _description_. Defaults to False.
-        error : bool, optional
-            _description_. Defaults to True.
-        verbose : bool, optional
-            _description_. Defaults to False.
+    td_coefs : np.ndarray
+        This is a 1D numpy float array of the coefficients of the filter.   
+    filter_name : str
+        For use in identification of the filter from within the C code. All structs and defiens that pertain to this filter will contain this identifier.
+    output_path : str
+        Where to output the resultinng header file.
+    frame_advance : int
+        The numer of samples etween susequent frames.
+    frame_overlap : int
+        When the convolution is performed it will always output frame_advance samples plus an optional frame_overlap.
+    td_block_length : int
+        The size in samples of a frame, measured in time domain samples.
+    gain_dB : float, optional
+        A gain applied to the filters output, by default 0.0
+    debug : bool, optional
+        If enabled then this will emit a debug struct, by default False
+    warn : bool, optional
+        Enable to emit warnings, by default False
+    error : bool, optional
+        Enable to emit error fix suggestions, by default True
+    verbose : bool, optional
+        Enable verbose printinng, by default False
 
     Raises
     ------
         ValueError: Bad config - Should be fixed
         ValueError: Unachievable config - MUST be fixed
-
     """
     td_coefs = np.array(td_coefs, dtype=np.float64)
 
@@ -375,7 +373,7 @@ if __name__ == "__main__":
     if args.frame_advance == None:
         frame_advance = args.block_length // 2
     else:
-        frame_advance = None
+        frame_advance = args.frame_advance
 
     output_path = os.path.realpath(args.output)
     filter_path = os.path.realpath(args.filter)

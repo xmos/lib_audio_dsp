@@ -77,12 +77,12 @@ def _emit_filter(fh, coefs_padded, name, block_length, bits_per_element=32):
 
 
 def process_array(
-    coefs: np.ndarray,
+    td_coefs: np.ndarray,
     filter_name: str,
     output_path: str,
     gain_dB=0.0,
     debug=False,
-    block_length=8,
+    td_block_length=8,
     silent=False,
 ):
     """
@@ -90,29 +90,29 @@ def process_array(
 
     Parameters
     ----------
-    coefs : np.ndarray
-        _description_
+    td_coefs : np.ndarray
+        This is a 1D numpy float array of the coefficients of the filter.   
     filter_name : str
-        _description_
+        For use in identification of the filter from within the C code. All structs and defiens that pertain to this filter will contain this identifier.
     output_path : str
-        _description_
+        Where to output the resultinng header file.
     gain_dB : float, optional
-        _description_, by default 0.0
+        A gain applied to the filters output, by default 0.0
     debug : bool, optional
-        _description_, by default False
-    block_length : int, optional
-        _description_, by default 8
+        If enabled then this will emit a debug struct, by default False
+    td_block_length : int
+        The size in samples of a frame, measured in time domain samples, by default 8
     silent : bool, optional
-        _description_, by default False
+        Suppress all printing, by default False
     """
     output_file_name = os.path.join(output_path, filter_name + ".h")
 
-    original_filter_length = len(coefs)
+    original_filter_length = len(td_coefs)
 
     # this is the above but rounded up to the nearest block_length
     target_filter_bank_length = (
-        (original_filter_length + block_length - 1) // block_length
-    ) * block_length
+        (original_filter_length + td_block_length - 1) // td_block_length
+    ) * td_block_length
 
     if original_filter_length != target_filter_bank_length:
         if not silent:
@@ -123,9 +123,9 @@ def process_array(
                 target_filter_bank_length,
             )
         padding = np.zeros(target_filter_bank_length - original_filter_length)
-        prepared_coefs = np.concatenate((coefs, padding))
+        prepared_coefs = np.concatenate((td_coefs, padding))
     else:
-        prepared_coefs = coefs
+        prepared_coefs = td_coefs
 
     # Apply the gains
     prepared_coefs *= 10.0 ** (gain_dB / 20.0)
@@ -134,18 +134,18 @@ def process_array(
         fh.write('#include "dsp/td_block_fir.h"\n\n')
 
         # The count of blocks in the filter ( the data is at least 2 more)
-        filter_block_count = target_filter_bank_length // block_length
+        filter_block_count = target_filter_bank_length // td_block_length
 
-        _emit_filter(fh, prepared_coefs, filter_name, block_length)
+        _emit_filter(fh, prepared_coefs, filter_name, td_block_length)
 
         if debug:
-            rf.emit_debug_filter(fh, coefs, filter_name)
+            rf.emit_debug_filter(fh, td_coefs, filter_name)
 
             fh.write(
                 "#define debug_"
                 + filter_name
                 + "_DATA_BUFFER_ELEMENTS ("
-                + str(len(coefs))
+                + str(len(td_coefs))
                 + ")\n"
             )
             fh.write("\n")
@@ -160,13 +160,13 @@ def process_array(
             "#define "
             + filter_name
             + "_DATA_BUFFER_ELEMENTS ("
-            + str(data_block_count * block_length)
+            + str(data_block_count * td_block_length)
             + ")\n\n"
         )
 
-        fh.write("#define " + filter_name + "_TD_BLOCK_LENGTH (" + str(block_length) + ")\n")
+        fh.write("#define " + filter_name + "_TD_BLOCK_LENGTH (" + str(td_block_length) + ")\n")
         fh.write("#define " + filter_name + "_BLOCK_COUNT (" + str(filter_block_count) + ")\n")
-        fh.write("#define " + filter_name + "_FRAME_ADVANCE (" + str(block_length) + ")\n")
+        fh.write("#define " + filter_name + "_FRAME_ADVANCE (" + str(td_block_length) + ")\n")
         fh.write("#define " + filter_name + "_FRAME_OVERLAP (" + str(0) + ")\n")
 
     return
