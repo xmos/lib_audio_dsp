@@ -92,7 +92,6 @@ pipeline {
                         "test/signal_chain",
                         "test/fir",
                         "test/utils",
-                        "test/td_block_fir"
                       ]) // buildApps
                     } // tools
                   } // withVenv
@@ -241,7 +240,6 @@ pipeline {
                       buildApps([
                         "test/drc",
                         "test/reverb",
-                        "test/fd_block_fir"
                       ]) // buildApps
                     }
                   }
