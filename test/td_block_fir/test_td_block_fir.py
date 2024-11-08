@@ -6,7 +6,7 @@ import shutil
 from scipy.signal import firwin
 # I dont know how to do this properly
 sys.path.append('../../python/audio_dsp/dsp/')
-from td_block_fir import process_array
+from audio_dsp.dsp.td_block_fir import process_array
 
 build_dir_name = "build"
 
@@ -28,14 +28,14 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
     # run the filter_generator on the coefs
     try:
         process_array(coefficients, "dut", gen_dir, gain_dB, debug = True, silent = True)
-    except ValueError:
+    except ValueError as e:
         # print('Success (Expected Fail)')
         print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
-        return 1
-    except Exception:
+        raise e
+    except Exception as e:
         # print('Fail', repr(error))
         print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
-        return 1
+        raise e
     
     # build the project
     subprocess.check_output("cmake -B " + build_dir_name, cwd = dir_name, shell = True, stderr = subprocess.DEVNULL)
@@ -61,7 +61,7 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
         print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
     return sig_int
 
-dir_name = '.'
+dir_name = Path(__file__).parent
 
 def test_trivial():
     build_and_run_tests(dir_name, np.ones(1))

@@ -91,7 +91,8 @@ pipeline {
                         "test/cascaded_biquads",
                         "test/signal_chain",
                         "test/fir",
-                        "test/utils"
+                        "test/utils",
+                        "test/td_block_fir"
                       ]) // buildApps
                     } // tools
                   } // withVenv
@@ -189,6 +190,21 @@ pipeline {
                 }
               }
             } // test SC
+            stage('Test TD block FIR') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/td_block_fir") {
+                          sh "pytest python -m pytest --junitxml='pytest_result.xml' -rA -vvv --durations=0 -o junit_logging=all"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test TD block FIR
           }
           post {
             cleanup {
@@ -225,6 +241,7 @@ pipeline {
                       buildApps([
                         "test/drc",
                         "test/reverb",
+                        "test/fd_block_fir"
                       ]) // buildApps
                     }
                   }
@@ -265,6 +282,21 @@ pipeline {
                 }
               }
             } // test Reverb
+            stage('Test FD block FIR') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/fd_block_fir") {
+                          sh "pytest python -m pytest --junitxml='pytest_result.xml' -rA -vvv --durations=0 -o junit_logging=all"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test FD block FIR
           }
           post {
             cleanup {
