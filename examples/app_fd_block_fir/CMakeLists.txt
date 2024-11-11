@@ -23,11 +23,6 @@ set(APP_COMPILER_FLAGS ${EXAMPLE_BUILD_FLAGS})
 file(GLOB C_SRC CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_LIST_DIR} src/*.c)
 
 set(DSP_DIR build/dsp_pipeline)
-# set(DSP_MAIN ${DSP_DIR}/adsp_generated_auto.c)
-# if(NOT EXISTS ${DSP_MAIN})
-#     write_file(${DSP_MAIN} "#error Generate pipeline before building or build with dsp_pipeline.ipynb")
-#     write_file(${DSP_DIR}/adsp_generated_auto.h "#error Generate pipeline before building or build with dsp_pipeline.ipynb")
-# endif()
 
 set(APP_C_SRCS
     "${C_SRC};${DSP_MAIN}")
