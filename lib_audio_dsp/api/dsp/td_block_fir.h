@@ -16,7 +16,7 @@ typedef struct td_block_fir_filter_t {
     int32_t * coefs; //the actual coefficients, reversed for the VPU
     uint32_t block_count;  // the actual number of blocks
     uint32_t accu_shr; //the amount to shr the accumulator after all accumulation is complete
-    uint32_t accu_shl; //the amount to shr the accumulator after all accumulation is complete
+    uint32_t accu_shl; //the amount to shl the accumulator after all accumulation is complete
 } td_block_fir_filter_t;
 
 /*
@@ -25,10 +25,10 @@ time domain block convolution. The filter generator should be run first resultin
 that defines the parameters for this function. For example, running the generator with --name={NAME}
 would 
     fir_data - Struct of type td_block_fir_data_t
-    data - an amount of memory to be used by the struct in order to hold a history of the samples. The 
+    data - an area of memory to be used by the struct in order to hold a history of the samples. The 
            define {NAME}_DATA_BUFFER_ELEMENTS specifies exactly the number of int32_t elements to 
            allocate for the filter {NAME} to correctly function.
-    data_buffer_elements - The number of samples contained in data array, this should be 
+    data_buffer_elements - The number of samples contained in the data array, this should be 
            {NAME}_DATA_BUFFER_ELEMENTS.
 */
 void td_block_fir_data_init(

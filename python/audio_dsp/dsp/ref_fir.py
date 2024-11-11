@@ -8,7 +8,7 @@ import io
 
 def quant(coefs: np.ndarray, exp: float):
     """
-    Quantise an nnp.ndarray with exponent exp.
+    Quantise an np.ndarray with exponent exp.
 
     Parameters
     ----------

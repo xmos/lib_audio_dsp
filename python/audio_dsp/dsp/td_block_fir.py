@@ -95,9 +95,9 @@ def process_array(
     filter_name : str
         For use in identification of the filter from within the C code. All structs and defiens that pertain to this filter will contain this identifier.
     output_path : str
-        Where to output the resultinng header file.
+        Where to output the resulting header file.
     gain_dB : float, optional
-        A gain applied to the filters output, by default 0.0
+        A gain applied to the filter's output, by default 0.0
     debug : bool, optional
         If enabled then this will emit a debug struct, by default False
     td_block_length : int

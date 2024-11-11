@@ -42,8 +42,8 @@ Function to initialise the struct that manages the data, rather than coefficient
 frequency domain convolution. The filter generator should be run first resulting in a header 
 that defines the parameters for this function. For example, running the generator with --name={NAME}
 would 
-    fir_data - Struct of type fd_fir_data_t
-    data - an amount of memory to be used by the struct in order to hold a history of the samples. The 
+    fir_data - Pointer to struct of type fd_fir_data_t
+    data - an area of memory to be used by the struct in order to hold a history of the samples. The 
            define {NAME}_DATA_BUFFER_ELEMENTS specifies exactly the number of int32_t elements to 
            allocate for the filter {NAME} to correctly function.
     frame_advance - The number of samples contained in each frame, i.e. the samples count between updates.
@@ -51,7 +51,7 @@ would
     block_length - The length of the processing block, independent to the frame_advance. Must be a power 
            of two. This should be initialised to {NAME}_TD_BLOCK_LENGTH.
     block_count - The count of blocks required to implement the filter. This should be initialised to 
-           {NAME}_BLOCK_COUNT).
+           {NAME}_BLOCK_COUNT.
 */
 void fd_block_fir_data_init(
     fd_fir_data_t * fir_data, 
