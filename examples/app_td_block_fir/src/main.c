@@ -55,7 +55,7 @@ void worker(chanend_t c,
         td_block_fir_compute(audio_channel_1, &d1, f1);
 
         chan_out_buf_word(c, audio_channel_0, TD_BLOCK_FIR_LENGTH);
-        chan_out_buf_word(c,audio_channel_1, TD_BLOCK_FIR_LENGTH);
+        chan_out_buf_word(c, audio_channel_1, TD_BLOCK_FIR_LENGTH);
     }
 }
 
