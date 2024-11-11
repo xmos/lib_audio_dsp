@@ -34,7 +34,7 @@ More information on implementation can be found in `XCORE Math Library`_ documen
 Block Time Domain FIR
 =====================
 
-The direct FIR implements the filter as a convolution in the time domain, but with a block size 
+The block time domain FIR implements the filter as a convolution in the time domain, but with a block size 
 optimized for execution on the vector-unit of XCORE.AI. The advantage with this one is over twice
 the efficiency of the lib_xcore_math. This block will generate C code for the block time domain FIR
 filter.
