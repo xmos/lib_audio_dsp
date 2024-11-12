@@ -8,18 +8,18 @@ import os
 import audio_dsp.dsp.ref_fir as rf
 
 
-def _calc_max_accu(quantised_coefs, VPU_shr=30):
+def _calc_max_accu(quantised_coefs, vpu_shr=30):
     v = np.where(quantised_coefs > 0, np.iinfo(np.int32).max, np.iinfo(np.int32).min)
     v = np.array(v, dtype=np.int64)
     accu = 0
     for x, y in zip(v, quantised_coefs):
-        accu += np.int64(np.rint((x * y) / 2**VPU_shr))
+        accu += np.int64(np.rint((x * y) / 2**vpu_shr))
     return accu
 
 
 def _emit_filter(fh, coefs_padded, name, block_length, bits_per_element=32):
-    VPU_shr = 30  # the CPU shifts the product before accumulation
-    VPU_accu_bits = 40
+    vpu_shr = 30  # the CPU shifts the product before accumulation
+    vpu_accu_bits = 40
 
     # reverse the filter
     coefs_padded = coefs_padded[::-1]
@@ -31,10 +31,10 @@ def _emit_filter(fh, coefs_padded, name, block_length, bits_per_element=32):
     exp = bits_per_element - 2 - e
 
     quantised_coefs = rf.quant(coefs_padded, exp)
-    max_accu = _calc_max_accu(quantised_coefs, VPU_shr)
+    max_accu = _calc_max_accu(quantised_coefs, vpu_shr)
 
     # This guarentees no accu overflow
-    while max_accu > 2 ** (VPU_accu_bits - 1) - 1:
+    while max_accu > 2 ** (vpu_accu_bits - 1) - 1:
         exp -= 1
         quantised_coefs = rf.quant(coefs_padded, exp)
         max_accu = _calc_max_accu(quantised_coefs)
@@ -56,11 +56,11 @@ def _emit_filter(fh, coefs_padded, name, block_length, bits_per_element=32):
         counter += 1
     fh.write("};\n")
 
-    if VPU_shr - exp > 0:
+    if vpu_shr - exp > 0:
         accu_shr = 0
-        accu_shl = exp - VPU_shr
+        accu_shl = exp - vpu_shr
     else:
-        accu_shr = exp - VPU_shr
+        accu_shr = exp - vpu_shr
         accu_shl = 0
 
     # then emit the td_block_fir_filter_t struct

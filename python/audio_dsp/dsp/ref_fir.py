@@ -31,7 +31,7 @@ def quant(coefs: np.ndarray, exp: float):
 # emit the debug filter coefs
 def emit_debug_filter(fh: io.TextIOWrapper, coefs: np.ndarray, name: str):
     """
-    Emit a deug section describing the filter to the header.
+    Emit a debug section describing the filter to the header.
 
     Parameters
     ----------

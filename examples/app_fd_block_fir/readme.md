@@ -1,5 +1,4 @@
-app_td_block_fir
+app_fd_block_fir
 ---
 
-This demonstrates 16 concurrent FIRs running on a single tile with a frame size of 8 and of length 4008.
-Currently, it runs at 46kHz.
+This demonstrates the usage of a frequency domain FIR.

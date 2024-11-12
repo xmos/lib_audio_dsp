@@ -35,8 +35,8 @@ Block Time Domain FIR
 =====================
 
 The block time domain FIR implements the filter as a convolution in the time domain, but with a block size 
-optimized for execution on the vector-unit of xcore.ai. The advantage with this one is over twice
-the efficiency of the lib_xcore_math. This block will generate C code for the block time domain FIR
+optimized for execution on the vector-unit of xcore.ai. The advantage with this one is it is over twice
+the efficiency of the lib_xcore_math implementation. This block will generate C code for the block time domain FIR
 filter.
 More information on implementation can be found in
 `AN02027: Efficient computation of FIR filters on the Xcore <https://www.xmos.com/application-notes/>`_.

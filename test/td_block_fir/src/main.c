@@ -6,8 +6,16 @@
 #include <stdlib.h>
 #include "../autogen/dut.h"
 
+/*
+This controls the number of extra block long the data is vs the length of the coefficient
+array. It tests that with more data then you need the FIR is still correctly implemented.
+*/
 #define EXTRA_DATA_BLOCKS 2
 
+/*
+This tests for equlivance between the FD implementation and the TD reference.
+It has an allowed error of 4 for mean abs error and abs mean error. 
+*/
 int run_test(void){
     //allocate a TD FIR for reference
     int32_t __attribute__((aligned (8))) data_debug[debug_dut_DATA_BUFFER_ELEMENTS];

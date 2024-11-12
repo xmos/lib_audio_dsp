@@ -239,15 +239,10 @@ def process_array(
 
     if verbose:
         print("actual_output_sample_count", actual_output_sample_count)
-    if verbose:
         print("frame_advance", frame_advance)
-    if verbose:
         print("td_block_length", td_block_length)
-    if verbose:
         print("frame_overlap", frame_overlap)
-    if verbose:
         print("taps_per_phase", taps_per_phase)
-    if verbose:
         print("phases", phases)
 
     # Calc the length the filter need to be to fill all blocks when zero padded
@@ -289,19 +284,14 @@ def process_array(
 
     # split into blocks
     blocked = np.reshape(prepared_coefs, (-1, taps_per_phase))
-    # print('blocked', blocked.shape)
 
     padding_per_block = td_block_length - taps_per_phase
-    # print('padding_per_block', padding_per_block)
 
     # zero pad the filter taps
     blocked_and_padded = np.concatenate((blocked, np.zeros((phases, padding_per_block))), axis=1)
 
-    # print('blocked_and_padded', blocked_and_padded)
     # transform to the frequency domain
     Blocked_and_padded = np.fft.rfft(blocked_and_padded)
-
-    # print('Blocked_and_padded', Blocked_and_padded)
 
     with open(output_file_name, "w") as fh:
         fh.write('#include "dsp/fd_block_fir.h"\n\n')

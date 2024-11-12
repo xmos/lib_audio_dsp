@@ -5,6 +5,10 @@
 #include <xcore/hwtimer.h>
 #include "../autogen/dut.h"
 
+/*
+This tests for equlivance between the FD implementation and the TD reference.
+It has an allowed error of 32 for mean abs error and abs mean error. 
+*/
 int run_test(void){
 
     int32_t __attribute__((aligned (8))) data[dut_DATA_BUFFER_ELEMENTS];

@@ -6,10 +6,11 @@
 // This is fixed due to the VPU
 #define TD_BLOCK_FIR_LENGTH 8
 
-typedef struct td_block_fir_data_t {
-    int32_t * data; //the actual data
-    uint32_t index;  //current head index of the data
-    uint32_t data_stride; //the number of bytes a pointer has to have subtracted to move around the circular buffer! //TODO
+typedef struct td_block_fir_data_t
+{
+    int32_t *data;        // the actual data
+    uint32_t index;       // current head index of the data
+    uint32_t data_stride; // the number of bytes a pointer has to have subtracted to move around the circular buffer
 } td_block_fir_data_t;
 
 typedef struct td_block_fir_filter_t {
@@ -19,50 +20,67 @@ typedef struct td_block_fir_filter_t {
     uint32_t accu_shl; //the amount to shl the accumulator after all accumulation is complete
 } td_block_fir_filter_t;
 
-/*
-Function to initialise the struct that manages the data, rather than coefficients, for a 
+/**
+ * @brief Function to initialise the struct that manages the data, rather than coefficients, for a 
 time domain block convolution. The filter generator should be run first resulting in a header 
 that defines the parameters for this function. For example, running the generator with --name={NAME}
-would 
-    fir_data - Struct of type td_block_fir_data_t
-    data - an area of memory to be used by the struct in order to hold a history of the samples. The 
+would generate defines prepended with {NAME}, i.e. {NAME}_DATA_BUFFER_ELEMENTS, {NAME}_TD_BLOCK_LENGTH,
+{NAME}_BLOCK_COUNT, {NAME}_FRAME_ADVANCE, {NAME}_FRAME_OVERLAP.
+ * 
+ * @param fir_data Poitner to struct of type td_block_fir_data_t
+ * @param data Pointer to an amount of memory to be used by the struct in order to hold a history of the samples. The 
            define {NAME}_DATA_BUFFER_ELEMENTS specifies exactly the number of int32_t elements to 
            allocate for the filter {NAME} to correctly function.
-    data_buffer_elements - The number of samples contained in the data array, this should be 
+ * @param data_buffer_elements The number of samples contained in the data array, this should be 
            {NAME}_DATA_BUFFER_ELEMENTS.
-*/
+ */
 void td_block_fir_data_init(
     td_block_fir_data_t * fir_data, 
     int32_t *data, 
     uint32_t data_buffer_elements);
 
-/*
-Function to add samples to the FIR data structure.
-    samples_in - array of int32_t samples of length expected to be fir_data->frame_advance.
-    fir_data - Struct of type td_block_fir_data_t to which the samples will be added.
-*/
+/**
+
+ * @brief Function to add samples to the FIR data structure.
+ * 
+ * @param samples_in Array of int32_t samples of length TD_BLOCK_FIR_LENGTH.
+ * @param fir_data Pointer to struct of type td_block_fir_data_t to which the samples will be added.
+ */
 void td_block_fir_add_data(
     int32_t samples_in[TD_BLOCK_FIR_LENGTH],
     td_block_fir_data_t * fir_data);
 
-/*
-Function to compute the convolution between fir_data and fir_filter.
-    samples_out - Array of length TD_BLOCK_FIR_LENGTH(8), which will be used to return the 
+/**
+ * @brief Function to compute the convolution between fir_data and fir_filter.
+ * 
+ * @param samples_out Array of length TD_BLOCK_FIR_LENGTH(8), which will be used to return the 
         processed samples.
-    fir_data - Struct of type td_block_fir_data_t to which the data samples will be used.
-    fir_filter - Struct of type td_block_fir_filter_t to which the coefficient samples will be used.
-*/
+ * @param fir_data Pointer to struct of type td_block_fir_data_t from which the data samples will be obtained.
+ * @param fir_filter Pointer to struct of type td_block_fir_filter_t from which the coefficients will be obtained.
+ */
 void td_block_fir_compute(
     int32_t samples_out[TD_BLOCK_FIR_LENGTH],
     td_block_fir_data_t * fir_data, 
     td_block_fir_filter_t * fir_filter);
 
-// bring up and debug code below
-
+/**
+ * @brief Function to add samples to the FIR data structure. This is for debug and test only.
+ * 
+ * @param input_block Array of int32_t samples of length TD_BLOCK_FIR_LENGTH.
+ * @param fir_data Pointer to struct of type td_block_fir_data_t to which the samples will be added.
+ */
 void td_block_fir_add_data_ref(
     int32_t input_block[TD_BLOCK_FIR_LENGTH],
     td_block_fir_data_t * fir_data);
     
+/**
+ * @brief Function to compute the convolution between fir_data and fir_filter. This is for debug and test only.
+ * 
+ * @param samples_out Array of length TD_BLOCK_FIR_LENGTH(8), which will be used to return the 
+        processed samples.
+ * @param fir_data Pointer to struct of type td_block_fir_data_t from which the data samples will be obtained.
+ * @param fir_filter Pointer to struct of type td_block_fir_filter_t from which the coefficients will be obtained.
+ */
 void td_block_fir_compute_ref(
     int32_t samples_out[TD_BLOCK_FIR_LENGTH],
     td_block_fir_data_t * fir_data, 

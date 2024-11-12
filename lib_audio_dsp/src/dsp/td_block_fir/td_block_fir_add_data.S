@@ -9,7 +9,7 @@
 
 /*  
 
-void td_block_fir_add_data_asm( 
+void td_block_fir_add_data( 
     int32_t samples_in[TD_BLOCK_FIR_LENGTH],
     td_block_fir_data_t * fir_data
 );
@@ -20,7 +20,11 @@ typedef struct td_block_FIR_data_t {
     uint32_t data_stride; // 2
 } td_block_fir_data_t;
 
+
+See td_block_fir_add_data_ref for reference code.
+
 */
+
 #define FUNCTION_NAME   td_block_fir_add_data
 #define NSTACKWORDS     4
 
@@ -35,10 +39,12 @@ FUNCTION_NAME:
 
   {vldd input_block_p[0]; ldc r0, 32}
   {ldw r3, data_struct_p[1]; nop} //load index
-  {ldw r7, data_struct_p[0]; add r6, r3, r0} //load data_stride
+  {ldw r7, data_struct_p[0]; add r6, r3, r0} //load data_pointer
   {ldw r2, data_struct_p[2]; add r11, r7, r3} //load data_stride
   {vstd r11[0]; sub r3, r2, r3}
-  {bt r3, td_block_fir_add_data_skip; nop}
+
+  // if this is the end of the buffer then paste it onto the front too
+  {bt r3, td_block_fir_add_data_skip; nop} 
     {vstd r7[0]; mov r6, r0}
 td_block_fir_add_data_skip:  
   stw r6, data_struct_p[1]

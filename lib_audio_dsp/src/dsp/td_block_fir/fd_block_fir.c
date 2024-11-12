@@ -5,6 +5,9 @@
 #include "xmath/xmath.h"
 #include "dsp/fd_block_fir.h"
 
+/** 
+ * @brief This does a bfp_complex_s32_macc but bin zero is treated as two real values.
+ */
 __attribute__((noinline)) //bug workaround
 static void bfp_complex_s32_macc2(
     bfp_complex_s32_t* acc,
@@ -26,7 +29,7 @@ static void bfp_complex_s32_macc2(
 }
 
 static unsigned get_tail(fd_fir_data_t * fir_data){
-    unsigned tail = fir_data->head_index + 1;//TODO
+    unsigned tail = fir_data->head_index + 1;
     if(tail == fir_data->block_count)
         tail = 0;
     return tail;

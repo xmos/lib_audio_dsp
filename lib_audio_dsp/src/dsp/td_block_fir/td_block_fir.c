@@ -29,9 +29,7 @@ void td_block_fir_add_data_ref(
 
     fir_data->index = head;
 }
-#if 0
-#include "vpu_scalar_ops.h"
-#else
+
 enum {
     VPU_INT8_EPV    = 32,
     VPU_INT16_EPV   = 16,
@@ -113,5 +111,3 @@ void td_block_fir_compute_ref(
         output_block[i] = res;
     }
 }
-
-#endif

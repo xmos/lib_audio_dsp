@@ -26,7 +26,10 @@ typedef struct td_block_fir_filter_t {
     uint32_t accu_shr;    // 2
 } td_block_fir_filter_t;
 
+See td_block_fir_compute_ref for reference code.
+
 */
+
 #define FUNCTION_NAME   td_block_fir_compute
 #define NSTACKWORDS     (6+8) + 32
 
@@ -59,6 +62,7 @@ FUNCTION_NAME:
   {ldw r5, filter_struct_p[0] ; nop}
   {bf r8, prepare; sub r3, r3, 4}
     {add t, t, s; ldc s, 0}
+  //At the point s and t are the first and second loop counters.
   prepare:
   {bf s, td_block_fir_compute_skip_first_half; nop} //if s is zero then just do t
 td_block_fir_compute_first_half:
@@ -91,6 +95,8 @@ td_block_fir_compute_second_half:
 td_block_fir_compute_done:
   {ldw s, filter_struct_p[2]; ldaw t, sp[6]}
 
+  //In order to use VLSAT we need 8 shift values from memory. This puts them into memory
+  //as fast as possible. 
   std s, s, sp[3]
   std s, s, sp[4]
   std s, s, sp[5]
