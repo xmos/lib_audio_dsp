@@ -446,7 +446,7 @@ def _normalise_biquad(coeffs: list[float]) -> list[float]:
     negative.
 
     Expected input format: [b0, b1, b2, a0, a1, a2]
-    Expected output format: [b0, b1, b2, -a1, -a2]
+    Expected output format: [b0, b1, b2, -a1, -a2]/a0
 
     """
     if len(coeffs) != 6:
@@ -513,7 +513,9 @@ def make_biquad_bypass(fs: int) -> list[float]:
     Returns
     -------
     list[float]
-        The coefficients of the bypass biquad filter.
+        The coefficients of the biquad filter in the order
+        [b0, b1, b2, -a1, -a2]. The coefficients are normalised by a0
+        such that ``a0 = 1``.
     """
     coeffs = np.array([1.0, 0.0, 0.0, 0.0, 0.0], dtype=float).tolist()
     return coeffs
@@ -532,7 +534,8 @@ def make_biquad_mute(fs: int) -> list[float]:
     Returns
     -------
     list[float]
-        The biquad filter coefficients list representing a mute filter.
+        The coefficients of the biquad filter in the order
+        [b0, b1, b2, -a1, -a2].
     """
     coeffs = [0.0, 0.0, 0.0, 0.0, 0.0]
 
@@ -554,8 +557,9 @@ def make_biquad_gain(fs: int, gain_db: float) -> list[float]:
     Returns
     -------
     list[float]
-        A list of biquad coefficients.
-
+        The coefficients of the biquad filter in the order
+        [b0, b1, b2, -a1, -a2]. The coefficients are normalised by a0
+        such that ``a0 = 1``.
     """
     coeffs = make_biquad_bypass(fs)
     coeffs = _apply_biquad_gain(coeffs, gain_db)
@@ -578,7 +582,9 @@ def make_biquad_lowpass(fs: int, filter_freq: float, q_factor: float) -> list[fl
     Returns
     -------
     list[float]
-        A list of six coefficients representing the biquad filter.
+        The coefficients of the biquad filter in the order
+        [b0, b1, b2, -a1, -a2]. The coefficients are normalised by a0
+        such that ``a0 = 1``.
 
     Raises
     ------
@@ -619,7 +625,9 @@ def make_biquad_highpass(fs: int, filter_freq: float, q_factor: float) -> list[f
     Returns
     -------
     list[float]
-        A list of six coefficients representing the biquad filter.
+        The coefficients of the biquad filter in the order
+        [b0, b1, b2, -a1, -a2]. The coefficients are normalised by a0
+        such that ``a0 = 1``.
 
     Raises
     ------
@@ -662,8 +670,9 @@ def make_biquad_bandpass(fs: int, filter_freq: float, BW) -> list[float]:
     Returns
     -------
     list[float]
-        A list of six coefficients [b0, b1, b2, a0, a1, a2] for the
-        biquad filter.
+        The coefficients of the biquad filter in the order
+        [b0, b1, b2, -a1, -a2]. The coefficients are normalised by a0
+        such that ``a0 = 1``.
 
     Raises
     ------
@@ -706,7 +715,9 @@ def make_biquad_bandstop(fs: int, filter_freq: float, BW: float) -> list[float]:
     Returns
     -------
     list[float]
-        The coefficients of the biquad bandstop filter.
+        The coefficients of the biquad filter in the order
+        [b0, b1, b2, -a1, -a2]. The coefficients are normalised by a0
+        such that ``a0 = 1``.
 
     Raises
     ------
@@ -747,7 +758,9 @@ def make_biquad_notch(fs: int, filter_freq: float, q_factor: float) -> list[floa
     Returns
     -------
     list[float]
-        The coefficients of the biquad notch filter.
+        The coefficients of the biquad filter in the order
+        [b0, b1, b2, -a1, -a2]. The coefficients are normalised by a0
+        such that ``a0 = 1``.
 
     Raises
     ------
@@ -789,7 +802,9 @@ def make_biquad_allpass(fs: int, filter_freq: float, q_factor: float) -> list[fl
     Returns
     -------
     list[float]
-        The coefficients of the biquad allpass filter.
+        The coefficients of the biquad filter in the order
+        [b0, b1, b2, -a1, -a2]. The coefficients are normalised by a0
+        such that ``a0 = 1``.
 
     Raises
     ------
@@ -835,7 +850,8 @@ def make_biquad_peaking(
     -------
     list[float]
         The coefficients of the biquad filter in the order
-        [b0, b1, b2, a0, a1, a2].
+        [b0, b1, b2, -a1, -a2]. The coefficients are normalised by a0
+        such that ``a0 = 1``.
 
     Raises
     ------
@@ -887,7 +903,8 @@ def make_biquad_constant_q(
     -------
     list[float]
         The coefficients of the biquad filter in the order
-        [b0, b1, b2, a0, a1, a2].
+        [b0, b1, b2, -a1, -a2]. The coefficients are normalised by a0
+        such that ``a0 = 1``.
 
     Raises
     ------
@@ -954,8 +971,9 @@ def make_biquad_lowshelf(
     Returns
     -------
     list[float]
-        A list of six coefficients [b0, b1, b2, a0, a1, a2] for the
-        biquad filter.
+        The coefficients of the biquad filter in the order
+        [b0, b1, b2, -a1, -a2]. The coefficients are normalised by a0
+        such that ``a0 = 1``.
 
     Raises
     ------
@@ -1008,7 +1026,9 @@ def make_biquad_highshelf(
     Returns
     -------
     list[float]
-        The coefficients of the highshelf biquad filter.
+        The coefficients of the biquad filter in the order
+        [b0, b1, b2, -a1, -a2]. The coefficients are normalised by a0
+        such that ``a0 = 1``.
 
     Raises
     ------
@@ -1063,8 +1083,9 @@ def make_biquad_linkwitz(fs: int, f0: float, q0: float, fp: float, qp: float) ->
     Returns
     -------
     list[float]
-        A list of six coefficients [b0, b1, b2, a0, a1, a2] for the
-        biquad filter.
+        The coefficients of the biquad filter in the order
+        [b0, b1, b2, -a1, -a2]. The coefficients are normalised by a0
+        such that ``a0 = 1``.
 
     Raises
     ------

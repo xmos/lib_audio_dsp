@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.34.0')
+@Library('xmos_jenkins_shared_library@v0.35.0')
 
 def runningOn(machine) {
   println "Stage running on:"
@@ -33,7 +33,7 @@ pipeline {
   } // parameters
 
   environment {
-    XMOSDOC_VERSION = "v6.1.2"
+    XMOSDOC_VERSION = "v6.1.3"
   } // environment
 
   options {
