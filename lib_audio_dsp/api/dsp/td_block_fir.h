@@ -6,18 +6,31 @@
 // This is fixed due to the VPU
 #define TD_BLOCK_FIR_LENGTH 8
 
+/** 
+ * @brief Time domain data struct.
+ */
 typedef struct td_block_fir_data_t
 {
-    int32_t *data;        // the actual data
-    uint32_t index;       // current head index of the data
-    uint32_t data_stride; // the number of bytes a pointer has to have subtracted to move around the circular buffer
+    /** The actual data samples. */
+    int32_t *data;
+    /** Index of the head of the FIFO data. */
+    uint32_t index;  
+    /** Tthe number of bytes a pointer has to have subtracted to move around the circular buffer. */
+    uint32_t data_stride;
 } td_block_fir_data_t;
 
+/** 
+ * @brief Time domain filter struct.
+ */
 typedef struct td_block_fir_filter_t {
-    int32_t * coefs; //the actual coefficients, reversed for the VPU
-    uint32_t block_count;  // the actual number of blocks
-    uint32_t accu_shr; //the amount to shr the accumulator after all accumulation is complete
-    uint32_t accu_shl; //the amount to shl the accumulator after all accumulation is complete
+    /** The actual coefficients, reversed for the VPU. */
+    int32_t * coefs; 
+    /** Count of blocks of data. */
+    uint32_t block_count; 
+    /** The amount to shr the accumulator after all accumulation is complete.*/
+    uint32_t accu_shr;
+    /** The amount to shl the accumulator after all accumulation is complete.*/
+    uint32_t accu_shl; //t
 } td_block_fir_filter_t;
 
 /**

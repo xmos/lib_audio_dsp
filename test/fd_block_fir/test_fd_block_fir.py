@@ -3,6 +3,7 @@ from pathlib import Path
 import subprocess
 import sys
 import shutil
+import pytest
 from scipy.signal import firwin
 from audio_dsp.dsp.fd_block_fir import process_array
 
@@ -65,65 +66,46 @@ dir_name = Path(__file__).parent
 def test_trivial():
     build_and_run_tests(dir_name, np.random.uniform(-0.125, 0.125, 34))
 
-def test_constant_value_variable_length():
-    for td_block_length in [16, 32]:
-        for filter_length_mul in [1, 2, 3]:
-            for filter_length_mod in [-2, -1, 0, 1, 2, 3]:
-                filter_length = (td_block_length*filter_length_mul)//2 + filter_length_mod
-                for frame_overlap in range(0, 4):
-                    for frame_advance_mod in [-2, -1, 0, 1]:
-                        frame_advance = td_block_length//2 + frame_advance_mod
-                        build_and_run_tests(dir_name, 
-                                            np.ones(filter_length)/filter_length, 
-                                            td_block_length = td_block_length, 
-                                            frame_overlap = frame_overlap,
-                                            frame_advance = frame_advance)
+@pytest.mark.parametrize("td_block_length", [16, 32])
+@pytest.mark.parametrize("filter_length_mul", [1, 2, 3])
+@pytest.mark.parametrize("filter_length_mod", [-2, -1, 0, 1, 2, 3])
+@pytest.mark.parametrize("frame_overlap", range(0, 4))
+@pytest.mark.parametrize("frame_advance_mod", [-2, -1, 0, 1])
+def test_constant_value_variable_length(td_block_length, filter_length_mul, filter_length_mod, frame_overlap, frame_advance_mod):
+    filter_length = (td_block_length*filter_length_mul)//2 + filter_length_mod
+    frame_advance = td_block_length//2 + frame_advance_mod
+    build_and_run_tests(dir_name, 
+                        np.ones(filter_length)/filter_length, 
+                        td_block_length = td_block_length, 
+                        frame_overlap = frame_overlap,
+                        frame_advance = frame_advance)
 
-def test_random_value_variable_length():
-    for length in range(15, 19):
-        build_and_run_tests(dir_name, 0.125*np.random.uniform(-1, 1, length))
+@pytest.mark.parametrize("length", range(15, 19))
+def test_random_value_variable_length(length):
+    build_and_run_tests(dir_name, 0.125*np.random.uniform(-1, 1, length))
 
-def test_extreme_value_variable_length():
-    for length in range(1, 18):
-        c = np.random.randint(0, 2, length)*2 - 1
-        build_and_run_tests(dir_name, c)
+@pytest.mark.parametrize("length", range(1, 18))
+def test_extreme_value_variable_length(length):
+    c = np.random.randint(0, 2, length)*2 - 1
+    build_and_run_tests(dir_name, c)
 
-def test_all_negative_variable_length():
-    for length in range(2, 17):
-        c = -np.ones(length)
-        build_and_run_tests(dir_name, c)
+@pytest.mark.parametrize("length", range(2, 17))
+def test_all_negative_variable_length(length):
+    c = -np.ones(length)
+    build_and_run_tests(dir_name, c)
 
-def test_random_pos_value_variable_length():
-    for length in range(2, 17):
-        build_and_run_tests(dir_name, np.abs(np.random.uniform(-1, 1, length)))
+@pytest.mark.parametrize("length", range(2, 17))
+def test_random_pos_value_variable_length(length):
+    build_and_run_tests(dir_name, np.abs(np.random.uniform(-1, 1, length)))
 
-def test_random_neg_value_variable_length():
-    for length in range(2, 17):
-        build_and_run_tests(dir_name, np.abs(np.random.uniform(-1, 1, length)))
+@pytest.mark.parametrize("length", range(2, 17))
+def test_random_neg_value_variable_length(length):
+    build_and_run_tests(dir_name, np.abs(np.random.uniform(-1, 1, length)))
 
-def test_long_lengths():
-    for length in [1024, 4096]:
-        build_and_run_tests(dir_name, np.random.uniform(-1, 1, length))
+@pytest.mark.parametrize("length", [1024, 4096])
+def test_long_lengths(length):
+    build_and_run_tests(dir_name, np.random.uniform(-1, 1, length))
 
-def test_real_filter():
-    for length in [16, 17, 18, 32, 33, 34, 127, 128, 129]:
-        build_and_run_tests(dir_name, firwin(length, 0.5))
-            
-if __name__ == "__main__":
-
-    print("test_trivial")
-    test_trivial()
-    print("test_constant_value_variable_length")
-    test_constant_value_variable_length()
-    print("test_real_filter")
-    test_real_filter()
-    print("test_random_neg_value_variable_length")
-    test_random_neg_value_variable_length()
-    print("test_random_pos_value_variable_length")
-    test_random_pos_value_variable_length()
-    print("test_all_negative_variable_length")
-    test_all_negative_variable_length()
-    print("test_extreme_value_variable_length")
-    test_extreme_value_variable_length()
-    print("test_random_value_variable_length")
-    test_random_value_variable_length()
+@pytest.mark.parametrize("length", [16, 17, 18, 32, 33, 34, 127, 128, 129])
+def test_real_filter(length):
+    build_and_run_tests(dir_name, firwin(length, 0.5))

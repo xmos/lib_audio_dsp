@@ -6,24 +6,40 @@
 #ifndef FD_BLOCK_FIR
 #define FD_BLOCK_FIR
 #include "xmath/types.h"
-typedef struct fd_fir_data_t {
-    bfp_complex_s32_t * data_blocks;
-    int32_t * prev_td_data;
-    int32_t * overlapping_frame_data;
-    uint32_t head_index;
 
-    // These are the three properties
-    uint32_t td_block_length; // The length of the block when in a TD form including zero padding
+/** 
+ * @brief Frequency domain data struct.
+ */
+typedef struct fd_fir_data_t {
+    /** Pointer to an array of bfp_complex_s32_t structs. */
+    bfp_complex_s32_t * data_blocks;
+    /** Pointer to array of samples that form the overlap between consecutive blocks. */
+    int32_t * prev_td_data;
+    /** Pointer to array of samples that form the overlap between consecutive outputs. */
+    int32_t * overlapping_frame_data;
+    /** Index of the head of the FIFO of data blocks. */
+    uint32_t head_index;
+    /** The length of the block when in a TD form including zero padding. */
+    uint32_t td_block_length; 
+    /** Count of blocks of data. */
     uint32_t block_count;
+    /** The frame advance, in time domain samples, between subsequent blocks. */
     uint32_t frame_advance;
 
 } fd_fir_data_t;
-typedef struct fd_fir_filter_t {
-    bfp_complex_s32_t * coef_blocks;
 
-    // These are the three properties
-    uint32_t td_block_length; // The length of the block when in a TD form including zero padding
+/** 
+ * @brief Frequency domain filter struct.
+ */
+typedef struct fd_fir_filter_t {
+
+    /** Pointer to an array of bfp_complex_s32_t structs. */
+    bfp_complex_s32_t * coef_blocks;
+    /** The length of the block when in a TD form including zero padding. */
+    uint32_t td_block_length;
+    /** Count of blocks in the filter. */
     uint32_t block_count;
+    /** Time domain taps per block. */
     uint32_t taps_per_block;
 
 } fd_fir_filter_t;
