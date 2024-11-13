@@ -18,8 +18,12 @@ class lowpass_1ord(dspg.dsp_block):
 
     Parameters
     ----------
-    bandwidth : float
-        Set the low pass bandwidth.
+    cutoff : float, optional
+        Set the low pass filter cutoff frequency in Hz. Either `cutoff` or
+        `coeff` must be set.
+    coeff : float, optional
+        Set the low pass filter coefficient. Either `cutoff` or
+        `coeff` must be set.
     """
 
     def __init__(self, fs, n_chans, cutoff=None, coeff=None, Q_sig=dspg.Q_SIG):
