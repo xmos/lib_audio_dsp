@@ -128,7 +128,7 @@ def process_array(
         prepared_coefs = td_coefs
 
     # Apply the gains
-    prepared_coefs *= 10.0 ** (gain_dB / 20.0)
+    prepared_coefs = prepared_coefs * 10.0 ** (gain_dB / 20.0)
 
     with open(output_file_name, "w") as fh:
         fh.write('#include "dsp/td_block_fir.h"\n\n')

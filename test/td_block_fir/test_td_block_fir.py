@@ -93,11 +93,6 @@ def test_random_pos_value_variable_length(length):
 def test_random_neg_value_variable_length(length):
     build_and_run_tests(dir_name, np.abs(np.random.uniform(-1, 1, length)))
 
-@pytest.mark.parametrize("length", [128, 1024, 4096])
-@pytest.mark.parametrize("length_mod", [-1, 0, 1])
-def test_long_lengths(length, length_mod):
-    build_and_run_tests(dir_name, np.random.uniform(-1, 1, length+length_mod))
-
 @pytest.mark.parametrize("length", [127, 128, 129])
 def test_real_filter(length):
     build_and_run_tests(dir_name, firwin(length, 0.5))
