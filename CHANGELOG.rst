@@ -1,8 +1,9 @@
 Audio DSP library change log
 ============================
 
-Unreleased
-----------
+1.2.0
+-----
+
   * ADDED: Stereo room and plate reverb Stages.
   * FIXED: Delay could return different type to input.
   * CHANGED: Removed host app.
@@ -63,3 +64,4 @@ Unreleased
 -----
 
   * Initial release.
+

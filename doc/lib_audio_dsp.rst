@@ -16,9 +16,9 @@ tuned on the fly via a PC based tuning interface, and utilities for hardware con
 
 lib_audio_dsp includes common signal processing functions optimised for the xcore, such as:
 
-* biquads and FIR filters
-* compressors, limiters, noise gates and envelope detectors
-* adders, subtractors, gains, volume controls and mixers
+* biquads and FIR filters.
+* compressors, limiters, noise gates and envelope detectors.
+* adders, subtractors, gains, volume controls and mixers.
 * delays and reverb.
 
 These can be combined together to make complex audio pipelines for many
@@ -30,7 +30,7 @@ This document covers the following topics:
 #. :ref:`tool_user_guide_section`: A Beginner's Guide to installing and using the DSP design and generation Python library.
 #. :ref:`design_guide_section`: Advanced guidance on designing and debugging generated DSP pipelines.
 #. :ref:`dsp_components_section`: Details all DSP components provided by this library.
-#. :ref:`run_time_control_guide_section`: Adding run time control to a DSP application.
+#. :ref:`run_time_control_guide_section`: How to add run time control to a DSP application.
 
 The subsequent sections provide comprehensive insights into the functionalities and applications of lib_audio_dsp, 
 detailing how to leverage its features for efficient audio signal processing. 
