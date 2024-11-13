@@ -150,6 +150,13 @@ class peak_expander_base(expander_base, peak_compressor_limiter_base):
     Inheritance from expander_base is prioritised over
     peak_compressor_limiter_base due to the order in the definition. To
     confirm this, peak_expander_base.__mro__ can be inspected.
+
+    Parameters
+    ----------
+    threshold_db : float
+        Threshold in decibels below which expansion occurs. This cannot
+        be greater than the maximum value representable in
+        Q_SIG format, and will saturate to that value.
     """
 
 
