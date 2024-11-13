@@ -318,12 +318,32 @@ class reverb_stereo_base(reverb_base):
     def process_channels(self, sample_list: list[float]):
         """Process_channels is should be implemented for the stereo reverb,
         but depends on the algorithm.
+
+        Parameters
+        ----------
+        sample_list : list[float]
+            A list of the input samples
+
+        Returns
+        -------
+        list[float]
+            The processed samples.
         """
         raise NotImplementedError
 
     def process_channels_xcore(self, sample_list: list[float]):
         """Process_channels is should be implemented for the stereo reverb,
         but depends on the algorithm.
+
+        Parameters
+        ----------
+        sample_list : list[float]
+            A list of the input samples.
+
+        Returns
+        -------
+        list[float]
+            The processed samples.
         """
         raise NotImplementedError
 
