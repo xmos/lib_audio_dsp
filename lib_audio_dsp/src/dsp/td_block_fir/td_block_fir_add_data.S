@@ -8,7 +8,6 @@
 .issue_mode dual
 
 /*  
-
 void td_block_fir_add_data( 
     int32_t samples_in[TD_BLOCK_FIR_LENGTH],
     td_block_fir_data_t * fir_data
@@ -20,9 +19,7 @@ typedef struct td_block_FIR_data_t {
     uint32_t data_stride; // 2
 } td_block_fir_data_t;
 
-
 See td_block_fir_add_data_ref for reference code.
-
 */
 
 #define FUNCTION_NAME   td_block_fir_add_data
@@ -67,8 +64,4 @@ td_block_fir_add_data_skip:
 #undef NSTACKWORDS
 #undef FUNCTION_NAME
 
-
 #endif //defined(__XS3A__)
-
-
-
