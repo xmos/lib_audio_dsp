@@ -49,6 +49,6 @@ void ifft_init(module_instance_t* instance,
                  int n_outputs,
                  int frame_size);
 
-void ifft_process(bfp_complex_s32_t **input, int32_t ***output, void *app_data_state);
+void ifft_process(int32_t **input, int32_t **output, void *app_data_state);
 
 void ifft_control(void *state, module_control_t *control);

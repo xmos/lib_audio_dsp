@@ -10,7 +10,7 @@
 #include "stages/fft.h"
 #include "dsp/defines.h"
 
-void fft_process(int32_t ** input, bfp_complex_s32_t ** output, void * app_data_state)
+void fft_process(int32_t ** input, int32_t ** output, void * app_data_state)
 {
     xassert(app_data_state != NULL);
     fft_state_t *state = app_data_state;
@@ -21,18 +21,23 @@ void fft_process(int32_t ** input, bfp_complex_s32_t ** output, void * app_data_
     // note calc headroom as we may h
     bfp_s32_init(&(state->fft[0].signal), &input[0][0], state->fft[0].exp, state->fft[0].nfft, 1);
 
-    printf("bfp exp: %d, hr: %d\n", state->fft[0].signal.exp, state->fft[0].signal.hr);
+    printf("bfp exp: %d, hr: %u\n", state->fft[0].signal.exp, state->fft[0].signal.hr);
 
     // printf("doing fft\n");
     // do the FFT
     bfp_complex_s32_t * c = bfp_fft_forward_mono(&(state->fft[0].signal));
-    printf("bin[256]: %ld, exponent: %d\n", c->data[256].re, c->exp);
+    printf("bin[256]: %ld, exponent: %d\n", c->data[128].im, c->exp);
+    printf("bin[256]: %ld, exponent: %d\n", c->data[128].re, c->exp);
     int32_t exponent = f32_log2(state->fft[0].nfft) + SIG_EXP - 2;
     printf("exponent_new: %ld\n", exponent);
     bfp_complex_s32_use_exponent(c, exponent);
-    // printf("fft output data addr: %p\n", c->data);
+    printf("bin[256]: %ld, exponent: %d\n", c->data[128].im, c->exp);
+    printf("exponent_new: %d, hr: %u\n", c->exp, c->hr);
+    printf("fft output data addr: %p, len: %d\n", c->data, c->length);
 
-    output[0][0] = *c;
+    // output[0] = (int32_t*)c->data;
+    memcpy(output[0], c->data, state->fft[0].nfft*sizeof(int32_t));
+    printf("out[256]: %ld\n", output[0][256]);
 }
 
 void fft_init(module_instance_t* instance,

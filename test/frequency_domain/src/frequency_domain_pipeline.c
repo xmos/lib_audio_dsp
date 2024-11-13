@@ -143,9 +143,9 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 	int32_t edge0[256] = {0}; // in
     // int32_t edge1[1] = {0}; // spare
 	int32_t edge2[512] = {0}; // buffered
-	bfp_complex_s32_t edge3 = {0}; // fft'd
-	bfp_complex_s32_t edge4 = {0}; // mult'd
-	int32_t* edge5[1] = {NULL}; // ifft'd
+	int32_t edge3[512] = {0}; // fft'd
+	int32_t edge4[512] = {0}; // mult'd
+	int32_t edge5[512] = {0}; // ifft'd
 	int32_t edge6[256]; // wola'd -> last FD related stage so memcopy
 
 	// constant edge
@@ -284,14 +284,14 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
     int32_t* stage_2_input[] = {edge0};  // buffer
 	int32_t* stage_2_output[] = {edge2};
 	int32_t* stage_3_input[] = {edge2}; // fft
-	bfp_complex_s32_t* stage_3_output[] = {&edge3};
-	bfp_complex_s32_t* stage_5_input[] = {&edge3}; // ifft
-	int32_t** stage_5_output[] = {edge5};
-	int32_t** stage_6_input[] = {edge5}; // wola
+	int32_t* stage_3_output[] = {edge3};
+	int32_t* stage_5_input[] = {edge3}; // ifft
+	int32_t* stage_5_output[] = {edge5};
+	int32_t* stage_6_input[] = {edge5}; // wola
 	int32_t* stage_6_output[] = {edge6};
 
-	bfp_complex_s32_t* stage_4_input[] = {&edge3, &edge7}; //bfp mult
-	bfp_complex_s32_t* stage_4_output[] = {&edge4};
+	// bfp_complex_s32_t* stage_4_input[] = {&edge3, &edge7}; //bfp mult
+	// bfp_complex_s32_t* stage_4_output[] = {&edge4};
 
 	while(1) {
 	int read_count = 1;
@@ -316,23 +316,22 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 		stage_2_input,
 		stage_2_output,
 		modules[2]->state);
-	// printf("s2 out addr: %p\n", &stage_2_output[0][0]);
-	// printf("s3 in addr: %p\n", &stage_3_input[0][0]);
+	printf("s2 out addr: %p\n", &stage_2_output[0][0]);
+	printf("s3 in addr: %p\n", &stage_3_input[0][0]);
 	printf("ffting\n");
 	fft_process(
 		stage_3_input,
 		stage_3_output,
 		modules[3]->state);
-    // printf("s3 output data addr: %p\n", stage_3_output[0]->data);
-    // printf("s5 in output data addr: %p\n", stage_5_input[0]->data);
+    printf("s3 output data addr: %p\n", &stage_3_output[0][0]);
+    printf("s5 in output data addr: %p\n", &stage_5_input[0][0]);
 
-	// // temp lazy filter
-	// for(int i=0; i<256; i++)
-	// {
-	// 	stage_5_input[0]->data[i].re *= 0.1f;
-	// 	stage_5_input[0]->data[i].im *= 0.1f;
+	// temp lazy filter
+	for(int i=0; i<512; i++)
+	{
+		stage_5_input[0][i] *= 0.1f;
 
-	// }
+	}
 	// bfp_multiply_process(
 	// 	stage_4_input,
 	// 	stage_4_output,
