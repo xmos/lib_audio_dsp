@@ -13,25 +13,18 @@ typedef struct {
 } ifft_config_t;
 
 
-typedef struct {
-    int32_t nfft;
-    int32_t* data;
-    int32_t exp;
-    bfp_s32_t signal;
-    bfp_complex_s32_t spectrum;
-} ifft_t;
 
 typedef struct
 {
-    ifft_t* ifft;
     int n_inputs;
     int n_outputs;
     int frame_size;
+    int32_t nfft;
+    int32_t exp;
 }ifft_state_t;
 
 typedef struct
 {
-    int32_t* shared_memory;
     int32_t nfft;
     int32_t exp;
 }ifft_constants_t;
@@ -39,8 +32,7 @@ typedef struct
 
 
 
-#define IFFT_STAGE_REQUIRED_MEMORY(N_CH) \
-     + ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N_CH * sizeof(ifft_t))
+#define IFFT_STAGE_REQUIRED_MEMORY 0
 
 void ifft_init(module_instance_t* instance,
                  adsp_bump_allocator_t* allocator,

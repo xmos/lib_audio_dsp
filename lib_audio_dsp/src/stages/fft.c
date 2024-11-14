@@ -14,30 +14,20 @@ void fft_process(int32_t ** input, int32_t ** output, void * app_data_state)
 {
     xassert(app_data_state != NULL);
     fft_state_t *state = app_data_state;
-    // put signal int32_t array into bfp
-
-    state->fft[0].data = &input[0][0];
 
     // note calc headroom as we may h
-    bfp_s32_init(&(state->fft[0].signal), &input[0][0], state->fft[0].exp, state->fft[0].nfft, 1);
+    bfp_s32_t in_sig;
+    bfp_s32_init(&in_sig, &input[0][0], SIG_EXP, state->nfft, 1);
 
-    printf("bfp exp: %d, hr: %u\n", state->fft[0].signal.exp, state->fft[0].signal.hr);
-
-    // printf("doing fft\n");
     // do the FFT
-    bfp_complex_s32_t * c = bfp_fft_forward_mono(&(state->fft[0].signal));
-    printf("bin[256]: %ld, exponent: %d\n", c->data[128].im, c->exp);
-    printf("bin[256]: %ld, exponent: %d\n", c->data[128].re, c->exp);
-    int32_t exponent = f32_log2(state->fft[0].nfft) + SIG_EXP - 2;
-    printf("exponent_new: %ld\n", exponent);
-    bfp_complex_s32_use_exponent(c, exponent);
-    printf("bin[256]: %ld, exponent: %d\n", c->data[128].im, c->exp);
-    printf("exponent_new: %d, hr: %u\n", c->exp, c->hr);
-    printf("fft output data addr: %p, len: %d\n", c->data, c->length);
+    bfp_complex_s32_t * c = bfp_fft_forward_mono(&in_sig);
+
+    bfp_complex_s32_use_exponent(c, state->exp);
 
     // output[0] = (int32_t*)c->data;
-    memcpy(output[0], c->data, state->fft[0].nfft*sizeof(int32_t));
-    printf("out[256]: %ld\n", output[0][256]);
+    if(input != output) {
+        memcpy(output[0], c->data, state->nfft*sizeof(int32_t));
+    }
 }
 
 void fft_init(module_instance_t* instance,
@@ -56,11 +46,8 @@ void fft_init(module_instance_t* instance,
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    state->fft = ADSP_BUMP_ALLOCATOR_WORD_ALLIGNED_MALLOC(allocator, n_inputs * sizeof(fft_t));
-
-    // point to shared memory
-    state->fft[0].nfft = constants->nfft;
-    state->fft[0].exp = constants->exp;
+    state->nfft = constants->nfft;
+    state->exp = constants->exp;
 
 }
 

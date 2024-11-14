@@ -102,8 +102,8 @@ adsp_pipeline_t * adsp_auto_pipeline_init() {
 
     // static fft_config_t config3 = {};
     static fft_state_t state3 = {};
-	static fft_constants_t constants3 = {.nfft = 512, .exp=SIG_EXP};
-	static uint8_t memory3[FFT_STAGE_REQUIRED_MEMORY(1)];
+	static fft_constants_t constants3 = {.nfft = 512, .exp=(/**log2(512)=**/9 + SIG_EXP - 2)};
+	static uint8_t memory3[FFT_STAGE_REQUIRED_MEMORY];
 	static adsp_bump_allocator_t allocator3 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory3);
 	adsp_auto.modules[3].state = (void*)&state3;
 	adsp_auto.modules[3].constants = (void*)&constants3;
@@ -112,8 +112,8 @@ adsp_pipeline_t * adsp_auto_pipeline_init() {
 
     // static ifft_config_t config5 = {};
     static ifft_state_t state5 = {};
-	static ifft_constants_t constants5 = {.nfft = 512, .exp=SIG_EXP};
-	static uint8_t memory5[IFFT_STAGE_REQUIRED_MEMORY(1)];
+	static ifft_constants_t constants5 = {.nfft = 512, .exp=(/**log2(512)=**/9 + SIG_EXP - 2)};
+	static uint8_t memory5[IFFT_STAGE_REQUIRED_MEMORY];
 	static adsp_bump_allocator_t allocator5 = ADSP_BUMP_ALLOCATOR_INITIALISER(memory5);
 	adsp_auto.modules[5].state = (void*)&state5;
 	adsp_auto.modules[5].constants = (void*)&constants5;

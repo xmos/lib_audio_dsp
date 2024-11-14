@@ -12,22 +12,14 @@
 typedef struct {
 } fft_config_t;
 
-
-typedef struct {
-    int32_t nfft;
-    int32_t* data;
-    int32_t exp;
-    bfp_s32_t signal;
-    bfp_complex_s32_t spectrum;
-} fft_t;
-
 typedef struct
 {
-    fft_t* fft;
     int n_inputs;
     int n_outputs;
     int frame_size;
-}fft_state_t;
+    int32_t nfft;
+    int32_t exp;
+} fft_state_t;
 
 typedef struct
 {
@@ -35,11 +27,7 @@ typedef struct
     int32_t exp;
 }fft_constants_t;
 
-
-
-
-#define FFT_STAGE_REQUIRED_MEMORY(N_CH) \
-     + ADSP_BUMP_ALLOCATOR_WORD_N_BYTES(N_CH * sizeof(fft_t))
+#define FFT_STAGE_REQUIRED_MEMORY 0
 
 void fft_init(module_instance_t* instance,
                  adsp_bump_allocator_t* allocator,
