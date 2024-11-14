@@ -3,7 +3,7 @@
 DSP Components
 ##############
 
-lib_audio_dsp provides many common signal processing functions optimised
+`lib_audio_dsp` provides many common signal processing functions optimised
 for xcore. These can be combined together to make complex audio pipelines
 for many different applications, such as home audio, music production,
 voice processing, and AI feature extraction.
