@@ -11,14 +11,21 @@ typedef struct
     int n_inputs;
     int n_outputs;
     int frame_size;
+    int nfft;
+    int exp;
 }bfp_multiply_state_t;
 
+typedef struct
+{
+    int32_t nfft;
+    int32_t exp;
+}bfp_multiply_constants_t;
 
 
 #define BFP_MULTIPLY_STAGE_REQUIRED_MEMORY 0
 
 void bfp_multiply_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 
-void bfp_multiply_process(bfp_complex_s32_t **input, bfp_complex_s32_t **output, void *app_data_state);
+void bfp_multiply_process(int32_t **input, int32_t **output, void *app_data_state);
 
 
