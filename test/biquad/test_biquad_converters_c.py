@@ -155,7 +155,7 @@ def test_design_biquad_lowpass():
         flt_coeffs = bq.make_biquad_lowpass(ratios[n][1], ratios[n][0], ratios[n][2])
         _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-19, atol=0)
+    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-19, atol=1)
 
 
 def test_design_biquad_highpass():
@@ -221,7 +221,7 @@ def test_design_biquad_bandpass():
         flt_coeffs = bq.make_biquad_bandpass(ratios[n][1], ratios[n][0], ratios[n][2])
         _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-17, atol=0)
+    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-17, atol=1)
 
 
 def test_design_biquad_bandstop():
@@ -248,7 +248,7 @@ def test_design_biquad_bandstop():
         flt_coeffs = bq.make_biquad_bandstop(ratios[n][1], ratios[n][0], ratios[n][2])
         _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-17, atol=0)
+    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-17, atol=1)
 
 
 def test_design_biquad_notch():

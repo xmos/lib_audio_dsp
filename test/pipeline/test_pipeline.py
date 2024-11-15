@@ -152,6 +152,7 @@ def test_pipeline_q27(input, add):
     _, out_data = audio_helpers.read_wav(outfile)
     np.testing.assert_equal(expected, out_data)
 
+@pytest.mark.group0
 def test_complex_pipeline():
     """
     Generate a multithreaded pipeline and check the output is as expected
@@ -197,6 +198,7 @@ def test_complex_pipeline():
     _, out_data = audio_helpers.read_wav(outfile)
     np.testing.assert_equal(expected, out_data)
 
+@pytest.mark.group0
 def test_stage_labels():
     """
     Test for the user defined stage labels.

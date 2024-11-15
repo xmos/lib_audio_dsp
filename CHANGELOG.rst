@@ -1,6 +1,16 @@
 Audio DSP library change log
 ============================
 
+1.2.0
+-----
+
+  * ADDED: Stereo room and plate reverb Stages.
+  * FIXED: Delay could return different type to input.
+  * CHANGED: Removed host app.
+  * ADDED: Tuning API added to Python library.
+  * CHANGED: Documentation restructured to improve readability.
+  * CHANGED: Added reverb base classes in Python.
+
 1.1.0
 -----
 

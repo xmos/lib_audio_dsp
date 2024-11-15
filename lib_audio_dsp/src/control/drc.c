@@ -2,24 +2,6 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include "control/adsp_control.h"
-#include "dsp/_helpers/drc_utils.h"
-
-#include <xcore/assert.h>
-
-#include <math.h>
-
-static inline q1_31 get_alpha(float fs, float time) {
-  xassert(time > 0 && "time has to be positive");
-  time = 2 / (fs * time);
-  int32_t sign, exp, mant;
-  asm("fsexp %0, %1, %2": "=r" (sign), "=r" (exp): "r" (time));
-  asm("fmant %0, %1": "=r" (mant): "r" (time));
-
-  // mant to q31
-  right_shift_t shr = -Q_alpha - exp + 23;
-  mant >>= shr;
-  return mant;
-}
 
 env_detector_t adsp_env_detector_init(
   float fs,
@@ -27,11 +9,9 @@ env_detector_t adsp_env_detector_init(
   float release_t
 ) {
   env_detector_t env_det;
-
-  env_det.attack_alpha = get_alpha(fs, attack_t);
-  env_det.release_alpha = get_alpha(fs, release_t);
+  env_det.attack_alpha = calc_alpha(fs, attack_t);
+  env_det.release_alpha = calc_alpha(fs, release_t);
   env_det.envelope = 0;
-
   return env_det;
 }
 
@@ -43,8 +23,7 @@ limiter_t adsp_limiter_peak_init(
 ) {
   limiter_t lim;
   lim.env_det = adsp_env_detector_init(fs, attack_t, release_t);
-  float th = powf(10, threshold_db / 20);
-  lim.threshold = from_float_pos(th);
+  lim.threshold = db_to_q_sig(threshold_db);
   lim.gain = INT32_MAX;
   return lim;
 }
@@ -57,8 +36,7 @@ limiter_t adsp_limiter_rms_init(
 ) {
   limiter_t lim;
   lim.env_det = adsp_env_detector_init(fs, attack_t, release_t);
-  float th = powf(10, threshold_db / 10);
-  lim.threshold = from_float_pos(th);
+  lim.threshold = db_pow_to_q_sig(threshold_db);
   lim.gain = INT32_MAX;
   return lim;
 }
@@ -72,9 +50,7 @@ compressor_t adsp_compressor_rms_init(
 ) {
   compressor_t comp;
   comp.env_det = adsp_env_detector_init(fs, attack_t, release_t);
-  float th = powf(10.0f, threshold_db / 10.0f);
-  if (th > 1.0f) th = 1.0f;
-  comp.threshold = from_float_pos(th);
+  comp.threshold = db_pow_to_q_sig(threshold_db);
   comp.gain = INT32_MAX;
   comp.slope = (1.0f - 1.0f / ratio) / 2.0f;
   return comp;
@@ -110,8 +86,8 @@ noise_suppressor_expander_t adsp_noise_suppressor_expander_init(
 ) {
   noise_suppressor_expander_t nse;
   nse.env_det = adsp_env_detector_init(fs, attack_t, release_t);
-  float th = powf(10, threshold_db / 20);
-  adsp_noise_suppressor_expander_set_th(&nse, from_float_pos(th));
+  int32_t th = db_to_q_sig(threshold_db);
+  adsp_noise_suppressor_expander_set_th(&nse, th);
   nse.gain = INT32_MAX;
   nse.slope = 1 - ratio;
   nse.env_det.envelope = (1 << (-SIG_EXP)) - 1;

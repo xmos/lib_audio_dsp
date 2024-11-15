@@ -74,7 +74,7 @@ DECLARE_JOB(signal_consumer, (adsp_pipeline_t *));
 void signal_consumer(adsp_pipeline_t * m_dsp)
 {
     int32_t output_word = 0;
-    memset(output_buffer, 0, sizeof(int32_t) * OUTPUT_BUFFER_LENGTH);
+    memset((void *)output_buffer, 0, sizeof(int32_t) * OUTPUT_BUFFER_LENGTH);
     int32_t * output_samples[NUM_CHANNELS] = {&output_word};
     while(1)
     {

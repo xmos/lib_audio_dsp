@@ -35,7 +35,7 @@ void reverb_room_init(module_instance_t* instance,
     int32_t damping = config->damping;
     uint32_t predelay = config->predelay;
 
-    xassert(n_inputs == 1); // Currently support only 1 channel reverb
+    xassert(n_inputs == 1); // Mono only implementation
 
     uint8_t *reverb_heap = adsp_bump_allocator_malloc(allocator, REVERB_ROOM_STAGE_REQUIRED_MEMORY(fs, max_room_size, max_predelay));
     memset(reverb_heap, 0, REVERB_ROOM_STAGE_REQUIRED_MEMORY(fs, max_room_size, max_predelay));

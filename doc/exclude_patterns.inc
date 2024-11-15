@@ -1,9 +1,12 @@
 # The following patterns are to be excluded from the documentation build
 
-**readme*
-**README*
 **CHANGELOG*
 **LICENSE*
+
+# Readmes
+examples/app_simple_audio_dsp_integration/README.rst
+host/dsp_host/README.rst
+test/biquad/README.rst
 
 .doc_venv/*
 test/*

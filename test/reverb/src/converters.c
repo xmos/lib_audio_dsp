@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "control/reverb.h"
+#include "control/reverb_plate.h"
 
 FILE * _fopen(char * fname, char* mode) {
   FILE * fp = fopen(fname, mode);
@@ -48,6 +49,13 @@ int main(int argc, char* argv[])
     int32_t gains[2];
     adsp_reverb_wet_dry_mix(gains, samp);
     fwrite(gains, sizeof(int32_t), 2, out);
+#elif defined(WET_DRY_MIX_ST)
+    int32_t gains[3];
+    adsp_reverb_st_wet_dry_mix(gains, samp, 1.0);
+    fwrite(gains, sizeof(int32_t), 3, out);
+#elif defined(CUTOFF)
+    int32_t ival = adsp_reverb_plate_calc_bandwidth(samp, 48000.0f);
+    fwrite(&ival, sizeof(int32_t), 1, out);
 #else
 #error "config not defined"
 #endif
