@@ -8,12 +8,13 @@ The steps will be broadly similar for any user-created project.
 
 .. note::
 
-   Copying multiple lines into a console sometimes does not work as expected on
-   Windows. Ensure that each line is copied and executed separately.
+   Copying multiple lines into the console may not work as expected on Windows. 
+   To avoid issues, copy and execute each line individually.
 
 Hardware Requirements
 =====================
-- xcore.ai evaluation board (XK-EVK-XU316 or XK-316-AUDIO-MC-AB)
+
+- xcore.ai evaluation board (`XK-EVK-XU316`_ or `XK-316-AUDIO-MC-AB`_)
 - xTag debugger and cable
 - 2x Micro USB cable (one for power supply and one for the xTag)
 
@@ -26,7 +27,7 @@ Software Requirements
 - `XTC 15.3.0 <https://www.xmos.com/software-tools/>`_
 - `Python 3.10 <https://www.python.org/downloads/>`_
 - `Jupyter 7.2.1 <https://jupyter.org/install>`_
-- `CMake <https://cmake.org/download/>`_
+- `CMake 3.21 <https://cmake.org/download/>`_
 
 Additionally, on Windows the following is required: 
 
@@ -53,9 +54,8 @@ Setup Steps
 
          .. code-block:: console
 
-            "C:\Program Files (x86)\XMOS\XTC\15.3.0\SetEnv"
+            call "C:\Program Files\XMOS\XTC\15.3.0\SetEnv.bat"
 
-         or similar
 
    .. tab:: Linux and macOS:
 
@@ -85,8 +85,9 @@ Setup Steps
 
       .. code-block:: console
 
-         cd lib_audio_dsp\examples\app_simple_audio_dsp_integration 
-         cmake -B build -G Ninja cd ..\..\..\..
+         cd lib_audio_dsp/examples/app_simple_audio_dsp_integration
+         cmake -B build -G Ninja 
+         cd ../../..
 
    .. tab:: Linux and macOS
 
@@ -96,7 +97,7 @@ Setup Steps
 
          cd lib_audio_dsp/examples/app_simple_audio_dsp_integration 
          cmake -B build 
-         cd ../../../..
+         cd ../../..
 
 #. Create a requirements file inside *lib_audio_dsp_sandbox*.
 
@@ -128,7 +129,7 @@ Setup Steps
       .. code-block:: console
 
          python -m venv .venv 
-         .venv\Scripts\activate.bat 
+         call .venv/Scripts/activate.bat 
          pip install -Ur requirements.txt 
          cd ..
 
