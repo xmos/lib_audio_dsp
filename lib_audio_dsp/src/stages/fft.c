@@ -15,19 +15,26 @@ void fft_process(int32_t ** input, int32_t ** output, void * app_data_state)
     xassert(app_data_state != NULL);
     fft_state_t *state = app_data_state;
 
+    // FFT is inplace, so might as well do it in the new place
+    if(input != output) {
+        memcpy(&output[0][sizeof(bfp_complex_s32_t)], &input[0][0], state->nfft*sizeof(int32_t));
+    }
     // note calc headroom as we may h
-    bfp_s32_t in_sig;
-    bfp_s32_init(&in_sig, &input[0][0], SIG_EXP, state->nfft, 1);
+    bfp_s32_t* in_sig = (bfp_s32_t*) &output[0][0];
 
-    // do the FFT
-    bfp_complex_s32_t * c = bfp_fft_forward_mono(&in_sig);
+    bfp_s32_init(in_sig, &output[0][sizeof(bfp_complex_s32_t)], SIG_EXP, state->nfft, 1);
+    printf("in_sig exp: %d hr %u\n", in_sig->exp, in_sig->hr);
 
-    bfp_complex_s32_use_exponent(c, state->exp);
+    // do the FFT, note out_spect = (bfp_complex_s32_t*)in_sig
+    bfp_complex_s32_t * out_spect = bfp_fft_forward_mono(in_sig);
+    bfp_fft_unpack_mono(out_spect);
+    printf("spect exp: %d hr %u, sz %u\n", out_spect->exp, out_spect->hr, out_spect->length);
+
+    // bfp_complex_s32_use_exponent(out_spect, state->exp);
+    // printf("newspect exp: %d hr%u\n", c->exp, c->hr);
 
     // output[0] = (int32_t*)c->data;
-    if(input != output) {
-        memcpy(output[0], c->data, state->nfft*sizeof(int32_t));
-    }
+
 }
 
 void fft_init(module_instance_t* instance,

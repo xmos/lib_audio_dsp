@@ -12,15 +12,33 @@ void bfp_multiply_process(int32_t **input, int32_t **output, void *app_data_stat
 {
     bfp_multiply_state_t *state = app_data_state;
 
+    bfp_complex_s32_t* out_spect;
+    if(input[0] == output[0]){
+        out_spect =  (bfp_complex_s32_t*)&input[0][0];
+    }
+    else if (input[1] == output[0]){
+        out_spect =  (bfp_complex_s32_t*)&input[1][0];
+    }
+    else {
+        out_spect =  (bfp_complex_s32_t*)&output[0][0];
+        bfp_complex_s32_init(out_spect, (complex_s32_t*)&output[0][sizeof(bfp_complex_s32_t)], state->exp, (state->nfft >> 1) + 1, 0);
+    }
+
     output[0][0] = input[0][0];
 
-    bfp_complex_s32_t in_spect_0, in_spect_1, out_spect;
-    bfp_complex_s32_init(&in_spect_0, (complex_s32_t*)&input[0][0], state->exp, state->nfft >> 1, 1);
-    bfp_complex_s32_init(&in_spect_1, (complex_s32_t*)&input[1][0], state->exp, state->nfft >> 1, 1);
-    bfp_complex_s32_init(&out_spect, (complex_s32_t*)&output[0][0], state->exp, state->nfft >> 1, 0);
+    bfp_complex_s32_t* in_spect_0 = (bfp_complex_s32_t*)&input[0][0];
+    bfp_complex_s32_t* in_spect_1 = (bfp_complex_s32_t*)&input[1][0];
+    // bfp_complex_s32_init(&in_spect_0, (complex_s32_t*)&input[0][0], state->exp, state->nfft >> 1, 1);
+    // bfp_complex_s32_init(&in_spect_1, (complex_s32_t*)&input[1][0], state->exp, state->nfft >> 1, 1);
+    // bfp_complex_s32_init(&out_spect, (complex_s32_t*)&output[0][0], state->exp, state->nfft >> 1, 0);
 
-    bfp_complex_s32_mul(&out_spect, &in_spect_0, &in_spect_1);
-    bfp_complex_s32_use_exponent(&out_spect, state->exp);
+    bfp_complex_s32_mul(out_spect, in_spect_0, in_spect_1);
+    printf("in0 exp %d, hr: %d\n", in_spect_0->exp, in_spect_0->hr);
+    printf("in1 exp %d, hr: %d\n", in_spect_1->exp, in_spect_1->hr);
+    printf("out exp %d, hr: %d\n", out_spect->exp, out_spect->hr);
+
+    // bfp_complex_s32_use_exponent(&out_spect, state->exp);
+    // printf("new exp %d, hr: %d\n", out_spect.exp, out_spect.hr);
 
 }
 
