@@ -126,7 +126,7 @@ class Pipeline:
         self._n_in = n_in
         self._n_out = 0
         self._id = identifier
-        self.pipeline_stage: None
+        self.pipeline_stage: None | PipelineStage
         self._labelled_stages = {}
         self._generate_xscope_task = generate_xscope_task
 

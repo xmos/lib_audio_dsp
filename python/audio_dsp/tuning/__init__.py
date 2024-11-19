@@ -31,8 +31,9 @@ def _validate_pipeline_checksum(pipeline: Pipeline, proto: TuningTransport):
     if equal is False:
         raise RuntimeError(
             (
-                f"Python pipeline checksum {pipeline.pipeline_stage['checksum']} "
-                f"does not match device pipeline checksum {device_pipeline_checksum}"
+                "Device pipeline mismatch, the pipeline on the connected device does not match "
+                "this design. To resolve this, update the firmware on the connected device to use this updated pipeline.\n"
+                f"\n\tExpected checksum: {pipeline.pipeline_stage['checksum']}\n\tGot {device_pipeline_checksum}"
             )
         )
 
