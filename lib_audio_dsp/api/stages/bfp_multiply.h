@@ -5,6 +5,7 @@
 #include "dsp/signal_chain.h"
 #include "bump_allocator.h"
 #include <xmath/xmath.h>
+#include "dsp/defines.h"
 
 typedef struct
 {
@@ -26,6 +27,6 @@ typedef struct
 
 void bfp_multiply_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 
-void bfp_multiply_process(int32_t **input, int32_t **output, void *app_data_state);
+void bfp_multiply_process(complex_spectrum_t **input, complex_spectrum_t **output, void *app_data_state);
 
 

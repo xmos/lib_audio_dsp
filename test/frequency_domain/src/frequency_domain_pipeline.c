@@ -150,15 +150,16 @@ adsp_pipeline_t * adsp_auto_pipeline_init() {
 	return &adsp_auto;
 }
 
-
 void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t** modules) {
 	local_thread_mode_set_bits(thread_mode_high_priority);
 
 	int32_t edge0[256] = {0}; // in
     // int32_t edge1[1] = {0}; // spare
 	int32_t edge2[512] = {0}; // buffered
-	int32_t edge3[512 + sizeof(bfp_complex_s32_t) + 2] = {0}; // fft'd
-	int32_t edge4[512 + sizeof(bfp_complex_s32_t) + 2] = {0}; // mult'd
+	char edge3[sizeof(complex_spectrum_t) + 257*sizeof(complex_s32_t)]; // fft'd
+	complex_spectrum_t* edge3_ptr = (complex_spectrum_t*)edge3;
+	char edge4[sizeof(complex_spectrum_t) + 257*sizeof(complex_s32_t)]; // mult'd
+	complex_spectrum_t* edge4_ptr = (complex_spectrum_t*)edge4;
 	int32_t edge5[512] = {0}; // ifft'd
 	int32_t edge6[256]; // wola'd -> last FD related stage so memcopy
 
@@ -166,8 +167,8 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 	// constant edge
 	// int32_t edge7[512 + sizeof(bfp_complex_s32_t)] = {0}; // mult'd
 
-	int32_t __attribute__((aligned (8))) edge7[512 + sizeof(bfp_complex_s32_t) + 2] = {
-	[sizeof(bfp_complex_s32_t)] = 2147483647,	 0,	 2147483647,	           0,	
+	int32_t __attribute__((aligned (8))) edge7[sizeof(complex_spectrum_t) + 257*2] = {
+	[sizeof(complex_spectrum_t)] = 2147483647,	 0,	 2147483647,	           0,	
 	2147483647,	           0,	 2147483647,	           0,	
 	2147483647,	           0,	 2147483647,	           0,	
 	2147483647,	           0,	 2147483647,	           0,	
@@ -297,12 +298,14 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 	2147483647,	           0,	 2147483647,	           0,
 	2147483647, 			0
 	};
+	complex_spectrum_t* edge7_ptr = (complex_spectrum_t*)edge7;
+	edge7_ptr->exp = -31;
 
-	bfp_complex_s32_init((bfp_complex_s32_t*)&edge7[0], (complex_s32_t*)&edge7[sizeof(bfp_complex_s32_t)], -31, 257, 1);
+	// bfp_complex_s32_init((bfp_complex_s32_t*)&edge7[0], (complex_s32_t*)&edge7[sizeof(bfp_complex_s32_t)], -31, 257, 1);
 
-	printf("bfpsz: %d\n", sizeof(bfp_complex_s32_t));
-	printf("t [%ld, %ld, %ld, %ld, %ld, %ld, %ld. %ld]\n", edge7[0], edge7[1], edge7[2], edge7[3], edge7[4], edge7[5], edge7[6],edge7[7]);
-	printf("t [%ld, %ld, %ld, %ld, %ld, %ld, %ld. %ld]\n", edge7[0+sizeof(bfp_complex_s32_t)], edge7[1+sizeof(bfp_complex_s32_t)], edge7[2+sizeof(bfp_complex_s32_t)], edge7[3+sizeof(bfp_complex_s32_t)], edge7[4+sizeof(bfp_complex_s32_t)], edge7[5+sizeof(bfp_complex_s32_t)], edge7[6+sizeof(bfp_complex_s32_t)],edge7[7+sizeof(bfp_complex_s32_t)]);
+	// printf("bfpsz: %d\n", sizeof(bfp_complex_s32_t));
+	// printf("t [%ld, %ld, %ld, %ld, %ld, %ld, %ld. %ld]\n", edge7[0], edge7[1], edge7[2], edge7[3], edge7[4], edge7[5], edge7[6],edge7[7]);
+	// printf("t [%ld, %ld, %ld, %ld, %ld, %ld, %ld. %ld]\n", edge7[0+sizeof(bfp_complex_s32_t)], edge7[1+sizeof(bfp_complex_s32_t)], edge7[2+sizeof(bfp_complex_s32_t)], edge7[3+sizeof(bfp_complex_s32_t)], edge7[4+sizeof(bfp_complex_s32_t)], edge7[5+sizeof(bfp_complex_s32_t)], edge7[6+sizeof(bfp_complex_s32_t)],edge7[7+sizeof(bfp_complex_s32_t)]);
 
 	// bfp_complex_s32_t edge7 = {.data = (complex_s32_t*)test_0, .length = 128, .exp = -35, .flags = 0, .hr = 0};
 
@@ -310,14 +313,14 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
     int32_t* stage_2_input[] = {edge0};  // buffer
 	int32_t* stage_2_output[] = {edge2};
 	int32_t* stage_3_input[] = {edge2}; // fft
-	int32_t* stage_3_output[] = {edge3};
-	int32_t* stage_5_input[] = {edge4}; // ifft
+	complex_spectrum_t* stage_3_output[] = {edge3_ptr};
+	complex_spectrum_t* stage_5_input[] = {edge3_ptr}; // ifft
 	int32_t* stage_5_output[] = {edge5};
 	int32_t* stage_6_input[] = {edge5}; // wola
 	int32_t* stage_6_output[] = {edge6};
 
-	int32_t* stage_4_input[] = {edge3, edge7}; //bfp mult
-	int32_t* stage_4_output[] = {edge4};
+	complex_spectrum_t* stage_4_input[] = {edge3_ptr, edge7_ptr}; //bfp mult
+	complex_spectrum_t* stage_4_output[] = {edge4_ptr};
 
 	while(1) {
 	int read_count = 1;
@@ -344,6 +347,8 @@ void dsp_auto_thread0(chanend_t* c_source, chanend_t* c_dest, module_instance_t*
 		modules[2]->state);
 	printf("s2 out addr: %p\n", &stage_2_output[0][0]);
 	printf("s3 in addr: %p\n", &stage_3_input[0][0]);
+    printf("s3 output data addr: %p\n", stage_3_output[0]->data);
+
 	printf("ffting\n");
 	fft_process(
 		stage_3_input,

@@ -9,32 +9,36 @@
 #include "stages/ifft.h"
 #include "dsp/defines.h"
 
-void ifft_process(int32_t ** input, int32_t ** output, void * app_data_state)
+void ifft_process(complex_spectrum_t ** input, int32_t ** output, void * app_data_state)
 {
     xassert(app_data_state != NULL);
     ifft_state_t *state = app_data_state;
 
+
+
     // initialise BFP spectrum, note length = nfft/2 as packed complex numbers
-    bfp_complex_s32_t* in_spect = (bfp_complex_s32_t*)input[0];
-    printf("spect exp: %d hr %u, sz %u\n", in_spect->exp, in_spect->hr, in_spect->length);
+    bfp_complex_s32_t in_spect;
+    bfp_complex_s32_init(&in_spect, input[0]->data, input[0]->exp, (state->nfft >> 1) + 1, 1);
+    printf("spect exp: %d hr %u, sz %u\n", in_spect.exp, in_spect.hr, in_spect.length);
 
     // do the ifft
-    printf("data 0 [%ld, %ld]\n", in_spect->data[0].re, in_spect->data[0].im);
-    printf("data 256 [%ld, %ld]\n", in_spect->data[256].re, in_spect->data[256].im);
-    bfp_fft_pack_mono(in_spect);
-    printf("data 0 [%ld, %ld]\n", in_spect->data[0].re, in_spect->data[0].im);
-    printf("data 256 [%ld, %ld]\n", in_spect->data[256].re, in_spect->data[256].im);
-    printf("spect exp: %d hr %u, sz %u\n", in_spect->exp, in_spect->hr, in_spect->length);
+    // printf("data 0 [%ld, %ld]\n", in_spect->data[0].re, in_spect->data[0].im);
+    // printf("data 256 [%ld, %ld]\n", in_spect->data[256].re, in_spect->data[256].im);
+    bfp_fft_pack_mono(&in_spect);
+    // printf("data 0 [%ld, %ld]\n", in_spect->data[0].re, in_spect->data[0].im);
+    // printf("data 256 [%ld, %ld]\n", in_spect->data[256].re, in_spect->data[256].im);
+    // printf("spect exp: %d hr %u, sz %u\n", in_spect->exp, in_spect->hr, in_spect->length);
 
-    bfp_s32_t *out_sig = bfp_fft_inverse_mono(in_spect);
+    bfp_s32_t *out_sig = bfp_fft_inverse_mono(&in_spect);
 
     // // return to Q_SIG format
     bfp_s32_use_exponent(out_sig, SIG_EXP);
 
-    // if input and output pointer are different, copy
-    if(input != output) {
-        memcpy(&output[0][0], out_sig->data, state->nfft*sizeof(int32_t));
+    // if input and output pointer are different, copy- note input is nfft/2 + 1 complex, so can't be copied before
+    if((int32_t *)input[0]->data != &output[0][0]) {
+        memcpy(&output[0][0], input[0]->data, state->nfft*sizeof(int32_t));
     }
+
 }
 
 void ifft_init(module_instance_t* instance,

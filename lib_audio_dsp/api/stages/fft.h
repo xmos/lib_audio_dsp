@@ -8,6 +8,7 @@
 // no runtime configurable parameters
 #include "bump_allocator.h"
 #include <xmath/xmath.h>
+#include "dsp/defines.h"
 
 typedef struct {
 } fft_config_t;
@@ -36,6 +37,6 @@ void fft_init(module_instance_t* instance,
                  int n_outputs,
                  int frame_size);
 
-void fft_process(int32_t **input, int32_t **output, void *app_data_state);
+void fft_process(int32_t **input, complex_spectrum_t **output, void *app_data_state);
 
 void fft_control(void *state, module_control_t *control);
