@@ -14,7 +14,7 @@ These scenarios are:
 - Tuning and simulating a pipeline
 - Deploying pipeline code onto the xcore.
 
-The steps in this guide should be executed in a `Jupyter Notebook <https://jupyter.org/>`_.
+The steps in this guide should be executed in a `Jupyter Notebook`_.
 
 Creating a Pipeline
 ===================
