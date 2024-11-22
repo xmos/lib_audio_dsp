@@ -73,6 +73,8 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = None, td_block_l
     else:
         # print("Fail")
         print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
+        raise RuntimeError(f"xsim failed: {sig_int}")
+
     return sig_int
 
 dir_name = Path(__file__).parent
@@ -125,5 +127,5 @@ def test_real_filter(length):
     build_and_run_tests(dir_name, firwin(length, 0.5))
 
 if __name__ == "__main__":
-    test_constant_value_variable_length(16, 2, -2, 2, 0)
-    # test_constant_value_variable_length(16, 1, -2, 0, -2)
+    # test_constant_value_variable_length(16, 2, -2, 2, 0)
+    test_constant_value_variable_length(16, 1, -2, 0, -2)

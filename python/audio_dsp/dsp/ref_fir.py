@@ -88,7 +88,7 @@ def emit_debug_filter(fh: io.TextIOWrapper, coefs: np.ndarray, name: str):
 
     struct_name = "td_block_debug_fir_filter_" + name
 
-    fh.write('#include "dsp/fir.h"\n')
+    fh.write('#include "ref_fir.h"\n')
     fh.write("td_reference_fir_filter_t " + struct_name + " = {\n")
     fh.write("\t.coefs = " + coef_data_name + ",\n")
     fh.write("\t.length = " + str(filter_length) + ",\n")

@@ -76,28 +76,4 @@ void td_block_fir_compute(
     td_block_fir_data_t * fir_data, 
     td_block_fir_filter_t * fir_filter);
 
-/**
- * @brief Function to add samples to the FIR data structure. This is for debug and test only.
- * 
- * @param input_block Array of int32_t samples of length TD_BLOCK_FIR_LENGTH.
- * @param fir_data Pointer to struct of type td_block_fir_data_t to which the samples will be added.
- */
-void td_block_fir_add_data_ref(
-    int32_t input_block[TD_BLOCK_FIR_LENGTH],
-    td_block_fir_data_t * fir_data);
-    
-/**
- * @brief Function to compute the convolution between fir_data and fir_filter. This is for debug and test only.
- * 
- * @param samples_out Array of length TD_BLOCK_FIR_LENGTH(8), which will be used to return the 
-        processed samples.
- * @param fir_data Pointer to struct of type td_block_fir_data_t from which the data samples will be obtained.
- * @param fir_filter Pointer to struct of type td_block_fir_filter_t from which the coefficients will be obtained.
- */
-void td_block_fir_compute_ref(
-    int32_t samples_out[TD_BLOCK_FIR_LENGTH],
-    td_block_fir_data_t * fir_data, 
-    td_block_fir_filter_t * fir_filter
-); 
-
 #endif //TD_BLOCK_FIR_H

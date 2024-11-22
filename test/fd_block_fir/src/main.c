@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <xcore/hwtimer.h>
 #include "../autogen/dut.h"
+#include "ref_fir.h"
 
 /*
 This tests for equlivance between the FD implementation and the TD reference.

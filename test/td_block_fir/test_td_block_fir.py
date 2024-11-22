@@ -65,6 +65,7 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
     else:
         # print("Fail")
         print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
+        raise RuntimeError(f"xsim failed: {sig_int}")
     return sig_int
 
 dir_name = Path(__file__).parent
