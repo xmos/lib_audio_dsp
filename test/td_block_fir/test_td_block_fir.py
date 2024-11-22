@@ -5,9 +5,13 @@ import sys
 import shutil
 import pytest
 from scipy.signal import firwin
-# I dont know how to do this properly
-sys.path.append('../../python/audio_dsp/dsp/')
 from audio_dsp.dsp.td_block_fir import process_array
+
+# TODO move build utils somewhere else
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../pipeline/python')))
+from build_utils import build
+
 
 build_dir_name = "build"
 
@@ -39,9 +43,10 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
         raise e
     
     # build the project
-    subprocess.check_output("cmake -B " + build_dir_name, cwd = dir_name, shell = True, stderr = subprocess.DEVNULL)
-    subprocess.check_output("xmake -C " + build_dir_name, cwd = dir_name, shell = True)
-    
+    # subprocess.check_output("cmake -B " + build_dir_name, cwd = dir_name, shell = True, stderr = subprocess.DEVNULL)
+    # subprocess.check_output("xmake -C " + build_dir_name, cwd = dir_name, shell = True)
+    build(Path(dir_name), Path(build_dir), "td_fir_test")
+
     app = "xsim" if sim else "xrun --io"
     run_cmd = app + " --args " + str(bin_dir / "td_fir_test.xe") 
     

@@ -1,11 +1,17 @@
 import numpy as np
 from pathlib import Path
 import subprocess
+import os
 import sys
 import shutil
 import pytest
 from scipy.signal import firwin
 from audio_dsp.dsp.fd_block_fir import process_array
+
+# TODO move build utils somewhere else
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../pipeline/python')))
+from build_utils import build
+
 
 build_dir_name = "build"
 
@@ -27,19 +33,28 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = None, td_block_l
     # run the filter_generator on the coefs
     try:
         process_array(coefficients, "dut", gen_dir, frame_advance, frame_overlap, td_block_length, 
-                      gain_dB = gain_dB, debug = True, warn = False, error = False, verbose = False)
+                      gain_dB = gain_dB, debug = True, warn = False, error = True, verbose = False)
     except ValueError as e:
         # print('Success (Expected Fail)')
-        print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
+        if str(e) not in ["Bad config", "Unachievable config"]:
+            raise e
+        else:
+            print("caught bad config")
+            print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
+            return
     except Exception as e:
         # print('Fail', repr(error))
         print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
         raise e
 
     # build the project
-    subprocess.check_output("cmake -B " + local_build_dir_name, cwd = dir_name, shell = True, stderr = subprocess.DEVNULL)
-    subprocess.check_output("xmake -C " + local_build_dir_name, cwd = dir_name, shell = True)
+
     
+    # subprocess.check_output('cmake -G "Unix Makefiles" -B ' + local_build_dir_name, cwd = dir_name, shell = True, stderr = subprocess.DEVNULL)
+    # subprocess.check_output("xmake -C " + local_build_dir_name, cwd = dir_name, shell = True)
+    
+    build(Path(dir_name), Path(build_dir), "fd_fir_test")
+
     app = "xsim" if sim else "xrun --io"
     run_cmd = app + " --args " + str(bin_dir / "fd_fir_test.xe") 
     
@@ -50,7 +65,7 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = None, td_block_l
     # Clean up
     shutil.rmtree(bin_dir) 
     shutil.rmtree(gen_dir) 
-    shutil.rmtree(build_dir) 
+    # shutil.rmtree(build_dir) 
 
     if sig_int == 0:
         # print("Success")
@@ -108,3 +123,7 @@ def test_long_lengths(length):
 @pytest.mark.parametrize("length", [16, 17, 18, 32, 33, 34, 127, 128, 129])
 def test_real_filter(length):
     build_and_run_tests(dir_name, firwin(length, 0.5))
+
+if __name__ == "__main__":
+    test_constant_value_variable_length(16, 2, -2, 2, 0)
+    # test_constant_value_variable_length(16, 1, -2, 0, -2)

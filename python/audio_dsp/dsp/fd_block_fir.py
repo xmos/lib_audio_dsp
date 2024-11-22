@@ -209,11 +209,13 @@ def process_array(
 
         if actual_output_sample_count < minimum_output_samples:
             achievable_frame_overlap = actual_output_sample_count - frame_advance
+            achievable_frame_advance = actual_output_sample_count - frame_overlap
+            achievable_block_length = minimum_output_samples - 1 + original_td_filter_length
             if error:
                 print("Error: frame_overlap of", frame_overlap, "is unachievable.")
                 print("\tOption 1: reduce frame_overlap to", achievable_frame_overlap)
-                print("\tOption 2: decrease the frame_advance to ...")
-                print("\tOption 3: increase the td_block_length to ...")
+                print("\tOption 2: decrease the frame_advance to", achievable_frame_advance)
+                print("\tOption 3: increase the td_block_length to", achievable_block_length)
             raise ValueError("Unachievable config")
 
         phases = (original_td_filter_length + taps_per_phase - 1) // taps_per_phase
