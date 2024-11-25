@@ -6,6 +6,7 @@ import numpy as np
 import argparse
 import os
 import audio_dsp.dsp.ref_fir as rf
+import warnings
 
 
 def _calc_max_accu(quantised_coefs, vpu_shr=30):
@@ -116,12 +117,7 @@ def generate_td_fir(
 
     if original_filter_length != target_filter_bank_length:
         if not silent:
-            print(
-                "Warning: ",
-                filter_name,
-                " will be zero padded to length ",
-                target_filter_bank_length,
-            )
+            warnings.warn(f"{filter_name} will be zero padded to length {target_filter_bank_length}")
         padding = np.zeros(target_filter_bank_length - original_filter_length)
         prepared_coefs = np.concatenate((td_coefs, padding))
     else:
@@ -195,7 +191,7 @@ if __name__ == "__main__":
     if os.path.exists(filter_path):
         coefs = np.load(filter_path)
     else:
-        print("Error: cannot find ", filter_path)
+        raise FileNotFoundError(f"Error: cannot find {filter_path}")
         exit(1)
 
     if args.name != None:

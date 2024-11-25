@@ -7,7 +7,7 @@ import argparse
 import math
 import os
 import audio_dsp.dsp.ref_fir as rf
-
+import warnings
 
 def _emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_element=32):
     assert len(fd_block_coefs.shape) == 2
@@ -226,12 +226,8 @@ def generate_fd_fir(
 
     if new_frame_overlap != frame_overlap:
         if warn:
-            print(
-                "Warning: requested a frame overlap of",
-                frame_overlap,
-                "but will get ",
-                new_frame_overlap,
-            )
+            warnings.warn(f"Warning: requested a frame overlap of {frame_overlap},"
+            f"but will get {new_frame_overlap}")
             print(
                 "To increase efficiency, try increasing the length of the filter by",
                 (new_frame_overlap - frame_overlap) * phases,
@@ -256,10 +252,8 @@ def generate_fd_fir(
     # check length is efficient for td_block_length
     if original_td_filter_length % taps_per_phase != 0:
         if warn:
-            print(
-                "Warning: Chosen td_block_length and frame_overlap is not maximally efficient for filter of length",
-                original_td_filter_length,
-            )
+            warnings.warn(f"Warning: Chosen td_block_length and frame_overlap is not maximally"
+            f" efficient for filter of length {original_td_filter_length,}")
             print(
                 "         Better would be:",
                 adjusted_td_length,
@@ -375,7 +369,7 @@ if __name__ == "__main__":
     if os.path.exists(filter_path):
         coefs = np.load(filter_path)
     else:
-        print("Error: cannot find ", filter_path)
+        raise FileNotFoundError(f"Error: cannot find {filter_path}")
         exit(1)
 
     if args.name != None:
