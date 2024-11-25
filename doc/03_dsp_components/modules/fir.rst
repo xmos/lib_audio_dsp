@@ -41,7 +41,7 @@ filter.
 More information on implementation can be found in
 `AN02027: Efficient computation of FIR filters on the Xcore <https://www.xmos.com/application-notes/>`_.
 
-.. autofunction:: audio_dsp.dsp.td_block_fir.process_array
+.. autofunction:: audio_dsp.dsp.td_block_fir.generate_td_fir
 
 
 ==========================
@@ -56,4 +56,4 @@ frequency domain FIR filter.
 More information on implementation can be found in
 `AN02027: Efficient computation of FIR filters on the Xcore <https://www.xmos.com/application-notes/>`_.
 
-.. autofunction:: audio_dsp.dsp.fd_block_fir.process_array
+.. autofunction:: audio_dsp.dsp.fd_block_fir.generate_fd_fir

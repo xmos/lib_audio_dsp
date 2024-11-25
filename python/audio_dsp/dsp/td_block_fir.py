@@ -76,14 +76,14 @@ def _emit_filter(fh, coefs_padded, name, block_length, bits_per_element=32):
     return filter_struct_name
 
 
-def process_array(
+def generate_td_fir(
     td_coefs: np.ndarray,
     filter_name: str,
     output_path: str,
     gain_dB=0.0,
-    debug=False,
     td_block_length=8,
     silent=False,
+    debug=False,
 ):
     """
     Convert the input array into a header to be included in a C project.
@@ -204,4 +204,4 @@ if __name__ == "__main__":
         p = os.path.basename(filter_path)
         filter_name = p.split(".")[0]
 
-    process_array(coefs, filter_name, output_path, gain_dB, debug=args.debug)
+    generate_td_fir(coefs, filter_name, output_path, gain_dB, debug=args.debug)

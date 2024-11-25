@@ -99,7 +99,7 @@ def _emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_ele
     file_handle.write("};\n")
 
 
-def process_array(
+def generate_fd_fir(
     td_coefs: np.ndarray,
     filter_name: str,
     output_path: str,
@@ -107,11 +107,11 @@ def process_array(
     frame_overlap: int,
     td_block_length: int,
     gain_dB=0.0,
-    debug=False,
+    verbose=False,
     warn=False,
     error=True,
-    verbose=False,
-):
+    debug=False,
+    ):
     """
     Convert the input array into a header to be included in a C project.
 
@@ -384,7 +384,7 @@ if __name__ == "__main__":
         p = os.path.basename(filter_path)
         filter_name = p.split(".")[0]
 
-    process_array(
+    generate_fd_fir(
         coefs,
         filter_name,
         output_path,

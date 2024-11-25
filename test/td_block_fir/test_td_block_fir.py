@@ -5,7 +5,7 @@ import sys
 import shutil
 import pytest
 from scipy.signal import firwin
-from audio_dsp.dsp.td_block_fir import process_array
+from audio_dsp.dsp.td_block_fir import generate_td_fir
 
 # TODO move build utils somewhere else
 import os
@@ -32,7 +32,7 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
     gen_dir.mkdir(exist_ok=True, parents=True)
     # run the filter_generator on the coefs
     try:
-        process_array(coefficients, "dut", gen_dir, gain_dB, debug = True, silent = True)
+        generate_td_fir(coefficients, "dut", gen_dir, gain_dB, silent = True, debug = True)
     except ValueError as e:
         # print('Success (Expected Fail)')
         print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
@@ -103,3 +103,5 @@ def test_random_neg_value_variable_length(length):
 def test_real_filter(length):
     build_and_run_tests(dir_name, firwin(length, 0.5))
             
+if __name__ == "__main__":
+    test_random_pos_value_variable_length(2)

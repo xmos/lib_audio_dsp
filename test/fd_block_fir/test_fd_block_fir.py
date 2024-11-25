@@ -6,7 +6,7 @@ import sys
 import shutil
 import pytest
 from scipy.signal import firwin
-from audio_dsp.dsp.fd_block_fir import process_array
+from audio_dsp.dsp.fd_block_fir import generate_fd_fir
 
 # TODO move build utils somewhere else
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../pipeline/python')))
@@ -32,7 +32,7 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = None, td_block_l
 
     # run the filter_generator on the coefs
     try:
-        process_array(coefficients, "dut", gen_dir, frame_advance, frame_overlap, td_block_length, 
+        generate_fd_fir(coefficients, "dut", gen_dir, frame_advance, frame_overlap, td_block_length, 
                       gain_dB = gain_dB, debug = True, warn = False, error = True, verbose = False)
     except ValueError as e:
         # print('Success (Expected Fail)')
