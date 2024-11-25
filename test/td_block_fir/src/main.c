@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "../autogen/dut.h"
+#include "ref_fir.h"
 
 /*
 This controls the number of extra block long the data is vs the length of the coefficient
