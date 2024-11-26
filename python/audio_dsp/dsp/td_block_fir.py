@@ -110,6 +110,9 @@ def generate_td_fir(
 
     original_filter_length = len(td_coefs)
 
+    if td_block_length != 8:
+        raise ValueError("Only td_block_length of 8 supported.")
+
     # this is the above but rounded up to the nearest block_length
     target_filter_bank_length = (
         (original_filter_length + td_block_length - 1) // td_block_length
