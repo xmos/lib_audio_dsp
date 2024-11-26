@@ -168,6 +168,7 @@ def _emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_ele
     file_handle.write("\t.taps_per_block = " + str(taps_per_block) + ",\n")
     file_handle.write("};\n")
 
+    return name, quantised_coefs
 
 def generate_fd_fir(
     td_coefs: np.ndarray,
@@ -362,7 +363,7 @@ def generate_fd_fir(
     with open(output_file_name, "w") as fh:
         fh.write('#include "dsp/fd_block_fir.h"\n\n')
 
-        _emit_filter(Blocked_and_padded, filter_name, fh, taps_per_phase)
+        filter_struct_name, quantized_coefs = _emit_filter(Blocked_and_padded, filter_name, fh, taps_per_phase)
 
         if debug:
             rf.emit_debug_filter(fh, td_coefs, filter_name)

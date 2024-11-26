@@ -48,11 +48,6 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = None, td_block_l
         raise e
 
     # build the project
-
-    
-    # subprocess.check_output('cmake -G "Unix Makefiles" -B ' + local_build_dir_name, cwd = dir_name, shell = True, stderr = subprocess.DEVNULL)
-    # subprocess.check_output("xmake -C " + local_build_dir_name, cwd = dir_name, shell = True)
-    
     build(Path(dir_name), Path(build_dir), "fd_fir_test")
 
     app = "xsim" if sim else "xrun --io"

@@ -142,7 +142,7 @@ def _emit_filter(fh, coefs_padded, name, block_length, bits_per_element=32):
     fh.write("};\n")
     fh.write("\n")
 
-    return filter_struct_name, quantized_coefs
+    return filter_struct_name, quantised_coefs
 
 
 def generate_td_fir(
