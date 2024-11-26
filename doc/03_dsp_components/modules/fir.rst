@@ -41,7 +41,38 @@ filter.
 More information on implementation can be found in
 `AN02027: Efficient computation of FIR filters on the Xcore <https://www.xmos.com/application-notes/>`_.
 
-.. autofunction:: audio_dsp.dsp.td_block_fir.generate_td_fir
+.. tab:: Autogenerator
+
+    .. only:: latex
+    
+    .. rubric:: Autogenerator
+
+    .. autofunction:: audio_dsp.dsp.td_block_fir.generate_td_fir
+
+.. tab:: C API
+
+    .. only:: latex
+
+        .. rubric:: C API
+
+    .. doxygenfunction:: td_block_fir_data_init
+    .. doxygenfunction:: td_block_fir_add_data
+    .. doxygenfunction:: td_block_fir_compute
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+   .. autoclass:: audio_dsp.dsp.td_block_fir.fir_block_td
+        :noindex:
+
+        .. automethod:: process
+            :noindex:
+
+        .. automethod:: reset_state
+            :noindex:
 
 
 ==========================
@@ -56,4 +87,35 @@ frequency domain FIR filter.
 More information on implementation can be found in
 `AN02027: Efficient computation of FIR filters on the Xcore <https://www.xmos.com/application-notes/>`_.
 
-.. autofunction:: audio_dsp.dsp.fd_block_fir.generate_fd_fir
+.. tab:: Autogenerator
+
+    .. only:: latex
+    
+    .. rubric:: Autogenerator
+
+    .. autofunction:: audio_dsp.dsp.fd_block_fir.generate_fd_fir
+
+.. tab:: C API
+
+    .. only:: latex
+
+        .. rubric:: C API
+
+    .. doxygenfunction:: fd_block_fir_data_init
+    .. doxygenfunction:: fd_block_fir_add_data
+    .. doxygenfunction:: fd_block_fir_compute
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+   .. autoclass:: audio_dsp.dsp.fd_block_fir.fir_block_fd
+        :noindex:
+
+        .. automethod:: process
+            :noindex:
+
+        .. automethod:: reset_state
+            :noindex:
