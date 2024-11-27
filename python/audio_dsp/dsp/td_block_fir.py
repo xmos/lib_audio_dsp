@@ -45,8 +45,6 @@ class fir_block_td(dspg.dsp_block):
         self.block_len = td_block_length
 
         self.reset_state()
-        self.buffer_idx = [self.n_taps - 1] * self.n_chans
-        self.buffer_idx_int = [self.n_taps - 1] * self.n_chans
 
         filter_struct_name, prepared_coefs, quantized_coefs = generate_td_fir(
             self.coeffs, filter_name, output_path, gain_dB, self.block_len, silent=False)

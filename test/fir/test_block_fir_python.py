@@ -24,11 +24,14 @@ def test_frames(coeff_path, n_chans, block_size):
     fir_btd = tbf.fir_block_td(48000, n_chans, Path(gen_dir, coeff_path), "dut",
     gen_dir, td_block_length=block_size)
 
-    fir_bfd = tbf.fir_block_td(48000, n_chans, Path(gen_dir, coeff_path), "dut",
-    gen_dir, td_block_length=block_size)
+    fir_bfd = fbf.fir_block_fd(48000, n_chans, Path(gen_dir, coeff_path), "dut",
+    gen_dir, block_size, 0, 256)
 
     np.random.seed(0)
-    signal = sg.pink_noise(48000, 0.1, 0.5)
+    # signal = sg.pink_noise(48000, 0.1, 0.5)
+    signal = np.zeros(50)
+    signal[:10] = 1
+    signal[30:40] = 1
     signal = np.tile(signal, [n_chans, 1])
     signal[0] = -signal[0]
     frame_size = block_size
