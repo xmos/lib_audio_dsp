@@ -29,14 +29,14 @@ def test_frames(coeff_path, n_chans, block_size):
 
     np.random.seed(0)
     # signal = sg.pink_noise(48000, 0.1, 0.5)
-    signal = np.zeros(50)
+    signal = np.zeros(56)
     signal[:10] = 1
     signal[30:40] = 1
     signal = np.tile(signal, [n_chans, 1])
     signal[0] = -signal[0]
     frame_size = block_size
 
-    signal_frames = utils.frame_signal(signal, frame_size, 1)
+    signal_frames = utils.frame_signal(signal, frame_size, frame_size)
 
     out_flt_d = np.zeros_like(signal)
     out_flt_btd = np.zeros_like(signal)
@@ -45,9 +45,9 @@ def test_frames(coeff_path, n_chans, block_size):
     out_int = np.zeros_like(out_flt_d)
 
     for n in range(len(signal_frames)):
-        out_flt_d[:, n:n+frame_size] = fir_d.process_frame(signal_frames[n])
-        out_flt_btd[:, n:n+frame_size] = fir_btd.process_frame(signal_frames[n])
-        out_flt_bfd[:, n:n+frame_size] = fir_bfd.process_frame(signal_frames[n])
+        out_flt_d  [:, n*frame_size:(n+1)*frame_size] = fir_d.process_frame(signal_frames[n])
+        out_flt_btd[:, n*frame_size:(n+1)*frame_size] = fir_btd.process_frame(signal_frames[n])
+        out_flt_bfd[:, n*frame_size:(n+1)*frame_size] = fir_bfd.process_frame(signal_frames[n])
 
     assert np.all(-out_flt_d[0, :] == out_flt_d[1:, :])
     np.testing.assert_allclose(out_flt_d, out_flt_btd, atol=2**-56, rtol=2**-42)
@@ -57,7 +57,7 @@ def test_frames(coeff_path, n_chans, block_size):
     fir_btd.reset_state()
 
     for n in range(len(signal_frames)):
-        out_int[:, n:n+frame_size] = fir_d.process_frame_xcore(signal_frames[n])
+        out_int[:, n*frame_size:(n+1)*frame_size] = fir_d.process_frame_xcore(signal_frames[n])
 
     for n in range(1, n_chans):
         # rounding differences can occur between positive and negative signal

@@ -63,7 +63,7 @@ def do_test(p):
 
     # run through Python bit exact implementation
     for n in range(len(signal_frames)):
-        out_py[:, n:n+frame_size] = ref_module.process_frame_xcore(signal_frames[n])
+        out_py[:, n*frame_size:(n+1)*frame_size] = ref_module.process_frame_xcore(signal_frames[n])
 
     # back to int scaling
     out_py_int = out_py * 2**31
