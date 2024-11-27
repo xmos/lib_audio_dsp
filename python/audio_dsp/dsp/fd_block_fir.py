@@ -50,12 +50,14 @@ class fir_block_fd(dspg.dsp_block):
         self.buffer_idx_int = [self.n_taps - 1] * self.n_chans
 
         filter_struct_name, prepared_coefs, quantized_coefs = generate_fd_fir(
-            self.coeffs, filter_name, output_path, gain_dB, self.block_length, silent=False)
+            self.coeffs, filter_name, output_path, gain_dB, self.block_len, silent=False)
+
 
     def reset_state(self) -> None:
         """Reset all the delay line values to zero."""
-        self.buffer = np.zeros((self.n_chans, (self.n_taps + block_len)))
-        self.buffer_int = [[0] * (self.n_taps + block_len) for _ in range(self.n_chans)]
+        buffer_len = (self.n_taps + self.block_len - 1)
+        self.buffer = np.zeros((self.n_chans, buffer_len))
+        self.buffer_int = [[0] * buffer_len for _ in range(self.n_chans)]
         return
 
     def process_frame(self, frame: list):
@@ -72,11 +74,16 @@ class fir_block_fd(dspg.dsp_block):
         float
             The processed output sample.
         """
-        self.buffer[self.n_taps:] = frame
-        output =  np.convolve(self.buffer, self.coeffs, mode="valid")
-        self.buffer = np.roll(self.buffer, -self.block_len)
+        n_outputs = len(frame)
+        frame_size = frame[0].shape[0]
+        output = deepcopy(frame)
+        for chan in range(n_outputs):
+            self.buffer[chan, self.n_taps-1:] = frame[chan]
+            output[chan] =  np.convolve(self.buffer[chan], self.coeffs, mode="valid")
+            self.buffer[chan] = np.roll(self.buffer[chan], -self.block_len)
 
-        return output_samples
+        return output
+
 
 
 def _emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_element=32):
