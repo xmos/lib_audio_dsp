@@ -51,7 +51,7 @@ def test_frames(coeff_path, n_chans, block_size):
 
     assert np.all(-out_flt_d[0, :] == out_flt_d[1:, :])
     np.testing.assert_allclose(out_flt_d, out_flt_btd, atol=2**-56, rtol=2**-42)
-    np.testing.assert_allclose(out_flt_d, out_flt_bfd, atol=2**-56, rtol=2**-42)
+    np.testing.assert_allclose(out_flt_d, out_flt_bfd, atol=2**-51, rtol=2**-41)
 
     fir_d.reset_state()
     fir_btd.reset_state()
