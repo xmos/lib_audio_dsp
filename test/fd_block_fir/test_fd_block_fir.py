@@ -34,19 +34,17 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = None, td_block_l
     # run the filter_generator on the coefs
     try:
         generate_fd_fir(coefficients, "dut", gen_dir, frame_advance, frame_overlap, td_block_length, 
-                      gain_dB = gain_dB, warn = False, error = True, verbose = False)
+                      gain_dB = gain_dB, verbose = False)
         generate_debug_fir(coefficients, "dut", gen_dir, frame_advance, frame_overlap, td_block_length, 
-                      gain_dB = gain_dB, warn = False, error = True, verbose = False)
+                      gain_dB = gain_dB, verbose = False)
     except ValueError as e:
-        # print('Success (Expected Fail)')
-        if str(e) not in ["Bad config", "Unachievable config"]:
+        if "Bad config" not in str(e):
             raise e
         else:
             print("caught bad config")
             print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
             return
     except Exception as e:
-        # print('Fail', repr(error))
         print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
         raise e
 
@@ -63,13 +61,10 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = None, td_block_l
     # Clean up
     shutil.rmtree(bin_dir) 
     shutil.rmtree(gen_dir) 
-    # shutil.rmtree(build_dir) 
 
     if sig_int == 0:
-        # print("Success")
         pass
     else:
-        # print("Fail")
         print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
         raise RuntimeError(f"xsim failed: {sig_int}")
 
@@ -126,4 +121,4 @@ def test_real_filter(length):
 
 if __name__ == "__main__":
     # test_constant_value_variable_length(16, 2, -2, 2, 0)
-    test_constant_value_variable_length(16, 1, -2, 0, -2)
+    test_long_lengths(1024)

@@ -205,8 +205,6 @@ def generate_fd_fir(
     td_block_length: int,
     gain_dB=0.0,
     verbose=False,
-    warn=False,
-    error=True,
     ):
     """
     Convert the input array into a header to be included in a C project.
@@ -227,40 +225,29 @@ def generate_fd_fir(
         The size in samples of a frame, measured in time domain samples.
     gain_dB : float, optional
         A gain applied to the filters output, by default 0.0
-    warn : bool, optional
-        Enable to emit warnings, by default False
-    error : bool, optional
-        Enable to emit error fix suggestions, by default True
     verbose : bool, optional
         Enable verbose printinng, by default False
 
     Raises
     ------
-        ValueError: Bad config - Should be fixed
-        ValueError: Unachievable config - MUST be fixed
+        ValueError: Bad config - Must be fixed
     """
     td_coefs = np.array(td_coefs, dtype=np.float64)
 
     if not math.log2(td_block_length).is_integer():
-        if error:
-            print("Error: td_block_length is not a power of two")
-        raise ValueError("Bad config")
+        raise ValueError("Bad config: td_block_length is not a power of two")
 
     output_file_name = os.path.join(output_path, filter_name + ".h")
 
     original_td_filter_length = len(td_coefs)
     if frame_advance < 1:
-        if error:
-            print("Error: cannot have a zero or negative frame_advance")
-        raise ValueError("Bad config")
+        raise ValueError("Bad config: cannot have a zero or negative frame_advance")
 
     if frame_overlap == None:
         frame_overlap = 0
 
     if frame_overlap < 0:
-        if error:
-            print("Error: cannot have a negative frame_overlap")
-        raise ValueError("Bad config")
+        raise ValueError("Bad config: cannot have a negative frame_overlap")
 
     # for every frame advance we must output at least frame_advance samples plus the requested frame_overlap samples
     minimum_output_samples = frame_overlap + frame_advance
@@ -305,12 +292,12 @@ def generate_fd_fir(
             achievable_frame_overlap = actual_output_sample_count - frame_advance
             achievable_frame_advance = actual_output_sample_count - frame_overlap
             achievable_block_length = minimum_output_samples - 1 + original_td_filter_length
-            if error:
-                print("Error: frame_overlap of", frame_overlap, "is unachievable.")
+            if verbose:
+                print("Error")
                 print("\tOption 1: reduce frame_overlap to", achievable_frame_overlap)
                 print("\tOption 2: decrease the frame_advance to", achievable_frame_advance)
                 print("\tOption 3: increase the td_block_length to", achievable_block_length)
-            raise ValueError("Unachievable config")
+            raise ValueError("Bad config: frame_overlap of", frame_overlap, "is unachievable.")
 
         phases = (original_td_filter_length + taps_per_phase - 1) // taps_per_phase
 
@@ -319,13 +306,12 @@ def generate_fd_fir(
         new_frame_overlap = td_block_length + 1 - taps_per_phase - frame_advance
 
     if new_frame_overlap != frame_overlap:
-        if warn:
-            warnings.warn(f"Warning: requested a frame overlap of {frame_overlap},"
-            f"but will get {new_frame_overlap}")
-            print(
-                "To increase efficiency, try increasing the length of the filter by",
-                (new_frame_overlap - frame_overlap) * phases,
-            )
+        warnings.warn(f"Warning: requested a frame overlap of {frame_overlap},"
+        f"but will get {new_frame_overlap}")
+        print(
+            "To increase efficiency, try increasing the length of the filter by",
+            (new_frame_overlap - frame_overlap) * phases,
+        )
         assert new_frame_overlap > frame_overlap
         frame_overlap = new_frame_overlap
 
@@ -345,16 +331,15 @@ def generate_fd_fir(
 
     # check length is efficient for td_block_length
     if original_td_filter_length % taps_per_phase != 0:
-        if warn:
-            warnings.warn(f"Warning: Chosen td_block_length and frame_overlap is not maximally"
-            f" efficient for filter of length {original_td_filter_length,}")
-            print(
-                "         Better would be:",
-                adjusted_td_length,
-                "taps, currently it will be padded with",
-                adjusted_td_length - original_td_filter_length,
-                "zeros.",
-            )
+        warnings.warn(f"Warning: Chosen td_block_length and frame_overlap is not maximally"
+        f" efficient for filter of length {original_td_filter_length,}")
+        print(
+            "         Better would be:",
+            adjusted_td_length,
+            "taps, currently it will be padded with",
+            adjusted_td_length - original_td_filter_length,
+            "zeros.",
+        )
 
     # pad filters
     assert adjusted_td_length % taps_per_phase == 0

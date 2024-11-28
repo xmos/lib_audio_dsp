@@ -33,9 +33,8 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
     gen_dir.mkdir(exist_ok=True, parents=True)
     # run the filter_generator on the coefs
     try:
-        generate_td_fir(coefficients, "dut", gen_dir, gain_dB, silent = True)
-        generate_debug_fir(coefficients, "dut", gen_dir, 
-                      gain_dB = gain_dB, warn = False, error = True, verbose = False)
+        generate_td_fir(coefficients, "dut", gen_dir, gain_dB)
+        generate_debug_fir(coefficients, "dut", gen_dir, gain_dB = gain_dB, verbose = False)
     except ValueError as e:
         # print('Success (Expected Fail)')
         print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
@@ -46,8 +45,6 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
         raise e
     
     # build the project
-    # subprocess.check_output("cmake -B " + build_dir_name, cwd = dir_name, shell = True, stderr = subprocess.DEVNULL)
-    # subprocess.check_output("xmake -C " + build_dir_name, cwd = dir_name, shell = True)
     build(Path(dir_name), Path(build_dir), "td_fir_test")
 
     app = "xsim" if sim else "xrun --io"
@@ -63,10 +60,8 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
     shutil.rmtree(build_dir) 
 
     if sig_int == 0:
-        # print("Success")
         pass
     else:
-        # print("Fail")
         print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
         raise RuntimeError(f"xsim failed: {sig_int}")
     return sig_int

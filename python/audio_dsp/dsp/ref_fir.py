@@ -111,8 +111,6 @@ def generate_debug_fir(
     td_block_length=None,
     gain_dB=0.0,
     verbose=False,
-    warn=False,
-    error=True,
     ):
 
     output_file_name = os.path.join(output_path, filter_name + "_debug.h")

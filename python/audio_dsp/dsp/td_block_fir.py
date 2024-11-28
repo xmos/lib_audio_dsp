@@ -47,7 +47,7 @@ class fir_block_td(dspg.dsp_block):
         self.reset_state()
 
         filter_struct_name, prepared_coefs, quantized_coefs = generate_td_fir(
-            self.coeffs, filter_name, output_path, gain_dB, self.block_len, silent=False)
+            self.coeffs, filter_name, output_path, gain_dB, self.block_len)
 
     def reset_state(self) -> None:
         """Reset all the delay line values to zero."""
@@ -155,7 +155,7 @@ def generate_td_fir(
     output_path: str,
     gain_dB=0.0,
     td_block_length=8,
-    silent=False,
+    verbose=False
 ):
     """
     Convert the input array into a header to be included in a C project.
@@ -172,8 +172,6 @@ def generate_td_fir(
         A gain applied to the filter's output, by default 0.0
     td_block_length : int
         The size in samples of a frame, measured in time domain samples, by default 8
-    silent : bool, optional
-        Suppress all printing, by default False
     """
     output_file_name = os.path.join(output_path, filter_name + ".h")
 
@@ -188,8 +186,7 @@ def generate_td_fir(
     ) * td_block_length
 
     if original_filter_length != target_filter_bank_length:
-        if not silent:
-            warnings.warn(f"{filter_name} will be zero padded to length {target_filter_bank_length}")
+        warnings.warn(f"{filter_name} will be zero padded to length {target_filter_bank_length}")
         padding = np.zeros(target_filter_bank_length - original_filter_length)
         prepared_coefs = np.concatenate((td_coefs, padding))
     else:
