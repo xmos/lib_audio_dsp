@@ -6,6 +6,7 @@ import shutil
 import pytest
 from scipy.signal import firwin
 from audio_dsp.dsp.td_block_fir import generate_td_fir
+from audio_dsp.dsp.ref_fir import generate_debug_fir
 
 # TODO move build utils somewhere else
 import os
@@ -32,7 +33,9 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
     gen_dir.mkdir(exist_ok=True, parents=True)
     # run the filter_generator on the coefs
     try:
-        generate_td_fir(coefficients, "dut", gen_dir, gain_dB, silent = True, debug = True)
+        generate_td_fir(coefficients, "dut", gen_dir, gain_dB, silent = True)
+        generate_debug_fir(coefficients, "dut", gen_dir, 
+                      gain_dB = gain_dB, warn = False, error = True, verbose = False)
     except ValueError as e:
         # print('Success (Expected Fail)')
         print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)

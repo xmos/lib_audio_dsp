@@ -156,7 +156,6 @@ def generate_td_fir(
     gain_dB=0.0,
     td_block_length=8,
     silent=False,
-    debug=False,
 ):
     """
     Convert the input array into a header to be included in a C project.
@@ -171,8 +170,6 @@ def generate_td_fir(
         Where to output the resulting header file.
     gain_dB : float, optional
         A gain applied to the filter's output, by default 0.0
-    debug : bool, optional
-        If enabled then this will emit a debug struct, by default False
     td_block_length : int
         The size in samples of a frame, measured in time domain samples, by default 8
     silent : bool, optional
@@ -209,18 +206,6 @@ def generate_td_fir(
 
         filter_struct_name, quantized_coefs = _emit_filter(fh, prepared_coefs, filter_name, td_block_length)
 
-        if debug:
-            rf.emit_debug_filter(fh, td_coefs, filter_name)
-
-            fh.write(
-                "#define debug_"
-                + filter_name
-                + "_DATA_BUFFER_ELEMENTS ("
-                + str(len(td_coefs))
-                + ")\n"
-            )
-            fh.write("\n")
-
         # emit the data define
         data_block_count = filter_block_count + 2
         fh.write("//This is the count of int32_t words to allocate for one data channel.\n")
@@ -249,7 +234,6 @@ if __name__ == "__main__":
     parser.add_argument("filter", type=str, help="path to the filter(numpy format)")
     parser.add_argument("--gain", type=float, default=0.0, help="Apply a gain to the output(dB).")
     parser.add_argument("--output", type=str, default=".", help="Output location.")
-    parser.add_argument("--debug", action="store_true", default=False, help="Enable debug output.")
     parser.add_argument(
         "--name",
         type=str,
@@ -275,4 +259,4 @@ if __name__ == "__main__":
         p = os.path.basename(filter_path)
         filter_name = p.split(".")[0]
 
-    generate_td_fir(coefs, filter_name, output_path, gain_dB, debug=args.debug)
+    generate_td_fir(coefs, filter_name, output_path, gain_dB)

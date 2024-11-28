@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <xcore/hwtimer.h>
 #include "../autogen/dut.h"
+#include "../autogen/dut_debug.h"
+
 #include "ref_fir.h"
 
 /*

@@ -7,6 +7,7 @@ import shutil
 import pytest
 from scipy.signal import firwin
 from audio_dsp.dsp.fd_block_fir import generate_fd_fir
+from audio_dsp.dsp.ref_fir import generate_debug_fir
 
 # TODO move build utils somewhere else
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../pipeline/python')))
@@ -33,7 +34,9 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = None, td_block_l
     # run the filter_generator on the coefs
     try:
         generate_fd_fir(coefficients, "dut", gen_dir, frame_advance, frame_overlap, td_block_length, 
-                      gain_dB = gain_dB, debug = True, warn = False, error = True, verbose = False)
+                      gain_dB = gain_dB, warn = False, error = True, verbose = False)
+        generate_debug_fir(coefficients, "dut", gen_dir, frame_advance, frame_overlap, td_block_length, 
+                      gain_dB = gain_dB, warn = False, error = True, verbose = False)
     except ValueError as e:
         # print('Success (Expected Fail)')
         if str(e) not in ["Bad config", "Unachievable config"]:

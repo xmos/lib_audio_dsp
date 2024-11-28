@@ -4,6 +4,8 @@
 
 import numpy as np
 import io
+import os
+import audio_dsp.dsp.ref_fir as rf
 
 
 def quant(coefs: np.ndarray, exp: float):
@@ -99,3 +101,33 @@ def emit_debug_filter(fh: io.TextIOWrapper, coefs: np.ndarray, name: str):
     fh.write("\n")
 
     return struct_name
+
+def generate_debug_fir(
+    td_coefs: np.ndarray,
+    filter_name: str,
+    output_path: str,
+    frame_advance=None,
+    frame_overlap=None,
+    td_block_length=None,
+    gain_dB=0.0,
+    verbose=False,
+    warn=False,
+    error=True,
+    ):
+
+    output_file_name = os.path.join(output_path, filter_name + "_debug.h")
+    td_coefs = np.array(td_coefs, dtype=np.float64)
+
+    with open(output_file_name, "w") as fh:
+        fh.write('#include "dsp/fd_block_fir.h"\n\n')
+
+        rf.emit_debug_filter(fh, td_coefs, filter_name)
+
+        fh.write(
+            "#define debug_"
+            + filter_name
+            + "_DATA_BUFFER_ELEMENTS ("
+            + str(len(td_coefs))
+            + ")\n"
+        )
+        fh.write("\n")

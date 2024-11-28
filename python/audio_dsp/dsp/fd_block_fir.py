@@ -207,7 +207,6 @@ def generate_fd_fir(
     verbose=False,
     warn=False,
     error=True,
-    debug=False,
     ):
     """
     Convert the input array into a header to be included in a C project.
@@ -228,8 +227,6 @@ def generate_fd_fir(
         The size in samples of a frame, measured in time domain samples.
     gain_dB : float, optional
         A gain applied to the filters output, by default 0.0
-    debug : bool, optional
-        If enabled then this will emit a debug struct, by default False
     warn : bool, optional
         Enable to emit warnings, by default False
     error : bool, optional
@@ -391,18 +388,6 @@ def generate_fd_fir(
 
         filter_struct_name, quantized_coefs = _emit_filter(coeffs_fd, filter_name, fh, taps_per_phase)
 
-        if debug:
-            rf.emit_debug_filter(fh, td_coefs, filter_name)
-
-            fh.write(
-                "#define debug_"
-                + filter_name
-                + "_DATA_BUFFER_ELEMENTS ("
-                + str(len(td_coefs))
-                + ")\n"
-            )
-            fh.write("\n")
-
         prev_buffer_length = td_block_length - frame_advance
         data_buffer_length = phases * td_block_length
 
@@ -444,7 +429,6 @@ if __name__ == "__main__":
     )
     parser.add_argument("--gain", type=float, default=0.0, help="Apply a gain to the output(dB).")
     parser.add_argument("--output", type=str, default=".", help="Output location.")
-    parser.add_argument("--debug", action="store_true", default=False, help="Enable debug output.")
     parser.add_argument(
         "--name",
         type=str,
@@ -483,5 +467,4 @@ if __name__ == "__main__":
         args.frame_overlap,
         args.block_length,
         gain_dB=gain_dB,
-        debug=args.debug,
     )

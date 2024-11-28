@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "../autogen/dut.h"
+#include "../autogen/dut_debug.h"
 #include "ref_fir.h"
 
 /*
