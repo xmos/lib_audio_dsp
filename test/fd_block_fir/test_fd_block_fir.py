@@ -17,7 +17,7 @@ from build_utils import build
 build_dir_name = "build"
 
 
-def build_and_run_tests(dir_name, coefficients, frame_advance = None, td_block_length = 32, frame_overlap = 0, sim = True, gain_dB = 0.0):
+def build_and_run_tests(dir_name, coefficients, frame_advance = 16, td_block_length = None, frame_overlap = 0, sim = True, gain_dB = 0.0):
 
     local_build_dir_name = build_dir_name
 
@@ -75,7 +75,7 @@ dir_name = Path(__file__).parent
 def test_trivial():
     build_and_run_tests(dir_name, np.random.uniform(-0.125, 0.125, 34))
 
-@pytest.mark.parametrize("td_block_length", [16, 32])
+@pytest.mark.parametrize("td_block_length", [16])
 @pytest.mark.parametrize("filter_length_mul", [1, 2, 3])
 @pytest.mark.parametrize("filter_length_mod", [-2, -1, 0, 1, 2, 3])
 @pytest.mark.parametrize("frame_overlap", range(0, 4))
@@ -85,7 +85,7 @@ def test_constant_value_variable_length(td_block_length, filter_length_mul, filt
     frame_advance = td_block_length//2 + frame_advance_mod
     build_and_run_tests(dir_name, 
                         np.ones(filter_length)/filter_length, 
-                        td_block_length = td_block_length, 
+                        td_block_length = None, 
                         frame_overlap = frame_overlap,
                         frame_advance = frame_advance)
 

@@ -202,7 +202,7 @@ def generate_fd_fir(
     output_path: str,
     frame_advance: int,
     frame_overlap: int,
-    td_block_length: int,
+    td_block_length=None,
     gain_dB=0.0,
     verbose=False,
     ):
@@ -221,12 +221,12 @@ def generate_fd_fir(
         The number of samples between subsequent frames.
     frame_overlap : int
         When the convolution is performed it will always output frame_advance samples plus an optional frame_overlap.
-    td_block_length : int
+    td_block_length : int, optional
         The size in samples of a frame, measured in time domain samples.
     gain_dB : float, optional
         A gain applied to the filters output, by default 0.0
     verbose : bool, optional
-        Enable verbose printinng, by default False
+        Enable verbose printing, by default False
 
     Raises
     ------
@@ -234,7 +234,13 @@ def generate_fd_fir(
     """
     td_coefs = np.array(td_coefs, dtype=np.float64)
 
-    if not math.log2(td_block_length).is_integer():
+    if frame_advance < 64:
+        warnings.warn("For frame_advance < 64, a time domain implementation is likely more"
+        "efficient, please see AN02027.", UserWarning)
+
+    if not td_block_length:
+        td_block_length = 2**np.ceil(np.log2(frame_advance)).astype(int)
+    elif not math.log2(td_block_length).is_integer():
         raise ValueError("Bad config: td_block_length is not a power of two")
 
     output_file_name = os.path.join(output_path, filter_name + ".h")
@@ -306,8 +312,8 @@ def generate_fd_fir(
         new_frame_overlap = td_block_length + 1 - taps_per_phase - frame_advance
 
     if new_frame_overlap != frame_overlap:
-        warnings.warn(f"Warning: requested a frame overlap of {frame_overlap},"
-        f"but will get {new_frame_overlap}")
+        warnings.warn(f"Requested a frame overlap of {frame_overlap},"
+        f"but will get {new_frame_overlap}", UserWarning)
         print(
             "To increase efficiency, try increasing the length of the filter by",
             (new_frame_overlap - frame_overlap) * phases,
@@ -331,8 +337,8 @@ def generate_fd_fir(
 
     # check length is efficient for td_block_length
     if original_td_filter_length % taps_per_phase != 0:
-        warnings.warn(f"Warning: Chosen td_block_length and frame_overlap is not maximally"
-        f" efficient for filter of length {original_td_filter_length,}")
+        warnings.warn(f"Chosen td_block_length and frame_overlap is not maximally"
+        f" efficient for filter of length {original_td_filter_length,}", UserWarning)
         print(
             "         Better would be:",
             adjusted_td_length,
