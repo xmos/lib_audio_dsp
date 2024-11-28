@@ -6,6 +6,8 @@
 // accu_shr returns the accumulator to the correct output q value
 #include "ref_fir.h"
 #include <string.h>
+#include "xmath/xs3/vpu_scalar_ops.h"
+
 
 int32_t td_reference_fir(
     int32_t new_sample,
@@ -56,33 +58,7 @@ void td_block_fir_add_data_ref(
     fir_data->index = head;
 }
 
-enum
-{
-    VPU_INT8_EPV = 32,
-    VPU_INT16_EPV = 16,
-    VPU_INT32_EPV = 8,
-};
-#define VPU_INT40_MAX (0x7FFFFFFFFFLL)
-#define VPU_INT40_MIN (-0x7FFFFFFFFFLL)
-#define SAT40(X) (((X) > VPU_INT40_MAX) ? VPU_INT40_MAX \
-                                        : (((X) < VPU_INT40_MIN) ? VPU_INT40_MIN : (X)))
-#define ROUND_SHR64(X, SHIFT) ((int64_t)(((SHIFT) == 0) ? (X) : ((((int64_t)(X)) + (1 << ((SHIFT) - 1))) >> (SHIFT))))
-static int64_t vlmaccr32(
-    const int64_t acc,
-    const int32_t x[VPU_INT32_EPV],
-    const int32_t y[VPU_INT32_EPV])
-{
-    int64_t s = acc;
-    for (int i = 0; i < VPU_INT32_EPV; i++)
-    {
 
-        int64_t p = (((int64_t)x[i]) * y[i]);
-        p = ROUND_SHR64(p, 30);
-        s += p;
-    }
-
-    return SAT40(s);
-}
 void td_block_fir_compute_ref(
     int32_t output_block[TD_BLOCK_FIR_LENGTH],
     td_block_fir_data_t *fir_data,
