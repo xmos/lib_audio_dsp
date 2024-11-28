@@ -42,7 +42,9 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 16, td_block_len
             raise e
         else:
             print("caught bad config")
+            print(str(e))
             print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
+            raise e
             return
     except Exception as e:
         print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)

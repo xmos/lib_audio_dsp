@@ -239,7 +239,7 @@ def generate_fd_fir(
         "efficient, please see AN02027.", UserWarning)
 
     if not td_block_length:
-        td_block_length = 2**np.ceil(np.log2(frame_advance)).astype(int)
+        td_block_length = 2**(np.ceil(np.log2(frame_advance)).astype(int) + 1)
     elif not math.log2(td_block_length).is_integer():
         raise ValueError("Bad config: td_block_length is not a power of two")
 
@@ -338,14 +338,9 @@ def generate_fd_fir(
     # check length is efficient for td_block_length
     if original_td_filter_length % taps_per_phase != 0:
         warnings.warn(f"Chosen td_block_length and frame_overlap is not maximally"
-        f" efficient for filter of length {original_td_filter_length,}", UserWarning)
-        print(
-            "         Better would be:",
-            adjusted_td_length,
-            "taps, currently it will be padded with",
-            adjusted_td_length - original_td_filter_length,
-            "zeros.",
-        )
+        f"efficient for filter of length {original_td_filter_length,}.\n"
+        f"Better would be: {adjusted_td_length} taps, currently it will be padded with"
+            f"{adjusted_td_length - original_td_filter_length} zeros.", UserWarning)
 
     # pad filters
     assert adjusted_td_length % taps_per_phase == 0
