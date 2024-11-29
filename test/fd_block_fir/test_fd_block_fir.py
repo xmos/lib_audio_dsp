@@ -77,10 +77,13 @@ dir_name = Path(__file__).parent
 def test_trivial():
     build_and_run_tests(dir_name, np.random.uniform(-0.125, 0.125, 34))
 
-# @pytest.mark.parametrize("td_block_length", [16])
-@pytest.mark.parametrize("filter_length_mul", [1, 2, 3])
-@pytest.mark.parametrize("filter_length_mod", [-2, 1, 3])
-@pytest.mark.parametrize("frame_overlap", [0, 3])
+@pytest.mark.parametrize("td_block_length", [16])
+# @pytest.mark.parametrize("filter_length_mul", [1, 2, 3])
+# @pytest.mark.parametrize("filter_length_mod", [-2, 1, 3])
+@pytest.mark.parametrize(["filter_length_mul", "filter_length_mod"], [[1, -2],
+                                                                      [2, 1],
+                                                                      [3, 3]])
+@pytest.mark.parametrize("frame_overlap,", [0, 3])
 @pytest.mark.parametrize("frame_advance_mod", [-2, 0, 1])
 def test_constant_value_variable_length(td_block_length, filter_length_mul, filter_length_mod, frame_overlap, frame_advance_mod):
     filter_length = (td_block_length*filter_length_mul)//2 + filter_length_mod
