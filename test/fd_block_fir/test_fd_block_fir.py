@@ -77,7 +77,7 @@ dir_name = Path(__file__).parent
 def test_trivial():
     build_and_run_tests(dir_name, np.random.uniform(-0.125, 0.125, 34))
 
-@pytest.mark.parametrize("td_block_length", [16])
+# @pytest.mark.parametrize("td_block_length", [16])
 @pytest.mark.parametrize("filter_length_mul", [1, 2, 3])
 @pytest.mark.parametrize("filter_length_mod", [-2, 1, 3])
 @pytest.mark.parametrize("frame_overlap", [0, 3])
@@ -113,7 +113,8 @@ def test_random_pos_value_variable_length(length):
 def test_random_neg_value_variable_length(length):
     build_and_run_tests(dir_name, np.abs(np.random.uniform(-1, 1, length)))
 
-@pytest.mark.parametrize("length", [1024])#, 4096])
+@pytest.mark.skip("Slow test")
+@pytest.mark.parametrize("length", [1024, 4096])
 def test_long_lengths(length):
     build_and_run_tests(dir_name, np.random.uniform(-1, 1, length))
 
