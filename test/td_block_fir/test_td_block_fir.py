@@ -7,6 +7,8 @@ import pytest
 from scipy.signal import firwin
 from audio_dsp.dsp.td_block_fir import generate_td_fir
 from audio_dsp.dsp.ref_fir import generate_debug_fir
+import uuid
+from filelock import FileLock
 
 # TODO move build utils somewhere else
 import os
@@ -30,34 +32,38 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
     build_dir = Path(__file__).parent / local_build_dir_name
 
     bin_dir.mkdir(exist_ok=True, parents=True)
-    gen_dir.mkdir(exist_ok=True, parents=True)
-    # run the filter_generator on the coefs
-    try:
-        generate_td_fir(coefficients, "dut", gen_dir, gain_dB)
-        generate_debug_fir(coefficients, "dut", gen_dir, gain_dB = gain_dB, verbose = False)
-    except ValueError as e:
-        # print('Success (Expected Fail)')
-        print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
-        raise e
-    except Exception as e:
-        # print('Fail', repr(error))
-        print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
-        raise e
+    # the builds share files, so can't be built in parallel, but we can run xsim in parallel after
+    with FileLock("build_blocker.lock"):
+        gen_dir.mkdir(exist_ok=True, parents=True)
+
+        # run the filter_generator on the coefs
+        try:
+            generate_td_fir(coefficients, "dut", gen_dir, gain_dB)
+            generate_debug_fir(coefficients, "dut", gen_dir, gain_dB = gain_dB, verbose = False)
+        except ValueError as e:
+            # print('Success (Expected Fail)')
+            print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
+            raise e
+        except Exception as e:
+            # print('Fail', repr(error))
+            print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
+            raise e
+        
+        # build the project
+        build(Path(dir_name), Path(build_dir), "td_fir_test")
     
-    # build the project
-    build(Path(dir_name), Path(build_dir), "td_fir_test")
+        unique_xe = str(bin_dir / f"{uuid.uuid4().hex[:10]}_td_fir_test.xe")
+        os.rename(str(bin_dir / "td_fir_test.xe"), unique_xe)
+
+        # Clean up
+        shutil.rmtree(gen_dir) 
 
     app = "xsim" if sim else "xrun --io"
-    run_cmd = app + " --args " + str(bin_dir / "td_fir_test.xe") 
+    run_cmd = app + " --args " + str(bin_dir / unique_xe) 
     
     proc = subprocess.run(run_cmd, capture_output=True, cwd = dir_name, shell = True)
 
     sig_int = proc.returncode
-
-    # Clean up
-    shutil.rmtree(bin_dir) 
-    shutil.rmtree(gen_dir) 
-    shutil.rmtree(build_dir) 
 
     if sig_int == 0:
         pass
