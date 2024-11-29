@@ -280,11 +280,9 @@ pipeline {
           }
           steps {
             checkout scm
-            createVenv("requirements.txt")
+            createVenv("requirements-format.txt")
             withVenv {
-              sh 'pip install -e ./python'
-              sh 'pip install "pyright < 2.0"'
-              sh 'pip install "ruff < 0.4"'
+              sh 'pip install --no-deps -r requirements-format.txt'
               sh "make -C python check" // ruff check
               versionChecks checkReleased: false, versionsPairs: versionsPairs
               buildDocs xmosdocVenvPath: "${WORKSPACE}", archiveZipOnly: true // needs python run
