@@ -113,6 +113,7 @@ def generate_debug_fir(
     gain_dB=0.0,
     verbose=False,
 ):
+    """Convert the input array into a header to be included in a C debug tests."""
     output_file_name = os.path.join(output_path, filter_name + "_debug.h")
     td_coefs = np.array(td_coefs, dtype=np.float64)
 

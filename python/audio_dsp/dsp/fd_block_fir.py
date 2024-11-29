@@ -297,7 +297,7 @@ def _get_filter_phases(
 def generate_fd_fir(
     td_coefs: np.ndarray,
     filter_name: str,
-    output_path: str,
+    output_path: Path,
     frame_advance: int,
     frame_overlap: int,
     td_block_length=None,

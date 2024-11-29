@@ -163,7 +163,7 @@ def _emit_filter(fh, coefs_padded, name, block_length, bits_per_element=32):
 def generate_td_fir(
     td_coefs: np.ndarray,
     filter_name: str,
-    output_path: str,
+    output_path: Path,
     gain_dB=0.0,
     td_block_length=8,
     verbose=False,
