@@ -287,7 +287,7 @@ pipeline {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/fd_block_fir") {
-                          sh "python -m pytest --junitxml='pytest_result.xml' -rA -vvv --durations=0 -o junit_logging=all"
+                          sh "python -m pytest --junitxml='pytest_result.xml' -rA -vvv --durations=0 -o junit_logging=all -n auto"
                         }
                       }
                     }

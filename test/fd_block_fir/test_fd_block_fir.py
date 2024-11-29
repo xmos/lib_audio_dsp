@@ -8,11 +8,12 @@ import pytest
 from scipy.signal import firwin
 from audio_dsp.dsp.fd_block_fir import generate_fd_fir
 from audio_dsp.dsp.ref_fir import generate_debug_fir
+import uuid
 
 # TODO move build utils somewhere else
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../pipeline/python')))
 from build_utils import build
-
+from filelock import FileLock
 
 build_dir_name = "build"
 
@@ -26,43 +27,48 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 16, td_block_len
     build_dir = Path(__file__).parent / local_build_dir_name
 
     bin_dir.mkdir(exist_ok=True, parents=True)
-    gen_dir.mkdir(exist_ok=True, parents=True)
 
     if frame_advance is None:
         frame_advance = max(td_block_length//2, 1)
 
-    # run the filter_generator on the coefs
-    try:
-        generate_fd_fir(coefficients, "dut", gen_dir, frame_advance, frame_overlap, td_block_length, 
-                      gain_dB = gain_dB, verbose = True)
-        generate_debug_fir(coefficients, "dut", gen_dir, frame_advance, frame_overlap, td_block_length, 
-                      gain_dB = gain_dB, verbose = True)
-    except ValueError as e:
-        if "Bad config" not in str(e):
-            raise e
-        else:
-            print("caught bad config")
-            print(str(e))
-            print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
-            raise e
-            return
-    except Exception as e:
-        print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
-        raise e
+    # the builds share files, so can't be built in parallel, but we can run xsim in parallel after
+    with FileLock("build_blocker.lock"):
+        gen_dir.mkdir(exist_ok=True, parents=True)
 
-    # build the project
-    build(Path(dir_name), Path(build_dir), "fd_fir_test")
+        # run the filter_generator on the coefs
+        try:
+            generate_fd_fir(coefficients, "dut", gen_dir, frame_advance, frame_overlap, td_block_length, 
+                        gain_dB = gain_dB, verbose = True)
+            generate_debug_fir(coefficients, "dut", gen_dir, frame_advance, frame_overlap, td_block_length, 
+                        gain_dB = gain_dB, verbose = True)
+        except ValueError as e:
+            if "Bad config" not in str(e):
+                raise e
+            else:
+                print("caught bad config")
+                print(str(e))
+                print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
+                raise e
+                return
+        except Exception as e:
+            print('FAIL coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)
+            raise e
+
+        # build the project
+        build(Path(dir_name), Path(build_dir), "fd_fir_test")
+
+        unique_xe = str(bin_dir / f"{uuid.uuid4().hex[:10]}_fd_fir_test.xe")
+        os.rename(str(bin_dir / "fd_fir_test.xe"), unique_xe)
+
+        # Clean up
+        shutil.rmtree(gen_dir) 
 
     app = "xsim" if sim else "xrun --io"
-    run_cmd = app + " --args " + str(bin_dir / "fd_fir_test.xe") 
+    run_cmd = app + " --args " + str(bin_dir / unique_xe) 
     
     proc = subprocess.run(run_cmd,  cwd = dir_name, shell = True)
 
     sig_int = proc.returncode
-
-    # Clean up
-    shutil.rmtree(bin_dir) 
-    shutil.rmtree(gen_dir) 
 
     if sig_int == 0:
         pass
