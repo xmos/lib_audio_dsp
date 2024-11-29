@@ -23,8 +23,8 @@ class fir_block_fd(dspg.dsp_block):
     Parameters
     ----------
     coeffs_path : Path
-        Path to a file containing the coefficients, in a format
-        supported by `np.loadtxt <https://numpy.org/doc/stable/reference/generated/numpy.loadtxt.html>`_.
+        Path to a file containing the coefficients, in a format supported by
+        `np.loadtxt <https://numpy.org/doc/stable/reference/generated/numpy.loadtxt.html>`_.
     filter_name : str
         Name of the filter, used for the autogen struct name
     output_path : Path
@@ -33,7 +33,8 @@ class fir_block_fd(dspg.dsp_block):
         The number of samples between subsequent frames. This should
         be set to the same as the DSP pipeline frame size.
     frame_overlap : int
-        When the convolution is performed it will always output frame_advance samples plus an optional frame_overlap.
+        When the convolution is performed it will always output
+        frame_advance samples plus an optional frame_overlap.
     td_block_length : int
         The size in samples of a frame, measured in time domain samples.
     gain_db : float, optional
@@ -43,8 +44,19 @@ class fir_block_fd(dspg.dsp_block):
         be set to the same as the DSP pipeline frame size, and must be a multiple of 8.
     """
 
-    def __init__(self, fs: float, n_chans: int, coeffs_path: Path, filter_name: str,
-    output_path: Path, frame_advance: int, frame_overlap: int, td_block_length: int, gain_dB=0.0, Q_sig: int = dspg.Q_SIG):
+    def __init__(
+        self,
+        fs: float,
+        n_chans: int,
+        coeffs_path: Path,
+        filter_name: str,
+        output_path: Path,
+        frame_advance: int,
+        frame_overlap: int,
+        td_block_length: int,
+        gain_dB=0.0,
+        Q_sig: int = dspg.Q_SIG,
+    ):
         super().__init__(fs, n_chans, Q_sig)
         self.coeffs = np.loadtxt(coeffs_path)
         self.n_taps = len(self.coeffs)
@@ -54,11 +66,17 @@ class fir_block_fd(dspg.dsp_block):
         self.nfft = td_block_length
 
         filter_struct_name, self.coeffs_fd, quantized_coefs, self.taps_per_phase = generate_fd_fir(
-            self.coeffs, filter_name, output_path, frame_advance, frame_overlap,
-            self.nfft, gain_dB=gain_dB)
+            self.coeffs,
+            filter_name,
+            output_path,
+            frame_advance,
+            frame_overlap,
+            self.nfft,
+            gain_dB=gain_dB,
+        )
 
         self.n_fd_buffers = self.coeffs_fd.shape[0]
-        
+
         self.reset_state()
         self.buffer_idx = [self.n_taps - 1] * self.n_chans
         self.buffer_idx_int = [self.n_taps - 1] * self.n_chans
@@ -69,7 +87,9 @@ class fir_block_fd(dspg.dsp_block):
         self.td_buffer = np.zeros((self.n_chans, self.nfft))
         self.td_buffer_int = [[0] * self.nfft for _ in range(self.n_chans)]
 
-        self.fd_buffer = np.zeros((self.n_chans, self.n_fd_buffers, self.nfft//2 + 1), dtype=np.complex128)
+        self.fd_buffer = np.zeros(
+            (self.n_chans, self.n_fd_buffers, self.nfft // 2 + 1), dtype=np.complex128
+        )
         return
 
     def process_frame(self, frame: list):
@@ -90,19 +110,17 @@ class fir_block_fd(dspg.dsp_block):
         frame_size = frame[0].shape[0]
         output = deepcopy(frame)
         for chan in range(n_outputs):
-
-            self.td_buffer[chan, -self.frame_advance:] = frame[chan]
+            self.td_buffer[chan, -self.frame_advance :] = frame[chan]
             self.fd_buffer[chan, 0, :] = np.fft.rfft(self.td_buffer[chan])
 
             output_spect = np.sum(self.fd_buffer[chan] * self.coeffs_fd, axis=(0))
             output_sig = np.fft.irfft(output_spect)
-            output[chan] =  output_sig[-self.frame_advance:]
+            output[chan] = output_sig[-self.frame_advance :]
 
             self.td_buffer[chan] = np.roll(self.td_buffer[chan], -self.frame_advance)
             self.fd_buffer[chan] = np.roll(self.fd_buffer[chan], 1, axis=0)
 
         return output
-
 
 
 def _emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_element=32):
@@ -197,7 +215,19 @@ def _emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_ele
     return name, quantised_coefs
 
 
-def _get_filter_phases(td_block_length, original_td_filter_length, frame_overlap, frame_advance, auto_block_length, verbose):
+def _get_filter_phases(
+    td_block_length,
+    original_td_filter_length,
+    frame_overlap,
+    frame_advance,
+    auto_block_length,
+    verbose,
+):
+    """Calculate the number of phases of the filter, and check it will work.
+
+    If using auto_block_length, increase the block length and recursively
+    recall this function until the filter works.
+    """
     # for every frame advance we must output at least frame_advance samples plus the requested frame_overlap samples
     minimum_output_samples = frame_overlap + frame_advance
 
@@ -229,11 +259,20 @@ def _get_filter_phases(td_block_length, original_td_filter_length, frame_overlap
 
         if actual_output_sample_count < minimum_output_samples:
             if auto_block_length:
-                print(f"Auto block length, trying next size up, was: {td_block_length}, now: {td_block_length*2}")
+                print(
+                    f"Auto block length, trying next size up, was: {td_block_length}, now: {td_block_length*2}"
+                )
                 # increase block length to get enough output samples
                 td_block_length *= 2
                 # recursion in case we can now do a single phase filter
-                return _get_filter_phases(td_block_length, original_td_filter_length, frame_overlap, frame_advance, auto_block_length, verbose)
+                return _get_filter_phases(
+                    td_block_length,
+                    original_td_filter_length,
+                    frame_overlap,
+                    frame_advance,
+                    auto_block_length,
+                    verbose,
+                )
 
         if actual_output_sample_count < minimum_output_samples:
             achievable_frame_overlap = actual_output_sample_count - frame_advance
@@ -264,7 +303,7 @@ def generate_fd_fir(
     td_block_length=None,
     gain_dB=0.0,
     verbose=False,
-    ):
+):
     """
     Convert the input array into a header to be included in a C project.
 
@@ -273,13 +312,16 @@ def generate_fd_fir(
     td_coefs : np.ndarray
         This is a 1D numpy float array of the coefficients of the filter.
     filter_name : str
-        For use in identification of the filter from within the C code. All structs and defines that pertain to this filter will contain this identifier.
+        For use in identification of the filter from within the C code.
+        All structs and defines that pertain to this filter will contain
+        this identifier.
     output_path : str
         Where to output the resulting header file.
     frame_advance : int
         The number of samples between subsequent frames.
     frame_overlap : int
-        When the convolution is performed it will always output frame_advance samples plus an optional frame_overlap.
+        When the convolution is performed it will always output
+        frame_advance samples plus an optional frame_overlap.
     td_block_length : int, optional
         The size in samples of a frame, measured in time domain samples.
     gain_dB : float, optional
@@ -294,12 +336,15 @@ def generate_fd_fir(
     td_coefs = np.array(td_coefs, dtype=np.float64)
 
     if frame_advance < 64:
-        warnings.warn("For frame_advance < 64, a time domain implementation is likely more"
-        "efficient, please see AN02027.", UserWarning)
+        warnings.warn(
+            "For frame_advance < 64, a time domain implementation is likely more"
+            "efficient, please see AN02027.",
+            UserWarning,
+        )
 
     if not td_block_length:
         auto_block_length = True
-        td_block_length = 2**(np.ceil(np.log2(frame_advance)).astype(int) + 1)
+        td_block_length = 2 ** (np.ceil(np.log2(frame_advance)).astype(int) + 1)
     elif not math.log2(td_block_length).is_integer():
         raise ValueError("Bad config: td_block_length is not a power of two")
     else:
@@ -330,14 +375,23 @@ def generate_fd_fir(
             minimum_output_samples,
         )
 
-    td_block_length, phases, taps_per_phase, new_frame_overlap, actual_output_sample_count = _get_filter_phases(td_block_length, original_td_filter_length, frame_overlap, frame_advance, auto_block_length, verbose)
+    td_block_length, phases, taps_per_phase, new_frame_overlap, actual_output_sample_count = (
+        _get_filter_phases(
+            td_block_length,
+            original_td_filter_length,
+            frame_overlap,
+            frame_advance,
+            auto_block_length,
+            verbose,
+        )
+    )
 
     if new_frame_overlap != frame_overlap:
-        warnings.warn(f"Requested a frame overlap of {frame_overlap},"
-        f"but will get {new_frame_overlap}", UserWarning)
-        print(
-            "To increase efficiency, try increasing the length of the filter by",
-            (new_frame_overlap - frame_overlap) * phases,
+        warnings.warn(
+            f"Requested a frame overlap of {frame_overlap}, but will get"
+            f" {new_frame_overlap}. \n To increase efficiency, try increasing the length of the filter"
+            f" by {(new_frame_overlap - frame_overlap) * phases}.",
+            UserWarning,
         )
         assert new_frame_overlap > frame_overlap
         frame_overlap = new_frame_overlap
@@ -358,10 +412,13 @@ def generate_fd_fir(
 
     # check length is efficient for td_block_length
     if original_td_filter_length % taps_per_phase != 0:
-        warnings.warn(f"Chosen td_block_length and frame_overlap is not maximally"
-        f"efficient for filter of length {original_td_filter_length,}.\n"
-        f"Better would be: {adjusted_td_length} taps, currently it will be padded with"
-            f"{adjusted_td_length - original_td_filter_length} zeros.", UserWarning)
+        warnings.warn(
+            f"Chosen td_block_length and frame_overlap is not maximally "
+            f"efficient for filter of length {original_td_filter_length}.\n"
+            f"Better would be: {adjusted_td_length} taps, currently it will be padded with "
+            f"{adjusted_td_length - original_td_filter_length} zeros.",
+            UserWarning,
+        )
 
     # pad filters
     assert adjusted_td_length % taps_per_phase == 0
@@ -393,7 +450,9 @@ def generate_fd_fir(
     with open(output_file_name, "w") as fh:
         fh.write('#include "dsp/fd_block_fir.h"\n\n')
 
-        filter_struct_name, quantized_coefs = _emit_filter(coeffs_fd, filter_name, fh, taps_per_phase)
+        filter_struct_name, quantized_coefs = _emit_filter(
+            coeffs_fd, filter_name, fh, taps_per_phase
+        )
 
         prev_buffer_length = td_block_length - frame_advance
         data_buffer_length = phases * td_block_length

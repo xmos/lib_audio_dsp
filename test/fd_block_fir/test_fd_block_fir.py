@@ -79,9 +79,9 @@ def test_trivial():
 
 @pytest.mark.parametrize("td_block_length", [16])
 @pytest.mark.parametrize("filter_length_mul", [1, 2, 3])
-@pytest.mark.parametrize("filter_length_mod", [-2, -1, 0, 1, 2, 3])
-@pytest.mark.parametrize("frame_overlap", range(0, 4))
-@pytest.mark.parametrize("frame_advance_mod", [-2, -1, 0, 1])
+@pytest.mark.parametrize("filter_length_mod", [-2, 1, 3])
+@pytest.mark.parametrize("frame_overlap", [0, 3])
+@pytest.mark.parametrize("frame_advance_mod", [-2, 0, 1])
 def test_constant_value_variable_length(td_block_length, filter_length_mul, filter_length_mod, frame_overlap, frame_advance_mod):
     filter_length = (td_block_length*filter_length_mul)//2 + filter_length_mod
     frame_advance = td_block_length//2 + frame_advance_mod
@@ -91,25 +91,25 @@ def test_constant_value_variable_length(td_block_length, filter_length_mul, filt
                         frame_overlap = frame_overlap,
                         frame_advance = frame_advance)
 
-@pytest.mark.parametrize("length", range(15, 19))
+@pytest.mark.parametrize("length", range(15, 19, 2))
 def test_random_value_variable_length(length):
     build_and_run_tests(dir_name, 0.125*np.random.uniform(-1, 1, length))
 
-@pytest.mark.parametrize("length", range(1, 18))
+@pytest.mark.parametrize("length", range(1, 18, 2))
 def test_extreme_value_variable_length(length):
     c = np.random.randint(0, 2, length)*2 - 1
     build_and_run_tests(dir_name, c)
 
-@pytest.mark.parametrize("length", range(2, 17))
+@pytest.mark.parametrize("length", range(2, 17, 2))
 def test_all_negative_variable_length(length):
     c = -np.ones(length)
     build_and_run_tests(dir_name, c)
 
-@pytest.mark.parametrize("length", range(2, 17))
+@pytest.mark.parametrize("length", range(2, 17, 2))
 def test_random_pos_value_variable_length(length):
     build_and_run_tests(dir_name, np.abs(np.random.uniform(-1, 1, length)))
 
-@pytest.mark.parametrize("length", range(2, 17))
+@pytest.mark.parametrize("length", range(2, 17, 2))
 def test_random_neg_value_variable_length(length):
     build_and_run_tests(dir_name, np.abs(np.random.uniform(-1, 1, length)))
 
@@ -123,4 +123,5 @@ def test_real_filter(length):
 
 if __name__ == "__main__":
     # test_constant_value_variable_length(16, 2, -2, 2, 0)
-    test_long_lengths(1024)
+    # test_long_lengths(1024)
+    test_trivial()

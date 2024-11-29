@@ -11,6 +11,7 @@ from audio_dsp.dsp import generic as dspg
 import warnings
 from copy import deepcopy
 
+
 class fir_block_td(dspg.dsp_block):
     """
     An FIR filter, implemented in block form in the time domain.
@@ -34,8 +35,17 @@ class fir_block_td(dspg.dsp_block):
         be set to the same as the DSP pipeline frame size, and must be a multiple of 8.
     """
 
-    def __init__(self, fs: float, n_chans: int, coeffs_path: Path, filter_name: str,
-    output_path: Path, gain_dB=0.0, td_block_length=8, Q_sig: int = dspg.Q_SIG):
+    def __init__(
+        self,
+        fs: float,
+        n_chans: int,
+        coeffs_path: Path,
+        filter_name: str,
+        output_path: Path,
+        gain_dB=0.0,
+        td_block_length=8,
+        Q_sig: int = dspg.Q_SIG,
+    ):
         super().__init__(fs, n_chans, Q_sig)
         self.coeffs = np.loadtxt(coeffs_path)
         self.n_taps = len(self.coeffs)
@@ -47,11 +57,12 @@ class fir_block_td(dspg.dsp_block):
         self.reset_state()
 
         filter_struct_name, prepared_coefs, quantized_coefs = generate_td_fir(
-            self.coeffs, filter_name, output_path, gain_dB, self.block_len)
+            self.coeffs, filter_name, output_path, gain_dB, self.block_len
+        )
 
     def reset_state(self) -> None:
         """Reset all the delay line values to zero."""
-        buffer_len = (self.n_taps + self.block_len - 1)
+        buffer_len = self.n_taps + self.block_len - 1
         self.buffer = np.zeros((self.n_chans, buffer_len))
         self.buffer_int = [[0] * buffer_len for _ in range(self.n_chans)]
         return
@@ -74,8 +85,8 @@ class fir_block_td(dspg.dsp_block):
         frame_size = frame[0].shape[0]
         output = deepcopy(frame)
         for chan in range(n_outputs):
-            self.buffer[chan, self.n_taps-1:] = frame[chan]
-            output[chan] =  np.convolve(self.buffer[chan], self.coeffs, mode="valid")
+            self.buffer[chan, self.n_taps - 1 :] = frame[chan]
+            output[chan] = np.convolve(self.buffer[chan], self.coeffs, mode="valid")
             self.buffer[chan] = np.roll(self.buffer[chan], -self.block_len)
 
         return output
@@ -155,7 +166,7 @@ def generate_td_fir(
     output_path: str,
     gain_dB=0.0,
     td_block_length=8,
-    verbose=False
+    verbose=False,
 ):
     """
     Convert the input array into a header to be included in a C project.
@@ -201,7 +212,9 @@ def generate_td_fir(
         # The count of blocks in the filter ( the data is at least 2 more)
         filter_block_count = target_filter_bank_length // td_block_length
 
-        filter_struct_name, quantized_coefs = _emit_filter(fh, prepared_coefs, filter_name, td_block_length)
+        filter_struct_name, quantized_coefs = _emit_filter(
+            fh, prepared_coefs, filter_name, td_block_length
+        )
 
         # emit the data define
         data_block_count = filter_block_count + 2

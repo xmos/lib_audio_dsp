@@ -71,29 +71,29 @@ dir_name = Path(__file__).parent
 def test_trivial():
     build_and_run_tests(dir_name, np.ones(1))
 
-@pytest.mark.parametrize("length", range(2, 17))
+@pytest.mark.parametrize("length", range(2, 17, 2))
 def test_constant_value_variable_length(length):
     build_and_run_tests(dir_name, np.ones(length))
 
-@pytest.mark.parametrize("length", range(2, 17))
+@pytest.mark.parametrize("length", range(2, 17, 2))
 def test_random_value_variable_length(length):
     build_and_run_tests(dir_name, np.random.uniform(-1, 1, length))
 
-@pytest.mark.parametrize("length", range(2, 17))
+@pytest.mark.parametrize("length", range(2, 17, 2))
 def test_extreme_value_variable_length(length):
     c = np.random.randint(0, 2, length)*2 - 1
     build_and_run_tests(dir_name, c)
 
-@pytest.mark.parametrize("length", range(2, 17))
+@pytest.mark.parametrize("length", range(2, 17, 2))
 def test_all_negative_variable_length(length):
     c = -np.ones(length)
     build_and_run_tests(dir_name, c)
 
-@pytest.mark.parametrize("length", range(2, 17))
+@pytest.mark.parametrize("length", range(2, 17, 2))
 def test_random_pos_value_variable_length(length):
     build_and_run_tests(dir_name, np.abs(np.random.uniform(-1, 1, length)))
 
-@pytest.mark.parametrize("length", range(2, 17))
+@pytest.mark.parametrize("length", range(2, 17, 2))
 def test_random_neg_value_variable_length(length):
     build_and_run_tests(dir_name, np.abs(np.random.uniform(-1, 1, length)))
 

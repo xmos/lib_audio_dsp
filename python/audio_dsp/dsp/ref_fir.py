@@ -102,6 +102,7 @@ def emit_debug_filter(fh: io.TextIOWrapper, coefs: np.ndarray, name: str):
 
     return struct_name
 
+
 def generate_debug_fir(
     td_coefs: np.ndarray,
     filter_name: str,
@@ -111,8 +112,7 @@ def generate_debug_fir(
     td_block_length=None,
     gain_dB=0.0,
     verbose=False,
-    ):
-
+):
     output_file_name = os.path.join(output_path, filter_name + "_debug.h")
     td_coefs = np.array(td_coefs, dtype=np.float64)
 
@@ -122,10 +122,6 @@ def generate_debug_fir(
         rf.emit_debug_filter(fh, td_coefs, filter_name)
 
         fh.write(
-            "#define debug_"
-            + filter_name
-            + "_DATA_BUFFER_ELEMENTS ("
-            + str(len(td_coefs))
-            + ")\n"
+            "#define debug_" + filter_name + "_DATA_BUFFER_ELEMENTS (" + str(len(td_coefs)) + ")\n"
         )
         fh.write("\n")
