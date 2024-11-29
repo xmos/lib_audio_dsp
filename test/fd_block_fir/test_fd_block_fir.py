@@ -34,9 +34,9 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 16, td_block_len
     # run the filter_generator on the coefs
     try:
         generate_fd_fir(coefficients, "dut", gen_dir, frame_advance, frame_overlap, td_block_length, 
-                      gain_dB = gain_dB, verbose = False)
+                      gain_dB = gain_dB, verbose = True)
         generate_debug_fir(coefficients, "dut", gen_dir, frame_advance, frame_overlap, td_block_length, 
-                      gain_dB = gain_dB, verbose = False)
+                      gain_dB = gain_dB, verbose = True)
     except ValueError as e:
         if "Bad config" not in str(e):
             raise e

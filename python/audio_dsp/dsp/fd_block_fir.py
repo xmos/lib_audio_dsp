@@ -196,6 +196,65 @@ def _emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_ele
 
     return name, quantised_coefs
 
+
+def _get_filter_phases(td_block_length, original_td_filter_length, frame_overlap, frame_advance, auto_block_length, verbose):
+    # for every frame advance we must output at least frame_advance samples plus the requested frame_overlap samples
+    minimum_output_samples = frame_overlap + frame_advance
+
+    if minimum_output_samples <= td_block_length + 1 - original_td_filter_length:
+        # This is a single-phase FIR
+        if verbose:
+            print("This is a single-phase FIR")
+
+        taps_per_phase = original_td_filter_length
+        actual_output_sample_count = td_block_length + 1 - original_td_filter_length
+
+        phases = 1
+
+        # update the frame_overlap
+        new_frame_overlap = actual_output_sample_count - frame_advance
+
+    else:
+        # This is a multi-phase FIR
+        if verbose:
+            print("This is a multi-phase FIR")
+
+        # want to work out the minimum number of phases that provides the required
+        # (frame_overlap+frame_advance) output samples, with the constraint of the
+        # taps_per_phase must be no greater than frame_advance.
+
+        # these must be true for a multi-phase implementation
+        taps_per_phase = frame_advance
+        actual_output_sample_count = td_block_length + 1 - taps_per_phase
+
+        if actual_output_sample_count < minimum_output_samples:
+            if auto_block_length:
+                print(f"Auto block length, trying next size up, was: {td_block_length}, now: {td_block_length*2}")
+                # increase block length to get enough output samples
+                td_block_length *= 2
+                # recursion in case we can now do a single phase filter
+                return _get_filter_phases(td_block_length, original_td_filter_length, frame_overlap, frame_advance, auto_block_length, verbose)
+
+        if actual_output_sample_count < minimum_output_samples:
+            achievable_frame_overlap = actual_output_sample_count - frame_advance
+            achievable_frame_advance = actual_output_sample_count - frame_overlap
+            achievable_block_length = minimum_output_samples - 1 + original_td_filter_length
+            if verbose:
+                print("Error")
+                print("\tOption 1: reduce frame_overlap to", achievable_frame_overlap)
+                print("\tOption 2: decrease the frame_advance to", achievable_frame_advance)
+                print("\tOption 3: increase the td_block_length to", achievable_block_length)
+            raise ValueError("Bad config: frame_overlap of", frame_overlap, "is unachievable.")
+
+        phases = (original_td_filter_length + taps_per_phase - 1) // taps_per_phase
+
+        assert phases > 1
+
+        new_frame_overlap = td_block_length + 1 - taps_per_phase - frame_advance
+
+    return td_block_length, phases, taps_per_phase, new_frame_overlap, actual_output_sample_count
+
+
 def generate_fd_fir(
     td_coefs: np.ndarray,
     filter_name: str,
@@ -239,9 +298,12 @@ def generate_fd_fir(
         "efficient, please see AN02027.", UserWarning)
 
     if not td_block_length:
+        auto_block_length = True
         td_block_length = 2**(np.ceil(np.log2(frame_advance)).astype(int) + 1)
     elif not math.log2(td_block_length).is_integer():
         raise ValueError("Bad config: td_block_length is not a power of two")
+    else:
+        auto_block_length = False
 
     output_file_name = os.path.join(output_path, filter_name + ".h")
 
@@ -268,48 +330,7 @@ def generate_fd_fir(
             minimum_output_samples,
         )
 
-    if minimum_output_samples <= td_block_length + 1 - original_td_filter_length:
-        # This is a single-phase FIR
-        if verbose:
-            print("This is a single-phase FIR")
-
-        taps_per_phase = original_td_filter_length
-        actual_output_sample_count = td_block_length + 1 - original_td_filter_length
-
-        phases = 1
-
-        # update the frame_overlap
-        new_frame_overlap = actual_output_sample_count - frame_advance
-
-    else:
-        # This is a multi-phase FIR
-        if verbose:
-            print("This is a multi-phase FIR")
-
-        # want to work out the minimum number of phases that provides the required
-        # (frame_overlap+frame_advance) output samples, with the constraint of the
-        # taps_per_phase must be no greater than frame_advance.
-
-        # these must be true for a multi-phase implementation
-        taps_per_phase = frame_advance
-        actual_output_sample_count = td_block_length + 1 - taps_per_phase
-
-        if actual_output_sample_count < minimum_output_samples:
-            achievable_frame_overlap = actual_output_sample_count - frame_advance
-            achievable_frame_advance = actual_output_sample_count - frame_overlap
-            achievable_block_length = minimum_output_samples - 1 + original_td_filter_length
-            if verbose:
-                print("Error")
-                print("\tOption 1: reduce frame_overlap to", achievable_frame_overlap)
-                print("\tOption 2: decrease the frame_advance to", achievable_frame_advance)
-                print("\tOption 3: increase the td_block_length to", achievable_block_length)
-            raise ValueError("Bad config: frame_overlap of", frame_overlap, "is unachievable.")
-
-        phases = (original_td_filter_length + taps_per_phase - 1) // taps_per_phase
-
-        assert phases > 1
-
-        new_frame_overlap = td_block_length + 1 - taps_per_phase - frame_advance
+    td_block_length, phases, taps_per_phase, new_frame_overlap, actual_output_sample_count = _get_filter_phases(td_block_length, original_td_filter_length, frame_overlap, frame_advance, auto_block_length, verbose)
 
     if new_frame_overlap != frame_overlap:
         warnings.warn(f"Requested a frame overlap of {frame_overlap},"
