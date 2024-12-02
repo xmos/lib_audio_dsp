@@ -198,7 +198,7 @@ class XCommonCMakeHelper:
             or (not cache.exists())
             or not (makefile.exists() or ninjabuild.exists())
         ):
-            cmake_cmd = ["cmake", "-S", f"{self.source_dir}", "-B", f"{self.build_dir}", "-DCMAKE_COLOR_DIAGNOSTICS=OFF"]
+            cmake_cmd = ["cmake", "-S", f"{self.source_dir}", "-B", f"{self.build_dir}", "-DCMAKE_COLOR_MAKEFILE=OFF"]
             if cache.exists():
                 # Generator is already known by CMake
                 ret = subprocess.Popen(
