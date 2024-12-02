@@ -282,7 +282,7 @@ class XCommonCMakeHelper:
             cmd += 'xrun'
         cmd += f" {app}"
         ret = subprocess.Popen(
-            shlex.split(cmd),
+            shlex.split(shlex.quote(cmd)),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
