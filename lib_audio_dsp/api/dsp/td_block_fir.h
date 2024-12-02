@@ -46,7 +46,7 @@ typedef struct td_block_fir_filter_t {
  * ```
  * td_block_fir_data_t {NAME}_fir_data;
  * int32_t {NAME}_data[{NAME}_DATA_BUFFER_ELEMENTS];
- * td_block_fir_data_init(&{NAME}_fir_data, {NAME}_data, {NAME}_DATA_BUFFER_ELEMENTS*sizeof(int32_t));
+ * td_block_fir_data_init(&{NAME}_fir_data, {NAME}_data, {NAME}_DATA_BUFFER_ELEMENTS);
  * ```
  * 
  * @param fir_data              Pointer to struct of type td_block_fir_data_t
@@ -54,8 +54,8 @@ typedef struct td_block_fir_filter_t {
  *                              hold a history of the samples. The define `{NAME}_DATA_BUFFER_ELEMENTS`
  *                              specifies exactly the number of int32_t elements to allocate for
  *                              the filter `{NAME}` to correctly function.
- * @param data_buffer_elements  The number of bytes contained in the data array, this should be 
-                                `{NAME}_DATA_BUFFER_ELEMENTS*sizeof(int32_t)`.
+ * @param data_buffer_elements  The number of words contained in the data array, this should be 
+                                `{NAME}_DATA_BUFFER_ELEMENTS`.
  */
 void td_block_fir_data_init(
     td_block_fir_data_t * fir_data, 

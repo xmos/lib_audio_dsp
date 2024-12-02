@@ -36,8 +36,8 @@ void worker(chanend_t c,
     td_block_fir_filter_t * f1)
 {   
     td_block_fir_data_t d0, d1;
-    td_block_fir_data_init(&d0, data0, data0_elements * sizeof(int32_t));
-    td_block_fir_data_init(&d1, data1, data1_elements * sizeof(int32_t));
+    td_block_fir_data_init(&d0, data0, data0_elements);
+    td_block_fir_data_init(&d1, data1, data1_elements);
     memset(data0, 0, data0_elements *sizeof(int32_t));    
     memset(data1, 0, data1_elements*sizeof(int32_t));
 

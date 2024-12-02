@@ -34,7 +34,7 @@ int run_test(void){
 
         td_block_fir_data_t data;
 
-        td_block_fir_data_init(&data, block_data_td, (dut_DATA_BUFFER_ELEMENTS + TD_BLOCK_FIR_LENGTH*b)* sizeof(int32_t));
+        td_block_fir_data_init(&data, block_data_td, (dut_DATA_BUFFER_ELEMENTS + TD_BLOCK_FIR_LENGTH*b));
 
         memset(block_data_td, 0, sizeof(block_data_td));
         memset(data_debug, 0, sizeof(data_debug));
