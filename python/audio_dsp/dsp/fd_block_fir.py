@@ -13,6 +13,7 @@ import warnings
 from copy import deepcopy
 from typing import Optional, Tuple
 
+
 class fir_block_fd(dspg.dsp_block):
     """
     An FIR filter, implemented in block form in the frequency domain.
@@ -80,9 +81,9 @@ class fir_block_fd(dspg.dsp_block):
         filter_name: str,
         output_path: Path,
         frame_advance: int,
-        frame_overlap: int=0,
-        nfft: Optional[int]=None,
-        gain_dB: float=0.0,
+        frame_overlap: int = 0,
+        nfft: Optional[int] = None,
+        gain_dB: float = 0.0,
         Q_sig: int = dspg.Q_SIG,
     ):
         super().__init__(fs, n_chans, Q_sig)
@@ -101,7 +102,7 @@ class fir_block_fd(dspg.dsp_block):
             gain_dB=gain_dB,
         )
 
-        self.nfft = 2*(self.coeffs_fd.shape[1] - 1)
+        self.nfft = 2 * (self.coeffs_fd.shape[1] - 1)
         self.n_fd_buffers = self.coeffs_fd.shape[0]
 
         self.reset_state()
@@ -322,9 +323,9 @@ def generate_fd_fir(
     filter_name: str,
     output_path: Path,
     frame_advance: int,
-    frame_overlap: int=0,
-    nfft: Optional[int]=None,
-    gain_dB: float=0.0,
+    frame_overlap: int = 0,
+    nfft: Optional[int] = None,
+    gain_dB: float = 0.0,
     verbose=False,
 ):
     """
