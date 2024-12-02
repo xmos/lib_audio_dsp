@@ -38,7 +38,7 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
 
         # run the filter_generator on the coefs
         try:
-            generate_td_fir(coefficients, "dut", gen_dir, gain_dB)
+            generate_td_fir(coefficients, "dut", gen_dir, gain_dB=gain_dB)
             generate_debug_fir(coefficients, "dut", gen_dir, gain_dB = gain_dB, verbose = False)
         except ValueError as e:
             # print('Success (Expected Fail)')

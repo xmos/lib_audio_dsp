@@ -97,7 +97,7 @@ void fd_block_fir_add_data(
  * 
  * @param samples_out  Array of length fir_data->td_block_length, which will be used to return the 
  *                     processed samples. The samples will be returned from element 0 for 
- *                     (fir_data-td_block_length + 1 - fir_filter->taps_per_block) elements.
+ *                     `(fir_data-td_block_length + 1 - fir_filter->taps_per_block)` elements.
  *                     The remaining samples of the array are used as scratch for the processing to be in-place.
  * @param fir_data     Pointer to struct of type fd_fir_data_t from which the data samples will be obtained.
  * @param fir_filter   Pointer to struct of type fd_fir_filter_t from which the coefficients will be obtained.
