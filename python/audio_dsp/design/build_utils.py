@@ -280,9 +280,9 @@ class XCommonCMakeHelper:
             cmd += f'xgdb -q --return-child-result --batch -ex "connect --xscope-port {hostname}:{port} --xscope" -ex "load" -ex "continue"'
         else:
             cmd += 'xrun'
-        cmd += f" {app}"
+        cmd += f' "{app}"'
         ret = subprocess.Popen(
-            shlex.split(shlex.quote(cmd)),
+            shlex.split(cmd),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
