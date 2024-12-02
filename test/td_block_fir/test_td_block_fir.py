@@ -6,7 +6,7 @@ import shutil
 import pytest
 from scipy.signal import firwin
 from audio_dsp.dsp.td_block_fir import generate_td_fir
-from audio_dsp.dsp.ref_fir import generate_debug_fir
+
 import uuid
 from filelock import FileLock
 
@@ -14,7 +14,8 @@ from filelock import FileLock
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../pipeline/python')))
 from build_utils import build
-
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../fd_block_fir')))
+from ref_fir import generate_debug_fir
 
 build_dir_name = "build"
 

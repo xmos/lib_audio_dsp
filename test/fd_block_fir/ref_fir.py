@@ -5,30 +5,6 @@
 import numpy as np
 import io
 import os
-import audio_dsp.dsp.ref_fir as rf
-
-
-def quant(coefs: np.ndarray, exp: float):
-    """
-    Quantise an np.ndarray with exponent exp.
-
-    Parameters
-    ----------
-    coefs : np.ndarray
-        Array of floats to be quanntised
-    exp : float
-        Exponent to use for the quantisation
-
-    Returns
-    -------
-    np.array
-         Array of ints
-    """
-    quantised = np.rint(np.ldexp(coefs, exp))
-    quantised_and_clipped = np.clip(quantised, np.iinfo(np.int32).min, np.iinfo(np.int32).max)
-    assert np.allclose(quantised, quantised_and_clipped)
-    return np.array(quantised_and_clipped, dtype=np.int64)
-
 
 # emit the debug filter coefs
 def emit_debug_filter(fh: io.TextIOWrapper, coefs: np.ndarray, name: str):
@@ -120,7 +96,7 @@ def generate_debug_fir(
     with open(output_file_name, "w") as fh:
         fh.write('#include "dsp/fd_block_fir.h"\n\n')
 
-        rf.emit_debug_filter(fh, td_coefs, filter_name)
+        emit_debug_filter(fh, td_coefs, filter_name)
 
         fh.write(
             "#define debug_" + filter_name + "_DATA_BUFFER_ELEMENTS (" + str(len(td_coefs)) + ")\n"

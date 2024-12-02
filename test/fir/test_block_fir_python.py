@@ -28,10 +28,10 @@ def test_frames(coeff_path, n_chans, block_size):
     gen_dir, block_size, 0, 256)
 
     np.random.seed(0)
-    # signal = sg.pink_noise(48000, 0.1, 0.5)
-    signal = np.zeros(56)
-    signal[:10] = 1
-    signal[30:40] = 1
+    signal = sg.pink_noise(48000, 0.01, 0.5)
+    signal = np.zeros(512)
+    signal[0] = 1
+    # signal[30:40] = 1
     signal = np.tile(signal, [n_chans, 1])
     signal[0] = -signal[0]
     frame_size = block_size
@@ -64,4 +64,4 @@ def test_frames(coeff_path, n_chans, block_size):
         np.testing.assert_allclose(-out_int[0, :], out_int[n, :], atol=(2**(-fir_d.Q_sig + 1)))
 
 if __name__ == "__main__":
-    test_frames("simple_low_pass.txt", 2, 8)
+    test_frames("simple_low_pass.txt", 1, 8)

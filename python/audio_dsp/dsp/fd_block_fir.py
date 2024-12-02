@@ -7,8 +7,8 @@ import argparse
 import math
 import os
 from pathlib import Path
-import audio_dsp.dsp.ref_fir as rf
 from audio_dsp.dsp import generic as dspg
+import audio_dsp.dsp.utils as utils
 import warnings
 from copy import deepcopy
 
@@ -40,7 +40,8 @@ class fir_block_fd(dspg.dsp_block):
         The FFT size in samples of a frame, measured in time domain samples.
         If this is not set, the FFT size is set automatically. An initial
         attempt of ``nfft = 2**(ceil(log2(frame_advance)) + 1)`` is made,
-        but may need to be increased for longer overlaps.
+        but may need to be increased for longer overlaps. If it is set,
+        it must be a power of 2.
     gain_dB : float, optional
         A gain applied to the filters output, by default 0.0
 
@@ -190,7 +191,7 @@ def _emit_filter(fd_block_coefs, name, file_handle, taps_per_block, bits_per_ele
         e = max(exponents)
         exp = bits_per_element - e - 1
 
-        quantised_coefs = rf.quant(flat_fd_block, exp)
+        quantised_coefs = utils.quantize_array(flat_fd_block, exp)
         block_properties.append([offset, exp])
 
         for quantised_coef in quantised_coefs:
@@ -350,7 +351,8 @@ def generate_fd_fir(
         The FFT size in samples of a frame, measured in time domain samples.
         If this is not set, the FFT size is set automatically. An initial
         attempt of ``nfft = 2**(ceil(log2(frame_advance)) + 1)`` is made,
-        but may need to be increased for longer overlaps.
+        but may need to be increased for longer overlaps. If it is set,
+        it must be a power of 2.
     gain_dB : float, optional
         A gain applied to the filters output, by default 0.0
     verbose : bool, optional
@@ -512,26 +514,38 @@ inherit_numpy_docstring(generate_fd_fir.__doc__, fir_block_fd)
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Optional app description")
 
-    parser.add_argument("block_length", type=int, help="Length of a block. Must be a power of 2.")
-    parser.add_argument("filter", type=str, help="path to the filter(numpy format)")
+    parser.add_argument("filter", type=str, help="path to the filter (numpy format)")
     parser.add_argument(
         "--frame_advance",
         type=int,
         default=None,
-        help="The count of new samples from one update to the next. Assumed block_length//2 if not given.",
+        help="The count of new samples from one update to the next. ",
     )
-
-    parser.add_argument(
-        "--frame_overlap", type=int, default=None, help=" TODO . Defaults to 0(LTI filtering)."
-    )
-    parser.add_argument("--gain", type=float, default=0.0, help="Apply a gain to the output(dB).")
-    parser.add_argument("--output", type=str, default=".", help="Output location.")
     parser.add_argument(
         "--name",
         type=str,
         default=None,
-        help="Name for the filter(override the default which is the filename)",
+        help="Name for the filter for use in identification of the filter"
+        "from within the C code.",
     )
+
+    parser.add_argument("--output", type=str, default=".", help="Output location.")
+    parser.add_argument(
+        "--frame_overlap",
+        type=int,
+        default=0,
+        help="The number of additional samples to output per frame. This allows"
+        "windowing between frames to occur. By default no overlap occurs.",
+    )
+    parser.add_argument(
+        "block_length",
+        type=int,
+        default=None,
+        help="The FFT size in samples of a frame, measured in time domain "
+        "samples. Must be a power of 2.",
+    )
+
+    parser.add_argument("--gain", type=float, default=0.0, help="Apply a gain to the output(dB).")
 
     args = parser.parse_args()
 

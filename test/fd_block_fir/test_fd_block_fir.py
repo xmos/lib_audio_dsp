@@ -7,7 +7,7 @@ import shutil
 import pytest
 from scipy.signal import firwin
 from audio_dsp.dsp.fd_block_fir import generate_fd_fir
-from audio_dsp.dsp.ref_fir import generate_debug_fir
+from ref_fir import generate_debug_fir
 import uuid
 
 # TODO move build utils somewhere else

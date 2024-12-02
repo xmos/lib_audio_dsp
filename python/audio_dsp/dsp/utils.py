@@ -376,3 +376,25 @@ def time_to_samples(fs, time: float, units: str) -> int:
     else:
         raise ValueError("Units must be 'samples', 'ms' or 's'")
     return time
+
+
+def quantize_array(coefs: np.ndarray, exp: float):
+    """
+    Quantise an np.ndarray with exponent exp.
+
+    Parameters
+    ----------
+    coefs : np.ndarray
+        Array of floats to be quanntised
+    exp : float
+        Exponent to use for the quantisation
+
+    Returns
+    -------
+    np.array
+         Array of ints
+    """
+    quantised = np.rint(np.ldexp(coefs, exp))
+    quantised_and_clipped = np.clip(quantised, np.iinfo(np.int32).min, np.iinfo(np.int32).max)
+    assert np.allclose(quantised, quantised_and_clipped)
+    return np.array(quantised_and_clipped, dtype=np.int64)
