@@ -198,10 +198,11 @@ class XCommonCMakeHelper:
             or (not cache.exists())
             or not (makefile.exists() or ninjabuild.exists())
         ):
+            cmake_cmd = ["cmake", "-S", f"{self.source_dir}", "-B", f"{self.build_dir}", "-DCMAKE_COLOR_DIAGNOSTICS=OFF"]
             if cache.exists():
                 # Generator is already known by CMake
                 ret = subprocess.Popen(
-                    [*(f"cmake -S {self.source_dir} -B {self.build_dir}".split())],
+                    cmake_cmd,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     text=True,
@@ -211,7 +212,7 @@ class XCommonCMakeHelper:
                 generator = "Unix Makefiles"
                 ret = subprocess.Popen(
                     [
-                        *(f"cmake -S {self.source_dir} -B {self.build_dir} -G".split()),
+                        *cmake_cmd, "-G",
                         generator,
                     ],
                     stdout=subprocess.PIPE,
@@ -236,7 +237,7 @@ class XCommonCMakeHelper:
             Return code from the invokation of CMake. 0 if success.
         """
         ret = subprocess.Popen(
-            f"cmake --build {self.build_dir} --target {self.target_name}".split(),
+            ["cmake", "--build", f"{self.build_dir}", "--target", f"{self.target_name}"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -248,13 +249,13 @@ class XCommonCMakeHelper:
         """
         Invoke xrun or xgdb with the options specified in this class instance.
         If xscope is True, the invokation will be of the form
-        'xgdb -q --return-child-result --batch 
-            -ex "connect --xscope-port <hostname>:<port> --xscope" 
-            -ex "load" 
-            -ex "continue" 
+        'xgdb -q --return-child-result --batch
+            -ex "connect --xscope-port <hostname>:<port> --xscope"
+            -ex "load"
+            -ex "continue"
             <binary>',
         whereas if xscope if False the invokation will be of the form
-        "xrun <binary>", 
+        "xrun <binary>",
         where the path to the binary is constructed as per this
         class' docstring.
 
@@ -280,7 +281,7 @@ class XCommonCMakeHelper:
             cmd += f'xgdb -q --return-child-result --batch -ex "connect --xscope-port {hostname}:{port} --xscope" -ex "load" -ex "continue"'
         else:
             cmd += 'xrun'
-        cmd += f' "{app}"'
+        cmd += f" {shlex.quote(app)}"
         ret = subprocess.Popen(
             shlex.split(cmd),
             stdout=subprocess.PIPE,
