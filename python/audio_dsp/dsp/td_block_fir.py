@@ -72,7 +72,7 @@ class fir_block_td(dspg.dsp_block):
         self.reset_state()
 
         filter_struct_name, prepared_coefs, quantized_coefs = generate_td_fir(
-            self.coeffs, filter_name, output_path, gain_dB, self.frame_advance
+            self.coeffs, filter_name, output_path, self.frame_advance, gain_dB, 
         )
 
     def reset_state(self) -> None:

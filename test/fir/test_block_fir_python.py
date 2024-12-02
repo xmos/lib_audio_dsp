@@ -22,7 +22,7 @@ gen_dir = Path(__file__).parent / "autogen"
 def test_frames(coeff_path, n_chans, block_size):
     fir_d = fir.fir_direct(48000, n_chans, Path(gen_dir, coeff_path))
     fir_btd = tbf.fir_block_td(48000, n_chans, Path(gen_dir, coeff_path), "dut",
-    gen_dir, td_block_length=block_size)
+    gen_dir, frame_advance=block_size)
 
     fir_bfd = fbf.fir_block_fd(48000, n_chans, Path(gen_dir, coeff_path), "dut",
     gen_dir, block_size, 0, 256)

@@ -11,7 +11,7 @@ from audio_dsp.dsp import generic as dspg
 import audio_dsp.dsp.utils as utils
 import warnings
 from copy import deepcopy
-
+from typing import Optional, Tuple
 
 class fir_block_fd(dspg.dsp_block):
     """
@@ -80,9 +80,9 @@ class fir_block_fd(dspg.dsp_block):
         filter_name: str,
         output_path: Path,
         frame_advance: int,
-        frame_overlap=0,
-        nfft=None,
-        gain_dB=0.0,
+        frame_overlap: int=0,
+        nfft: Optional[int]=None,
+        gain_dB: float=0.0,
         Q_sig: int = dspg.Q_SIG,
     ):
         super().__init__(fs, n_chans, Q_sig)
@@ -90,8 +90,6 @@ class fir_block_fd(dspg.dsp_block):
         self.n_taps = len(self.coeffs)
 
         self.frame_advance = frame_advance
-        self.frame_overlap = frame_overlap
-        self.nfft = nfft
 
         filter_struct_name, self.coeffs_fd, quantized_coefs, self.taps_per_phase = generate_fd_fir(
             self.coeffs,
@@ -99,10 +97,11 @@ class fir_block_fd(dspg.dsp_block):
             output_path,
             frame_advance,
             frame_overlap,
-            self.nfft,
+            nfft,
             gain_dB=gain_dB,
         )
 
+        self.nfft = 2*(self.coeffs_fd.shape[1] - 1)
         self.n_fd_buffers = self.coeffs_fd.shape[0]
 
         self.reset_state()
@@ -248,7 +247,7 @@ def _get_filter_phases(
     frame_advance,
     auto_block_length,
     verbose,
-):
+) -> Tuple[int, int, int, int, int]:
     """Calculate the number of phases of the filter, and check it will work.
 
     If using auto_block_length, increase the block length and recursively
@@ -323,9 +322,9 @@ def generate_fd_fir(
     filter_name: str,
     output_path: Path,
     frame_advance: int,
-    frame_overlap=0,
-    nfft=None,
-    gain_dB=0.0,
+    frame_overlap: int=0,
+    nfft: Optional[int]=None,
+    gain_dB: float=0.0,
     verbose=False,
 ):
     """
