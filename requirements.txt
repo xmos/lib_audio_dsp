@@ -114,7 +114,7 @@ pyproject-hooks==1.1.0
     # via
     #   build
     #   pip-tools
-pyright==1.1.372
+pyright==1.1.389
     # via -r tools/requirements.in
 pytest==8.2.2
     # via
@@ -126,7 +126,7 @@ python-dateutil==2.9.0.post0
     # via matplotlib
 pyyaml==6.0.1
     # via audio-dsp
-ruff==0.5.2
+ruff==0.8.1
     # via -r tools/requirements.in
 scipy==1.14.0
     # via audio-dsp
@@ -140,7 +140,7 @@ stack-data==0.6.3
     # via ipython
 tabulate==0.9.0
     # via audio-dsp
-tomli==2.0.1
+tomli==2.2.1
     # via
     #   build
     #   pip-tools
@@ -153,7 +153,9 @@ traitlets==5.14.3
     #   ipywidgets
     #   matplotlib-inline
 typing-extensions==4.12.2
-    # via ipython
+    # via
+    #   ipython
+    #   pyright
 wcwidth==0.2.13
     # via prompt-toolkit
 wheel==0.43.0
