@@ -139,7 +139,7 @@ class Pipeline:
         self.next_thread()
 
     @staticmethod
-    def begin(n_in, identifier="auto", frame_size=1, fs=48000):
+    def begin(n_in, identifier="auto", frame_size=1, fs=48000, generate_xscope_task=False):
         """Create a new Pipeline and get the attributes required for design.
 
         Returns
@@ -147,7 +147,7 @@ class Pipeline:
         Pipeline, Thread, StageOutputList
             The pipeline instance, the initial thread and the pipeline input edges.
         """
-        p = Pipeline(n_in, identifier, frame_size, fs)
+        p = Pipeline(n_in, identifier, frame_size, fs, generate_xscope_task)
         return p, p.i
 
     def _add_thread(self) -> Thread:
