@@ -8,7 +8,7 @@ the Jupyter notebook.
 import IPython
 import ipywidgets as widgets
 import pathlib
-import shutil
+import shlex
 import subprocess
 import time
 
@@ -274,15 +274,15 @@ class XCommonCMakeHelper:
         returncode
             Return code from the invokation of xrun or xgdb. 0 if success.
         """
-        app = self.bin_dir / self.config_name / (self.project_name + self.config_suffix + ".xe")
-        cmd = ""
+        app = f'{self.bin_dir / self.config_name / (self.project_name + self.config_suffix + ".xe")}'
+        cmd = ''
         if xscope:
             cmd += f'xgdb -q --return-child-result --batch -ex "connect --xscope-port {hostname}:{port} --xscope" -ex "load" -ex "continue"'
         else:
-            cmd += "xrun"
+            cmd += 'xrun'
         cmd += f" {app}"
         ret = subprocess.Popen(
-            cmd.split(),
+            shlex.split(cmd),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
