@@ -15,6 +15,7 @@ from python import build_utils, run_pipeline_xcoreai, audio_helpers
 
 from pathlib import Path
 import numpy as np
+import soundfile as sf
 
 
 PKG_DIR = Path(__file__).parent
@@ -59,7 +60,7 @@ def do_test(p, n_outs=1):
     xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile, n_outs, 1)
 
-    _, out_data = audio_helpers.read_wav(outfile)
+    out_data, _ = sf.read(outfile, always_2d=True)
 
     # convert to float scaling and make frames
     frame_size = 1
@@ -74,7 +75,7 @@ def do_test(p, n_outs=1):
     # back to int scaling
     out_py_int = out_py * 2**31
 
-    np.testing.assert_equal(out_py_int, out_data.T)
+    np.testing.assert_equal(out_py, out_data.T)
 
 @pytest.mark.group0
 def test_adder():
