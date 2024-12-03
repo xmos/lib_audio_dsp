@@ -813,7 +813,7 @@ class switch_stereo(dspg.dsp_block):
         self.switch_position = 0
         return
 
-    def process_channels(self, sample_list: list[float]) -> float:
+    def process_channels(self, sample_list: list[float]) -> list[float]:
         """Return the sample at the current switch position.
 
         This method takes a list of samples and returns the sample at
@@ -829,10 +829,10 @@ class switch_stereo(dspg.dsp_block):
         y : float
             The sample at the current switch position.
         """
-        y = sample_list[(2 * self.switch_position):(2 * self.switch_position + 2)]
+        y = sample_list[(2 * self.switch_position) : (2 * self.switch_position + 2)]
         return y
 
-    def process_channels_xcore(self, sample_list: list[float]) -> float:
+    def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
         """Return the sample at the current switch position.
 
         As there is no DSP, this just calls self.process.
@@ -878,7 +878,7 @@ class switch_stereo(dspg.dsp_block):
         frame_size = frame[0].shape[0]
         output = [np.zeros(frame_size)] * 2
         for sample in range(frame_size):
-            out_samples = self.process_channels(frame_np[:, sample].tolist())[0]
+            out_samples = self.process_channels(frame_np[:, sample].tolist())
             output[0][sample] = out_samples[0]
             output[1][sample] = out_samples[1]
 
@@ -909,7 +909,7 @@ class switch_stereo(dspg.dsp_block):
         """
         frame_np = np.array(frame)
         frame_size = frame[0].shape[0]
-        output = np.zeros((2, frame_size))
+        output = [np.zeros(frame_size)] * 2
         for sample in range(frame_size):
             out_samples = self.process_channels_xcore(frame_np[:, sample].tolist())
             output[0][sample] = out_samples[0]
