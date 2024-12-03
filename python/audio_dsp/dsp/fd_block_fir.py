@@ -298,16 +298,16 @@ def _get_filter_phases(
                     verbose,
                 )
 
-        if actual_output_sample_count < minimum_output_samples:
-            achievable_frame_overlap = actual_output_sample_count - frame_advance
-            achievable_frame_advance = actual_output_sample_count - frame_overlap
-            achievable_block_length = minimum_output_samples - 1 + original_td_filter_length
-            if verbose:
-                print("Error")
-                print("\tOption 1: reduce frame_overlap to", achievable_frame_overlap)
-                print("\tOption 2: decrease the frame_advance to", achievable_frame_advance)
-                print("\tOption 3: increase the td_block_length to", achievable_block_length)
-            raise ValueError("Bad config: frame_overlap of", frame_overlap, "is unachievable.")
+            else:
+                achievable_frame_overlap = actual_output_sample_count - frame_advance
+                achievable_frame_advance = actual_output_sample_count - frame_overlap
+                achievable_block_length = minimum_output_samples - 1 + original_td_filter_length
+                if verbose:
+                    print("Error")
+                    print("\tOption 1: reduce frame_overlap to", achievable_frame_overlap)
+                    print("\tOption 2: decrease the frame_advance to", achievable_frame_advance)
+                    print("\tOption 3: increase the td_block_length to", achievable_block_length)
+                raise ValueError("Bad config: frame_overlap of", frame_overlap, "is unachievable.")
 
         phases = (original_td_filter_length + taps_per_phase - 1) // taps_per_phase
 
@@ -418,7 +418,7 @@ def generate_fd_fir(
     if new_frame_overlap != frame_overlap:
         warnings.warn(
             f"Requested a frame overlap of {frame_overlap}, but will get"
-            f" {new_frame_overlap}. \n To increase efficiency, try increasing the length of the filter"
+            f" {new_frame_overlap}. \nTo increase efficiency, try increasing the length of the filter"
             f" by {(new_frame_overlap - frame_overlap) * phases}.",
             UserWarning,
         )
@@ -507,18 +507,13 @@ def generate_fd_fir(
     return filter_struct_name, coeffs_fd, quantized_coefs, taps_per_phase
 
 
-from docstring_inheritance import inherit_numpy_docstring
-
-inherit_numpy_docstring(generate_fd_fir.__doc__, fir_block_fd)
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Optional app description")
 
     parser.add_argument("filter", type=str, help="path to the filter (numpy format)")
     parser.add_argument(
-        "--frame_advance",
+        "frame_advance",
         type=int,
-        default=None,
         help="The count of new samples from one update to the next. ",
     )
     parser.add_argument(
@@ -538,7 +533,7 @@ if __name__ == "__main__":
         "windowing between frames to occur. By default no overlap occurs.",
     )
     parser.add_argument(
-        "block_length",
+        "--nfft",
         type=int,
         default=None,
         help="The FFT size in samples of a frame, measured in time domain "
@@ -548,11 +543,6 @@ if __name__ == "__main__":
     parser.add_argument("--gain", type=float, default=0.0, help="Apply a gain to the output(dB).")
 
     args = parser.parse_args()
-
-    if args.frame_advance == None:
-        frame_advance = args.block_length // 2
-    else:
-        frame_advance = args.frame_advance
 
     output_path = os.path.realpath(args.output)
     filter_path = os.path.realpath(args.filter)
@@ -574,8 +564,8 @@ if __name__ == "__main__":
         coefs,
         filter_name,
         output_path,
-        frame_advance,
-        args.frame_overlap,
-        args.block_length,
+        args.frame_advance,
+        frame_overlap=args.frame_overlap,
+        nfft=args.nfft,
         gain_dB=gain_dB,
     )
