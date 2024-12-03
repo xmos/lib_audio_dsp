@@ -8,7 +8,7 @@ the Jupyter notebook.
 import IPython
 import ipywidgets as widgets
 import pathlib
-import shutil
+import shlex
 import subprocess
 import time
 
@@ -198,10 +198,18 @@ class XCommonCMakeHelper:
             or (not cache.exists())
             or not (makefile.exists() or ninjabuild.exists())
         ):
+            cmake_cmd = [
+                "cmake",
+                "-S",
+                f"{self.source_dir}",
+                "-B",
+                f"{self.build_dir}",
+                "-DCMAKE_COLOR_MAKEFILE=OFF",
+            ]
             if cache.exists():
                 # Generator is already known by CMake
                 ret = subprocess.Popen(
-                    [*(f"cmake -S {self.source_dir} -B {self.build_dir}".split())],
+                    cmake_cmd,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     text=True,
@@ -211,7 +219,8 @@ class XCommonCMakeHelper:
                 generator = "Unix Makefiles"
                 ret = subprocess.Popen(
                     [
-                        *(f"cmake -S {self.source_dir} -B {self.build_dir} -G".split()),
+                        *cmake_cmd,
+                        "-G",
                         generator,
                     ],
                     stdout=subprocess.PIPE,
@@ -236,7 +245,7 @@ class XCommonCMakeHelper:
             Return code from the invokation of CMake. 0 if success.
         """
         ret = subprocess.Popen(
-            f"cmake --build {self.build_dir} --target {self.target_name}".split(),
+            ["cmake", "--build", f"{self.build_dir}", "--target", f"{self.target_name}"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -246,35 +255,45 @@ class XCommonCMakeHelper:
 
     def run(self, xscope: bool = True, hostname: str = "localhost", port: str = "12345") -> int:
         """
-        Invoke xrun with the options specified in this class instance.
-        Invokation will be of the form
-        "xrun <binary>", where the path to the binary is constructed as per this
+        Invoke xrun or xgdb with the options specified in this class instance.
+        If xscope is True, the invokation will be of the form
+        'xgdb -q --return-child-result --batch
+            -ex "connect --xscope-port <hostname>:<port> --xscope"
+            -ex "load"
+            -ex "continue"
+            <binary>',
+        whereas if xscope if False the invokation will be of the form
+        "xrun <binary>",
+        where the path to the binary is constructed as per this
         class' docstring.
 
         Parameters
         ----------
         xscope : bool
-            Specify whether to also pass "--xscope-port {hostname}:{port} as
-            an option to the call to xrun.
+            Specify whether to set up an xscope server or not.
 
         hostname : str
-            Hostname to pass to xrun for the xscope server, if xscope is True
+            Hostname to use for the xscope server if xscope is True
 
         port : str
-            Port to pass to xrun for the xscope server, if xscope is True
+            Port to use for the xscope server if xscope is True
 
         Returns
         -------
         returncode
-            Return code from the invokation of xrun. 0 if success.
+            Return code from the invokation of xrun or xgdb. 0 if success.
         """
-        app = self.bin_dir / self.config_name / (self.project_name + self.config_suffix + ".xe")
-        cmd = "xrun "
+        app = (
+            f'{self.bin_dir / self.config_name / (self.project_name + self.config_suffix + ".xe")}'
+        )
+        cmd = ""
         if xscope:
-            cmd += f"--xscope-port {hostname}:{port} "
-        cmd += f"{app}"
+            cmd += f'xgdb -q --return-child-result --batch -ex "connect --xscope-port {hostname}:{port} --xscope" -ex "load" -ex "continue"'
+        else:
+            cmd += "xrun"
+        cmd += f" {shlex.quote(app)}"
         ret = subprocess.Popen(
-            cmd.split(),
+            shlex.split(cmd),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
