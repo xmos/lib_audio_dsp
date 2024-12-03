@@ -74,7 +74,7 @@ def do_test(p, n_outs=1):
     # back to int scaling
     out_py_int = out_py * 2**31
 
-    np.testing.assert_equal(out_py_int[0], out_data)
+    np.testing.assert_equal(out_py_int, out_data.T)
 
 @pytest.mark.group0
 def test_adder():
