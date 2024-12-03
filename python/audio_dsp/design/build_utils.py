@@ -198,7 +198,14 @@ class XCommonCMakeHelper:
             or (not cache.exists())
             or not (makefile.exists() or ninjabuild.exists())
         ):
-            cmake_cmd = ["cmake", "-S", f"{self.source_dir}", "-B", f"{self.build_dir}", "-DCMAKE_COLOR_MAKEFILE=OFF"]
+            cmake_cmd = [
+                "cmake",
+                "-S",
+                f"{self.source_dir}",
+                "-B",
+                f"{self.build_dir}",
+                "-DCMAKE_COLOR_MAKEFILE=OFF",
+            ]
             if cache.exists():
                 # Generator is already known by CMake
                 ret = subprocess.Popen(
@@ -212,7 +219,8 @@ class XCommonCMakeHelper:
                 generator = "Unix Makefiles"
                 ret = subprocess.Popen(
                     [
-                        *cmake_cmd, "-G",
+                        *cmake_cmd,
+                        "-G",
                         generator,
                     ],
                     stdout=subprocess.PIPE,
@@ -275,12 +283,14 @@ class XCommonCMakeHelper:
         returncode
             Return code from the invokation of xrun or xgdb. 0 if success.
         """
-        app = f'{self.bin_dir / self.config_name / (self.project_name + self.config_suffix + ".xe")}'
-        cmd = ''
+        app = (
+            f'{self.bin_dir / self.config_name / (self.project_name + self.config_suffix + ".xe")}'
+        )
+        cmd = ""
         if xscope:
             cmd += f'xgdb -q --return-child-result --batch -ex "connect --xscope-port {hostname}:{port} --xscope" -ex "load" -ex "continue"'
         else:
-            cmd += 'xrun'
+            cmd += "xrun"
         cmd += f" {shlex.quote(app)}"
         ret = subprocess.Popen(
             shlex.split(cmd),
