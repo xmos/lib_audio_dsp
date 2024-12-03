@@ -65,7 +65,7 @@ def do_test(p, n_outs=1):
     frame_size = 1
     sig_flt = np.float64(sig.T) * 2**-31
     signal_frames = utils.frame_signal(sig_flt, frame_size, frame_size)
-    out_py = np.zeros((1, sig.shape[0]))
+    out_py = np.zeros((n_outs, sig.shape[0]))
 
     # run through Python bit exact implementation
     for n in range(len(signal_frames)):

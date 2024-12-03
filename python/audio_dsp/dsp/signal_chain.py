@@ -876,11 +876,13 @@ class switch_stereo(dspg.dsp_block):
         """
         frame_np = np.array(frame)
         frame_size = frame[0].shape[0]
-        output = np.zeros(frame_size)
+        output = [np.zeros(frame_size)] * 2
         for sample in range(frame_size):
-            output[sample] = self.process_channels(frame_np[:, sample].tolist())
+            out_samples = self.process_channels(frame_np[:, sample].tolist())[0]
+            output[0][sample] = out_samples[0]
+            output[1][sample] = out_samples[1]
 
-        return [output]
+        return output
 
     def process_frame_xcore(self, frame: list[np.ndarray]) -> list[np.ndarray]:
         """
@@ -907,11 +909,12 @@ class switch_stereo(dspg.dsp_block):
         """
         frame_np = np.array(frame)
         frame_size = frame[0].shape[0]
-        output = np.zeros(frame_size)
+        output = np.zeros((2, frame_size))
         for sample in range(frame_size):
-            output[sample] = self.process_channels_xcore(frame_np[:, sample].tolist())
-
-        return [output]
+            out_samples = self.process_channels_xcore(frame_np[:, sample].tolist())
+            output[0][sample] = out_samples[0]
+            output[1][sample] = out_samples[1]
+        return output
 
     def move_switch(self, position: int) -> None:
         """Move the switch to the specified position. This will cause
