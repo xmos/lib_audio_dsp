@@ -21,7 +21,7 @@ PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
 
-def do_test(p):
+def do_test(p, n_outs=1):
     """
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
@@ -47,11 +47,17 @@ def do_test(p):
         sig1 = np.linspace(-2**23, 2**23, n_samps, dtype=np.int32)  << 4
     else:
         sig1 = np.linspace(2**23, -2**23, n_samps, dtype=np.int32)  << 4
-    sig = np.stack((sig0, sig1), axis=1)
+
+    if type(ref_module) == sc.switch_stereo:
+                sig = np.stack((sig0, sig0, sig1, sig1), axis=1)
+    else:
+        sig = np.stack((sig0, sig1), axis=1)
+        
+
     audio_helpers.write_wav(infile, rate, sig)
 
     xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
-    run_pipeline_xcoreai.run(xe, infile, outfile, 1, 1)
+    run_pipeline_xcoreai.run(xe, infile, outfile, n_outs, 1)
 
     _, out_data = audio_helpers.read_wav(outfile)
 
@@ -148,4 +154,7 @@ def test_switch_stereo(position):
     p["s"].move_switch(position)
     p.set_outputs(switch_dsp)
 
-    do_test(p)
+    do_test(p, n_outs=2)
+
+if __name__ == "__main__":
+    test_switch_stereo(0)

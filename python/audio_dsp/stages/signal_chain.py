@@ -311,7 +311,7 @@ class SwitchStereo(Stage):
     """
 
     def __init__(self, index=0, **kwargs):
-        super().__init__(config=find_config("switch"), **kwargs)
+        super().__init__(config=find_config("switch_stereo"), **kwargs)
         self.index = index
         self.create_outputs(2)
         self.dsp_block = sc.switch_stereo(self.fs, self.n_in)

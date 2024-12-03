@@ -13,10 +13,14 @@
 void switch_stereo_process(int32_t **input, int32_t **output, void *app_data_state)
 {
     switch_stereo_state_t *state = app_data_state;
-    int32_t *in = input[2 * state->config.position];
-    int32_t *out = output[0];
+    int32_t *in_1 = input[2 * state->config.position];
+    int32_t *in_2 = input[2 * state->config.position + 1];
 
-    memcpy(out, in, 2 * sizeof(int32_t) * state->frame_size);
+    int32_t *out_1 = output[0];
+    int32_t *out_2 = output[1];
+
+    memcpy(out_1, in_1, sizeof(int32_t) * state->frame_size);
+    memcpy(out_2, in_2, sizeof(int32_t) * state->frame_size);
 
 }
 
