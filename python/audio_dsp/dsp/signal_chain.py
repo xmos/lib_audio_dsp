@@ -798,7 +798,10 @@ class switch(dspg.dsp_block):
 
 
 class switch_stereo(dspg.dsp_block):
-    """A class representing a switch in a signal chain.
+    """A class representing a stereo switch in a signal chain.
+
+    The inputs should be grouped in stereo pairs, e.g.
+    ``[0_L, 0_R, 1_L, 1_R, ...]``.
 
     Attributes
     ----------
@@ -814,7 +817,7 @@ class switch_stereo(dspg.dsp_block):
         return
 
     def process_channels(self, sample_list: list[float]) -> list[float]:
-        """Return the sample at the current switch position.
+        """Return the stereo samples at the current switch position.
 
         This method takes a list of samples and returns the sample at
         the current switch position.
@@ -822,32 +825,32 @@ class switch_stereo(dspg.dsp_block):
         Parameters
         ----------
         sample_list : list
-            A list of samples for each of the switch inputs.
+            A list of samples for each of the stereo switch inputs.
 
         Returns
         -------
         y : float
-            The sample at the current switch position.
+            The stereo samples at the current switch position.
         """
         y = sample_list[(2 * self.switch_position) : (2 * self.switch_position + 2)]
         return y
 
     def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
-        """Return the sample at the current switch position.
+        """Return the stereo samples at the current switch position.
 
         As there is no DSP, this just calls self.process.
 
         Parameters
         ----------
         sample_list : list
-            A list of samples for each of the switch inputs.
+            A list of samples for each of the stereo switch inputs.
         channel : int
             Not used by this DSP module.
 
         Returns
         -------
         y : float
-            The sample at the current switch position.
+            The stereo samples at the current switch position.
         """
         return self.process_channels(sample_list)
 
@@ -860,19 +863,20 @@ class switch_stereo(dspg.dsp_block):
         number of arrays is equal to the number of channels, and the
         length of the arrays is equal to the frame size.
 
-        When switching, the input channels are combined into a single
-        output channel. This means the output frame will be a list of
-        length 1.
+        When switching, the stereo input channels pairs are switched
+        between to select the stereo output channel. This means the
+        output frame will be a list of length 2.
 
         Parameters
         ----------
         frame : list
             List of frames, where each frame is a 1-D numpy array.
+            Stereo pairs should be consecutive.
 
         Returns
         -------
         list
-            Length 1 list of processed frames.
+            Length 2 list of processed frames.
         """
         frame_np = np.array(frame)
         frame_size = frame[0].shape[0]
@@ -893,19 +897,20 @@ class switch_stereo(dspg.dsp_block):
         number of arrays is equal to the number of channels, and the
         length of the arrays is equal to the frame size.
 
-        When switching, the input channels are combined into a single
-        output channel. This means the output frame will be a list of
-        length 1.
+        When switching, the stereo input channels pairs are switched
+        between to select the stereo output channel. This means the
+        output frame will be a list of length 2.
 
         Parameters
         ----------
         frame : list
             List of frames, where each frame is a 1-D numpy array.
+            Stereo pairs should be consecutive.
 
         Returns
         -------
         list
-            Length 1 list of processed frames.
+            Length 2 list of processed frames.
         """
         frame_np = np.array(frame)
         frame_size = frame[0].shape[0]

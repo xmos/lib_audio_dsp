@@ -305,8 +305,10 @@ class Switch(Stage):
 
 class SwitchStereo(Stage):
     """
-    Switch the input to one of the outputs. The switch can be used to
-    select between different signals.
+    Switch the input to one of the stereo pairs of outputs. The switch
+    can be used to select between different stereo signal pairs. The
+    inputs should be passed in pairs, e.g. ``[0_L, 0_R, 1_L, 1_R, ...]``.
+    Setting the switch position will output the nth pair.
 
     """
 
@@ -325,7 +327,7 @@ class SwitchStereo(Stage):
         ----------
         position : int
             The position to which to move the switch. This changes the output
-            signal to the input[position]
+            signal to the [input[2*position], input[:2*position + 1]]
         """
         self.dsp_block.move_switch(position)
         return self
