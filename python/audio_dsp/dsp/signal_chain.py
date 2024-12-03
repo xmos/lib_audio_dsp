@@ -829,7 +829,7 @@ class switch_stereo(dspg.dsp_block):
         y : float
             The sample at the current switch position.
         """
-        y = sample_list[(2 * self.switch_position), (2 * self.switch_position + 1)]
+        y = sample_list[(2 * self.switch_position):(2 * self.switch_position + 2)]
         return y
 
     def process_channels_xcore(self, sample_list: list[float]) -> float:
