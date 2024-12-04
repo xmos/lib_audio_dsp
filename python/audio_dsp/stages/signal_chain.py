@@ -303,6 +303,36 @@ class Switch(Stage):
         return self
 
 
+class SwitchStereo(Stage):
+    """
+    Switch the input to one of the stereo pairs of outputs. The switch
+    can be used to select between different stereo signal pairs. The
+    inputs should be passed in pairs, e.g. ``[0_L, 0_R, 1_L, 1_R, ...]``.
+    Setting the switch position will output the nth pair.
+
+    """
+
+    def __init__(self, index=0, **kwargs):
+        super().__init__(config=find_config("switch_stereo"), **kwargs)
+        self.index = index
+        self.create_outputs(2)
+        self.dsp_block = sc.switch_stereo(self.fs, self.n_in)
+        self.set_control_field_cb("position", lambda: self.dsp_block.switch_position)
+
+    def move_switch(self, position):
+        """
+        Move the switch to the specified position.
+
+        Parameters
+        ----------
+        position : int
+            The position to which to move the switch. This changes the output
+            signal to the [input[2*position], input[:2*position + 1]]
+        """
+        self.dsp_block.move_switch(position)
+        return self
+
+
 class Delay(Stage):
     """
     Delay the input signal by a specified amount.

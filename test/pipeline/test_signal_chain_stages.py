@@ -6,7 +6,7 @@ number of inputs and outputs
 """
 import pytest
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
-from audio_dsp.stages.signal_chain import Adder, Subtractor, Mixer, Switch
+from audio_dsp.stages.signal_chain import Adder, Subtractor, Mixer, Switch, SwitchStereo
 from audio_dsp.stages.compressor_sidechain import CompressorSidechain
 
 import audio_dsp.dsp.utils as utils
@@ -15,13 +15,14 @@ from python import build_utils, run_pipeline_xcoreai, audio_helpers
 
 from pathlib import Path
 import numpy as np
+import soundfile as sf
 
 
 PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
 
-def do_test(p):
+def do_test(p, n_outs=1):
     """
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
@@ -47,19 +48,25 @@ def do_test(p):
         sig1 = np.linspace(-2**23, 2**23, n_samps, dtype=np.int32)  << 4
     else:
         sig1 = np.linspace(2**23, -2**23, n_samps, dtype=np.int32)  << 4
-    sig = np.stack((sig0, sig1), axis=1)
+
+    if type(ref_module) == sc.switch_stereo:
+                sig = np.stack((sig0, sig0, sig1, sig1), axis=1)
+    else:
+        sig = np.stack((sig0, sig1), axis=1)
+        
+
     audio_helpers.write_wav(infile, rate, sig)
 
     xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
-    run_pipeline_xcoreai.run(xe, infile, outfile, 1, 1)
+    run_pipeline_xcoreai.run(xe, infile, outfile, n_outs, 1)
 
-    _, out_data = audio_helpers.read_wav(outfile)
+    out_data, _ = sf.read(outfile, always_2d=True)
 
     # convert to float scaling and make frames
     frame_size = 1
     sig_flt = np.float64(sig.T) * 2**-31
     signal_frames = utils.frame_signal(sig_flt, frame_size, frame_size)
-    out_py = np.zeros((1, sig.shape[0]))
+    out_py = np.zeros((n_outs, sig.shape[0]))
 
     # run through Python bit exact implementation
     for n in range(len(signal_frames)):
@@ -68,7 +75,7 @@ def do_test(p):
     # back to int scaling
     out_py_int = out_py * 2**31
 
-    np.testing.assert_equal(out_py_int[0], out_data)
+    np.testing.assert_equal(out_py, out_data.T)
 
 @pytest.mark.group0
 def test_adder():
@@ -136,3 +143,19 @@ def test_switch(position):
 
     do_test(p)
 
+
+@pytest.mark.parametrize("position", ([0, 1]))
+def test_switch_stereo(position):
+    """
+    Test the mixer stage adds the same in Python and C
+    """
+    channels = 4
+    p = Pipeline(channels)
+    switch_dsp = p.stage(SwitchStereo, p.i, "s")
+    p["s"].move_switch(position)
+    p.set_outputs(switch_dsp)
+
+    do_test(p, n_outs=2)
+
+if __name__ == "__main__":
+    test_switch_stereo(0)
