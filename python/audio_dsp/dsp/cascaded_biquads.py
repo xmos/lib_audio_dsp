@@ -28,6 +28,8 @@ class cascaded_biquads_8(dspg.dsp_block):
     ----------
     coeffs_list : list
         List of coefficients for each biquad in the cascade.
+    b_shift_list : list
+        List of b_shift values to use when initialising each biquad. See biquad docs for details.
 
     Attributes
     ----------
@@ -36,13 +38,19 @@ class cascaded_biquads_8(dspg.dsp_block):
 
     """
 
-    def __init__(self, coeffs_list, fs, n_chans, Q_sig=dspg.Q_SIG):
+    def __init__(self, coeffs_list, fs, n_chans, Q_sig=dspg.Q_SIG, b_shift_list=None):
         super().__init__(fs, n_chans, Q_sig)
         self.biquads = []
+        b_shift_list = b_shift_list or [0] * 8
         assert len(coeffs_list) <= 8, "Too many biquads in coeffs_list"
+        assert len(b_shift_list) >= len(
+            coeffs_list
+        ), "b_shift must be provided for all coefficients"
         for n in range(8):
             if n < len(coeffs_list):
-                self.biquads.append(bq.biquad(coeffs_list[n], fs, n_chans, Q_sig=Q_sig))
+                self.biquads.append(
+                    bq.biquad(coeffs_list[n], fs, n_chans, b_shift=b_shift_list[n], Q_sig=Q_sig)
+                )
             else:
                 self.biquads.append(bq.biquad_bypass(fs, n_chans))
 
@@ -282,12 +290,21 @@ class parametric_eq_8band(cascaded_biquads_8):
 
     def __init__(self, fs, n_chans, filter_spec, Q_sig=dspg.Q_SIG):
         coeffs_list = []
+        b_shift_list = []
         for spec in filter_spec:
             class_name = f"make_biquad_{spec[0]}"
             class_handle = getattr(bq, class_name)
             coeffs_list.append(class_handle(fs, *spec[1:]))
 
-        super().__init__(coeffs_list, fs, n_chans, Q_sig=Q_sig)
+            # hack, some biqauds in biquad.py use higher b_shift and there isn't an
+            # easy way to figure out which ones.
+            b_shift_list.append(
+                bq.BOOST_BSHIFT
+                if spec[0] in ("highshelf", "peaking", "constant_q", "gain", "lowshelf")
+                else 0
+            )
+
+        super().__init__(coeffs_list, fs, n_chans, b_shift_list=b_shift_list, Q_sig=Q_sig)
 
 
 def make_butterworth_lowpass(N, fc, fs):
