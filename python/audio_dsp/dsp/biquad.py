@@ -87,6 +87,12 @@ class biquad(dspg.dsp_block):
         """
         self.coeffs, self.int_coeffs = _round_and_check(new_coeffs, self.b_shift)
 
+        # reset states to avoid clicks
+        self._x1 = [0.0] * self.n_chans
+        self._x2 = [0.0] * self.n_chans
+        self._y1 = [0.0] * self.n_chans
+        self._y2 = [0.0] * self.n_chans
+
     def process(self, sample: float, channel: int = 0) -> float:
         """
         Filter a single sample using direct form 1 biquad using floating
