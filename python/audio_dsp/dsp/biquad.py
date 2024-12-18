@@ -334,6 +334,12 @@ class biquad_slew(biquad):
 
     Attributes
     ----------
+    coeffs : list[list[float]]
+        List of normalised float biquad coefficients in the form in the
+        form `[b0, b1, b2, -a1, -a2]/a0`, rounded to int32 precision.
+    int_coeffs : list[list[int]]
+        List of normalised int biquad coefficients in the form in the
+        form `[b0, b1, b2, -a1, -a2]/a0`, scaled and rounded to int32.
     target_coeffs : list[float]
         List of normalised float target biquad coefficients in the form in the
         form `[b0, b1, b2, -a1, -a2]/a0`, rounded to int32 precision. The coeffs
@@ -363,8 +369,8 @@ class biquad_slew(biquad):
         )
         self.target_coeffs = deepcopy(self.coeffs)
         self.target_coeffs_int = deepcopy(self.int_coeffs)
-        self.coeffs = [deepcopy(self.coeffs)] * n_chans
-        self.int_coeffs = [deepcopy(self.int_coeffs)] * n_chans
+        self.coeffs = [deepcopy(self.coeffs) for chan in range(n_chans)]
+        self.int_coeffs = [deepcopy(self.int_coeffs) for chan in range(n_chans)]
         self.slew_shift = slew_shift
 
     def update_coeffs(self, new_coeffs: list[float]):
@@ -386,7 +392,7 @@ class biquad_slew(biquad):
 
         for n in range(5):
             self.coeffs[channel][n] += (
-                self.target_coeffs[n] - self.coeffs[channel][n]
+                self.target_coeffs[n] - self.coeffs[channel][n]  # pyright: ignore : overloads base class coeffs
             ) * 2**-self.slew_shift
 
         y = (
@@ -410,6 +416,10 @@ class biquad_slew(biquad):
         return y
 
     def process_int(self, sample: float, channel: int = 0) -> float:
+        """
+        Filter a single sample using direct form 1 biquad using int32
+        fixed point maths.
+        """
         raise NotImplementedError
 
     def process_xcore(self, sample: float, channel: int = 0) -> float:
@@ -425,7 +435,7 @@ class biquad_slew(biquad):
 
         for n in range(5):
             self.int_coeffs[channel][n] += (
-                utils.saturate_int32_vpu(self.target_coeffs_int[n] - self.int_coeffs[channel][n])
+                utils.saturate_int32_vpu(self.target_coeffs_int[n] - self.int_coeffs[channel][n])  # pyright: ignore : overloads base class int_coeffs
                 >> self.slew_shift
             )
 
