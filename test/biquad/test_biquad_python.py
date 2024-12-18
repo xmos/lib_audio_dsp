@@ -258,36 +258,42 @@ def test_coeff_change():
     bq_1 = bq.biquad(coeffs_1, fs, 1)
     bq_2 = bq.biquad_slew(coeffs_1, fs, 1, slew_shift=6)
     bq_3 = bq.biquad(coeffs_1, fs, 1)
+    bq_4 = bq.biquad_slew(coeffs_1, fs, 1, slew_shift=6)
 
-    # signal = gen.white_noise(fs, 0.2, 0.5)
     signal = gen.sin(fs, 0.2, 10000, 0.1)
 
     output_flt_1 = np.zeros_like(signal)
     output_flt_2 = np.zeros_like(signal)
     output_flt_3 = np.zeros_like(signal)
+    output_vpu = np.zeros_like(signal)
 
     for n in range(2000):
         output_flt_1[n] = bq_1.process(signal[n])
         output_flt_2[n] = bq_2.process(signal[n])
         output_flt_3[n] = bq_3.process(signal[n])
+        output_vpu[n] = bq_4.process_xcore(signal[n])
 
     bq_1.update_coeffs(coeffs_2)
     bq_2.update_coeffs(coeffs_2)
-    bq_3.update_coeffs_2(coeffs_2)
+    bq_3.update_coeffs(coeffs_2)
+    bq_4.update_coeffs(coeffs_2)
 
     for n in range(2000, 5000):
         output_flt_1[n] = bq_1.process(signal[n])
         output_flt_2[n] = bq_2.process(signal[n])
         output_flt_3[n] = bq_3.process(signal[n])
+        output_vpu[n] = bq_4.process_xcore(signal[n])
 
     bq_1.update_coeffs(coeffs_1)
     bq_2.update_coeffs(coeffs_1)
-    bq_3.update_coeffs_2(coeffs_1)
+    bq_3.update_coeffs(coeffs_1)
+    bq_4.update_coeffs(coeffs_1)
 
     for n in range(5000, len(signal)):
         output_flt_1[n] = bq_1.process(signal[n])
         output_flt_2[n] = bq_2.process(signal[n])
         output_flt_3[n] = bq_3.process(signal[n])
+        output_vpu[n] = bq_4.process_xcore(signal[n])
 
     pass
 

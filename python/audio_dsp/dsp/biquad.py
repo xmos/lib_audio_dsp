@@ -311,7 +311,7 @@ class biquad_slew(biquad):
     def process(self, sample: float, channel: int = 0) -> float:
         """
         Filter a single sample using direct form 1 biquad using floating
-        point maths.
+        point maths. This will slew the coeffs towards the target coefficients.
 
         """
 
@@ -338,6 +338,53 @@ class biquad_slew(biquad):
 
         return y
 
+    def process_int(self, sample: float, channel: int = 0) -> float:
+        raise NotImplementedError
+
+    def process_xcore(self, sample: float, channel: int = 0) -> float:
+        """
+        Filter a single sample using direct form 1 biquad using int32
+        fixed point maths, with use of the XS3 VPU.
+
+        The float input sample is quantized to int32, and returned to
+        float before outputting.
+
+        """
+        sample_int = utils.float_to_int32(sample, self.Q_sig)
+
+        for n in range(5):
+            self.int_coeffs[channel][n] += utils.saturate_int32_vpu(self.target_coeffs_int[n] - self.int_coeffs[channel][n]) >> self.slew_shift
+
+
+        # process a single sample using direct form 1. In the VPU the
+        # ``>> 30`` comes before accumulation
+        y = utils.vlmaccr(
+            [
+                sample_int,
+                self._x1[channel],
+                self._x2[channel],
+                self._y1[channel],
+                self._y2[channel],
+            ],
+            self.int_coeffs[channel],
+        )
+
+        y = utils.saturate_int32(y)
+
+        # save states
+        self._x2[channel] = utils.int32(self._x1[channel])
+        self._x1[channel] = utils.int32(sample_int)
+        self._y2[channel] = utils.int32(self._y1[channel])
+        self._y1[channel] = utils.int32(y)
+
+        # compensate for coefficients
+        y = utils.int64(y << self.b_shift)
+        y = utils.saturate_int32(y)
+
+        y_flt = utils.int32_to_float(y, self.Q_sig)
+
+        return y_flt
+
 def biquad_bypass(fs: int, n_chans: int, Q_sig=dspg.Q_SIG) -> biquad:
     """Return a biquad object with `b0 = 1`, i.e. output=input."""
     coeffs = make_biquad_bypass(fs)
@@ -355,6 +402,7 @@ def biquad_lowpass(
 ) -> biquad:
     """Return a biquad object with low pass filter coefficients."""
     coeffs = make_biquad_lowpass(fs, filter_freq, q_factor)
+    coeffs = _apply_biquad_gain(coeffs, gain)
     return biquad(coeffs, fs, n_chans=n_chans, Q_sig=Q_sig)
 
 
@@ -363,6 +411,7 @@ def biquad_highpass(
 ) -> biquad:
     """Return a biquad object with high pass filter coefficients."""
     coeffs = make_biquad_highpass(fs, filter_freq, q_factor)
+    coeffs = _apply_biquad_gain(coeffs, gain)
     return biquad(coeffs, fs, n_chans=n_chans, Q_sig=Q_sig)
 
 
@@ -372,6 +421,7 @@ def biquad_bandpass(
     """Return a biquad object with bandpass filter coefficients."""
     # bw is bandwidth in octaves
     coeffs = make_biquad_bandpass(fs, filter_freq, bw)
+
     return biquad(coeffs, fs, n_chans=n_chans, Q_sig=Q_sig)
 
 
@@ -925,7 +975,7 @@ def make_biquad_peaking(
     max_gain = (BOOST_BSHIFT + 1) * (20 * np.log10(2))
     boost_db = _check_max_gain(boost_db, max_gain)
 
-    A = np.sqrt(10 ** (boost_db / 40))
+    A = np.sqrt(10 ** (boost_db / 20))
     w0 = 2.0 * np.pi * filter_freq / fs
     alpha = np.sin(w0) / (2.0 * q_factor)
 
@@ -997,12 +1047,12 @@ def make_biquad_constant_q(
         a2 = 1 - K / q_factor + K**2
     else:
         V = 1 / V
-        b0 = 1 + K / q_factor + K**2
+        b0 = 1 + (K / q_factor) + K**2
         b1 = 2 * (K**2 - 1)
-        b2 = 1 - K / q_factor + K**2
-        a0 = 1 + V * K / q_factor + K**2
+        b2 = 1 - (K / q_factor) + K**2
+        a0 = 1 + (V * K / q_factor) + K**2
         a1 = 2 * (K**2 - 1)
-        a2 = 1 - V * K / q_factor + K**2
+        a2 = 1 - (V * K / q_factor) + K**2
 
     coeffs = [b0, b1, b2, a0, a1, a2]
     coeffs = _normalise_biquad(coeffs)
