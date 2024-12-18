@@ -282,6 +282,62 @@ class biquad(dspg.dsp_block):
             self._y2[chan] = 0
 
 
+class biquad_slew(biquad):
+    def __init__(        self,
+        coeffs: list[float],
+        fs: int,
+        n_chans: int = 1,
+        b_shift: int = 0,
+        slew_shift: int = 2,
+        Q_sig: int = dspg.Q_SIG,):
+
+        super().__init__(coeffs, fs, n_chans, b_shift, Q_sig,)
+        self.target_coeffs = deepcopy(self.coeffs)
+        self.target_coeffs_int = deepcopy(self.int_coeffs)
+        self.coeffs = [deepcopy(self.coeffs)]*n_chans
+        self.int_coeffs = [deepcopy(self.int_coeffs)]*n_chans
+        self.slew_shift = slew_shift
+
+    def update_coeffs(self, new_coeffs: list[float]):
+        """Update the saved coefficients to the input values.
+
+        Parameters
+        ----------
+        new_coeffs : list[float]
+            The new coefficients to be updated.
+        """
+        self.target_coeffs, self.target_coeffs_int = _round_and_check(new_coeffs, self.b_shift)
+
+    def process(self, sample: float, channel: int = 0) -> float:
+        """
+        Filter a single sample using direct form 1 biquad using floating
+        point maths.
+
+        """
+
+        for n in range(5):
+            self.coeffs[channel][n] += (self.target_coeffs[n] - self.coeffs[channel][n]) * 2**-self.slew_shift
+
+        y = (
+            self.coeffs[channel][0] * sample
+            + self.coeffs[channel][1] * self._x1[channel]
+            + self.coeffs[channel][2] * self._x2[channel]
+            + self.coeffs[channel][3] * self._y1[channel]
+            + self.coeffs[channel][4] * self._y2[channel]
+        )
+
+        y = utils.saturate_float(y, self.Q_sig)
+
+        self._x2[channel] = self._x1[channel]
+        self._x1[channel] = sample
+        self._y2[channel] = self._y1[channel]
+        self._y1[channel] = y
+
+        y = y * (1 << self.b_shift)
+        y = utils.saturate_float(y, self.Q_sig)
+
+        return y
+
 def biquad_bypass(fs: int, n_chans: int, Q_sig=dspg.Q_SIG) -> biquad:
     """Return a biquad object with `b0 = 1`, i.e. output=input."""
     coeffs = make_biquad_bypass(fs)
@@ -869,7 +925,7 @@ def make_biquad_peaking(
     max_gain = (BOOST_BSHIFT + 1) * (20 * np.log10(2))
     boost_db = _check_max_gain(boost_db, max_gain)
 
-    A = np.sqrt(10 ** (boost_db / 20))
+    A = np.sqrt(10 ** (boost_db / 40))
     w0 = 2.0 * np.pi * filter_freq / fs
     alpha = np.sin(w0) / (2.0 * q_factor)
 
