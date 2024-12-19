@@ -43,10 +43,10 @@ def saturation_test(filter: bq.biquad, fs):
     top_half = utils.db(output_flt) > -50
     if np.any(top_half):
         error_flt = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
-        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        mean_error_flt = np.abs(utils.db(np.nanmean(utils.db2gain(error_flt))))
         assert mean_error_flt < 0.055
         error_vpu = np.abs(utils.db(output_int[top_half])-utils.db(output_vpu[top_half]))
-        mean_error_vpu = utils.db(np.nanmean(utils.db2gain(error_vpu)))
+        mean_error_vpu = np.abs(utils.db(np.nanmean(utils.db2gain(error_vpu))))
         assert mean_error_vpu < 0.05
 
 
@@ -77,10 +77,10 @@ def chirp_filter_test(filter: bq.biquad, fs):
 
     if np.any(top_half):
         error_flt = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
-        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        mean_error_flt = np.abs(utils.db(np.nanmean(utils.db2gain(error_flt))))
         assert mean_error_flt < 0.055
         error_vpu = np.abs(utils.db(output_int[top_half])-utils.db(output_vpu[top_half]))
-        mean_error_vpu = utils.db(np.nanmean(utils.db2gain(error_vpu)))
+        mean_error_vpu = np.abs(utils.db(np.nanmean(utils.db2gain(error_vpu))))
         assert mean_error_vpu < 0.05
 
 
@@ -302,6 +302,17 @@ def test_coeff_change():
     assert np.max(np.abs(output_flt_slew - dc)) < amplitude*1.01
     assert np.max(np.abs(output_vpu_slew - dc)) < amplitude*1.01
 
+    top_half = utils.db(output_flt_reset) > -50
+    if np.any(top_half):
+        error_vpu = np.abs(utils.db(output_flt_reset[top_half])-utils.db(output_vpu_reset[top_half]))
+        mean_error_vpu = np.abs(utils.db(np.nanmean(utils.db2gain(error_vpu))))
+        assert mean_error_vpu < 0.05
+
+    top_half = utils.db(output_flt_slew) > -50
+    if np.any(top_half):
+        error_vpu = np.abs(utils.db(output_flt_slew[top_half])-utils.db(output_vpu_slew[top_half]))
+        mean_error_vpu = np.abs(utils.db(np.nanmean(utils.db2gain(error_vpu))))
+        assert mean_error_vpu < 0.05
 
     pass
 
