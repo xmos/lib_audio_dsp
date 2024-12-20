@@ -9,6 +9,9 @@ import numpy as np
 from pathlib import Path
 from itertools import cycle
 import pytest
+import os
+import shutil
+from filelock import FileLock
 
 
 PKG_DIR = Path(__file__).parent
@@ -29,20 +32,27 @@ def test_frame_size(frame_size):
 
     s = p.stage(FrameCount, i)
     p.set_outputs(s)
-
-    infile = "inframe.wav"
-    outfile = "outframe.wav"
+    
+    app_dir = PKG_DIR / f"test_frame_size_{frame_size}"
+    os.makedirs(app_dir, exist_ok=True)
+    infile = app_dir / "inframe.wav"
+    outfile = app_dir / "outframe.wav"
     n_samps, rate = 2048, 48000
 
-    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
-    target = "default"
-    # Build pipeline test executable. This will download xscope_fileio if not present
-    build_utils.build(APP_DIR, BUILD_DIR, target)
+
+
+    with FileLock("test_pipeline_build.lock"):
+        generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+        target = "default"
+        # Build pipeline test executable. This will download xscope_fileio if not present
+        build_utils.build(APP_DIR, BUILD_DIR, target)
+        os.makedirs(app_dir / "bin", exist_ok=True)
+        shutil.copytree(APP_DIR / "bin", app_dir / "bin", dirs_exist_ok=True)
 
     sig = np.zeros((n_samps, 1), dtype=np.int32)
     audio_helpers.write_wav(infile, rate, sig)
 
-    xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
+    xe = app_dir / f"bin/{target}/pipeline_test_{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile, 1, 1)
 
     _, out_data = audio_helpers.read_wav(outfile)
@@ -52,4 +62,3 @@ def test_frame_size(frame_size):
     for i, (actual, expected) in enumerate(zip(out_data, expected)):
         assert actual == shift_to_pipeline(expected)
     assert i + 1 == n_samps
-
