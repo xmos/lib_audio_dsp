@@ -80,7 +80,7 @@ def do_test(make_p, tune_p, dut_frame_size, folder_name):
     app_dir = PKG_DIR / folder_name
     os.makedirs(app_dir, exist_ok=True)
 
-    with FileLock("test_pipeline_build.lock"):
+    with FileLock(build_utils.PIPELINE_BUILD_LOCK):
 
         for func_p in [make_p, tune_p]:
             # Exit if tune_p is not defined
