@@ -110,8 +110,6 @@ pipeline {
                     env.HAS_GENERIC_CHANGES = hasGenericChanges()
                   }
                   echo "env.HAS_GENERIC_CHANGES is '${env.HAS_GENERIC_CHANGES}'"
-                  script{bq_changes = hasChangesIn("biquad")}
-                  echo "HAS_bq_CHANGES is '${bq_changes}'"
                   // try building a simple app without venv to check
                   // build that doesn't use design tools won't
                   // need Python

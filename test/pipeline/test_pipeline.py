@@ -39,11 +39,10 @@ outfile = "test_output.wav"
 Fs = 48000
 
 
-def gen_build(app_dir, p):
+def gen_build(app_dir, p, target):
     with FileLock(build_utils.PIPELINE_BUILD_LOCK):
         # Autogenerate C code
         generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
-        target = "default"
 
         # Build pipeline test executable. This will download xscope_fileio if not present
         build_utils.build(APP_DIR, BUILD_DIR, target)
@@ -74,16 +73,9 @@ def test_pipeline():
 
     app_dir = PKG_DIR / "test_pipeline"
     os.makedirs(app_dir, exist_ok=True)
-
-    gen_build(app_dir, p)
-
-    # with FileLock("test_pipeline_build.lock"):
-    #     # Autogenerate C code
-    #     generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
     target = "default"
 
-    #     # Build pipeline test executable. This will download xscope_fileio if not present
-    #     build_utils.build(APP_DIR, BUILD_DIR, target)
+    gen_build(app_dir, p, target)
 
     outfile_py = Path(outfile).parent / (str(Path(outfile).stem) + '_py.wav')
     outfile_c = Path(outfile).parent / (str(Path(outfile).stem) + '_c.wav')
@@ -160,13 +152,8 @@ def test_pipeline_q27(input, add):
     app_dir = PKG_DIR / "test_pipeline_q27_"
     os.makedirs(app_dir, exist_ok=True)
 
-    gen_build(app_dir, p)
-
-    # generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
     target = "default"
-
-    # # Build pipeline test executable. This will download xscope_fileio if not present
-    # build_utils.build(APP_DIR, BUILD_DIR, target)
+    gen_build(app_dir, p, target)
 
     sig = np.multiply(np.ones((n_samps, channels), dtype=np.int32), input, dtype=np.int32)
     audio_helpers.write_wav(infile, rate, sig)
@@ -207,16 +194,11 @@ def test_complex_pipeline():
     p.set_outputs(a)
     n_stages = 3  # 2 of the 4 threads are parallel
 
-
     app_dir = PKG_DIR / "test_pipeline_complex"
     os.makedirs(app_dir, exist_ok=True)
 
-    gen_build(app_dir, p)
-    # generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
     target = "default"
-
-    # # Build pipeline test executable. This will download xscope_fileio if not present
-    # build_utils.build(APP_DIR, BUILD_DIR, target)
+    gen_build(app_dir, p, target)
 
     in_val = 1000
     # expected output is +5 on left, +6 on right, in the Q1.27 format

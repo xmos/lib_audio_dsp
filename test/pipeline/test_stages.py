@@ -622,7 +622,6 @@ def test_reverb(frame_size, pregain, mix):
     do_test(make_p, tune_p, frame_size, folder_name)
 
 
-@pytest.mark.group0
 @pytest.mark.parametrize("pregain, mix", [
     [0.01, False],
     [0.01, True],
@@ -633,9 +632,8 @@ def test_reverb_plate(frame_size, pregain, mix):
     Test Reverb stage
     """
 
-
     def make_p(fr):
-        reverb_test_channels = 2  # Reverb expects only 1 channel
+        reverb_test_channels = 2  # Reverb expects only 2 channel
         p = Pipeline(reverb_test_channels, frame_size=fr)
         o = p.stage(ReverbPlateStereo, p.i, label="control")
         p.set_outputs(o)
