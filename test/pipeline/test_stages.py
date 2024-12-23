@@ -621,6 +621,52 @@ def test_reverb(frame_size, pregain, mix):
     folder_name = f"reverbroom_{frame_size}_{pregain}_{int(mix)}"
     do_test(make_p, tune_p, frame_size, folder_name)
 
+
+@pytest.mark.group0
+@pytest.mark.parametrize("pregain, mix", [
+    [0.01, False],
+    [0.01, True],
+    [0.3, False],
+     ])
+def test_reverb_plate(frame_size, pregain, mix):
+    """
+    Test Reverb stage
+    """
+
+
+    def make_p(fr):
+        reverb_test_channels = 2  # Reverb expects only 1 channel
+        p = Pipeline(reverb_test_channels, frame_size=fr)
+        o = p.stage(ReverbPlateStereo, p.i, label="control")
+        p.set_outputs(o)
+
+        return p
+
+    def tune_p(fr):
+        p = make_p(fr)
+
+        # Set initialization parameters of the stage
+        if mix:
+            p["control"].set_wet_dry_mix(0.5)
+        else:
+            p["control"].set_wet_gain(-1)
+            p["control"].set_dry_gain(-2)
+        p["control"].set_pre_gain(pregain)
+        p["control"].set_early_diffusion(0.4)
+        p["control"].set_late_diffusion(0.4)
+        p["control"].set_bandwidth(4000)
+        p["control"].set_damping(0.5)
+        p["control"].set_decay(0.6)
+        p["control"].set_predelay(5)
+
+        stage_config = p["control"].get_config()
+        generate_test_param_file("REVERB_PLATE_STEREO", stage_config)
+        return p
+
+    folder_name = f"reverbplate_{frame_size}_{pregain}_{int(mix)}"
+    do_test(make_p, tune_p, frame_size, folder_name)
+
+
 @pytest.mark.parametrize("change_delay", [5, 0])
 def test_delay(frame_size, change_delay):
     """
