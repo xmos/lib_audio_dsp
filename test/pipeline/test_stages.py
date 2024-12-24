@@ -497,7 +497,6 @@ def test_noise_gate(frame_size):
     folder_name = f"noise_gate_{frame_size}"
     do_test(make_p, tune_p, frame_size, folder_name)
 
-@pytest.mark.group0
 def test_noise_suppressor_expander(frame_size):
     """
     Test the noise suppressor (expander) stage suppress the noise the same in Python and C
@@ -553,7 +552,6 @@ def test_volume(frame_size):
     folder_name = f"volume_{frame_size}"
     do_test(make_p, tune_p, frame_size, folder_name)
 
-@pytest.mark.group0
 def test_fixed_gain(frame_size):
     """
     Test the volume stage amplifies the same in Python and C

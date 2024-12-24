@@ -310,7 +310,7 @@ pipeline {
               when {
                 anyOf {
                   expression{env.HAS_GENERIC_CHANGES.toBoolean()}
-                  expression{hasChangesIn("-e drc -e env -e limit -e noise")}
+                  expression{hasChangesIn("-e drc -e env -e limit -e noise -e compressor")}
                   }
                 }
               steps {
