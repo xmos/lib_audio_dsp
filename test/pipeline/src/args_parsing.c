@@ -43,12 +43,12 @@ static void parse_one_arg(char *arg_part_1, test_config_t *test_config)
     }
     else if(strcmp(arg_part_1, "-i") == 0)
     {
-        test_config->input_filename = malloc(strlen(arg_part_2));
+        test_config->input_filename = malloc(strlen(arg_part_2)+1);
         strcpy(test_config->input_filename, arg_part_2);
     }
     else if(strcmp(arg_part_1, "-o") == 0)
     {
-        test_config->output_filename = malloc(strlen(arg_part_2));
+        test_config->output_filename = malloc(strlen(arg_part_2)+1);
         strcpy(test_config->output_filename, arg_part_2);
     }
     else

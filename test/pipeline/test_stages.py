@@ -12,10 +12,13 @@ from audio_dsp.stages import *
 import audio_dsp.dsp.utils as utils
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
 
+import os
 from pathlib import Path
 import numpy as np
 import struct
 import yaml
+from filelock import FileLock
+import shutil
 
 PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
@@ -52,7 +55,7 @@ def generate_ref(sig, ref_module, pipeline_channels, frame_size):
     return out_py_int
 
 
-def do_test(make_p, tune_p, dut_frame_size):
+def do_test(make_p, tune_p, dut_frame_size, folder_name):
     """
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
@@ -74,62 +77,77 @@ def do_test(make_p, tune_p, dut_frame_size):
         The frame size to use for the pipeline that will run on the device.
     """
 
-    for func_p in [make_p, tune_p]:
-        # Exit if tune_p is not defined
-        if not func_p:
-            continue
+    app_dir = PKG_DIR / folder_name
+    os.makedirs(app_dir, exist_ok=True)
 
-        dut_p = func_p(dut_frame_size)
-        pipeline_channels = len(dut_p.i)
+    with FileLock(build_utils.PIPELINE_BUILD_LOCK):
 
-        out_dir = None
+        for func_p in [make_p, tune_p]:
+            # Exit if tune_p is not defined
+            if not func_p:
+                continue
 
-        # Generate uninitialized stages for make_p, only if tune_p is defined
-        if func_p == make_p and tune_p:
-            out_dir = "dsp_pipeline_uninitialized"
+            dut_p = func_p(dut_frame_size)
+            pipeline_channels = len(dut_p.i)
+
+            out_dir = None
+
+            # Generate uninitialized stages for make_p, only if tune_p is defined
+            if func_p == make_p and tune_p:
+                out_dir = "dsp_pipeline_uninitialized"
+            else:
+                out_dir = "dsp_pipeline_initialized"
+            generate_dsp_main(dut_p, out_dir=BUILD_DIR / out_dir)
+
+        n_samps, rate = 1024, 48000
+        infile = app_dir / "instage.wav"
+        outfile = app_dir / "outstage.wav"
+
+
+        sig0 = (
+            np.linspace(-(2**26), 2**26, n_samps, dtype=np.int32) << 4
+        )  # numbers which should be unmodified through pipeline
+        # data formats
+        sig1 = np.linspace(-(2**23), 2**23, n_samps, dtype=np.int32) << 4
+
+        if pipeline_channels == 2:
+            sig = np.stack((sig0, sig1), axis=1)
+        elif pipeline_channels == 1:
+            sig = sig0
+            sig = sig.reshape((len(sig), 1))
         else:
-            out_dir = "dsp_pipeline_initialized"
-        generate_dsp_main(dut_p, out_dir=BUILD_DIR / out_dir)
+            assert False, f"Unsupported number of channels {pipeline_channels}. Test supports 1 or 2 channels"
 
-    n_samps, rate = 1024, 48000
-    infile = "instage.wav"
-    outfile = "outstage.wav"
+        audio_helpers.write_wav(infile, rate, sig)
+        
+        # The reference function should be always tune_p, it is make_p if tune_p is not defined
+        ref_func_p = tune_p if tune_p else make_p
 
-    # The reference function should be always tune_p, it is make_p if tune_p is not defined
-    ref_func_p = tune_p if tune_p else make_p
+        ref_p = [ref_func_p(s) for s in TEST_FRAME_SIZES]
+        out_py_int_all = [
+            generate_ref(sig, p.stages[2].dsp_block, pipeline_channels, fr)
+            for p, fr in zip(ref_p, TEST_FRAME_SIZES)
+        ]
 
-    ref_p = [ref_func_p(s) for s in TEST_FRAME_SIZES]
-    sig0 = (
-        np.linspace(-(2**26), 2**26, n_samps, dtype=np.int32) << 4
-    )  # numbers which should be unmodified through pipeline
-    # data formats
-    sig1 = np.linspace(-(2**23), 2**23, n_samps, dtype=np.int32) << 4
-
-    if pipeline_channels == 2:
-        sig = np.stack((sig0, sig1), axis=1)
-    elif pipeline_channels == 1:
-        sig = sig0
-        sig = sig.reshape((len(sig), 1))
-    else:
-        assert False, f"Unsupported number of channels {pipeline_channels}. Test supports 1 or 2 channels"
-
-    audio_helpers.write_wav(infile, rate, sig)
-
-    out_py_int_all = [
-        generate_ref(sig, p.stages[2].dsp_block, pipeline_channels, fr)
-        for p, fr in zip(ref_p, TEST_FRAME_SIZES)
-    ]
+        for target in ["default", "control_commands"]:
+            # Do not run the control test if tune_p is not defined
+            if not tune_p and target == "control_commands":
+                continue
+            # Build pipeline test executable. This will download xscope_fileio if not present
+            build_utils.build(APP_DIR, BUILD_DIR, target)
+            # old_xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
+            # new_xe = app_dir / f"bin/{target}/pipeline_test_{target}.xe"
+        os.makedirs(app_dir / "bin", exist_ok=True)
+        shutil.copytree(APP_DIR / "bin", app_dir / "bin", dirs_exist_ok=True)
 
     for target in ["default", "control_commands"]:
         # Do not run the control test if tune_p is not defined
         if not tune_p and target == "control_commands":
             continue
 
-        # Build pipeline test executable. This will download xscope_fileio if not present
-        build_utils.build(APP_DIR, BUILD_DIR, target)
-
-        xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
-        run_pipeline_xcoreai.run(xe, infile, outfile, pipeline_channels, 1)
+        xe = app_dir / f"bin/{target}/pipeline_test_{target}.xe"
+        _, _ = audio_helpers.read_wav(infile)
+        run_pipeline_xcoreai.run(xe, infile, outfile, pipeline_channels, 1, return_stdout=False)
 
         _, out_data = audio_helpers.read_wav(outfile)
         if out_data.ndim == 1:
@@ -137,7 +155,7 @@ def do_test(make_p, tune_p, dut_frame_size):
         for out_py_int, ref_frame_size in zip(out_py_int_all, TEST_FRAME_SIZES):
             for ch in range(pipeline_channels):
                 # Save Python tracks
-                audio_helpers.write_wav(outfile.replace(".wav", f"_python_ch{ch}.wav"), rate, np.array(out_py_int.T, dtype=np.int32))
+                audio_helpers.write_wav(app_dir / "outstage_python_ch{ch}.wav", rate, np.array(out_py_int.T, dtype=np.int32))
                 diff = out_py_int.T[:, ch] - out_data[:, ch]
                 print(f"ch {ch}: max diff {max(abs(diff))}")
                 sol = (~np.equal(out_py_int.T, out_data)).astype(int)
@@ -272,8 +290,8 @@ def test_biquad(method, args, frame_size):
         generate_test_param_file("BIQUAD", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
-
+    folder_name = f"biquad_{frame_size}_{method[5:]}"
+    do_test(make_p, tune_p, frame_size, folder_name)
 
 filter_spec = [
     ["lowpass", fs * 0.4, 0.707],
@@ -321,7 +339,8 @@ def test_cascaded_biquad(method, args, frame_size):
         generate_test_param_file("CASCADED_BIQUADS", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    folder_name = f"cbq_{frame_size}_{method[5:]}"
+    do_test(make_p, tune_p, frame_size, folder_name)
 
 @pytest.mark.group0
 def test_limiter_rms(frame_size):
@@ -346,7 +365,8 @@ def test_limiter_rms(frame_size):
         generate_test_param_file("LIMITER_RMS", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    folder_name = f"limiterrms_{frame_size}"
+    do_test(make_p, tune_p, frame_size, folder_name)
 
 
 def test_limiter_peak(frame_size):
@@ -371,7 +391,8 @@ def test_limiter_peak(frame_size):
         generate_test_param_file("LIMITER_PEAK", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    folder_name = f"limiterpeak_{frame_size}"
+    do_test(make_p, tune_p, frame_size, folder_name)
 
 @pytest.mark.group0
 def test_hard_limiter_peak(frame_size):
@@ -396,7 +417,8 @@ def test_hard_limiter_peak(frame_size):
         generate_test_param_file("HARD_LIMITER_PEAK", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    folder_name = f"hardlimiterpeak_{frame_size}"
+    do_test(make_p, tune_p, frame_size, folder_name)
 
 
 def test_clipper(frame_size):
@@ -421,7 +443,8 @@ def test_clipper(frame_size):
         generate_test_param_file("CLIPPER", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    folder_name = f"clipper_{frame_size}"
+    do_test(make_p, tune_p, frame_size, folder_name)
 
 @pytest.mark.group0
 def test_compressor(frame_size):
@@ -446,8 +469,8 @@ def test_compressor(frame_size):
         generate_test_param_file("COMPRESSOR_RMS", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
-
+    folder_name = f"compressor_{frame_size}"
+    do_test(make_p, tune_p, frame_size, folder_name)
 
 def test_noise_gate(frame_size):
     """
@@ -471,9 +494,9 @@ def test_noise_gate(frame_size):
         generate_test_param_file("NOISE_GATE", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    folder_name = f"noise_gate_{frame_size}"
+    do_test(make_p, tune_p, frame_size, folder_name)
 
-@pytest.mark.group0
 def test_noise_suppressor_expander(frame_size):
     """
     Test the noise suppressor (expander) stage suppress the noise the same in Python and C
@@ -496,7 +519,8 @@ def test_noise_suppressor_expander(frame_size):
         generate_test_param_file("NOISE_SUPPRESSOR_EXPANDER", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    folder_name = f"noise_suppressor_{frame_size}"
+    do_test(make_p, tune_p, frame_size, folder_name)
 
 
 def test_volume(frame_size):
@@ -525,9 +549,9 @@ def test_volume(frame_size):
         generate_test_param_file("VOLUME_CONTROL", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    folder_name = f"volume_{frame_size}"
+    do_test(make_p, tune_p, frame_size, folder_name)
 
-@pytest.mark.group0
 def test_fixed_gain(frame_size):
     """
     Test the volume stage amplifies the same in Python and C
@@ -550,16 +574,20 @@ def test_fixed_gain(frame_size):
         generate_test_param_file("FIXED_GAIN", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    folder_name = f"fixed_gain_{frame_size}"
+    do_test(make_p, tune_p, frame_size, folder_name)
 
+@pytest.mark.group0
 @pytest.mark.parametrize("pregain, mix", [
     [0.01, False],
     [0.01, True],
-    [0.3, False]])
+    [0.3, False],
+     ])
 def test_reverb(frame_size, pregain, mix):
     """
     Test Reverb stage
     """
+
 
     def make_p(fr):
         reverb_test_channels = 1  # Reverb expects only 1 channel
@@ -588,43 +616,22 @@ def test_reverb(frame_size, pregain, mix):
         generate_test_param_file("REVERB_ROOM", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    folder_name = f"reverbroom_{frame_size}_{pregain}_{int(mix)}"
+    do_test(make_p, tune_p, frame_size, folder_name)
 
 
-def test_stereo_reverb(frame_size):
-
-    def make_p(fr):
-        reverb_test_channels = 2  # Stereo reverb expects 2 channels
-        p = Pipeline(reverb_test_channels, frame_size=fr)
-        o = p.stage(ReverbRoomStereo, p.i, label="control")
-        p.set_outputs(o)
-
-        return p
-
-    def tune_p(fr):
-        p = make_p(fr)
-
-        # Set initialization parameters of the stage
-        p["control"].set_wet_gain(-1)
-        p["control"].set_dry_gain(-2)
-        p["control"].set_pre_gain(0.01)
-        p["control"].set_room_size(0.4)
-        p["control"].set_damping(0.5)
-        p["control"].set_decay(0.6)
-        p["control"].set_predelay(5)
-        p["control"].set_width(0.7)
-
-        stage_config = p["control"].get_config()
-        generate_test_param_file("REVERB_ROOM_STEREO", stage_config)
-        return p
-
-    do_test(make_p, tune_p, frame_size)
-
-
-def test_stereo_reverb_plate(frame_size):
+@pytest.mark.parametrize("pregain, mix", [
+    [0.01, False],
+    [0.01, True],
+    [0.3, False],
+     ])
+def test_reverb_plate(frame_size, pregain, mix):
+    """
+    Test Reverb stage
+    """
 
     def make_p(fr):
-        reverb_test_channels = 2  # Stereo reverb expects 2 channels
+        reverb_test_channels = 2  # Reverb expects only 2 channel
         p = Pipeline(reverb_test_channels, frame_size=fr)
         o = p.stage(ReverbPlateStereo, p.i, label="control")
         p.set_outputs(o)
@@ -635,21 +642,25 @@ def test_stereo_reverb_plate(frame_size):
         p = make_p(fr)
 
         # Set initialization parameters of the stage
-        p["control"].set_wet_dry_mix(0.5)
-        p["control"].set_pre_gain(0.5)
+        if mix:
+            p["control"].set_wet_dry_mix(0.5)
+        else:
+            p["control"].set_wet_gain(-1)
+            p["control"].set_dry_gain(-2)
+        p["control"].set_pre_gain(pregain)
+        p["control"].set_early_diffusion(0.4)
+        p["control"].set_late_diffusion(0.4)
+        p["control"].set_bandwidth(4000)
         p["control"].set_damping(0.5)
         p["control"].set_decay(0.6)
         p["control"].set_predelay(5)
-        p["control"].set_early_diffusion(0.5)
-        p["control"].set_late_diffusion(0.5)
-        p["control"].set_bandwidth(10000)
-        p["control"].set_width(1.0)
 
         stage_config = p["control"].get_config()
         generate_test_param_file("REVERB_PLATE_STEREO", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
+    folder_name = f"reverbplate_{frame_size}_{pregain}_{int(mix)}"
+    do_test(make_p, tune_p, frame_size, folder_name)
 
 
 @pytest.mark.parametrize("change_delay", [5, 0])
@@ -676,8 +687,8 @@ def test_delay(frame_size, change_delay):
         generate_test_param_file("DELAY", stage_config)
         return p
 
-    do_test(make_p, tune_p, frame_size)
-
+    folder_name = f"delay_{frame_size}_{change_delay}"
+    do_test(make_p, tune_p, frame_size, folder_name)
 
 @pytest.fixture(scope="session", autouse=True)
 def make_coeffs():
@@ -710,4 +721,5 @@ def test_fir(frame_size, filter_name):
         p.set_outputs(o)
         return p
 
-    do_test(make_p, None, frame_size)
+    folder_name = f"fir_{frame_size}_{filter_name[:5]}"
+    do_test(make_p, None, frame_size, folder_name)

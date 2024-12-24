@@ -1,5 +1,41 @@
 @Library('xmos_jenkins_shared_library@v0.35.0')
 
+def boolean hasChangesIn(String module) {
+  dir("lib_audio_dsp"){
+    if (env.CHANGE_TARGET == null) {
+      return false
+    } 
+    else {
+      return sh(
+        returnStatus: true,
+        script: "git diff --name-only remotes/origin/${env.CHANGE_TARGET}...remotes/origin/${env.BRANCH_NAME} | grep ${module}"
+      ) == 0
+    }
+  }
+}
+
+def boolean hasGenericChanges() {
+    if (env.BRANCH_NAME == "main") {
+      return true
+    }
+    if (env.BRANCH_NAME == "develop") {
+      return true
+    }
+    if (hasChangesIn("utils")) {
+      return true
+    }
+    if (hasChangesIn("helpers")) {
+      return true
+    }
+    if ( hasChangesIn("adsp")) {
+      return true
+    }
+    if (hasChangesIn("defines")) {
+      return true
+    }
+    return false
+}
+
 def runningOn(machine) {
   println "Stage running on:"
   println machine
@@ -34,6 +70,7 @@ pipeline {
 
   environment {
     XMOSDOC_VERSION = "v6.1.3"
+    HAS_GENERIC_CHANGES = false
   } // environment
 
   options {
@@ -69,6 +106,10 @@ pipeline {
                 runningOn(env.NODE_NAME)
                 dir("lib_audio_dsp") {
                   checkout scm
+                  script{
+                    env.HAS_GENERIC_CHANGES = hasGenericChanges()
+                  }
+                  echo "env.HAS_GENERIC_CHANGES is '${env.HAS_GENERIC_CHANGES}'"
                   // try building a simple app without venv to check
                   // build that doesn't use design tools won't
                   // need Python
@@ -79,7 +120,6 @@ pipeline {
                     } // dir
                   } // tools
                 } // dir
-
                 createVenv("lib_audio_dsp/requirements.txt")
                 dir("lib_audio_dsp") {
                   // build everything
@@ -100,6 +140,12 @@ pipeline {
 
             } // Build
             stage('Test Biquad') {
+              when {
+                anyOf {
+                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasChangesIn("biquad")}
+                  }
+              }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
@@ -115,6 +161,13 @@ pipeline {
               }
             } // test biquad
             stage('Test Cascaded Biquads') {
+              when {
+                anyOf {
+                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasChangesIn("biquad")}
+                  expression{hasChangesIn("cascaded_biquad")}
+                  }
+                }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
@@ -145,6 +198,13 @@ pipeline {
               }
             } // Unit tests
             stage('Test Utils') {
+              when {
+                anyOf {
+                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasChangesIn("utils")}
+                  expression{hasChangesIn("control")}
+                  }
+                }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
@@ -160,6 +220,12 @@ pipeline {
               }
             } // test utils
             stage('Test FIR') {
+              when {
+                anyOf {
+                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasChangesIn("fir")}
+                  }
+                }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
@@ -175,6 +241,12 @@ pipeline {
               }
             } // test SC
             stage('Test SC') {
+              when {
+                anyOf {
+                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasChangesIn("signal_chain")}
+                  }
+                }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
@@ -206,6 +278,9 @@ pipeline {
                 runningOn(env.NODE_NAME)
                 dir("lib_audio_dsp") {
                   checkout scm
+                  script{
+                    env.HAS_GENERIC_CHANGES = hasGenericChanges()
+                  }
                   // try building a simple app without venv to check
                   // build that doesn't use design tools won't
                   // need Python
@@ -232,6 +307,12 @@ pipeline {
               }
             } // Build
             stage('Test DRC') {
+              when {
+                anyOf {
+                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasChangesIn("-e drc -e env -e limit -e noise -e compressor")}
+                  }
+                }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
@@ -251,6 +332,12 @@ pipeline {
               }
             } // test drc
             stage('Test Reverb') {
+              when {
+                anyOf {
+                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasChangesIn("reverb")}
+                  }
+                }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
@@ -313,12 +400,12 @@ pipeline {
                 withTools(params.TOOLS_VERSION) {
                   sh "pip install -r requirements.txt"
                   sh "pip install -e ${WORKSPACE}/xtagctl"
-                    withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
+                  withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       sh "xtagctl reset ${adapterIDs[0]}"
                       dir("test/pipeline") {
-                        sh "python -m pytest -m group0 --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
+                        sh "python -m pytest -m group0 -n 3 --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
                       }
-                    }
+                  }
                 }
               }
             }
@@ -354,12 +441,12 @@ pipeline {
                 withTools(params.TOOLS_VERSION) {
                   sh "pip install -r requirements.txt"
                   sh "pip install -e ${WORKSPACE}/xtagctl"
-                    withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
+                  withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       sh "xtagctl reset ${adapterIDs[0]}"
                       dir("test/pipeline") {
-                        sh "python -m pytest -m group1 --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
-                        }
+                      sh "python -m pytest   -m group1 -n 3 --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO "
                     }
+                  }
                 }
               }
             }
