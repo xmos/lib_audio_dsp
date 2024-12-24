@@ -149,7 +149,14 @@ def test_pipeline_q27(input, add):
     addn = p.stage(AddN, i, n=add)
     p.set_outputs(addn)
 
-    app_dir = PKG_DIR / "test_pipeline_q27_"
+    if input == INT32_MAX:
+        app_str = "max"
+    elif input == INT32_MIN:
+        app_str = "min"
+    else:
+        app_str = f"{input}"
+
+    app_dir = PKG_DIR / f"test_pipeline_q27_{app_str}"
     os.makedirs(app_dir, exist_ok=True)
 
     target = "default"
