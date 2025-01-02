@@ -797,6 +797,148 @@ class switch(dspg.dsp_block):
         return
 
 
+class switch_stereo(dspg.dsp_block):
+    """A class representing a stereo switch in a signal chain.
+
+    The inputs should be grouped in stereo pairs, e.g.
+    ``[0_L, 0_R, 1_L, 1_R, ...]``.
+
+    Attributes
+    ----------
+    switch_position : int
+        The current position of the switch.
+
+    """
+
+    def __init__(self, fs, n_chans, Q_sig: int = dspg.Q_SIG) -> None:
+        super().__init__(fs, n_chans, Q_sig)
+        assert n_chans % 2 == 0
+        self.switch_position = 0
+        return
+
+    def process_channels(self, sample_list: list[float]) -> list[float]:
+        """Return the stereo samples at the current switch position.
+
+        This method takes a list of samples and returns the sample at
+        the current switch position.
+
+        Parameters
+        ----------
+        sample_list : list
+            A list of samples for each of the stereo switch inputs.
+
+        Returns
+        -------
+        y : float
+            The stereo samples at the current switch position.
+        """
+        y = sample_list[(2 * self.switch_position) : (2 * self.switch_position + 2)]
+        return y
+
+    def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
+        """Return the stereo samples at the current switch position.
+
+        As there is no DSP, this just calls self.process.
+
+        Parameters
+        ----------
+        sample_list : list
+            A list of samples for each of the stereo switch inputs.
+        channel : int
+            Not used by this DSP module.
+
+        Returns
+        -------
+        y : float
+            The stereo samples at the current switch position.
+        """
+        return self.process_channels(sample_list)
+
+    def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
+        """
+        Take a list frames of samples and return the processed frames,
+        using floating point maths.
+
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When switching, the stereo input channels pairs are switched
+        between to select the stereo output channel. This means the
+        output frame will be a list of length 2.
+
+        Parameters
+        ----------
+        frame : list
+            List of frames, where each frame is a 1-D numpy array.
+            Stereo pairs should be consecutive.
+
+        Returns
+        -------
+        list
+            Length 2 list of processed frames.
+        """
+        frame_np = np.array(frame)
+        frame_size = frame[0].shape[0]
+        output = [np.zeros(frame_size)] * 2
+        for sample in range(frame_size):
+            out_samples = self.process_channels(frame_np[:, sample].tolist())
+            output[0][sample] = out_samples[0]
+            output[1][sample] = out_samples[1]
+
+        return output
+
+    def process_frame_xcore(self, frame: list[np.ndarray]) -> list[np.ndarray]:
+        """
+        Take a list frames of samples and return the processed frames,
+        using int32 fixed point maths.
+
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When switching, the stereo input channels pairs are switched
+        between to select the stereo output channel. This means the
+        output frame will be a list of length 2.
+
+        Parameters
+        ----------
+        frame : list
+            List of frames, where each frame is a 1-D numpy array.
+            Stereo pairs should be consecutive.
+
+        Returns
+        -------
+        list
+            Length 2 list of processed frames.
+        """
+        frame_np = np.array(frame)
+        frame_size = frame[0].shape[0]
+        output = [np.zeros(frame_size)] * 2
+        for sample in range(frame_size):
+            out_samples = self.process_channels_xcore(frame_np[:, sample].tolist())
+            output[0][sample] = out_samples[0]
+            output[1][sample] = out_samples[1]
+        return output
+
+    def move_switch(self, position: int) -> None:
+        """Move the switch to the specified position. This will cause
+        the channel in sample_list[position] to be output.
+
+        Parameters
+        ----------
+        position : int
+            The position to move the switch to.
+        """
+        if position < 0 or position >= self.n_chans:
+            warnings.warn(
+                f"Switch position {position} is out of range, keeping old switch position"
+            )
+        else:
+            self.switch_position = position
+        return
+
+
 class delay(dspg.dsp_block):
     """
     A simple delay line class.

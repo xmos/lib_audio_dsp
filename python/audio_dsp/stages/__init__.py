@@ -15,6 +15,7 @@ from .signal_chain import (
     Fork,
     Adder,
     Switch,
+    SwitchStereo,
     Subtractor,
     Bypass,
     Mixer,

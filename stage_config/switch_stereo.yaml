@@ -1,0 +1,7 @@
+module:
+  switch_stereo:
+    position:
+      type: int32_t
+      help: The current switch position.
+includes:
+  - "stdint.h"

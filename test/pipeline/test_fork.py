@@ -10,25 +10,32 @@ from python import build_utils, run_pipeline_xcoreai, audio_helpers
 
 from pathlib import Path
 import numpy as np
-
+from filelock import FileLock
+import os
+import shutil
 
 PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
 
-def do_test(p, in_ch, out_ch):
+def do_test(p, in_ch, out_ch, folder_name):
     """
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
     """
-    infile = "infork.wav"
-    outfile = "outfork.wav"
+    app_dir = PKG_DIR / folder_name
+    os.makedirs(app_dir, exist_ok=True)
+    infile = app_dir / "instage.wav"
+    outfile = app_dir / "outstage.wav"
     n_samps, rate = 1024, 48000
 
-    generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
-    target = "default"
-    # Build pipeline test executable. This will download xscope_fileio if not present
-    build_utils.build(APP_DIR, BUILD_DIR, target)
+    with FileLock(build_utils.PIPELINE_BUILD_LOCK):
+        generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+        target = "default"
+        # Build pipeline test executable. This will download xscope_fileio if not present
+        build_utils.build(APP_DIR, BUILD_DIR, target)
+        os.makedirs(app_dir / "bin", exist_ok=True)
+        shutil.copytree(APP_DIR / "bin", app_dir / "bin", dirs_exist_ok=True)
 
     sig0 = np.linspace(-2**26, 2**26, n_samps, dtype=np.int32)  << 4 # numbers which should be unmodified through pipeline
                                                                      # data formats
@@ -39,7 +46,7 @@ def do_test(p, in_ch, out_ch):
         sig = sig0.reshape((n_samps, 1))
     audio_helpers.write_wav(infile, rate, sig)
 
-    xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
+    xe = app_dir / f"bin/{target}/pipeline_test_{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile, 2, 1)
 
     _, out_data = audio_helpers.read_wav(outfile)
@@ -67,9 +74,9 @@ def test_fork(fork_output, inputs):
     p.set_outputs(fork.forks[fork_output])
 
     if inputs == 1:
-        do_test(p, [0], (0, 1))
+        do_test(p, [0], (0, 1), folder_name=f"fork_{inputs}_{fork_output}")
     else:
-        do_test(p, (0, 1), (0, 1))
+        do_test(p, (0, 1), (0, 1), folder_name=f"fork_{inputs}_{fork_output}")
 
 @pytest.mark.group0
 def test_fork_copies():
@@ -82,4 +89,4 @@ def test_fork_copies():
     p.set_outputs(fork.forks[0][0] + fork.forks[1][0])
 
     # input channel 0 comes out both outputs
-    do_test(p, (0, 0), (0, 1))
+    do_test(p, (0, 0), (0, 1), folder_name=f"fork_copy")
