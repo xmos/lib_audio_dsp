@@ -1,6 +1,8 @@
+// Copyright 2025 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
-#ifndef TD_BLOCK_FIR_H
-#define TD_BLOCK_FIR_H
+#pragma once
+
 #include <stdint.h>
 
 // This is fixed due to the VPU
@@ -88,5 +90,3 @@ void td_block_fir_compute(
     int32_t samples_out[TD_BLOCK_FIR_LENGTH],
     td_block_fir_data_t * fir_data, 
     td_block_fir_filter_t * fir_filter);
-
-#endif //TD_BLOCK_FIR_H

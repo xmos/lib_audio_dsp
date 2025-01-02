@@ -3,8 +3,6 @@
 
 #pragma once
 
-#ifndef FD_BLOCK_FIR
-#define FD_BLOCK_FIR
 #include "xmath/types.h"
 
 /** 
@@ -106,5 +104,3 @@ void fd_block_fir_compute(
     int32_t * samples_out,
     fd_fir_data_t * fir_data,
     fd_fir_filter_t * fir_filter);
-
-#endif
