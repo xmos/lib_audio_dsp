@@ -110,7 +110,7 @@ pipeline {
                 dir("lib_audio_dsp") {
                   checkout scm
                   script{
-                    env.HAS_GENERIC_CHANGES = hasGenericChanges()
+                    env.HAS_GENERIC_CHANGES = hasGenericChanges().toBoolean()
                   }
                   echo "env.HAS_GENERIC_CHANGES is '${env.HAS_GENERIC_CHANGES}'"
                   echo "env.HAS_GENERIC_CHANGES is '${hasGenericChanges()}'"
@@ -146,7 +146,7 @@ pipeline {
             stage('Test Biquad') {
               when {
                 anyOf {
-                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasGenericChanges()}
                   expression{hasChangesIn("biquad")}
                   }
               }
@@ -167,7 +167,7 @@ pipeline {
             stage('Test Cascaded Biquads') {
               when {
                 anyOf {
-                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasGenericChanges()}
                   expression{hasChangesIn("biquad")}
                   expression{hasChangesIn("cascaded_biquad")}
                   }
@@ -204,7 +204,7 @@ pipeline {
             stage('Test Utils') {
               when {
                 anyOf {
-                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasGenericChanges()}
                   expression{hasChangesIn("utils")}
                   expression{hasChangesIn("control")}
                   }
@@ -226,7 +226,7 @@ pipeline {
             stage('Test FIR') {
               when {
                 anyOf {
-                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasGenericChanges()}
                   expression{hasChangesIn("fir")}
                   }
                 }
@@ -247,7 +247,7 @@ pipeline {
             stage('Test SC') {
               when {
                 anyOf {
-                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasGenericChanges()}
                   expression{hasChangesIn("signal_chain")}
                   }
                 }
@@ -328,7 +328,7 @@ pipeline {
             stage('Test DRC') {
               when {
                 anyOf {
-                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasGenericChanges()}
                   expression{hasChangesIn("-e drc -e env -e limit -e noise -e compressor")}
                   }
                 }
@@ -353,7 +353,7 @@ pipeline {
             stage('Test Reverb') {
               when {
                 anyOf {
-                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasGenericChanges()}
                   expression{hasChangesIn("reverb")}
                   }
                 }
