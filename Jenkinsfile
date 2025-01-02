@@ -15,10 +15,11 @@ def boolean hasChangesIn(String module) {
 }
 
 def boolean hasGenericChanges() {
-    if (env.BRANCH_NAME == "main") {
+    echo env.BRANCH_NAME
+    if (env.BRANCH_NAME ==~ /master|main|release.*/) {
       return true
     }
-    if (env.BRANCH_NAME == "develop") {
+    if (env.BRANCH_NAME  ==~ /develop/) {
       return true
     }
     if (hasChangesIn("utils")) {
@@ -27,7 +28,7 @@ def boolean hasGenericChanges() {
     if (hasChangesIn("helpers")) {
       return true
     }
-    if ( hasChangesIn("adsp")) {
+    if (hasChangesIn("adsp")) {
       return true
     }
     if (hasChangesIn("defines")) {
