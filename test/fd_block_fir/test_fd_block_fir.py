@@ -84,8 +84,6 @@ def test_trivial():
     build_and_run_tests(dir_name, np.random.uniform(-0.125, 0.125, 34))
 
 @pytest.mark.parametrize("td_block_length", [16])
-# @pytest.mark.parametrize("filter_length_mul", [1, 2, 3])
-# @pytest.mark.parametrize("filter_length_mod", [-2, 1, 3])
 @pytest.mark.parametrize(["filter_length_mul", "filter_length_mod"], [[1, -2],
                                                                       [2, 1],
                                                                       [3, 3]])
