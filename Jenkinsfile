@@ -266,6 +266,12 @@ pipeline {
               }
             } // test SC
             stage('Test TD block FIR') {
+              when {
+                anyOf {
+                  expression{hasGenericChanges()}
+                  expression{hasChangesIn("td_block")}
+                  }
+                }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
@@ -372,6 +378,12 @@ pipeline {
               }
             } // test Reverb
             stage('Test FD block FIR') {
+              when {
+                anyOf {
+                  expression{hasGenericChanges()}
+                  expression{hasChangesIn("fd_block")}
+                  }
+                }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
