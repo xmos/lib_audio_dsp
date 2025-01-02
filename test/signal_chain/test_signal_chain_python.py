@@ -76,11 +76,11 @@ def test_gains_frames(filter_n, fs, n_chans, q_format):
     frame_size = 1
 
     for n in range(len(signal_frames)):
-        output_flt[:, n:n+frame_size] = filter.process_frame(signal_frames[n])
+        output_flt[:, n*frame_size:(n+1)*frame_size] = filter.process_frame(signal_frames[n])
     assert np.all(output_flt[0, :] == output_flt)
 
     for n in range(len(signal_frames)):
-        output_xcore[:, n:n+frame_size] = filter.process_frame_xcore(signal_frames[n])
+        output_xcore[:, n*frame_size:(n+1)*frame_size] = filter.process_frame_xcore(signal_frames[n])
     assert np.all(output_xcore[0, :] == output_xcore)
 
 
@@ -273,10 +273,10 @@ def test_combiners_frames(filter_spec, fs, q_format):
     frame_size = 1
 
     for n in range(len(signal_frames)):
-        output_flt[:, n:n+frame_size] = filter.process_frame(signal_frames[n])
+        output_flt[:, n*frame_size:(n+1)*frame_size] = filter.process_frame(signal_frames[n])
 
     for n in range(len(signal_frames)):
-        output_xcore[:, n:n+frame_size] = filter.process_frame_xcore(signal_frames[n])
+        output_xcore[:, n*frame_size:(n+1)*frame_size] = filter.process_frame_xcore(signal_frames[n])
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
     top_half = utils.db(output_flt) > -50
@@ -316,11 +316,11 @@ def test_delay(fs, delay_spec, n_chans):
     frame_size = 1
 
     for n in range(len(signal_frames)):
-        output_flt[:, n:n+frame_size] = filter.process_frame(signal_frames[n])
+        output_flt[:, n*frame_size:(n+1)*frame_size] = filter.process_frame(signal_frames[n])
     assert np.all(signal[:, : sig_len] == output_flt[:, delay_samps :])
 
     for n in range(len(signal_frames)):
-        output_xcore[:, n:n+frame_size] = filter.process_frame_xcore(signal_frames[n])
+        output_xcore[:, n*frame_size:(n+1)*frame_size] = filter.process_frame_xcore(signal_frames[n])
     assert np.all(signal[:, : sig_len] == output_xcore[:, delay_samps :])
 
 

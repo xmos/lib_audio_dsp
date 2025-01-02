@@ -28,3 +28,96 @@ More information on implementation can be found in `XCORE Math Library`_ documen
 
     .. automethod:: check_coeff_scaling
         :noindex:
+
+
+=====================
+Block Time Domain FIR
+=====================
+
+The block time domain FIR implements the filter as a convolution in the time domain, but with a block size 
+optimized for execution on the vector-unit of xcore.ai. The advantage with this one is it is over twice
+the efficiency of the lib_xcore_math implementation. This block will generate C code for the block time domain FIR
+filter.
+More information on implementation can be found in
+`AN02027: Efficient computation of FIR filters on the XCORE <https://www.xmos.com/application-notes/>`_.
+
+.. tab:: Autogenerator
+
+    .. only:: latex
+    
+    .. rubric:: Autogenerator
+
+    .. autofunction:: audio_dsp.dsp.td_block_fir.generate_td_fir
+        :noindex:
+
+.. tab:: C API
+
+    .. only:: latex
+
+        .. rubric:: C API
+
+    .. doxygenfunction:: td_block_fir_data_init
+    .. doxygenfunction:: td_block_fir_add_data
+    .. doxygenfunction:: td_block_fir_compute
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+   .. autoclass:: audio_dsp.dsp.td_block_fir.fir_block_td
+        :noindex:
+
+        .. automethod:: process
+            :noindex:
+
+        .. automethod:: reset_state
+            :noindex:
+
+
+==========================
+Block Frequency Domain FIR
+==========================
+
+This implementation is a frequency-domain implementation resulting in a lower algorithmic
+complexity than the time-domain versions. This will achieve the highest taps per second possible
+with the xcore. The main cost to using this implementation is the memory requirements double
+compared to the previous two time-domain versions. This block will generate C code for the block 
+frequency domain FIR filter.
+More information on implementation can be found in
+`AN02027: Efficient computation of FIR filters on the XCORE <https://www.xmos.com/application-notes/>`_.
+
+.. tab:: Autogenerator
+
+    .. only:: latex
+    
+    .. rubric:: Autogenerator
+
+    .. autofunction:: audio_dsp.dsp.fd_block_fir.generate_fd_fir
+        :noindex:
+
+.. tab:: C API
+
+    .. only:: latex
+
+        .. rubric:: C API
+
+    .. doxygenfunction:: fd_block_fir_data_init
+    .. doxygenfunction:: fd_block_fir_add_data
+    .. doxygenfunction:: fd_block_fir_compute
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+   .. autoclass:: audio_dsp.dsp.fd_block_fir.fir_block_fd
+        :noindex:
+
+        .. automethod:: process
+            :noindex:
+
+        .. automethod:: reset_state
+            :noindex:

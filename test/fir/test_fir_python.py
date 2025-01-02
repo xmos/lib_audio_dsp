@@ -72,12 +72,12 @@ def test_frames(coeff_path, n_chans):
     out_int = np.zeros_like(out_flt)
 
     for n in range(len(signal_frames)):
-        out_flt[:, n:n+frame_size] = fut.process_frame(signal_frames[n])
+        out_flt[:, n*frame_size:(n+1)*frame_size] = fut.process_frame(signal_frames[n])
     assert np.all(-out_flt[0, :] == out_flt[1:, :])
     fut.reset_state()
 
     for n in range(len(signal_frames)):
-        out_int[:, n:n+frame_size] = fut.process_frame_xcore(signal_frames[n])
+        out_int[:, n*frame_size:(n+1)*frame_size] = fut.process_frame_xcore(signal_frames[n])
 
     for n in range(1, n_chans):
         # rounding differences can occur between positive and negative signal

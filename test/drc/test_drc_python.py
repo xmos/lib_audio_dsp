@@ -658,11 +658,11 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans, 
     output_flt = np.zeros_like(signal)
 
     for n in range(len(signal_frames)):
-        output_int[:, n:n+frame_size] = drcut.process_frame_xcore(signal_frames[n])
+        output_int[:, n*frame_size:(n+1)*frame_size] = drcut.process_frame_xcore(signal_frames[n])
     if "clipper" not in component:
         drcut.reset_state()
     for n in range(len(signal_frames)):
-        output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])
+        output_flt[:, n*frame_size:(n+1)*frame_size] = drcut.process_frame(signal_frames[n])
 
     assert np.all(output_int[0, :] == output_int)
     assert np.all(output_flt[0, :] == output_flt)

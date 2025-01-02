@@ -42,10 +42,10 @@ class fir_direct(dspg.dsp_block):
     n_taps : int
         Number of taps in the filter.
     buffer : np.ndarray
-        Buffer of previous inputs for the convlution in floating point
+        Buffer of previous inputs for the convolution in floating point
         format.
     buffer_int : list
-        Buffer of previous inputs for the convlution in fixed point
+        Buffer of previous inputs for the convolution in fixed point
         format.
     buffer_idx : list
         List of the floating point buffer head for each channel.

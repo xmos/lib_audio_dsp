@@ -19,22 +19,24 @@ def boolean hasGenericChanges() {
     if (env.BRANCH_NAME ==~ /master|main|release.*/) {
       return true
     }
-    if (env.BRANCH_NAME  ==~ /develop/) {
+    else if (env.BRANCH_NAME  ==~ /develop/) {
       return true
     }
-    if (hasChangesIn("utils")) {
+    else if (hasChangesIn("utils")) {
       return true
     }
-    if (hasChangesIn("helpers")) {
+    else if (hasChangesIn("helpers")) {
       return true
     }
-    if (hasChangesIn("adsp")) {
+    else if (hasChangesIn("adsp")) {
       return true
     }
-    if (hasChangesIn("defines")) {
+    else if (hasChangesIn("defines")) {
       return true
     }
-    return false
+    else {
+      return false
+    }
 }
 
 def runningOn(machine) {
@@ -108,9 +110,10 @@ pipeline {
                 dir("lib_audio_dsp") {
                   checkout scm
                   script{
-                    env.HAS_GENERIC_CHANGES = hasGenericChanges()
+                    env.HAS_GENERIC_CHANGES = hasGenericChanges().toBoolean()
                   }
                   echo "env.HAS_GENERIC_CHANGES is '${env.HAS_GENERIC_CHANGES}'"
+                  echo "env.HAS_GENERIC_CHANGES is '${hasGenericChanges()}'"
                   // try building a simple app without venv to check
                   // build that doesn't use design tools won't
                   // need Python
@@ -132,7 +135,7 @@ pipeline {
                         "test/cascaded_biquads",
                         "test/signal_chain",
                         "test/fir",
-                        "test/utils"
+                        "test/utils",
                       ]) // buildApps
                     } // tools
                   } // withVenv
@@ -143,7 +146,7 @@ pipeline {
             stage('Test Biquad') {
               when {
                 anyOf {
-                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasGenericChanges()}
                   expression{hasChangesIn("biquad")}
                   }
               }
@@ -164,7 +167,7 @@ pipeline {
             stage('Test Cascaded Biquads') {
               when {
                 anyOf {
-                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasGenericChanges()}
                   expression{hasChangesIn("biquad")}
                   expression{hasChangesIn("cascaded_biquad")}
                   }
@@ -201,7 +204,7 @@ pipeline {
             stage('Test Utils') {
               when {
                 anyOf {
-                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasGenericChanges()}
                   expression{hasChangesIn("utils")}
                   expression{hasChangesIn("control")}
                   }
@@ -223,7 +226,7 @@ pipeline {
             stage('Test FIR') {
               when {
                 anyOf {
-                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasGenericChanges()}
                   expression{hasChangesIn("fir")}
                   }
                 }
@@ -244,7 +247,7 @@ pipeline {
             stage('Test SC') {
               when {
                 anyOf {
-                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasGenericChanges()}
                   expression{hasChangesIn("signal_chain")}
                   }
                 }
@@ -262,6 +265,21 @@ pipeline {
                 }
               }
             } // test SC
+            stage('Test TD block FIR') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/td_block_fir") {
+                          runPytest("--dist worksteal --durations=0")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test TD block FIR
           }
           post {
             cleanup {
@@ -310,7 +328,7 @@ pipeline {
             stage('Test DRC') {
               when {
                 anyOf {
-                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasGenericChanges()}
                   expression{hasChangesIn("-e drc -e env -e limit -e noise -e compressor")}
                   }
                 }
@@ -335,7 +353,7 @@ pipeline {
             stage('Test Reverb') {
               when {
                 anyOf {
-                  expression{env.HAS_GENERIC_CHANGES.toBoolean()}
+                  expression{hasGenericChanges()}
                   expression{hasChangesIn("reverb")}
                   }
                 }
@@ -345,7 +363,7 @@ pipeline {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
                         dir("test/reverb") {
-                          runPytest("--dist worksteal")
+                          runPytest("--dist worksteal --durations=0")
                         }
                       }
                     }
@@ -353,6 +371,21 @@ pipeline {
                 }
               }
             } // test Reverb
+            stage('Test FD block FIR') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/fd_block_fir") {
+                          runPytest("--dist worksteal --durations=0")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test FD block FIR
           }
           post {
             cleanup {
