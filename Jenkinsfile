@@ -19,22 +19,24 @@ def boolean hasGenericChanges() {
     if (env.BRANCH_NAME ==~ /master|main|release.*/) {
       return true
     }
-    if (env.BRANCH_NAME  ==~ /develop/) {
+    else if (env.BRANCH_NAME  ==~ /develop/) {
       return true
     }
-    if (hasChangesIn("utils")) {
+    else if (hasChangesIn("utils")) {
       return true
     }
-    if (hasChangesIn("helpers")) {
+    else if (hasChangesIn("helpers")) {
       return true
     }
-    if (hasChangesIn("adsp")) {
+    else if (hasChangesIn("adsp")) {
       return true
     }
-    if (hasChangesIn("defines")) {
+    else if (hasChangesIn("defines")) {
       return true
     }
-    return false
+    else {
+      return false
+    }
 }
 
 def runningOn(machine) {
@@ -111,6 +113,7 @@ pipeline {
                     env.HAS_GENERIC_CHANGES = hasGenericChanges()
                   }
                   echo "env.HAS_GENERIC_CHANGES is '${env.HAS_GENERIC_CHANGES}'"
+                  echo "env.HAS_GENERIC_CHANGES is '${hasGenericChanges()}'"
                   // try building a simple app without venv to check
                   // build that doesn't use design tools won't
                   // need Python
