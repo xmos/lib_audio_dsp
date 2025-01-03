@@ -305,4 +305,6 @@ if __name__ == "__main__":
         p = os.path.basename(filter_path)
         filter_name = p.split(".")[0]
 
-    generate_td_fir(coefs, filter_name, output_path, gain_dB)
+    os.makedirs(args.output, exist_ok=True)
+
+    generate_td_fir(coefs, filter_name, output_path, gain_dB=gain_dB)
