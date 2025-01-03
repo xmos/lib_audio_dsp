@@ -66,7 +66,7 @@ def single_slew_test(filt, tname, sig_fl, coeffs_2):
 
   out_py_int = run_py_slew(filt, sig_fl, coeffs_2)
   out_c = get_c_slew_wav(test_dir)
-  shutil.rmtree(test_dir)
+#   shutil.rmtree(test_dir)
 
   np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
@@ -92,4 +92,4 @@ if __name__ == "__main__":
   bin_dir.mkdir(exist_ok=True, parents=True)
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
-  test_slew_c(sig_fl, ["biquad_constant_q", 100, 8, -10], ["biquad_constant_q", 10000, 8, -10])
+  test_slew_c(sig_fl, ["biquad_constant_q", 100, 8, -10], ["biquad_constant_q", 10000, 8, -10], 6)

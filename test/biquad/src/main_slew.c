@@ -18,8 +18,9 @@ FILE * _fopen(char * fname, char* mode) {
 
 int main()
 {
-  int32_t DWORD_ALIGNED taps_buf[5] = {0};
-  int32_t DWORD_ALIGNED taps_buf_2[5] = {0};
+  int32_t DWORD_ALIGNED taps_buf[8] = {0};
+  int32_t DWORD_ALIGNED taps_buf_1[8] = {0};
+  int32_t DWORD_ALIGNED taps_buf_2[8] = {0};
   int32_t state[8] = {0};
   left_shift_t lsh = 0;
   int32_t shift = 0;
@@ -37,6 +38,9 @@ int main()
   fread(&lsh, sizeof(int32_t), 1, coeffs);
   fclose(coeffs);
 
+  fread(taps_buf_1, sizeof(int32_t), 5, coeffs);
+  fclose(coeffs);
+
   fread(taps_buf_2, sizeof(int32_t), 5, coeffs_2);
   fread(&shift, sizeof(int32_t), 1, coeffs_2);
   fclose(coeffs_2);
@@ -46,7 +50,7 @@ int main()
     int32_t samp = 0, samp_out = 0;
     fread(&samp, sizeof(int32_t), 1, in);
     //printf("%ld ", samp);
-    samp_out = adsp_biquad_slew(samp, taps_buf, taps_buf, state, lsh, shift);
+    samp_out = adsp_biquad_slew(samp, taps_buf, taps_buf_1, state, lsh, shift);
     //printf("%ld ", samp_out);
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }
