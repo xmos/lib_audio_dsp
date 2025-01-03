@@ -486,7 +486,6 @@ def biquad_lowpass(
 ) -> biquad:
     """Return a biquad object with low pass filter coefficients."""
     coeffs = make_biquad_lowpass(fs, filter_freq, q_factor)
-    coeffs = _apply_biquad_gain(coeffs, gain)
     return biquad(coeffs, fs, n_chans=n_chans, Q_sig=Q_sig)
 
 
@@ -495,7 +494,6 @@ def biquad_highpass(
 ) -> biquad:
     """Return a biquad object with high pass filter coefficients."""
     coeffs = make_biquad_highpass(fs, filter_freq, q_factor)
-    coeffs = _apply_biquad_gain(coeffs, gain)
     return biquad(coeffs, fs, n_chans=n_chans, Q_sig=Q_sig)
 
 
