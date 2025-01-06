@@ -50,6 +50,7 @@ void biquad_slew_init(module_instance_t* instance,
     state->frame_size = frame_size;
 
     state->filter_states = adsp_bump_allocator_malloc(allocator, _BQ_SLEW_ARR_MEMORY(n_inputs)); // Allocate memory for the 1D pointers
+    state->coeffs = adsp_bump_allocator_malloc(allocator, _BQ_SLEW_ARR_MEMORY(n_inputs)); // Allocate memory for the 1D pointers
     for(int i=0; i<n_inputs; i++)
     {
         state->filter_states[i] = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, _BQ_SLEW_FILTER_MEMORY);
