@@ -44,5 +44,4 @@ int32_t adsp_biquad_slew(
   q2_30 target_coeffs[8],
   int32_t state[8],
   left_shift_t lsh,
-  int32_t slew_shift,
-  bool print);
+  int32_t slew_shift);

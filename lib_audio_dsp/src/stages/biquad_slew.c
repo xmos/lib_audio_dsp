@@ -28,7 +28,7 @@ void biquad_slew_process(int32_t **input, int32_t **output, void *app_data_state
                         state->config.filter_coeffs,
                         state->filter_states[i],
                         state->config.left_shift,
-                        state->config.slew_shift, true);
+                        state->config.slew_shift);
         } while (++j < state->frame_size);
     } while (++i < state->n_outputs);
 }
