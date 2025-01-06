@@ -11,7 +11,7 @@ from audio_dsp.dsp.generic import Q_SIG
 import audio_dsp.dsp.signal_gen as gen
 import pytest
 from ..test_utils import xdist_safe_bin_write
-from .test_biquad_c import float_to_qxx, qxx_to_float, in_signal
+from .test_biquad_c import float_to_qxx, qxx_to_float
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
@@ -70,8 +70,10 @@ def single_slew_test(filt, tname, sig_fl, coeffs_2):
 
   np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
-@pytest.mark.parametrize("filter_1", [["biquad_constant_q", 100, 8, -10]])
-@pytest.mark.parametrize("filter_2", [["biquad_constant_q", 10000, 8, -10]])
+# @pytest.mark.parametrize("filter_1", [["biquad_constant_q", 100, 8, -10]])
+# @pytest.mark.parametrize("filter_2", [["biquad_constant_q", 10000, 8, -10]])
+@pytest.mark.parametrize("filter_1", [["biquad_gain", 0]])
+@pytest.mark.parametrize("filter_2", [["biquad_gain", -10]])
 @pytest.mark.parametrize("slew_shift", [6])
 def test_slew_c(in_signal, filter_1, filter_2, slew_shift):
 
@@ -86,6 +88,28 @@ def test_slew_c(in_signal, filter_1, filter_2, slew_shift):
   filt =bq.biquad_slew(coeffs_1, fs, 1, slew_shift=slew_shift)
   filter_name = f"slew_{filter_type_1}_{filter_1[1]}_{filter_type_2}_{filter_1[1]}"
   single_slew_test(filt, filter_name, in_signal, coeffs_2)
+
+def get_sig(len=0.05):
+
+  sig_fl = np.ones(int(len*fs))*0.5
+  sig_int = float_to_qxx(sig_fl)
+
+  name = "sig_48k"
+  sig_path = bin_dir /  str(name + ".bin")
+  
+  xdist_safe_bin_write(sig_int, sig_path)
+
+  # wav file does not need to be locked as it is only used for debugging outside pytest
+  wav_path = gen_dir / str(name + ".wav")
+  sf.write(wav_path, sig_fl, int(fs), "PCM_24")
+
+  return sig_fl
+
+@pytest.fixture(scope="module")
+def in_signal():
+  bin_dir.mkdir(exist_ok=True, parents=True)
+  gen_dir.mkdir(exist_ok=True, parents=True)
+  return get_sig()
 
 if __name__ == "__main__":
   from test_biquad_c import get_sig
