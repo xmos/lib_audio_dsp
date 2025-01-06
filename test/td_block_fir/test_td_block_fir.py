@@ -114,7 +114,7 @@ def test_main(length):
     coeff_name = f"tmp_coeffs_{length}.npy"
     np.save(coeff_name, coeffs)
 
-    subprocess.check_output(f"python -m audio_dsp.dsp.td_block_fir {coeff_name} --output 'autogen'", shell=True)
+    subprocess.check_output(f"python -m audio_dsp.dsp.td_block_fir {coeff_name} --output autogen", shell=True)
 
 
 if __name__ == "__main__":

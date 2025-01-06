@@ -129,6 +129,15 @@ def test_long_lengths(length):
 def test_real_filter(length):
     build_and_run_tests(dir_name, firwin(length, 0.5))
 
+@pytest.mark.parametrize("length", range(2, 17, 2))
+def test_main(length):
+    coeffs = np.abs(np.random.uniform(-1, 1, length))
+    coeff_name = f"tmp_coeffs_{length}.npy"
+    np.save(coeff_name, coeffs)
+    frame_advance = 4
+
+    subprocess.check_output(f"python -m audio_dsp.dsp.fd_block_fir {coeff_name} {frame_advance} --output autogen", shell=True)
+
 if __name__ == "__main__":
     # test_constant_value_variable_length(16, 2, -2, 2, 0)
     # test_long_lengths(1024)
