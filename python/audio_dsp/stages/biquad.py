@@ -66,7 +66,8 @@ class Biquad(Stage):
         1.
         """
         self.details = {}
-        self.dsp_block = bq.biquad_bypass(self.fs, self.n_in)
+        new_coeffs = bq.make_biquad_bypass(self.fs)
+        self.dsp_block.update_coeffs(new_coeffs)
         return self
 
     def make_lowpass(self, f: float, q: float) -> "Biquad":
@@ -81,7 +82,8 @@ class Biquad(Stage):
             Butterworth response.
         """
         self.details = dict(type="low pass", **_ws(locals()))
-        self.dsp_block = bq.biquad_lowpass(self.fs, self.n_in, f, q)
+        new_coeffs = bq.make_biquad_lowpass(self.fs, f, q)
+        self.dsp_block.update_coeffs(new_coeffs)        
         return self
 
     def make_highpass(self, f: float, q: float) -> "Biquad":
@@ -96,7 +98,8 @@ class Biquad(Stage):
             Butterworth response.
         """
         self.details = dict(type="high pass", **_ws(locals()))
-        self.dsp_block = bq.biquad_highpass(self.fs, self.n_in, f, q)
+        new_coeffs = bq.make_biquad_highpass(self.fs, f, q)
+        self.dsp_block.update_coeffs(new_coeffs)        
         return self
 
     def make_bandpass(self, f: float, bw: float) -> "Biquad":
@@ -110,7 +113,8 @@ class Biquad(Stage):
             Bandwidth of the filter in octaves.
         """
         self.details = dict(type="band pass", **_ws(locals()))
-        self.dsp_block = bq.biquad_bandpass(self.fs, self.n_in, f, bw)
+        new_coeffs = bq.make_biquad_bandpass(self.fs, f, bw)
+        self.dsp_block.update_coeffs(new_coeffs)
         return self
 
     def make_bandstop(self, f: float, bw: float) -> "Biquad":
@@ -124,7 +128,8 @@ class Biquad(Stage):
             Bandwidth of the filter in octaves.
         """
         self.details = dict(type="band stop", **_ws(locals()))
-        self.dsp_block = bq.biquad_bandstop(self.fs, self.n_in, f, bw)
+        new_coeffs = bq.make_biquad_bandstop(self.fs, f, bw)
+        self.dsp_block.update_coeffs(new_coeffs)
         return self
 
     def make_notch(self, f: float, q: float) -> "Biquad":
@@ -152,7 +157,8 @@ class Biquad(Stage):
             Q factor of the filter.
         """
         self.details = dict(type="all pass", **_ws(locals()))
-        self.dsp_block = bq.biquad_allpass(self.fs, self.n_in, f, q)
+        new_coeffs = bq.make_biquad_allpass(self.fs, f, q)
+        self.dsp_block.update_coeffs(new_coeffs)
         return self
 
     def make_peaking(self, f: float, q: float, boost_db: float) -> "Biquad":
@@ -168,7 +174,8 @@ class Biquad(Stage):
             Gain of the filter in decibels.
         """
         self.details = dict(type="peaking", **_ws(locals()))
-        self.dsp_block = bq.biquad_peaking(self.fs, self.n_in, f, q, boost_db)
+        new_coeffs = bq.make_biquad_peaking(self.fs, f, q, boost_db)
+        self.dsp_block.update_coeffs(new_coeffs)
         return self
 
     def make_constant_q(self, f: float, q: float, boost_db: float) -> "Biquad":
@@ -188,7 +195,8 @@ class Biquad(Stage):
             Gain of the filter in decibels.
         """
         self.details = dict(type="constant q", **_ws(locals()))
-        self.dsp_block = bq.biquad_constant_q(self.fs, self.n_in, f, q, boost_db)
+        new_coeffs = bq.make_biquad_constant_q(self.fs, f, q, boost_db)
+        self.dsp_block.update_coeffs(new_coeffs)
         return self
 
     def make_lowshelf(self, f: float, q: float, boost_db: float) -> "Biquad":
@@ -210,7 +218,8 @@ class Biquad(Stage):
             Gain of the filter in decibels.
         """
         self.details = dict(type="lowshelf", **_ws(locals()))
-        self.dsp_block = bq.biquad_lowshelf(self.fs, self.n_in, f, q, boost_db)
+        new_coeffs = bq.make_biquad_lowshelf(self.fs, f, q, boost_db)
+        self.dsp_block.update_coeffs(new_coeffs)
         return self
 
     def make_highshelf(self, f: float, q: float, boost_db: float) -> "Biquad":
@@ -232,7 +241,8 @@ class Biquad(Stage):
             Gain of the filter in decibels.
         """
         self.details = dict(type="highshelf", **_ws(locals()))
-        self.dsp_block = bq.biquad_highshelf(self.fs, self.n_in, f, q, boost_db)
+        new_coeffs = bq.make_biquad_highshelf(self.fs, f, q, boost_db)
+        self.dsp_block.update_coeffs(new_coeffs)
         return self
 
     def make_linkwitz(self, f0: float, q0: float, fp: float, qp: float) -> "Biquad":
@@ -255,5 +265,26 @@ class Biquad(Stage):
             The target quality factor for the filter.
         """
         self.details = dict(type="linkwitz", **_ws(locals()))
-        self.dsp_block = bq.biquad_linkwitz(self.fs, self.n_in, f0, q0, fp, qp)
+        new_coeffs = bq.make_biquad_linkwitz(self.fs, f0, q0, fp, qp)
+        self.dsp_block.update_coeffs(new_coeffs)
         return self
+
+
+class BiquadSlew(Biquad):
+    def __init__(self, **kwargs):
+        Stage.__init__(self, config=find_config("biquad_slew"), **kwargs)
+        if self.fs is None:
+            raise ValueError("Biquad slew requires inputs with a valid fs")
+        self.fs = int(self.fs)
+        self.create_outputs(self.n_in)
+        init_coeffs = bq.make_biquad_bypass(self.fs)
+        self.dsp_block: bq = bq.biquad_slew(init_coeffs, self.fs, self.n_in)
+        self.set_control_field_cb(
+            "filter_coeffs", self._get_fixed_point_coeffs
+        )
+        self.set_control_field_cb("left_shift", lambda: self.dsp_block.b_shift)
+        self.set_control_field_cb("slew_shift", lambda: self.dsp_block.slew_shift)
+        self.stage_memory_parameters = (self.n_in,)
+
+    def _get_fixed_point_coeffs(self) -> list:
+        return self.dsp_block.target_coeffs_int
