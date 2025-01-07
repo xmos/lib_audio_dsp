@@ -143,7 +143,8 @@ class Biquad(Stage):
             Q factor of the filter.
         """
         self.details = dict(type="notch", **_ws(locals()))
-        self.dsp_block = bq.biquad_notch(self.fs, self.n_in, f, q)
+        new_coeffs = bq.make_biquad_notch(self.fs, f, q)
+        self.dsp_block.update_coeffs(new_coeffs)
         return self
 
     def make_allpass(self, f: float, q: float) -> "Biquad":
