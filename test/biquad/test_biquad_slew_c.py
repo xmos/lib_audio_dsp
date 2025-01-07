@@ -66,7 +66,7 @@ def single_slew_test(filt, tname, sig_fl, coeffs_2):
 
   out_py_int = run_py_slew(filt, sig_fl, coeffs_2)
   out_c = get_c_slew_wav(test_dir)
-#   shutil.rmtree(test_dir)
+  shutil.rmtree(test_dir)
 
   np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 

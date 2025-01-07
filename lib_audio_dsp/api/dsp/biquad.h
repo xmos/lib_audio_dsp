@@ -4,7 +4,6 @@
 #pragma once
 
 #include "xmath/types.h"
-#include "stdbool.h"
 
 /**
  * @brief Biquad filter.
@@ -24,7 +23,7 @@ int32_t adsp_biquad(
 
 
 /**
- * @brief Biquad filter.
+ * @brief Biquad filter with slew.
  *  This function implements a biquad filter with slew. 
  *  The filter is implemented as a direct form 1.
  *  The coeffs are exponentially slewed towards the target_coeffs.
