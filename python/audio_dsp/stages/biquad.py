@@ -50,16 +50,13 @@ class Biquad(Stage):
             raise ValueError("Biquad requires inputs with a valid fs")
         self.fs = int(self.fs)
         self.create_outputs(self.n_in)
-        self.dsp_block = bq.biquad_bypass(self.fs, self.n_in)
-        self.set_control_field_cb(
-            "filter_coeffs", lambda: [i for i in self._get_fixed_point_coeffs()]
-        )
+        self.dsp_block: bq = bq.biquad_bypass(self.fs, self.n_in)
+        self.set_control_field_cb("filter_coeffs", self._get_fixed_point_coeffs)
         self.set_control_field_cb("left_shift", lambda: self.dsp_block.b_shift)
         self.stage_memory_parameters = (self.n_in,)
 
-    def _get_fixed_point_coeffs(self) -> np.ndarray:
-        a = np.array(self.dsp_block.coeffs)
-        return np.array(a * (2**30), dtype=np.int32)
+    def _get_fixed_point_coeffs(self) -> list[int]:
+        return self.dsp_block.int_coeffs
 
     def make_bypass(self) -> "Biquad":
         """Make this biquad a bypass by setting the b0 coefficient to
@@ -83,7 +80,7 @@ class Biquad(Stage):
         """
         self.details = dict(type="low pass", **_ws(locals()))
         new_coeffs = bq.make_biquad_lowpass(self.fs, f, q)
-        self.dsp_block.update_coeffs(new_coeffs)        
+        self.dsp_block.update_coeffs(new_coeffs)
         return self
 
     def make_highpass(self, f: float, q: float) -> "Biquad":
@@ -99,7 +96,7 @@ class Biquad(Stage):
         """
         self.details = dict(type="high pass", **_ws(locals()))
         new_coeffs = bq.make_biquad_highpass(self.fs, f, q)
-        self.dsp_block.update_coeffs(new_coeffs)        
+        self.dsp_block.update_coeffs(new_coeffs)
         return self
 
     def make_bandpass(self, f: float, bw: float) -> "Biquad":
@@ -272,6 +269,26 @@ class Biquad(Stage):
 
 
 class BiquadSlew(Biquad):
+    """
+    A second order biquadratic filter with slew, which can be used to
+    make many common second order filters. The filter is initialised in a
+    bypass state, and the ``make_*`` methods can be used to calculate the
+    coefficients. This variant will slew between filter coefficients when
+    they are changed.
+
+    This Stage implements a direct form 1 biquad filter:
+    ``a0*y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]``
+
+    For efficiency the biquad coefficients are normalised by ``a0`` and the
+    output ``a`` coefficients multiplied by -1.
+
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.biquad.biquad_slew`
+        The DSP block class; see :ref:`Biquad`
+        for implementation details.
+    """
+
     def __init__(self, **kwargs):
         Stage.__init__(self, config=find_config("biquad_slew"), **kwargs)
         if self.fs is None:
@@ -279,16 +296,17 @@ class BiquadSlew(Biquad):
         self.fs = int(self.fs)
         self.create_outputs(self.n_in)
         init_coeffs = bq.make_biquad_bypass(self.fs)
-        self.dsp_block = bq.biquad_slew(init_coeffs, self.fs, self.n_in)
-        self.set_control_field_cb(
-            "filter_coeffs", self._get_fixed_point_coeffs
-        )
+        self.dsp_block: bq = bq.biquad_slew(init_coeffs, self.fs, self.n_in)
+        self.set_control_field_cb("filter_coeffs", self._get_fixed_point_coeffs)
         self.set_control_field_cb("left_shift", lambda: self.dsp_block.b_shift)
         self.set_control_field_cb("slew_shift", lambda: self.dsp_block.slew_shift)
         self.stage_memory_parameters = (self.n_in,)
 
     def _get_fixed_point_coeffs(self) -> list:
         return self.dsp_block.target_coeffs_int
-    
+
     def set_slew_shift(self, slew_shift):
+        """Set the slew shift for a biquad object. This sets how fast the
+        filter will slew between filter coefficients.
+        """
         self.dsp_block.slew_shift = slew_shift

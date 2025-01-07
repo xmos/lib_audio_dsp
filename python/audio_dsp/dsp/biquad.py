@@ -389,7 +389,6 @@ class biquad_slew(biquad):
         point maths. This will slew the coeffs towards the target coefficients.
 
         """
-
         for n in range(5):
             self.coeffs[channel][n] += (
                 self.target_coeffs[n] - self.coeffs[channel][n]  # pyright: ignore : overloads base class coeffs
