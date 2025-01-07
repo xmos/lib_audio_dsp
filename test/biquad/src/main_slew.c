@@ -25,7 +25,7 @@ int main()
   left_shift_t lsh = 0;
   int32_t shift = 0;
 
-  FILE * in = _fopen("../sig_48k.bin", "rb");
+  FILE * in = _fopen("../slew_sig_48k.bin", "rb");
   FILE * out = _fopen("sig_out.bin", "wb");
   FILE * coeffs = _fopen("coeffs.bin", "rb");
   FILE * coeffs_2 = _fopen("coeffs_2.bin", "rb");

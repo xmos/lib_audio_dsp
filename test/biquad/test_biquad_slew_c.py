@@ -92,7 +92,7 @@ def get_sig(len=0.05):
   sig_fl = np.ones(int(len*fs))*0.5
   sig_int = float_to_qxx(sig_fl)
 
-  name = "sig_48k"
+  name = "slew_sig_48k"
   sig_path = bin_dir /  str(name + ".bin")
   
   xdist_safe_bin_write(sig_int, sig_path)
