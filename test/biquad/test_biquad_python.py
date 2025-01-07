@@ -43,10 +43,10 @@ def saturation_test(filter: bq.biquad, fs):
     top_half = utils.db(output_flt) > -50
     if np.any(top_half):
         error_flt = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
-        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        mean_error_flt = np.abs(utils.db(np.nanmean(utils.db2gain(error_flt))))
         assert mean_error_flt < 0.055
         error_vpu = np.abs(utils.db(output_int[top_half])-utils.db(output_vpu[top_half]))
-        mean_error_vpu = utils.db(np.nanmean(utils.db2gain(error_vpu)))
+        mean_error_vpu = np.abs(utils.db(np.nanmean(utils.db2gain(error_vpu))))
         assert mean_error_vpu < 0.05
 
 
@@ -77,10 +77,10 @@ def chirp_filter_test(filter: bq.biquad, fs):
 
     if np.any(top_half):
         error_flt = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
-        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        mean_error_flt = np.abs(utils.db(np.nanmean(utils.db2gain(error_flt))))
         assert mean_error_flt < 0.055
         error_vpu = np.abs(utils.db(output_int[top_half])-utils.db(output_vpu[top_half]))
-        mean_error_vpu = utils.db(np.nanmean(utils.db2gain(error_vpu)))
+        mean_error_vpu = np.abs(utils.db(np.nanmean(utils.db2gain(error_vpu))))
         assert mean_error_vpu < 0.05
 
 
@@ -250,7 +250,71 @@ def test_frames(filter_n, fs, n_chans, q_format):
     assert np.all(output_vpu[0, :] == output_vpu)
 
 
+def test_coeff_change():
+    fs = 48000
+    coeffs_1 = bq.make_biquad_constant_q(fs, 100, 8, -10)
+    coeffs_2 = bq.make_biquad_constant_q(fs, 10000, 8, -10)
 
+    bq_1 = bq.biquad(coeffs_1, fs, 1)
+    bq_2 = bq.biquad(coeffs_1, fs, 1)
+    bq_3 = bq.biquad_slew(coeffs_1, fs, 1, slew_shift=6)
+    bq_4 = bq.biquad_slew(coeffs_1, fs, 1, slew_shift=6)
+
+    amplitude = 0.1
+    dc = 0
+    signal = gen.sin(fs, 0.2, 10000, amplitude) + dc
+
+    output_flt_reset = np.zeros_like(signal)
+    output_vpu_reset = np.zeros_like(signal)
+    output_flt_slew = np.zeros_like(signal)
+    output_vpu_slew = np.zeros_like(signal)
+
+    for n in range(2000):
+        output_flt_reset[n] = bq_1.process(signal[n])
+        output_vpu_reset[n] = bq_2.process_xcore(signal[n])
+        output_flt_slew[n] = bq_3.process(signal[n])
+        output_vpu_slew[n] = bq_4.process_xcore(signal[n])
+
+    bq_1.update_coeffs(coeffs_2)
+    bq_2.update_coeffs(coeffs_2)
+    bq_3.update_coeffs(coeffs_2)
+    bq_4.update_coeffs(coeffs_2)
+
+    for n in range(2000, 5000):
+        output_flt_reset[n] = bq_1.process(signal[n])
+        output_vpu_reset[n] = bq_2.process_xcore(signal[n])
+        output_flt_slew[n] = bq_3.process(signal[n])
+        output_vpu_slew[n] = bq_4.process_xcore(signal[n])
+
+    bq_1.update_coeffs(coeffs_1)
+    bq_2.update_coeffs(coeffs_1)
+    bq_3.update_coeffs(coeffs_1)
+    bq_4.update_coeffs(coeffs_1)
+
+    for n in range(5000, len(signal)):
+        output_flt_reset[n] = bq_1.process(signal[n])
+        output_vpu_reset[n] = bq_2.process_xcore(signal[n])
+        output_flt_slew[n] = bq_3.process(signal[n])
+        output_vpu_slew[n] = bq_4.process_xcore(signal[n])
+
+    assert np.max(np.abs(output_flt_reset - dc)) < amplitude*1.01
+    assert np.max(np.abs(output_vpu_reset - dc)) < amplitude*1.01
+    assert np.max(np.abs(output_flt_slew - dc)) < amplitude*1.01
+    assert np.max(np.abs(output_vpu_slew - dc)) < amplitude*1.01
+
+    top_half = utils.db(output_flt_reset) > -50
+    if np.any(top_half):
+        error_vpu = np.abs(utils.db(output_flt_reset[top_half])-utils.db(output_vpu_reset[top_half]))
+        mean_error_vpu = np.abs(utils.db(np.nanmean(utils.db2gain(error_vpu))))
+        assert mean_error_vpu < 0.05
+
+    top_half = utils.db(output_flt_slew) > -50
+    if np.any(top_half):
+        error_vpu = np.abs(utils.db(output_flt_slew[top_half])-utils.db(output_vpu_slew[top_half]))
+        mean_error_vpu = np.abs(utils.db(np.nanmean(utils.db2gain(error_vpu))))
+        assert mean_error_vpu < 0.05
+
+    pass
 
 # TODO check biquad actually filters
 # TODO check parameter generation
@@ -262,4 +326,5 @@ if __name__ == "__main__":
     # test_bandx_filters("biquad_bandstop", 10000, 10, 16000)
     # test_bypass(96000, 1)
     # test_gain_filters(5, 16000)
-    test_peaking_filters("biquad_peaking", 20, 0.5, 12, 16000)
+    # test_peaking_filters("biquad_peaking", 20, 0.5, 12, 16000)
+    test_coeff_change()

@@ -28,6 +28,11 @@ class biquad(dspg.dsp_block):
     For efficiency the biquad coefficients are normalised by a0 and the
     output `a` coefficients multiplied by -1.
 
+    When the coefficients are updated, the biquad states are reset. This
+    helps avoid large errors, but can make this implementation unsuitable
+    for real time control. For real time control, :py:class:`biquad_slew` may be a
+    better choice.
+
     Parameters
     ----------
     coeffs : list[float]
@@ -282,6 +287,187 @@ class biquad(dspg.dsp_block):
             self._y2[chan] = 0
 
 
+class biquad_slew(biquad):
+    """
+    A second order biquadratic filter instance that slews between
+    coefficient updates.
+
+    This implements a direct form 1 biquad filter, using the
+    coefficients provided at initialisation:
+    `a0*y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]`
+
+    For efficiency the biquad coefficients are normalised by a0 and the
+    output `a` coefficients multiplied by -1.
+
+    When the target coefficients are updated, the applied coefficients
+    are slewed towards the new target values. This makes this implementation
+    suitable for real time control. A table of the first 10 slew shifts is shown below:
+
+    +------------+--------------------+
+    | slew_shift | Time constant (ms) |
+    +============+====================+
+    |      1     |        0.03        |
+    +------------+--------------------+
+    |      2     |        0.07        |
+    +------------+--------------------+
+    |      3     |        0.16        |
+    +------------+--------------------+
+    |      4     |        0.32        |
+    +------------+--------------------+
+    |      5     |        0.66        |
+    +------------+--------------------+
+    |      6     |        1.32        |
+    +------------+--------------------+
+    |      7     |        2.66        |
+    +------------+--------------------+
+    |      8     |        5.32        |
+    +------------+--------------------+
+    |      9     |       10.66        |
+    +------------+--------------------+
+    |     10     |       21.32        |
+    +------------+--------------------+
+
+    Parameters
+    ----------
+    slew_shift : int
+        The shift value used in the exponential slew.
+
+    Attributes
+    ----------
+    coeffs : list[list[float]]
+        List of normalised float biquad coefficients in the form in the
+        form `[b0, b1, b2, -a1, -a2]/a0`, rounded to int32 precision.
+    int_coeffs : list[list[int]]
+        List of normalised int biquad coefficients in the form in the
+        form `[b0, b1, b2, -a1, -a2]/a0`, scaled and rounded to int32.
+    target_coeffs : list[float]
+        List of normalised float target biquad coefficients in the form in the
+        form `[b0, b1, b2, -a1, -a2]/a0`, rounded to int32 precision. The coeffs
+        are slewed towards these values.
+    target_coeffs_int : list[int]
+        List of normalised int target biquad coefficients in the form in the
+        form `[b0, b1, b2, -a1, -a2]/a0`, scaled and rounded to int32. The int_coeffs
+        are slewed towards these values.
+
+    """
+
+    def __init__(
+        self,
+        coeffs: list[float],
+        fs: int,
+        n_chans: int = 1,
+        b_shift: int = 0,
+        slew_shift: int = 2,
+        Q_sig: int = dspg.Q_SIG,
+    ):
+        super().__init__(
+            coeffs,
+            fs,
+            n_chans,
+            b_shift,
+            Q_sig,
+        )
+        self.target_coeffs = deepcopy(self.coeffs)
+        self.target_coeffs_int = deepcopy(self.int_coeffs)
+        self.coeffs = [deepcopy(self.coeffs) for chan in range(n_chans)]
+        self.int_coeffs = [deepcopy(self.int_coeffs) for chan in range(n_chans)]
+        self.slew_shift = slew_shift
+
+    def update_coeffs(self, new_coeffs: list[float]):
+        """Update the saved coefficients to the input values.
+
+        Parameters
+        ----------
+        new_coeffs : list[float]
+            The new coefficients to be updated.
+        """
+        self.target_coeffs, self.target_coeffs_int = _round_and_check(new_coeffs, self.b_shift)
+
+    def process(self, sample: float, channel: int = 0) -> float:
+        """
+        Filter a single sample using direct form 1 biquad using floating
+        point maths. This will slew the coeffs towards the target coefficients.
+
+        """
+        for n in range(5):
+            self.coeffs[channel][n] += (
+                self.target_coeffs[n] - self.coeffs[channel][n]  # pyright: ignore : overloads base class coeffs
+            ) * 2**-self.slew_shift
+
+        y = (
+            self.coeffs[channel][0] * sample
+            + self.coeffs[channel][1] * self._x1[channel]
+            + self.coeffs[channel][2] * self._x2[channel]
+            + self.coeffs[channel][3] * self._y1[channel]
+            + self.coeffs[channel][4] * self._y2[channel]
+        )
+
+        y = utils.saturate_float(y, self.Q_sig)
+
+        self._x2[channel] = self._x1[channel]
+        self._x1[channel] = sample
+        self._y2[channel] = self._y1[channel]
+        self._y1[channel] = y
+
+        y = y * (1 << self.b_shift)
+        y = utils.saturate_float(y, self.Q_sig)
+
+        return y
+
+    def process_int(self, sample: float, channel: int = 0) -> float:
+        """
+        Filter a single sample using direct form 1 biquad using int32
+        fixed point maths.
+        """
+        raise NotImplementedError
+
+    def process_xcore(self, sample: float, channel: int = 0) -> float:
+        """
+        Filter a single sample using direct form 1 biquad using int32
+        fixed point maths, with use of the XS3 VPU.
+
+        The float input sample is quantized to int32, and returned to
+        float before outputting.
+
+        """
+        sample_int = utils.float_to_int32(sample, self.Q_sig)
+
+        for n in range(5):
+            self.int_coeffs[channel][n] += (
+                utils.saturate_int32_vpu(self.target_coeffs_int[n] - self.int_coeffs[channel][n])  # pyright: ignore : overloads base class int_coeffs
+                >> self.slew_shift
+            )
+
+        # process a single sample using direct form 1. In the VPU the
+        # ``>> 30`` comes before accumulation
+        y = utils.vlmaccr(
+            [
+                sample_int,
+                self._x1[channel],
+                self._x2[channel],
+                self._y1[channel],
+                self._y2[channel],
+            ],
+            self.int_coeffs[channel],
+        )
+
+        y = utils.saturate_int32(y)
+
+        # save states
+        self._x2[channel] = utils.int32(self._x1[channel])
+        self._x1[channel] = utils.int32(sample_int)
+        self._y2[channel] = utils.int32(self._y1[channel])
+        self._y1[channel] = utils.int32(y)
+
+        # compensate for coefficients
+        y = utils.int64(y << self.b_shift)
+        y = utils.saturate_int32(y)
+
+        y_flt = utils.int32_to_float(y, self.Q_sig)
+
+        return y_flt
+
+
 def biquad_bypass(fs: int, n_chans: int, Q_sig=dspg.Q_SIG) -> biquad:
     """Return a biquad object with `b0 = 1`, i.e. output=input."""
     coeffs = make_biquad_bypass(fs)
@@ -316,6 +502,7 @@ def biquad_bandpass(
     """Return a biquad object with bandpass filter coefficients."""
     # bw is bandwidth in octaves
     coeffs = make_biquad_bandpass(fs, filter_freq, bw)
+
     return biquad(coeffs, fs, n_chans=n_chans, Q_sig=Q_sig)
 
 
@@ -941,12 +1128,12 @@ def make_biquad_constant_q(
         a2 = 1 - K / q_factor + K**2
     else:
         V = 1 / V
-        b0 = 1 + K / q_factor + K**2
+        b0 = 1 + (K / q_factor) + K**2
         b1 = 2 * (K**2 - 1)
-        b2 = 1 - K / q_factor + K**2
-        a0 = 1 + V * K / q_factor + K**2
+        b2 = 1 - (K / q_factor) + K**2
+        a0 = 1 + (V * K / q_factor) + K**2
         a1 = 2 * (K**2 - 1)
-        a2 = 1 - V * K / q_factor + K**2
+        a2 = 1 - (V * K / q_factor) + K**2
 
     coeffs = [b0, b1, b2, a0, a1, a2]
     coeffs = _normalise_biquad(coeffs)

@@ -293,6 +293,56 @@ def test_biquad(method, args, frame_size):
     folder_name = f"biquad_{frame_size}_{method[5:]}"
     do_test(make_p, tune_p, frame_size, folder_name)
 
+
+@pytest.mark.group0
+@pytest.mark.parametrize(
+    "method, args",
+    [
+        ("make_bypass", None),
+        ("make_lowpass", [1000, 0.707]),
+        ("make_highpass", [1000, 0.707]),
+        ("make_bandpass", [1000, 0.707]),
+        ("make_bandstop", [1000, 0.707]),
+        ("make_notch", [1000, 0.707]),
+        ("make_allpass", [1000, 0.707]),
+        ("make_peaking", [1000, 0.707, -6]),
+        ("make_constant_q", [1000, 0.707, -6]),
+        ("make_lowshelf", [1000, 0.707, -6]),
+        ("make_highshelf", [1000, 0.707, -6]),
+        ("make_linkwitz", [200, 0.707, 180, 0.707]),
+    ],
+)
+def test_biquad_slew(method, args, frame_size):
+    """
+    Test the biquad stage filters the same in Python and C
+    """
+
+    def make_p(fr):
+        p, i = Pipeline.begin(channels, frame_size=fr)
+        o = p.stage(BiquadSlew, i, label="control")
+        p.set_outputs(o)
+        p["control"].set_slew_shift(0)
+
+        return p
+
+    def tune_p(fr):
+        p = make_p(fr)
+
+        bq_method = getattr(p["control"], method)
+
+        # Set initialization parameters of the stage
+        if args:
+            bq_method(*args)
+        else:
+            bq_method()
+
+        stage_config = p["control"].get_config()
+        generate_test_param_file("BIQUAD_SLEW", stage_config)
+        return p
+
+    folder_name = f"biquad_slew_{frame_size}_{method[5:]}"
+    do_test(make_p, tune_p, frame_size, folder_name)
+
 filter_spec = [
     ["lowpass", fs * 0.4, 0.707],
     ["highpass", fs * 0.001, 1],

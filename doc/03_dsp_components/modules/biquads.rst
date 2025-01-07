@@ -48,6 +48,41 @@ The ``state`` should be initialised to ``0``. The ``state`` and ``coeffs`` must 
         .. automethod:: reset_state
             :noindex:
 
+
+=====================
+Single Slewing Biquad
+=====================
+
+This is similar to `Biquad`_, but when the target coefficients are updated it slew the applied
+coefficients towards the new values. This can be used for real time adjustable filter control.
+
+.. tab:: C API
+
+    .. only:: latex
+
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_biquad_slew
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.biquad.biquad_slew
+        :noindex:
+
+        .. automethod:: process
+            :noindex:
+
+        .. automethod:: update_coeffs
+            :noindex:
+
+        .. automethod:: reset_state
+            :noindex:
+
+
 .. _CascadedBiquads:
 
 ================
