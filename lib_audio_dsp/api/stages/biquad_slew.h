@@ -21,13 +21,13 @@ typedef struct
 #define _BQ_SLEW_FILTER_MEMORY \
     (BIQUAD_SLEW_STATE_LEN * sizeof(int32_t))
 #define _BQ_SLEW_ALL_FILTER_MEMORY(N_IN) \
-    (ADSP_BUMP_ALLOCATOR_DWORD_N_BYTES(2*_BQ_SLEW_FILTER_MEMORY) * (N_IN))
+    (ADSP_BUMP_ALLOCATOR_DWORD_N_BYTES(_BQ_SLEW_FILTER_MEMORY) * (N_IN))
 #define _BQ_SLEW_ARR_MEMORY(N_IN) \
     ((N_IN) * sizeof(int32_t*))
 
 
 #define BIQUAD_SLEW_STAGE_REQUIRED_MEMORY(N_IN) \
-    _BQ_SLEW_ALL_FILTER_MEMORY(N_IN) + _BQ_SLEW_ARR_MEMORY(N_IN)
+    2*_BQ_SLEW_ALL_FILTER_MEMORY(N_IN) + 2*_BQ_SLEW_ARR_MEMORY(N_IN)
 
 void biquad_slew_init(module_instance_t* instance,
                  adsp_bump_allocator_t* allocator,

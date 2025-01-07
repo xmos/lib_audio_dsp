@@ -70,10 +70,8 @@ def single_slew_test(filt, tname, sig_fl, coeffs_2):
 
   np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
-@pytest.mark.parametrize("filter_1", [["biquad_constant_q", 100, 8, -10]])
-@pytest.mark.parametrize("filter_2", [["biquad_constant_q", 10000, 8, -10]])
-# @pytest.mark.parametrize("filter_1", [["biquad_gain", 0]])
-# @pytest.mark.parametrize("filter_2", [["biquad_gain", -10]])
+@pytest.mark.parametrize("filter_1", [["biquad_constant_q", 100, 8, -10], ["biquad_gain", 0]])
+@pytest.mark.parametrize("filter_2", [["biquad_constant_q", 10000, 8, -10], ["biquad_gain", -10]])
 @pytest.mark.parametrize("slew_shift", [6])
 def test_slew_c(in_signal, filter_1, filter_2, slew_shift):
 
@@ -86,7 +84,7 @@ def test_slew_c(in_signal, filter_1, filter_2, slew_shift):
   coeffs_2 = coeffs_hand_2(fs, *filter_2[1:])
 
   filt =bq.biquad_slew(coeffs_1, fs, 1, slew_shift=slew_shift)
-  filter_name = f"slew_{filter_type_1}_{filter_1[1]}_{filter_type_2}_{filter_1[1]}"
+  filter_name = f"slew_{filter_type_1}_{filter_1[1]}_{filter_type_2}_{filter_2[1]}"
   single_slew_test(filt, filter_name, in_signal, coeffs_2)
 
 def get_sig(len=0.05):

@@ -29,10 +29,9 @@ int32_t adsp_biquad_slew(
 .cc_top FUNCTION_NAME.function,FUNCTION_NAME
 
 FUNCTION_NAME:
-  dualentsp NSTACKWORDS
+  { dualentsp NSTACKWORDS       ; mov r11, coeffs             }
   std r4, r5, sp[0]
 
-  { vclrdr                      ; mov r11, coeffs             }
   { vldr r11[0]                 ; ldc r11, 0                  }
   { vsetc r11                   ;                             }
 
