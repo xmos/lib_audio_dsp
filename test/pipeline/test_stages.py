@@ -321,6 +321,7 @@ def test_biquad_slew(method, args, frame_size):
         p, i = Pipeline.begin(channels, frame_size=fr)
         o = p.stage(BiquadSlew, i, label="control")
         p.set_outputs(o)
+        p["control"].set_slew_shift(0)
 
         return p
 

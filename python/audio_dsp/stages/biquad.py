@@ -288,3 +288,6 @@ class BiquadSlew(Biquad):
 
     def _get_fixed_point_coeffs(self) -> list:
         return self.dsp_block.target_coeffs_int
+    
+    def set_slew_shift(self, slew_shift):
+        self.dsp_block.slew_shift = slew_shift
