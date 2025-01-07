@@ -50,7 +50,7 @@ class Biquad(Stage):
             raise ValueError("Biquad requires inputs with a valid fs")
         self.fs = int(self.fs)
         self.create_outputs(self.n_in)
-        self.dsp_block: bq = bq.biquad_bypass(self.fs, self.n_in)
+        self.dsp_block = bq.biquad_bypass(self.fs, self.n_in)
         self.set_control_field_cb(
             "filter_coeffs", lambda: [i for i in self._get_fixed_point_coeffs()]
         )
@@ -278,7 +278,7 @@ class BiquadSlew(Biquad):
         self.fs = int(self.fs)
         self.create_outputs(self.n_in)
         init_coeffs = bq.make_biquad_bypass(self.fs)
-        self.dsp_block: bq = bq.biquad_slew(init_coeffs, self.fs, self.n_in)
+        self.dsp_block = bq.biquad_slew(init_coeffs, self.fs, self.n_in)
         self.set_control_field_cb(
             "filter_coeffs", self._get_fixed_point_coeffs
         )
