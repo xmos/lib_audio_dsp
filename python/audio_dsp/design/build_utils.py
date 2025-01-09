@@ -284,7 +284,7 @@ class XCommonCMakeHelper:
             Return code from the invokation of xrun or xgdb. 0 if success.
         """
         app = (
-            f'{self.bin_dir / self.config_name / (self.project_name + self.config_suffix + ".xe")}'
+            f"{self.bin_dir / self.config_name / (self.project_name + self.config_suffix + '.xe')}"
         )
         cmd = ""
         if xscope:

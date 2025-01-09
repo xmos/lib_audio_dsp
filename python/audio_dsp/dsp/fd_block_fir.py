@@ -285,7 +285,7 @@ def _get_filter_phases(
 
         if actual_output_sample_count < minimum_output_samples:
             if auto_block_length:
-                print(f"Auto block length, trying next size up, was: {nfft}, now: {nfft*2}")
+                print(f"Auto block length, trying next size up, was: {nfft}, now: {nfft * 2}")
                 # increase block length to get enough output samples
                 nfft *= 2
                 # recursion in case we can now do a single phase filter
@@ -520,8 +520,7 @@ if __name__ == "__main__":
         "--name",
         type=str,
         default=None,
-        help="Name for the filter for use in identification of the filter"
-        "from within the C code.",
+        help="Name for the filter for use in identification of the filter from within the C code.",
     )
 
     parser.add_argument("--output", type=str, default=".", help="Output location.")

@@ -9,7 +9,7 @@ import numpy as np
 
 def _ws(locals):
     """
-    without self.
+    Without self.
 
     Parameters
     ----------
