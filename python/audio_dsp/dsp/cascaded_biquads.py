@@ -43,9 +43,9 @@ class cascaded_biquads_8(dspg.dsp_block):
         self.biquads = []
         b_shift_list = b_shift_list or [0] * 8
         assert len(coeffs_list) <= 8, "Too many biquads in coeffs_list"
-        assert len(b_shift_list) >= len(
-            coeffs_list
-        ), "b_shift must be provided for all coefficients"
+        assert len(b_shift_list) >= len(coeffs_list), (
+            "b_shift must be provided for all coefficients"
+        )
         for n in range(8):
             if n < len(coeffs_list):
                 self.biquads.append(
@@ -63,7 +63,7 @@ class cascaded_biquads_8(dspg.dsp_block):
             print("{", end="")
             for n in range(8):
                 this_coeff = self.biquads[n].int_coeffs[nn]
-                print(f"{hex(this_coeff & (2**32-1))}, ", end="")
+                print(f"{hex(this_coeff & (2**32 - 1))}, ", end="")
             print("},", end="")
         print("}")
 
