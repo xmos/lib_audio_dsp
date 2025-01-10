@@ -198,7 +198,10 @@ class Pipeline:
             into a macro in the generated pipeline. Label must be set if tuning or
             run time control is required for this stage.
         """
-        s = self._current_thread.stage(stage_type, inputs, label=label, **kwargs)
+        if "thread" in kwargs:
+            s = self.threads[kwargs.pop('thread')].stage(stage_type, inputs, label=label, **kwargs)
+        else:
+            s = self._current_thread.stage(stage_type, inputs, label=label, **kwargs)
         if label:
             if label in self._labelled_stages:
                 raise RuntimeError(f"Label {label} is already in use.")

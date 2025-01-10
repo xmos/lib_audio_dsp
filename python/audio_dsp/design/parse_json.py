@@ -69,19 +69,27 @@ if __name__ == "__main__":
 
     graph = json_obj.graph
 
-    # get flat list of nodes
+    # get flat list of edges and threads
     edgelist = graph.input.output + graph.output.input
+    threadlist = []
     for i in graph.nodes:
         [edgelist.append(n) for n in i.input]
         [edgelist.append(n) for n in i.output]
+        threadlist.append(i.thread)
 
     uniq_edges, edge_counts = np.unique(edgelist, return_counts=True)
     # assert np.all(edge_counts == 2), "All nodes should be used twice in the graph"
     edge_list = [None]*len(uniq_edges)
 
+    uniq_threads = np.unique(threadlist, return_counts=False)
+
     from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 
     p, in_edges = Pipeline.begin(graph.input.channels, fs=graph.input.fs)
+
+    # make the threads
+    for n in range(len(uniq_threads) - 1):
+        p._add_thread()
 
     for n in range(graph.input.channels):
         edge_list[n] = in_edges[n]
@@ -104,9 +112,9 @@ if __name__ == "__main__":
         stage_inputs = sum(stage_inputs)
         if this_node.op_type == "Fork":
             count = len(this_node.output)//len(this_node.input)
-            node_output = p.stage(this_node._stage_handle, stage_inputs, this_node.name, count=count)
+            node_output = p.stage(this_node._stage_handle, stage_inputs, this_node.name, thread=this_node.thread, count=count)
         else:
-            node_output = p.stage(this_node._stage_handle, stage_inputs, this_node.name)
+            node_output = p.stage(this_node._stage_handle, stage_inputs, this_node.name, thread=this_node.thread)
 
         if len(node_output) != 0:
             for i in range(len(this_node.output)):
