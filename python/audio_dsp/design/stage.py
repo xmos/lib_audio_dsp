@@ -13,6 +13,10 @@ from audio_dsp.dsp.generic import dsp_block
 from typing import Optional
 from types import NotImplementedType
 
+from pydantic_core import CoreSchema, core_schema
+from typing import Annotated
+from typing import Any
+from pydantic import BaseModel, GetCoreSchemaHandler
 
 def find_config(name):
     """
@@ -164,6 +168,8 @@ class StageOutputList:
             other = StageOutputList(other)
         if other is None:
             other = StageOutputList([None])
+        if other == 0:
+            return self
         if not isinstance(other, StageOutputList):
             return NotImplemented
         return StageOutputList(other.edges + self.edges)
@@ -197,7 +203,10 @@ class StageOutputList:
 
     def __eq__(self, other):
         """Check if this list contains the same edges as another."""
-        return all(a is b for a, b in zip(self.edges, other.edges))
+        if other is None:
+            return False
+        else:
+            return all(a is b for a, b in zip(self.edges, other.edges))
 
 
 class PropertyControlField:
@@ -532,7 +541,6 @@ class Stage(Node):
             return f"{macro_name}({','.join((str(x) for x in self.stage_memory_parameters))})"
         else:
             return macro_name
-
 
 def all_stages() -> dict[str, Type[Stage]]:
     """Get a dict containing all stages in scope."""
