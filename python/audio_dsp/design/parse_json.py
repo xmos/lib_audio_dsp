@@ -64,7 +64,9 @@ class DspJson(BaseModel):
 
 
 if __name__ == "__main__":
-    json_obj = DspJson.model_validate_json(Path(r"C:\Users\allanskellett\Documents\051_dsp_txt\dsp_lang_1.json").read_text())
+    # json_obj = DspJson.model_validate_json(Path(r"C:\Users\allanskellett\Documents\051_dsp_txt\dsp_lang_1.json").read_text())
+    json_obj = DspJson.model_validate_json(Path(r"C:\Users\allanskellett\Documents\040_dsp_ultra\scio_0.json").read_text())
+
     graph = json_obj.graph
 
     # get flat list of nodes
@@ -74,7 +76,7 @@ if __name__ == "__main__":
         [edgelist.append(n) for n in i.output]
 
     uniq_edges, edge_counts = np.unique(edgelist, return_counts=True)
-    assert np.all(edge_counts == 2), "All nodes should be used twice in the graph"
+    # assert np.all(edge_counts == 2), "All nodes should be used twice in the graph"
     edge_list = [None]*len(uniq_edges)
 
     from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
@@ -100,13 +102,18 @@ if __name__ == "__main__":
             continue
 
         stage_inputs = sum(stage_inputs)
-        node_output = p.stage(this_node._stage_handle, stage_inputs, this_node.name)
+        if this_node.op_type == "Fork":
+            count = len(this_node.output)//len(this_node.input)
+            node_output = p.stage(this_node._stage_handle, stage_inputs, this_node.name, count=count)
+        else:
+            node_output = p.stage(this_node._stage_handle, stage_inputs, this_node.name)
 
-        for i in range(len(this_node.output)):
-            if edge_list[this_node.output[i]] is None:
-                edge_list[this_node.output[i]] = node_output[i]
-            else:
-                assert False , "oops"
+        if len(node_output) != 0:
+            for i in range(len(this_node.output)):
+                if edge_list[this_node.output[i]] is None:
+                    edge_list[this_node.output[i]] = node_output[i]
+                else:
+                    assert False , "oops"
     
         waiting_nodes.pop(0)
 
