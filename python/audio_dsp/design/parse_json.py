@@ -1,5 +1,5 @@
 from pydantic import BaseModel, RootModel, Field, create_model, TypeAdapter, field_validator, PrivateAttr, computed_field, ConfigDict
-from typing import Literal, Annotated, List, Union, Optional
+from typing import Literal, Annotated, List, Union, Optional, Any
 from annotated_types import Len
 from functools import partial
 from pathlib import Path
@@ -29,14 +29,12 @@ class Node(nodeBaseModel):
     name: str
     op_type: Literal[_stages_list]
     thread: int
-    parameters: Optional[dict[str, float]] = None
-    
+    parameters: Optional[dict[str, float]] = {}
+    config: Optional[dict[str, Any]] = {}
+
     @computed_field
     def _stage_handle(self) -> Stage:
         return getattr(Stages, self.op_type)
-
-
-
 
 class Input(nodeBaseModel):
     name: str
@@ -64,6 +62,8 @@ class DspJson(BaseModel):
 
 
 if __name__ == "__main__":
+    from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
+
     # json_obj = DspJson.model_validate_json(Path(r"C:\Users\allanskellett\Documents\051_dsp_txt\dsp_lang_1.json").read_text())
     json_obj = DspJson.model_validate_json(Path(r"C:\Users\allanskellett\Documents\040_dsp_ultra\scio_0.json").read_text())
 
@@ -77,45 +77,38 @@ if __name__ == "__main__":
         [edgelist.append(n) for n in i.output]
         threadlist.append(i.thread)
 
-    uniq_edges, edge_counts = np.unique(edgelist, return_counts=True)
-    # assert np.all(edge_counts == 2), "All nodes should be used twice in the graph"
-    edge_list = [None]*len(uniq_edges)
-
-    uniq_threads = np.unique(threadlist, return_counts=False)
-
-    from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
-
     p, in_edges = Pipeline.begin(graph.input.channels, fs=graph.input.fs)
 
-    # make the threads
-    for n in range(len(uniq_threads) - 1):
+    # make the right number of threads
+    for n in range(max(threadlist)):
         p._add_thread()
-
+    
+    # make edge list, populate first N with inputs
+    edge_list = [None]*(max(edgelist) + 1)
     for n in range(graph.input.channels):
         edge_list[n] = in_edges[n]
-
-    node_outputs = [None]*len(graph.nodes)
 
     waiting_nodes = list(range(len(graph.nodes)))
 
     while waiting_nodes:
         this_node = graph.nodes[waiting_nodes[0]]
+
+        # get node inputs
         stage_inputs = []
         for i in this_node.input:
             stage_inputs.append(edge_list[i])
 
         if None in stage_inputs:
+            # input doesn't exist yet, try next node, add this node to the end
             this_node = waiting_nodes.pop(0)
             waiting_nodes.append(this_node)
             continue
 
         stage_inputs = sum(stage_inputs)
-        if this_node.op_type == "Fork":
-            count = len(this_node.output)//len(this_node.input)
-            node_output = p.stage(this_node._stage_handle, stage_inputs, this_node.name, thread=this_node.thread, count=count)
-        else:
-            node_output = p.stage(this_node._stage_handle, stage_inputs, this_node.name, thread=this_node.thread)
+        node_output = p.stage(this_node._stage_handle, stage_inputs, this_node.name,
+                              thread=this_node.thread, **this_node.config,)
 
+        # if has outputs, add to edge to edge list- nothing should be there!
         if len(node_output) != 0:
             for i in range(len(this_node.output)):
                 if edge_list[this_node.output[i]] is None:
@@ -123,13 +116,14 @@ if __name__ == "__main__":
                 else:
                     assert False , "oops"
     
+        # done so pop
         waiting_nodes.pop(0)
 
-    output_nodes = []
-    for i in graph.output.input:
-        output_nodes.append(edge_list[i])
+    # setup the output
+    output_nodes = [None] * graph.output.channels
+    for i in range(len(graph.output.input)):
+        output_nodes[i] = edge_list[graph.output.input[i]]
     output_nodes = sum(output_nodes)
-
     p.set_outputs(output_nodes)
 
     pass
