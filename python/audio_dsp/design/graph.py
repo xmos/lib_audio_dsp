@@ -6,7 +6,7 @@
 from uuid import uuid4
 import graphlib
 from typing import Generic, TypeVar
-
+from pydantic import BaseModel
 
 class Node:
     """

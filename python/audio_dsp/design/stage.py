@@ -17,6 +17,10 @@ from pydantic_core import CoreSchema, core_schema
 from typing import Annotated
 from typing import Any
 from pydantic import BaseModel, GetCoreSchemaHandler
+from typing_extensions import TypedDict
+from pydantic import BaseModel, RootModel, Field, create_model, TypeAdapter, field_validator, PrivateAttr, computed_field, ConfigDict
+from typing import Literal, Annotated, List, Union, Optional, Any
+from typing_extensions import TypedDict
 
 def find_config(name):
     """
@@ -247,6 +251,28 @@ class _GlobalStages:
     stages = []
 
 
+class edgeProducerBaseModel(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    input: Optional[list[int]] = None
+    output: Optional[list[int]] = None
+
+    @field_validator("input", "output", mode="before")
+    def _single_to_list(cls, value: Union[int, list]) -> list:
+        if isinstance(value, list):
+            return value
+        else:
+            return [value]
+
+# class nodeBaseModel(edgeProducerBaseModel):
+#     input: list[int]
+#     output: list[int]
+#     name: str
+#     op_type: str
+#     thread: int
+
+# class StageConfig(BaseModel):
+#     pass        
+
 class Stage(Node):
     """
     Base class for stages in the DSP pipeline. Each subclass
@@ -351,6 +377,20 @@ class Stage(Node):
         """Add all subclasses of Stage to a global list for querying."""
         super().__init_subclass__()
         _GlobalStages.stages.append(cls)
+
+    class Model(edgeProducerBaseModel):
+        op_type: Literal["Undefined"]
+        config: dict = Field(default_factory=dict)
+        parameters: dict = Field(default_factory=dict)
+        input: list[int]
+        output: list[int]
+        name: str
+        thread: int
+
+    model: Model
+
+    def set_parameters(self, parameters: dict):
+        pass
 
     @property
     def o(self) -> StageOutputList:

@@ -6,43 +6,50 @@ from pathlib import Path
 import itertools
 import numpy as np
 
-from audio_dsp.design.stage import Stage, all_stages
+from audio_dsp.design.stage import Stage, all_stages, edgeProducerBaseModel
 import audio_dsp.stages as Stages
 
+_stage_dict = all_stages()
 _stages_list = tuple(all_stages().keys())
+_stages_2 = Union[tuple(all_stages().values())]
+# _stage_configs = Annotated[Union[tuple(i.Config for i in all_stages().values())], Field(discriminator="op_type")]
+_stage_Models = Annotated[Union[tuple(i.Model for i in all_stages().values())], Field(discriminator="op_type")]
 
-class nodeBaseModel(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    input: Optional[list[int]] = None
-    output: Optional[list[int]] = None
+# class edgeProducerBaseModel(BaseModel):
+#     model_config = ConfigDict(arbitrary_types_allowed=True)
+#     input: Optional[list[int]] = None
+#     output: Optional[list[int]] = None
 
-    @field_validator("input", "output", mode="before")
-    def _single_to_list(cls, value: Union[int, list]) -> list:
-        if isinstance(value, list):
-            return value
-        else:
-            return [value]
+#     @field_validator("input", "output", mode="before")
+#     def _single_to_list(cls, value: Union[int, list]) -> list:
+#         if isinstance(value, list):
+#             return value
+#         else:
+#             return [value]
 
-class Node(nodeBaseModel):
-    input: list[int]
-    output: list[int]
-    name: str
-    op_type: Literal[_stages_list]
-    thread: int
-    parameters: Optional[dict[str, float]] = {}
-    config: Optional[dict[str, Any]] = {}
+# class nodeBaseModel(edgeProducerBaseModel):
+#     input: list[int]
+#     output: list[int]
+#     name: str
+#     op_type: str
+#     thread: int
 
-    @computed_field
-    def _stage_handle(self) -> Stage:
-        return getattr(Stages, self.op_type)
+# class Node(nodeBaseModel):
+#     parameters: Optional[dict[str, float]] = {}
+#     config: Optional[_stage_configs] = {}
 
-class Input(nodeBaseModel):
+
+#     @computed_field
+#     def _stage_handle(self) -> Stage:
+#         return getattr(Stages, self.op_type)
+
+class Input(edgeProducerBaseModel):
     name: str
     output: list[int]
     channels: int
     fs: int
 
-class Output(nodeBaseModel):
+class Output(edgeProducerBaseModel):
     name: str
     input: list[int]
     channels: int
@@ -50,7 +57,7 @@ class Output(nodeBaseModel):
 
 class Graph(BaseModel):
     name: str
-    nodes: list[Node]
+    nodes: List[_stage_Models]
     input: Input
     output: Output
 
@@ -60,6 +67,10 @@ class DspJson(BaseModel):
     producer_version: str
     graph: Graph
 
+
+
+def stage_handle(model):
+    return getattr(Stages, model.op_type)
 
 if __name__ == "__main__":
     from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
@@ -105,8 +116,10 @@ if __name__ == "__main__":
             continue
 
         stage_inputs = sum(stage_inputs)
-        node_output = p.stage(this_node._stage_handle, stage_inputs, this_node.name,
+        node_output = p.stage(stage_handle(this_node), stage_inputs, this_node.name,
                               thread=this_node.thread, **this_node.config,)
+
+        p.stages[-1].set_parameters(this_node.parameters)
 
         # if has outputs, add to edge to edge list- nothing should be there!
         if len(node_output) != 0:
@@ -118,6 +131,7 @@ if __name__ == "__main__":
     
         # done so pop
         waiting_nodes.pop(0)
+
 
     # setup the output
     output_nodes = [None] * graph.output.channels

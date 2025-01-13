@@ -8,7 +8,7 @@ in the signal.
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
 from ..dsp import generic as dspg
-
+from typing import Literal
 
 class NoiseSuppressorExpander(Stage):
     """The Noise Suppressor (Expander) stage. A noise suppressor that
@@ -30,6 +30,9 @@ class NoiseSuppressorExpander(Stage):
         The DSP block class; see :ref:`NoiseSuppressorExpander`
         for implementation details.
     """
+
+    class Model(Stage.Model):
+        op_type: Literal["NoiseSuppressorExpander"] = "NoiseSuppressorExpander"
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("noise_suppressor_expander"), **kwargs)
