@@ -5,10 +5,19 @@ of quiet signals, typically by tring to reduce the audibility of noise
 in the signal.
 """
 
-from ..design.stage import Stage, find_config
+from ..design.stage import Stage, find_config, StageParameters
 from ..dsp import drc as drc
 from ..dsp import generic as dspg
+
+from pydantic import Field
 from typing import Literal
+
+
+class NoiseSuppressorExpanderParameters(StageParameters):
+    ratio: float = Field(default=3)
+    threshold_db: float = Field(default=-35)
+    attack_t: float = Field(default=0.005)
+    release_t: float = Field(default=0.120)
 
 class NoiseSuppressorExpander(Stage):
     """The Noise Suppressor (Expander) stage. A noise suppressor that
@@ -33,6 +42,7 @@ class NoiseSuppressorExpander(Stage):
 
     class Model(Stage.Model):
         op_type: Literal["NoiseSuppressorExpander"] = "NoiseSuppressorExpander"
+        parameters: NoiseSuppressorExpanderParameters = Field(default_factory=NoiseSuppressorExpanderParameters)
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("noise_suppressor_expander"), **kwargs)
@@ -52,6 +62,12 @@ class NoiseSuppressorExpander(Stage):
         self.set_control_field_cb("slope", lambda: self.dsp_block.slope_f32)
 
         self.stage_memory_parameters = (self.n_in,)
+
+    def set_parameters(self, parameters: NoiseSuppressorExpanderParameters):
+        self.make_noise_suppressor_expander(parameters.ratio,
+                                            parameters.threshold_db,
+                                            parameters.attack_t,
+                                            parameters.release_t)
 
     def make_noise_suppressor_expander(
         self, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG

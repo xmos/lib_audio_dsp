@@ -12,36 +12,7 @@ import audio_dsp.stages as Stages
 _stage_dict = all_stages()
 _stages_list = tuple(all_stages().keys())
 _stages_2 = Union[tuple(all_stages().values())]
-# _stage_configs = Annotated[Union[tuple(i.Config for i in all_stages().values())], Field(discriminator="op_type")]
 _stage_Models = Annotated[Union[tuple(i.Model for i in all_stages().values())], Field(discriminator="op_type")]
-
-# class edgeProducerBaseModel(BaseModel):
-#     model_config = ConfigDict(arbitrary_types_allowed=True)
-#     input: Optional[list[int]] = None
-#     output: Optional[list[int]] = None
-
-#     @field_validator("input", "output", mode="before")
-#     def _single_to_list(cls, value: Union[int, list]) -> list:
-#         if isinstance(value, list):
-#             return value
-#         else:
-#             return [value]
-
-# class nodeBaseModel(edgeProducerBaseModel):
-#     input: list[int]
-#     output: list[int]
-#     name: str
-#     op_type: str
-#     thread: int
-
-# class Node(nodeBaseModel):
-#     parameters: Optional[dict[str, float]] = {}
-#     config: Optional[_stage_configs] = {}
-
-
-#     @computed_field
-#     def _stage_handle(self) -> Stage:
-#         return getattr(Stages, self.op_type)
 
 class Input(edgeProducerBaseModel):
     name: str
@@ -66,8 +37,6 @@ class DspJson(BaseModel):
     producer_name: str
     producer_version: str
     graph: Graph
-
-
 
 def stage_handle(model):
     return getattr(Stages, model.op_type)
@@ -117,7 +86,7 @@ if __name__ == "__main__":
 
         stage_inputs = sum(stage_inputs)
         node_output = p.stage(stage_handle(this_node), stage_inputs, this_node.name,
-                              thread=this_node.thread, **this_node.config,)
+                              thread=this_node.thread, **this_node.config)
 
         p.stages[-1].set_parameters(this_node.parameters)
 

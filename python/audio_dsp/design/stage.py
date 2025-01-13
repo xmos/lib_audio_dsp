@@ -270,8 +270,8 @@ class edgeProducerBaseModel(BaseModel):
 #     op_type: str
 #     thread: int
 
-# class StageConfig(BaseModel):
-#     pass        
+class StageParameters(BaseModel, extra="forbid"):
+    pass
 
 class Stage(Node):
     """
