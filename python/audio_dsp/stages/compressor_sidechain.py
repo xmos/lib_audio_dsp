@@ -7,7 +7,7 @@ the level of a different input.
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
 from ..dsp import generic as dspg
-
+from typing import Literal
 
 class CompressorSidechain(Stage):
     """
@@ -35,6 +35,9 @@ class CompressorSidechain(Stage):
         The DSP block class; see :ref:`CompressorSidechain`
         for implementation details.
     """
+
+    class Model(Stage.Model):
+        op_type: Literal["CompressorSidechain"] = "CompressorSidechain"
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("compressor_sidechain"), **kwargs)

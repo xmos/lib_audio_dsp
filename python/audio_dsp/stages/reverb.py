@@ -2,17 +2,34 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Reverb Stages emulate the natural reverberance of rooms."""
 
-from ..design.stage import Stage, find_config
+from ..design.stage import Stage, find_config, edgeProducerBaseModel
 import audio_dsp.dsp.reverb as rvrb
 import audio_dsp.dsp.reverb_stereo as rvbs
 import audio_dsp.dsp.reverb_plate as rvp
 
+from typing_extensions import TypedDict
+from typing import Literal, Annotated, List, Union, Optional, Any
+from pydantic import BaseModel, ConfigDict
+
+
+class ReverbBaseConfig(TypedDict):
+    predelay: float
 
 class ReverbBase(Stage):
     """
     The base class for reverb stages, containing pre delays, and wet/dry
     mixes and pregain.
     """
+
+    # class Config(BaseModel):
+    #     # model_config = ConfigDict(from_attributes=True)
+    #     predelay: float
+
+    class Model(Stage.Model):
+        op_type: Literal["ReverbBase"] = "ReverbBase"
+        config: ReverbBaseConfig
+
+    model: Model
 
     def set_wet_dry_mix(self, mix):
         """
@@ -280,6 +297,11 @@ class ReverbPlateStereo(ReverbBase):
         The DSP block class; see :ref:`ReverbPlateStereo`
         for implementation details.
     """
+
+    class Model(ReverbBase.Model):
+        op_type: Literal["ReverbPlateStereo"] = "ReverbPlateStereo"
+
+    model: Model
 
     def __init__(self, predelay=10, max_predelay=None, **kwargs):
         super().__init__(config=find_config("reverb_plate_stereo"), **kwargs)
