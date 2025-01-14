@@ -7,6 +7,7 @@ from uuid import uuid4
 import graphlib
 from typing import Generic, TypeVar
 
+
 class Node:
     """
     Graph node.

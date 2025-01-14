@@ -11,11 +11,13 @@ from typing import Literal
 
 from pydantic import Field
 
+
 class CompressorSidechainParameters(StageParameters):
     ratio: float = Field(default=3)
     threshold_db: float = Field(default=-35)
     attack_t: float = Field(default=0.005)
     release_t: float = Field(default=0.120)
+
 
 class CompressorSidechain(Stage):
     """
@@ -46,7 +48,9 @@ class CompressorSidechain(Stage):
 
     class Model(Stage.Model):
         op_type: Literal["CompressorSidechain"] = "CompressorSidechain"
-        parameters: CompressorSidechainParameters = Field(default_factory=CompressorSidechainParameters)
+        parameters: CompressorSidechainParameters = Field(
+            default_factory=CompressorSidechainParameters
+        )
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("compressor_sidechain"), **kwargs)
@@ -68,11 +72,9 @@ class CompressorSidechain(Stage):
         self.stage_memory_parameters = (self.n_in,)
 
     def set_parameters(self, parameters: CompressorSidechainParameters):
-        self.make_compressor_sidechain(parameters.ratio,
-                                            parameters.threshold_db,
-                                            parameters.attack_t,
-                                            parameters.release_t)
-
+        self.make_compressor_sidechain(
+            parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
+        )
 
     def make_compressor_sidechain(
         self, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG

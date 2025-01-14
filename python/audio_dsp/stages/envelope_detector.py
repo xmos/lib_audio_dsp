@@ -16,6 +16,7 @@ class EnvelopeDetectorParameters(StageParameters):
     attack_t: float = Field(default=0)
     release_t: float = Field(default=0)
 
+
 class EnvelopeDetectorPeak(Stage):
     """
     A stage with no outputs that measures the signal peak envelope.
@@ -104,7 +105,6 @@ class EnvelopeDetectorRMS(Stage):
 
     def set_parameters(self, parameters: EnvelopeDetectorParameters):
         self.make_env_det_rms(parameters.attack_t, parameters.release_t)
-
 
     def make_env_det_rms(self, attack_t, release_t, Q_sig=dspg.Q_SIG):
         """Update envelope detector configuration based on new parameters.

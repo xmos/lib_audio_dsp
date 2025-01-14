@@ -18,9 +18,20 @@ from typing import Annotated
 from typing import Any
 from pydantic import BaseModel, GetCoreSchemaHandler
 from typing_extensions import TypedDict
-from pydantic import BaseModel, RootModel, Field, create_model, TypeAdapter, field_validator, PrivateAttr, computed_field, ConfigDict
+from pydantic import (
+    BaseModel,
+    RootModel,
+    Field,
+    create_model,
+    TypeAdapter,
+    field_validator,
+    PrivateAttr,
+    computed_field,
+    ConfigDict,
+)
 from typing import Literal, Annotated, List, Union, Optional, Any
 from typing_extensions import TypedDict
+
 
 def find_config(name):
     """
@@ -173,7 +184,7 @@ class StageOutputList:
         if other is None:
             other = StageOutputList([None])
         if other == 0:
-            # special case for sum(stage_outputs) 
+            # special case for sum(stage_outputs)
             return StageOutputList(self.edges)
         if not isinstance(other, StageOutputList):
             return NotImplemented
@@ -581,6 +592,7 @@ class Stage(Node):
             return f"{macro_name}({','.join((str(x) for x in self.stage_memory_parameters))})"
         else:
             return macro_name
+
 
 def all_stages() -> dict[str, Type[Stage]]:
     """Get a dict containing all stages in scope."""

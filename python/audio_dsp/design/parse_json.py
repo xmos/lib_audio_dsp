@@ -1,4 +1,14 @@
-from pydantic import BaseModel, RootModel, Field, create_model, TypeAdapter, field_validator, PrivateAttr, computed_field, ConfigDict
+from pydantic import (
+    BaseModel,
+    RootModel,
+    Field,
+    create_model,
+    TypeAdapter,
+    field_validator,
+    PrivateAttr,
+    computed_field,
+    ConfigDict,
+)
 from typing import Literal, Annotated, List, Union, Optional, Any
 from annotated_types import Len
 from functools import partial
@@ -12,7 +22,10 @@ import audio_dsp.stages as Stages
 _stage_dict = all_stages()
 _stages_list = tuple(all_stages().keys())
 _stages_2 = Union[tuple(all_stages().values())]
-_stage_Models = Annotated[Union[tuple(i.Model for i in all_stages().values())], Field(discriminator="op_type")]
+_stage_Models = Annotated[
+    Union[tuple(i.Model for i in all_stages().values())], Field(discriminator="op_type")
+]
+
 
 class Input(edgeProducerBaseModel):
     name: str
@@ -20,11 +33,13 @@ class Input(edgeProducerBaseModel):
     channels: int
     fs: int
 
+
 class Output(edgeProducerBaseModel):
     name: str
     input: list[int]
     channels: int
     fs: Optional[int] = None
+
 
 class Graph(BaseModel):
     name: str
@@ -32,20 +47,25 @@ class Graph(BaseModel):
     input: Input
     output: Output
 
+
 class DspJson(BaseModel):
     ir_version: int
     producer_name: str
     producer_version: str
     graph: Graph
 
+
 def stage_handle(model):
     return getattr(Stages, model.op_type)
+
 
 if __name__ == "__main__":
     from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 
     # json_obj = DspJson.model_validate_json(Path(r"C:\Users\allanskellett\Documents\051_dsp_txt\dsp_lang_1.json").read_text())
-    json_obj = DspJson.model_validate_json(Path(r"C:\Users\allanskellett\Documents\040_dsp_ultra\frj_0.json").read_text())
+    json_obj = DspJson.model_validate_json(
+        Path(r"C:\Users\allanskellett\Documents\040_dsp_ultra\frj_0.json").read_text()
+    )
 
     graph = json_obj.graph
 
@@ -62,9 +82,9 @@ if __name__ == "__main__":
     # make the right number of threads
     for n in range(max(threadlist)):
         p._add_thread()
-    
+
     # make edge list, populate first N with inputs
-    edge_list = [None]*(max(edgelist) + 1)
+    edge_list = [None] * (max(edgelist) + 1)
     for n in range(graph.input.channels):
         edge_list[n] = in_edges[n]
 
@@ -85,8 +105,13 @@ if __name__ == "__main__":
             continue
 
         stage_inputs = sum(stage_inputs)
-        node_output = p.stage(stage_handle(this_node), stage_inputs, this_node.name,
-                              thread=this_node.thread, **this_node.config.dict())
+        node_output = p.stage(
+            stage_handle(this_node),
+            stage_inputs,
+            this_node.name,
+            thread=this_node.thread,
+            **this_node.config.dict(),
+        )
 
         p.stages[-1].set_parameters(this_node.parameters)
 
@@ -96,11 +121,10 @@ if __name__ == "__main__":
                 if edge_list[this_node.output[i]] is None:
                     edge_list[this_node.output[i]] = node_output[i]
                 else:
-                    assert False , "oops"
-    
+                    assert False, "oops"
+
         # done so pop
         waiting_nodes.pop(0)
-
 
     # setup the output
     output_nodes = [None] * graph.output.channels

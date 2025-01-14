@@ -19,6 +19,7 @@ class NoiseSuppressorExpanderParameters(StageParameters):
     attack_t: float = Field(default=0.005)
     release_t: float = Field(default=0.120)
 
+
 class NoiseSuppressorExpander(Stage):
     """The Noise Suppressor (Expander) stage. A noise suppressor that
     reduces the level of an audio signal when it falls below a
@@ -42,7 +43,9 @@ class NoiseSuppressorExpander(Stage):
 
     class Model(Stage.Model):
         op_type: Literal["NoiseSuppressorExpander"] = "NoiseSuppressorExpander"
-        parameters: NoiseSuppressorExpanderParameters = Field(default_factory=NoiseSuppressorExpanderParameters)
+        parameters: NoiseSuppressorExpanderParameters = Field(
+            default_factory=NoiseSuppressorExpanderParameters
+        )
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("noise_suppressor_expander"), **kwargs)
@@ -64,10 +67,9 @@ class NoiseSuppressorExpander(Stage):
         self.stage_memory_parameters = (self.n_in,)
 
     def set_parameters(self, parameters: NoiseSuppressorExpanderParameters):
-        self.make_noise_suppressor_expander(parameters.ratio,
-                                            parameters.threshold_db,
-                                            parameters.attack_t,
-                                            parameters.release_t)
+        self.make_noise_suppressor_expander(
+            parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
+        )
 
     def make_noise_suppressor_expander(
         self, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG
