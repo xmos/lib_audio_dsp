@@ -41,15 +41,6 @@ These can be combined together to make complex audio pipelines for many
 different applications, such as home audio, music production, voice
 processing, and AI feature extraction.
 
-
-Known Issues
-************
-
-
-Host System Requirements
-************************
-
-
 Required Tools
 **************
 
