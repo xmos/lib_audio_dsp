@@ -1,3 +1,5 @@
+// Copyright 2025 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include "dsp/td_block_fir.h"
 
 void td_block_fir_data_init(td_block_fir_data_t *d,
