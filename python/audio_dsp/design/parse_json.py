@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
         stage_inputs = sum(stage_inputs)
         node_output = p.stage(stage_handle(this_node), stage_inputs, this_node.name,
-                              thread=this_node.thread, **this_node.config)
+                              thread=this_node.thread, **this_node.config.dict())
 
         p.stages[-1].set_parameters(this_node.parameters)
 

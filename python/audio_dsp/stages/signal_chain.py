@@ -5,16 +5,15 @@ pipeline. This includes stages for combining and splitting signals, basic
 gain components, and delays.
 """
 
-from ..design.stage import Stage, find_config, StageOutputList, StageOutput
-from ..design.stage import Stage, find_config, edgeProducerBaseModel
+from ..design.stage import Stage, find_config, StageOutputList, StageOutput, StageParameters, StageConfig
+from ..design.stage import Stage, find_config
 
 from ..dsp import generic as dspg
 import audio_dsp.dsp.signal_chain as sc
 import numpy as np
 
-from typing_extensions import TypedDict
 from typing import Literal, Annotated, List, Union, Optional, Any
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 class Bypass(Stage):
     """
@@ -34,8 +33,8 @@ class Bypass(Stage):
         return [np.copy(i) for i in in_channels]
 
 
-class ForkConfig(TypedDict):
-    count: int
+class ForkConfig(StageConfig):
+    count: int = Field(default=1)
 
 class Fork(Stage):
     """
@@ -58,7 +57,7 @@ class Fork(Stage):
 
     class Model(Stage.Model):
         op_type: Literal["Fork"] = "Fork"
-        config: ForkConfig
+        config: ForkConfig = Field(default_factory=ForkConfig)
 
     class ForkOutputList(StageOutputList):
         """
@@ -104,6 +103,9 @@ class Fork(Stage):
         return ret
 
 
+class MixerParameters(StageParameters):
+    gain_db: float = Field(default=0)
+
 class Mixer(Stage):
     """
     Mixes the input signals together. The mixer can be used to add signals
@@ -117,6 +119,7 @@ class Mixer(Stage):
 
     class Model(Stage.Model):
         op_type: Literal["Mixer"] = "Mixer"
+        parameters: MixerParameters = Field(default_factory=MixerParameters)
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("mixer"), **kwargs)
@@ -179,7 +182,7 @@ class Subtractor(Stage):
         self.dsp_block = sc.subtractor(self.fs)
 
 
-class FixedGainParameters(BaseModel):
+class FixedGainParameters(StageParameters):
     gain_db: float = Field(default=0)
 
 class FixedGain(Stage):
