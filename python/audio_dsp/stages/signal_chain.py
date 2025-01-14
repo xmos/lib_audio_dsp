@@ -5,7 +5,14 @@ pipeline. This includes stages for combining and splitting signals, basic
 gain components, and delays.
 """
 
-from ..design.stage import Stage, find_config, StageOutputList, StageOutput, StageParameters, StageConfig
+from ..design.stage import (
+    Stage,
+    find_config,
+    StageOutputList,
+    StageOutput,
+    StageParameters,
+    StageConfig,
+)
 
 from ..dsp import generic as dspg
 import audio_dsp.dsp.signal_chain as sc
@@ -13,6 +20,7 @@ import numpy as np
 
 from typing import Literal, Annotated, List, Union, Optional, Any
 from pydantic import Field
+
 
 class Bypass(Stage):
     """
@@ -34,6 +42,7 @@ class Bypass(Stage):
 
 class ForkConfig(StageConfig):
     count: int = Field(default=1)
+
 
 class Fork(Stage):
     """
@@ -104,6 +113,7 @@ class Fork(Stage):
 
 class MixerParameters(StageParameters):
     gain_db: float = Field(default=0)
+
 
 class Mixer(Stage):
     """
@@ -184,6 +194,7 @@ class Subtractor(Stage):
 class FixedGainParameters(StageParameters):
     gain_db: float = Field(default=0)
 
+
 class FixedGain(Stage):
     """
     This stage implements a fixed gain. The input signal is multiplied
@@ -228,6 +239,7 @@ class FixedGain(Stage):
 
     def set_parameters(self, parameters: FixedGainParameters):
         self.set_gain(parameters.gain_db)
+
 
 class VolumeControl(Stage):
     """
