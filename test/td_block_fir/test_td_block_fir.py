@@ -1,3 +1,5 @@
+# Copyright 2024-2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import numpy as np
 from pathlib import Path
 import subprocess

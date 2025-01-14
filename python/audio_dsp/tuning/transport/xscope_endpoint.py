@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Python bindings for Tools-supplied xscope_endpoint.dll/.so.
 Adapted and updated from XMOS_TOOLS_DIR/lib/python/xscope.py.
