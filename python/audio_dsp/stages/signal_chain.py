@@ -6,7 +6,6 @@ gain components, and delays.
 """
 
 from ..design.stage import Stage, find_config, StageOutputList, StageOutput, StageParameters, StageConfig
-from ..design.stage import Stage, find_config
 
 from ..dsp import generic as dspg
 import audio_dsp.dsp.signal_chain as sc
