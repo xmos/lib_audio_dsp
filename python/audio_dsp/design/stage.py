@@ -2,7 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """The edges and nodes for a DSP pipeline."""
 
-from typing import Iterable, Type
+from typing import Type
 
 import numpy
 from .graph import Edge, Node
@@ -13,24 +13,15 @@ from audio_dsp.dsp.generic import dsp_block
 from typing import Optional
 from types import NotImplementedType
 
-from pydantic_core import CoreSchema, core_schema
-from typing import Annotated
-from typing import Any
-from pydantic import BaseModel, GetCoreSchemaHandler
-from typing_extensions import TypedDict
+from typing import TypeVar
+from pydantic import BaseModel
 from pydantic import (
     BaseModel,
-    RootModel,
     Field,
-    create_model,
-    TypeAdapter,
     field_validator,
-    PrivateAttr,
-    computed_field,
     ConfigDict,
 )
-from typing import Literal, Annotated, List, Union, Optional, Any
-from typing_extensions import TypedDict
+from typing import Union, Optional
 
 
 def find_config(name):
@@ -265,8 +256,8 @@ class _GlobalStages:
 
 class edgeProducerBaseModel(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    input: Optional[list[int]] = None
-    output: Optional[list[int]] = None
+    input: list[int] = Field(default=[])
+    output: list[int] = Field(default=[])
 
     @field_validator("input", "output", mode="before")
     def _single_to_list(cls, value: Union[int, list]) -> list:
@@ -282,6 +273,11 @@ class StageConfig(BaseModel, extra="forbid"):
 
 class StageParameters(BaseModel, extra="forbid"):
     pass
+
+
+# This defines the types of instances of the config/parameter classes
+StageParameterType = TypeVar("StageParameterType", bound="StageParameters")
+StageConfigType = TypeVar("StageConfigType", bound="StageConfig")
 
 
 class Stage(Node):
@@ -390,17 +386,18 @@ class Stage(Node):
         _GlobalStages.stages.append(cls)
 
     class Model(edgeProducerBaseModel):
-        op_type: Literal["Undefined"]
-        config: StageConfig = Field(default_factory=StageConfig)
-        parameters: dict = Field(default_factory=dict)
-        input: list[int]
-        output: list[int]
+        # op_type: Literal["Undefined"] = "Undefined"
+        config: StageConfigType = Field(default_factory=StageConfig)
+        parameters: StageParameterType = Field(default_factory=StageParameters)
+        input: list[int] = Field(default=[])
+        output: list[int] = Field(default=[])
         name: str
         thread: int
 
-    model: Model
+    # stage doesn't actually have a model
+    # model: Model
 
-    def set_parameters(self, parameters: StageParameters):
+    def set_parameters(self, parameters: StageParameterType):
         pass
 
     @property

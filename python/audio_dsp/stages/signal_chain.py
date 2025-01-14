@@ -18,7 +18,7 @@ from ..dsp import generic as dspg
 import audio_dsp.dsp.signal_chain as sc
 import numpy as np
 
-from typing import Literal, Annotated, List, Union, Optional, Any
+from typing import Literal
 from pydantic import Field
 
 
@@ -217,7 +217,7 @@ class FixedGain(Stage):
 
     class Model(Stage.Model):
         op_type: Literal["FixedGain"] = "FixedGain"
-        parameters: FixedGainParameters
+        parameters: FixedGainParameters = Field(default_factory=FixedGainParameters)
 
     def __init__(self, gain_db=0, **kwargs):
         super().__init__(config=find_config("fixed_gain"), **kwargs)

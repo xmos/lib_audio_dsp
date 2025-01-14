@@ -34,7 +34,7 @@ class EnvelopeDetectorPeak(Stage):
 
     class Model(Stage.Model):
         op_type: Literal["EnvelopeDetectorPeak"] = "EnvelopeDetectorPeak"
-        parameters: EnvelopeDetectorParameters
+        parameters: EnvelopeDetectorParameters = Field(default_factory=EnvelopeDetectorParameters)
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("envelope_detector_peak"), **kwargs)
@@ -88,7 +88,7 @@ class EnvelopeDetectorRMS(Stage):
 
     class Model(Stage.Model):
         op_type: Literal["EnvelopeDetectorRms"] = "EnvelopeDetectorRms"
-        parameters: EnvelopeDetectorParameters
+        parameters: EnvelopeDetectorParameters = Field(default_factory=EnvelopeDetectorParameters)
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("envelope_detector_rms"), **kwargs)
