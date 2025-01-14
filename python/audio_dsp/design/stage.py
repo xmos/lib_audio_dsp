@@ -270,6 +270,9 @@ class edgeProducerBaseModel(BaseModel):
 #     op_type: str
 #     thread: int
 
+class StageConfig(BaseModel, extra="forbid"):
+    pass
+
 class StageParameters(BaseModel, extra="forbid"):
     pass
 
@@ -380,7 +383,7 @@ class Stage(Node):
 
     class Model(edgeProducerBaseModel):
         op_type: Literal["Undefined"]
-        config: dict = Field(default_factory=dict)
+        config: StageConfig = Field(default_factory=StageConfig)
         parameters: dict = Field(default_factory=dict)
         input: list[int]
         output: list[int]

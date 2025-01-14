@@ -4,15 +4,15 @@
 a signal varies over time.
 """
 
-from ..design.stage import Stage, find_config
+from ..design.stage import Stage, find_config, StageParameters
 from ..dsp import drc as drc
 from ..dsp import generic as dspg
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 
-class EnvelopeDetectorParameters(BaseModel):
+class EnvelopeDetectorParameters(StageParameters):
     attack_t: float = Field(default=0)
     release_t: float = Field(default=0)
 
