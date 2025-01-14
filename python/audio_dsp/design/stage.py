@@ -13,15 +13,9 @@ from audio_dsp.dsp.generic import dsp_block
 from typing import Optional
 from types import NotImplementedType
 
-from typing import TypeVar, Literal, Any, Generic
+from typing import TypeVar, Any
 from pydantic import BaseModel
-from pydantic import (
-    BaseModel,
-    Field,
-    field_validator,
-    ConfigDict,
-    validator
-)
+from pydantic import BaseModel, Field, field_validator, ConfigDict, validator
 from typing import Union, Optional
 
 
@@ -266,8 +260,6 @@ class edgeProducerBaseModel(BaseModel):
             return value
         else:
             return [value]
-
-
 
 
 class StageConfig(BaseModel, extra="forbid"):

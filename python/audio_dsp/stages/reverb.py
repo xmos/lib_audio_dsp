@@ -12,7 +12,9 @@ from pydantic import Field
 
 
 class ReverbBaseParams(StageParameters):
-    predelay: float = Field(default=15, ge=0, le=30, description="Set the predelay in milliseconds.")
+    predelay: float = Field(
+        default=15, ge=0, le=30, description="Set the predelay in milliseconds."
+    )
     width: float = Field(default=1.0, ge=0, le=1, description="Range: 0 to 1")
     pregain: float = Field(
         default=0.5,
