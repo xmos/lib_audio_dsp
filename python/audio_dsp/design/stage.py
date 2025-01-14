@@ -173,7 +173,8 @@ class StageOutputList:
         if other is None:
             other = StageOutputList([None])
         if other == 0:
-            return self
+            # special case for sum(stage_outputs) 
+            return StageOutputList(self.edges)
         if not isinstance(other, StageOutputList):
             return NotImplemented
         return StageOutputList(other.edges + self.edges)
@@ -263,18 +264,14 @@ class edgeProducerBaseModel(BaseModel):
         else:
             return [value]
 
-# class nodeBaseModel(edgeProducerBaseModel):
-#     input: list[int]
-#     output: list[int]
-#     name: str
-#     op_type: str
-#     thread: int
 
 class StageConfig(BaseModel, extra="forbid"):
     pass
 
+
 class StageParameters(BaseModel, extra="forbid"):
     pass
+
 
 class Stage(Node):
     """
@@ -392,7 +389,7 @@ class Stage(Node):
 
     model: Model
 
-    def set_parameters(self, parameters: dict):
+    def set_parameters(self, parameters: StageParameters):
         pass
 
     @property
