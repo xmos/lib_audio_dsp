@@ -45,10 +45,12 @@ processing, and AI feature extraction.
 Known Issues
 ************
 
+  * None
 
 Host System Requirements
 ************************
 
+  * None
 
 Required Tools
 **************
