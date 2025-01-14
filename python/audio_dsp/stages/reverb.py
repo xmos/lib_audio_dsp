@@ -43,7 +43,7 @@ class ReverbBase(Stage):
     """
 
     class Model(Stage.Model):
-        # op_type: Literal["ReverbBase"] = "ReverbBase"
+        # op_type: is not defined as this Stage cannot be pipelined
         config: ReverbBaseConfig = Field(default_factory=ReverbBaseConfig)
 
     # # Base class has no actual model

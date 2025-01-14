@@ -13,13 +13,14 @@ from audio_dsp.dsp.generic import dsp_block
 from typing import Optional
 from types import NotImplementedType
 
-from typing import TypeVar
+from typing import TypeVar, Literal, Any, Generic
 from pydantic import BaseModel
 from pydantic import (
     BaseModel,
     Field,
     field_validator,
     ConfigDict,
+    validator
 )
 from typing import Union, Optional
 
@@ -267,6 +268,8 @@ class edgeProducerBaseModel(BaseModel):
             return [value]
 
 
+
+
 class StageConfig(BaseModel, extra="forbid"):
     pass
 
@@ -277,7 +280,7 @@ class StageParameters(BaseModel, extra="forbid"):
 
 # This defines the types of instances of the config/parameter classes
 StageParameterType = TypeVar("StageParameterType", bound="StageParameters")
-StageConfigType = TypeVar("StageConfigType", bound="StageConfig")
+# StageConfigType = TypeVar("StageConfigType", bound="StageConfig")
 
 
 class Stage(Node):
@@ -386,13 +389,25 @@ class Stage(Node):
         _GlobalStages.stages.append(cls)
 
     class Model(edgeProducerBaseModel):
-        # op_type: Literal["Undefined"] = "Undefined"
-        config: StageConfigType = Field(default_factory=StageConfig)
-        parameters: StageParameterType = Field(default_factory=StageParameters)
+        # op_type: is not defined as this Stage cannot be pipelined
+        config: Any = Field(default_factory=StageConfig)
+        parameters: Any = Field(default_factory=StageParameters)
         input: list[int] = Field(default=[])
         output: list[int] = Field(default=[])
         name: str
         thread: int
+
+        @validator("config")
+        def _validate_config(cls, val):
+            if issubclass(type(val), StageConfig):
+                return val
+            raise TypeError("config must be a subclass of StageConfig")
+
+        @validator("parameters")
+        def _validate_parameters(cls, val):
+            if issubclass(type(val), StageParameters):
+                return val
+            raise TypeError("parameters must be a subclass of StageParameters")
 
     # stage doesn't actually have a model
     # model: Model
@@ -594,3 +609,8 @@ class Stage(Node):
 def all_stages() -> dict[str, Type[Stage]]:
     """Get a dict containing all stages in scope."""
     return {s.__name__: s for s in _GlobalStages.stages}
+
+
+def all_useable_stages() -> dict[str, Type[Stage]]:
+    """Get a dict containing all stages useable via the JSON interface."""
+    return {s.__name__: s for s in _GlobalStages.stages if "op_type" in s.Model.model_fields}

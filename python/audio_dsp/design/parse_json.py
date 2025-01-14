@@ -1,29 +1,16 @@
 from pydantic import (
     BaseModel,
-    RootModel,
     Field,
-    create_model,
-    TypeAdapter,
-    field_validator,
-    PrivateAttr,
-    computed_field,
-    ConfigDict,
 )
-from typing import Literal, Annotated, List, Union, Optional, Any
-from annotated_types import Len
-from functools import partial
+from typing import Annotated, List, Union, Optional
 from pathlib import Path
-import itertools
-import numpy as np
 
-from audio_dsp.design.stage import Stage, all_stages, edgeProducerBaseModel
+from audio_dsp.design.stage import all_useable_stages, edgeProducerBaseModel
 import audio_dsp.stages as Stages
 
-_stage_dict = all_stages()
-_stages_list = tuple(all_stages().keys())
-_stages_2 = Union[tuple(all_stages().values())]
+
 _stage_Models = Annotated[
-    Union[tuple(i.Model for i in all_stages().values())], Field(discriminator="op_type")
+    Union[tuple(i.Model for i in all_useable_stages().values())], Field(discriminator="op_type")
 ]
 
 
@@ -60,7 +47,7 @@ def stage_handle(model):
 
 
 if __name__ == "__main__":
-    from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
+    from audio_dsp.design.pipeline import Pipeline
 
     # json_obj = DspJson.model_validate_json(Path(r"C:\Users\allanskellett\Documents\051_dsp_txt\dsp_lang_1.json").read_text())
     json_obj = DspJson.model_validate_json(Path(r"C:\Users\allanskellett\Documents\040_dsp_ultra\scio_0.json").read_text())
