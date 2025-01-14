@@ -110,7 +110,7 @@ if __name__ == "__main__":
             stage_inputs,
             this_node.name,
             thread=this_node.thread,
-            **this_node.config.dict(),
+            **dict(this_node.config),
         )
 
         p.stages[-1].set_parameters(this_node.parameters)

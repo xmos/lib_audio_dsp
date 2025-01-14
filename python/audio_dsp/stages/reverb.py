@@ -7,15 +7,15 @@ import audio_dsp.dsp.reverb as rvrb
 import audio_dsp.dsp.reverb_stereo as rvbs
 import audio_dsp.dsp.reverb_plate as rvp
 
-from typing import Literal, Annotated, List, Union, Optional, Any
+from typing import Literal
 from pydantic import Field
 
 
 class ReverbBaseParams(StageParameters):
-    predelay: float = Field(15, ge=0, le=30, description="Set the predelay in milliseconds.")
-    width: float = Field(1.0, ge=0, le=1, description="Range: 0 to 1")
+    predelay: float = Field(default=15, ge=0, le=30, description="Set the predelay in milliseconds.")
+    width: float = Field(default=1.0, ge=0, le=1, description="Range: 0 to 1")
     pregain: float = Field(
-        0.5,
+        default=0.5,
         ge=0,
         le=1,
         description="It is not advised to increase this value above the "
@@ -23,7 +23,7 @@ class ReverbBaseParams(StageParameters):
         "the reverb delay lines.",
     )
     wet_dry_mix: float = Field(
-        0.5,
+        default=0.5,
         ge=0,
         le=1,
         description="It is not advised to increase this value above the "
@@ -33,7 +33,7 @@ class ReverbBaseParams(StageParameters):
 
 
 class ReverbBaseConfig(StageConfig):
-    predelay: float
+    predelay: float = Field(default=30)
 
 
 class ReverbBase(Stage):
@@ -43,10 +43,11 @@ class ReverbBase(Stage):
     """
 
     class Model(Stage.Model):
-        op_type: Literal["ReverbBase"] = "ReverbBase"
-        config: ReverbBaseConfig
+        # op_type: Literal["ReverbBase"] = "ReverbBase"
+        config: ReverbBaseConfig = Field(default_factory=ReverbBaseConfig)
 
-    model: Model
+    # # Base class has no actual model
+    # model: Model
 
     def set_wet_dry_mix(self, mix):
         """
@@ -295,7 +296,7 @@ class ReverbRoomStereo(ReverbRoom):
 
 class ReverbPlateParams(ReverbBaseParams):
     damping: float = Field(
-        0.5,
+        default=0.5,
         ge=0,
         le=1,
         description="This controls how much high frequency attenuation "
@@ -303,16 +304,16 @@ class ReverbPlateParams(ReverbBaseParams):
         "reverberation times at high frequencies. Range: 0 to 1",
     )
     decay: float = Field(
-        0.5,
+        default=0.5,
         ge=0,
         le=1,
         description="This sets how reverberant the room is. Higher "
         "values will give a longer reverberation time for "
         "a given room size. Range: 0 to 1",
     )
-    early_diffusion: float = Field(0.2, ge=0, le=1, description="Range: 0 to 1")
-    late_diffusion: float = Field(0.6, ge=0, le=1, description="Range: 0 to 1")
-    bandwidth: float = Field(8000, ge=0, le=24000, description="Range: 0 to 1")
+    early_diffusion: float = Field(default=0.2, ge=0, le=1, description="Range: 0 to 1")
+    late_diffusion: float = Field(default=0.6, ge=0, le=1, description="Range: 0 to 1")
+    bandwidth: float = Field(default=8000, ge=0, le=24000, description="Range: 0 to 1")
 
 
 class ReverbPlateStereo(ReverbBase):

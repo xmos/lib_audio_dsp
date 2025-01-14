@@ -4,7 +4,6 @@
 
 from audio_dsp.design.stage import Stage, find_config
 import audio_dsp.dsp.biquad as bq
-import numpy as np
 
 
 def _ws(locals):
