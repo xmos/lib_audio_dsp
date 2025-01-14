@@ -4,14 +4,20 @@ Lib Audio DSP
 
 .. rubric:: Introduction
 
+.. note::
+
+  Some software components in this tool flow are prototypes and will be updated in Version 2 of the library.
+  The underlying Digital Signal Processing (DSP) blocks are however fully functional. Future updates will
+  enhance the features and flexibility of the design tool.
+
 lib_audio_dsp is a DSP library for the XMOS xcore architecture. It facilitates the creation of
 multithreaded audio DSP pipelines that efficiently utilise the xcore architecture.
 
 The library is built around a set of DSP function blocks, referred to in the documentation as “Stages” ,
-which have a consistent API and can be combined to create many different designs. 
+which have a consistent API and can be combined to create many different designs.
 
 A tool for easily
-combining stages into a custom DSP pipeline is provided. DSP pipeline parameters can be adjusted and 
+combining stages into a custom DSP pipeline is provided. DSP pipeline parameters can be adjusted and
 tuned on the fly via a PC based tuning interface, and utilities for hardware controls are also provided.
 
 lib_audio_dsp includes common signal processing functions optimised for the xcore, such as:
@@ -32,17 +38,17 @@ This document covers the following topics:
 #. :ref:`dsp_components_section`: Details all DSP components provided by this library.
 #. :ref:`run_time_control_guide_section`: How to add run time control to a DSP application.
 
-The subsequent sections provide comprehensive insights into the functionalities and applications of lib_audio_dsp, 
-detailing how to leverage its features for efficient audio signal processing. 
+The subsequent sections provide comprehensive insights into the functionalities and applications of lib_audio_dsp,
+detailing how to leverage its features for efficient audio signal processing.
 
 
 .. toctree::
     :maxdepth: 2
     :hidden:
-    
+
     01_tool_user_guide/index
     02_design_guide/index
-    03_dsp_components/index    
+    03_dsp_components/index
     04_run_time_control_guide/index
 
 
