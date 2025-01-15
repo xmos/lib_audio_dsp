@@ -4,11 +4,16 @@
 together in series.
 """
 
-from ..design.stage import Stage, find_config
+from ..design.stage import Stage, find_config, StageParameters
 from ..dsp import cascaded_biquads as casc_bq
 import numpy as np
 from typing import Any, Literal
+from functools import partial
+from pydantic import BaseModel, RootModel, Field, create_model
+from typing import Literal, Annotated, List, Union
+from annotated_types import Len
 
+import audio_dsp.stages.biquad as bq
 
 def _parametric_eq_doc(wrapped):
     """Generate docs for parametric eq."""
@@ -146,3 +151,20 @@ class CascadedBiquads(Stage):
         self.details = dict(type="butterworth lowpass", N=N, fc=fc)
         self.dsp_block = casc_bq.butterworth_lowpass(self.fs, self.n_in, N, fc)
         return self
+
+def _8biquads():
+    return [bq.biquad_bypass() for _ in range(8)]
+
+class ParametricEqParameters(StageParameters):
+    filters: Annotated[list[bq.BIQUAD_TYPES], Len(8)] = Field(
+    default_factory=_8biquads, max_items=8)
+
+class ParametricEq(CascadedBiquads):
+    class Model(Stage.Model):
+        op_type: Literal["ParametricEq"] = "ParametricEq"
+        parameters: ParametricEqParameters = Field(default_factory=ParametricEqParameters)
+
+    def set_parameters(self, parameters: ParametricEqParameters):
+        model = parameters.model_dump()
+        biquads = [[*spec.values()] for spec in model["filters"]]
+        self.make_parametric_eq(biquads)
