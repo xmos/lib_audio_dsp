@@ -12,19 +12,20 @@ from mako.template import Template
 from pathlib import Path
 
 # Load folders
-TOOLS_USER_GUIDE_DIR    = "01_tool_user_guide"
-DESIGN_GUIDE_DIR        = "02_design_guide"
+#TOOLS_USER_GUIDE_DIR    = "01_tool_user_guide"
+#DESIGN_GUIDE_DIR        = "02_design_guide"
 DSP_COMP_DIR            = "03_dsp_components"
-RUNTIME_CTRL_DIR        = "04_run_time_control_guide"
+#RUNTIME_CTRL_DIR        = "04_run_time_control_guide"
+API_REFERENCE_DIR       = "05_api_reference"
 
 # Define paths
 ROOT_DIR = Path(__file__).parents[1]
-PYTHON_ROOT = Path(ROOT_DIR, "python")
-CTRL_GEN_DIR = Path(__file__).parent / DSP_COMP_DIR / "runtime_control" / "gen"
-DSP_GEN_DIR = Path(__file__).parent / DSP_COMP_DIR / "stages" / "gen"
-PY_STAGE_MAKO = Path(PYTHON_ROOT, "audio_dsp", "design", "templates", "py_stage_doc.mako")
-YAML_DIR =  Path(ROOT_DIR, "stage_config")
-TOOL_USER_GEN_DIR = Path(__file__).parent / TOOLS_USER_GUIDE_DIR / "gen"
+PYTHON_ROOT = ROOT_DIR / "python"
+STAGES_LIST_PATH = Path(__file__).parent / DSP_COMP_DIR / "gen" / "stages.rst"
+DSP_GEN_DIR = Path(__file__).parent / API_REFERENCE_DIR / "stages" / "gen"
+PY_STAGE_MAKO = ROOT_DIR / "python" / "audio_dsp" / "design" / "templates" / "py_stage_doc.mako"
+YAML_DIR = ROOT_DIR / "stage_config"
+API_REF_GEN_DIR = Path(__file__).parent / API_REFERENCE_DIR / "gen"
 
 
 def get_module_from_path(paths):
@@ -46,10 +47,11 @@ def get_file_info(fname):
 
     for i in node.body:
         if isinstance(i, ast.ClassDef):
+            if i.name.startswith("_"):
+                continue
             class_list.append(i.name)
 
     return docstring, class_list
-
 
 def python_doc(src_dir, dst_dir):
     p_design = sorted(src_dir.glob("*.py"))
@@ -67,9 +69,10 @@ ${"="*len(module)}
 ).render(modules=p_design_modules)
     (dst_dir / f"{src_dir.parts[-2]}.{src_dir.parts[-1]}.inc").write_text(gen)
 
-
-def python_doc_stages(src_dir, dst_dir):
+def python_doc_stages(src_dir, dst_dir, list_file):
     p_design = sorted(src_dir.glob("*.py"))
+    all_classes = []
+    all_files = []
     for file in p_design:
         if file.name.startswith("_"):
             continue
@@ -79,6 +82,8 @@ def python_doc_stages(src_dir, dst_dir):
         # Sorry
         title = title.title().replace("Rms", "RMS").replace("Fir", "FIR")
         docstring, classes = get_file_info(file)
+        all_classes.append(classes)
+        all_files.append(title)
 
         class_data = {}
         for class_name in classes:
@@ -96,7 +101,25 @@ def python_doc_stages(src_dir, dst_dir):
 
         gen = Template(filename=str(PY_STAGE_MAKO)).render(title = title, module = module, classes = classes, docstring = docstring, class_data = class_data)
         (dst_dir / f"{module_name}.rst").write_text(gen, newline="")
+    
+    # something should be really wrong if this asserts
+    assert len(all_classes) == len(all_files)
+    gen = Template("""
+DSP Stages List
+===============
 
+This is the list of all the supported stages:
+
+% for i in range(len(titles)):
+- :ref:`${titles[i]}_stages`
+% for cl in classes[i]:
+    * :ref:`${cl}_stage`
+% endfor ## cl in classes
+
+% endfor ## i in len(titles)
+
+""").render(titles = all_files, classes = all_classes)
+    list_file.write_text(gen, newline="")
 
 def c_doc(src_dir, dst_dir, glob="*.h"):
     api_dir = ROOT_DIR/"lib_audio_dsp"/"api"
@@ -116,10 +139,9 @@ ${"="*len(str(module))}
         gen = gen.replace("\\", "/")
     output_file.write_text(gen)
 
-
 if __name__ == "__main__":
     
-    python_doc(ROOT_DIR / "python" / "audio_dsp" / "design", TOOL_USER_GEN_DIR)
-    python_doc_stages(ROOT_DIR / "python" / "audio_dsp" / "stages", DSP_GEN_DIR)
-    c_doc(ROOT_DIR / "lib_audio_dsp" / "api" / "stages", TOOL_USER_GEN_DIR, "adsp_*.h")
+    python_doc(ROOT_DIR / "python" / "audio_dsp" / "design", API_REF_GEN_DIR)
+    python_doc_stages(ROOT_DIR / "python" / "audio_dsp" / "stages", DSP_GEN_DIR, STAGES_LIST_PATH)
+    #c_doc(ROOT_DIR / "lib_audio_dsp" / "api" / "stages", API_REF_GEN_DIR, "adsp_*.h")
     print("Done")

@@ -8,7 +8,7 @@ import audio_dsp.dsp.reverb_stereo as rvbs
 import audio_dsp.dsp.reverb_plate as rvp
 
 
-class ReverbBase(Stage):
+class _ReverbBase(Stage):
     """
     The base class for reverb stages, containing pre delays, and wet/dry
     mixes and pregain.
@@ -73,7 +73,7 @@ class ReverbBase(Stage):
         self.dsp_block.pregain = pre_gain
 
 
-class ReverbRoom(ReverbBase):
+class ReverbRoom(_ReverbBase):
     """
     The room reverb stage. This is based on Freeverb by Jezar at
     Dreampoint, and consists of 8 parallel comb filters fed into 4
@@ -259,7 +259,7 @@ class ReverbRoomStereo(ReverbRoom):
         self.dsp_block.width = width
 
 
-class ReverbPlateStereo(ReverbBase):
+class ReverbPlateStereo(_ReverbBase):
     """
     The stereo room plate stage. This is based on Dattorro's 1997
     paper. This reverb consists of 4 allpass filters for input diffusion,

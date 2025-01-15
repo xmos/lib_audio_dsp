@@ -1,3 +1,5 @@
+.. _fir:
+
 ###############################
 Finite Impulse Response Filters
 ###############################
@@ -29,6 +31,8 @@ More information on implementation can be found in `XCORE Math Library`_ documen
     .. automethod:: check_coeff_scaling
         :noindex:
 
+
+.. _FirBlockTD:
 
 =====================
 Block Time Domain FIR
@@ -75,6 +79,8 @@ More information on implementation can be found in
         .. automethod:: reset_state
             :noindex:
 
+
+.. _FirBlockFD:
 
 ==========================
 Block Frequency Domain FIR

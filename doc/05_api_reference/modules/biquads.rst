@@ -1,3 +1,5 @@
+.. _biquad_filters:
+
 ##############
 Biquad Filters
 ##############
@@ -48,6 +50,7 @@ The ``state`` should be initialised to ``0``. The ``state`` and ``coeffs`` must 
         .. automethod:: reset_state
             :noindex:
 
+.. _BiquadSlew:
 
 =====================
 Single Slewing Biquad

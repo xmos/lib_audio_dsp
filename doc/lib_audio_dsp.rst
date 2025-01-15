@@ -37,6 +37,7 @@ This document covers the following topics:
 #. :ref:`design_guide_section`: Advanced guidance on designing and debugging generated DSP pipelines.
 #. :ref:`dsp_components_section`: Details all DSP components provided by this library.
 #. :ref:`run_time_control_guide_section`: How to add run time control to a DSP application.
+#. :ref:`api_reference_section`: References all the public API.
 
 The subsequent sections provide comprehensive insights into the functionalities and applications of lib_audio_dsp,
 detailing how to leverage its features for efficient audio signal processing.
@@ -50,6 +51,7 @@ detailing how to leverage its features for efficient audio signal processing.
     02_design_guide/index
     03_dsp_components/index
     04_run_time_control_guide/index
+    05_api_reference/index
 
 
 .. rubric:: Copyright & Disclaimer

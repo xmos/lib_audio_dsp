@@ -12,4 +12,3 @@ The following sections provide guidance on preparing the environment for the lib
 
     setup
     using_the_tool
-    pipeline_design

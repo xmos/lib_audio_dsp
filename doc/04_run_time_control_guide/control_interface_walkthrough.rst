@@ -1,12 +1,7 @@
 .. _run_time_control_guide_walkthrough:
 
-
-Control Interface Walkthrough
-=============================
-
-
 Defining a Controllable Pipeline
-********************************
+================================
 
 This section will walk through adding control to a basic DSP pipeline. The following code snippet
 describes a simple DSP process with a volume control and a limiter. In the end application the 
@@ -44,7 +39,7 @@ of this to an application author is that this header file can be included in the
 the value of `volume_stage_index` will always be correct, even when the pipeline is redesigned.
 
 Writing the Configuration of a Stage
-************************************
+====================================
 
 Each stage type has a set of controllable parameters that can be read or written. A description of
 each parameter along with its type and name can be found in the :ref:`dsp_stages_section` section
@@ -104,7 +99,7 @@ A full example of a control thread that does this is shown below.
    :end-before: // end example
 
 Reading the Configuration of a Stage
-************************************
+====================================
 
 In some cases it makes sense to read back the configuration of the stage. Some stages have dynamic values that are 
 updated as the audio is processed and can be read back to the control thread. Volume control is an example of this
@@ -122,7 +117,7 @@ is created in the example above.
 
 
 Control Interface Details
-^^^^^^^^^^^^^^^^^^^^^^^^^
+=========================
 
 This section provides a brief overview of how the control interface works.
 

@@ -1,3 +1,4 @@
+.. _${title}_stages:
 
 ${"#"*(len(title) + 7)}
 ${title} Stages
