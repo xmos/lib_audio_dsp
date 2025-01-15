@@ -14,7 +14,6 @@ from typing import Optional
 from types import NotImplementedType
 
 from typing import TypeVar, Any
-from pydantic import BaseModel
 from pydantic import BaseModel, Field, field_validator, ConfigDict, validator
 from typing import Union, Optional
 
@@ -389,17 +388,20 @@ class Stage(Node):
         name: str
         thread: int
 
-        @validator("config")
+
+        @field_validator("config")
+        @classmethod
         def _validate_config(cls, val):
             if issubclass(type(val), StageConfig):
                 return val
-            raise TypeError("config must be a subclass of StageConfig")
+            raise ValueError("config must be a subclass of StageConfig")
 
-        @validator("parameters")
+        @field_validator("parameters")
+        @classmethod
         def _validate_parameters(cls, val):
             if issubclass(type(val), StageParameters):
                 return val
-            raise TypeError("parameters must be a subclass of StageParameters")
+            raise ValueError("parameters must be a subclass of StageParameters")
 
     # stage doesn't actually have a model
     # model: Model
