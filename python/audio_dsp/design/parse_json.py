@@ -7,6 +7,7 @@ from pathlib import Path
 
 from audio_dsp.design.stage import all_useable_stages, edgeProducerBaseModel
 import audio_dsp.stages as Stages
+from audio_dsp.design.pipeline import Pipeline
 
 
 _stage_Models = Annotated[
@@ -16,21 +17,21 @@ _stage_Models = Annotated[
 
 class Input(edgeProducerBaseModel):
     name: str
-    output: list[int]
+    output: list[int] = []
     channels: int
     fs: int
 
 
 class Output(edgeProducerBaseModel):
     name: str
-    input: list[int]
+    input: list[int] = []
     channels: int
     fs: Optional[int] = None
 
 
 class Graph(BaseModel):
     name: str
-    nodes: List[_stage_Models]
+    nodes: List[_stage_Models] # type: ignore
     input: Input
     output: Output
 
@@ -46,12 +47,9 @@ def stage_handle(model):
     return getattr(Stages, model.op_type)
 
 
-if __name__ == "__main__":
-    from audio_dsp.design.pipeline import Pipeline
+def make_pipeline(json_path: Path) -> Pipeline:
 
-    # json_obj = DspJson.model_validate_json(Path(r"C:\Users\allanskellett\Documents\051_dsp_txt\dsp_lang_1.json").read_text())
-    json_obj = DspJson.model_validate_json(Path(r"C:\Users\allanskellett\Documents\040_dsp_ultra\scio_0.json").read_text())
-
+    json_obj = DspJson.model_validate_json(json_path.read_text())
     graph = json_obj.graph
 
     # get flat list of edges and threads
@@ -117,5 +115,15 @@ if __name__ == "__main__":
         output_nodes[i] = edge_list[graph.output.input[i]]
     output_nodes = sum(output_nodes)
     p.set_outputs(output_nodes)
+
+    return p
+
+
+if __name__ == "__main__":
+    
+    # json_path = Path(r"C:\Users\allanskellett\Documents\051_dsp_txt\dsp_lang_1.json")
+    json_path = Path(r"C:\Users\allanskellett\Documents\040_dsp_ultra\scio_0.json")
+    p = make_pipeline(json_path)
+
 
     pass
