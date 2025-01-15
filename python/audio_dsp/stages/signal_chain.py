@@ -279,7 +279,7 @@ class Switch(Stage):
     """
     Switch the input to one of the outputs. The switch can be used to
     select between different signals.
-    
+
     Parameters
     ----------
     index : int
