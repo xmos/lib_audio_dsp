@@ -25,6 +25,7 @@ from .reverb import ReverbRoom, ReverbRoomStereo, ReverbPlateStereo
 from .fir import FirDirect
 from .compressor import CompressorRMS
 from .compressor_sidechain import CompressorSidechain
+from .envelope_detector import EnvelopeDetectorPeak, EnvelopeDetectorRMS
 
 # helper from design which allows listing all the available stages.
 from ..design.stage import all_stages

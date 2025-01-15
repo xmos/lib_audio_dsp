@@ -7,7 +7,7 @@ together in series.
 from ..design.stage import Stage, find_config
 from ..dsp import cascaded_biquads as casc_bq
 import numpy as np
-from typing import Any
+from typing import Any, Literal
 
 
 def _parametric_eq_doc(wrapped):
@@ -52,6 +52,9 @@ class CascadedBiquads(Stage):
         implementation details.
 
     """
+
+    class Model(Stage.Model):
+        op_type: Literal["CascadedBiquads"] = "CascadedBiquads"
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("cascaded_biquads"), **kwargs)

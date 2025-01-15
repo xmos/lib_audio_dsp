@@ -5,10 +5,21 @@ pipeline. This includes stages for combining and splitting signals, basic
 gain components, and delays.
 """
 
-from ..design.stage import Stage, find_config, StageOutputList, StageOutput
+from ..design.stage import (
+    Stage,
+    find_config,
+    StageOutputList,
+    StageOutput,
+    StageParameters,
+    StageConfig,
+)
+
 from ..dsp import generic as dspg
 import audio_dsp.dsp.signal_chain as sc
 import numpy as np
+
+from typing import Literal
+from pydantic import Field
 
 
 class Bypass(Stage):
@@ -17,6 +28,9 @@ class Bypass(Stage):
     a thread which is not being processed on to keep pipeline lengths aligned.
     """
 
+    class Model(Stage.Model):
+        op_type: Literal["Bypass"] = "Bypass"
+
     def __init__(self, **kwargs):
         super().__init__(name="bypass", **kwargs)
         self.create_outputs(self.n_in)
@@ -24,6 +38,10 @@ class Bypass(Stage):
     def process(self, in_channels):
         """Return a copy of the inputs."""
         return [np.copy(i) for i in in_channels]
+
+
+class ForkConfig(StageConfig):
+    count: int = Field(default=1)
 
 
 class Fork(Stage):
@@ -44,6 +62,10 @@ class Fork(Stage):
         each entry contains a set of outputs which will contain the same
         data as the input.
     """
+
+    class Model(Stage.Model):
+        op_type: Literal["Fork"] = "Fork"
+        config: ForkConfig = Field(default_factory=ForkConfig)
 
     class ForkOutputList(StageOutputList):
         """
@@ -89,6 +111,10 @@ class Fork(Stage):
         return ret
 
 
+class MixerParameters(StageParameters):
+    gain_db: float = Field(default=0)
+
+
 class Mixer(Stage):
     """
     Mixes the input signals together. The mixer can be used to add signals
@@ -99,6 +125,10 @@ class Mixer(Stage):
     dsp_block : :class:`audio_dsp.dsp.signal_chain.mixer`
         The DSP block class; see :ref:`Mixer` for implementation details
     """
+
+    class Model(Stage.Model):
+        op_type: Literal["Mixer"] = "Mixer"
+        parameters: MixerParameters = Field(default_factory=MixerParameters)
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("mixer"), **kwargs)
@@ -130,6 +160,9 @@ class Adder(Stage):
         The DSP block class; see :ref:`Adder` for implementation details.
     """
 
+    class Model(Stage.Model):
+        op_type: Literal["Adder"] = "Adder"
+
     def __init__(self, **kwargs):
         super().__init__(name="adder", **kwargs)
         self.create_outputs(1)
@@ -147,12 +180,19 @@ class Subtractor(Stage):
         The DSP block class; see :ref:`Subtractor` for implementation details.
     """
 
+    class Model(Stage.Model):
+        op_type: Literal["Subtractor"] = "Subtractor"
+
     def __init__(self, **kwargs):
         super().__init__(name="subtractor", **kwargs)
         self.create_outputs(1)
         if self.n_in != 2:
             raise ValueError(f"Subtractor requires 2 inputs, got {self.n_in}")
         self.dsp_block = sc.subtractor(self.fs)
+
+
+class FixedGainParameters(StageParameters):
+    gain_db: float = Field(default=0)
 
 
 class FixedGain(Stage):
@@ -175,6 +215,10 @@ class FixedGain(Stage):
         The DSP block class; see :ref:`FixedGain` for implementation details.
     """
 
+    class Model(Stage.Model):
+        op_type: Literal["FixedGain"] = "FixedGain"
+        parameters: FixedGainParameters = Field(default_factory=FixedGainParameters)
+
     def __init__(self, gain_db=0, **kwargs):
         super().__init__(config=find_config("fixed_gain"), **kwargs)
         self.create_outputs(self.n_in)
@@ -192,6 +236,9 @@ class FixedGain(Stage):
         """
         self.dsp_block = sc.fixed_gain(self.fs, self.n_in, gain_db)
         return self
+
+    def set_parameters(self, parameters: FixedGainParameters):
+        self.set_gain(parameters.gain_db)
 
 
 class VolumeControl(Stage):
@@ -213,6 +260,9 @@ class VolumeControl(Stage):
     dsp_block : :class:`audio_dsp.dsp.signal_chain.volume_control`
         The DSP block class; see :ref:`VolumeControl` for implementation details.
     """
+
+    class Model(Stage.Model):
+        op_type: Literal["VolumeControl"] = "VolumeControl"
 
     def __init__(self, gain_dB=0, mute_state=0, **kwargs):
         super().__init__(config=find_config("volume_control"), **kwargs)
@@ -282,6 +332,9 @@ class Switch(Stage):
 
     """
 
+    class Model(Stage.Model):
+        op_type: Literal["Switch"] = "Switch"
+
     def __init__(self, index=0, **kwargs):
         super().__init__(config=find_config("switch"), **kwargs)
         self.index = index
@@ -311,6 +364,9 @@ class SwitchStereo(Stage):
     Setting the switch position will output the nth pair.
 
     """
+
+    class Model(Stage.Model):
+        op_type: Literal["SwitchStereo"] = "SwitchStereo"
 
     def __init__(self, index=0, **kwargs):
         super().__init__(config=find_config("switch_stereo"), **kwargs)
@@ -356,6 +412,9 @@ class Delay(Stage):
     dsp_block : :class:`audio_dsp.dsp.signal_chain.delay`
         The DSP block class; see :ref:`Delay` for implementation details.
     """
+
+    class Model(Stage.Model):
+        op_type: Literal["Delay"] = "Delay"
 
     def __init__(self, max_delay, starting_delay, units="samples", **kwargs):
         super().__init__(config=find_config("delay"), **kwargs)

@@ -2,7 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """The edges and nodes for a DSP pipeline."""
 
-from typing import Iterable, Type
+from typing import Type
 
 import numpy
 from .graph import Edge, Node
@@ -12,6 +12,11 @@ from audio_dsp.design import plot
 from audio_dsp.dsp.generic import dsp_block
 from typing import Optional
 from types import NotImplementedType
+
+from typing import TypeVar, Any
+from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator, ConfigDict, validator
+from typing import Union, Optional
 
 
 def find_config(name):
@@ -164,6 +169,9 @@ class StageOutputList:
             other = StageOutputList(other)
         if other is None:
             other = StageOutputList([None])
+        if other == 0:
+            # special case for sum(stage_outputs)
+            return StageOutputList(self.edges)
         if not isinstance(other, StageOutputList):
             return NotImplemented
         return StageOutputList(other.edges + self.edges)
@@ -197,7 +205,10 @@ class StageOutputList:
 
     def __eq__(self, other):
         """Check if this list contains the same edges as another."""
-        return all(a is b for a, b in zip(self.edges, other.edges))
+        if other is None:
+            return False
+        else:
+            return all(a is b for a, b in zip(self.edges, other.edges))
 
 
 class PropertyControlField:
@@ -236,6 +247,32 @@ class _GlobalStages:
     """Class to hold some globals."""
 
     stages = []
+
+
+class edgeProducerBaseModel(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    input: list[int] = Field(default=[])
+    output: list[int] = Field(default=[])
+
+    @field_validator("input", "output", mode="before")
+    def _single_to_list(cls, value: Union[int, list]) -> list:
+        if isinstance(value, list):
+            return value
+        else:
+            return [value]
+
+
+class StageConfig(BaseModel, extra="forbid"):
+    pass
+
+
+class StageParameters(BaseModel, extra="forbid"):
+    pass
+
+
+# This defines the types of instances of the config/parameter classes
+StageParameterType = TypeVar("StageParameterType", bound="StageParameters")
+# StageConfigType = TypeVar("StageConfigType", bound="StageConfig")
 
 
 class Stage(Node):
@@ -342,6 +379,33 @@ class Stage(Node):
         """Add all subclasses of Stage to a global list for querying."""
         super().__init_subclass__()
         _GlobalStages.stages.append(cls)
+
+    class Model(edgeProducerBaseModel):
+        # op_type: is not defined as this Stage cannot be pipelined
+        config: Any = Field(default_factory=StageConfig)
+        parameters: Any = Field(default_factory=StageParameters)
+        input: list[int] = Field(default=[])
+        output: list[int] = Field(default=[])
+        name: str
+        thread: int
+
+        @validator("config")
+        def _validate_config(cls, val):
+            if issubclass(type(val), StageConfig):
+                return val
+            raise TypeError("config must be a subclass of StageConfig")
+
+        @validator("parameters")
+        def _validate_parameters(cls, val):
+            if issubclass(type(val), StageParameters):
+                return val
+            raise TypeError("parameters must be a subclass of StageParameters")
+
+    # stage doesn't actually have a model
+    # model: Model
+
+    def set_parameters(self, parameters: StageParameterType):
+        pass
 
     @property
     def o(self) -> StageOutputList:
@@ -537,3 +601,8 @@ class Stage(Node):
 def all_stages() -> dict[str, Type[Stage]]:
     """Get a dict containing all stages in scope."""
     return {s.__name__: s for s in _GlobalStages.stages}
+
+
+def all_useable_stages() -> dict[str, Type[Stage]]:
+    """Get a dict containing all stages useable via the JSON interface."""
+    return {s.__name__: s for s in _GlobalStages.stages if "op_type" in s.Model.model_fields}

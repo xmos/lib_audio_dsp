@@ -2,10 +2,40 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Reverb Stages emulate the natural reverberance of rooms."""
 
-from ..design.stage import Stage, find_config
+from ..design.stage import Stage, find_config, StageParameters, StageConfig
 import audio_dsp.dsp.reverb as rvrb
 import audio_dsp.dsp.reverb_stereo as rvbs
 import audio_dsp.dsp.reverb_plate as rvp
+
+from typing import Literal
+from pydantic import Field
+
+
+class ReverbBaseParams(StageParameters):
+    predelay: float = Field(
+        default=15, ge=0, le=30, description="Set the predelay in milliseconds."
+    )
+    width: float = Field(default=1.0, ge=0, le=1, description="Range: 0 to 1")
+    pregain: float = Field(
+        default=0.5,
+        ge=0,
+        le=1,
+        description="It is not advised to increase this value above the "
+        "default 0.015, as it can result in saturation inside "
+        "the reverb delay lines.",
+    )
+    wet_dry_mix: float = Field(
+        default=0.5,
+        ge=0,
+        le=1,
+        description="It is not advised to increase this value above the "
+        "default 0.015, as it can result in saturation inside "
+        "the reverb delay lines.",
+    )
+
+
+class ReverbBaseConfig(StageConfig):
+    predelay: float = Field(default=30)
 
 
 class ReverbBase(Stage):
@@ -13,6 +43,13 @@ class ReverbBase(Stage):
     The base class for reverb stages, containing pre delays, and wet/dry
     mixes and pregain.
     """
+
+    class Model(Stage.Model):
+        # op_type: is not defined as this Stage cannot be pipelined
+        config: ReverbBaseConfig = Field(default_factory=ReverbBaseConfig)
+
+    # # Base class has no actual model
+    # model: Model
 
     def set_wet_dry_mix(self, mix):
         """
@@ -259,6 +296,28 @@ class ReverbRoomStereo(ReverbRoom):
         self.dsp_block.width = width
 
 
+class ReverbPlateParams(ReverbBaseParams):
+    damping: float = Field(
+        default=0.5,
+        ge=0,
+        le=1,
+        description="This controls how much high frequency attenuation "
+        "is in the room. Higher values yield shorter "
+        "reverberation times at high frequencies. Range: 0 to 1",
+    )
+    decay: float = Field(
+        default=0.5,
+        ge=0,
+        le=1,
+        description="This sets how reverberant the room is. Higher "
+        "values will give a longer reverberation time for "
+        "a given room size. Range: 0 to 1",
+    )
+    early_diffusion: float = Field(default=0.2, ge=0, le=1, description="Range: 0 to 1")
+    late_diffusion: float = Field(default=0.6, ge=0, le=1, description="Range: 0 to 1")
+    bandwidth: float = Field(default=8000, ge=0, le=24000, description="Range: 0 to 1")
+
+
 class ReverbPlateStereo(ReverbBase):
     """
     The stereo room plate stage. This is based on Dattorro's 1997
@@ -280,6 +339,12 @@ class ReverbPlateStereo(ReverbBase):
         The DSP block class; see :ref:`ReverbPlateStereo`
         for implementation details.
     """
+
+    class Model(ReverbBase.Model):
+        op_type: Literal["ReverbPlateStereo"] = "ReverbPlateStereo"
+        parameters: ReverbPlateParams = Field(default_factory=ReverbPlateParams)
+
+    model: Model
 
     def __init__(self, predelay=10, max_predelay=None, **kwargs):
         super().__init__(config=find_config("reverb_plate_stereo"), **kwargs)
