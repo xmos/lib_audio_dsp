@@ -5,7 +5,7 @@ from pydantic import (
 from typing import Annotated, List, Union, Optional
 from pathlib import Path
 
-from audio_dsp.design.stage import all_useable_stages, edgeProducerBaseModel
+from audio_dsp.design.stage import all_useable_stages, edgeProducerBaseModel, StageOutputList
 import audio_dsp.stages as Stages
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 
@@ -88,7 +88,7 @@ def make_pipeline(json_path: Path) -> Pipeline:
             waiting_nodes.append(this_node)
             continue
 
-        stage_inputs = sum(stage_inputs)
+        stage_inputs = sum(stage_inputs, start=StageOutputList())
         node_output = p.stage(
             stage_handle(this_node),
             stage_inputs,
@@ -114,7 +114,7 @@ def make_pipeline(json_path: Path) -> Pipeline:
     output_nodes = [None] * graph.output.channels
     for i in range(len(graph.output.input)):
         output_nodes[i] = edge_list[graph.output.input[i]]
-    output_nodes = sum(output_nodes)
+    output_nodes = sum(output_nodes, start=StageOutputList())
     p.set_outputs(output_nodes)
 
     return p

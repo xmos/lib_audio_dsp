@@ -168,9 +168,6 @@ class StageOutputList:
             other = StageOutputList(other)
         if other is None:
             other = StageOutputList([None])
-        if other == 0:
-            # special case for sum(stage_outputs)
-            return StageOutputList(self.edges)
         if not isinstance(other, StageOutputList):
             return NotImplemented
         return StageOutputList(other.edges + self.edges)
@@ -386,7 +383,7 @@ class Stage(Node):
         input: list[int] = Field(default=[])
         output: list[int] = Field(default=[])
         name: str
-        thread: int
+        thread: int = Field(ge=0, lt=5)
 
 
         @field_validator("config")
