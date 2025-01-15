@@ -7,8 +7,10 @@ from pathlib import Path
 
 from audio_dsp.design.stage import all_useable_stages, edgeProducerBaseModel
 import audio_dsp.stages as Stages
-from audio_dsp.design.pipeline import Pipeline
+from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 
+import argparse
+import os
 
 _stage_Models = Annotated[
     Union[tuple(i.Model for i in all_useable_stages().values())], Field(discriminator="op_type")
@@ -31,7 +33,7 @@ class Output(edgeProducerBaseModel):
 
 class Graph(BaseModel):
     name: str
-    nodes: List[_stage_Models] # type: ignore
+    nodes: List[_stage_Models]  # type: ignore
     input: Input
     output: Output
 
@@ -48,7 +50,6 @@ def stage_handle(model):
 
 
 def make_pipeline(json_path: Path) -> Pipeline:
-
     json_obj = DspJson.model_validate_json(json_path.read_text())
     graph = json_obj.graph
 
@@ -120,10 +121,22 @@ def make_pipeline(json_path: Path) -> Pipeline:
 
 
 if __name__ == "__main__":
-    
-    # json_path = Path(r"C:\Users\allanskellett\Documents\051_dsp_txt\dsp_lang_1.json")
-    json_path = Path(r"C:\Users\allanskellett\Documents\040_dsp_ultra\scio_0.json")
-    p = make_pipeline(json_path)
+    parser = argparse.ArgumentParser(description="JSON-to-DSP pipeline generator")
+    parser.add_argument(
+        "json_path", type=Path, help="path to the JSON describing the DSP pipeline"
+    )
+    parser.add_argument("out_path", type=Path, help="path for the generated DSP code output")
+    args = parser.parse_args()
 
+    output_path = Path(args.out_path)
+    json_path = Path(args.json_path)
+
+    # json_path = Path(r"C:\Users\allanskellett\Documents\051_dsp_txt\dsp_lang_1.json")
+    # json_path = Path(r"C:\Users\allanskellett\Documents\040_dsp_ultra\scio_0.json")
+    p = make_pipeline(json_path)
+    generate_dsp_main(p, output_path)
+    p.draw(Path(output_path, "dsp_pipeline"))
+
+    os.startfile(Path(output_path, "dsp_pipeline.png"), "open")
 
     pass
