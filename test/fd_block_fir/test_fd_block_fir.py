@@ -138,7 +138,12 @@ def test_main(length):
     np.save(coeff_name, coeffs)
     frame_advance = 4
 
-    subprocess.check_output(f"python -m audio_dsp.dsp.fd_block_fir {coeff_name} {frame_advance} --output autogen", shell=True)
+    out_folder = f"autogen_{os.environ.get('PYTEST_XDIST_WORKER')}"
+    os.makedirs(out_folder, exist_ok=True)
+
+    subprocess.check_output(f"python -m audio_dsp.dsp.fd_block_fir {coeff_name} {frame_advance} --output {out_folder}", shell=True)
+
+    shutil.rmtree(out_folder)
 
 if __name__ == "__main__":
     # test_constant_value_variable_length(16, 2, -2, 2, 0)

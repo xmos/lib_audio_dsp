@@ -116,7 +116,13 @@ def test_main(length):
     coeff_name = f"tmp_coeffs_{length}.npy"
     np.save(coeff_name, coeffs)
 
-    subprocess.check_output(f"python -m audio_dsp.dsp.td_block_fir {coeff_name} --output autogen", shell=True)
+    out_folder = f"autogen_{os.environ.get('PYTEST_XDIST_WORKER')}"
+    os.makedirs(out_folder, exist_ok=True)
+
+    subprocess.check_output(f"python -m audio_dsp.dsp.td_block_fir {coeff_name} --output {out_folder}", shell=True)
+
+    shutil.rmtree(out_folder)
+
 
 
 if __name__ == "__main__":
