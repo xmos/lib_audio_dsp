@@ -4,7 +4,7 @@
 """Collection of all XMOS DSP stages for use in DSP pipeline."""
 
 from .biquad import Biquad, BiquadSlew
-from .cascaded_biquads import CascadedBiquads
+from .cascaded_biquads import CascadedBiquads, ParametricEq
 from .limiter import LimiterRMS, LimiterPeak, HardLimiterPeak, Clipper
 from .noise_gate import NoiseGate
 from .noise_suppressor_expander import NoiseSuppressorExpander
@@ -25,6 +25,7 @@ from .reverb import ReverbRoom, ReverbRoomStereo, ReverbPlateStereo
 from .fir import FirDirect
 from .compressor import CompressorRMS
 from .compressor_sidechain import CompressorSidechain
+from .envelope_detector import EnvelopeDetectorPeak, EnvelopeDetectorRMS
 
 # helper from design which allows listing all the available stages.
 from ..design.stage import all_stages
