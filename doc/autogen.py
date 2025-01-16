@@ -44,6 +44,7 @@ def get_file_info(fname):
     docstring = ast.get_docstring(node)
     if docstring == None:
         assert 0, f"{fname} does not have a docstring"
+    docstring = docstring.replace('\n', ' ')
 
     for i in node.body:
         if isinstance(i, ast.ClassDef):
@@ -73,6 +74,7 @@ def python_doc_stages(src_dir, dst_dir, list_file):
     p_design = sorted(src_dir.glob("*.py"))
     all_classes = []
     all_files = []
+    all_docstrings = []
     for file in p_design:
         if file.name.startswith("_"):
             continue
@@ -82,6 +84,7 @@ def python_doc_stages(src_dir, dst_dir, list_file):
         # Sorry
         title = title.title().replace("Rms", "RMS").replace("Fir", "FIR")
         docstring, classes = get_file_info(file)
+        all_docstrings.append(docstring)
         all_classes.append(classes)
         all_files.append(title)
 
@@ -111,14 +114,17 @@ DSP Stages List
 This is the list of all the supported stages:
 
 % for i in range(len(titles)):
-- :ref:`${titles[i]}_stages`
+*   :ref:`${titles[i]}_stages`
+
+    ${docstrings[i]}
+
 % for cl in classes[i]:
     * :ref:`${cl}_stage`
 % endfor ## cl in classes
 
 % endfor ## i in len(titles)
 
-""").render(titles = all_files, classes = all_classes)
+""").render(titles = all_files, classes = all_classes, docstrings = all_docstrings)
     list_file.write_text(gen, newline="")
 
 def c_doc(src_dir, dst_dir, glob="*.h"):

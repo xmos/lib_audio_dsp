@@ -3,7 +3,7 @@
 Tool User Guide
 ###############
 
-This guide introduces the `audio_dsp` Python library, and how to use it to generate multithreaded DSP pipelines for the xcore.
+This section introduces the `audio_dsp` Python library, and how to use it to generate multithreaded DSP pipelines for the xcore.
 
 The following sections provide guidance on preparing the environment for the library, building a pipeline, and exploring the API documentation.
 

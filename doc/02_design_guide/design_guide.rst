@@ -197,7 +197,7 @@ The :ref:`design_chanend_usage_section` section describes how chanends are used 
 problem will require either redesigning the DSP or the application that runs on the same tile to use fewer chanends.
 
 Exchanging audio with the DSP pipeline blocks for too long
-==========================================================
+----------------------------------------------------------
 
 `adsp_pipeline_sink` or `adsp_pipeline_source` will block until data is available. The :ref:`design_mips_usage_section`
 section describes how to ensure the DSP pipeline meets timing. Identifying this particular issue will depend on the rest

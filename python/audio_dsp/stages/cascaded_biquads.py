@@ -1,6 +1,6 @@
 # Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""Cascaded biquad Stages consist of several biquad filters connected
+"""Cascaded biquads Stages consist of several biquad filters connected
 together in series.
 """
 
