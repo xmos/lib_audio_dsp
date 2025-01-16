@@ -1,6 +1,14 @@
 Audio DSP library change log
 ============================
 
+1.3.0-alpha
+-----------
+  * ADDED: Block frequency and time domain FIR filters DSP code and examples.
+  * ADDED: Slewing biquad Stage.
+  * ADDED: Stereo switch Stage.
+  * ADDED: Stateful ConfigSender to only send updated configs.
+  * CHANGED: Biquad Stage resets state when coefficients change.
+
 1.2.0
 -----
 

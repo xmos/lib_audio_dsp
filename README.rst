@@ -5,7 +5,7 @@ lib_audio_dsp: Audio DSP Library for xcore.ai
 #############################################
 
 :vendor: XMOS
-:version: 1.2.0
+:version: 1.3.0-alpha
 :scope: General Use
 :description: Audio DSP Library for xcore.ai
 :category: Audio
