@@ -5,36 +5,41 @@ DSP Modules List
 This a list of all the supported modules:
 
 - :ref:`biquad_filters`
-    * :ref:`Biquad`
-    * :ref:`BiquadSlew`
-    * :ref:`CascadedBiquads`
+
+  * :ref:`Biquad`
+  * :ref:`BiquadSlew`
+  * :ref:`CascadedBiquads`
 
 - :ref:`drc`
-    * :ref:`EnvelopeDetectorPeak`
-    * :ref:`EnvelopeDetectorRMS`
-    * :ref:`Clipper`
-    * :ref:`LimiterPeak`
-    * :ref:`HardLimiterPeak`
-    * :ref:`LimiterRMS`
-    * :ref:`CompressorRMS`
-    * :ref:`CompressorSidechain`
-    * :ref:`NoiseGate`
-    * :ref:`NoiseSuppressorExpander`
+
+  * :ref:`EnvelopeDetectorPeak`
+  * :ref:`EnvelopeDetectorRMS`
+  * :ref:`Clipper`
+  * :ref:`LimiterPeak`
+  * :ref:`HardLimiterPeak`
+  * :ref:`LimiterRMS`
+  * :ref:`CompressorRMS`
+  * :ref:`CompressorSidechain`
+  * :ref:`NoiseGate`
+  * :ref:`NoiseSuppressorExpander`
 
 - :ref:`fir`
-    * :ref:`FirDirect`
-    * :ref:`FirBlockTD`
-    * :ref:`FirBlockFD`
+
+  * :ref:`FirDirect`
+  * :ref:`FirBlockTD`
+  * :ref:`FirBlockFD`
 
 - :ref:`reverb`
-    * :ref:`ReverbRoom`
-    * :ref:`ReverbRoomStereo`
-    * :ref:`ReverbPlateStereo`
+
+  * :ref:`ReverbRoom`
+  * :ref:`ReverbRoomStereo`
+  * :ref:`ReverbPlateStereo`
 
 - :ref:`signal_chain`
-    * :ref:`Adder`
-    * :ref:`Subtractor`
-    * :ref:`FixedGain`
-    * :ref:`Mixer`
-    * :ref:`VolumeControl`
-    * :ref:`Delay`
+
+  * :ref:`Adder`
+  * :ref:`Subtractor`
+  * :ref:`FixedGain`
+  * :ref:`Mixer`
+  * :ref:`VolumeControl`
+  * :ref:`Delay`

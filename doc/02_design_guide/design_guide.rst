@@ -1,11 +1,11 @@
-Summary of the xcore.ai architecture
-====================================
+Summary of the xcore architecture
+=================================
 
 A basic understanding of the xcore architecture is required in order to understand the consequences of various design
 choices that can be made in the DSP pipeline.
 
-An xcore application will consist of 1 or more xcore.ai chips connected together via a communication fabric (the
-XLink). Each xcore.ai contains 2 or more tiles; a tile is an independent processor with its own memory. A tile cannot
+An xcore application will consist of 1 or more xcore chips connected together via a communication fabric (the
+XLink). Each xcore chip contains 2 or more tiles; a tile is an independent processor with its own memory. A tile cannot
 read or write the memory of another tile. Each tile contains 8 logical cores; a logical core is an independent thread
 of execution that will run some application code. Each tile also has 32 chanends available for allocation; connecting
 2 chanends forms a channel, which allows for synchronous communication between any 2 logical cores in the system (even between tiles or
@@ -44,26 +44,27 @@ class in this context refers to a C struct and the functions that operate on it.
 
    Class diagram of a lib_audio_dsp application
 
-The application package contains Audio Source, Audio Sink and Control classes. The Audio Source and Sink are responsible
-for producing and consuming audio at the rate required by the DSP pipeline. The Control is responsible for implementing
+The application package contains *Audio Source*, *Audio Sink* and *Control* classes.
+The *Audio Source* and *Audio Sink* are responsible
+for producing and consuming audio at the rate required by the DSP pipeline. The *Control* is responsible for implementing
 any application specific dynamic control of the DSP pipeline; this is optional and will only be present where run time
-control is used. These are in the Application package as they will be unique for each application. Audio Source, Audio
-Sink, and Control make use of the classes in lib_audio_dsp; all make use of a pointer to a shared `adsp_pipeline_t` (as
+control is used. These are in the *Application* block as they will be unique for each application. *Audio Source*, *Audio
+Sink*, and *Control* make use of the classes in lib_audio_dsp; all make use of a pointer to a shared ``adsp_pipeline_t`` (as
 shown by the aggregation relationships (hollow diamond) in :numref:`dsp-class-label`). lib_audio_dsp presents a thread
-safe API, allowing Audio Source, Audio Sink and Control to exist on separate threads if desired. However, they must all
-exist on the same tile in order to access the shared `adsp_pipeline_t`.
+safe API, allowing *Audio Source*, *Audio Sink* and *Control* to exist on separate threads if desired. However, they must all
+exist on the same tile in order to access the shared ``adsp_pipeline_t``.
 
-The "lib_audio_dsp" repository represents the classes from this library. These APIs are documented fully in the Tool
-User Guide.
+The lib_audio_dsp repository represents the classes from this library.
+These APIs are documented fully in the :ref:`dsp_integration_control` section.
 
-The "Generated Pipeline" package represents the classes and objects which will be generated from the user's specified
-DSP pipeline design. :numref:`dsp-class-label` shows that `adsp_generated_auto` is composed of (filled diamond) the
-`adsp_pipeline_t` and multiple `module_instance_t`. Therefore, the generated pipeline is responsible for allocating
+The *Generated Pipeline* package represents the classes and objects which will be generated from the user's specified
+DSP pipeline design. :numref:`dsp-class-label` shows that ``adsp_generated_auto`` is composed of (filled diamond) the
+``adsp_pipeline_t`` and multiple ``module_instance_t``. Therefore, the generated pipeline is responsible for allocating
 the memory for all the stages in the pipeline and also initialising each stage. The generated pipeline also creates
-multiple threads (labelled `dsp_threadX` in :numref:`dsp-class-label`), each of which will have been uniquely
+multiple threads (labelled ``dsp_threadX`` in :numref:`dsp-class-label`), each of which will have been uniquely
 generated for the DSP pipeline that has been designed. The generated pipeline will always require at least 1 thread to
 run the DSP on; it is not possible to generate a DSP pipeline that can be executed inline on an existing thread. It is
-also not possible to split the DSP threads across more than 1 tile, because all threads access a shared `adsp_pipeline_t`
+also not possible to split the DSP threads across more than 1 tile, because all threads access a shared ``adsp_pipeline_t``
 object.
 
 To summarise, the generated DSP pipeline will consume the number of threads specified in the design (at least 1). At
@@ -150,14 +151,14 @@ thread.
 
 Each thread measures the total number of system ticks (periods of the system clock, by default a 100MHz clock) that pass
 while it is doing work and stores the maximum value that has occured since boot. This measurement can be used to get
-an estimate of the threads' MIPS utilisations. To access this value, the function `adsp_auto_print_thread_max_ticks()`
+an estimate of the threads' MIPS utilisations. To access this value, the function ``adsp_auto_print_thread_max_ticks()``
 ("auto" may be replaced with a custom pipeline identifier if specified) is generated along with the other generated
 pipeline functions. Calling this function on the same tile as the pipeline will print the measured value. Printing
-is implemented with `printf`, so the output will only be visible when connected to the device with `xrun` or `xgdb`.
+is implemented with ``printf``, so the output will only be visible when connected to the device with ``xrun`` or ``xgdb``.
 
 The number of available ticks on each thread depends on the frame size and sample rate of the data. For example, given
 that the system clock runs by default at 100MHz, if the sample rate is 48000 Hz and frame size is 1 then the available
-ticks will be :math:`1 * 100e6/48000 = 2083 ticks`. Below is an example output from `adsp_auto_print_thread_max_ticks()`
+ticks will be :math:`1 * 100e6/48000 = 2083 ticks`. Below is an example output from ``adsp_auto_print_thread_max_ticks()``
 for a pipeline with 4 threads::
 
    DSP Thread Ticks:
@@ -199,7 +200,7 @@ problem will require either redesigning the DSP or the application that runs on 
 Exchanging audio with the DSP pipeline blocks for too long
 ----------------------------------------------------------
 
-`adsp_pipeline_sink` or `adsp_pipeline_source` will block until data is available. The :ref:`design_mips_usage_section`
+``adsp_pipeline_sink`` or ``adsp_pipeline_source`` will block until data is available. The :ref:`design_mips_usage_section`
 section describes how to ensure the DSP pipeline meets timing. Identifying this particular issue will depend on the rest
 of the application. The result could be either dropped samples that are audible in the output or a complete application crash.
 

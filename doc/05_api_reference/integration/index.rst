@@ -1,4 +1,4 @@
-.. _dsp_control:
+.. _dsp_integration_control:
 
 Intergration and Control
 ========================

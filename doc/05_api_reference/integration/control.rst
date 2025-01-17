@@ -1,3 +1,5 @@
+.. _dsp_control:
+
 #######
 Control
 #######
