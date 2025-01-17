@@ -48,7 +48,7 @@ and sample rate must be specified.
    )
 
 
-The pipeline object can now be used to add DSP stages. For high shelf and low 
+The ``Pipeline`` object can now be used to add DSP stages. For high shelf and low 
 shelf use :py:class:`Biquad <audio_dsp.stages.biquad.Biquad>` and for
 the limiter use :py:class:`LimiterPeak <audio_dsp.stages.limiter.LimiterPeak>`.
 
@@ -76,9 +76,10 @@ the limiter use :py:class:`LimiterPeak <audio_dsp.stages.limiter.LimiterPeak>`.
 
     p.draw()
 
+:numref:`generated_pipeline_diagram` demonstrates the output of the Jupyter Notebook when the above snippet was executed.
+Jupyter Notebook will illustrate the designed pipeline.
 
-When running the above snippet in a Jupyter Notebook it will output the following 
-image which illustrates the pipeline which has been designed:
+.. _generated_pipeline_diagram:
 
 .. figure:: ../images/pipeline_diagram.png
    :width: 25%
@@ -92,8 +93,8 @@ Tuning and simulating a pipeline
 Each stage contains a number of designer methods which can be identified as they
 have the ``make_`` prefix. These can be used to configure the stages. The stages
 also provide a ``plot_frequency_response()`` method which shows the magnitude
-and phase response of the stage with its current configuration. The two biquads
-created above will have a flat frequency response until they are tuned. The code
+and phase response of the stage with its current configuration :numref:`freq_responce_bq_diagram`.
+The two biquads created above will have a flat frequency response until they are tuned. The code
 below shows how to use the designer methods to convert them into the low shelf
 and high shelf that is desired. The individual stages are accessed using the
 labels that were assigned to them when the stage was added to the pipeline.
@@ -108,6 +109,7 @@ labels that were assigned to them when the stage was added to the pipeline.
    p["highshelf"].make_highshelf(4000, 0.7, 6)
    p["highshelf"].plot_frequency_response()
 
+.. _freq_responce_bq_diagram:
 
 .. figure:: ../images/frequency_response.png
    :width: 100%
@@ -123,7 +125,7 @@ Code Generation
 
 With an initial pipeline complete, it is time to generate the xcore source code
 and run it on a device. The code can be generated using the
-:py:class:`generate_dsp_main() <audio_dsp.design.pipeline.generate_dsp_main>`
+:py:meth:`generate_dsp_main() <audio_dsp.design.pipeline.generate_dsp_main>`
 function.
 
 .. code-block:: python
@@ -153,9 +155,9 @@ When created, every stage's initialiser returns an instance of
 a container of 
 :py:class:`StageOutput<audio_dsp.design.stage.StageOutput>`. 
 The stage's outputs can be selected from
-the StageOutputList by indexing into it, creating a new StageOutputList, which
-can be concatenated with other StageOutputList instances using the ``+``
-operator. When creating a stage, it will require a StageOutputList as its
+the ``StageOutputList`` by indexing into it, creating a new ``StageOutputList``, which
+can be concatenated with other ``StageOutputList`` instances using the ``+``
+operator. When creating a stage, it will require a ``StageOutputList`` as its
 inputs.
 
 The below shows an example of how this could work with a pipeline with 7 inputs.
@@ -175,7 +177,7 @@ As the pipeline grows it may end up consuming more MIPS than are available on a
 single xcore thread. The pipeline design interface allows adding additional
 threads using the 
 :py:meth:`next_thread() <audio_dsp.design.pipeline.Pipeline.next_thread>` 
-method of the Pipeline instance. Each thread
+method of the ``Pipeline`` instance. Each thread
 in the pipeline represents an xcore hardware thread. Do not add more threads
 than are available in your application. The maximum number of threads that
 should be used, if available, is five. This limitation is due to the architecture of the xcore
