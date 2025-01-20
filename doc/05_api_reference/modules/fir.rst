@@ -1,3 +1,5 @@
+.. _fir:
+
 ###############################
 Finite Impulse Response Filters
 ###############################
@@ -30,6 +32,8 @@ More information on implementation can be found in `XCORE Math Library`_ documen
         :noindex:
 
 
+.. _FirBlockTD:
+
 =====================
 Block Time Domain FIR
 =====================
@@ -40,6 +44,11 @@ the efficiency of the lib_xcore_math implementation. This block will generate C 
 filter.
 More information on implementation can be found in
 `AN02027: Efficient computation of FIR filters on the XCORE <https://www.xmos.com/application-notes/>`_.
+
+.. note::
+
+    The block time domain FIR filter is not currently implemented as a DSP Stage, so cannot be
+    used with the DSP pipeline tool yet.
 
 .. tab:: Autogenerator
 
@@ -76,6 +85,8 @@ More information on implementation can be found in
             :noindex:
 
 
+.. _FirBlockFD:
+
 ==========================
 Block Frequency Domain FIR
 ==========================
@@ -87,6 +98,11 @@ compared to the previous two time-domain versions. This block will generate C co
 frequency domain FIR filter.
 More information on implementation can be found in
 `AN02027: Efficient computation of FIR filters on the XCORE <https://www.xmos.com/application-notes/>`_.
+
+.. note::
+
+    The block time domain FIR filter is not currently implemented as a DSP Stage, so cannot be
+    used with the DSP pipeline tool yet.
 
 .. tab:: Autogenerator
 

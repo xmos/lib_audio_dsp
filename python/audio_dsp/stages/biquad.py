@@ -285,7 +285,7 @@ class BiquadSlew(Biquad):
     Attributes
     ----------
     dsp_block : :class:`audio_dsp.dsp.biquad.biquad_slew`
-        The DSP block class; see :ref:`Biquad`
+        The DSP block class; see :ref:`BiquadSlew`
         for implementation details.
     """
 

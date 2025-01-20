@@ -8,7 +8,7 @@ def boolean hasChangesIn(String module) {
     else {
       return sh(
         returnStatus: true,
-        script: "git diff --name-only remotes/origin/${env.CHANGE_TARGET}...remotes/origin/${env.BRANCH_NAME} | grep ${module}"
+        script: "git diff --name-only remotes/origin/${env.CHANGE_TARGET}...remotes/origin/${env.BRANCH_NAME} | grep -v .rst | grep ${module}"
       ) == 0
     }
   }

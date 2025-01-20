@@ -1,23 +1,17 @@
 .. _run_time_control_guide_walkthrough:
 
-
-Control Interface Walkthrough
-=============================
-
-
 Defining a Controllable Pipeline
-********************************
+================================
 
 This section will walk through adding control to a basic DSP pipeline. The following code snippet
 describes a simple DSP process with a volume control and a limiter. In the end application the 
 volume can be set by the application.
+This code snippet will generate the pipeline diagram shown in :numref:`run_time_example_fig`.
 
 .. literalinclude:: ../../test/pipeline/doc_examples/run_time_control.py
    :language: python
    :start-after: # start example
    :end-before: # end example
-
-This code snippet will generate the pipeline diagram shown in :numref:`run_time_example_fig`.
 
 .. _run_time_example_fig:
 
@@ -31,8 +25,8 @@ the code that is generated will intialise the stages with their default configur
 
 A point of interest in this example is that the `label` argument to the pipeline `stage`
 method is set, but only for the volume control stage. The label for the volume control in 
-this example is "volume". After generating the source code for this pipeline, a file will
-be created in the specified directory named "adsp_instance_id_auto.h" (assuming that the pipeline
+this example is `volume`. After generating the source code for this pipeline, a file will
+be created in the specified directory named `adsp_instance_id_auto.h` (assuming that the pipeline
 identifier has been left as its default value of "auto"). The contents of the generated file are shown below:
 
 .. literalinclude:: ../../test/pipeline/doc_examples/run_time_dsp/src/dsp/adsp_instance_id_auto.h
@@ -44,13 +38,13 @@ of this to an application author is that this header file can be included in the
 the value of `volume_stage_index` will always be correct, even when the pipeline is redesigned.
 
 Writing the Configuration of a Stage
-************************************
+====================================
 
 Each stage type has a set of controllable parameters that can be read or written. A description of
 each parameter along with its type and name can be found in the :ref:`dsp_stages_section` section
 in the DSP components document. For volume control, there is a command named `CMD_VOLUME_CONTROL_TARGET_GAIN`
 that can be updated at run time to set the volume. This command is defined in the generated header file
-"cmds.h" which will be placed into the build directory at "src.autogen/common/cmds.h". "cmds.h" contains all
+`cmds.h` which will be placed into the build directory at `src.autogen/common/cmds.h`. `cmds.h` contains all
 the command IDs for all the stage types that CMake found.
 
 It is also possible to see the available control parameters, along with the values they will be set to, while
@@ -73,10 +67,10 @@ set of parameters.
 The format and type of the control parameters for each stage are chosen to optimise processing time on the
 DSP thread. For example, `CMD_VOLUME_CONTROL_TARGET_GAIN` is not a floating point value in decibels, but rather
 a linear fixed point value. For this example we can use the convenience function
-`adsp_dB_to_gain()` which is defined in `dsp/signal_chain.h`.
+`adsp_dB_to_gain()` which is defined in `control/signal_chain.h`.
 
 In order to send a control command, the API defined in `stages/adsp_control.h` is used. This API is documented in the
-Tool User Guide, in the :ref:`pipeline_design_api` section. Complete the
+:ref:`api_reference_section`, in the :ref:`dsp_control` section. Complete the
 following steps:
 
 #. Create a thread that will be updating the DSP configuration. This thread must be on the same tile as the DSP.
@@ -104,7 +98,7 @@ A full example of a control thread that does this is shown below.
    :end-before: // end example
 
 Reading the Configuration of a Stage
-************************************
+====================================
 
 In some cases it makes sense to read back the configuration of the stage. Some stages have dynamic values that are 
 updated as the audio is processed and can be read back to the control thread. Volume control is an example of this
@@ -122,7 +116,7 @@ is created in the example above.
 
 
 Control Interface Details
-^^^^^^^^^^^^^^^^^^^^^^^^^
+=========================
 
 This section provides a brief overview of how the control interface works.
 

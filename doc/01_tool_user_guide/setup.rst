@@ -52,17 +52,20 @@ Setup Steps
       #. Open the Command Prompt or other terminal application of choice
       #. Activate the XTC environment:
 
-         .. code-block:: console
+      .. code-block:: console
 
-            call "C:\Program Files\XMOS\XTC\15.3.0\SetEnv.bat"
+         call "C:\Program Files\XMOS\XTC\15.3.0\SetEnv.bat"
 
-
-   .. tab:: Linux and macOS:
+   .. tab:: Linux and macOS
 
       On Linux and macOS:
 
       #. Open a terminal
       #. Activate the XTC environment using *SetEnv*
+
+      .. code-block:: console
+
+         source /path/to/xtc/tools/SetEnv
 
 #. Create a sandbox folder with the command below:
 
@@ -112,7 +115,7 @@ Setup Steps
 
    .. tab:: Linux and macOS
 
-      On Linux or macOS:
+      On Linux and macOS:
 
       .. code-block:: console
 
@@ -135,7 +138,7 @@ Setup Steps
 
    .. tab:: Linux and macOS
 
-      On Linux or macOS:
+      On Linux and macOS:
 
       .. code-block:: console
 
@@ -154,7 +157,7 @@ Setup Steps
       jupyter notebook lib_audio_dsp/examples/app_simple_audio_dsp_integration/dsp_design.ipynb
 
    If a blank screen appears or nothing opens, then copy the link starting with
-   "http://127.0.0.1/" from the terminal into the browser. The following page
+   http://127.0.0.1/ from the terminal into the browser. The following page
    should open:
 
    .. figure:: ../images/jupyter_notebook_top_level.png
@@ -163,18 +166,21 @@ Setup Steps
       Top-level page of the Jupyter Notebook
 
 #. Run all the cells from the browser. From the menu at the top of the page
-   click *Run -> Run all cells*:
+   click *Run -> Run all cells* (:numref:`run_all_cells`).
+   This creates the pipeline and builds the app. Wait for all the cells to
+   finish.
+
+   .. _run_all_cells:
 
    .. figure:: ../images/jupyter_notebook_run_tests.png
       :width: 100%
 
       Run menu of the Jupyter Notebook
 
-   This creates the pipeline and builds the app. Wait for all the cells to
-   finish
-
    Any configuration or compilation errors will be displayed in the notebook in
-   the *Build and run* cell, as in the example below:
+   the *Build and run* cell, as in the example on :numref:`run_error`.
+
+   .. _run_error:
 
    .. figure:: ../images/config_error.png
       :width: 100%
@@ -183,18 +189,15 @@ Setup Steps
 
 #. Update and run *Pipeline design stage* to add the desired audio processing
    blocks. A diagram will be generated showing the pipeline IO mapping.
-
-   A simple pipeline example is shown in :numref:`pipeline_diagram`:
-
-      .. _pipeline_diagram:
-
-      .. figure:: ../images/pipeline_diagram.png
-         :width: 25%
-
-         Diagram of a simple audio pipeline
-
+   A simple pipeline example is shown in :numref:`pipeline_diagram`.
    See the top of the notebook for more information about this stage.
 
+   .. _pipeline_diagram:
+
+   .. figure:: ../images/pipeline_diagram.png
+      :width: 25%
+
+      Diagram of a simple audio pipeline
 
 #. Update and run the *Tuning Stage* cell to change the parameters before
    building. See the top of the notebook for more information about this stage.

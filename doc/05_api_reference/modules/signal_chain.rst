@@ -1,3 +1,5 @@
+.. _signal_chain:
+
 #######################
 Signal Chain Components
 #######################

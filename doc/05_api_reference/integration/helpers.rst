@@ -1,8 +1,8 @@
 .. _run_time_control_helper_section:
 
-=================================
-Run-Time Control Helper Functions
-=================================
+========================
+Control Helper Functions
+========================
 
 Most DSP Stages have fixed point control parameters. To aid conversion
 from typical tuning units (e.g. decibels) to the correct fixed point

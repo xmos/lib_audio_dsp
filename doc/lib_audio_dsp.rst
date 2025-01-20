@@ -13,7 +13,7 @@ Lib Audio DSP
 lib_audio_dsp is a DSP library for the XMOS xcore architecture. It facilitates the creation of
 multithreaded audio DSP pipelines that efficiently utilise the xcore architecture.
 
-The library is built around a set of DSP function blocks, referred to in the documentation as “Stages” ,
+The library is built around a set of DSP function blocks, referred to in the documentation as *Stages*,
 which have a consistent API and can be combined to create many different designs.
 
 A tool for easily
@@ -33,10 +33,11 @@ processing, and AI feature extraction.
 
 This document covers the following topics:
 
-#. :ref:`tool_user_guide_section`: A Beginner's Guide to installing and using the DSP design and generation Python library.
+#. :ref:`tool_user_guide_section`: A beginner's guide to installing and using the DSP design and generation Python library.
 #. :ref:`design_guide_section`: Advanced guidance on designing and debugging generated DSP pipelines.
-#. :ref:`dsp_components_section`: Details all DSP components provided by this library.
-#. :ref:`run_time_control_guide_section`: How to add run time control to a DSP application.
+#. :ref:`dsp_components_section`: List of all DSP components and details on the backend implementation.
+#. :ref:`run_time_control_guide_section`: Basic guide to add time control to a DSP application.
+#. :ref:`api_reference_section`: References to DSP components, control and integration and high-level tool desing API.
 
 The subsequent sections provide comprehensive insights into the functionalities and applications of lib_audio_dsp,
 detailing how to leverage its features for efficient audio signal processing.
@@ -50,6 +51,7 @@ detailing how to leverage its features for efficient audio signal processing.
     02_design_guide/index
     03_dsp_components/index
     04_run_time_control_guide/index
+    05_api_reference/index
 
 
 .. rubric:: Copyright & Disclaimer

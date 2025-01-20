@@ -28,7 +28,8 @@ functions.
 .. toctree::
     :maxdepth: 1
 
-    stages/index
-    modules/index
+    gen/stages
+    modules
+    q_format
     precision
     latency
