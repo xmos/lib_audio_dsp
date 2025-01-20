@@ -111,7 +111,7 @@ def python_doc_stages(src_dir, dst_dir, list_file):
 DSP Stages List
 ===============
 
-This is the list of all the supported stages:
+This a list of all the supported stages that can be used with the DSP pipeline tool:
 
 % for i in range(len(titles)):
 *   :ref:`${titles[i]}_stages`

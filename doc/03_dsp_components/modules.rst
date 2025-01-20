@@ -2,7 +2,7 @@
 DSP Modules List
 ================
 
-This a list of all the supported modules:
+This a list of all the modules that can be used independently without the DSP pipeline tool:
 
 - :ref:`biquad_filters`
 
