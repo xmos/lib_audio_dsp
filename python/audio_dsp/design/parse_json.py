@@ -5,7 +5,8 @@ from pydantic import (
 from typing import Annotated, List, Union, Optional
 from pathlib import Path
 
-from audio_dsp.design.stage import all_useable_stages, edgeProducerBaseModel, StageOutputList
+from audio_dsp.design.stage import all_useable_stages, StageOutputList
+from audio_dsp.models.stage import edgeProducerBaseModel, all_models
 import audio_dsp.stages as Stages
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 
@@ -13,9 +14,13 @@ import argparse
 import os
 
 _stage_Models = Annotated[
-    Union[tuple(i.Model for i in all_useable_stages().values())], Field(discriminator="op_type")
+    Union[tuple(i for i in all_models().values())], Field(discriminator="op_type")
 ]
-
+# import audio_dsp
+# # all_models = [audio_dsp.models.signal_chain.Adder, audio_dsp.models.signal_chain.FixedGain]
+# _stage_Models = Annotated[
+#     Union[tuple(all_models)], Field(discriminator="op_type")
+# ]
 
 class Input(edgeProducerBaseModel):
     name: str
@@ -121,18 +126,19 @@ def make_pipeline(json_path: Path) -> Pipeline:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="JSON-to-DSP pipeline generator")
-    parser.add_argument(
-        "json_path", type=Path, help="path to the JSON describing the DSP pipeline"
-    )
-    parser.add_argument("out_path", type=Path, help="path for the generated DSP code output")
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(description="JSON-to-DSP pipeline generator")
+    # parser.add_argument(
+    #     "json_path", type=Path, help="path to the JSON describing the DSP pipeline"
+    # )
+    # parser.add_argument("out_path", type=Path, help="path for the generated DSP code output")
+    # args = parser.parse_args()
 
-    output_path = Path(args.out_path)
-    json_path = Path(args.json_path)
+    # output_path = Path(args.out_path)
+    # json_path = Path(args.json_path)
 
     # json_path = Path(r"C:\Users\allanskellett\Documents\051_dsp_txt\dsp_lang_1.json")
-    # json_path = Path(r"C:\Users\allanskellett\Documents\040_dsp_ultra\scio_0.json")
+    json_path = Path(r"C:\Users\allanskellett\Documents\040_dsp_ultra\scio_0.json")
+    output_path = "tmpdir"
     p = make_pipeline(json_path)
     generate_dsp_main(p, output_path)
     p.draw(Path(output_path, "dsp_pipeline"))

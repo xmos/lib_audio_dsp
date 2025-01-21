@@ -17,6 +17,7 @@ from typing import TypeVar, Any
 from pydantic import BaseModel, Field, field_validator, ConfigDict, validator
 from typing import Union, Optional
 
+from audio_dsp.models.stage import StageParameters, StageModel, StageConfig
 
 def find_config(name):
     """
@@ -245,25 +246,25 @@ class _GlobalStages:
     stages = []
 
 
-class edgeProducerBaseModel(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    input: list[int] = Field(default=[])
-    output: list[int] = Field(default=[])
+# class edgeProducerBaseModel(BaseModel):
+#     model_config = ConfigDict(arbitrary_types_allowed=True)
+#     input: list[int] = Field(default=[])
+#     output: list[int] = Field(default=[])
 
-    @field_validator("input", "output", mode="before")
-    def _single_to_list(cls, value: Union[int, list]) -> list:
-        if isinstance(value, list):
-            return value
-        else:
-            return [value]
-
-
-class StageConfig(BaseModel, extra="forbid"):
-    pass
+#     @field_validator("input", "output", mode="before")
+#     def _single_to_list(cls, value: Union[int, list]) -> list:
+#         if isinstance(value, list):
+#             return value
+#         else:
+#             return [value]
 
 
-class StageParameters(BaseModel, extra="forbid"):
-    pass
+# class StageConfig(BaseModel, extra="forbid"):
+#     pass
+
+
+# class StageParameters(BaseModel, extra="forbid"):
+#     pass
 
 
 # This defines the types of instances of the config/parameter classes
@@ -376,34 +377,40 @@ class Stage(Node):
         super().__init_subclass__()
         _GlobalStages.stages.append(cls)
 
-    class Model(edgeProducerBaseModel):
-        # op_type: is not defined as this Stage cannot be pipelined
-        config: Any = Field(default_factory=StageConfig)
-        parameters: Any = Field(default_factory=StageParameters)
-        input: list[int] = Field(default=[])
-        output: list[int] = Field(default=[])
-        name: str
-        thread: int = Field(ge=0, lt=5)
+    # class Model(edgeProducerBaseModel):
+    #     # op_type: is not defined as this Stage cannot be pipelined
+    #     config: Any = Field(default_factory=StageConfig)
+    #     parameters: Any = Field(default_factory=StageParameters)
+    #     input: list[int] = Field(default=[])
+    #     output: list[int] = Field(default=[])
+    #     name: str
+    #     thread: int = Field(ge=0, lt=5)
 
 
-        @field_validator("config")
-        @classmethod
-        def _validate_config(cls, val):
-            if issubclass(type(val), StageConfig):
-                return val
-            raise ValueError("config must be a subclass of StageConfig")
+    #     @field_validator("config")
+    #     @classmethod
+    #     def _validate_config(cls, val):
+    #         if issubclass(type(val), StageConfig):
+    #             return val
+    #         raise ValueError("config must be a subclass of StageConfig")
 
-        @field_validator("parameters")
-        @classmethod
-        def _validate_parameters(cls, val):
-            if issubclass(type(val), StageParameters):
-                return val
-            raise ValueError("parameters must be a subclass of StageParameters")
+    #     @field_validator("parameters")
+    #     @classmethod
+    #     def _validate_parameters(cls, val):
+    #         if issubclass(type(val), StageParameters):
+    #             return val
+    #         raise ValueError("parameters must be a subclass of StageParameters")
 
-    # stage doesn't actually have a model
-    # model: Model
+    # # stage doesn't actually have a model
+    # Model: StageModel
+    class Model(StageModel):
+        pass
 
     def set_parameters(self, parameters: StageParameterType):
+        if isinstance(parameters, StageParameters) and type(parameters) != StageParameters:
+            raise NotImplementedError(f"A subclass of StageParameters ({type(parameters).__name__}) "
+            "was passed to the generic implementation, of set_parameters, resulting in the "
+            "parameters not being used. Please define set_parameters for the specific Stage class.")
         pass
 
     @property

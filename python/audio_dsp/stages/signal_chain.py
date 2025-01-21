@@ -21,6 +21,7 @@ import numpy as np
 from typing import Literal
 from pydantic import Field
 
+from audio_dsp.models.signal_chain import VolumeControlParameters, FixedGainParameters, SwitchParameters, MixerParameters
 
 class Bypass(Stage):
     """
@@ -28,8 +29,8 @@ class Bypass(Stage):
     a thread which is not being processed on to keep pipeline lengths aligned.
     """
 
-    class Model(Stage.Model):
-        op_type: Literal["Bypass"] = "Bypass"
+    # class Model(Stage.Model):
+    #     op_type: Literal["Bypass"] = "Bypass"
 
     def __init__(self, **kwargs):
         super().__init__(name="bypass", **kwargs)
@@ -63,9 +64,9 @@ class Fork(Stage):
         data as the input.
     """
 
-    class Model(Stage.Model):
-        op_type: Literal["Fork"] = "Fork"
-        config: ForkConfig = Field(default_factory=ForkConfig)
+    # class Model(Stage.Model):
+    #     op_type: Literal["Fork"] = "Fork"
+    #     config: ForkConfig = Field(default_factory=ForkConfig)
 
     class ForkOutputList(StageOutputList):
         """
@@ -126,9 +127,9 @@ class Mixer(Stage):
         The DSP block class; see :ref:`Mixer` for implementation details
     """
 
-    class Model(Stage.Model):
-        op_type: Literal["Mixer"] = "Mixer"
-        parameters: MixerParameters = Field(default_factory=MixerParameters)
+    # class Model(Stage.Model):
+    #     op_type: Literal["Mixer"] = "Mixer"
+    #     parameters: MixerParameters = Field(default_factory=MixerParameters)
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("mixer"), **kwargs)
@@ -148,6 +149,8 @@ class Mixer(Stage):
         self.dsp_block = sc.mixer(self.fs, self.n_in, gain_db)
         return self
 
+    def set_parameters(self, parameters: MixerParameters):
+        self.set_gain(parameters.gain_db)
 
 class Adder(Stage):
     """
@@ -160,8 +163,8 @@ class Adder(Stage):
         The DSP block class; see :ref:`Adder` for implementation details.
     """
 
-    class Model(Stage.Model):
-        op_type: Literal["Adder"] = "Adder"
+    # class Model(Stage.Model):
+    #     op_type: Literal["Adder"] = "Adder"
 
     def __init__(self, **kwargs):
         super().__init__(name="adder", **kwargs)
@@ -180,8 +183,8 @@ class Subtractor(Stage):
         The DSP block class; see :ref:`Subtractor` for implementation details.
     """
 
-    class Model(Stage.Model):
-        op_type: Literal["Subtractor"] = "Subtractor"
+    # class Model(Stage.Model):
+    #     op_type: Literal["Subtractor"] = "Subtractor"
 
     def __init__(self, **kwargs):
         super().__init__(name="subtractor", **kwargs)
@@ -215,9 +218,9 @@ class FixedGain(Stage):
         The DSP block class; see :ref:`FixedGain` for implementation details.
     """
 
-    class Model(Stage.Model):
-        op_type: Literal["FixedGain"] = "FixedGain"
-        parameters: FixedGainParameters = Field(default_factory=FixedGainParameters)
+    # class Model(Stage.Model):
+    #     op_type: Literal["FixedGain"] = "FixedGain"
+    #     parameters: FixedGainParameters = Field(default_factory=FixedGainParameters)
 
     def __init__(self, gain_db=0, **kwargs):
         super().__init__(config=find_config("fixed_gain"), **kwargs)
@@ -261,8 +264,8 @@ class VolumeControl(Stage):
         The DSP block class; see :ref:`VolumeControl` for implementation details.
     """
 
-    class Model(Stage.Model):
-        op_type: Literal["VolumeControl"] = "VolumeControl"
+    # class Model(Stage.Model):
+    #     op_type: Literal["VolumeControl"] = "VolumeControl"
 
     def __init__(self, gain_dB=0, mute_state=0, **kwargs):
         super().__init__(config=find_config("volume_control"), **kwargs)
@@ -324,6 +327,9 @@ class VolumeControl(Stage):
             self.dsp_block.unmute()
         return self
 
+    def set_parameters(self, parameters: VolumeControlParameters):
+        self.set_gain(parameters.gain_db)
+        self.set_mute_state(parameters.mute_state)
 
 class Switch(Stage):
     """
@@ -332,8 +338,8 @@ class Switch(Stage):
 
     """
 
-    class Model(Stage.Model):
-        op_type: Literal["Switch"] = "Switch"
+    # class Model(Stage.Model):
+    #     op_type: Literal["Switch"] = "Switch"
 
     def __init__(self, index=0, **kwargs):
         super().__init__(config=find_config("switch"), **kwargs)
@@ -355,6 +361,8 @@ class Switch(Stage):
         self.dsp_block.move_switch(position)
         return self
 
+    def set_parameters(self, parameters: SwitchParameters):
+        self.move_switch(parameters.position)
 
 class SwitchStereo(Stage):
     """
@@ -365,8 +373,8 @@ class SwitchStereo(Stage):
 
     """
 
-    class Model(Stage.Model):
-        op_type: Literal["SwitchStereo"] = "SwitchStereo"
+    # class Model(Stage.Model):
+    #     op_type: Literal["SwitchStereo"] = "SwitchStereo"
 
     def __init__(self, index=0, **kwargs):
         super().__init__(config=find_config("switch_stereo"), **kwargs)
@@ -388,6 +396,8 @@ class SwitchStereo(Stage):
         self.dsp_block.move_switch(position)
         return self
 
+    def set_parameters(self, parameters: SwitchParameters):
+        self.move_switch(parameters.position)
 
 class Delay(Stage):
     """
@@ -413,8 +423,8 @@ class Delay(Stage):
         The DSP block class; see :ref:`Delay` for implementation details.
     """
 
-    class Model(Stage.Model):
-        op_type: Literal["Delay"] = "Delay"
+    # class Model(Stage.Model):
+    #     op_type: Literal["Delay"] = "Delay"
 
     def __init__(self, max_delay, starting_delay, units="samples", **kwargs):
         super().__init__(config=find_config("delay"), **kwargs)
