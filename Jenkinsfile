@@ -72,7 +72,7 @@ pipeline {
   } // parameters
 
   environment {
-    XMOSDOC_VERSION = "v6.3.1"
+    XMOSDOC_VERSION = "main"
     HAS_GENERIC_CHANGES = false
   } // environment
 
