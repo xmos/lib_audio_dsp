@@ -38,8 +38,6 @@ class ReverbBaseModel(StageModel):
     # op_type: is not defined as this Stage cannot be pipelined
     config: ReverbBaseConfig = Field(default_factory=ReverbBaseConfig)
 
-
-
 class ReverbPlateParams(ReverbBaseParams):
     damping: float = Field(
         default=0.5,
