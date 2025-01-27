@@ -24,7 +24,9 @@ with output limiter. In this design the product will stream real time audio
 boosting or suppressing the treble and bass and then limiting the output
 amplitude to protect the output device.
 
-The DSP pipeline will perform the following processes:
+The DSP pipeline will perform the processes shown in :numref:`bass_treble_pipeline`.
+
+.. _bass_treble_pipeline:
 
 .. figure:: ../images/bass_treble_limit.drawio.png
    :width: 100%

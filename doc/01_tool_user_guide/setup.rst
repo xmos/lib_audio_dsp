@@ -151,8 +151,10 @@ Setup Steps
       jupyter notebook lib_audio_dsp/examples/app_simple_audio_dsp_integration/dsp_design.ipynb
 
    If a blank screen appears or nothing opens, then copy the link starting with
-   http://127.0.0.1/ from the terminal into the browser. The following page
-   should open:
+   http://127.0.0.1/ from the terminal into the browser. The top level Jupyter
+   notebook page should open, as can be seein in :numref:`top_level_notebook`.
+
+   .. _top_level_notebook
 
    .. figure:: ../images/jupyter_notebook_top_level.png
       :width: 25%
