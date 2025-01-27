@@ -22,7 +22,7 @@ The supported file formats for those are: ``.c``, ``.s``, ``.S`` and ``.h`` for 
 If you've added an API or a typedef that's intended to be public,
 it should be declared in the one of the ``lib_audio_dsp/api/dsp/`` header files and have Doxygen-style comments like:
 
-.. code-block::C
+.. code-block:: C
 
   /**
    * @brief Struct brief
@@ -57,7 +57,7 @@ If you decide to implement python reference API it should live in the appropriat
 Your python module is expected to be a class with is based on the ``dsp_block`` class
 and have at least ``__init__``, ``process`` and ``reset_state`` methods.
 
-.. code-block::python
+.. code-block:: python
 
   import audio_dsp.dsp.generic as dspg
 
@@ -120,7 +120,7 @@ This library uses ``ruff`` and ``pyright`` as python formatting tools.
 Both of them come as pip-installable packages and are defined in the ``requirements.txt`` file.
 To make sure your python code formatting passes our CI, do:
 
-.. code-block::console
+.. code-block:: console
 
   cd python
   make check
@@ -128,7 +128,7 @@ To make sure your python code formatting passes our CI, do:
 
 Alternatively, use ``ruff`` and ``pyright`` from the command line:
 
-.. code-block::console
+.. code-block:: console
 
   cd python
   pyright audio_dsp --skipunannotated --level warning
