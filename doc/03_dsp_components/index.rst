@@ -1,3 +1,7 @@
+.. raw:: latex
+
+    \newpage
+
 .. _dsp_components_section:
 
 DSP Components

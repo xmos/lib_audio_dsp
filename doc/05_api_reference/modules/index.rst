@@ -1,3 +1,7 @@
+.. raw:: latex
+
+    \newpage
+
 .. _dsp_modules_section:
 
 DSP Modules

@@ -1,3 +1,7 @@
+.. raw:: latex
+
+    \newpage
+
 .. _tool_user_guide_section:
 
 Tool User Guide

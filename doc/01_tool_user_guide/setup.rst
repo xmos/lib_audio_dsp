@@ -154,7 +154,7 @@ Setup Steps
    http://127.0.0.1/ from the terminal into the browser. The top level Jupyter
    notebook page should open, as can be seein in :numref:`top_level_notebook`.
 
-   .. _top_level_notebook
+   .. _top_level_notebook:
 
    .. figure:: ../images/jupyter_notebook_top_level.png
       :width: 25%
