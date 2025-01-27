@@ -208,9 +208,25 @@ required:
    * Enable the XTC tools: the installation can be tested by running the command
      ``xrun --version`` from the terminal. If the command is not found, the XTC
      tools are not installed correctly.
-   * Enable the Python Virtual Environment: this is checked by running the
-     command ``echo %VIRTUAL_ENV%`` on Windows, or ``echo $VIRTUAL_ENV`` on
-     Linux or macOS.  The path should have been set.
+   * From your sandbox, enable the Python Virtual Environment and check the path is set:
+   
+   .. tab:: Windows
+
+      On Windows:
+
+      .. code-block:: console
+
+         call .venv/Scripts/activate.bat 
+         echo %VIRTUAL_ENV%
+
+   .. tab:: Linux and macOS
+
+      On Linux and macOS:
+
+      .. code-block:: console
+
+         source .venv/bin/activate
+         echo $VIRTUAL_ENV
 
 #. Open the notebook by running ``jupyter notebook
    lib_audio_dsp/examples/app_simple_audio_dsp_integration/dsp_design.ipynb``
