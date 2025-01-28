@@ -2,11 +2,10 @@
 
 **CHANGELOG*
 **LICENSE*
+**CONTRIBUTING*
 
-# Readmes
-examples/app_simple_audio_dsp_integration/README.rst
-host/dsp_host/README.rst
-test/biquad/README.rst
+# notebooks
+examples/app_simple_audio_dsp_integration/dsp_design.ipynb
 
 .doc_venv/*
 test/*
