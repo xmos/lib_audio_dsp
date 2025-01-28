@@ -6,26 +6,26 @@ build-backend = "setuptools.build_meta"
 name = "audio_dsp"
 version = "1.2.0"
 description = "An audio DSP library for the xcore"
-authors = [
-]
+authors = []
 requires-python = ">=3.10"
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
 ]
 dependencies = [
-    "numpy >= 2.0",
-    "scipy",
-    "matplotlib < 3.9.1",
-    "IPyWidgets",
-    "graphviz",
-    "IPython",
-    "ipympl",
-    "pyyaml",
-    "mako",
-    "tabulate",
-    "docstring-inheritance",
-    "packaging>=24.1"
+  "numpy >= 2.0",
+  "pydantic",
+  "scipy",
+  "matplotlib < 3.9.1",
+  "IPyWidgets",
+  "graphviz",
+  "IPython",
+  "ipympl",
+  "pyyaml",
+  "mako",
+  "tabulate",
+  "docstring-inheritance",
+  "packaging>=24.1",
 ]
 
 [tool.ruff]
@@ -34,8 +34,8 @@ line-length = 99
 [tool.ruff.lint]
 select = ["D"]
 ignore = [
-    "D404", # First word of docstring must not be "This".
-    "D205", # Requires blank line after first line of a doc string (specified by PEP 257).
+  "D404", # First word of docstring must not be "This".
+  "D205", # Requires blank line after first line of a doc string (specified by PEP 257).
 ]
 fixable = ["ALL"]
 

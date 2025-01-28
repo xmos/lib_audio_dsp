@@ -35,3 +35,4 @@
 *.bkp
 examples/app_*d_block_fir/src/test_*.h
 examples/app_*d_block_fir/src/test_*.npy
+python/test_out

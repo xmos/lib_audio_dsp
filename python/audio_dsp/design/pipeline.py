@@ -289,7 +289,7 @@ class Pipeline:
         if path is None:
             display.display_svg(dot)
         else:
-            dot.format = "png"
+            dot.format = "svg"
             dot.render(path)
 
     @property

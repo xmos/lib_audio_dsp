@@ -1,3 +1,4 @@
+import subprocess
 from pydantic import (
     BaseModel,
     Field,
@@ -137,6 +138,6 @@ if __name__ == "__main__":
     generate_dsp_main(p, output_path)
     p.draw(Path(output_path, "dsp_pipeline"))
 
-    os.startfile(Path(output_path, "dsp_pipeline.png"), "open")
+    subprocess.run(["open", str(Path(output_path, "dsp_pipeline.svg"))])
 
     pass
