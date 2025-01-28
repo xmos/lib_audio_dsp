@@ -2,7 +2,7 @@
 Contributing to lib_audio_dsp
 #############################
 
-This guide will focus on adding a DSP mudule into the library.
+This guide will focus on adding a DSP module into the library.
 
 Module category
 ***************
@@ -10,7 +10,7 @@ Module category
 This library tends to categorise modules into groups.
 Have a quick look at the headers in ``lib_audio_dsp/api/dsp/`` to see if your module falls into any of those.
 The headers roughly translate to the categories as they tend to group several APIs within them.
-That header name would be roughly consistent in the docuemntation and the tests.
+That header name would be roughly consistent in the documentation and the tests.
 If you feel like your module doesn't fall into anything that's been done in this repo,
 you can add a new header file and a documentation page for it.
 
@@ -51,7 +51,7 @@ Python API
 Python reference API is encouraged but not necessary.
 Due to the nature of modern DSP algorithm development,
 we tend to prototype the new modules in python before translating and optimising them.
-Python reference is also often used as an extra layer of documentation providing an easy-to-look-at veiew of the
+Python reference is also often used as an extra layer of documentation providing an easy-to-look-at view of the
 algorithm without going into low-level fixed point C/assembly code.
 Another use of Python reference is unit testing the backend implementation.
 This allows us to see the accuracy difference between double floting point and 32-bit fixed point implementations.
@@ -113,7 +113,7 @@ Your python module is expected:
     float
       The processed sample.
     """
-    return sample[channel]
+    return sample
 
 Optionally, you can also implement ``process_xcore`` method.
 ``process_xcore`` tries to provide the closest implementation to the C/assembly.
@@ -131,15 +131,6 @@ To make sure your python code formatting passes our CI, do:
   cd python
   make check
   make update
-
-Alternatively, use ``ruff`` and ``pyright`` from the command line:
-
-.. code-block:: console
-
-  cd python
-  pyright audio_dsp --skipunannotated --level warning
-  ruff check --fix
-  fuff format
 
 Documentation
 *************
@@ -176,3 +167,11 @@ Running tests should be done via running ``pytest -n auto``, so basic ``pytest``
 The tests have to be parallelisable, so if you intent to read and write files during your test,
 you should consider using unique names for the test folders and/or file locks
 (a lot of our tests already do that, so don't hesitate to take them as the example;).
+
+Continuous Integration
+**********************
+
+Every module and test has to be added to our CI and pass before we can approve your pull request.
+You are not expected to know the details or syntax of our CI system (Jenkins/Groovy).
+After you raise your pull request, we will provide you with guidance on how to add your tests to Jenkins
+and help with fixing it if it's a test/infrastructiure related issue.
