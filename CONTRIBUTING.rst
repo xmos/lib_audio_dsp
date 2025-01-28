@@ -7,10 +7,10 @@ This guide will focus on adding a DSP mudule into the library.
 Module category
 ***************
 
-This library tends to categorise modules in groups.
-These categories a roughly preserved in the header file names and documentation.
+This library tends to categorise modules into groups.
 Have a quick look at the headers in ``lib_audio_dsp/api/dsp/`` to see if your module falls into any of those.
-That header name would be roughly consistent in the docuemntation and the tests as well.
+The headers roughly translate to the categories as they tend to group several APIs within them.
+That header name would be roughly consistent in the docuemntation and the tests.
 If you feel like your module doesn't fall into anything that's been done in this repo,
 you can add a new header file and a documentation page for it.
 
@@ -49,13 +49,19 @@ Python API
 **********
 
 Python reference API is encouraged but not necessary.
-Python is often used as an extra piece of documentation before going into low-level fixed point C/assembly code.
-Python is also often used to unit test the C/assembly
-and see the accuracy difference between double floting point against 32-bit fixed point implementations.
+Due to the nature of modern DSP algorithm development,
+we tend to prototype the new modules in python before translating and optimising them.
+Python reference is also often used as an extra layer of documentation providing an easy-to-look-at veiew of the
+algorithm without going into low-level fixed point C/assembly code.
+Another use of Python reference is unit testing the backend implementation.
+This allows us to see the accuracy difference between double floting point and 32-bit fixed point implementations.
 
 If you decide to implement python reference API it should live in the appropriate file in ``python/audio_dsp/dsp``.
-Your python module is expected to be a class with is based on the ``dsp_block`` class
-and have at least ``__init__``, ``process`` and ``reset_state`` methods.
+Your python module is expected:
+
+- to be a class which is based on the ``dsp_block`` class
+- to implement at least ``__init__``, ``process`` and ``reset_state`` methods
+- to have numpydoc-style docstrings for the class and the every method of it
 
 .. code-block:: python
 
@@ -69,7 +75,7 @@ and have at least ``__init__``, ``process`` and ``reset_state`` methods.
   ----------
   param1 : float
     Input parameter description
-  param1 : float
+  param2 : float
     Input parameter description
 
   Attributes
@@ -109,7 +115,7 @@ and have at least ``__init__``, ``process`` and ``reset_state`` methods.
     """
     return sample[channel]
 
-Optionally, you can also implement ``process_xscope`` method.
+Optionally, you can also implement ``process_xcore`` method.
 ``process_xcore`` tries to provide the closest implementation to the C/assembly.
 Being implemented as a 32-bit fixed point version of ``process``,
 ``process_xcore`` is easily testable againts the backend implementation
@@ -147,25 +153,26 @@ For the example, go to any ``.rst`` in ``doc/05_api_reference/modules/``.
 Use ``doxygenstruct`` and ``doxygenfunction`` for the C API and structs and
 ``autoclass`` for python in the same way as in the rest of the documentation.
 
-After your module is documented and the API is reference it's time to add it to the components list!
+After your module is documented and the API is referenced it's time to add it to the components list!
 To do that you need to go to ``doc/03_dsp_components/modules.rst``
-and add a reference with the link you just created to the appropriate place.
+and add a reference with the link to your heading.
 
 Testing
 *******
 
 The backend C/assembly implementation has to be unit tested.
 We accept two ways of doing that:
+
 #. Testing against Python ``process`` or ``process_xcore``
 #. Testing against the reference C implementation
 
-In the second case the reference, easy-to-look-at C API has to be implemented in the test source code.
+In the second case the reference - an easy-to-look-at C API has to be implemented in the test source code.
 
 For both cases, we expect to run (``xsim``) representative signals through the implementation and the chosen reference.
-Your test should consider some egde cases and as well as common representative use cases of the module.
+Your test should consider some egde cases as well as common representative use cases of the module.
 
 Running tests should be done via running ``pytest -n auto``, so basic ``pytest`` structure should be built up first
-(see how to wrap ``xsim`` into pytest in our current tests).
+(see how to wrap ``xsim`` into ``pytest`` in our current tests).
 The tests have to be parallelisable, so if you intent to read and write files during your test,
-you should consider using unique names for the test folders and file locks
-(a lot of our tests already do that, so don't hesitate to take them as the example).
+you should consider using unique names for the test folders and/or file locks
+(a lot of our tests already do that, so don't hesitate to take them as the example;).
