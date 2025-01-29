@@ -14,12 +14,6 @@ class FirDirect(Stage):
     convolved with the filter coefficients. The filter coefficients can
     only be set at compile time.
 
-    Parameters
-    ----------
-    coeffs_path : Path
-        Path to a file containing the coefficients, in a format
-        supported by `np.loadtxt <https://numpy.org/doc/stable/reference/generated/numpy.loadtxt.html>`_.
-
     Attributes
     ----------
     dsp_block : :class:`audio_dsp.dsp.fir.fir_direct`

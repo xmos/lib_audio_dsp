@@ -1,7 +1,8 @@
-
 from .stage import StageModel, StageParameters, StageConfig
 from typing import Literal
 from pydantic import Field, root_validator
+from pydantic.json_schema import SkipJsonSchema
+
 
 class ForkConfig(StageConfig):
     count: int = Field(default=1)
@@ -16,24 +17,26 @@ class Fork(StageModel):
     def check_fork(cls, values):
         cnt = values.get("config")["count"]
         try:
-            in_len =len(values.get("input"))
+            in_len = len(values.get("input"))
         except TypeError:
             in_len = 1
 
         try:
-            out_len =len(values.get("output"))
+            out_len = len(values.get("output"))
         except TypeError:
             out_len = 1
 
-        if out_len/in_len != cnt:
-            if out_len/in_len == out_len//in_len:
-                values["config"]["count"] = out_len//in_len
+        if out_len / in_len != cnt:
+            if out_len / in_len == out_len // in_len:
+                values["config"]["count"] = out_len // in_len
             else:
                 raise ValueError("number of fork outputs not a multiple of inputs")
         return values
 
+
 class MixerParameters(StageParameters):
     gain_db: float = Field(default=0)
+
 
 class Mixer(StageModel):
     """
@@ -42,7 +45,7 @@ class Mixer(StageModel):
     """
 
     op_type: Literal["Mixer"] = "Mixer"
-    parameters: MixerParameters = Field(default_factory=MixerParameters)
+    parameters: SkipJsonSchema[MixerParameters] = Field(default_factory=MixerParameters)
 
 
 class Adder(StageModel):
@@ -66,21 +69,17 @@ class FixedGain(StageModel):
 
     If the gain needs to be changed at runtime, use a
     :class:`VolumeControl` stage instead.
-
-    Parameters
-    ----------
-    gain_db : float, optional
-        The gain of the mixer in dB.
     """
 
     # class Model(Stage.Model):
     op_type: Literal["FixedGain"] = "FixedGain"
-    parameters: FixedGainParameters = Field(default_factory=FixedGainParameters)
+    parameters: SkipJsonSchema[FixedGainParameters] = Field(default_factory=FixedGainParameters)
 
 
 class VolumeControlParameters(StageParameters):
     gain_db: float = Field(default=0)
     mute_state: int = Field(default=0)
+
 
 class VolumeControl(StageModel):
     """
@@ -88,21 +87,17 @@ class VolumeControl(StageModel):
     multiplied by a gain. The gain can be changed at runtime. To avoid
     pops and clicks during gain changes, a slew is applied to the gain
     update. The stage can be muted and unmuted at runtime.
-
-    Parameters
-    ----------
-    gain_db : float, optional
-        The gain of the mixer in dB.
-    mute_state : int, optional
-        The mute state of the Volume Control: 0: unmuted, 1: muted.
     """
 
     op_type: Literal["VolumeControl"] = "VolumeControl"
-    parameters: VolumeControlParameters = Field(default_factory=VolumeControlParameters)
+    parameters: SkipJsonSchema[VolumeControlParameters] = Field(
+        default_factory=VolumeControlParameters
+    )
 
 
 class SwitchParameters(StageParameters):
     position: int = Field(default=0)
+
 
 class Switch(StageModel):
     """
@@ -112,7 +107,7 @@ class Switch(StageModel):
     """
 
     op_type: Literal["Switch"] = "Switch"
-    parameters: SwitchParameters = Field(default_factory=SwitchParameters)
+    parameters: SkipJsonSchema[SwitchParameters] = Field(default_factory=SwitchParameters)
 
 
 class SwitchStereo(StageModel):
@@ -125,6 +120,4 @@ class SwitchStereo(StageModel):
     """
 
     op_type: Literal["SwitchStereo"] = "SwitchStereo"
-    parameters: SwitchParameters = Field(default_factory=SwitchParameters)
-
-
+    parameters: SkipJsonSchema[SwitchParameters] = Field(default_factory=SwitchParameters)

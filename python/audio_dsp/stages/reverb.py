@@ -327,13 +327,6 @@ class ReverbPlateStereo(ReverbBase):
     and delays. The output is taken from multiple taps in the delay lines
     to get a desirable echo density.
 
-    Parameters
-    ----------
-    predelay : float, optional
-        The delay applied to the wet channel in ms.
-    max_predelay : float, optional
-        The maximum predelay in ms.
-
     Attributes
     ----------
     dsp_block : :class:`audio_dsp.dsp.reverb.reverb_plate_stereo`
@@ -478,3 +471,4 @@ class ReverbPlateStereo(ReverbBase):
         self.set_width(parameters.width)
         self.set_pre_gain(parameters.pregain)
         self.set_wet_dry_mix(parameters.wet_dry_mix)
+

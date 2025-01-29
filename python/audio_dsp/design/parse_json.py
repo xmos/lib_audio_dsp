@@ -1,20 +1,23 @@
 """Shut up ruff."""
 
-from pydantic import (
-    BaseModel,
-    Field,
-)
-from typing import Annotated, Union, Optional
+import copy
+import tempfile
 from pathlib import Path
-from typing import Annotated, Optional, Union
+from pprint import pprint
+from typing import Annotated, Optional, Type, Union
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse, Response
-from pydantic import BaseModel, Field
+from pydantic import (
+    BaseModel,
+    Field,
+)
 
 import audio_dsp.stages as Stages
 from audio_dsp.design.pipeline import Pipeline
+from audio_dsp.design.stage import StageOutputList
+from audio_dsp.models.stage import StageModel, all_models, edgeProducerBaseModel
 
 _stage_Models = Annotated[
     Union[tuple(i for i in all_models().values())], Field(discriminator="op_type")
@@ -22,8 +25,6 @@ _stage_Models = Annotated[
 
 
 class Input(edgeProducerBaseModel):
-    """Shut up ruff."""
-
     name: str
     output: list[int] = []
     channels: int
@@ -31,8 +32,6 @@ class Input(edgeProducerBaseModel):
 
 
 class Output(edgeProducerBaseModel):
-    """Shut up ruff."""
-
     name: str
     input: list[int] = []
     channels: int
@@ -40,8 +39,6 @@ class Output(edgeProducerBaseModel):
 
 
 class Graph(BaseModel):
-    """Shut up ruff."""
-
     name: str
     nodes: list[_stage_Models]  # type: ignore
     input: Input
@@ -49,8 +46,6 @@ class Graph(BaseModel):
 
 
 class DspJson(BaseModel):
-    """Shut up ruff."""
-
     ir_version: int
     producer_name: str
     producer_version: str
@@ -70,9 +65,9 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
     edgelist = graph.input.output + graph.output.input
     threadlist = []
     for i in graph.nodes:
-        [edgelist.append(n) for n in i.input]
-        [edgelist.append(n) for n in i.output]
-        threadlist.append(i.thread)
+        [edgelist.append(n) for n in i.placement.input]
+        [edgelist.append(n) for n in i.placement.output]
+        threadlist.append(i.placement.thread)
 
     p, in_edges = Pipeline.begin(graph.input.channels, fs=graph.input.fs)
 
@@ -92,7 +87,7 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
 
         # get node inputs
         stage_inputs = []
-        for i in this_node.input:
+        for i in this_node.placement.input:
             stage_inputs.append(edge_list[i])
 
         if None in stage_inputs:
@@ -105,8 +100,8 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
         node_output = p.stage(
             stage_handle(this_node),
             stage_inputs,
-            this_node.name,
-            thread=this_node.thread,
+            this_node.placement.name,
+            thread=this_node.placement.thread,
             **dict(this_node.config),
         )
 
@@ -114,11 +109,10 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
 
         # if has outputs, add to edge to edge list- nothing should be there!
         if len(node_output) != 0:
-            for i in range(len(this_node.output)):
-                if edge_list[this_node.output[i]] is None:
-                    edge_list[this_node.output[i]] = node_output[i]
-                else:
-                    assert False, "oops"
+            for i in range(len(this_node.placement.output)):
+                if edge_list[this_node.placement.output[i]] is not None:
+                    raise ValueError("Output already exists")
+                edge_list[this_node.placement.output[i]] = node_output[i]
 
         # done so pop
         waiting_nodes.pop(0)

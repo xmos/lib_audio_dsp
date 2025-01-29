@@ -11,6 +11,7 @@ from .stage import StageModel, StageParameters, StageConfig
 
 from pydantic import Field
 from typing import Literal
+from pydantic.json_schema import SkipJsonSchema
 
 
 class NoiseSuppressorExpanderParameters(StageParameters):
@@ -42,6 +43,6 @@ class NoiseSuppressorExpander(StageModel):
     """
 
     op_type: Literal["NoiseSuppressorExpander"] = "NoiseSuppressorExpander"
-    parameters: NoiseSuppressorExpanderParameters = Field(
+    parameters: SkipJsonSchema[NoiseSuppressorExpanderParameters] = Field(
         default_factory=NoiseSuppressorExpanderParameters
     )

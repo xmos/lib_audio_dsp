@@ -10,6 +10,7 @@ from ..dsp import generic as dspg
 from typing import Literal
 
 from pydantic import Field
+from pydantic.json_schema import SkipJsonSchema
 
 
 class CompressorSidechainParameters(StageParameters):
@@ -48,7 +49,7 @@ class CompressorSidechain(Stage):
 
     class Model(Stage.Model):
         op_type: Literal["CompressorSidechain"] = "CompressorSidechain"
-        parameters: CompressorSidechainParameters = Field(
+        parameters: SkipJsonSchema[CompressorSidechainParameters] = Field(
             default_factory=CompressorSidechainParameters
         )
 

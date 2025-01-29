@@ -1,6 +1,8 @@
 from .stage import StageParameters, StageConfig, StageModel
 from typing import Literal
 from pydantic import Field
+from pydantic.json_schema import SkipJsonSchema
+
 
 class ReverbBaseParams(StageParameters):
     predelay: float = Field(
@@ -38,6 +40,7 @@ class _ReverbBaseModel(StageModel):
     # op_type: is not defined as this Stage cannot be pipelined
     config: ReverbBaseConfig = Field(default_factory=ReverbBaseConfig)
 
+
 class ReverbPlateParams(ReverbBaseParams):
     damping: float = Field(
         default=0.5,
@@ -67,16 +70,9 @@ class ReverbPlateStereo(_ReverbBaseModel):
     followed by a figure of 8 reverb tank of allpasses, low-pass filters,
     and delays. The output is taken from multiple taps in the delay lines
     to get a desirable echo density.
-
-    Parameters
-    ----------
-    predelay : float, optional
-        The delay applied to the wet channel in ms.
-    max_predelay : float, optional
-        The maximum predelay in ms.
     """
-    input: list[int] = Field(default=[], min_length=2, max_length=2)
-    output: list[int] =  Field(default=[], max_length=2)
-    op_type: Literal["ReverbPlateStereo"] = "ReverbPlateStereo"
-    parameters: ReverbPlateParams = Field(default_factory=ReverbPlateParams)
 
+    input: list[int] = Field(default=[], min_length=2, max_length=2)
+    output: list[int] = Field(default=[], max_length=2)
+    op_type: Literal["ReverbPlateStereo"] = "ReverbPlateStereo"
+    parameters: SkipJsonSchema[ReverbPlateParams] = Field(default_factory=ReverbPlateParams)

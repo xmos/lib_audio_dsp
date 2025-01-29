@@ -5,23 +5,27 @@ pipeline. This includes stages for combining and splitting signals, basic
 gain components, and delays.
 """
 
-from ..design.stage import (
-    Stage,
-    find_config,
-    StageOutputList,
-    StageOutput,
-    StageParameters,
-    StageConfig,
-)
-
-from ..dsp import generic as dspg
-import audio_dsp.dsp.signal_chain as sc
 import numpy as np
-
-from typing import Literal
 from pydantic import Field
 
-from audio_dsp.models.signal_chain import VolumeControlParameters, FixedGainParameters, SwitchParameters, MixerParameters
+import audio_dsp.dsp.signal_chain as sc
+from audio_dsp.models.signal_chain import (
+    FixedGainParameters,
+    MixerParameters,
+    SwitchParameters,
+    VolumeControlParameters,
+)
+
+from ..design.stage import (
+    Stage,
+    StageConfig,
+    StageOutput,
+    StageOutputList,
+    StageParameters,
+    find_config,
+)
+from ..dsp import generic as dspg
+
 
 class Bypass(Stage):
     """
@@ -152,6 +156,7 @@ class Mixer(Stage):
     def set_parameters(self, parameters: MixerParameters):
         self.set_gain(parameters.gain_db)
 
+
 class Adder(Stage):
     """
     Add the input signals together. The adder can be used to add signals
@@ -207,11 +212,6 @@ class FixedGain(Stage):
     If the gain needs to be changed at runtime, use a
     :class:`VolumeControl` stage instead.
 
-    Parameters
-    ----------
-    gain_db : float, optional
-        The gain of the mixer in dB.
-
     Attributes
     ----------
     dsp_block : :class:`audio_dsp.dsp.signal_chain.fixed_gain`
@@ -250,13 +250,6 @@ class VolumeControl(Stage):
     multiplied by a gain. The gain can be changed at runtime. To avoid
     pops and clicks during gain changes, a slew is applied to the gain
     update. The stage can be muted and unmuted at runtime.
-
-    Parameters
-    ----------
-    gain_db : float, optional
-        The gain of the mixer in dB.
-    mute_state : int, optional
-        The mute state of the Volume Control: 0: unmuted, 1: muted.
 
     Attributes
     ----------
@@ -331,6 +324,7 @@ class VolumeControl(Stage):
         self.set_gain(parameters.gain_db)
         self.set_mute_state(parameters.mute_state)
 
+
 class Switch(Stage):
     """
     Switch the input to one of the outputs. The switch can be used to
@@ -363,6 +357,7 @@ class Switch(Stage):
 
     def set_parameters(self, parameters: SwitchParameters):
         self.move_switch(parameters.position)
+
 
 class SwitchStereo(Stage):
     """
@@ -399,23 +394,13 @@ class SwitchStereo(Stage):
     def set_parameters(self, parameters: SwitchParameters):
         self.move_switch(parameters.position)
 
+
 class Delay(Stage):
     """
     Delay the input signal by a specified amount.
 
     The maximum delay is set at compile time, and the runtime delay can
     be set between 0 and ``max_delay``.
-
-    Parameters
-    ----------
-    max_delay : float
-        The maximum delay in specified units. This can only be set at
-        compile time.
-    starting_delay : float
-        The starting delay in specified units.
-    units : str, optional
-        The units of the delay, can be 'samples', 'ms' or 's'.
-        Default is 'samples'.
 
     Attributes
     ----------

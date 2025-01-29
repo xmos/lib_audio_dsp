@@ -5,11 +5,13 @@ a signal varies over time.
 """
 
 from .stage import StageModel, StageParameters, StageConfig
+
 # from ..dsp import drc as drc
 # from ..dsp import generic as dspg
 from typing import Literal
 
 from pydantic import Field
+from pydantic.json_schema import SkipJsonSchema
 
 
 class EnvelopeDetectorParameters(StageParameters):
@@ -33,7 +35,9 @@ class EnvelopeDetectorPeak(StageModel):
     """
 
     op_type: Literal["EnvelopeDetectorPeak"] = "EnvelopeDetectorPeak"
-    parameters: EnvelopeDetectorParameters = Field(default_factory=EnvelopeDetectorParameters)
+    parameters: SkipJsonSchema[EnvelopeDetectorParameters] = Field(
+        default_factory=EnvelopeDetectorParameters
+    )
 
 
 class EnvelopeDetectorRMS(StageModel):
@@ -52,4 +56,6 @@ class EnvelopeDetectorRMS(StageModel):
     """
 
     op_type: Literal["EnvelopeDetectorRms"] = "EnvelopeDetectorRms"
-    parameters: EnvelopeDetectorParameters = Field(default_factory=EnvelopeDetectorParameters)
+    parameters: SkipJsonSchema[EnvelopeDetectorParameters] = Field(
+        default_factory=EnvelopeDetectorParameters
+    )

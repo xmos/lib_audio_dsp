@@ -11,7 +11,7 @@ import yaml
 
 from audio_dsp.design import plot
 from audio_dsp.dsp.generic import dsp_block
-from audio_dsp.models.stage import StageModel, StageParameters
+from audio_dsp.models.stage import StageParameters, StageModel, StageConfig
 
 from .graph import Edge, Node
 
