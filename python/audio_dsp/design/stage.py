@@ -2,20 +2,18 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """The edges and nodes for a DSP pipeline."""
 
-from typing import Type
+from pathlib import Path
+from types import NotImplementedType
+from typing import Optional, Type, TypeVar
 
 import numpy
-from .graph import Edge, Node
 import yaml
-from pathlib import Path
+
 from audio_dsp.design import plot
 from audio_dsp.dsp.generic import dsp_block
-from typing import Optional
-from types import NotImplementedType
+from audio_dsp.models.stage import StageModel, StageParameters
 
-from typing import TypeVar, Any
-from pydantic import BaseModel, Field, field_validator, ConfigDict, validator
-from typing import Union, Optional
+from .graph import Edge, Node
 
 
 def find_config(name):
@@ -245,30 +243,8 @@ class _GlobalStages:
     stages = []
 
 
-class edgeProducerBaseModel(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    input: list[int] = Field(default=[])
-    output: list[int] = Field(default=[])
-
-    @field_validator("input", "output", mode="before")
-    def _single_to_list(cls, value: Union[int, list]) -> list:
-        if isinstance(value, list):
-            return value
-        else:
-            return [value]
-
-
-class StageConfig(BaseModel, extra="forbid"):
-    pass
-
-
-class StageParameters(BaseModel, extra="forbid"):
-    pass
-
-
 # This defines the types of instances of the config/parameter classes
 StageParameterType = TypeVar("StageParameterType", bound="StageParameters")
-# StageConfigType = TypeVar("StageConfigType", bound="StageConfig")
 
 
 class Stage(Node):
@@ -376,34 +352,16 @@ class Stage(Node):
         super().__init_subclass__()
         _GlobalStages.stages.append(cls)
 
-    class Model(edgeProducerBaseModel):
-        # op_type: is not defined as this Stage cannot be pipelined
-        config: Any = Field(default_factory=StageConfig)
-        parameters: Any = Field(default_factory=StageParameters)
-        input: list[int] = Field(default=[])
-        output: list[int] = Field(default=[])
-        name: str
-        thread: int = Field(ge=0, lt=5)
-
-
-        @field_validator("config")
-        @classmethod
-        def _validate_config(cls, val):
-            if issubclass(type(val), StageConfig):
-                return val
-            raise ValueError("config must be a subclass of StageConfig")
-
-        @field_validator("parameters")
-        @classmethod
-        def _validate_parameters(cls, val):
-            if issubclass(type(val), StageParameters):
-                return val
-            raise ValueError("parameters must be a subclass of StageParameters")
-
-    # stage doesn't actually have a model
-    # model: Model
+    class Model(StageModel):
+        pass
 
     def set_parameters(self, parameters: StageParameterType):
+        if isinstance(parameters, StageParameters) and type(parameters) != StageParameters:
+            raise NotImplementedError(
+                f"A subclass of StageParameters ({type(parameters).__name__}) "
+                "was passed to the generic implementation, of set_parameters, resulting in the "
+                "parameters not being used. Please define set_parameters for the specific Stage class."
+            )
         pass
 
     @property

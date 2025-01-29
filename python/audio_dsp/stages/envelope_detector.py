@@ -10,11 +10,11 @@ from ..dsp import generic as dspg
 from typing import Literal
 
 from pydantic import Field
+from audio_dsp.models.envelope_detector import EnvelopeDetectorParameters
 
-
-class EnvelopeDetectorParameters(StageParameters):
-    attack_t: float = Field(default=0)
-    release_t: float = Field(default=0)
+# class EnvelopeDetectorParameters(StageParameters):
+#     attack_t: float = Field(default=0)
+#     release_t: float = Field(default=0)
 
 
 class EnvelopeDetectorPeak(Stage):
@@ -32,9 +32,9 @@ class EnvelopeDetectorPeak(Stage):
 
     """
 
-    class Model(Stage.Model):
-        op_type: Literal["EnvelopeDetectorPeak"] = "EnvelopeDetectorPeak"
-        parameters: EnvelopeDetectorParameters = Field(default_factory=EnvelopeDetectorParameters)
+    # class Model(Stage.Model):
+    #     op_type: Literal["EnvelopeDetectorPeak"] = "EnvelopeDetectorPeak"
+    #     parameters: EnvelopeDetectorParameters = Field(default_factory=EnvelopeDetectorParameters)
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("envelope_detector_peak"), **kwargs)
@@ -86,9 +86,9 @@ class EnvelopeDetectorRMS(Stage):
 
     """
 
-    class Model(Stage.Model):
-        op_type: Literal["EnvelopeDetectorRms"] = "EnvelopeDetectorRms"
-        parameters: EnvelopeDetectorParameters = Field(default_factory=EnvelopeDetectorParameters)
+    # class Model(Stage.Model):
+    #     op_type: Literal["EnvelopeDetectorRms"] = "EnvelopeDetectorRms"
+    #     parameters: EnvelopeDetectorParameters = Field(default_factory=EnvelopeDetectorParameters)
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("envelope_detector_rms"), **kwargs)
