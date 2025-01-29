@@ -29,7 +29,7 @@ class ReverbBaseConfig(StageConfig):
     predelay: float = Field(default=30)
 
 
-class ReverbBaseModel(StageModel):
+class _ReverbBaseModel(StageModel):
     """
     The base class for reverb stages, containing pre delays, and wet/dry
     mixes and pregain.
@@ -60,7 +60,7 @@ class ReverbPlateParams(ReverbBaseParams):
     bandwidth: float = Field(default=8000, ge=0, le=24000, description="Range: 0 to 1")
 
 
-class ReverbPlateStereo(ReverbBaseModel):
+class ReverbPlateStereo(_ReverbBaseModel):
     """
     The stereo room plate stage. This is based on Dattorro's 1997
     paper. This reverb consists of 4 allpass filters for input diffusion,

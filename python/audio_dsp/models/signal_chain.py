@@ -10,7 +10,7 @@ class ForkConfig(StageConfig):
 class Fork(StageModel):
     op_type: Literal["Fork"] = "Fork"
     config: ForkConfig = Field(default_factory=ForkConfig)
-    input: list[int] = Field(default=[], min_length=1, max_length=1)
+    # input: list[int] = Field(default=[], min_length=1, max_length=1)
 
     @root_validator(pre=True)
     def check_fork(cls, values):

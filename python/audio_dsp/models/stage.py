@@ -50,6 +50,7 @@ class StageModel(edgeProducerBaseModel):
     output: list[int] = Field(default=[])
     name: str
     thread: int = Field(ge=0, lt=5)
+    
 
 
     @field_validator("config")
@@ -76,4 +77,4 @@ class StageModel(edgeProducerBaseModel):
 
 def all_models() -> dict[str, Type[StageModel]]:
     """Get a dict containing all stages in scope."""
-    return {s.__name__: s for s in _GlobalStageModels.stages if "op_type" in s.model_fields}
+    return {s.__name__: s for s in _GlobalStageModels.stages if "op_type" in s.model_fields and not s.__name__.startswith('_')}
