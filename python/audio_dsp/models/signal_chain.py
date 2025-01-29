@@ -113,6 +113,8 @@ class Switch(StageModel):
 
     op_type: Literal["Switch"] = "Switch"
     parameters: SwitchParameters = Field(default_factory=SwitchParameters)
+    output: list[int] = Field(default=[], max_length=1)
+
 
 
 class SwitchStereo(StageModel):
@@ -126,5 +128,7 @@ class SwitchStereo(StageModel):
 
     op_type: Literal["SwitchStereo"] = "SwitchStereo"
     parameters: SwitchParameters = Field(default_factory=SwitchParameters)
+    input: list[int] = Field(default=[], multiple_of=2)
+    output: list[int] = Field(default=[], max_length=2)
 
 
