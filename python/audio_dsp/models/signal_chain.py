@@ -1,7 +1,7 @@
 
 from .stage import StageModel, StageParameters, StageConfig
 from typing import Literal
-from pydantic import Field
+from pydantic import Field, root_validator
 
 class ForkConfig(StageConfig):
     count: int = Field(default=1)
@@ -10,7 +10,27 @@ class ForkConfig(StageConfig):
 class Fork(StageModel):
     op_type: Literal["Fork"] = "Fork"
     config: ForkConfig = Field(default_factory=ForkConfig)
+    input: list[int] = Field(default=[], min_length=1, max_length=1)
 
+    @root_validator(pre=True)
+    def check_fork(cls, values):
+        cnt = values.get("config")["count"]
+        try:
+            in_len =len(values.get("input"))
+        except TypeError:
+            in_len = 1
+
+        try:
+            out_len =len(values.get("output"))
+        except TypeError:
+            out_len = 1
+
+        if out_len/in_len != cnt:
+            if out_len/in_len == out_len//in_len:
+                values["config"]["count"] = out_len//in_len
+            else:
+                raise ValueError("number of fork outputs not a multiple of inputs")
+        return values
 
 class MixerParameters(StageParameters):
     gain_db: float = Field(default=0)

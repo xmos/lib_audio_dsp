@@ -75,7 +75,8 @@ class ReverbPlateStereo(ReverbBaseModel):
     max_predelay : float, optional
         The maximum predelay in ms.
     """
-
+    input: list[int] = Field(default=[], min_length=2, max_length=2)
+    output: list[int] =  Field(default=[], max_length=2)
     op_type: Literal["ReverbPlateStereo"] = "ReverbPlateStereo"
     parameters: ReverbPlateParams = Field(default_factory=ReverbPlateParams)
 
