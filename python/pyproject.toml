@@ -26,6 +26,8 @@ dependencies = [
   "tabulate",
   "docstring-inheritance",
   "packaging>=24.1",
+  "fastapi>=0.115.7",
+  "uvicorn>=0.34.0",
 ]
 
 [tool.ruff]
