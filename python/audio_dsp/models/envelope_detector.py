@@ -34,6 +34,7 @@ class EnvelopeDetectorPeak(StageModel):
 
     op_type: Literal["EnvelopeDetectorPeak"] = "EnvelopeDetectorPeak"
     parameters: EnvelopeDetectorParameters = Field(default_factory=EnvelopeDetectorParameters)
+    output: list[int] = Field(default=[], max_length=0)
 
 
 class EnvelopeDetectorRMS(StageModel):
@@ -53,3 +54,4 @@ class EnvelopeDetectorRMS(StageModel):
 
     op_type: Literal["EnvelopeDetectorRms"] = "EnvelopeDetectorRms"
     parameters: EnvelopeDetectorParameters = Field(default_factory=EnvelopeDetectorParameters)
+    output: list[int] = Field(default=[], max_length=0)
