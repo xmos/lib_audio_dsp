@@ -130,19 +130,31 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
 app = FastAPI()
 
 
-@app.get("/schema")
+@app.get("/schema/graph")
 def get_dsp_json_schema():
     """
     Return JSON schema for DspJson with the 'parameters' field
     stripped out of all models under _stage_Models.
     """
-    schema = copy.deepcopy(DspJson.model_json_schema())
+    schema = copy.deepcopy(Graph.model_json_schema())
     return JSONResponse(schema)
 
 
-@app.post("/render")
-def render_dsp(json_data: DspJson):
+@app.get("/schema/params")
+def get_params_schema():
+    """Return JSON schema for the parameters of each stage."""
+    params = {
+        k: n.model_fields["parameters"].annotation.model_json_schema()
+        for k, n in all_models().items()
+        if hasattr(n.model_fields["parameters"].annotation, "model_json_schema")
+    }
+    return JSONResponse(params)
+
+
+@app.post("/graph/render")
+def render_dsp(graph: Graph):
     """Render the DSP pipeline diagram as an SVG image."""
+    json_data = DspJson(ir_version=1, producer_name="test", producer_version="0.1", graph=graph)
     pipeline = make_pipeline(json_data)
 
     # Write the pipeline diagram to a temporary file
@@ -161,10 +173,10 @@ def render_dsp(json_data: DspJson):
     return Response(content=svg_content, media_type="image/svg+xml")
 
 
-@app.get("/params")
-def get_params(json_data: DspJson):
+@app.get("graph/params")
+def get_params(graph: Graph):
     """Return the JSON schema for the parameters of each stage."""
-    nodes = json_data.graph.nodes
+    nodes = graph.nodes
     params = {n.name: n.parameters.__class__.model_json_schema() for n in nodes}
     return JSONResponse(params)
 
