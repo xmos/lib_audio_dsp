@@ -344,7 +344,7 @@ This can be used to reduce the level of the *input* signal when the
 
         .. rubric:: Python API
 
-    .. autoclass:: audio_dsp.dsp.drc.sidechain.compressor_rms_sidechain_mono
+    .. autoclass:: audio_dsp.dsp.drc.compressor_rms_sidechain_mono
         :noindex:
 
         .. automethod:: process
@@ -449,7 +449,7 @@ initialisation to simplify run-time computation.
 
         .. rubric:: Python API
 
-    .. autoclass:: audio_dsp.dsp.drc.expander.noise_suppressor_expander
+    .. autoclass:: audio_dsp.dsp.drc.noise_suppressor_expander
         :noindex:
 
         .. automethod:: process

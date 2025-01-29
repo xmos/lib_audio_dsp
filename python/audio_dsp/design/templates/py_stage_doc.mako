@@ -13,7 +13,7 @@ ${"="*len(cl)}
 ${cl}
 ${"="*len(cl)}
 
-.. autoclass:: ${module}.${cl}
+.. autoclass:: audio_dsp.stages.${cl}
     :noindex:
     :members:
     :inherited-members: Stage
