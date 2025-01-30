@@ -28,13 +28,21 @@ DRC helpers
 
 .. doxygenfunction:: peak_expander_slope_from_ratio
 
+.. doxygenfunction:: qxx_to_db
+
+.. doxygenfunction:: qxx_to_db_pow
+
 Reverb helpers
 ==============
 
 .. doxygenfile:: control/reverb.h
+
+.. doxygenfile:: control/reverb_plate.h
 
 
 Signal chain helpers
 ====================
 
 .. doxygenfunction:: time_to_samples
+
+.. doxygenfunction:: adsp_dB_to_gain
