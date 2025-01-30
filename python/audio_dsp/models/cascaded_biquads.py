@@ -1,4 +1,4 @@
-from typing import Annotated, List, Literal, Union
+from typing import Annotated, Literal
 
 from annotated_types import Len
 from pydantic import Field
@@ -9,7 +9,7 @@ import audio_dsp.models.biquad as bq
 from .stage import StageConfig, StageModel, StageParameters
 
 
-class CascadedBiquadsModel(StageModel):
+class CascadedBiquads(StageModel):
     """8 cascaded biquad filters. This allows up to 8 second order
     biquad filters to be run in series.
 
@@ -44,7 +44,7 @@ class ParametricEqParameters(StageParameters):
     )
 
 
-class ParametricEq(CascadedBiquadsModel):
+class ParametricEq(CascadedBiquads):
     # class Model(Stage.Model):
     op_type: Literal["ParametricEq"] = "ParametricEq"
     parameters: SkipJsonSchema[ParametricEqParameters] = Field(

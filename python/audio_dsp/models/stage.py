@@ -21,7 +21,7 @@ class StageConfig(BaseModel, extra="forbid"):
     pass
 
 
-class StageParameters(BaseModel, extra="forbid"):
+class StageParameters(BaseModel, extra="ignore"):
     pass
 
 

@@ -55,7 +55,7 @@ class EnvelopeDetectorRMS(StageModel):
 
     """
 
-    op_type: Literal["EnvelopeDetectorRms"] = "EnvelopeDetectorRms"
+    op_type: Literal["EnvelopeDetectorRMS"] = "EnvelopeDetectorRMS"
     parameters: SkipJsonSchema[EnvelopeDetectorParameters] = Field(
         default_factory=EnvelopeDetectorParameters
     )

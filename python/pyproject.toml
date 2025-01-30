@@ -28,6 +28,7 @@ dependencies = [
   "packaging>=24.1",
   "fastapi>=0.115.7",
   "uvicorn>=0.34.0",
+  "python-multipart>=0.0.20",
 ]
 
 [tool.ruff]

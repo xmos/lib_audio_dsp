@@ -1,13 +1,19 @@
 """Shut up ruff."""
 
 import copy
+import io
 import tempfile
+import traceback
+import wave
 from pathlib import Path
 from pprint import pprint
 from typing import Annotated, Optional, Type, Union
 
+import numpy as np
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile
+from fastapi.exceptions import HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from pydantic import (
     BaseModel,
@@ -24,14 +30,14 @@ _stage_Models = Annotated[
 ]
 
 
-class Input(edgeProducerBaseModel):
+class Input(edgeProducerBaseModel, extra="ignore"):
     name: str
     output: list[int] = []
     channels: int
     fs: int
 
 
-class Output(edgeProducerBaseModel):
+class Output(edgeProducerBaseModel, extra="ignore"):
     name: str
     input: list[int] = []
     channels: int
@@ -129,6 +135,24 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
 
 app = FastAPI()
 
+origins = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://localhost:8080",
+]
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # List of allowed origins
+    allow_credentials=True,  # Allow cookies and authentication headers
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
+)
+
+global_graph: Optional[Graph] = None
+global_pipeline: Optional[Pipeline] = None
+
 
 @app.get("/schema/graph")
 def get_dsp_json_schema():
@@ -151,13 +175,134 @@ def get_params_schema():
     return JSONResponse(params)
 
 
+@app.post("/graph/params")
+def set_parameters(params: dict):
+    """Set the parameters of the globally stored graph."""
+    global global_graph
+    if global_graph is None:
+        raise HTTPException(status_code=400, detail="No graph has been set.")
+    for node in global_graph.nodes:
+        if node.placement.name in params:
+            node.parameters = node.parameters.__class__(**params[node.placement.name])
+    global global_pipeline
+    global_pipeline = make_pipeline(
+        DspJson(ir_version=1, producer_name="test", producer_version="0.1", graph=global_graph)
+    )
+    return {"message": "Parameters successfully set."}
+
+
+@app.get("/graph/params")
+def get_parameters():
+    """Get the parameters of the globally stored graph."""
+    global global_graph
+    if global_graph is None:
+        raise HTTPException(status_code=400, detail="No graph has been set.")
+    return {node.placement.name: node.parameters for node in global_graph.nodes}
+
+
+@app.post("/graph/audio")
+async def run_audio(file: UploadFile = File(...)):
+    """Run the audio through the pipeline."""
+    global global_pipeline
+    if global_pipeline is None:
+        raise HTTPException(status_code=400, detail="No graph has been set.")
+    if file.content_type != "audio/wav":
+        raise HTTPException(status_code=400, detail="Only WAV files are supported.")
+    try:
+        contents = await file.read()
+
+        # Read the WAV file properties
+        with wave.open(io.BytesIO(contents), "rb") as wav_file:
+            n_channels = wav_file.getnchannels()
+            sample_width = wav_file.getsampwidth()
+            contents = wav_file.readframes(wav_file.getnframes())
+
+        # Convert bytes to numpy array
+        if sample_width == 2:  # 16-bit audio
+            audio_data = np.frombuffer(contents, dtype=np.int16)
+            print(2)
+        elif sample_width == 4:  # 32-bit audio
+            audio_data = np.frombuffer(contents, dtype=np.int32)
+            print(4)
+        else:
+            raise HTTPException(
+                status_code=400, detail=f"Unsupported sample width: {sample_width}"
+            )
+
+        # Reshape the audio data
+        audio_data = audio_data.reshape(-1, n_channels)
+
+        # If the pipeline expects 2 channels but we have 1, duplicate the channel
+        assert global_graph is not None
+        if len(global_graph.input.output) == 2 and n_channels == 1:
+            audio_data = np.column_stack((audio_data, audio_data))
+
+        max_value = 2 ** (8 * sample_width - 1)
+        audio_data = audio_data.astype(np.float32) / max_value  # Process the audio
+        processed = global_pipeline.executor().process(audio_data)
+        sim_out = processed.data
+        output_scaled = (sim_out * 32767.0).astype(np.int16)
+        output_bytes = output_scaled.tobytes()
+        fs = processed.fs
+
+        # Create a new WAV file in memory
+        output_buffer = io.BytesIO()
+        with wave.open(output_buffer, "wb") as output_wav:
+            output_wav.setnchannels(sim_out.shape[1])
+            output_wav.setsampwidth(2)  # 16-bit audio
+            output_wav.setframerate(fs)
+            output_wav.writeframes(output_bytes)
+
+        output_buffer.seek(0)
+        return Response(content=output_buffer.getvalue(), media_type="audio/wav")
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/graph/set")
+def set_graph(graph: Graph):
+    """Set the global graph after validating it."""
+    global global_graph
+    global global_pipeline
+    try:
+        json_data = DspJson(
+            ir_version=1, producer_name="test", producer_version="0.1", graph=graph
+        )
+        global_pipeline = make_pipeline(json_data)  # Validate the graph
+        global_graph = graph  # Store it globally after successful validation
+        # create the graph stage schema to be used in set_parameters
+        schema_dict = {
+            node.placement.name: node.parameters.__class__.model_json_schema()
+            for node in graph.nodes
+        }
+        return JSONResponse(schema_dict)
+    except Exception as e:
+        return JSONResponse(
+            content={"error": str(e), "traceback": traceback.format_exc()}, status_code=400
+        )
+
+
+@app.get("/graph/get")
+def get_graph():
+    """Retrieve the currently stored graph."""
+    if global_graph is None:
+        raise HTTPException(status_code=404, detail="No graph is set.")
+    return global_graph
+
+
 @app.post("/graph/render")
-def render_dsp(graph: Graph):
-    """Render the DSP pipeline diagram as an SVG image."""
-    json_data = DspJson(ir_version=1, producer_name="test", producer_version="0.1", graph=graph)
+def render_dsp():
+    """Render the globally stored DSP pipeline diagram as an SVG image."""
+    global global_graph
+    if global_graph is None:
+        raise HTTPException(status_code=400, detail="No graph has been set.")
+
+    json_data = DspJson(
+        ir_version=1, producer_name="test", producer_version="0.1", graph=global_graph
+    )
     pipeline = make_pipeline(json_data)
 
-    # Write the pipeline diagram to a temporary file
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir) / "dsp_pipeline"
         pipeline.draw(tmp_path)  # writes "dsp_pipeline.svg" in that directory
@@ -166,22 +311,10 @@ def render_dsp(graph: Graph):
         if not svg_file.exists():
             return {"error": "SVG file could not be generated"}
 
-        # Read the SVG content
         svg_content = svg_file.read_text()
 
-    # Return as image/svg+xml
     return Response(content=svg_content, media_type="image/svg+xml")
 
 
-@app.get("graph/params")
-def get_params(graph: Graph):
-    """Return the JSON schema for the parameters of each stage."""
-    nodes = graph.nodes
-    params = {n.name: n.parameters.__class__.model_json_schema() for n in nodes}
-    return JSONResponse(params)
-
-
-# Uncomment this if you prefer to run with `python main.py`
-# Otherwise you can run with `uvicorn main:app --reload`
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
