@@ -93,7 +93,7 @@ def test_4_coeff_overflow():
 @pytest.mark.parametrize("fs", [16000, 44100, 48000, 88200, 96000, 192000])
 @pytest.mark.parametrize("amplitude", [0.5, 1, 2, 16])
 def test_bypass(fs, amplitude):
-    filter = bq.biquad_bypass(fs, 1)
+    filter = bq.biquad(bq.make_biquad_bypass(fs), fs, 1)
     length = 0.05
     signal = gen.log_chirp(fs, length, amplitude)
     signal = utils.saturate_float_array(signal, filter.Q_sig)
@@ -127,7 +127,7 @@ def test_peaking_filters(filter_type, f, q, gain, fs):
     if f < fs*5e-4:
         f = max(fs*5e-4, f)
     filter_handle = getattr(bq, "make_%s" % filter_type)
-    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), fs, b_shift=bq.BOOST_BSHIFT)
+    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), fs)
     chirp_filter_test(filter, fs)
 
 
@@ -143,7 +143,7 @@ def test_shelf_filters(filter_type, f, q, gain, fs):
         f = max(fs*5e-4, f)
 
     filter_handle = getattr(bq, "make_%s" % filter_type)
-    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), fs, b_shift=bq.BOOST_BSHIFT)
+    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), fs)
     chirp_filter_test(filter, fs)
 
 
@@ -160,7 +160,7 @@ def test_xpass_filters(filter_type, f, q, fs):
         f = max(fs*5e-4, f)
 
     filter_handle = getattr(bq, "make_%s" % filter_type)
-    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q), fs, b_shift=0)
+    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q), fs)
     chirp_filter_test(filter, fs)
 
 
@@ -178,7 +178,7 @@ def test_bandx_filters(filter_type, f, q, fs):
     if q >= 5 and f/(fs/2) > high_q_stability_limit:
         f = high_q_stability_limit*fs/2
 
-    filter = bq.biquad(filter_handle(fs, f, q), fs, b_shift=0)
+    filter = bq.biquad(filter_handle(fs, f, q), fs)
     chirp_filter_test(filter, fs)
 
 
@@ -193,7 +193,7 @@ def test_linkwitz_filters(f0, fp_ratio, q0, qp, fs):
     if fs > 100000 and f0 < 50 and fp_ratio < 1:
         f0 = 30
 
-    filter = bq.biquad_linkwitz(fs, 1, f0, q0, f0*fp_ratio, qp)
+    filter = bq.biquad(bq.make_biquad_linkwitz(fs, f0, q0, f0*fp_ratio, qp), fs, 1)
     chirp_filter_test(filter, fs)
 
 
@@ -201,7 +201,7 @@ def test_linkwitz_filters(f0, fp_ratio, q0, qp, fs):
 @pytest.mark.parametrize("fs", [16000, 44100, 48000, 88200, 96000, 192000])
 def test_gain_filters(gain, fs):
 
-    filter = bq.biquad_gain(fs, 1, gain)
+    filter = bq.biquad(bq.make_biquad_gain(fs, gain), fs, 1)
     chirp_filter_test(filter, fs)
 
 @pytest.mark.parametrize("fs", [48000])
@@ -221,9 +221,8 @@ def test_frames(filter_n, fs, n_chans, q_format):
 
     filter_spec = filter_spec[filter_n]
 
-    class_name = f"biquad_{filter_spec[0]}"
-    class_handle = getattr(bq, class_name)
-    filter = class_handle(fs, n_chans, *filter_spec[1:], Q_sig=q_format)
+    filter_handle = getattr(bq, "make_biquad_%s" % filter_spec[0])
+    filter = bq.biquad(filter_handle(fs, *filter_spec[1:]), fs, n_chans, Q_sig=q_format)
 
     length = 0.05
     signal = gen.log_chirp(fs, length, 0.5)
