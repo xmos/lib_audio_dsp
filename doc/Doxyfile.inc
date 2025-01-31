@@ -15,6 +15,8 @@ INPUT += ../lib_audio_dsp/api/dsp \
          ../lib_audio_dsp/api/control/reverb_plate.h \
          ../lib_audio_dsp/api/control/biquad.h \
          ../lib_audio_dsp/api/control/signal_chain.h \
+         ../lib_audio_dsp/api/control/drc.h \
+         ../lib_audio_dsp/api/control/signal_chain.h \
 
 INCLUDE_PATH = ../lib_audio_dsp/api \
 
