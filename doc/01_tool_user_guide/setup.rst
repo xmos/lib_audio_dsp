@@ -230,7 +230,11 @@ required:
          source .venv/bin/activate
          echo $VIRTUAL_ENV
 
-#. Open the notebook by running ``jupyter notebook
-   lib_audio_dsp/examples/app_simple_audio_dsp_integration/dsp_design.ipynb``
+#. Open the notebook by running
+
+   .. code-block:: console
+
+      jupyter notebook lib_audio_dsp/examples/app_simple_audio_dsp_integration/dsp_design.ipynb
+
    from ``lib_audio_dsp_sandbox``, as described in the 
    :ref:`Setup Steps<all_steps>` section.
