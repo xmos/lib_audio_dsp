@@ -10,8 +10,9 @@ import audio_dsp.dsp.biquad as bq
 from audio_dsp.dsp.generic import Q_SIG
 import audio_dsp.dsp.signal_gen as gen
 import pytest
-from ..test_utils import xdist_safe_bin_write
-from .test_biquad_c import float_to_qxx, qxx_to_float
+# from .. import test_utils as tu
+from test.test_utils import xdist_safe_bin_write
+from test_biquad_c import float_to_qxx, qxx_to_float
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
@@ -39,7 +40,9 @@ def run_py_slew(filt: bq.biquad_slew, sig_fl, coeffs_2):
     for n in range(sig_fl.size//2):
         out_int[n] = filt.process_xcore(sig_fl[n])
 
+    print(filt.b_shift)
     filt.update_coeffs(coeffs_2)
+    print(filt.b_shift)
 
     for n in range(sig_fl.size//2, sig_fl.size):
         out_int[n] = filt.process_xcore(sig_fl[n])
@@ -57,12 +60,12 @@ def single_slew_test(filt, tname, sig_fl, coeffs_2):
   filt_info = np.append(coeffs_arr, shift_arr)
   filt_info.tofile(test_dir / "coeffs.bin")
 
-  _, coeffs_2_int = bq._round_and_check(coeffs_2, filt.b_shift)
+  # _, coeffs_2_int = bq._round_and_check(coeffs_2, filt.b_shift)
 
-  coeffs_2_arr = np.array(coeffs_2_int, dtype=np.int32)
+  # coeffs_2_arr = np.array(coeffs_2_int, dtype=np.int32)
   slew_arr = np.array(filt.slew_shift, dtype=np.int32)
-  filt_2_info = np.append(coeffs_2_arr, slew_arr)
-  filt_2_info.tofile(test_dir / "coeffs_2.bin")
+  # filt_2_info = np.append(coeffs_2_arr, slew_arr)
+  # filt_2_info.tofile(test_dir / "coeffs_2.bin")
 
   out_py_int = run_py_slew(filt, sig_fl, coeffs_2)
   out_c = get_c_slew_wav(test_dir)
@@ -114,4 +117,4 @@ if __name__ == "__main__":
   bin_dir.mkdir(exist_ok=True, parents=True)
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
-  test_slew_c(sig_fl, ["biquad_constant_q", 100, 8, -10], ["biquad_constant_q", 10000, 8, -10], 6)
+  test_slew_c(sig_fl, ["biquad_constant_q", 100, 10, 35], ["biquad_constant_q", 100, 10, 35], 6)
