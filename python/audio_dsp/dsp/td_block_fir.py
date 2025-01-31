@@ -58,7 +58,7 @@ class fir_block_td(dspg.dsp_block):
         filter_name: str,
         output_path: Path,
         frame_advance=8,
-        gain_dB=0.0,
+        gain_db=0.0,
         Q_sig: int = dspg.Q_SIG,
     ):
         super().__init__(fs, n_chans, Q_sig)
@@ -76,7 +76,7 @@ class fir_block_td(dspg.dsp_block):
             filter_name,
             output_path,
             self.frame_advance,
-            gain_dB,
+            gain_db,
         )
 
     def reset_state(self) -> None:
@@ -184,7 +184,7 @@ def generate_td_fir(
     filter_name: str,
     output_path: Path,
     frame_advance=8,
-    gain_dB=0.0,
+    gain_db=0.0,
     verbose=False,
 ):
     """
@@ -204,7 +204,7 @@ def generate_td_fir(
     frame_advance : int, optional
         The size in samples of a frame, measured in time domain samples,
         by default 8. Only multiples of 8 are supported.
-    gain_dB : float, optional
+    gain_db : float, optional
         A gain applied to the filter's output, by default 0.0
     verbose : bool, optional
         Enable verbose printing, by default False
@@ -240,7 +240,7 @@ def generate_td_fir(
         prepared_coefs = td_coefs
 
     # Apply the gains
-    prepared_coefs = prepared_coefs * 10.0 ** (gain_dB / 20.0)
+    prepared_coefs = prepared_coefs * 10.0 ** (gain_db / 20.0)
 
     with open(output_file_name, "w") as fh:
         fh.write('#include "dsp/td_block_fir.h"\n\n')
@@ -291,7 +291,7 @@ if __name__ == "__main__":
 
     output_path = os.path.realpath(args.output)
     filter_path = os.path.realpath(args.filter)
-    gain_dB = args.gain
+    gain_db = args.gain
 
     if os.path.exists(filter_path):
         coefs = np.load(filter_path)
@@ -307,4 +307,4 @@ if __name__ == "__main__":
 
     os.makedirs(args.output, exist_ok=True)
 
-    generate_td_fir(coefs, filter_name, output_path, gain_dB=gain_dB)
+    generate_td_fir(coefs, filter_name, output_path, gain_db=gain_db)

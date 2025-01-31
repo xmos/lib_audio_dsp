@@ -12,6 +12,7 @@ INPUT += ../lib_audio_dsp/api/dsp \
          ../lib_audio_dsp/api/stages/adsp_pipeline.h \
          ../lib_audio_dsp/api/control/helpers.h \
          ../lib_audio_dsp/api/control/reverb.h \
+         ../lib_audio_dsp/api/control/reverb_plate.h \
          ../lib_audio_dsp/api/control/biquad.h \
          ../lib_audio_dsp/api/control/signal_chain.h \
 

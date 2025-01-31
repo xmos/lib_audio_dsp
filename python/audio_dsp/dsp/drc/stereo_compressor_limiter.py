@@ -261,6 +261,11 @@ class peak_compressor_limiter_stereo_base(compressor_limiter_stereo_base):
     """
     A compressor/limiter with a peak envelope detector.
 
+    Parameters
+    ----------
+    threshold_db : float
+        Threshold in decibels above which limiting occurs.
+
     Attributes
     ----------
     threshold_db : float
@@ -306,6 +311,11 @@ class rms_compressor_limiter_stereo_base(compressor_limiter_stereo_base):
 
     Note the threshold is saved in the power domain, as the RMS envelope
     detector returns x².
+
+    Parameters
+    ----------
+    threshold_db : float
+        Threshold in decibels above which limiting occurs.
 
     Attributes
     ----------
@@ -359,6 +369,11 @@ class limiter_peak_stereo(peak_compressor_limiter_stereo_base):
     time sets how fast the limiter starts limiting. The release time
     sets how long the signal takes to ramp up to it's original level
     after the envelope is below the threshold.
+
+    Parameters
+    ----------
+    threshold_dB : float
+        Threshold in decibels above which limiting occurs.
     """
 
     def __init__(self, fs, threshold_dB, attack_t, release_t, Q_sig=dspg.Q_SIG):
@@ -383,6 +398,24 @@ class compressor_rms_stereo(rms_compressor_limiter_stereo_base):
     starts compressing. The release time sets how long the signal takes
     to ramp up to it's original level after the envelope is below the
     threshold.
+
+    Parameters
+    ----------
+    threshold_dB : float
+        Threshold in decibels above which limiting occurs.
+    ratio : float
+        Compression gain ratio applied when the signal is above the
+        threshold
+
+    Attributes
+    ----------
+    ratio : float
+    slope : float
+        The slope factor of the compressor, defined as
+        `slope = (1 - 1/ratio) / 2`.
+    slope_f32 : float32
+        The slope factor of the compressor, used for int32 to float32
+        processing.
     """
 
     def __init__(self, fs, ratio, threshold_dB, attack_t, release_t, Q_sig=dspg.Q_SIG):
