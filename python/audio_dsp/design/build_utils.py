@@ -253,7 +253,8 @@ class XCommonCMakeHelper:
     def run(self, xscope: bool = True, hostname: str = "localhost", port: str = "12345") -> int:
         """
         Invoke xrun or xgdb with the options specified in this class instance.
-        If xscope is True, the invocation will be of the form::
+
+        If xscope is True the invocation will be of the form::
 
             xgdb -q --return-child-result --batch
             -ex "connect --xscope-port <hostname>:<port> --xscope"
@@ -283,7 +284,6 @@ class XCommonCMakeHelper:
         -------
         returncode
             Return code from the invokation of xrun or xgdb. 0 if success.
-
         """
         app = (
             f"{self.bin_dir / self.config_name / (self.project_name + self.config_suffix + '.xe')}"
