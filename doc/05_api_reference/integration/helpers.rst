@@ -32,6 +32,9 @@ DRC helpers
 
 .. doxygenfunction:: qxx_to_db_pow
 
+.. doxygenfile:: control/drc.h
+
+
 Reverb helpers
 ==============
 
@@ -43,6 +46,5 @@ Reverb helpers
 Signal chain helpers
 ====================
 
-.. doxygenfunction:: time_to_samples
+.. doxygenfile:: control/signal_chain.h
 
-.. doxygenfunction:: adsp_dB_to_gain
