@@ -86,7 +86,7 @@ def generate_debug_fir(
     frame_advance=None,
     frame_overlap=None,
     td_block_length=None,
-    gain_dB=0.0,
+    gain_db=0.0,
     verbose=False,
 ):
     """Convert the input array into a header to be included in a C debug tests."""
