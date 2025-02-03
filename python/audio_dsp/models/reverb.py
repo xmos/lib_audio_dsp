@@ -4,7 +4,7 @@ from pydantic import Field
 from pydantic.json_schema import SkipJsonSchema
 
 
-class ReverbBaseParams(StageParameters):
+class ReverbBaseParameters(StageParameters):
     predelay: float = Field(
         default=15, ge=0, le=30, description="Set the predelay in milliseconds."
     )
@@ -41,7 +41,7 @@ class _ReverbBaseModel(StageModel):
     config: ReverbBaseConfig = Field(default_factory=ReverbBaseConfig)
 
 
-class ReverbPlateParams(ReverbBaseParams):
+class ReverbPlateParameters(ReverbBaseParameters):
     damping: float = Field(
         default=0.5,
         ge=0,
@@ -75,4 +75,6 @@ class ReverbPlateStereo(_ReverbBaseModel):
     input: list[int] = Field(default=[], min_length=2, max_length=2)
     output: list[int] = Field(default=[], max_length=2)
     op_type: Literal["ReverbPlateStereo"] = "ReverbPlateStereo"
-    parameters: SkipJsonSchema[ReverbPlateParams] = Field(default_factory=ReverbPlateParams)
+    parameters: SkipJsonSchema[ReverbPlateParameters] = Field(
+        default_factory=ReverbPlateParameters
+    )

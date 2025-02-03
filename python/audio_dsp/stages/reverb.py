@@ -9,7 +9,7 @@ import audio_dsp.dsp.reverb_plate as rvp
 
 from typing import Literal
 from pydantic import Field
-from audio_dsp.models.reverb import ReverbPlateParams
+from audio_dsp.models.reverb import ReverbPlateParameters
 
 
 # class ReverbBaseParams(StageParameters):
@@ -461,7 +461,7 @@ class ReverbPlateStereo(ReverbBase):
         """
         self.dsp_block.bandwidth = bandwidth
 
-    def set_parameters(self, parameters: ReverbPlateParams):
+    def set_parameters(self, parameters: ReverbPlateParameters):
         self.set_damping(parameters.damping)
         self.set_decay(parameters.decay)
         self.set_early_diffusion(parameters.early_diffusion)
@@ -471,4 +471,3 @@ class ReverbPlateStereo(ReverbBase):
         self.set_width(parameters.width)
         self.set_pre_gain(parameters.pregain)
         self.set_wet_dry_mix(parameters.wet_dry_mix)
-

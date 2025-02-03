@@ -1,0 +1,487 @@
+{
+  "$defs": {
+    "Adder": {
+      "description": "Add the input signals together. The adder can be used to add signals\ntogether. It must have exactly one output.",
+      "properties": {
+        "placement": {
+          "$ref": "#/$defs/NodePlacement"
+        },
+        "op_type": {
+          "const": "Adder",
+          "default": "Adder",
+          "title": "Op Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "placement"
+      ],
+      "title": "Adder",
+      "type": "object"
+    },
+    "CompressorSidechain": {
+      "description": "An sidechain compressor based on the RMS envelope of the detect\nsignal.\n\nThis stage is limited to accepting 2 channels. The first is the channel that\nwill be compressed. The second is the detect channel. The level of compression\ndepends on the envelope of the second channel.\n\nWhen the RMS envelope of the detect signal exceeds the threshold, the\nprocessed signal amplitude is reduced by the compression ratio.\n\nThe threshold sets the value above which compression occurs. The\nratio sets how much the signal is compressed. A ratio of 1 results\nin no compression, while a ratio of infinity results in the same\nbehaviour as a limiter. The attack time sets how fast the compressor\nstarts compressing. The release time sets how long the signal takes\nto ramp up to its original level after the envelope is below the\nthreshold.",
+      "properties": {
+        "placement": {
+          "$ref": "#/$defs/NodePlacement"
+        },
+        "op_type": {
+          "const": "CompressorSidechain",
+          "default": "CompressorSidechain",
+          "title": "Op Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "placement"
+      ],
+      "title": "CompressorSidechain",
+      "type": "object"
+    },
+    "EnvelopeDetectorPeak": {
+      "description": "A stage with no outputs that measures the signal peak envelope.\n\nThe current envelope of the signal can be read out using this stage's\n``envelope`` control.\n\nAttributes\n----------\ndsp_block : :class:`audio_dsp.dsp.drc.drc.envelope_detector_peak`\n    The DSP block class; see :ref:`EnvelopeDetectorPeak`\n    for implementation details.",
+      "properties": {
+        "placement": {
+          "$ref": "#/$defs/NodePlacement"
+        },
+        "op_type": {
+          "const": "EnvelopeDetectorPeak",
+          "default": "EnvelopeDetectorPeak",
+          "title": "Op Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "placement"
+      ],
+      "title": "EnvelopeDetectorPeak",
+      "type": "object"
+    },
+    "EnvelopeDetectorRMS": {
+      "description": "A stage with no outputs that measures the signal RMS envelope.\n\nThe current envelope of the signal can be read out using this stage's\n``envelope`` control.\n\nAttributes\n----------\ndsp_block : :class:`audio_dsp.dsp.drc.drc.envelope_detector_rms`\n    The DSP block class; see :ref:`EnvelopeDetectorRMS`\n    for implementation details.",
+      "properties": {
+        "placement": {
+          "$ref": "#/$defs/NodePlacement"
+        },
+        "op_type": {
+          "const": "EnvelopeDetectorRMS",
+          "default": "EnvelopeDetectorRMS",
+          "title": "Op Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "placement"
+      ],
+      "title": "EnvelopeDetectorRMS",
+      "type": "object"
+    },
+    "FixedGain": {
+      "description": "This stage implements a fixed gain. The input signal is multiplied\nby a gain. If the gain is changed at runtime, pops and clicks may\noccur.\n\nIf the gain needs to be changed at runtime, use a\n:class:`VolumeControl` stage instead.",
+      "properties": {
+        "placement": {
+          "$ref": "#/$defs/NodePlacement"
+        },
+        "op_type": {
+          "const": "FixedGain",
+          "default": "FixedGain",
+          "title": "Op Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "placement"
+      ],
+      "title": "FixedGain",
+      "type": "object"
+    },
+    "Fork": {
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/ForkConfig"
+        },
+        "placement": {
+          "$ref": "#/$defs/NodePlacement"
+        },
+        "op_type": {
+          "const": "Fork",
+          "default": "Fork",
+          "title": "Op Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "placement"
+      ],
+      "title": "Fork",
+      "type": "object"
+    },
+    "ForkConfig": {
+      "properties": {
+        "count": {
+          "default": 1,
+          "title": "Count",
+          "type": "integer"
+        }
+      },
+      "title": "ForkConfig",
+      "type": "object"
+    },
+    "Input": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "output": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "title": "Output",
+          "type": "array"
+        },
+        "channels": {
+          "title": "Channels",
+          "type": "integer"
+        },
+        "fs": {
+          "title": "Fs",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "channels",
+        "fs"
+      ],
+      "title": "Input",
+      "type": "object"
+    },
+    "Mixer": {
+      "description": "Mixes the input signals together. The mixer can be used to add signals together, or to attenuate the input signals. It must have exactly one output.",
+      "properties": {
+        "placement": {
+          "$ref": "#/$defs/NodePlacement"
+        },
+        "op_type": {
+          "const": "Mixer",
+          "default": "Mixer",
+          "title": "Op Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "placement"
+      ],
+      "title": "Mixer",
+      "type": "object"
+    },
+    "NodePlacement": {
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "title": "Input",
+          "type": "array"
+        },
+        "output": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "title": "Output",
+          "type": "array"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "thread": {
+          "exclusiveMaximum": 5,
+          "minimum": 0,
+          "title": "Thread",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "thread"
+      ],
+      "title": "NodePlacement",
+      "type": "object"
+    },
+    "NoiseSuppressorExpander": {
+      "description": "The Noise Suppressor (Expander) stage. A noise suppressor that\nreduces the level of an audio signal when it falls below a\nthreshold. This is also known as an expander.\n\nWhen the signal envelope falls below the threshold, the gain applied\nto the signal is reduced relative to the expansion ratio over the\nrelease time. When the envelope returns above the threshold, the\ngain applied to the signal is increased to 1 over the attack time.\n\nThe initial state of the noise suppressor is with the suppression\noff; this models a full scale signal having been present before\nt = 0.\n\nAttributes\n----------\ndsp_block : :class:`audio_dsp.dsp.drc.expander.noise_suppressor_expander`\n    The DSP block class; see :ref:`NoiseSuppressorExpander`\n    for implementation details.",
+      "properties": {
+        "placement": {
+          "$ref": "#/$defs/NodePlacement"
+        },
+        "op_type": {
+          "const": "NoiseSuppressorExpander",
+          "default": "NoiseSuppressorExpander",
+          "title": "Op Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "placement"
+      ],
+      "title": "NoiseSuppressorExpander",
+      "type": "object"
+    },
+    "Output": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "input": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "title": "Input",
+          "type": "array"
+        },
+        "channels": {
+          "title": "Channels",
+          "type": "integer"
+        },
+        "fs": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fs"
+        }
+      },
+      "required": [
+        "name",
+        "channels"
+      ],
+      "title": "Output",
+      "type": "object"
+    },
+    "ParametricEq": {
+      "properties": {
+        "placement": {
+          "$ref": "#/$defs/NodePlacement"
+        },
+        "op_type": {
+          "const": "ParametricEq",
+          "default": "ParametricEq",
+          "title": "Op Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "placement"
+      ],
+      "title": "ParametricEq",
+      "type": "object"
+    },
+    "ReverbBaseConfig": {
+      "properties": {
+        "predelay": {
+          "default": 30,
+          "title": "Predelay",
+          "type": "number"
+        }
+      },
+      "title": "ReverbBaseConfig",
+      "type": "object"
+    },
+    "ReverbPlateStereo": {
+      "description": "The stereo room plate stage. This is based on Dattorro's 1997\npaper. This reverb consists of 4 allpass filters for input diffusion,\nfollowed by a figure of 8 reverb tank of allpasses, low-pass filters,\nand delays. The output is taken from multiple taps in the delay lines\nto get a desirable echo density.",
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/ReverbBaseConfig"
+        },
+        "placement": {
+          "$ref": "#/$defs/NodePlacement"
+        },
+        "input": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "Input",
+          "type": "array"
+        },
+        "output": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "title": "Output",
+          "type": "array"
+        },
+        "op_type": {
+          "const": "ReverbPlateStereo",
+          "default": "ReverbPlateStereo",
+          "title": "Op Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "placement"
+      ],
+      "title": "ReverbPlateStereo",
+      "type": "object"
+    },
+    "Switch": {
+      "description": "Switch the input to one of the outputs. The switch can be used to\nselect between different signals.",
+      "properties": {
+        "placement": {
+          "$ref": "#/$defs/NodePlacement"
+        },
+        "op_type": {
+          "const": "Switch",
+          "default": "Switch",
+          "title": "Op Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "placement"
+      ],
+      "title": "Switch",
+      "type": "object"
+    },
+    "SwitchStereo": {
+      "description": "Switch the input to one of the stereo pairs of outputs. The switch\ncan be used to select between different stereo signal pairs. The\ninputs should be passed in pairs, e.g. ``[0_L, 0_R, 1_L, 1_R, ...]``.\nSetting the switch position will output the nth pair.",
+      "properties": {
+        "placement": {
+          "$ref": "#/$defs/NodePlacement"
+        },
+        "op_type": {
+          "const": "SwitchStereo",
+          "default": "SwitchStereo",
+          "title": "Op Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "placement"
+      ],
+      "title": "SwitchStereo",
+      "type": "object"
+    },
+    "VolumeControl": {
+      "description": "This stage implements a volume control. The input signal is\nmultiplied by a gain. The gain can be changed at runtime. To avoid\npops and clicks during gain changes, a slew is applied to the gain\nupdate. The stage can be muted and unmuted at runtime.",
+      "properties": {
+        "placement": {
+          "$ref": "#/$defs/NodePlacement"
+        },
+        "op_type": {
+          "const": "VolumeControl",
+          "default": "VolumeControl",
+          "title": "Op Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "placement"
+      ],
+      "title": "VolumeControl",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "nodes": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "Adder": "#/$defs/Adder",
+            "CompressorSidechain": "#/$defs/CompressorSidechain",
+            "EnvelopeDetectorPeak": "#/$defs/EnvelopeDetectorPeak",
+            "EnvelopeDetectorRMS": "#/$defs/EnvelopeDetectorRMS",
+            "FixedGain": "#/$defs/FixedGain",
+            "Fork": "#/$defs/Fork",
+            "Mixer": "#/$defs/Mixer",
+            "NoiseSuppressorExpander": "#/$defs/NoiseSuppressorExpander",
+            "ParametricEq": "#/$defs/ParametricEq",
+            "ReverbPlateStereo": "#/$defs/ReverbPlateStereo",
+            "Switch": "#/$defs/Switch",
+            "SwitchStereo": "#/$defs/SwitchStereo",
+            "VolumeControl": "#/$defs/VolumeControl"
+          },
+          "propertyName": "op_type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/Fork"
+          },
+          {
+            "$ref": "#/$defs/Mixer"
+          },
+          {
+            "$ref": "#/$defs/Adder"
+          },
+          {
+            "$ref": "#/$defs/FixedGain"
+          },
+          {
+            "$ref": "#/$defs/VolumeControl"
+          },
+          {
+            "$ref": "#/$defs/Switch"
+          },
+          {
+            "$ref": "#/$defs/SwitchStereo"
+          },
+          {
+            "$ref": "#/$defs/ParametricEq"
+          },
+          {
+            "$ref": "#/$defs/ReverbPlateStereo"
+          },
+          {
+            "$ref": "#/$defs/EnvelopeDetectorPeak"
+          },
+          {
+            "$ref": "#/$defs/EnvelopeDetectorRMS"
+          },
+          {
+            "$ref": "#/$defs/NoiseSuppressorExpander"
+          },
+          {
+            "$ref": "#/$defs/CompressorSidechain"
+          }
+        ]
+      },
+      "title": "Nodes",
+      "type": "array"
+    },
+    "input": {
+      "$ref": "#/$defs/Input"
+    },
+    "output": {
+      "$ref": "#/$defs/Output"
+    }
+  },
+  "required": [
+    "name",
+    "nodes",
+    "input",
+    "output"
+  ],
+  "title": "Graph",
+  "type": "object"
+}

@@ -17,7 +17,7 @@ class _GlobalStageModels:
     stages = []
 
 
-class StageConfig(BaseModel, extra="forbid"):
+class StageConfig(BaseModel, extra="ignore"):
     pass
 
 

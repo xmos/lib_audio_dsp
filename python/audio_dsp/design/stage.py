@@ -11,7 +11,7 @@ import yaml
 
 from audio_dsp.design import plot
 from audio_dsp.dsp.generic import dsp_block
-from audio_dsp.models.stage import StageParameters, StageModel, StageConfig
+from audio_dsp.models.stage import StageConfig, StageModel, StageParameters
 
 from .graph import Edge, Node
 
@@ -351,9 +351,6 @@ class Stage(Node):
         """Add all subclasses of Stage to a global list for querying."""
         super().__init_subclass__()
         _GlobalStages.stages.append(cls)
-
-    class Model(StageModel):
-        pass
 
     def set_parameters(self, parameters: StageParameterType):
         if isinstance(parameters, StageParameters) and type(parameters) != StageParameters:

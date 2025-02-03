@@ -4,22 +4,22 @@
 together in series.
 """
 
-from ..design.stage import Stage, find_config, StageParameters
-from ..dsp import cascaded_biquads as casc_bq
+from typing import Annotated, Any, Literal
+
 import numpy as np
-from typing import Any, Literal
-from functools import partial
-from pydantic import BaseModel, RootModel, Field, create_model
-from pydantic.json_schema import SkipJsonSchema
-from typing import Literal, Annotated, List, Union
 from annotated_types import Len
+from pydantic import BaseModel, Field, RootModel, create_model
+from pydantic.json_schema import SkipJsonSchema
 
 import audio_dsp.stages.biquad as bq
+from audio_dsp.design.stage import Stage, StageModel, StageParameters, find_config
+from audio_dsp.dsp import cascaded_biquads as casc_bq
 
 
 def _parametric_eq_doc(wrapped):
     """Generate docs for parametric eq."""
     import inspect
+
     from ..dsp import biquad
 
     # find all the biquad design methods
@@ -59,9 +59,6 @@ class CascadedBiquads(Stage):
         implementation details.
 
     """
-
-    class Model(Stage.Model):
-        op_type: Literal["CascadedBiquads"] = "CascadedBiquads"
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("cascaded_biquads"), **kwargs)
@@ -166,7 +163,7 @@ class ParametricEqParameters(StageParameters):
 
 
 class ParametricEq(CascadedBiquads):
-    class Model(Stage.Model):
+    class ParametricEq(StageModel):
         op_type: Literal["ParametricEq"] = "ParametricEq"
         parameters: SkipJsonSchema[ParametricEqParameters] = Field(
             default_factory=ParametricEqParameters

@@ -4,9 +4,9 @@
 the level of a different input.
 """
 
-from ..design.stage import Stage, find_config, StageParameters
-from ..dsp import drc as drc
-from ..dsp import generic as dspg
+from audio_dsp.design.stage import Stage, find_config, StageParameters, StageModel
+from audio_dsp.dsp import drc as drc
+from audio_dsp.dsp import generic as dspg
 from typing import Literal
 
 from pydantic import Field
@@ -47,7 +47,27 @@ class CompressorSidechain(Stage):
         for implementation details.
     """
 
-    class Model(Stage.Model):
+    class CompressorSidechain(StageModel):
+        """
+        An sidechain compressor based on the RMS envelope of the detect
+        signal.
+
+        This stage is limited to accepting 2 channels. The first is the channel that
+        will be compressed. The second is the detect channel. The level of compression
+        depends on the envelope of the second channel.
+
+        When the RMS envelope of the detect signal exceeds the threshold, the
+        processed signal amplitude is reduced by the compression ratio.
+
+        The threshold sets the value above which compression occurs. The
+        ratio sets how much the signal is compressed. A ratio of 1 results
+        in no compression, while a ratio of infinity results in the same
+        behaviour as a limiter. The attack time sets how fast the compressor
+        starts compressing. The release time sets how long the signal takes
+        to ramp up to its original level after the envelope is below the
+        threshold.
+        """
+
         op_type: Literal["CompressorSidechain"] = "CompressorSidechain"
         parameters: SkipJsonSchema[CompressorSidechainParameters] = Field(
             default_factory=CompressorSidechainParameters

@@ -5,13 +5,12 @@ of quiet signals, typically by tring to reduce the audibility of noise
 in the signal.
 """
 
-from ..design.stage import Stage, find_config, StageParameters
-from ..dsp import drc as drc
-from ..dsp import generic as dspg
-
 from pydantic import Field
-from typing import Literal
 from pydantic.json_schema import SkipJsonSchema
+
+from audio_dsp.design.stage import Stage, StageModel, StageParameters, find_config
+from audio_dsp.dsp import drc as drc
+from audio_dsp.dsp import generic as dspg
 
 
 class NoiseSuppressorExpanderParameters(StageParameters):
@@ -42,8 +41,21 @@ class NoiseSuppressorExpander(Stage):
         for implementation details.
     """
 
-    class Model(Stage.Model):
-        op_type: Literal["NoiseSuppressorExpander"] = "NoiseSuppressorExpander"
+    class NoiseSuppressorExpander(StageModel):
+        """The Noise Suppressor (Expander) stage. A noise suppressor that
+        reduces the level of an audio signal when it falls below a
+        threshold. This is also known as an expander.
+
+        When the signal envelope falls below the threshold, the gain applied
+        to the signal is reduced relative to the expansion ratio over the
+        release time. When the envelope returns above the threshold, the
+        gain applied to the signal is increased to 1 over the attack time.
+
+        The initial state of the noise suppressor is with the suppression
+        off; this models a full scale signal having been present before
+        t = 0.
+        """
+
         parameters: SkipJsonSchema[NoiseSuppressorExpanderParameters] = Field(
             default_factory=NoiseSuppressorExpanderParameters
         )

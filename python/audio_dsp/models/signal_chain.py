@@ -1,6 +1,6 @@
 from .stage import StageModel, StageParameters, StageConfig
 from typing import Literal
-from pydantic import Field, root_validator
+from pydantic import Field, model_validator
 from pydantic.json_schema import SkipJsonSchema
 
 
@@ -11,27 +11,25 @@ class ForkConfig(StageConfig):
 class Fork(StageModel):
     op_type: Literal["Fork"] = "Fork"
     config: ForkConfig = Field(default_factory=ForkConfig)
-    # input: list[int] = Field(default=[], min_length=1, max_length=1)
 
-    @root_validator(pre=True)
-    def check_fork(cls, values):
-        cnt = values.get("config")["count"]
+    # input: list[int] = Field(default=[], min_length=1, max_length=1)
+    @model_validator(mode="after")
+    def check_fork(self):
         try:
-            in_len = len(values.get("input"))
+            in_len = len(self.placement.input)
         except TypeError:
             in_len = 1
-
         try:
-            out_len = len(values.get("output"))
+            out_len = len(self.placement.output)
         except TypeError:
             out_len = 1
 
-        if out_len / in_len != cnt:
+        if out_len / in_len != self.config.count:
             if out_len / in_len == out_len // in_len:
-                values["config"]["count"] = out_len // in_len
+                self.config.count = out_len // in_len
             else:
                 raise ValueError("number of fork outputs not a multiple of inputs")
-        return values
+        return self
 
 
 class MixerParameters(StageParameters):
@@ -40,8 +38,7 @@ class MixerParameters(StageParameters):
 
 class Mixer(StageModel):
     """
-    Mixes the input signals together. The mixer can be used to add signals
-    together, or to attenuate the input signals.
+    Mixes the input signals together. The mixer can be used to add signals together, or to attenuate the input signals. It must have exactly one output.
     """
 
     op_type: Literal["Mixer"] = "Mixer"
@@ -51,7 +48,7 @@ class Mixer(StageModel):
 class Adder(StageModel):
     """
     Add the input signals together. The adder can be used to add signals
-    together.
+    together. It must have exactly one output.
     """
 
     op_type: Literal["Adder"] = "Adder"

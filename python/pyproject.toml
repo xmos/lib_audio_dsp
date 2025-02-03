@@ -29,6 +29,7 @@ dependencies = [
   "fastapi>=0.115.7",
   "uvicorn>=0.34.0",
   "python-multipart>=0.0.20",
+  "numba>=0.61.0",
 ]
 
 [tool.ruff]

@@ -2,6 +2,7 @@
 
 import copy
 import io
+import logging
 import tempfile
 import traceback
 import wave
@@ -25,9 +26,19 @@ from audio_dsp.design.pipeline import Pipeline
 from audio_dsp.design.stage import StageOutputList
 from audio_dsp.models.stage import StageModel, all_models, edgeProducerBaseModel
 
+BAD_NAMES = ["CascadedBiquads"]
+
 _stage_Models = Annotated[
-    Union[tuple(i for i in all_models().values())], Field(discriminator="op_type")
+    Union[tuple(i for i in all_models().values() if i.__name__ not in BAD_NAMES)],
+    Field(discriminator="op_type"),
 ]
+
+print("Available stages:")
+for stage in all_models().values():
+    print(f"  - {stage.__name__}")
+    ann = stage.model_fields["parameters"].annotation
+    schema = ann.model_json_schema() if hasattr(ann, "model_json_schema") else {}
+    pprint(schema)
 
 
 class Input(edgeProducerBaseModel, extra="ignore"):
@@ -220,10 +231,8 @@ async def run_audio(file: UploadFile = File(...)):
         # Convert bytes to numpy array
         if sample_width == 2:  # 16-bit audio
             audio_data = np.frombuffer(contents, dtype=np.int16)
-            print(2)
         elif sample_width == 4:  # 32-bit audio
             audio_data = np.frombuffer(contents, dtype=np.int32)
-            print(4)
         else:
             raise HTTPException(
                 status_code=400, detail=f"Unsupported sample width: {sample_width}"
@@ -239,11 +248,13 @@ async def run_audio(file: UploadFile = File(...)):
 
         max_value = 2 ** (8 * sample_width - 1)
         audio_data = audio_data.astype(np.float32) / max_value  # Process the audio
-        processed = global_pipeline.executor().process(audio_data)
-        sim_out = processed.data
+        executor = global_pipeline.executor().process
+        a = executor(audio_data)
+        data = a.data
+        fs = a.fs
+        sim_out = data
         output_scaled = (sim_out * 32767.0).astype(np.int16)
         output_bytes = output_scaled.tobytes()
-        fs = processed.fs
 
         # Create a new WAV file in memory
         output_buffer = io.BytesIO()
@@ -257,6 +268,8 @@ async def run_audio(file: UploadFile = File(...)):
         return Response(content=output_buffer.getvalue(), media_type="audio/wav")
 
     except Exception as e:
+        logging.exception("Error processing audio")
+        logging.error(f"Error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 

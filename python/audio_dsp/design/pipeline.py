@@ -4,18 +4,15 @@
 """Top level pipeline design class and code generation functions."""
 
 from pathlib import Path
-from tabulate import tabulate
 
 from audio_dsp.design.composite_stage import CompositeStage
 from audio_dsp.design.pipeline_executor import PipelineExecutor, PipelineView
-from .graph import Graph
-from .stage import Stage, StageOutput, StageOutputList, find_config
-from .thread import Thread
+from audio_dsp.design.graph import Graph
+from audio_dsp.design.stage import Stage, StageOutput, StageOutputList, find_config
+from audio_dsp.design.thread import Thread
 from IPython import display
-import yaml
 import hashlib
 import json
-import numpy as np
 from uuid import uuid4
 from ._draw import new_record_digraph
 from functools import wraps
