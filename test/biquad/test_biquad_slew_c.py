@@ -40,12 +40,16 @@ def run_py_slew(filt: bq.biquad_slew, sig_fl, coeffs_2):
     for n in range(sig_fl.size//2):
         out_int[n] = filt.process_xcore(sig_fl[n])
 
-    print(filt.b_shift)
+    init_shift = (filt.b_shift)
+    print(init_shift)
     filt.update_coeffs(coeffs_2)
-    print(filt.b_shift)
 
     for n in range(sig_fl.size//2, sig_fl.size):
         out_int[n] = filt.process_xcore(sig_fl[n])
+        if filt.b_shift != init_shift:
+          print(f"B shift changed at {n}")
+          init_shift = filt.b_shift
+    print(filt.b_shift)
 
     sf.write(gen_dir / "sig_py_int.wav", out_int, fs, "PCM_24")
 
@@ -117,4 +121,5 @@ if __name__ == "__main__":
   bin_dir.mkdir(exist_ok=True, parents=True)
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
-  test_slew_c(sig_fl, ["biquad_constant_q", 100, 10, 35], ["biquad_constant_q", 100, 10, 35], 6)
+  # test_slew_c(sig_fl, ["biquad_highshelf", 1000, 1, 10], ["biquad_highshelf", 1000, 1, -6], 6)
+  test_slew_c(sig_fl, ["biquad_peaking", 1000, 0.1, 20], ["biquad_highpass", 1000, 1], 6)
