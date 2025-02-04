@@ -58,7 +58,7 @@ A peak-based envelope detector will run its EMA using the absolute value of the 
 
         .. rubric:: Python API
 
-    .. autoclass:: audio_dsp.dsp.drc.drc.envelope_detector_peak
+    .. autoclass:: audio_dsp.dsp.drc.envelope_detector_peak
         :noindex:
 
         .. automethod:: process
@@ -90,7 +90,7 @@ input sample. It returns the mean² in order to avoid a square root.
 
         .. rubric:: Python API
 
-    .. autoclass:: audio_dsp.dsp.drc.drc.envelope_detector_rms
+    .. autoclass:: audio_dsp.dsp.drc.envelope_detector_rms
         :noindex:
 
         .. automethod:: process
@@ -124,7 +124,7 @@ instantaneously, so has no attack or release times.
 
         .. rubric:: Python API
 
-    .. autoclass:: audio_dsp.dsp.drc.drc.clipper
+    .. autoclass:: audio_dsp.dsp.drc.clipper
         :noindex:
 
         .. automethod:: process
@@ -175,7 +175,7 @@ When envelope is above the threshold, the new gain is calculated as
 
         .. rubric:: Python API
 
-    .. autoclass:: audio_dsp.dsp.drc.drc.limiter_peak
+    .. autoclass:: audio_dsp.dsp.drc.limiter_peak
         :noindex:
 
         .. automethod:: process
@@ -209,7 +209,7 @@ headroom bits.
 
         .. rubric:: Python API
 
-    .. autoclass:: audio_dsp.dsp.drc.drc.hard_limiter_peak
+    .. autoclass:: audio_dsp.dsp.drc.hard_limiter_peak
         :noindex:
 
         .. automethod:: process
@@ -242,7 +242,7 @@ When envelope is above the threshold, the new gain is calculated as
 
         .. rubric:: Python API
 
-    .. autoclass:: audio_dsp.dsp.drc.drc.limiter_rms
+    .. autoclass:: audio_dsp.dsp.drc.limiter_rms
         :noindex:
 
         .. automethod:: process
@@ -306,7 +306,7 @@ When the envelope is above the threshold, the new gain is calculated as
 
         .. rubric:: Python API
 
-    .. autoclass:: audio_dsp.dsp.drc.drc.compressor_rms
+    .. autoclass:: audio_dsp.dsp.drc.compressor_rms
         :noindex:
 
         .. automethod:: process
@@ -344,7 +344,7 @@ This can be used to reduce the level of the *input* signal when the
 
         .. rubric:: Python API
 
-    .. autoclass:: audio_dsp.dsp.drc.sidechain.compressor_rms_sidechain_mono
+    .. autoclass:: audio_dsp.dsp.drc.compressor_rms_sidechain_mono
         :noindex:
 
         .. automethod:: process
@@ -398,7 +398,7 @@ the input signal. Otherwise, unity gain is applied.
 
         .. rubric:: Python API
 
-    .. autoclass:: audio_dsp.dsp.drc.expander.noise_gate
+    .. autoclass:: audio_dsp.dsp.drc.noise_gate
         :noindex:
 
         .. automethod:: process
@@ -449,7 +449,7 @@ initialisation to simplify run-time computation.
 
         .. rubric:: Python API
 
-    .. autoclass:: audio_dsp.dsp.drc.expander.noise_suppressor_expander
+    .. autoclass:: audio_dsp.dsp.drc.noise_suppressor_expander
         :noindex:
 
         .. automethod:: process

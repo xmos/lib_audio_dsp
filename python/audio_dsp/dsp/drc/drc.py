@@ -808,48 +808,6 @@ class hard_limiter_peak(limiter_peak):
             )
 
 
-class lookahead_limiter_peak(peak_compressor_limiter_base):
-    """Not implemented. Peak limiter with built in delay for avoiding
-    clipping.
-    """
-
-    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
-
-        self.delay = np.ceil(attack_t * fs)
-        self.delay_line = np.zeros(self.delay)
-        raise NotImplementedError
-
-    def process(self, sample, channel=0):
-        """Not implemented."""
-        raise NotImplementedError
-
-    def process_xcore(self, sample, channel=0, return_int=False):
-        """Not implemented."""
-        raise NotImplementedError
-
-
-class lookahead_limiter_rms(rms_compressor_limiter_base):
-    """Not implemented. RMS limiter with built in delay for avoiding
-    clipping.
-    """
-
-    def __init__(self, fs, n_chans, threshold_db, attack_t, release_t, delay, Q_sig=dspg.Q_SIG):
-        super().__init__(fs, n_chans, threshold_db, attack_t, release_t, Q_sig)
-
-        self.delay = np.ceil(attack_t * fs)
-        self.delay_line = np.zeros(self.delay)
-        raise NotImplementedError
-
-    def process(self, sample, channel=0):
-        """Not implemented."""
-        raise NotImplementedError
-
-    def process_xcore(self, sample, channel=0, return_int=False):
-        """Not implemented."""
-        raise NotImplementedError
-
-
 # TODO lookahead limiters and compressors
 # TODO add soft limiter
 # TODO add peak compressors

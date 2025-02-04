@@ -32,6 +32,7 @@ documentation:
       pdf_title: '{{title}} (README)'
       pdf_filename: '{{lib_name}}_v{{version}}_readme'
       pdf_short: yes
+  latex_toc_depth: 3
 
 software:
   cognidox_part_number: XM-015102-SM

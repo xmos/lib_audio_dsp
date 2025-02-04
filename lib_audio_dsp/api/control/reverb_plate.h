@@ -39,6 +39,7 @@ static inline int32_t adsp_reverb_plate_calc_damping(float damping) {
  * for passing to a reverb.
  *
  * @param bandwidth The chose value of bandwidth.
+ * @param fs The sampling frequency in Hz
  * @return Bandwidth as a Q_RVP fixed point integer, clipped to the accepted range.
  */
 static inline int32_t adsp_reverb_plate_calc_bandwidth(float bandwidth, float fs) {
