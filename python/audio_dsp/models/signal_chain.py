@@ -1,18 +1,34 @@
-from .stage import StageModel, StageParameters, StageConfig
 from typing import Literal
-from pydantic import Field, model_validator
-from pydantic.json_schema import SkipJsonSchema
+
+from pydantic import Field, field_validator, model_validator
+
+from audio_dsp.models.stage import NodePlacement, StageConfig, StageModel, StageParameters
 
 
 class ForkConfig(StageConfig):
     count: int = Field(default=1)
 
 
-class Fork(StageModel):
+class ForkPlacement(NodePlacement, extra="forbid"):
+    input: list[int] = Field(default=set(), max_length=1, min_length=1)
+    output: list[int] = Field(default=set())
+    name: str
+    thread: int = Field(ge=0, lt=5)
+
+    @field_validator("input", "output", mode="before")
+    def _single_to_list(cls, value: int | list) -> list:
+        if isinstance(value, list):
+            return value
+        else:
+            return [value]
+
+
+class Fork(StageModel[ForkPlacement]):
+    """Forks the input signal into multiple outputs."""
+
     op_type: Literal["Fork"] = "Fork"
     config: ForkConfig = Field(default_factory=ForkConfig)
 
-    # input: list[int] = Field(default=[], min_length=1, max_length=1)
     @model_validator(mode="after")
     def check_fork(self):
         try:
@@ -36,13 +52,28 @@ class MixerParameters(StageParameters):
     gain_db: float = Field(default=0)
 
 
-class Mixer(StageModel):
+class MixerPlacement(NodePlacement, extra="forbid"):
+    input: list[int] = Field(default=[])
+    output: list[int] = Field(default=[], max_length=1, min_length=1)
+    name: str
+    thread: int = Field(ge=0, lt=5)
+
+    @field_validator("input", "output", mode="before")
+    def _single_to_list(cls, value: int | list) -> list:
+        if isinstance(value, list):
+            return value
+        else:
+            return [value]
+
+
+class Mixer(StageModel[MixerPlacement]):
     """
-    Mixes the input signals together. The mixer can be used to add signals together, or to attenuate the input signals. It must have exactly one output.
+    Mixes the input signals together. The mixer can be used to add signals together, or to attenuate the input signals.
+    It must have exactly one output.
     """
 
     op_type: Literal["Mixer"] = "Mixer"
-    parameters: SkipJsonSchema[MixerParameters] = Field(default_factory=MixerParameters)
+    parameters: MixerParameters = Field(default_factory=MixerParameters)
 
 
 class Adder(StageModel):
@@ -70,7 +101,7 @@ class FixedGain(StageModel):
 
     # class Model(Stage.Model):
     op_type: Literal["FixedGain"] = "FixedGain"
-    parameters: SkipJsonSchema[FixedGainParameters] = Field(default_factory=FixedGainParameters)
+    parameters: FixedGainParameters = Field(default_factory=FixedGainParameters)
 
 
 class VolumeControlParameters(StageParameters):
@@ -87,9 +118,7 @@ class VolumeControl(StageModel):
     """
 
     op_type: Literal["VolumeControl"] = "VolumeControl"
-    parameters: SkipJsonSchema[VolumeControlParameters] = Field(
-        default_factory=VolumeControlParameters
-    )
+    parameters: VolumeControlParameters = Field(default_factory=VolumeControlParameters)
 
 
 class SwitchParameters(StageParameters):
@@ -104,7 +133,7 @@ class Switch(StageModel):
     """
 
     op_type: Literal["Switch"] = "Switch"
-    parameters: SkipJsonSchema[SwitchParameters] = Field(default_factory=SwitchParameters)
+    parameters: SwitchParameters = Field(default_factory=SwitchParameters)
 
 
 class SwitchStereo(StageModel):
@@ -117,4 +146,4 @@ class SwitchStereo(StageModel):
     """
 
     op_type: Literal["SwitchStereo"] = "SwitchStereo"
-    parameters: SkipJsonSchema[SwitchParameters] = Field(default_factory=SwitchParameters)
+    parameters: SwitchParameters = Field(default_factory=SwitchParameters)

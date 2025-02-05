@@ -43,6 +43,6 @@ class NoiseSuppressorExpander(StageModel):
     """
 
     op_type: Literal["NoiseSuppressorExpander"] = "NoiseSuppressorExpander"
-    parameters: SkipJsonSchema[NoiseSuppressorExpanderParameters] = Field(
+    parameters: NoiseSuppressorExpanderParameters = Field(
         default_factory=NoiseSuppressorExpanderParameters
     )

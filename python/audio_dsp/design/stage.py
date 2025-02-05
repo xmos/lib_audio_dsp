@@ -83,7 +83,7 @@ class StageOutput(Edge):
     def dest_index(self, value):
         if self._dest_index is not None:
             raise RuntimeError(
-                f"This edge has already been connected, edges cannot have multiple destinations."
+                f"This edge has already been connected, edges cannot have multiple destinations: {value = }."
             )
         self._dest_index = value
 

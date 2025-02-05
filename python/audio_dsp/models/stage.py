@@ -3,9 +3,6 @@ from typing import Any, Type, Union
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.json_schema import SkipJsonSchema
 
-from audio_dsp.design import plot
-from audio_dsp.dsp.generic import dsp_block
-
 
 class edgeProducerBaseModel(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -26,8 +23,11 @@ class StageParameters(BaseModel, extra="ignore"):
 
 
 class NodePlacement(BaseModel, extra="forbid"):
-    input: list[int] = Field(default=[])
-    output: list[int] = Field(default=[])
+    input: list[int] = Field(
+        default=[],
+        description="Set of input edges, edges must be unique and not referenced anywhere else. Use the Fork stage to re-use edges.",
+    )
+    output: list[int] = Field(default=[], description="IDs of output edges.")
     name: str
     thread: int = Field(ge=0, lt=5)
 
@@ -39,25 +39,8 @@ class NodePlacement(BaseModel, extra="forbid"):
             return [value]
 
 
-class StageModel(edgeProducerBaseModel):
-    # op_type: is not defined as this Stage cannot be pipelined
-    config: SkipJsonSchema[Any] = Field(default_factory=StageConfig)
-    parameters: SkipJsonSchema[Any] = Field(default_factory=StageParameters)
-    placement: NodePlacement
-
-    @field_validator("config")
-    @classmethod
-    def _validate_config(cls, val):
-        if issubclass(type(val), StageConfig):
-            return val
-        raise ValueError("config must be a subclass of StageConfig")
-
-    @field_validator("parameters")
-    @classmethod
-    def _validate_parameters(cls, val):
-        if issubclass(type(val), StageParameters):
-            return val
-        raise ValueError("parameters must be a subclass of StageParameters")
+class StageModel[Placement = NodePlacement](edgeProducerBaseModel):
+    placement: Placement
 
     # stage doesn't actually have a model
     # model: Model

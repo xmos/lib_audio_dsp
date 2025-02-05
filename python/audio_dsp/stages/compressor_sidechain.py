@@ -4,13 +4,14 @@
 the level of a different input.
 """
 
-from audio_dsp.design.stage import Stage, find_config, StageParameters, StageModel
-from audio_dsp.dsp import drc as drc
-from audio_dsp.dsp import generic as dspg
 from typing import Literal
 
-from pydantic import Field
-from pydantic.json_schema import SkipJsonSchema
+from pydantic import BaseModel, Field, field_validator
+
+from audio_dsp.design.stage import Stage, StageModel, StageParameters, find_config
+from audio_dsp.models.stage import NodePlacement
+from audio_dsp.dsp import drc as drc
+from audio_dsp.dsp import generic as dspg
 
 
 class CompressorSidechainParameters(StageParameters):
@@ -18,6 +19,26 @@ class CompressorSidechainParameters(StageParameters):
     threshold_db: float = Field(default=-35)
     attack_t: float = Field(default=0.005)
     release_t: float = Field(default=0.120)
+
+
+class CompressorPlacement(NodePlacement, extra="forbid"):
+    # only 2 inputs and 1 ouput
+    input: list[int] = Field(
+        default=[],
+        max_length=2,
+        min_length=2,
+        description="Exactly 2 inputs: first is the channel that will be compressed, second is the detect channel.",
+    )
+    output: list[int] = Field(default=[], max_length=1, min_length=1)
+    name: str
+    thread: int = Field(ge=0, lt=5)
+
+    @field_validator("input", "output", mode="before")
+    def _single_to_list(cls, value: int | list) -> list:
+        if isinstance(value, list):
+            return value
+        else:
+            return [value]
 
 
 class CompressorSidechain(Stage):
@@ -47,7 +68,7 @@ class CompressorSidechain(Stage):
         for implementation details.
     """
 
-    class CompressorSidechain(StageModel):
+    class CompressorSidechain(StageModel[CompressorPlacement]):
         """
         An sidechain compressor based on the RMS envelope of the detect
         signal.
@@ -69,7 +90,7 @@ class CompressorSidechain(Stage):
         """
 
         op_type: Literal["CompressorSidechain"] = "CompressorSidechain"
-        parameters: SkipJsonSchema[CompressorSidechainParameters] = Field(
+        parameters: CompressorSidechainParameters = Field(
             default_factory=CompressorSidechainParameters
         )
 

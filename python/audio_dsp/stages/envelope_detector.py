@@ -4,13 +4,15 @@
 a signal varies over time.
 """
 
-from ..design.stage import Stage, find_config, StageParameters
-from ..dsp import drc as drc
-from ..dsp import generic as dspg
 from typing import Literal
 
-from pydantic import Field
+from pydantic import BaseModel, Field, field_validator
+
+from audio_dsp.design.stage import Stage, StageParameters, find_config
+from audio_dsp.dsp import drc as drc
+from audio_dsp.dsp import generic as dspg
 from audio_dsp.models.envelope_detector import EnvelopeDetectorParameters
+from audio_dsp.models.stage import NodePlacement
 
 # class EnvelopeDetectorParameters(StageParameters):
 #     attack_t: float = Field(default=0)

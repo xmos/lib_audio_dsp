@@ -31,7 +31,7 @@ class CascadedBiquads(StageModel):
 
     # class Model(Stage.Model):
     op_type: Literal["CascadedBiquads"] = "CascadedBiquads"
-    parameters: SkipJsonSchema[CascadedBiquadParameters] = Field(
+    parameters: CascadedBiquadParameters = Field(
         default_factory=CascadedBiquadParameters
     )
 

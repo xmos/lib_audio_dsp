@@ -4,14 +4,30 @@
 a signal varies over time.
 """
 
-from .stage import StageModel, StageParameters, StageConfig
-
 # from ..dsp import drc as drc
 # from ..dsp import generic as dspg
 from typing import Literal
 
-from pydantic import Field
-from pydantic.json_schema import SkipJsonSchema
+from pydantic import BaseModel, Field, field_validator
+
+from .stage import StageConfig, StageModel, StageParameters
+
+
+class EnvelopeDetectorPlacement(BaseModel, extra="forbid"):
+    input: list[int] = Field(
+        default=[],
+        description="Set of input edges, edges must be unique and not referenced anywhere else. Use the Fork stage to re-use edges.",
+    )
+    output: list[int] = Field([], max_length=0)
+    name: str
+    thread: int = Field(ge=0, lt=5)
+
+    @field_validator("input", "output", mode="before")
+    def _single_to_list(cls, value: int | list) -> list:
+        if isinstance(value, list):
+            return value
+        else:
+            return [value]
 
 
 class EnvelopeDetectorParameters(StageParameters):
@@ -19,7 +35,7 @@ class EnvelopeDetectorParameters(StageParameters):
     release_t: float = Field(default=0)
 
 
-class EnvelopeDetectorPeak(StageModel):
+class EnvelopeDetectorPeak(StageModel[EnvelopeDetectorPlacement]):
     """
     A stage with no outputs that measures the signal peak envelope.
 
@@ -35,12 +51,10 @@ class EnvelopeDetectorPeak(StageModel):
     """
 
     op_type: Literal["EnvelopeDetectorPeak"] = "EnvelopeDetectorPeak"
-    parameters: SkipJsonSchema[EnvelopeDetectorParameters] = Field(
-        default_factory=EnvelopeDetectorParameters
-    )
+    parameters: EnvelopeDetectorParameters = Field(default_factory=EnvelopeDetectorParameters)
 
 
-class EnvelopeDetectorRMS(StageModel):
+class EnvelopeDetectorRMS(StageModel[EnvelopeDetectorPlacement]):
     """
     A stage with no outputs that measures the signal RMS envelope.
 
@@ -56,6 +70,4 @@ class EnvelopeDetectorRMS(StageModel):
     """
 
     op_type: Literal["EnvelopeDetectorRMS"] = "EnvelopeDetectorRMS"
-    parameters: SkipJsonSchema[EnvelopeDetectorParameters] = Field(
-        default_factory=EnvelopeDetectorParameters
-    )
+    parameters: EnvelopeDetectorParameters = Field(default_factory=EnvelopeDetectorParameters)
