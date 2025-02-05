@@ -74,8 +74,19 @@ void biquad_slew_control(void *module_state, module_control_t *control)
     if(control->config_rw_state == config_write_pending)
     {
         // Finish the write by updating the working copy with the new config
+        left_shift_t old_b_sh = config->left_shift;
         memcpy(&state->config, config, sizeof(biquad_slew_config_t));
         control->config_rw_state = config_none_pending;
+
+        left_shift_t b_shift_change = old_b_sh - config->left_shift;
+
+        if (b_shift_change > 0){
+            // state->config.remaining_shifts = b_shift_change;
+        }
+
+        // 
+
+
     }
     else if(control->config_rw_state == config_read_pending)
     {

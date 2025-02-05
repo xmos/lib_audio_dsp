@@ -353,14 +353,14 @@ class biquad_slew(biquad):
     ):
         dspg.dsp_block.__init__(self, fs, n_chans, Q_sig)
         self.b_shift = b_shift#_get_bshift(coeffs)
-        self.coeffs = [[0.0]*5]*n_chans
-        self.int_coeffs = [[0]*5]*n_chans
+        self.coeffs = [0.0]*5
+        self.int_coeffs = [0]*5
         self.reset_state()
         self.update_coeffs(coeffs)
-        self.coeffs = [deepcopy(self.target_coeffs) for chan in range(n_chans)]
-        self.int_coeffs = [deepcopy(self.target_coeffs_int) for chan in range(n_chans)]
+        self.coeffs[:] = self.target_coeffs
+        self.int_coeffs[:] = self.target_coeffs_int
         self.slew_shift = slew_shift  #
-        self.remaining_shifts = [0] * n_chans
+        self.remaining_shifts = 0
 
     def update_coeffs(self, new_coeffs: list[float]):
         """Update the saved coefficients to the input values.
@@ -371,25 +371,25 @@ class biquad_slew(biquad):
             The new coefficients to be updated.
         """
         old_b_shift = self.b_shift
-        new_b_shift = _get_bshift(new_coeffs)
+        self.b_shift = _get_bshift(new_coeffs)
+        self.target_coeffs, self.target_coeffs_int = _round_and_check(new_coeffs, self.b_shift)
 
-        b_shift_change = self.b_shift - new_b_shift
+        b_shift_change = old_b_shift - self.b_shift
 
         if b_shift_change > 0:
             # we can't shift safely until we know we have headroom
-            self.remaining_shifts = [b_shift_change] * self.n_chans
+            self.remaining_shifts = b_shift_change
+            self.b_shift = self.b_shift + self.remaining_shifts
         if b_shift_change < 0:
-            self.b_shift = new_b_shift
             b_shift_change = -b_shift_change
             for chan in range(self.n_chans):
-                self.coeffs[chan][:3] = [x * 2**-b_shift_change for x in self.coeffs[chan][:3]]
-                self.int_coeffs[chan][:3] = [
-                    x >> b_shift_change for x in self.int_coeffs[chan][:3]
+                self.coeffs[:3] = [x * 2**-b_shift_change for x in self.coeffs[:3]]
+                self.int_coeffs[:3] = [
+                    x >> b_shift_change for x in self.int_coeffs[:3]
                 ]
                 self._y1[chan] = self._y1[chan] * 2**-b_shift_change
                 self._y2[chan] = self._y2[chan] * 2**-b_shift_change
 
-        self.target_coeffs, self.target_coeffs_int = _round_and_check(new_coeffs, self.b_shift)
 
     def process(self, sample: float, channel: int = 0) -> float:
         """
@@ -397,47 +397,49 @@ class biquad_slew(biquad):
         point maths. This will slew the coeffs towards the target coefficients.
 
         """
-        for n in range(5):
-            self.coeffs[channel][n] += (
-                self.target_coeffs[n] - self.coeffs[channel][n]  # pyright: ignore : overloads base class coeffs
-            ) * 2**-self.slew_shift
+        raise NotImplementedError
+
+
+    def process_channels(self, sample_list: list[float]):
+
 
         if (
-            self.remaining_shifts[channel] > 0
+            self.remaining_shifts > 0
         ):
-            if (abs(self.coeffs[channel][0]) < 1
-                and abs(self.coeffs[channel][1]) < 1
-                and abs(self.coeffs[channel][2]) < 1
-                and abs(self._y1[channel]) < 1
-                and abs(self._y2[channel]) < 1
+
+            tmp_target = deepcopy(self.target_coeffs)
+            tmp_target[:3] = [x *2**-self.remaining_shifts for x in tmp_target[:3]]
+
+            for n in range(5):
+                self.int_coeffs[n] += (
+                utils.saturate_int32_vpu(tmp_target[n] - self.int_coeffs[n])  # pyright: ignore : overloads base class int_coeffs
+                >> self.slew_shift
+            )
+
+            if (abs(self.coeffs[0]) < 1
+                and abs(self.coeffs[1]) < 1
+                and abs(self.coeffs[2]) < 1
+                and all(abs(x) < 1 for x in self._y1)
+                and all(abs(x) < 1 for x in self._y2)
             ):
                 # we now have the headroom to shift
-                self.int_coeffs[channel][:3] = [x*2 for x in self.coeffs[channel][:3]]
-                self.target_coeffs_int[:3] = [x*2 for x in self.target_coeffs[:3]]
-                self._y1[channel] = self._y1[channel] * 2
-                self._y2[channel] = self._y2[channel] * 2
-                self.remaining_shifts[channel] -= 1
+                self.int_coeffs[:3] = [x*2 for x in self.coeffs[:3]]
+                self._y1 = self._y1 * 2
+                self._y2 = self._y2 * 2
+                self.remaining_shifts -= 1
                 self.b_shift -= 1
+        else:
+            for n in range(5):
+                self.coeffs[n] += (
+                    self.target_coeffs[n] - self.coeffs[n]  # pyright: ignore : overloads base class coeffs
+                ) * 2**-self.slew_shift
 
-        y = (
-            self.coeffs[channel][0] * sample
-            + self.coeffs[channel][1] * self._x1[channel]
-            + self.coeffs[channel][2] * self._x2[channel]
-            + self.coeffs[channel][3] * self._y1[channel]
-            + self.coeffs[channel][4] * self._y2[channel]
-        )
+        out_samples = deepcopy(sample_list)
 
-        y = utils.saturate_float(y, self.Q_sig)
-
-        self._x2[channel] = self._x1[channel]
-        self._x1[channel] = sample
-        self._y2[channel] = self._y1[channel]
-        self._y1[channel] = y
-
-        y = y * (1 << self.b_shift)
-        y = utils.saturate_float(y, self.Q_sig)
-
-        return y
+        for channel in range(len(sample_list)):
+            # use basic biquad
+            out_samples[channel] = super().process(sample_list[channel], channel)
+        return out_samples
 
     def process_int(self, sample: float, channel: int = 0) -> float:
         """
@@ -446,7 +448,10 @@ class biquad_slew(biquad):
         """
         raise NotImplementedError
 
-    def process_xcore(self, sample: float, channel: int = 0) -> float:
+    def process_xcore(self, sample, channel):
+        raise NotImplementedError
+
+    def process_channels_xcore(self, sample_list: list[float]) -> float:
         """
         Filter a single sample using direct form 1 biquad using int32
         fixed point maths, with use of the XS3 VPU.
@@ -455,64 +460,46 @@ class biquad_slew(biquad):
         float before outputting.
 
         """
-        sample_int = utils.float_to_int32(sample, self.Q_sig)
 
-        for n in range(5):
-            self.int_coeffs[channel][n] += (
-                utils.saturate_int32_vpu(self.target_coeffs_int[n] - self.int_coeffs[channel][n])  # pyright: ignore : overloads base class int_coeffs
+        if self.remaining_shifts > 0:
+            # change in b_shift to manage, target_coeffs have less headroom, so add the headroom back
+            tmp_target = deepcopy(self.target_coeffs_int)
+            tmp_target[:3] = [utils.int32(x >> self.remaining_shifts) for x in tmp_target[:3]]
+
+            # do the slew
+            for n in range(5):
+                self.int_coeffs[n] += (
+                utils.saturate_int32_vpu(tmp_target[n] - self.int_coeffs[n])  # pyright: ignore : overloads base class int_coeffs
                 >> self.slew_shift
             )
 
-        if (
-            self.remaining_shifts[channel] > 0
-        ):
-            # print([abs(self.int_coeffs[channel][0]) < ((2**30) - 1),
-            # abs(self.int_coeffs[channel][1]) < ((2**30) - 1),
-            # abs(self.int_coeffs[channel][2]) < ((2**30) - 1),
-            # abs(self._y1[channel]) < ((2**30) - 1),
-            # abs(self._y2[channel]) < ((2**30) - 1)])
-            if (abs(self.int_coeffs[channel][0]) < ((2**30) - 1)
-                and abs(self.int_coeffs[channel][1]) < ((2**30) - 1)
-                and abs(self.int_coeffs[channel][2]) < ((2**30) - 1)
-                and abs(self._y1[channel]) < ((2**30) - 1)
-                and abs(self._y2[channel]) < ((2**30) - 1)
+            # see if we have headroom to do the shift
+            if (abs(self.int_coeffs[0]) < ((2**30) - 1)
+                and abs(self.int_coeffs[1]) < ((2**30) - 1)
+                and abs(self.int_coeffs[2]) < ((2**30) - 1)
+                and all(abs(x) < ((2**30) - 1) for x in self._y1)
+                and all(abs(x) < ((2**30) - 1) for x in self._y2)
             ):
                 # we now have the headroom to shift
-                self.int_coeffs[channel][:3] = [utils.int32(x << 1) for x in self.int_coeffs[channel][:3]]
-                self.target_coeffs_int[:3] = [utils.int32(x << 1) for x in self.target_coeffs_int[:3]]
-                self._y1[channel] = utils.int32(self._y1[channel] << 1)
-                self._y2[channel] = utils.int32(self._y2[channel] << 1)
-                self.remaining_shifts[channel] -= 1
+                self.int_coeffs[:3] = [utils.int32(x << 1) for x in self.int_coeffs[:3]]
+                self._y1 = [utils.int32(x << 1) for x in self._y1]
+                self._y2 = [utils.int32(x << 1) for x in self._y2]
+                self.remaining_shifts -= 1
                 self.b_shift -= 1
+        else:
+            # no change in b_shift to manage, so can just slew
+            for n in range(5):
+                self.int_coeffs[n] += (
+                utils.saturate_int32_vpu(self.target_coeffs_int[n] - self.int_coeffs[n])  # pyright: ignore : overloads base class int_coeffs
+                >> self.slew_shift
+            )
 
-        # process a single sample using direct form 1. In the VPU the
-        # ``>> 30`` comes before accumulation
-        y = utils.vlmaccr(
-            [
-                sample_int,
-                self._x1[channel],
-                self._x2[channel],
-                self._y1[channel],
-                self._y2[channel],
-            ],
-            self.int_coeffs[channel],
-        )
+        out_samples = deepcopy(sample_list)
+        for channel in range(len(sample_list)):
+            # use basic biquad process
+            out_samples[channel] = super().process_xcore(sample_list[channel], channel)
 
-        y = utils.saturate_int32(y)
-
-        # save states
-        self._x2[channel] = utils.int32(self._x1[channel])
-        self._x1[channel] = utils.int32(sample_int)
-        self._y2[channel] = utils.int32(self._y1[channel])
-        self._y1[channel] = utils.int32(y)
-
-        # compensate for coefficients
-        y = utils.int64(y << self.b_shift)
-        y = utils.saturate_int32(y)
-
-        y_flt = utils.int32_to_float(y, self.Q_sig)
-
-        return y_flt
+        return out_samples
 
 
 def _round_to_q30(coeffs: list[float]) -> tuple[list[float], list[int]]:

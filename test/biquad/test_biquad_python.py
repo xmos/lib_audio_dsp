@@ -271,8 +271,8 @@ def test_coeff_change():
     for n in range(2000):
         output_flt_reset[n] = bq_1.process(signal[n])
         output_vpu_reset[n] = bq_2.process_xcore(signal[n])
-        output_flt_slew[n] = bq_3.process(signal[n])
-        output_vpu_slew[n] = bq_4.process_xcore(signal[n])
+        output_flt_slew[n] = bq_3.process_channels([signal[n]])[0]
+        output_vpu_slew[n] = bq_4.process_channels_xcore([signal[n]])[0]
 
     bq_1.update_coeffs(coeffs_2)
     bq_2.update_coeffs(coeffs_2)
@@ -282,8 +282,8 @@ def test_coeff_change():
     for n in range(2000, 5000):
         output_flt_reset[n] = bq_1.process(signal[n])
         output_vpu_reset[n] = bq_2.process_xcore(signal[n])
-        output_flt_slew[n] = bq_3.process(signal[n])
-        output_vpu_slew[n] = bq_4.process_xcore(signal[n])
+        output_flt_slew[n] = bq_3.process_channels([signal[n]])[0]
+        output_vpu_slew[n] = bq_4.process_channels_xcore([signal[n]])[0]
 
     bq_1.update_coeffs(coeffs_1)
     bq_2.update_coeffs(coeffs_1)
@@ -293,8 +293,8 @@ def test_coeff_change():
     for n in range(5000, len(signal)):
         output_flt_reset[n] = bq_1.process(signal[n])
         output_vpu_reset[n] = bq_2.process_xcore(signal[n])
-        output_flt_slew[n] = bq_3.process(signal[n])
-        output_vpu_slew[n] = bq_4.process_xcore(signal[n])
+        output_flt_slew[n] = bq_3.process_channels([signal[n]])[0]
+        output_vpu_slew[n] = bq_4.process_channels_xcore([signal[n]])[0]
 
     assert np.max(np.abs(output_flt_reset - dc)) < amplitude*1.01
     assert np.max(np.abs(output_vpu_reset - dc)) < amplitude*1.01

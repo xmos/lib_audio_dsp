@@ -15,6 +15,8 @@ typedef struct
     int n_inputs;
     int n_outputs;
     int frame_size;
+    left_shift_t  **remaining_shifts;
+    left_shift_t **b_shift;
 }biquad_slew_state_t;
 
 

@@ -36,6 +36,8 @@ static inline float _check_gain(float gain, float max_gain) {
 
 static inline left_shift_t _get_b_shift(float b0, float b1, float b2) {
 
+  // calculate the required headroom for the b coefficients
+
   float max_b = fabsf(b0);
   float tmp = fabsf(b1);
   if (tmp > max_b){
