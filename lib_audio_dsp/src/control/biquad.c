@@ -34,36 +34,63 @@ static inline float _check_gain(float gain, float max_gain) {
   return gain_sat;
 }
 
-void adsp_design_biquad_bypass(q2_30 coeffs[5]) {
+static inline left_shift_t _get_b_shift(float b0, float b1, float b2) {
+
+  float max_b = fabsf(b0);
+  float tmp = fabsf(b1);
+  if (tmp > max_b){
+    max_b = tmp;
+  }
+  tmp = fabsf(b2);
+  if (tmp > max_b){
+    max_b = tmp;
+  }
+
+  tmp = floorf(log2f(max_b));
+  left_shift_t out = (left_shift_t)tmp;
+
+  return out > 0 ? out : 0;
+}
+
+
+left_shift_t adsp_design_biquad_bypass(q2_30 coeffs[5]) {
   coeffs[0] = 1 << Q_factor;
   coeffs[1] = 0;
   coeffs[2] = 0;
   coeffs[3] = 0;
   coeffs[4] = 0;
+
+  // b_shift is zero for bypass
+  return 0;
 }
 
-void adsp_design_biquad_mute(q2_30 coeffs[5]) {
+left_shift_t adsp_design_biquad_mute(q2_30 coeffs[5]) {
   coeffs[0] = 0;
   coeffs[1] = 0;
   coeffs[2] = 0;
   coeffs[3] = 0;
   coeffs[4] = 0;
+
+  // b_shift is zero for mute
+  return 0;
 }
 
 left_shift_t adsp_design_biquad_gain(q2_30 coeffs[5], const float gain_db) {
   float A  = powf(10.0f, (gain_db * (1.0f / 20.0f)));
 
-  coeffs[0] = _float2fixed_assert( A, Q_factor - BOOST_BSHIFT );
+  left_shift_t b_sh = _get_b_shift(A, 0, 0);
+
+  coeffs[0] = _float2fixed_assert( A, Q_factor - b_sh );
   coeffs[1] = 0;
   coeffs[2] = 0;
   coeffs[3] = 0;
   coeffs[4] = 0;
 
-  return BOOST_BSHIFT;
+  return b_sh;
 }
 
 
-void adsp_design_biquad_lowpass
+left_shift_t adsp_design_biquad_lowpass
 (
   q2_30 coeffs[5],
   const float fc,
@@ -96,9 +123,10 @@ void adsp_design_biquad_lowpass
   coeffs[3] = _float2fixed_assert( -a1, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2, Q_factor );
 
+  return 0;
 }
 
-void adsp_design_biquad_highpass
+left_shift_t adsp_design_biquad_highpass
 (
   q2_30 coeffs[5],
   const float fc,
@@ -126,10 +154,12 @@ void adsp_design_biquad_highpass
   coeffs[2] = _float2fixed_assert(  b2, Q_factor );
   coeffs[3] = _float2fixed_assert( -a1, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2, Q_factor );
+
+  return 0;
 }
 
 
-void adsp_design_biquad_bandpass
+left_shift_t adsp_design_biquad_bandpass
 (
   q2_30 coeffs[5],
   const float fc,
@@ -159,9 +189,11 @@ void adsp_design_biquad_bandpass
   coeffs[2] = _float2fixed_assert(  b2 * inv_a0, Q_factor );
   coeffs[3] = _float2fixed_assert( -a1 * inv_a0, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2 * inv_a0, Q_factor );
+
+  return 0;
 }
 
-void adsp_design_biquad_bandstop
+left_shift_t adsp_design_biquad_bandstop
 (
   q2_30 coeffs[5],
   const float fc,
@@ -191,9 +223,11 @@ void adsp_design_biquad_bandstop
   coeffs[2] = _float2fixed_assert(  b2 * inv_a0, Q_factor );
   coeffs[3] = _float2fixed_assert( -a1 * inv_a0, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2 * inv_a0, Q_factor );
+
+  return 0;
 }
 
-void adsp_design_biquad_notch
+left_shift_t adsp_design_biquad_notch
 (
   q2_30 coeffs[5],
   const float fc,
@@ -215,16 +249,19 @@ void adsp_design_biquad_notch
   float a1 = b1;
   float a2 = (1.0f - KQ + KK) * norm;
 
+
   // Store as fixed-point values
   coeffs[0] = _float2fixed_assert(  b0, Q_factor );
   coeffs[1] = _float2fixed_assert(  b1, Q_factor );
   coeffs[2] = _float2fixed_assert(  b2, Q_factor );
   coeffs[3] = _float2fixed_assert( -a1, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2, Q_factor );
+
+  return 0;
 }
 
 
-void adsp_design_biquad_allpass
+left_shift_t adsp_design_biquad_allpass
 (
   q2_30 coeffs[5],
   const float fc,
@@ -252,6 +289,8 @@ void adsp_design_biquad_allpass
   coeffs[2] = _float2fixed_assert(  b2, Q_factor );
   coeffs[3] = _float2fixed_assert( -a1, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2, Q_factor );
+
+  return 0;
 }
 
 
@@ -281,14 +320,16 @@ left_shift_t adsp_design_biquad_peaking
   float a1 =  b1;
   float a2 =  (1.0f - alpha / A)*norm;
 
+  left_shift_t b_sh = _get_b_shift(b0, b1, b2);
+
   // Store as fixed-point values
-  coeffs[0] = _float2fixed_assert(  b0, Q_factor - BOOST_BSHIFT);
-  coeffs[1] = _float2fixed_assert(  b1, Q_factor - BOOST_BSHIFT);
-  coeffs[2] = _float2fixed_assert(  b2, Q_factor - BOOST_BSHIFT);
+  coeffs[0] = _float2fixed_assert(  b0, Q_factor - b_sh);
+  coeffs[1] = _float2fixed_assert(  b1, Q_factor - b_sh);
+  coeffs[2] = _float2fixed_assert(  b2, Q_factor - b_sh);
   coeffs[3] = _float2fixed_assert( -a1, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2, Q_factor );
 
-  return BOOST_BSHIFT;
+  return b_sh;
 }
 
 left_shift_t adsp_design_biquad_const_q
@@ -329,14 +370,20 @@ left_shift_t adsp_design_biquad_const_q
 
   float inv_a0 = 1.0f/a0;
 
+  b0 *= inv_a0;
+  b1 *= inv_a0;
+  b2 *= inv_a0;
+
+  left_shift_t b_sh = _get_b_shift(b0, b1, b2);
+
   // Store as fixed-point values
-  coeffs[0] = _float2fixed_assert(  b0 * inv_a0, Q_factor - BOOST_BSHIFT);
-  coeffs[1] = _float2fixed_assert(  b1 * inv_a0, Q_factor - BOOST_BSHIFT);
-  coeffs[2] = _float2fixed_assert(  b2 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[0] = _float2fixed_assert(  b0, Q_factor - b_sh);
+  coeffs[1] = _float2fixed_assert(  b1, Q_factor - b_sh);
+  coeffs[2] = _float2fixed_assert(  b2, Q_factor - b_sh);
   coeffs[3] = _float2fixed_assert( -a1 * inv_a0, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2 * inv_a0, Q_factor );
 
-  return BOOST_BSHIFT;
+  return b_sh;
 }
 
 left_shift_t adsp_design_biquad_lowshelf
@@ -370,14 +417,20 @@ left_shift_t adsp_design_biquad_lowshelf
 
   float inv_a0 = 1.0f / a0;
 
+  b0 *= inv_a0;
+  b1 *= inv_a0;
+  b2 *= inv_a0;
+
+  left_shift_t b_sh = _get_b_shift(b0, b1, b2);
+
   // Store as fixed-point values
-  coeffs[0] = _float2fixed_assert(  b0 * inv_a0, Q_factor - BOOST_BSHIFT);
-  coeffs[1] = _float2fixed_assert(  b1 * inv_a0, Q_factor - BOOST_BSHIFT);
-  coeffs[2] = _float2fixed_assert(  b2 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[0] = _float2fixed_assert(  b0, Q_factor - b_sh);
+  coeffs[1] = _float2fixed_assert(  b1, Q_factor - b_sh);
+  coeffs[2] = _float2fixed_assert(  b2, Q_factor - b_sh);
   coeffs[3] = _float2fixed_assert( -a1 * inv_a0, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2 * inv_a0, Q_factor );
 
-  return BOOST_BSHIFT;
+  return b_sh;
 }
 
 left_shift_t adsp_design_biquad_highshelf
@@ -411,17 +464,23 @@ left_shift_t adsp_design_biquad_highshelf
 
   float inv_a0 = 1.0f/a0;
 
+  b0 *= inv_a0;
+  b1 *= inv_a0;
+  b2 *= inv_a0;
+
+  left_shift_t b_sh = _get_b_shift(b0, b1, b2);
+
   // Store as fixed-point values
-  coeffs[0] = _float2fixed_assert(  b0 * inv_a0, Q_factor - BOOST_BSHIFT);
-  coeffs[1] = _float2fixed_assert(  b1 * inv_a0, Q_factor - BOOST_BSHIFT);
-  coeffs[2] = _float2fixed_assert(  b2 * inv_a0, Q_factor - BOOST_BSHIFT);
+  coeffs[0] = _float2fixed_assert(  b0, Q_factor - b_sh);
+  coeffs[1] = _float2fixed_assert(  b1, Q_factor - b_sh);
+  coeffs[2] = _float2fixed_assert(  b2, Q_factor - b_sh);
   coeffs[3] = _float2fixed_assert( -a1 * inv_a0, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2 * inv_a0, Q_factor );
 
-  return BOOST_BSHIFT;
+  return b_sh;
 }
 
-void adsp_design_biquad_linkwitz(
+left_shift_t adsp_design_biquad_linkwitz(
   q2_30 coeffs[5],
   const float f0,
   const float fs,
@@ -462,11 +521,18 @@ void adsp_design_biquad_linkwitz(
 
   float inv_a0 = 1.0f / a0;
 
+  b0 *= inv_a0;
+  b1 *= inv_a0;
+  b2 *= inv_a0;
+
+  left_shift_t b_sh = _get_b_shift(b0, b1, b2);
+
   // Store as fixed-point values
-  coeffs[0] = _float2fixed_assert(  b0 * inv_a0, Q_factor );
-  coeffs[1] = _float2fixed_assert(  b1 * inv_a0, Q_factor );
-  coeffs[2] = _float2fixed_assert(  b2 * inv_a0, Q_factor );
+  coeffs[0] = _float2fixed_assert(  b0, Q_factor - b_sh);
+  coeffs[1] = _float2fixed_assert(  b1, Q_factor - b_sh);
+  coeffs[2] = _float2fixed_assert(  b2, Q_factor - b_sh);
   coeffs[3] = _float2fixed_assert( -a1 * inv_a0, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2 * inv_a0, Q_factor );
 
+  return b_sh;
 }

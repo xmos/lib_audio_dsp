@@ -376,12 +376,7 @@ class biquad_slew(biquad):
         b_shift_change = self.b_shift - new_b_shift
 
         if b_shift_change > 0:
-            # for chan in range(self.n_chans):
-            # self.coeffs[chan][:3] = [x * 2**b_shift_change for x in self.coeffs[chan][:3]]
-            # self.int_coeffs[chan][:3] = [utils.saturate_int32(x << b_shift_change) for x in self.int_coeffs[chan][:3]]
-            # self._y1[chan] = utils.saturate_int32(self._y1[chan] << b_shift_change)
-            # self._y2[chan] = utils.saturate_int32(self._y2[chan] << b_shift_change)
-            # self.target_coeffs_int = [x >> b_shift_change for x in self.target_coeffs_int]
+            # we can't shift safely until we know we have headroom
             self.remaining_shifts = [b_shift_change] * self.n_chans
         if b_shift_change < 0:
             self.b_shift = new_b_shift
@@ -406,6 +401,23 @@ class biquad_slew(biquad):
             self.coeffs[channel][n] += (
                 self.target_coeffs[n] - self.coeffs[channel][n]  # pyright: ignore : overloads base class coeffs
             ) * 2**-self.slew_shift
+
+        if (
+            self.remaining_shifts[channel] > 0
+        ):
+            if (abs(self.coeffs[channel][0]) < 1
+                and abs(self.coeffs[channel][1]) < 1
+                and abs(self.coeffs[channel][2]) < 1
+                and abs(self._y1[channel]) < 1
+                and abs(self._y2[channel]) < 1
+            ):
+                # we now have the headroom to shift
+                self.int_coeffs[channel][:3] = [x*2 for x in self.coeffs[channel][:3]]
+                self.target_coeffs_int[:3] = [x*2 for x in self.target_coeffs[:3]]
+                self._y1[channel] = self._y1[channel] * 2
+                self._y2[channel] = self._y2[channel] * 2
+                self.remaining_shifts[channel] -= 1
+                self.b_shift -= 1
 
         y = (
             self.coeffs[channel][0] * sample
@@ -454,18 +466,18 @@ class biquad_slew(biquad):
         if (
             self.remaining_shifts[channel] > 0
         ):
-            print([abs(self.int_coeffs[channel][0]) < ((2**30) - 1),
-            abs(self.int_coeffs[channel][1]) < ((2**30) - 1),
-            abs(self.int_coeffs[channel][2]) < ((2**30) - 1),
-            abs(self._y1[channel]) < ((2**30) - 1),
-            abs(self._y2[channel]) < ((2**30) - 1)])
+            # print([abs(self.int_coeffs[channel][0]) < ((2**30) - 1),
+            # abs(self.int_coeffs[channel][1]) < ((2**30) - 1),
+            # abs(self.int_coeffs[channel][2]) < ((2**30) - 1),
+            # abs(self._y1[channel]) < ((2**30) - 1),
+            # abs(self._y2[channel]) < ((2**30) - 1)])
             if (abs(self.int_coeffs[channel][0]) < ((2**30) - 1)
                 and abs(self.int_coeffs[channel][1]) < ((2**30) - 1)
                 and abs(self.int_coeffs[channel][2]) < ((2**30) - 1)
                 and abs(self._y1[channel]) < ((2**30) - 1)
                 and abs(self._y2[channel]) < ((2**30) - 1)
             ):
-                # pass
+                # we now have the headroom to shift
                 self.int_coeffs[channel][:3] = [utils.int32(x << 1) for x in self.int_coeffs[channel][:3]]
                 self.target_coeffs_int[:3] = [utils.int32(x << 1) for x in self.target_coeffs_int[:3]]
                 self._y1[channel] = utils.int32(self._y1[channel] << 1)
