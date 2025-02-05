@@ -56,7 +56,7 @@ class NoiseSuppressorExpander(Stage):
         t = 0.
         """
 
-        parameters: SkipJsonSchema[NoiseSuppressorExpanderParameters] = Field(
+        parameters: NoiseSuppressorExpanderParameters = Field(
             default_factory=NoiseSuppressorExpanderParameters
         )
 

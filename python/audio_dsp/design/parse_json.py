@@ -2,12 +2,12 @@
 
 import copy
 import io
+import json
 import logging
 import tempfile
 import traceback
 import wave
 from pathlib import Path
-from pprint import pprint
 from typing import Annotated, Optional, Type, Union
 
 import numpy as np
@@ -33,30 +33,70 @@ _stage_Models = Annotated[
     Field(discriminator="op_type"),
 ]
 
-print("Available stages:")
-for stage in all_models().values():
-    print(f"  - {stage.__name__}")
-    ann = stage.model_fields["parameters"].annotation
-    schema = ann.model_json_schema() if hasattr(ann, "model_json_schema") else {}
-    pprint(schema)
-
 
 class Input(edgeProducerBaseModel, extra="ignore"):
-    name: str
-    output: list[int] = []
-    channels: int
-    fs: int
+    name: str = Field(..., description="Name of the input")
+    output: list[int] = Field(
+        default_factory=list,
+        description="List of output edges, should be a range of the number of channels",
+    )
+    channels: int = Field(..., description="Number of input channels")
+    fs: int = Field(..., description="Sampling frequency in Hz")
 
 
 class Output(edgeProducerBaseModel, extra="ignore"):
-    name: str
-    input: list[int] = []
-    channels: int
+    name: str = Field(..., description="Name of the output")
+    input: list[int] = Field(
+        default_factory=list,
+        description="List of input edges, should be a range of the number of channels. Input edges to this stage can not be used elsewhere, same as with any other stage.",
+    )
+    channels: int = Field(..., description="Number of output channels")
     fs: Optional[int] = None
 
 
 class Graph(BaseModel):
-    name: str
+    """
+    Graph object to hold the pipeline.
+
+    Pay attention to the field definitions of the nodes, including the number of input and output edges for each node (and edge is a channel).
+
+    Examples:
+    --------
+
+    1. EQ + Reverb Example:
+
+    ```json
+    {
+      "name": "EQ + Reverb Example",
+      "nodes": [
+        {"placement": {"input": [0, 1], "output": [2, 3], "name": "VolumeIn", "thread": 0}, "op_type": "VolumeControl"},
+        {"op_type": "ParametricEq", "placement": {"input": [2, 3], "output": [4, 5], "name": "PEQ", "thread": 0}},
+        {"op_type": "ReverbPlateStereo", "config": {"predelay": 30}, "placement": {"input": [4, 5], "output": [6, 7], "name": "StereoReverb", "thread": 0}},
+      ],
+      "input": {"name": "audio_in", "output": [0, 1], "channels": 2, "fs": 48000},
+      "output": {"name": "audio_out", "input": [6, 7], "channels": 2}
+    }
+    ```
+
+    2. Stereo Mixer with Volume:
+
+    ```json
+    {
+      "name": "Stereo Mixer with Volume",
+      "input": {"channels": 2, "fs": 48000, "name": "stereo_in", "output": [0, 1]},
+      "nodes": [
+        {"op_type": "Mixer", "placement": {"input": [0, 1], "name": "Mixer", "output": [2], "thread": 0}},
+        {"op_type": "VolumeControl", "placement": {"input": [2], "name": "Volume", "output": [3], "thread": 0}},
+        {"config": {"count": 1}, "op_type": "Fork", "placement": {"input": [3], "name": "Fork", "output": [4, 5], "thread": 0}},
+      ]
+      "output": {"channels": 2, "input": [4, 5], "name": "stereo_out"}
+    }
+    """
+
+    name: str = Field(
+        ...,
+        description="Name of the graph, should describe what the graph does. Space are allowed.",
+    )
     nodes: list[_stage_Models]  # type: ignore
     input: Input
     output: Output
@@ -119,10 +159,11 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
             stage_inputs,
             this_node.placement.name,
             thread=this_node.placement.thread,
-            **dict(this_node.config),
+            **dict(this_node.config if hasattr(this_node, "config") else {}),
         )
 
-        p.stages[-1].set_parameters(this_node.parameters)
+        if hasattr(this_node, "parameters"):
+            p.stages[-1].set_parameters(this_node.parameters)
 
         # if has outputs, add to edge to edge list- nothing should be there!
         if len(node_output) != 0:
@@ -181,7 +222,10 @@ def get_params_schema():
     params = {
         k: n.model_fields["parameters"].annotation.model_json_schema()
         for k, n in all_models().items()
-        if hasattr(n.model_fields["parameters"].annotation, "model_json_schema")
+        if (
+            hasattr(n.model_fields, "parameters")
+            and hasattr(n.model_fields["parameters"].annotation, "model_json_schema")
+        )
     }
     return JSONResponse(params)
 
@@ -193,7 +237,7 @@ def set_parameters(params: dict):
     if global_graph is None:
         raise HTTPException(status_code=400, detail="No graph has been set.")
     for node in global_graph.nodes:
-        if node.placement.name in params:
+        if node.placement.name in params and hasattr(node, "parameters"):
             node.parameters = node.parameters.__class__(**params[node.placement.name])
     global global_pipeline
     global_pipeline = make_pipeline(
@@ -288,6 +332,7 @@ def set_graph(graph: Graph):
         schema_dict = {
             node.placement.name: node.parameters.__class__.model_json_schema()
             for node in graph.nodes
+            if hasattr(node, "parameters")
         }
         return JSONResponse(schema_dict)
     except Exception as e:

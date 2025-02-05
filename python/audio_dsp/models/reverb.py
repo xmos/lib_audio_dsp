@@ -75,6 +75,6 @@ class ReverbPlateStereo(_ReverbBaseModel):
     input: list[int] = Field(default=[], min_length=2, max_length=2)
     output: list[int] = Field(default=[], max_length=2)
     op_type: Literal["ReverbPlateStereo"] = "ReverbPlateStereo"
-    parameters: SkipJsonSchema[ReverbPlateParameters] = Field(
+    parameters: ReverbPlateParameters = Field(
         default_factory=ReverbPlateParameters
     )

@@ -165,7 +165,7 @@ class ParametricEqParameters(StageParameters):
 class ParametricEq(CascadedBiquads):
     class ParametricEq(StageModel):
         op_type: Literal["ParametricEq"] = "ParametricEq"
-        parameters: SkipJsonSchema[ParametricEqParameters] = Field(
+        parameters: ParametricEqParameters = Field(
             default_factory=ParametricEqParameters
         )
 
