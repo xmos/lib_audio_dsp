@@ -1,7 +1,8 @@
-from .stage import StageParameters, StageConfig, StageModel
 from typing import Literal
-from pydantic import Field
-from pydantic.json_schema import SkipJsonSchema
+
+from pydantic import BaseModel, Field, field_validator
+
+from audio_dsp.models.stage import StageConfig, StageModel, StageParameters
 
 
 class ReverbBaseParameters(StageParameters):
@@ -31,7 +32,7 @@ class ReverbBaseConfig(StageConfig):
     predelay: float = Field(default=30)
 
 
-class _ReverbBaseModel(StageModel):
+class _ReverbBaseModel[T](StageModel[T]):
     """
     The base class for reverb stages, containing pre delays, and wet/dry
     mixes and pregain.
@@ -63,7 +64,28 @@ class ReverbPlateParameters(ReverbBaseParameters):
     bandwidth: float = Field(default=8000, ge=0, le=24000, description="Range: 0 to 1")
 
 
-class ReverbPlateStereo(_ReverbBaseModel):
+class ReverbBasePlacement(BaseModel, extra="forbid"):
+    input: list[int] = Field(
+        default=[],
+        description="Set of input edges, edges must be unique and not referenced anywhere else. Use the Fork stage to re-use edges.",
+        min_length=2,
+        max_length=2,
+    )
+    output: list[int] = Field(
+        default=[], description="IDs of output edges.", min_length=2, max_length=2
+    )
+    name: str
+    thread: int = Field(ge=0, lt=5)
+
+    @field_validator("input", "output", mode="before")
+    def _single_to_list(cls, value: Union[int, list]) -> list:
+        if isinstance(value, list):
+            return value
+        else:
+            return [value]
+
+
+class ReverbPlateStereo(_ReverbBaseModel[ReverbBasePlacement]):
     """
     The stereo room plate stage. This is based on Dattorro's 1997
     paper. This reverb consists of 4 allpass filters for input diffusion,
@@ -72,9 +94,5 @@ class ReverbPlateStereo(_ReverbBaseModel):
     to get a desirable echo density.
     """
 
-    input: list[int] = Field(default=[], min_length=2, max_length=2)
-    output: list[int] = Field(default=[], max_length=2)
     op_type: Literal["ReverbPlateStereo"] = "ReverbPlateStereo"
-    parameters: ReverbPlateParameters = Field(
-        default_factory=ReverbPlateParameters
-    )
+    parameters: ReverbPlateParameters = Field(default_factory=ReverbPlateParameters)
