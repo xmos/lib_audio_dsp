@@ -78,7 +78,7 @@ class ReverbBasePlacement(BaseModel, extra="forbid"):
     thread: int = Field(ge=0, lt=5)
 
     @field_validator("input", "output", mode="before")
-    def _single_to_list(cls, value: Union[int, list]) -> list:
+    def _single_to_list(cls, value: int | list) -> list:
         if isinstance(value, list):
             return value
         else:
