@@ -13,24 +13,18 @@ void biquad_slew_process(int32_t **input, int32_t **output, void *app_data_state
 {
     biquad_slew_state_t *state = app_data_state;
 
-    // do while saves instructions for cases
-    // where the loop will always execute at
-    // least once
-    int i = 0;
-    do {
-        int32_t *in = input[i];
-        int32_t *out = output[i];
-        int j = 0;
-        do
-        {
-            *out++ = adsp_biquad_slew((*in++),
-                        state->coeffs[i],
-                        state->config.filter_coeffs,
-                        state->filter_states[i],
-                        state->config.left_shift,
-                        state->config.slew_shift);
-        } while (++j < state->frame_size);
-    } while (++i < state->n_outputs);
+    for (int i=0; i < state->frame_size; i++){
+        adsp_biquad_slew_coeffs(state->config.filter_coeffs,
+                                &(state->slew_state), 
+                                state->filter_states,
+                                state->n_outputs);
+        for (int j=0; j < state->n_outputs; j++){
+            output[j][i] = adsp_biquad(input[j][i],
+                                       state->slew_state.coeffs,
+                                       state->filter_states[j],
+                                       state->slew_state.lsh);
+        }
+    }
 }
 
 void biquad_slew_init(module_instance_t* instance,
@@ -50,16 +44,16 @@ void biquad_slew_init(module_instance_t* instance,
     state->frame_size = frame_size;
 
     state->filter_states = adsp_bump_allocator_malloc(allocator, _BQ_SLEW_ARR_MEMORY(n_inputs)); // Allocate memory for the 1D pointers
-    state->coeffs = adsp_bump_allocator_malloc(allocator, _BQ_SLEW_ARR_MEMORY(n_inputs)); // Allocate memory for the 1D pointers
     for(int i=0; i<n_inputs; i++)
     {
         state->filter_states[i] = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, _BQ_SLEW_FILTER_MEMORY);
         memset(state->filter_states[i], 0, _BQ_SLEW_FILTER_MEMORY);
-
-        // initialise the filter coeffs to the starting values
-        state->coeffs[i] = ADSP_BUMP_ALLOCATOR_DWORD_ALLIGNED_MALLOC(allocator, _BQ_SLEW_FILTER_MEMORY);
-        memcpy(state->coeffs[i], config->filter_coeffs, 5*sizeof(int32_t));
     }
+
+    // initialise the filter coeffs to the starting values
+    memcpy(state->slew_state.coeffs, config->filter_coeffs, 5*sizeof(int32_t));
+    state->slew_state.remaining_shifts = 0;
+    state->slew_state.lsh = config->left_shift;
 
     // copy default config
     memcpy(&state->config, config, sizeof(biquad_slew_config_t));

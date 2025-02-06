@@ -11,12 +11,10 @@ typedef struct
 {
     biquad_slew_config_t config;
     int32_t **filter_states;
-    int32_t **coeffs;
+    adsp_biquad_slew_state_t slew_state;
     int n_inputs;
     int n_outputs;
     int frame_size;
-    left_shift_t  **remaining_shifts;
-    left_shift_t **b_shift;
 }biquad_slew_state_t;
 
 

@@ -474,11 +474,11 @@ class biquad_slew(biquad):
             )
 
             # see if we have headroom to do the shift
-            if (abs(self.int_coeffs[0]) < ((2**30) - 1)
-                and abs(self.int_coeffs[1]) < ((2**30) - 1)
-                and abs(self.int_coeffs[2]) < ((2**30) - 1)
-                and all(abs(x) < ((2**30) - 1) for x in self._y1)
-                and all(abs(x) < ((2**30) - 1) for x in self._y2)
+            if (abs(self.int_coeffs[0]) < ((2**30))
+                and abs(self.int_coeffs[1]) < ((2**30))
+                and abs(self.int_coeffs[2]) < ((2**30))
+                and all(abs(x) < ((2**30)) for x in self._y1)
+                and all(abs(x) < ((2**30)) for x in self._y2)
             ):
                 # we now have the headroom to shift
                 self.int_coeffs[:3] = [utils.int32(x << 1) for x in self.int_coeffs[:3]]
