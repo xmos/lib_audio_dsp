@@ -49,10 +49,10 @@ class cascaded_biquads_8(dspg.dsp_block):
         for n in range(8):
             if n < len(coeffs_list):
                 self.biquads.append(
-                    bq.biquad(coeffs_list[n], fs, n_chans, b_shift=b_shift_list[n], Q_sig=Q_sig)
+                    bq.biquad(coeffs_list[n], fs, n_chans, Q_sig=Q_sig)
                 )
             else:
-                self.biquads.append(bq.biquad_bypass(fs, n_chans))
+                self.biquads.append(bq.biquad(bq.make_biquad_bypass(fs), fs, n_chans, Q_sig=Q_sig))
 
     def print_xcoremath_coeffs(self):
         """Print the cascaded biquad coefficients in the format required
@@ -86,34 +86,6 @@ class cascaded_biquads_8(dspg.dsp_block):
         y = sample
         for biquad in self.biquads:
             y = biquad.process(y, channel)
-
-        return y
-
-    def process_frame(self, frame):
-        """
-        Take a list frames of samples and return the processed frames
-        using floating point maths.
-
-        A frame is defined as a list of 1-D numpy arrays, where the
-        number of arrays is equal to the number of channels, and the
-        length of the arrays is equal to the frame size.
-
-        The all the samples are run through each biquad in turn.
-
-        Parameters
-        ----------
-        frame : list
-            List of frames, where each frame is a 1-D numpy array.
-
-        Returns
-        -------
-        list
-            List of processed frames, with the same structure as the
-            input frame.
-        """
-        y = frame
-        for biquad in self.biquads:
-            y = biquad.process_frame(y)
 
         return y
 
@@ -168,33 +140,6 @@ class cascaded_biquads_8(dspg.dsp_block):
         y = sample
         for biquad in self.biquads:
             y = biquad.process_xcore(y, channel)
-
-        return y
-
-    def process_frame_xcore(self, frame):
-        """
-        Take a list frames of samples and return the processed frames
-        using int32 fixed point maths, with use of the XS3 VPU.
-
-        A frame is defined as a list of 1-D numpy arrays, where the
-        number of arrays is equal to the number of channels, and the
-        length of the arrays is equal to the frame size.
-
-        Parameters
-        ----------
-        frame : list
-            List of frames, where each frame is a 1-D numpy array.
-
-        Returns
-        -------
-        list
-            List of processed frames, with the same structure as the
-            input frame.
-        """
-        # in the future we could use a more efficient implementation
-        y = frame
-        for biquad in self.biquads:
-            y = biquad.process_frame_xcore(y)
 
         return y
 

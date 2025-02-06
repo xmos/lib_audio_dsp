@@ -130,11 +130,11 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
         """
         frame_np = np.array(frame)
         frame_size = frame[0].shape[0]
-        output = np.zeros(frame_size)
+        output = np.zeros((len(frame), frame_size))
         for sample in range(frame_size):
-            output[sample] = self.process_channels(frame_np[:, sample].tolist())
+            output[:, sample] = self.process_channels(frame_np[:, sample].tolist())
 
-        return [output]
+        return list(output)
 
     def process_frame_xcore(self, frame: list):
         """
@@ -161,11 +161,11 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
         """
         frame_np = np.array(frame)
         frame_size = frame[0].shape[0]
-        output = np.zeros(frame_size)
+        output = np.zeros((len(frame), frame_size))
         for sample in range(frame_size):
-            output[sample] = self.process_channels_xcore(frame_np[:, sample].tolist())
+            output[:, sample] = self.process_channels_xcore(frame_np[:, sample].tolist())
 
-        return [output]
+        return list(output)
 
     def freq_response(self, nfft=512):
         """
