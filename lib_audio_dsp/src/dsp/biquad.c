@@ -1,6 +1,7 @@
 #include "dsp/adsp.h"
 #include "stdio.h"
 #include <stdbool.h>
+#include <string.h>
 
 
 void adsp_biquad_slew_coeffs(
@@ -55,3 +56,14 @@ void adsp_biquad_slew_coeffs(
 
 }
 
+void adsp_biquad_slew_state_init(
+  adsp_biquad_slew_state_t* slew_state,
+  q2_30 target_coeffs[8],
+  left_shift_t lsh,
+  left_shift_t slew_shift
+){
+  memcpy(slew_state->coeffs, target_coeffs, 5*sizeof(int32_t));
+  slew_state->remaining_shifts = 0;
+  slew_state->lsh = lsh;
+  slew_state->slew_shift = slew_shift;
+  }

@@ -30,6 +30,14 @@ typedef struct {
 } adsp_biquad_slew_state_t;
 
 
+void adsp_biquad_slew_state_init(
+  adsp_biquad_slew_state_t* slew_state,
+  q2_30 target_coeffs[8],
+  left_shift_t lsh,
+  left_shift_t slew_shift
+);
+
+
 void adsp_biquad_slew_coeffs(
   q2_30 target_coeffs[8],
   adsp_biquad_slew_state_t* slew_state,
