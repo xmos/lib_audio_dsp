@@ -50,7 +50,7 @@ class Biquad(Stage):
             raise ValueError("Biquad requires inputs with a valid fs")
         self.fs = int(self.fs)
         self.create_outputs(self.n_in)
-        self.dsp_block: bq = bq.biquad_bypass(self.fs, self.n_in)
+        self.dsp_block: bq = bq.biquad(bq.make_biquad_bypass(self.fs), self.fs, self.n_in)
         self.set_control_field_cb("filter_coeffs", self._get_fixed_point_coeffs)
         self.set_control_field_cb("left_shift", lambda: self.dsp_block.b_shift)
         self.stage_memory_parameters = (self.n_in,)
