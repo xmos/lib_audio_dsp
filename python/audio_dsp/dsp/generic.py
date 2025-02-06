@@ -98,11 +98,13 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
         output_samples = deepcopy(sample_list)
         for channel in range(len(output_samples)):
             output_samples[channel] = self.process(sample_list[channel], channel)
+        return output_samples
 
     def process_channels_xcore(self, sample_list: list[float]) -> float:
         output_samples = deepcopy(sample_list)
         for channel in range(len(output_samples)):
             output_samples[channel] = self.process_xcore(sample_list[channel], channel)
+        return output_samples
 
     def process_frame(self, frame: list):
         """
