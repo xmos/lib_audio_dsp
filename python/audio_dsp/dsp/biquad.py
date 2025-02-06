@@ -399,6 +399,13 @@ class biquad_slew(biquad):
         """
         raise NotImplementedError
 
+    def process_xcore (self, sample: float, channel: int = 0) -> float:
+        """
+        Filter a single sample using direct form 1 biquad using floating
+        point maths. This will slew the coeffs towards the target coefficients.
+
+        """
+        raise NotImplementedError
 
     def process_channels(self, sample_list: list[float]):
 
