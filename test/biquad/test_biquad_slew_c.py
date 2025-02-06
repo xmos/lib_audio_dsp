@@ -12,6 +12,7 @@ import audio_dsp.dsp.signal_gen as gen
 import pytest
 from ..test_utils import xdist_safe_bin_write
 from .test_biquad_c import float_to_qxx, qxx_to_float
+import os
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
@@ -49,29 +50,34 @@ def run_py_slew(filt: bq.biquad_slew, sig_fl, coeffs_2):
     return out_int
 
 
-def single_slew_test(filt, tname, sig_fl, coeffs_2):
+def single_slew_test(filt, tname, sig_fl, filt_2):
   test_dir = bin_dir / tname
   test_dir.mkdir(exist_ok = True, parents = True)
   coeffs_arr = np.array(filt.int_coeffs, dtype=np.int32)
   shift_arr = np.array(filt.b_shift, dtype=np.int32)
-  filt_info = np.append(coeffs_arr, shift_arr)
+  slew_arr = np.array(filt.slew_shift, dtype=np.int32)
+  filt_info = np.append(coeffs_arr, (shift_arr, slew_arr))
+
   filt_info.tofile(test_dir / "coeffs.bin")
 
-  _, coeffs_2_int = bq._round_and_check(coeffs_2, filt.b_shift)
+  # _, coeffs_2_int = bq._round_and_check(coeffs_2, filt.b_shift)
 
-  coeffs_2_arr = np.array(coeffs_2_int, dtype=np.int32)
-  slew_arr = np.array(filt.slew_shift, dtype=np.int32)
-  filt_2_info = np.append(coeffs_2_arr, slew_arr)
+  coeffs_arr = np.array(filt_2.int_coeffs, dtype=np.int32)
+  shift_arr = np.array(filt_2.b_shift, dtype=np.int32)
+  filt_2_info = np.append(coeffs_arr, shift_arr)
   filt_2_info.tofile(test_dir / "coeffs_2.bin")
 
-  out_py_int = run_py_slew(filt, sig_fl, coeffs_2)
+  out_py_int = run_py_slew(filt, sig_fl, filt_2.coeffs)
   out_c = get_c_slew_wav(test_dir)
   shutil.rmtree(test_dir)
 
   np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
-@pytest.mark.parametrize("filter_1", [["biquad_constant_q", 100, 8, -10], ["biquad_gain", 0]])
-@pytest.mark.parametrize("filter_2", [["biquad_constant_q", 10000, 8, -10], ["biquad_gain", -10]])
+  test_slew_c(sig_fl, ["biquad_highshelf", 1000, 1, 10], ["biquad_highshelf", 1000, 1, -6], 6)
+  # test_slew_c(sig_fl, ["biquad_peaking", 1000, 0.1, 50], ["biquad_highpass", 1000, 1], 3)
+
+@pytest.mark.parametrize("filter_1", [["biquad_constant_q", 100, 8, -10], ["biquad_gain", 0], ["biquad_constant_q", 10000, 8, -10], ["biquad_gain", -10],  ["biquad_highshelf", 1000, 1, 10], ["biquad_highshelf", 1000, 1, -6], ["biquad_peaking", 1000, 0.1, 50], ["biquad_highpass", 1000, 1]])
+@pytest.mark.parametrize("filter_2", [["biquad_constant_q", 100, 8, -10], ["biquad_gain", 0], ["biquad_constant_q", 10000, 8, -10], ["biquad_gain", -10],  ["biquad_highshelf", 1000, 1, 10], ["biquad_highshelf", 1000, 1, -6], ["biquad_peaking", 1000, 0.1, 50], ["biquad_highpass", 1000, 1]])
 @pytest.mark.parametrize("slew_shift", [6])
 def test_slew_c(in_signal, filter_1, filter_2, slew_shift):
 
@@ -84,8 +90,12 @@ def test_slew_c(in_signal, filter_1, filter_2, slew_shift):
   coeffs_2 = coeffs_hand_2(fs, *filter_2[1:])
 
   filt =bq.biquad_slew(coeffs_1, fs, 1, slew_shift=slew_shift)
-  filter_name = f"slew_{filter_type_1}_{filter_1[1]}_{filter_type_2}_{filter_2[1]}"
-  single_slew_test(filt, filter_name, in_signal, coeffs_2)
+  filt2 =bq.biquad_slew(coeffs_2, fs, 1, slew_shift=slew_shift)
+
+  worker_id = os.environ.get("PYTEST_XDIST_WORKER")
+
+  filter_name = f"{worker_id}_slew_{filter_type_1}_{filter_1[1]}_{filter_type_2}_{filter_2[1]}"
+  single_slew_test(filt, filter_name, in_signal, filt2)
 
 def get_sig(len=0.05):
 

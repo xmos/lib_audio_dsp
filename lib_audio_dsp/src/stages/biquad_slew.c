@@ -14,8 +14,7 @@ void biquad_slew_process(int32_t **input, int32_t **output, void *app_data_state
     biquad_slew_state_t *state = app_data_state;
 
     for (int i=0; i < state->frame_size; i++){
-        adsp_biquad_slew_coeffs(state->config.filter_coeffs,
-                                &(state->slew_state), 
+        adsp_biquad_slew_coeffs(&(state->slew_state), 
                                 state->filter_states,
                                 state->n_outputs);
         for (int j=0; j < state->n_outputs; j++){

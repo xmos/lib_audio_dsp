@@ -23,6 +23,7 @@ int main()
   int32_t DWORD_ALIGNED taps_buf_2[8] = {0};
   int32_t state[8] = {0};
   left_shift_t lsh = 0;
+  left_shift_t lsh_2 = 0;
   int32_t shift = 0;
 
   FILE * in = _fopen("../slew_sig_48k.bin", "rb");
@@ -36,14 +37,11 @@ int main()
 
   fread(taps_buf, sizeof(int32_t), 5, coeffs);
   fread(&lsh, sizeof(int32_t), 1, coeffs);
+  fread(&shift, sizeof(int32_t), 1, coeffs);
   fclose(coeffs);
 
-  // coeffs = _fopen("coeffs.bin", "rb");
-  // fread(taps_buf_1, sizeof(int32_t), 5, coeffs);
-  // fclose(coeffs);
-
   fread(taps_buf_2, sizeof(int32_t), 5, coeffs_2);
-  fread(&shift, sizeof(int32_t), 1, coeffs_2);
+  fread(&lsh_2, sizeof(int32_t), 1, coeffs_2);
   fclose(coeffs_2);
   
   adsp_biquad_slew_state_t slew_state;
@@ -53,7 +51,7 @@ int main()
 
   for (unsigned i = 0; i < in_len/2; i++)
   {
-    adsp_biquad_slew_coeffs(taps_buf, &slew_state, states, 1);
+    adsp_biquad_slew_coeffs(&slew_state, states, 1);
     int32_t samp = 0, samp_out = 0;
     fread(&samp, sizeof(int32_t), 1, in);
     //printf("%ld ", samp);
@@ -62,9 +60,11 @@ int main()
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }
 
+  adsp_biquad_slew_state_update_coeffs(&slew_state, taps_buf_2, lsh_2);
+
   for (unsigned i = in_len/2; i < in_len; i++)
   {
-    adsp_biquad_slew_coeffs(taps_buf_2, &slew_state, states, 1);
+    adsp_biquad_slew_coeffs(&slew_state, states, 1);
     int32_t samp = 0, samp_out = 0;
     fread(&samp, sizeof(int32_t), 1, in);
     //printf("%ld ", samp);

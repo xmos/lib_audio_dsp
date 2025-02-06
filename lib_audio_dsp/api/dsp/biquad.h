@@ -23,6 +23,7 @@ int32_t adsp_biquad(
 
 
 typedef struct {
+  q2_30 DWORD_ALIGNED target_coeffs[8];
   q2_30 DWORD_ALIGNED coeffs[8];
   int32_t slew_shift;
   left_shift_t remaining_shifts;
@@ -37,9 +38,13 @@ void adsp_biquad_slew_state_init(
   left_shift_t slew_shift
 );
 
+void adsp_biquad_slew_state_update_coeffs(
+  adsp_biquad_slew_state_t* slew_state,
+  q2_30 target_coeffs[8],
+  left_shift_t lsh
+);
 
 void adsp_biquad_slew_coeffs(
-  q2_30 target_coeffs[8],
   adsp_biquad_slew_state_t* slew_state,
   int32_t** states,
   int32_t channels

@@ -5,7 +5,6 @@
 
 
 void adsp_biquad_slew_coeffs(
-  q2_30 target_coeffs[8],
   adsp_biquad_slew_state_t* slew_state,
   int32_t** states,
   int32_t channels
@@ -14,11 +13,11 @@ void adsp_biquad_slew_coeffs(
   if (slew_state->remaining_shifts > 0){
     // change in b_shift to manage, target_coeffs have less headroom, so add the headroom back
     for (int i=0; i < 3; i++){
-      int32_t tmp_target = target_coeffs[i] >> slew_state->remaining_shifts;
+      int32_t tmp_target = slew_state->target_coeffs[i] >> slew_state->remaining_shifts;
       slew_state->coeffs[i] += (tmp_target - slew_state->coeffs[i]) >> slew_state->slew_shift;
     }  
     for (int i=3; i < 5; i++){
-      slew_state->coeffs[i] += (target_coeffs[i] - slew_state->coeffs[i]) >> slew_state->slew_shift;
+      slew_state->coeffs[i] += (slew_state->target_coeffs[i] - slew_state->coeffs[i]) >> slew_state->slew_shift;
     }
 
     // see if we have headroom to do the shift
@@ -50,7 +49,7 @@ void adsp_biquad_slew_coeffs(
   }
   else{
     for (int i=0; i < 5; i++){
-      slew_state->coeffs[i] += (target_coeffs[i] - slew_state->coeffs[i]) >> slew_state->slew_shift;
+      slew_state->coeffs[i] += (slew_state->target_coeffs[i] - slew_state->coeffs[i]) >> slew_state->slew_shift;
     }
   }
 
@@ -62,8 +61,19 @@ void adsp_biquad_slew_state_init(
   left_shift_t lsh,
   left_shift_t slew_shift
 ){
+  memcpy(slew_state->target_coeffs, target_coeffs, 5*sizeof(int32_t));
   memcpy(slew_state->coeffs, target_coeffs, 5*sizeof(int32_t));
   slew_state->remaining_shifts = 0;
   slew_state->lsh = lsh;
   slew_state->slew_shift = slew_shift;
   }
+
+
+void adsp_biquad_slew_state_update_coeffs(
+  adsp_biquad_slew_state_t* slew_state,
+  q2_30 target_coeffs[8],
+  left_shift_t lsh
+){
+  memcpy(slew_state->target_coeffs, target_coeffs, 5*sizeof(int32_t));
+  slew_state->lsh = lsh;
+}
