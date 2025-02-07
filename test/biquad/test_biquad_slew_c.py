@@ -60,8 +60,6 @@ def single_slew_test(filt, tname, sig_fl, filt_2):
 
   filt_info.tofile(test_dir / "coeffs.bin")
 
-  # _, coeffs_2_int = bq._round_and_check(coeffs_2, filt.b_shift)
-
   coeffs_arr = np.array(filt_2.int_coeffs, dtype=np.int32)
   shift_arr = np.array(filt_2.b_shift, dtype=np.int32)
   filt_2_info = np.append(coeffs_arr, shift_arr)
@@ -73,8 +71,6 @@ def single_slew_test(filt, tname, sig_fl, filt_2):
 
   np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
-  test_slew_c(sig_fl, ["biquad_highshelf", 1000, 1, 10], ["biquad_highshelf", 1000, 1, -6], 6)
-  # test_slew_c(sig_fl, ["biquad_peaking", 1000, 0.1, 50], ["biquad_highpass", 1000, 1], 3)
 
 @pytest.mark.parametrize("filter_1", [["biquad_constant_q", 100, 8, -10], ["biquad_gain", 0], ["biquad_constant_q", 10000, 8, -10], ["biquad_gain", -10],  ["biquad_highshelf", 1000, 1, 10], ["biquad_highshelf", 1000, 1, -6], ["biquad_peaking", 1000, 0.1, 50], ["biquad_highpass", 1000, 1]])
 @pytest.mark.parametrize("filter_2", [["biquad_constant_q", 100, 8, -10], ["biquad_gain", 0], ["biquad_constant_q", 10000, 8, -10], ["biquad_gain", -10],  ["biquad_highshelf", 1000, 1, 10], ["biquad_highshelf", 1000, 1, -6], ["biquad_peaking", 1000, 0.1, 50], ["biquad_highpass", 1000, 1]])
@@ -120,7 +116,6 @@ def in_signal():
   return get_sig()
 
 if __name__ == "__main__":
-  from test_biquad_c import get_sig
   bin_dir.mkdir(exist_ok=True, parents=True)
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
