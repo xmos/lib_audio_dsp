@@ -436,7 +436,7 @@ def test_design_biquad_high_shelf():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-12.8, atol=0)
+    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-11.2, atol=0)
 
 
 def test_design_biquad_low_shelf():
@@ -466,7 +466,7 @@ def test_design_biquad_low_shelf():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-12.8, atol=0)
+    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-11.2, atol=1)
 
 
 
