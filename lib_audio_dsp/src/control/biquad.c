@@ -14,7 +14,6 @@
 
 static const float pi =    (float)M_PI;
 static const float log_2 = 0.69314718055f;
-// static const float db_2 = 6.02059991328f;  // 20*log10(2)
 
 static inline float _check_fc(float fc, float fs) {
   float fc_sat = fc;
@@ -25,14 +24,6 @@ static inline float _check_fc(float fc, float fs) {
   return fc_sat;
 }
 
-// static inline float _check_gain(float gain, float max_gain) {
-//   float gain_sat = gain;
-//   // saturate if > fs/2
-//   if (gain_sat >= max_gain){
-//     gain_sat = max_gain;
-//   }
-//   return gain_sat;
-// }
 
 static inline left_shift_t _get_b_shift(float b0, float b1, float b2) {
 
@@ -66,7 +57,7 @@ left_shift_t adsp_design_biquad_bypass(q2_30 coeffs[5]) {
   coeffs[3] = 0;
   coeffs[4] = 0;
 
-  // b_shift is zero for bypass
+  // b_shift is always zero for this type of filter
   return 0;
 }
 
@@ -77,7 +68,7 @@ left_shift_t adsp_design_biquad_mute(q2_30 coeffs[5]) {
   coeffs[3] = 0;
   coeffs[4] = 0;
 
-  // b_shift is zero for mute
+  // b_shift is always zero for this type of filter
   return 0;
 }
 
@@ -129,6 +120,7 @@ left_shift_t adsp_design_biquad_lowpass
   coeffs[3] = _float2fixed_assert( -a1, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2, Q_factor );
 
+  // b_shift is always zero for this type of filter
   return 0;
 }
 
@@ -161,6 +153,7 @@ left_shift_t adsp_design_biquad_highpass
   coeffs[3] = _float2fixed_assert( -a1, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2, Q_factor );
 
+  // b_shift is always zero for this type of filter
   return 0;
 }
 
@@ -196,6 +189,7 @@ left_shift_t adsp_design_biquad_bandpass
   coeffs[3] = _float2fixed_assert( -a1 * inv_a0, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2 * inv_a0, Q_factor );
 
+  // b_shift is always zero for this type of filter
   return 0;
 }
 
@@ -230,6 +224,7 @@ left_shift_t adsp_design_biquad_bandstop
   coeffs[3] = _float2fixed_assert( -a1 * inv_a0, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2 * inv_a0, Q_factor );
 
+  // b_shift is always zero for this type of filter
   return 0;
 }
 
@@ -255,7 +250,6 @@ left_shift_t adsp_design_biquad_notch
   float a1 = b1;
   float a2 = (1.0f - KQ + KK) * norm;
 
-
   // Store as fixed-point values
   coeffs[0] = _float2fixed_assert(  b0, Q_factor );
   coeffs[1] = _float2fixed_assert(  b1, Q_factor );
@@ -263,6 +257,7 @@ left_shift_t adsp_design_biquad_notch
   coeffs[3] = _float2fixed_assert( -a1, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2, Q_factor );
 
+  // b_shift is always zero for this type of filter
   return 0;
 }
 
@@ -296,6 +291,7 @@ left_shift_t adsp_design_biquad_allpass
   coeffs[3] = _float2fixed_assert( -a1, Q_factor );
   coeffs[4] = _float2fixed_assert( -a2, Q_factor );
 
+  // b_shift is always zero for this type of filter
   return 0;
 }
 
@@ -308,7 +304,6 @@ left_shift_t adsp_design_biquad_peaking
   const float filter_Q,
   const float gain_db
 ) {
-  // float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT + 1)*db_2);
   float fc_sat = _check_fc(fc, fs);
 
   // Compute common factors
@@ -346,7 +341,6 @@ left_shift_t adsp_design_biquad_const_q
   const float filter_Q,
   const float gain_db
 ) {
-  // float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT + 1)*db_2);
   float fc_sat = _check_fc(fc, fs);
 
   // Compute common factors
@@ -400,7 +394,6 @@ left_shift_t adsp_design_biquad_lowshelf
   const float filter_Q,
   const float gain_db
 ) {
-  // float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT)*db_2);
   float fc_sat = _check_fc(fc, fs);
 
   // Compute common factors
@@ -447,7 +440,6 @@ left_shift_t adsp_design_biquad_highshelf
   const float filter_Q,
   const float gain_db
 ) {
-  // float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT)*db_2);
   float fc_sat = _check_fc(fc, fs);
 
   // Compute common factors
@@ -512,7 +504,6 @@ left_shift_t adsp_design_biquad_linkwitz(
 
   float gn = 2.0f * half_w_fc * (1.0f / (tanf(half_w_fc / fs)));
   float gn_pow2 = gn * gn;
-
 
   float factor_b = gn * d1i;
   float factor_a = gn * c1i;
