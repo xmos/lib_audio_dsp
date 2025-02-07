@@ -48,9 +48,7 @@ class cascaded_biquads_8(dspg.dsp_block):
         )
         for n in range(8):
             if n < len(coeffs_list):
-                self.biquads.append(
-                    bq.biquad(coeffs_list[n], fs, n_chans, Q_sig=Q_sig)
-                )
+                self.biquads.append(bq.biquad(coeffs_list[n], fs, n_chans, Q_sig=Q_sig))
             else:
                 self.biquads.append(bq.biquad(bq.make_biquad_bypass(fs), fs, n_chans, Q_sig=Q_sig))
 

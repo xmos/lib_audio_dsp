@@ -73,6 +73,7 @@ void biquad_slew_control(void *module_state, module_control_t *control)
         adsp_biquad_slew_state_update_coeffs(&(state->slew_state), state->filter_states,
         state->n_inputs, config->filter_coeffs, config->left_shift);
         state->slew_state.lsh = config->slew_shift;
+        control->config_rw_state = config_none_pending;
     }
     else if(control->config_rw_state == config_read_pending)
     {

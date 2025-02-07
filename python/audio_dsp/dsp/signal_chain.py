@@ -38,10 +38,12 @@ def _check_gain(value):
         value = 24
     return value
 
+
 class _combiners(dspg.dsp_block):
     """_combiners take multiple inputs and combine them to one output,
-    so the output frame size is different
+    so the output frame size is different.
     """
+
     def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
         """
         Take a list frames of samples and return the processed frames,
@@ -661,7 +663,6 @@ class switch(_combiners):
             The sample at the current switch position.
         """
         return self.process_channels(sample_list)
-
 
     def move_switch(self, position: int) -> None:
         """Move the switch to the specified position. This will cause

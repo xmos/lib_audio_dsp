@@ -353,8 +353,8 @@ class biquad_slew(biquad):
     ):
         dspg.dsp_block.__init__(self, fs, n_chans, Q_sig)
         self.b_shift = _get_bshift(coeffs)
-        self.coeffs = [0.0]*5
-        self.int_coeffs = [0]*5
+        self.coeffs = [0.0] * 5
+        self.int_coeffs = [0] * 5
         self.reset_state()
         self.update_coeffs(coeffs)
         self.coeffs[:] = self.target_coeffs
@@ -385,9 +385,7 @@ class biquad_slew(biquad):
         if b_shift_change < 0:
             b_shift_change = -b_shift_change
             self.coeffs[:3] = [x * 2**-b_shift_change for x in self.coeffs[:3]]
-            self.int_coeffs[:3] = [
-                x >> b_shift_change for x in self.int_coeffs[:3]
-            ]
+            self.int_coeffs[:3] = [x >> b_shift_change for x in self.int_coeffs[:3]]
             for chan in range(self.n_chans):
                 if type(self._y1[chan]) is int:
                     self._y1[chan] = self._y1[chan] >> b_shift_change
@@ -395,8 +393,6 @@ class biquad_slew(biquad):
                 else:
                     self._y1[chan] = self._y1[chan] * 2**-b_shift_change
                     self._y2[chan] = self._y2[chan] * 2**-b_shift_change
-
-
 
     def process(self, sample: float, channel: int = 0) -> float:
         """
@@ -406,7 +402,7 @@ class biquad_slew(biquad):
         """
         raise NotImplementedError
 
-    def process_xcore (self, sample: float, channel: int = 0) -> float:
+    def process_xcore(self, sample: float, channel: int = 0) -> float:
         """
         Filter a single sample using direct form 1 biquad using floating
         point maths. This will slew the coeffs towards the target coefficients.
@@ -415,23 +411,22 @@ class biquad_slew(biquad):
         raise NotImplementedError
 
     def process_channels(self, sample_list: list[float]):
-
         if self.remaining_shifts > 0:
-
             tmp_target = deepcopy(self.target_coeffs)
-            tmp_target[:3] = [x * (2**(-self.remaining_shifts)) for x in tmp_target[:3]]
+            tmp_target[:3] = [x * (2 ** (-self.remaining_shifts)) for x in tmp_target[:3]]
 
             for n in range(5):
                 self.coeffs[n] += (tmp_target[n] - self.coeffs[n]) * 2**-self.slew_shift
 
-            if (abs(self.coeffs[0]) < 1
+            if (
+                abs(self.coeffs[0]) < 1
                 and abs(self.coeffs[1]) < 1
                 and abs(self.coeffs[2]) < 1
                 and all(abs(x) < 1 for x in self._y1)
                 and all(abs(x) < 1 for x in self._y2)
             ):
                 # we now have the headroom to shift
-                self.coeffs[:3] = [x*2 for x in self.coeffs[:3]]
+                self.coeffs[:3] = [x * 2 for x in self.coeffs[:3]]
                 self._y1 = self._y1 * 2
                 self._y2 = self._y2 * 2
                 self.remaining_shifts -= 1
@@ -466,7 +461,6 @@ class biquad_slew(biquad):
         float before outputting.
 
         """
-
         if self.remaining_shifts > 0:
             # change in b_shift to manage, target_coeffs have less headroom, so add the headroom back
             tmp_target = deepcopy(self.target_coeffs_int)
@@ -475,16 +469,16 @@ class biquad_slew(biquad):
             # do the slew
             for n in range(5):
                 self.int_coeffs[n] += (
-                utils.saturate_int32_vpu(tmp_target[n] - self.int_coeffs[n])
-                >> self.slew_shift
-            )
+                    utils.saturate_int32_vpu(tmp_target[n] - self.int_coeffs[n]) >> self.slew_shift
+                )
 
             # see if we have headroom to do the shift
-            if (abs(self.int_coeffs[0]) < ((2**30))
-                and abs(self.int_coeffs[1]) < ((2**30))
-                and abs(self.int_coeffs[2]) < ((2**30))
-                and all(abs(x) < ((2**30)) for x in self._y1)
-                and all(abs(x) < ((2**30)) for x in self._y2)
+            if (
+                abs(self.int_coeffs[0]) < (2**30)
+                and abs(self.int_coeffs[1]) < (2**30)
+                and abs(self.int_coeffs[2]) < (2**30)
+                and all(abs(x) < (2**30) for x in self._y1)
+                and all(abs(x) < (2**30) for x in self._y2)
             ):
                 # we now have the headroom to shift
                 self.int_coeffs[:3] = [utils.int32(x << 1) for x in self.int_coeffs[:3]]
@@ -496,9 +490,9 @@ class biquad_slew(biquad):
             # no change in b_shift to manage, so can just slew
             for n in range(5):
                 self.int_coeffs[n] += (
-                utils.saturate_int32_vpu(self.target_coeffs_int[n] - self.int_coeffs[n])
-                >> self.slew_shift
-            )
+                    utils.saturate_int32_vpu(self.target_coeffs_int[n] - self.int_coeffs[n])
+                    >> self.slew_shift
+                )
 
         out_samples = deepcopy(sample_list)
         for channel in range(len(sample_list)):
