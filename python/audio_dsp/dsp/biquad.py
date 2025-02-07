@@ -382,11 +382,11 @@ class biquad_slew(biquad):
             self.b_shift = self.b_shift + self.remaining_shifts
         if b_shift_change < 0:
             b_shift_change = -b_shift_change
+            self.coeffs[:3] = [x * 2**-b_shift_change for x in self.coeffs[:3]]
+            self.int_coeffs[:3] = [
+                x >> b_shift_change for x in self.int_coeffs[:3]
+            ]
             for chan in range(self.n_chans):
-                self.coeffs[:3] = [x * 2**-b_shift_change for x in self.coeffs[:3]]
-                self.int_coeffs[:3] = [
-                    x >> b_shift_change for x in self.int_coeffs[:3]
-                ]
                 self._y1[chan] = self._y1[chan] * 2**-b_shift_change
                 self._y2[chan] = self._y2[chan] * 2**-b_shift_change
 
@@ -408,7 +408,6 @@ class biquad_slew(biquad):
         raise NotImplementedError
 
     def process_channels(self, sample_list: list[float]):
-
 
         if (
             self.remaining_shifts > 0

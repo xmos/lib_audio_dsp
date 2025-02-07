@@ -60,7 +60,7 @@ int main()
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }
 
-  adsp_biquad_slew_state_update_coeffs(&slew_state, taps_buf_2, lsh_2);
+  adsp_biquad_slew_state_update_coeffs(&slew_state, states, 1, taps_buf_2, lsh_2);
 
   for (unsigned i = in_len/2; i < in_len; i++)
   {

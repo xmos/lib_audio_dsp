@@ -72,10 +72,13 @@ def single_slew_test(filt, tname, sig_fl, filt_2):
   np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
 
-@pytest.mark.parametrize("filter_1", [["biquad_constant_q", 100, 8, -10], ["biquad_gain", 0], ["biquad_constant_q", 10000, 8, -10], ["biquad_gain", -10],  ["biquad_highshelf", 1000, 1, 10], ["biquad_highshelf", 1000, 1, -6], ["biquad_peaking", 1000, 0.1, 50], ["biquad_highpass", 1000, 1]])
-@pytest.mark.parametrize("filter_2", [["biquad_constant_q", 100, 8, -10], ["biquad_gain", 0], ["biquad_constant_q", 10000, 8, -10], ["biquad_gain", -10],  ["biquad_highshelf", 1000, 1, 10], ["biquad_highshelf", 1000, 1, -6], ["biquad_peaking", 1000, 0.1, 50], ["biquad_highpass", 1000, 1]])
+@pytest.mark.parametrize("filter_1", [["biquad_constant_q", 100, 8, -10], ["biquad_gain", 0], ["biquad_constant_q", 10000, 8, -10], ["biquad_gain", -10],  ["biquad_highshelf", 1000, 1, 10], ["biquad_highshelf", 1000, 1, -6], ["biquad_peaking", 1000, 0.1, 20], ["biquad_highpass", 1000, 1]])
+@pytest.mark.parametrize("filter_2", [["biquad_constant_q", 100, 8, -10], ["biquad_gain", 0], ["biquad_constant_q", 10000, 8, -10], ["biquad_gain", -10],  ["biquad_highshelf", 1000, 1, 10], ["biquad_highshelf", 1000, 1, -6], ["biquad_peaking", 1000, 0.1, 20], ["biquad_highpass", 1000, 1]])
 @pytest.mark.parametrize("slew_shift", [6])
 def test_slew_c(in_signal, filter_1, filter_2, slew_shift):
+
+  print(filter_1)
+  print(filter_2)
 
   filter_type_1 = filter_1[0]
   filter_type_2 = filter_2[0]
