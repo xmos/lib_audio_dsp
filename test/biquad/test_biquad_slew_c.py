@@ -50,7 +50,7 @@ def run_py_slew(filt: bq.biquad_slew, sig_fl, coeffs_2):
     return out_int
 
 
-def single_slew_test(filt, tname, sig_fl, filt_2):
+def single_slew_test(filt, tname, sig_fl, filt_2, coeffs_2):
   test_dir = bin_dir / tname
   test_dir.mkdir(exist_ok = True, parents = True)
   coeffs_arr = np.array(filt.int_coeffs, dtype=np.int32)
@@ -65,7 +65,7 @@ def single_slew_test(filt, tname, sig_fl, filt_2):
   filt_2_info = np.append(coeffs_arr, shift_arr)
   filt_2_info.tofile(test_dir / "coeffs_2.bin")
 
-  out_py_int = run_py_slew(filt, sig_fl, filt_2.coeffs)
+  out_py_int = run_py_slew(filt, sig_fl, coeffs_2)
   out_c = get_c_slew_wav(test_dir)
   shutil.rmtree(test_dir)
 
@@ -94,11 +94,12 @@ def test_slew_c(in_signal, filter_1, filter_2, slew_shift):
   worker_id = os.environ.get("PYTEST_XDIST_WORKER")
 
   filter_name = f"{worker_id}_slew_{filter_type_1}_{filter_1[1]}_{filter_type_2}_{filter_2[1]}"
-  single_slew_test(filt, filter_name, in_signal, filt2)
+  single_slew_test(filt, filter_name, in_signal, filt2, coeffs_2)
 
 def get_sig(len=0.05):
+  sig_fl = gen.log_chirp(fs, len, 0.5)
 
-  sig_fl = np.ones(int(len*fs))*0.5
+  # sig_fl = np.ones(int(len*fs))*0.5
   sig_int = float_to_qxx(sig_fl)
 
   name = "slew_sig_48k"
