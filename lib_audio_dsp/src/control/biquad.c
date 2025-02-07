@@ -14,7 +14,7 @@
 
 static const float pi =    (float)M_PI;
 static const float log_2 = 0.69314718055f;
-static const float db_2 = 6.02059991328f;  // 20*log10(2)
+// static const float db_2 = 6.02059991328f;  // 20*log10(2)
 
 static inline float _check_fc(float fc, float fs) {
   float fc_sat = fc;
@@ -25,14 +25,14 @@ static inline float _check_fc(float fc, float fs) {
   return fc_sat;
 }
 
-static inline float _check_gain(float gain, float max_gain) {
-  float gain_sat = gain;
-  // saturate if > fs/2
-  if (gain_sat >= max_gain){
-    gain_sat = max_gain;
-  }
-  return gain_sat;
-}
+// static inline float _check_gain(float gain, float max_gain) {
+//   float gain_sat = gain;
+//   // saturate if > fs/2
+//   if (gain_sat >= max_gain){
+//     gain_sat = max_gain;
+//   }
+//   return gain_sat;
+// }
 
 static inline left_shift_t _get_b_shift(float b0, float b1, float b2) {
 
@@ -46,6 +46,10 @@ static inline left_shift_t _get_b_shift(float b0, float b1, float b2) {
   tmp = fabsf(b2);
   if (tmp > max_b){
     max_b = tmp;
+  }
+
+  if (max_b == 0){
+    return 0;
   }
 
   tmp = floorf(log2f(max_b));
@@ -304,11 +308,11 @@ left_shift_t adsp_design_biquad_peaking
   const float filter_Q,
   const float gain_db
 ) {
-  float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT + 1)*db_2);
+  // float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT + 1)*db_2);
   float fc_sat = _check_fc(fc, fs);
 
   // Compute common factors
-  float A  = powf(10.0f, (gain_db_sat * (1.0f / 40.0f)));
+  float A  = powf(10.0f, (gain_db * (1.0f / 40.0f)));
   float w0 = 2.0f * pi * (fc_sat / fs); 
   // intentional double precision, gets extra precision
   float alpha = f32_sin(w0) / (2.0 * filter_Q);
@@ -342,18 +346,18 @@ left_shift_t adsp_design_biquad_const_q
   const float filter_Q,
   const float gain_db
 ) {
-  float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT + 1)*db_2);
+  // float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT + 1)*db_2);
   float fc_sat = _check_fc(fc, fs);
 
   // Compute common factors
-  float V = powf(10.0f, (gain_db_sat * (1.0f/ 20.0f)));
+  float V = powf(10.0f, (gain_db * (1.0f/ 20.0f)));
   // w0 is only needed for calculating K
   float K = tanf(pi * fc_sat / fs);
 
   float factor_a = K / filter_Q;
   float factor_b = 0;
   float K_pow2 = K * K;
-  if(gain_db_sat > 0) {
+  if(gain_db > 0) {
     factor_b = V * factor_a;
   }
   else
@@ -396,11 +400,11 @@ left_shift_t adsp_design_biquad_lowshelf
   const float filter_Q,
   const float gain_db
 ) {
-  float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT)*db_2);
+  // float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT)*db_2);
   float fc_sat = _check_fc(fc, fs);
 
   // Compute common factors
-  float A  = powf(10.0f, (gain_db_sat * (1.0f / 40.0f)));
+  float A  = powf(10.0f, (gain_db * (1.0f / 40.0f)));
   float w0 = 2.0f * pi * fc_sat / fs;
   float alpha = sinf(w0) / (2.0f * filter_Q);
 
@@ -443,11 +447,11 @@ left_shift_t adsp_design_biquad_highshelf
   const float filter_Q,
   const float gain_db
 ) {
-  float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT)*db_2);
+  // float gain_db_sat = _check_gain(gain_db, (float)(BOOST_BSHIFT)*db_2);
   float fc_sat = _check_fc(fc, fs);
 
   // Compute common factors
-  float A  = powf(10.0f, (gain_db_sat * (1.0f / 40.0f)));
+  float A  = powf(10.0f, (gain_db * (1.0f / 40.0f)));
   float w0 = 2.0f * pi * fc_sat / fs;
   float alpha = sinf(w0) / (2.0f * filter_Q);
 

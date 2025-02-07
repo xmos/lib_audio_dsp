@@ -629,7 +629,11 @@ def _get_bshift(coeffs: list[float]) -> int:
     if len(coeffs) != 5:
         raise ValueError("coeffs should be in the form [b0 b1 b2 -a1 -a2]")
     b_coeffs = coeffs[:3]
-    shr = int(np.floor(np.log2(np.max(np.abs(b_coeffs)))))
+    max_b = np.max(np.abs(b_coeffs))
+    if max_b != 0:
+        shr = int(np.floor(np.log2(max_b)))
+    else:
+        return 0
     return shr if (shr >= 0) else 0
 
 
