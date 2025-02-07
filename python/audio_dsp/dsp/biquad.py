@@ -381,7 +381,7 @@ class biquad_slew(biquad):
         if b_shift_change > 0:
             # we can't shift safely until we know we have headroom
             self.remaining_shifts = b_shift_change
-            self.b_shift = old_b_shift
+            self.b_shift += self.remaining_shifts
         if b_shift_change < 0:
             b_shift_change = -b_shift_change
             self.coeffs[:3] = [x * 2**-b_shift_change for x in self.coeffs[:3]]
@@ -389,8 +389,13 @@ class biquad_slew(biquad):
                 x >> b_shift_change for x in self.int_coeffs[:3]
             ]
             for chan in range(self.n_chans):
-                self._y1[chan] = self._y1[chan] * 2**-b_shift_change
-                self._y2[chan] = self._y2[chan] * 2**-b_shift_change
+                if type(self._y1[chan]) is int:
+                    self._y1[chan] = self._y1[chan] >> b_shift_change
+                    self._y2[chan] = self._y2[chan] >> b_shift_change
+                else:
+                    self._y1[chan] = self._y1[chan] * 2**-b_shift_change
+                    self._y2[chan] = self._y2[chan] * 2**-b_shift_change
+
 
 
     def process(self, sample: float, channel: int = 0) -> float:
