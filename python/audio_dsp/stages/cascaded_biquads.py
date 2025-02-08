@@ -12,8 +12,9 @@ from pydantic import BaseModel, Field, RootModel, create_model
 from pydantic.json_schema import SkipJsonSchema
 
 import audio_dsp.stages.biquad as bq
-from audio_dsp.design.stage import Stage, StageModel, StageParameters, find_config
+from audio_dsp.design.stage import Stage, find_config
 from audio_dsp.dsp import cascaded_biquads as casc_bq
+from audio_dsp.models.cascaded_biquads import ParametricEqParameters
 
 
 def _parametric_eq_doc(wrapped):
@@ -92,82 +93,88 @@ class CascadedBiquads(Stage):
         self.stage_memory_parameters = (self.n_in,)
 
     def _get_fixed_point_coeffs(self):
-        fc = []
+        """Get the fixed point coefficients for all biquads."""
+        coeffs = []
         for bq in self.dsp_block.biquads:
-            fc.extend(bq.coeffs)
-        a = np.array(fc)
-        return np.array(a * (2**30), dtype=np.int32)
+            coeffs.extend(bq.coeffs)
+        return coeffs
 
     @_parametric_eq_doc
     def make_parametric_eq(self, filter_spec: list[list[Any]]) -> "CascadedBiquads":
-        """Configure this instance as a Parametric Equaliser.
+        """Update parametric eq configuration based on new parameters.
 
-        This allows each of the 8 biquads to be individually designed using the designer
-        methods for the biquad. This expects to receive a list of up to 8 biquad design descriptions
-        where a biquad design description is of the form::
+        Parameters
+        ----------
+        filter_spec : list[list[Any]]
+            A list of lists, each inner list contains the parameters for
+            a single biquad filter. The first element of each inner list
+            is the filter type, the remaining elements are the
+            parameters for that filter type. The available filter types
+            and their parameters are:{generated_doc}
 
-            ["type", args...]
-
-        where "type" is a string defining how the biquad should be designed e.g. "lowpass", and args...
-        is all the parameters to design that type of filter. All options and arguments are listed below::{generated_doc}
+        Returns
+        -------
+        CascadedBiquads
+            self
         """
-        self.details = dict(type="parametric")
+        self.details = dict(filter_spec=filter_spec)
         self.dsp_block = casc_bq.parametric_eq_8band(self.fs, self.n_in, filter_spec)
         return self
 
     def make_butterworth_highpass(self, N: int, fc: float) -> "CascadedBiquads":
-        """Configure this instance as an Nth order Butterworth highpass
-        filter using N/2 cascaded biquads.
-
-        For details on the implementation, see
-        :class:`audio_dsp.dsp.cascaded_biquads.make_butterworth_highpass`
+        """Update parametric eq configuration to be a butterworth highpass filter.
 
         Parameters
         ----------
         N : int
-            Filter order, must be even
+            The order of the filter. Must be even and less than 16.
         fc : float
-            -3 dB frequency in Hz.
+            The cutoff frequency in Hz.
+
+        Returns
+        -------
+        CascadedBiquads
+            self
         """
-        self.details = dict(type="butterworth highpass", N=N, fc=fc)
+        self.details = dict(N=N, fc=fc)
         self.dsp_block = casc_bq.butterworth_highpass(self.fs, self.n_in, N, fc)
         return self
 
     def make_butterworth_lowpass(self, N: int, fc: float) -> "CascadedBiquads":
-        """Configure this instance as an Nth order Butterworth lowpass
-        filter using N/2 cascaded biquads.
-
-        For details on the implementation, see
-        :class:`audio_dsp.dsp.cascaded_biquads.make_butterworth_lowpass`
+        """Update parametric eq configuration to be a butterworth lowpass filter.
 
         Parameters
         ----------
         N : int
-            Filter order, must be even
+            The order of the filter. Must be even and less than 16.
         fc : float
-            -3 dB frequency in Hz.
+            The cutoff frequency in Hz.
+
+        Returns
+        -------
+        CascadedBiquads
+            self
         """
-        self.details = dict(type="butterworth lowpass", N=N, fc=fc)
+        self.details = dict(N=N, fc=fc)
         self.dsp_block = casc_bq.butterworth_lowpass(self.fs, self.n_in, N, fc)
         return self
 
 
-def _8biquads():
-    return [bq.biquad_bypass() for _ in range(8)]
-
-
-class ParametricEqParameters(StageParameters):
-    filters: Annotated[list[bq.BIQUAD_TYPES], Len(8)] = Field(
-        default_factory=_8biquads, max_items=8
-    )
-
-
 class ParametricEq(CascadedBiquads):
-    class ParametricEq(StageModel):
-        op_type: Literal["ParametricEq"] = "ParametricEq"
-        parameters: ParametricEqParameters = Field(
-            default_factory=ParametricEqParameters
-        )
+    """A parametric equalizer stage. This stage allows up to 8 biquad
+    filters to be run in series. Each filter can be configured
+    independently.
+
+    For documentation on the individual biquad filters, see
+    :class:`audio_dsp.stages.biquad.Biquad` and
+    :class:`audio_dsp.dsp.biquad.biquad`
+
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.cascaded_biquad.cascaded_biquad`
+        The DSP block class; see :ref:`CascadedBiquads` for
+        implementation details.
+    """
 
     def set_parameters(self, parameters: ParametricEqParameters):
         model = parameters.model_dump()

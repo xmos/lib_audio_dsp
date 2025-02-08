@@ -5,19 +5,10 @@ of quiet signals, typically by tring to reduce the audibility of noise
 in the signal.
 """
 
-from pydantic import Field
-from pydantic.json_schema import SkipJsonSchema
-
-from audio_dsp.design.stage import Stage, StageModel, StageParameters, find_config
+from audio_dsp.design.stage import Stage, find_config
 from audio_dsp.dsp import drc as drc
 from audio_dsp.dsp import generic as dspg
-
-
-class NoiseSuppressorExpanderParameters(StageParameters):
-    ratio: float = Field(default=3)
-    threshold_db: float = Field(default=-35)
-    attack_t: float = Field(default=0.005)
-    release_t: float = Field(default=0.120)
+from audio_dsp.models.noise_suppressor_expander import NoiseSuppressorExpanderParameters
 
 
 class NoiseSuppressorExpander(Stage):
@@ -41,31 +32,12 @@ class NoiseSuppressorExpander(Stage):
         for implementation details.
     """
 
-    class NoiseSuppressorExpander(StageModel):
-        """The Noise Suppressor (Expander) stage. A noise suppressor that
-        reduces the level of an audio signal when it falls below a
-        threshold. This is also known as an expander.
-
-        When the signal envelope falls below the threshold, the gain applied
-        to the signal is reduced relative to the expansion ratio over the
-        release time. When the envelope returns above the threshold, the
-        gain applied to the signal is increased to 1 over the attack time.
-
-        The initial state of the noise suppressor is with the suppression
-        off; this models a full scale signal having been present before
-        t = 0.
-        """
-
-        parameters: NoiseSuppressorExpanderParameters = Field(
-            default_factory=NoiseSuppressorExpanderParameters
-        )
-
     def __init__(self, **kwargs):
         super().__init__(config=find_config("noise_suppressor_expander"), **kwargs)
         self.create_outputs(self.n_in)
 
-        threshold = -35
         ratio = 3
+        threshold = -35
         at = 0.005
         rt = 0.120
         self.dsp_block = drc.noise_suppressor_expander(
