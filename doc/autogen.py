@@ -26,7 +26,7 @@ DSP_GEN_DIR = Path(__file__).parent / DSP_COMP_DIR / "stages" / "gen"
 PY_STAGE_MAKO = Path(
     PYTHON_ROOT, "audio_dsp", "design", "templates", "py_stage_doc.mako"
 )
-YAML_DIR = Path(PYTHON_ROOT) / "audio_dsp" / "stage_config"
+YAML_DIR = Path(__file__).parent / "audio_dsp" / "stage_config"
 TOOL_USER_GEN_DIR = Path(__file__).parent / TOOLS_USER_GUIDE_DIR / "gen"
 
 

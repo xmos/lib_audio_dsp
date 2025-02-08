@@ -32,7 +32,7 @@ def find_config(name):
     Path
         Path to the config file.
     """
-    ret = Path(__file__).parents[3] / "stage_config" / f"{name}.yaml"
+    ret = Path(__file__).parents[2] / "audio_dsp" / "stage_config" / f"{name}.yaml"
     if not ret.exists():
         raise ValueError(f"{ret} does not exist")
     return ret
