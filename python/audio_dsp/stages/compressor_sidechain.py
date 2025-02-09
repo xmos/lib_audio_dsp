@@ -45,7 +45,9 @@ class CompressorSidechain(Stage):
         threshold = -35
         at = 0.005
         rt = 0.120
-        self.dsp_block = drc.compressor_sidechain(self.fs, ratio, threshold, at, rt)
+        self.dsp_block: drc.compressor_rms_sidechain_mono = drc.compressor_rms_sidechain_mono(
+            self.fs, ratio, threshold, at, rt
+        )
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
@@ -87,7 +89,7 @@ class CompressorSidechain(Stage):
             release_t=release_t,
             Q_sig=Q_sig,
         )
-        self.dsp_block = drc.compressor_sidechain(
+        self.dsp_block = drc.compressor_rms_sidechain_mono(
             self.fs, ratio, threshold_db, attack_t, release_t, Q_sig
         )
         return self
