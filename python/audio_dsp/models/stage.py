@@ -1,7 +1,6 @@
-from typing import Any, Type, Union
+from typing import Type, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from pydantic.json_schema import SkipJsonSchema
 
 
 class edgeProducerBaseModel(BaseModel):
@@ -25,7 +24,7 @@ class StageParameters(BaseModel, extra="ignore"):
 class NodePlacement(BaseModel, extra="forbid"):
     input: list[int] = Field(
         default=[],
-        description="Set of input edges, edges must be unique and not referenced anywhere else. Use the Fork stage to re-use edges.",
+        description="List of input edges.",
     )
     output: list[int] = Field(default=[], description="IDs of output edges.")
     name: str

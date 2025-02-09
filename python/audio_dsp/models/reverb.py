@@ -67,7 +67,7 @@ class ReverbPlateParameters(ReverbBaseParameters):
 class ReverbBasePlacement(BaseModel, extra="forbid"):
     input: list[int] = Field(
         default=[],
-        description="Set of input edges, edges must be unique and not referenced anywhere else. Use the Fork stage to re-use edges.",
+        description="List of input edges.",
         min_length=2,
         max_length=2,
     )

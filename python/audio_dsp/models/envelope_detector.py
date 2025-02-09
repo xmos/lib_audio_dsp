@@ -16,7 +16,7 @@ from .stage import StageConfig, StageModel, StageParameters
 class EnvelopeDetectorPlacement(BaseModel, extra="forbid"):
     input: list[int] = Field(
         default=[],
-        description="Set of input edges, edges must be unique and not referenced anywhere else. Use the Fork stage to re-use edges.",
+        description="Set of input edges.",
     )
     output: list[int] = Field([], max_length=0)
     name: str
