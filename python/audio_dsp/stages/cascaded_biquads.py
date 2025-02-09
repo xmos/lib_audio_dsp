@@ -4,17 +4,11 @@
 together in series.
 """
 
-from typing import Annotated, Any, Literal
+from typing import Any
 
-import numpy as np
-from annotated_types import Len
-from pydantic import BaseModel, Field, RootModel, create_model
-from pydantic.json_schema import SkipJsonSchema
-
-import audio_dsp.stages.biquad as bq
 from audio_dsp.design.stage import Stage, find_config
 from audio_dsp.dsp import cascaded_biquads as casc_bq
-from audio_dsp.models.cascaded_biquads import ParametricEqParameters
+from audio_dsp.models.cascaded_biquads import CascadedBiquadParameters
 
 
 def _parametric_eq_doc(wrapped):
@@ -176,7 +170,7 @@ class ParametricEq(CascadedBiquads):
         implementation details.
     """
 
-    def set_parameters(self, parameters: ParametricEqParameters):
+    def set_parameters(self, parameters: CascadedBiquadParameters):
         model = parameters.model_dump()
         biquads = [[*spec.values()] for spec in model["filters"]]
         self.make_parametric_eq(biquads)
