@@ -28,6 +28,16 @@ for the fixed point processing. Bit exactness is not always possible
 for modules that use 32b float operations, as the rounding of these can
 differ between C libraries.
 
+There are 3 layers of ``process`` functions:
+
+1) ``process`` operates for a single sample on a single channel
+2) ``process_channels`` operates on all channels for a single sample
+3) ``process_frame`` operates on all samples and channels for a single frame.
+
+A DSP module may overload one or all of these, depending if it operates
+sample-wise, channel-wise or frame-wise. It is expected that
+``process_frame`` will be called by higher level DSP Stages.
+
 .. autoclass:: audio_dsp.dsp.generic.dsp_block
     :members:
     :noindex:

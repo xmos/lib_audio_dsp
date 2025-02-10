@@ -20,7 +20,7 @@ int main()
 {
   int32_t DWORD_ALIGNED taps_buf[8] = {0};
   int32_t DWORD_ALIGNED taps_buf_2[8] = {0};
-  int32_t state[8] = {0};
+  int32_t DWORD_ALIGNED state[8] = {0};
   left_shift_t lsh = 0;
   left_shift_t lsh_2 = 0;
   int32_t shift = 0;
@@ -53,7 +53,7 @@ int main()
     int32_t samp = 0, samp_out = 0;
     fread(&samp, sizeof(int32_t), 1, in);
     //printf("%ld ", samp);
-    samp_out = adsp_biquad(samp, slew_state.coeffs, state, slew_state.lsh);
+    samp_out = adsp_biquad(samp, slew_state.active_coeffs, state, slew_state.lsh);
     // printf("%ld ", samp_out);
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }
@@ -66,7 +66,7 @@ int main()
     int32_t samp = 0, samp_out = 0;
     fread(&samp, sizeof(int32_t), 1, in);
     //printf("%ld ", samp);
-    samp_out = adsp_biquad(samp, slew_state.coeffs, state, slew_state.lsh);
+    samp_out = adsp_biquad(samp, slew_state.active_coeffs, state, slew_state.lsh);
     // printf("%ld ", samp_out);
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }

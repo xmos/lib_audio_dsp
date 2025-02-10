@@ -19,7 +19,7 @@ void biquad_slew_process(int32_t **input, int32_t **output, void *app_data_state
                                 state->n_outputs);
         for (int j=0; j < state->n_outputs; j++){
             output[j][i] = adsp_biquad(input[j][i],
-                                       state->slew_state.coeffs,
+                                       state->slew_state.active_coeffs,
                                        state->filter_states[j],
                                        state->slew_state.lsh);
         }

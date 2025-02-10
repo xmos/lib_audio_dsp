@@ -21,24 +21,26 @@ int32_t adsp_biquad(
   int32_t state[8],
   left_shift_t lsh);
 
-
+/**
+ * @brief Slewing biquad state structure
+ */
 typedef struct {
-  // Target filter coefficients, the active coefficients are slewed towards these
+  /** Target filter coefficients, the active coefficients are slewed towards these */
   q2_30 DWORD_ALIGNED target_coeffs[8];
-  // Active filter coefficients, used to filter the audio
-  q2_30 DWORD_ALIGNED coeffs[8];
-  // Left shift compensation for if the filter coefficents cannot be represented in Q1.30
+  /** Active filter coefficients, used to filter the audio */
+  q2_30 DWORD_ALIGNED active_coeffs[8];
+  /** Left shift compensation for if the filter coefficents cannot be represented in Q1.30 */
   left_shift_t lsh;
-  // Shift value used by the exponential slew
+  /** Shift value used by the exponential slew */
   int32_t slew_shift;
-  // Remaining shifts for cases when the left shift changes during a target_coeff update.
+  /** Remaining shifts for cases when the left shift changes during a target_coeff update. */
   left_shift_t remaining_shifts;
 
 } biquad_slew_t;
 
 /**
  * @brief Initialise a slewing biquad filter object.
- *  This sets all the filter coefficients to the target value
+ *  This sets the active filter coefficients to the target value
  * 
  * @param target_coeffs   Filter coefficients
  * @param lsh             Filter left shift compensation value
