@@ -391,28 +391,33 @@ class biquad_slew(biquad):
 
     def process(self, sample: float, channel: int = 0) -> float:
         """
-        Filter a single sample using direct form 1 biquad using floating
-        point maths. This will slew the coeffs towards the target coefficients.
-
+        ``process`` is not implemented for the slewing biquad, as the
+        coefficient slew is shared across the channels.
         """
         raise NotImplementedError
 
     def process_int(self, sample: float, channel: int = 0) -> float:
         """
-        Filter a single sample using direct form 1 biquad using int32
-        fixed point maths.
+        ``process_int`` is not implemented for the slewing biquad, as the
+        coefficient slew is shared across the channels.
         """
         raise NotImplementedError
 
     def process_xcore(self, sample: float, channel: int = 0) -> float:
         """
-        Filter a single sample using direct form 1 biquad using floating
-        point maths. This will slew the coeffs towards the target coefficients.
-
+        ``process_xcore`` is not implemented for the slewing biquad, as the
+        coefficient slew is shared across the channels.
         """
         raise NotImplementedError
 
-    def process_channels(self, sample_list: list[float]):
+    def process_channels(self, sample_list: list[float]) -> list[float]:
+        """
+        Slew the biquad coefficients towards the target, then filter the
+        samples in each channel using floating point maths.
+
+        Each sample is filtered using direct form 1 biquad using
+        floating point maths.
+        """
         if self.remaining_shifts > 0:
             tmp_target = deepcopy(self.target_coeffs)
             tmp_target[:3] = [x * (2 ** (-self.remaining_shifts)) for x in tmp_target[:3]]
@@ -444,14 +449,16 @@ class biquad_slew(biquad):
             out_samples[channel] = super().process(sample_list[channel], channel)
         return out_samples
 
-    def process_channels_xcore(self, sample_list: list[float]) -> float:
+    def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
         """
-        Filter a single sample using direct form 1 biquad using int32
+        Slew the biquad coefficients towards the target, then filter the
+        samples in each channel using fixed point maths.
+
+        Each sample is filtered using direct form 1 biquad using int32
         fixed point maths, with use of the XS3 VPU.
 
         The float input sample is quantized to int32, and returned to
         float before outputting.
-
         """
         if self.remaining_shifts > 0:
             # change in b_shift to manage, target_coeffs have less headroom, so add the headroom back

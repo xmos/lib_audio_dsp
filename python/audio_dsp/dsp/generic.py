@@ -94,13 +94,45 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
 
         return y_flt
 
-    def process_channels(self, sample_list: list[float]) -> float:
+    def process_channels(self, sample_list: list[float]) -> list[float]:
+        """
+        Process the sample in each audio channel using floating point maths.
+
+        The generic implementation calls self.process for each channel.
+
+        Parameters
+        ----------
+        sample_list : list[float]
+            The input samples to be processed. Each sample represents a
+            different channel
+
+        Returns
+        -------
+        list[float]
+            The processed samples for each channel.
+        """
         output_samples = deepcopy(sample_list)
         for channel in range(len(output_samples)):
             output_samples[channel] = self.process(sample_list[channel], channel)
         return output_samples
 
-    def process_channels_xcore(self, sample_list: list[float]) -> float:
+    def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
+        """
+        Process the sample in each audio channel using fixed point maths.
+
+        The generic implementation calls self.process_xcore for each channel.
+
+        Parameters
+        ----------
+        sample_list : list[float]
+            The input samples to be processed. Each sample represents a
+            different channel
+
+        Returns
+        -------
+        list[float]
+            The processed samples for each channel.
+        """
         output_samples = deepcopy(sample_list)
         for channel in range(len(output_samples)):
             output_samples[channel] = self.process_xcore(sample_list[channel], channel)

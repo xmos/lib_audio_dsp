@@ -294,7 +294,6 @@ def test_biquad(method, args, frame_size):
     do_test(make_p, tune_p, frame_size, folder_name)
 
 
-@pytest.mark.group0
 @pytest.mark.parametrize(
     "method, args",
     [
