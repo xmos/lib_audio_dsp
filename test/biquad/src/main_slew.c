@@ -43,8 +43,7 @@ int main()
   fread(&lsh_2, sizeof(int32_t), 1, coeffs_2);
   fclose(coeffs_2);
   
-  biquad_slew_t slew_state;
-  adsp_biquad_slew_init(&slew_state, taps_buf, lsh, shift);
+  biquad_slew_t slew_state = adsp_biquad_slew_init(taps_buf, lsh, shift);
 
   int32_t * states[1] = {&state[0]};
 

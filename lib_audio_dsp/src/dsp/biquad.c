@@ -55,17 +55,18 @@ void adsp_biquad_slew_coeffs(
 
 }
 
-void adsp_biquad_slew_init(
-  biquad_slew_t* slew_state,
+biquad_slew_t adsp_biquad_slew_init(
   q2_30 target_coeffs[8],
   left_shift_t lsh,
   left_shift_t slew_shift
 ){
-  memcpy(slew_state->target_coeffs, target_coeffs, 5*sizeof(int32_t));
-  memcpy(slew_state->coeffs, target_coeffs, 5*sizeof(int32_t));
-  slew_state->remaining_shifts = 0;
-  slew_state->lsh = lsh;
-  slew_state->slew_shift = slew_shift;
+  biquad_slew_t slew_state;
+  memcpy(slew_state.target_coeffs, target_coeffs, 5*sizeof(int32_t));
+  memcpy(slew_state.coeffs, target_coeffs, 5*sizeof(int32_t));
+  slew_state.remaining_shifts = 0;
+  slew_state.lsh = lsh;
+  slew_state.slew_shift = slew_shift;
+  return slew_state;
   }
 
 

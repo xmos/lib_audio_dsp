@@ -50,7 +50,7 @@ void biquad_slew_init(module_instance_t* instance,
     }
 
     // initialise the filter coeffs to the starting values
-    adsp_biquad_slew_init(&(state->slew_state), config->filter_coeffs, config->left_shift, config->slew_shift);
+    state->slew_state = adsp_biquad_slew_init(config->filter_coeffs, config->left_shift, config->slew_shift);
 
     // copy default config
     memcpy(&state->config, config, sizeof(biquad_slew_config_t));
