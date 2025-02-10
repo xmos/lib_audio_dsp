@@ -11,7 +11,7 @@ typedef struct
 {
     biquad_slew_config_t config;
     int32_t **filter_states;
-    adsp_biquad_slew_state_t slew_state;
+    biquad_slew_t slew_state;
     int n_inputs;
     int n_outputs;
     int frame_size;

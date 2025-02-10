@@ -239,13 +239,8 @@ class parametric_eq_8band(cascaded_biquads_8):
             class_handle = getattr(bq, class_name)
             coeffs_list.append(class_handle(fs, *spec[1:]))
 
-            # hack, some biqauds in biquad.py use higher b_shift and there isn't an
-            # easy way to figure out which ones.
-            b_shift_list.append(
-                bq.BOOST_BSHIFT
-                if spec[0] in ("highshelf", "peaking", "constant_q", "gain", "lowshelf")
-                else 0
-            )
+            # get the b_shift for each ser of coeffs
+            b_shift_list.append(bq._get_bshift(coeffs_list[-1]))
 
         super().__init__(coeffs_list, fs, n_chans, b_shift_list=b_shift_list, Q_sig=Q_sig)
 

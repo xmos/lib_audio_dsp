@@ -9,8 +9,6 @@
 #include "control/helpers.h"
 
 #define Q_factor 30
-#define BOOST_BSHIFT 2
-
 
 static const float pi =    (float)M_PI;
 static const float log_2 = 0.69314718055f;

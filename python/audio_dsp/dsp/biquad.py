@@ -14,8 +14,6 @@ from docstring_inheritance import inherit_numpy_docstring
 from audio_dsp.dsp import utils as utils
 from audio_dsp.dsp import generic as dspg
 
-BOOST_BSHIFT = 2  # limit boosts to 12 dB gain
-
 
 class biquad(dspg.dsp_block):
     """
@@ -79,7 +77,7 @@ class biquad(dspg.dsp_block):
         self.b_shift = _get_bshift(new_coeffs)
         self.coeffs, self.int_coeffs = _round_and_check(new_coeffs, self.b_shift)
         self._check_gain()
-        print(f"reset, {self.b_shift}")
+
         # reset states to avoid clicks
         self.reset_state()
 
@@ -347,19 +345,18 @@ class biquad_slew(biquad):
         coeffs: list[float],
         fs: int,
         n_chans: int = 1,
-        b_shift: int = 0,
         slew_shift: int = 2,
         Q_sig: int = dspg.Q_SIG,
     ):
         dspg.dsp_block.__init__(self, fs, n_chans, Q_sig)
-        self.b_shift = _get_bshift(coeffs)
-        self.coeffs = [0.0] * 5
-        self.int_coeffs = [0] * 5
-        self.reset_state()
-        self.update_coeffs(coeffs)
-        self.coeffs[:] = self.target_coeffs
-        self.int_coeffs[:] = self.target_coeffs_int
-        self.slew_shift = slew_shift  #
+        # call the superclass during init only
+        biquad.update_coeffs(self, coeffs)
+
+        # set target equal to initial
+        self.target_coeffs = deepcopy(self.coeffs)
+        self.target_coeffs_int = deepcopy(self.int_coeffs)
+
+        self.slew_shift = slew_shift
         self.remaining_shifts = 0
 
     def update_coeffs(self, new_coeffs: list[float]):
@@ -373,10 +370,8 @@ class biquad_slew(biquad):
         old_b_shift = self.b_shift
         self.b_shift = _get_bshift(new_coeffs)
         self.target_coeffs, self.target_coeffs_int = _round_and_check(new_coeffs, self.b_shift)
-        print(f"slew, {self.b_shift}")
 
         b_shift_change = old_b_shift - self.b_shift
-        print(f"b_shift_change, {b_shift_change}")
 
         if b_shift_change > 0:
             # we can't shift safely until we know we have headroom
@@ -399,6 +394,13 @@ class biquad_slew(biquad):
         Filter a single sample using direct form 1 biquad using floating
         point maths. This will slew the coeffs towards the target coefficients.
 
+        """
+        raise NotImplementedError
+
+    def process_int(self, sample: float, channel: int = 0) -> float:
+        """
+        Filter a single sample using direct form 1 biquad using int32
+        fixed point maths.
         """
         raise NotImplementedError
 
@@ -441,16 +443,6 @@ class biquad_slew(biquad):
             # use basic biquad
             out_samples[channel] = super().process(sample_list[channel], channel)
         return out_samples
-
-    def process_int(self, sample: float, channel: int = 0) -> float:
-        """
-        Filter a single sample using direct form 1 biquad using int32
-        fixed point maths.
-        """
-        raise NotImplementedError
-
-    def process_xcore(self, sample, channel):
-        raise NotImplementedError
 
     def process_channels_xcore(self, sample_list: list[float]) -> float:
         """

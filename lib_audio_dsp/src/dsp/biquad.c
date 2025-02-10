@@ -5,7 +5,7 @@
 
 
 void adsp_biquad_slew_coeffs(
-  adsp_biquad_slew_state_t* slew_state,
+  biquad_slew_t* slew_state,
   int32_t** states,
   int32_t channels
 ){
@@ -55,8 +55,8 @@ void adsp_biquad_slew_coeffs(
 
 }
 
-void adsp_biquad_slew_state_init(
-  adsp_biquad_slew_state_t* slew_state,
+void adsp_biquad_slew_init(
+  biquad_slew_t* slew_state,
   q2_30 target_coeffs[8],
   left_shift_t lsh,
   left_shift_t slew_shift
@@ -69,8 +69,8 @@ void adsp_biquad_slew_state_init(
   }
 
 
-void adsp_biquad_slew_state_update_coeffs(
-  adsp_biquad_slew_state_t* slew_state,
+void adsp_biquad_slew_update(
+  biquad_slew_t* slew_state,
   int32_t** states,
   int32_t channels,
   q2_30 target_coeffs[8],
