@@ -1,3 +1,7 @@
+.. raw:: latex
+
+    \newpage
+
 .. _design_guide_section:
 
 Design Guide

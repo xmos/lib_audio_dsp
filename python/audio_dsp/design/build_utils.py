@@ -1,9 +1,6 @@
 # Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""
-Utility functions for building and running the application within
-the Jupyter notebook.
-"""
+"""Utility functions for building and running the application within the Jupyter notebook."""
 
 import IPython
 import ipywidgets as widgets
@@ -180,8 +177,8 @@ class XCommonCMakeHelper:
         """
         Invoke CMake with the options specified in this class instance.
         Invokation will be of the form
-        "cmake -S <source_dir> -B <build_dir>". On first run, the invokation
-        will also contain "-G <generator>", where "generator"
+        ``cmake -S <source_dir> -B <build_dir>``. On first run, the invokation
+        will also contain ``-G <generator>``, where "generator"
         will be either "Ninja" if Ninja is present on the current system or
         "Unix Makefiles" if it is not.
 
@@ -236,7 +233,7 @@ class XCommonCMakeHelper:
         """
         Invoke CMake's build with the options specified in this class instance.
         Invokation will be of the form
-        "cmake --build <build_dir> --target <target_name>", where the target
+        ``cmake --build <build_dir> --target <target_name>``, where the target
         name is constructed as per this class' docstring.
 
         Returns
@@ -256,14 +253,19 @@ class XCommonCMakeHelper:
     def run(self, xscope: bool = True, hostname: str = "localhost", port: str = "12345") -> int:
         """
         Invoke xrun or xgdb with the options specified in this class instance.
-        If xscope is True, the invokation will be of the form
-        'xgdb -q --return-child-result --batch
+
+        If xscope is True the invocation will be of the form::
+
+            xgdb -q --return-child-result --batch
             -ex "connect --xscope-port <hostname>:<port> --xscope"
             -ex "load"
             -ex "continue"
-            <binary>',
-        whereas if xscope if False the invokation will be of the form
-        "xrun <binary>",
+            <binary>
+
+        whereas if xscope if False the invocation will be of the form::
+
+            xrun <binary>
+
         where the path to the binary is constructed as per this
         class' docstring.
 

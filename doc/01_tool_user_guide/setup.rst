@@ -26,7 +26,6 @@ Software Requirements
   installed and the ``dot`` executable must be on the system path.
 - `XTC 15.3.0 <https://www.xmos.com/software-tools/>`_
 - `Python 3.10 <https://www.python.org/downloads/>`_
-- `Jupyter 7.2.1 <https://jupyter.org/install>`_
 - `CMake 3.21 <https://cmake.org/download/>`_
 
 Additionally, on Windows the following is required: 
@@ -73,11 +72,21 @@ Setup Steps
 
       mkdir lib_audio_dsp_sandbox
 
-#. Clone the library inside *lib_audio_dsp_sandbox*:
+#. Clone the library inside *lib_audio_dsp_sandbox* using SSH (if you
+   have shared your keys with Github) or HTTPS:
 
    .. code-block:: console
 
+      cd lib_audio_dsp_sandbox
+
+      # with SSH
       git clone git@github.com:xmos/lib_audio_dsp.git
+
+      # without SSH
+      git clone https://github.com/xmos/lib_audio_dsp.git
+
+   For troubleshooting SSH issues, please see this
+   `Github guide <https://docs.github.com/en/authentication/troubleshooting-ssh>`_.
 
 #. Get the sandbox inside *lib_audio_dsp_sandbox*. This step can take several
    minutes.
@@ -102,7 +111,8 @@ Setup Steps
          cmake -B build 
          cd ../../..
 
-#. Create a requirements file inside *lib_audio_dsp_sandbox*.
+#. Create a Python virtualenv inside *lib_audio_dsp_sandbox*, and install
+   lib_audio_dsp and it's requirements.
 
    .. tab:: Windows
 
@@ -110,31 +120,9 @@ Setup Steps
 
       .. code-block:: console
 
-         echo -e lib_audio_dsp/python > requirements.txt
-         echo notebook >> requirements.txt
-
-   .. tab:: Linux and macOS
-
-      On Linux and macOS:
-
-      .. code-block:: console
-
-         echo "-e lib_audio_dsp/python" > requirements.txt
-         echo notebook >> requirements.txt
-         chmod 644 requirements.txt
-
-#. Create a Python virtualenv inside *lib_audio_dsp_sandbox*.
-
-   .. tab:: Windows
-
-      On Windows:
-
-      .. code-block:: console
-
-         python -m venv .venv 
+         py -3.10 -m venv .venv 
          call .venv/Scripts/activate.bat 
-         pip install -Ur requirements.txt 
-         cd ..
+         pip install -e ./lib_audio_dsp/python
 
    .. tab:: Linux and macOS
 
@@ -142,12 +130,18 @@ Setup Steps
 
       .. code-block:: console
 
-         python -m venv .venv 
+         python3.10 -m venv .venv 
          source .venv/bin/activate 
-         pip install -Ur requirements.txt 
-         cd ..
+         pip install -e ./lib_audio_dsp/python
 
 #. Connect an XCORE-AI-EXPLORER using both USB ports
+
+#. The examples are presented as a Jupyter notebook for interactive development.
+   Install Juptyer notebooks into the Python virtual environment with the command:
+
+   .. code-block:: console
+
+      pip install notebook==7.2.1
 
 #. Open the notebook by running from *lib_audio_dsp_sandbox* the following
    command:
@@ -157,8 +151,10 @@ Setup Steps
       jupyter notebook lib_audio_dsp/examples/app_simple_audio_dsp_integration/dsp_design.ipynb
 
    If a blank screen appears or nothing opens, then copy the link starting with
-   http://127.0.0.1/ from the terminal into the browser. The following page
-   should open:
+   http://127.0.0.1/ from the terminal into the browser. The top level Jupyter
+   notebook page should open, as can be seein in :numref:`top_level_notebook`.
+
+   .. _top_level_notebook:
 
    .. figure:: ../images/jupyter_notebook_top_level.png
       :width: 25%
@@ -214,11 +210,31 @@ required:
    * Enable the XTC tools: the installation can be tested by running the command
      ``xrun --version`` from the terminal. If the command is not found, the XTC
      tools are not installed correctly.
-   * Enable the Python Virtual Environment: this is checked by running the
-     command ``echo %VIRTUAL_ENV%`` on Windows, or ``echo $VIRTUAL_ENV`` on
-     Linux or macOS.  The path should have been set.
+   * From your sandbox, enable the Python Virtual Environment and check the path is set:
+   
+   .. tab:: Windows
 
-#. Open the notebook by running ``jupyter notebook
-   lib_audio_dsp/examples/app_simple_audio_dsp_integration/dsp_design.ipynb``
+      On Windows:
+
+      .. code-block:: console
+
+         call .venv/Scripts/activate.bat 
+         echo %VIRTUAL_ENV%
+
+   .. tab:: Linux and macOS
+
+      On Linux and macOS:
+
+      .. code-block:: console
+
+         source .venv/bin/activate
+         echo $VIRTUAL_ENV
+
+#. Open the notebook by running
+
+   .. code-block:: console
+
+      jupyter notebook lib_audio_dsp/examples/app_simple_audio_dsp_integration/dsp_design.ipynb
+
    from ``lib_audio_dsp_sandbox``, as described in the 
    :ref:`Setup Steps<all_steps>` section.

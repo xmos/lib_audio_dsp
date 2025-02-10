@@ -13,7 +13,7 @@ ${"="*len(cl)}
 ${cl}
 ${"="*len(cl)}
 
-.. autoclass:: ${module}.${cl}
+.. autoclass:: audio_dsp.stages.${cl}
     :noindex:
     :members:
     :inherited-members: Stage
@@ -58,8 +58,10 @@ details on reading and writing these commands, see the Run-Time Control User Gui
 %>
 ##  do the printing, use ljust to pad to max size
 .. table::
-  :widths: ${help_width}, ${pay_width} 
+  :widths: ${help_width}, ${pay_width}
+% if len(row_list) > 6:
   :class: longtable
+%endif
 
   ${"="*max_help}  ${"="*max_pay}
   ${"Control parameter".ljust(max_help)}  ${"Payload length".ljust(max_pay)}

@@ -43,7 +43,7 @@ class fir_block_fd(dspg.dsp_block):
         attempt of ``nfft = 2**(ceil(log2(frame_advance)) + 1)`` is made,
         but may need to be increased for longer overlaps. If it is set,
         it must be a power of 2.
-    gain_dB : float, optional
+    gain_db : float, optional
         A gain applied to the filters output, by default 0.0
 
     Attributes
@@ -83,7 +83,7 @@ class fir_block_fd(dspg.dsp_block):
         frame_advance: int,
         frame_overlap: int = 0,
         nfft: Optional[int] = None,
-        gain_dB: float = 0.0,
+        gain_db: float = 0.0,
         Q_sig: int = dspg.Q_SIG,
     ):
         super().__init__(fs, n_chans, Q_sig)
@@ -99,7 +99,7 @@ class fir_block_fd(dspg.dsp_block):
             frame_advance,
             frame_overlap,
             nfft,
-            gain_dB=gain_dB,
+            gain_db=gain_db,
         )
 
         self.nfft = 2 * (self.coeffs_fd.shape[1] - 1)
@@ -325,7 +325,7 @@ def generate_fd_fir(
     frame_advance: int,
     frame_overlap: int = 0,
     nfft: Optional[int] = None,
-    gain_dB: float = 0.0,
+    gain_db: float = 0.0,
     verbose=False,
 ):
     """
@@ -353,7 +353,7 @@ def generate_fd_fir(
         attempt of ``nfft = 2**(ceil(log2(frame_advance)) + 1)`` is made,
         but may need to be increased for longer overlaps. If it is set,
         it must be a power of 2.
-    gain_dB : float, optional
+    gain_db : float, optional
         A gain applied to the filters output, by default 0.0
     verbose : bool, optional
         Enable verbose printing, by default False
@@ -461,7 +461,7 @@ def generate_fd_fir(
         prepared_coefs = td_coefs
 
     # Apply the gains
-    prepared_coefs *= 10.0 ** (gain_dB / 20.0)
+    prepared_coefs *= 10.0 ** (gain_db / 20.0)
 
     assert len(prepared_coefs) % taps_per_phase == 0
 
@@ -545,7 +545,7 @@ if __name__ == "__main__":
 
     output_path = os.path.realpath(args.output)
     filter_path = os.path.realpath(args.filter)
-    gain_dB = args.gain
+    gain_db = args.gain
 
     if os.path.exists(filter_path):
         coefs = np.load(filter_path)
@@ -566,5 +566,5 @@ if __name__ == "__main__":
         args.frame_advance,
         frame_overlap=args.frame_overlap,
         nfft=args.nfft,
-        gain_dB=gain_dB,
+        gain_db=gain_db,
     )

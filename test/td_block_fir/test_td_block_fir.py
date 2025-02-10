@@ -26,7 +26,7 @@ gen_dir = Path(__file__).parent / "autogen"
 build_dir = Path(__file__).parent / build_dir_name
 
 
-def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_length = 8, frame_overlap = 0, sim = True, gain_dB = 0.0):
+def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_length = 8, frame_overlap = 0, sim = True, gain_db = 0.0):
 
     local_build_dir_name = build_dir_name
 
@@ -41,8 +41,8 @@ def build_and_run_tests(dir_name, coefficients, frame_advance = 8, td_block_leng
 
         # run the filter_generator on the coefs
         try:
-            generate_td_fir(coefficients, "dut", gen_dir, gain_dB=gain_dB)
-            generate_debug_fir(coefficients, "dut", gen_dir, gain_dB = gain_dB, verbose = False)
+            generate_td_fir(coefficients, "dut", gen_dir, gain_db=gain_db)
+            generate_debug_fir(coefficients, "dut", gen_dir, gain_db = gain_db, verbose = False)
         except ValueError as e:
             # print('Success (Expected Fail)')
             print('coef count', len(coefficients), 'frame_advance', frame_advance, 'td_block_length', td_block_length, 'frame_overlap', frame_overlap)

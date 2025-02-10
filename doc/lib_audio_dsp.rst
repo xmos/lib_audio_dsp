@@ -1,6 +1,10 @@
-
 Lib Audio DSP
 #############
+
+.. raw:: latex
+
+    \newpage
+
 
 .. rubric:: Introduction
 
@@ -42,6 +46,8 @@ This document covers the following topics:
 The subsequent sections provide comprehensive insights into the functionalities and applications of lib_audio_dsp,
 detailing how to leverage its features for efficient audio signal processing.
 
+For example appliations, see the Application Notes related to lib_audio_dsp on the
+`XMOS website <https://www.xmos.com/file/lib_audio_dsp#related-application-notes>`_.
 
 .. toctree::
     :maxdepth: 2

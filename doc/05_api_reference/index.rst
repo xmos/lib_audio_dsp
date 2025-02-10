@@ -1,3 +1,7 @@
+.. raw:: latex
+
+    \newpage
+
 .. _api_reference_section:
 
 API Reference
