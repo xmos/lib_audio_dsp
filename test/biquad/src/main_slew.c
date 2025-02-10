@@ -19,7 +19,6 @@ FILE * _fopen(char * fname, char* mode) {
 int main()
 {
   int32_t DWORD_ALIGNED taps_buf[8] = {0};
-  // int32_t DWORD_ALIGNED taps_buf_1[8] = {0};
   int32_t DWORD_ALIGNED taps_buf_2[8] = {0};
   int32_t state[8] = {0};
   left_shift_t lsh = 0;

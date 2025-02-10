@@ -92,8 +92,7 @@ def test_slew_c(in_signal, filter_1, filter_2, slew_shift):
   filt2 =bq.biquad_slew(coeffs_2, fs, 1, slew_shift=slew_shift)
 
   worker_id = os.environ.get("PYTEST_XDIST_WORKER")
-
-  filter_name = f"{worker_id}_slew_{filter_type_1}_{filter_1[1]}_{filter_type_2}_{filter_2[1]}"
+  filter_name = f"slew_{worker_id}_{filter_type_1}_{filter_type_2}"
   single_slew_test(filt, filter_name, in_signal, filt2, coeffs_2)
 
 def get_sig(len=0.05):
