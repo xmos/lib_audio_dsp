@@ -30,6 +30,7 @@ dependencies = [
   "uvicorn>=0.34.0",
   "python-multipart>=0.0.20",
   "numba>=0.61.0",
+  "pytest>=8.3.4",
 ]
 
 [tool.ruff]
