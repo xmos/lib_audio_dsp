@@ -3,26 +3,33 @@
 from typing import Literal
 from pydantic import Field
 
-from audio_dsp.models.stage import StageModel, StageParameters
+from audio_dsp.models.stage import StageModel, StageParameters, StageConfig, NodePlacement
 
 
-class DelayParameters(StageParameters):
-    """Parameters for delay stage.
+class DelayConfig(StageConfig):
+    """Configuration for delay stage.
     
     Attributes:
         max_delay: Maximum delay length in samples
-        starting_delay: Initial delay length in samples
-        units: Units for delay values, either "samples" or "seconds"
     """
     max_delay: int = Field(
         default=1024,
         gt=0,
         description="Maximum delay length in samples"
     )
-    starting_delay: int = Field(
+
+
+class DelayParameters(StageParameters):
+    """Parameters for delay stage.
+    
+    Attributes:
+        delay: Current delay length in samples
+        units: Units for delay values, either "samples" or "seconds"
+    """
+    delay: int = Field(
         default=0,
         ge=0,
-        description="Initial delay length in samples"
+        description="Current delay length in samples"
     )
     units: Literal["samples", "seconds"] = Field(
         default="samples",
@@ -30,12 +37,14 @@ class DelayParameters(StageParameters):
     )
 
 
-class Delay(StageModel):
+class Delay(StageModel[NodePlacement]):
     """Delay stage for delaying input signals.
     
     Delays the input signal by a specified amount. The maximum delay is set at 
-    compile time, and the runtime delay can be set between 0 and max_delay.
+    compile time via config, and the runtime delay can be set between 0 and max_delay.
     The delay can be specified in either samples or seconds.
     """
     op_type: Literal["Delay"] = "Delay"
-    parameters: DelayParameters = Field(default_factory=DelayParameters) 
+    parameters: DelayParameters = Field(default_factory=DelayParameters)
+    config: DelayConfig = Field(default_factory=DelayConfig)
+    placement: NodePlacement 

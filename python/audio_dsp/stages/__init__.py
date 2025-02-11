@@ -11,7 +11,6 @@ from .noise_suppressor_expander import NoiseSuppressorExpander
 from .signal_chain import (
     VolumeControl,
     FixedGain,
-    Delay,
     Fork,
     Adder,
     Switch,
@@ -26,6 +25,7 @@ from .fir import FirDirect
 from .compressor import CompressorRMS
 from .compressor_sidechain import CompressorSidechain
 from .envelope_detector import EnvelopeDetectorPeak, EnvelopeDetectorRMS
+from .delay import DelayStage as Delay  # Replace signal_chain.Delay with our model-based one
 
 # helper from design which allows listing all the available stages.
 from ..design.stage import all_stages

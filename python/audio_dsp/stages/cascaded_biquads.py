@@ -153,6 +153,18 @@ class CascadedBiquads(Stage):
         self.dsp_block = casc_bq.butterworth_lowpass(self.fs, self.n_in, N, fc)
         return self
 
+    def set_parameters(self, parameters: CascadedBiquadParameters):
+        """Update cascaded biquads configuration based on new parameters.
+
+        Parameters
+        ----------
+        parameters : CascadedBiquadParameters
+            The parameters to update the cascaded biquads with.
+        """
+        model = parameters.model_dump()
+        biquads = [[*spec.values()] for spec in model["filters"]]
+        return self.make_parametric_eq(biquads)
+
 
 class ParametricEq(CascadedBiquads):
     """A parametric equalizer stage. This stage allows up to 8 biquad

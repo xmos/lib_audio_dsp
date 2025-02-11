@@ -5,6 +5,7 @@
 from ..design.stage import Stage, find_config
 from ..dsp import drc as drc
 from ..dsp import generic as dspg
+from ..models.noise_gate_model import NoiseGateParameters
 
 
 class NoiseGate(Stage):
@@ -65,3 +66,17 @@ class NoiseGate(Stage):
             self.fs, self.n_in, threshold_db, attack_t, release_t, Q_sig
         )
         return self
+
+    def set_parameters(self, parameters: NoiseGateParameters):
+        """Update noise gate configuration based on new parameters.
+
+        Parameters
+        ----------
+        parameters : NoiseGateParameters
+            The parameters to update the noise gate with.
+        """
+        return self.make_noise_gate(
+            parameters.threshold_db,
+            parameters.attack_t,
+            parameters.release_t
+        )

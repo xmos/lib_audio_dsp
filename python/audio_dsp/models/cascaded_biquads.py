@@ -15,7 +15,7 @@ def _8biquads():
 
 class CascadedBiquadParameters(StageParameters):
     filters: Annotated[list[bq.BIQUAD_TYPES], Len(8)] = Field(
-        default_factory=_8biquads, max_items=8
+        default_factory=_8biquads, max_length=8
     )
 
 
