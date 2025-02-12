@@ -796,6 +796,31 @@ class switch(dspg.dsp_block):
             self.switch_position = position
         return
 
+class switch_slew(switch):
+    
+    def _gen_coeffs(self):
+        x = np.linspace(0, 1, 100)
+        y = (np.cos(x*np.pi))
+        weights = np.ones_like(x)
+        weights[[0, 1, 2, 3, 4, 49, 50, -5, -4, -3, -2, -1]] = 100
+        p = np.polynomial.chebyshev.Chebyshev.fit(x, y, [1, 3], w=weights)
+        p_coef_full = np.polynomial.chebyshev.cheb2poly(p.coef)
+        p_coef = p_coef_full[1::2]
+        print(p_coef)
+
+    def _sin_approx(x):
+        # a two term sine approximation, based on a Chebyshev polynomial
+        # fit. x must be between -1 and 1
+
+        # these values are calculated from _gen_coeffs
+        p0 =-1.5112467637821103
+        p1 = 0.511527130914426
+
+        x2 = x*x
+        y = p0
+        y += x2*p1
+        y *= x
+        return y
 
 class switch_stereo(dspg.dsp_block):
     """A class representing a stereo switch in a signal chain.
