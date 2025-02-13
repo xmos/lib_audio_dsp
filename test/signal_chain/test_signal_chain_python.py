@@ -356,6 +356,11 @@ def test_switch_slew():
     for n in range(len(signal_frames)//2, len(signal_frames)):
         output_xcore[:, n*frame_size:(n+1)*frame_size] = sw_x.process_frame_xcore(signal_frames[n])
 
+    top_half = utils.db(output_flt) > -50
+    if np.any(top_half):
+        error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
+        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        assert mean_error_flt < 0.055
 
     pass
 

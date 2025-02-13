@@ -801,8 +801,8 @@ class switch_slew(switch):
     def __init__(self, fs, n_chans, Q_sig: int = dspg.Q_SIG) -> None:
         super().__init__(fs, n_chans, Q_sig)
         self.switching = False
-        # slew time in seconds is 2*(2**30)/(2^5*fs^2). 
-        self.step = int(fs) << 5
+        # slew time in seconds 0.03
+        self.step = (2**31-1)//int(fs*0.03)
         self.x = int(-2**30)
 
         self._gen_coeffs()
@@ -827,7 +827,7 @@ class switch_slew(switch):
 
     def _sin_approx(self, x):
         # a two term cosine fade approximation, based on a Chebyshev
-        # polynomial fit. x must be between -1 and 1
+        # polynomial fit. x must be between -1 and 1. returns cos()+0.5
 
         # Horner's method, nested polynomial multiplication
         x2 = x*x
@@ -851,7 +851,7 @@ class switch_slew(switch):
         utils.int32(y)
         y = utils.int32(utils.int64(x*y) >> 30)
 
-        # convert to a gain between 1 and 0 in Q31
+        # convert from +/-1 in Q30 to a gain between 1 and 0 in Q31
         y += 2**30
         return utils.int32(y)
 

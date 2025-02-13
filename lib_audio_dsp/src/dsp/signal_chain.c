@@ -139,3 +139,14 @@ int32_t adsp_delay(
   }
   return out;
 }
+
+int32_t _sin_approx(int32_t x){
+  int32_t x2 = (x*x) >> 30;
+  
+  int32_t y = -1622688857;
+  y += (x2*549248075) >> 30;
+  y = (x*y) >> 30;
+  y += 1 << 30;
+
+  return y;
+}
