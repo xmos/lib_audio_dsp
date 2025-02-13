@@ -313,22 +313,9 @@ class biquad_slew(biquad):
     ----------
     slew_shift : int
         The shift value used in the exponential slew.
-    b_shift : int
-        The number of right shift bits applied to the b coefficients.
-        The default coefficient scaling allows for a maximum coefficient
-        value of 2, but high gain shelf and peaking filters can have
-        coefficients above this value. Shifting the b coefficients down
-        allows coefficients greater than 2, with the cost of b_shift
-        bits of precision.
 
     Attributes
     ----------
-    coeffs : list[list[float]]
-        List of normalised float biquad coefficients in the form in the
-        form `[b0, b1, b2, -a1, -a2]/a0`, rounded to int32 precision.
-    int_coeffs : list[list[int]]
-        List of normalised int biquad coefficients in the form in the
-        form `[b0, b1, b2, -a1, -a2]/a0`, scaled and rounded to int32.
     target_coeffs : list[float]
         List of normalised float target biquad coefficients in the form in the
         form `[b0, b1, b2, -a1, -a2]/a0`, rounded to int32 precision. The coeffs
@@ -345,7 +332,7 @@ class biquad_slew(biquad):
         coeffs: list[float],
         fs: int,
         n_chans: int = 1,
-        slew_shift: int = 2,
+        slew_shift: int = 6,
         Q_sig: int = dspg.Q_SIG,
     ):
         dspg.dsp_block.__init__(self, fs, n_chans, Q_sig)
@@ -356,7 +343,7 @@ class biquad_slew(biquad):
         self.target_coeffs = deepcopy(self.coeffs)
         self.target_coeffs_int = deepcopy(self.int_coeffs)
 
-        self.slew_shift = slew_shift
+        self.slew_shift = slew_shift if slew_shift > 1 else 1
         self.remaining_shifts = 0
 
     def update_coeffs(self, new_coeffs: list[float]):

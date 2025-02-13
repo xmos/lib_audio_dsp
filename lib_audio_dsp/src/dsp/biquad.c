@@ -65,12 +65,12 @@ biquad_slew_t adsp_biquad_slew_init(
   memcpy(slew_state.active_coeffs, target_coeffs, 5*sizeof(int32_t));
   slew_state.remaining_shifts = 0;
   slew_state.lsh = lsh;
-  slew_state.slew_shift = slew_shift;
+  slew_state.slew_shift = slew_shift < 1? 1 : slew_shift;
   return slew_state;
   }
 
 
-void adsp_biquad_slew_update(
+void adsp_biquad_slew_update_coeffs(
   biquad_slew_t* slew_state,
   int32_t** states,
   int32_t channels,
