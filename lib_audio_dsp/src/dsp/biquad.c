@@ -65,7 +65,7 @@ biquad_slew_t adsp_biquad_slew_init(
   memcpy(slew_state.active_coeffs, target_coeffs, 5*sizeof(int32_t));
   slew_state.remaining_shifts = 0;
   slew_state.lsh = lsh;
-  slew_state.slew_shift = slew_shift < 1? 1 : slew_shift;
+  slew_state.slew_shift = slew_shift < 1 ? 1 : slew_shift;
   return slew_state;
   }
 

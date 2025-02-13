@@ -302,7 +302,7 @@ class BiquadSlew(Biquad):
         self.set_control_field_cb("slew_shift", lambda: self.dsp_block.slew_shift)
         self.stage_memory_parameters = (self.n_in,)
 
-    def _get_fixed_point_coeffs(self) -> list:
+    def _get_fixed_point_coeffs(self) -> list[int]:
         return self.dsp_block.target_coeffs_int
 
     def set_slew_shift(self, slew_shift):

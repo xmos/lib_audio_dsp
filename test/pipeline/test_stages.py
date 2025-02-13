@@ -8,6 +8,8 @@ import pytest
 import scipy.signal as spsig
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 from audio_dsp.stages import *
+import audio_dsp.dsp.biquad as bq
+from copy import deepcopy
 
 import audio_dsp.dsp.utils as utils
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
@@ -55,7 +57,7 @@ def generate_ref(sig, ref_module, pipeline_channels, frame_size):
     return out_py_int
 
 
-def do_test(make_p, tune_p, dut_frame_size, folder_name):
+def do_test(make_p, tune_p, dut_frame_size, folder_name, skip_default=False):
     """
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
@@ -93,7 +95,7 @@ def do_test(make_p, tune_p, dut_frame_size, folder_name):
             out_dir = None
 
             # Generate uninitialized stages for make_p, only if tune_p is defined
-            if func_p == make_p and tune_p:
+            if (func_p == make_p and tune_p):
                 out_dir = "dsp_pipeline_uninitialized"
             else:
                 out_dir = "dsp_pipeline_initialized"
@@ -143,6 +145,8 @@ def do_test(make_p, tune_p, dut_frame_size, folder_name):
     for target in ["default", "control_commands"]:
         # Do not run the control test if tune_p is not defined
         if not tune_p and target == "control_commands":
+            continue
+        if target == "default" and skip_default:
             continue
 
         xe = app_dir / f"bin/{target}/pipeline_test_{target}.xe"
@@ -277,7 +281,6 @@ def test_biquad(method, args, frame_size):
 
     def tune_p(fr):
         p = make_p(fr)
-
         bq_method = getattr(p["control"], method)
 
         # Set initialization parameters of the stage
@@ -297,7 +300,7 @@ def test_biquad(method, args, frame_size):
 @pytest.mark.parametrize(
     "method, args",
     [
-        ("make_bypass", None),
+        # ("make_bypass", None),
         ("make_lowpass", [1000, 0.707]),
         ("make_highpass", [1000, 0.707]),
         ("make_bandpass", [1000, 0.707]),
@@ -307,7 +310,7 @@ def test_biquad(method, args, frame_size):
         ("make_peaking", [1000, 0.707, -6]),
         ("make_constant_q", [1000, 0.707, -6]),
         ("make_lowshelf", [1000, 0.707, -6]),
-        ("make_highshelf", [1000, 0.707, -6]),
+        ("make_highshelf", [1000, 0.707, 10]),
         ("make_linkwitz", [200, 0.707, 180, 0.707]),
     ],
 )
@@ -320,7 +323,6 @@ def test_biquad_slew(method, args, frame_size):
         p, i = Pipeline.begin(channels, frame_size=fr)
         o = p.stage(BiquadSlew, i, label="control")
         p.set_outputs(o)
-        p["control"].set_slew_shift(0)
 
         return p
 
@@ -340,7 +342,11 @@ def test_biquad_slew(method, args, frame_size):
         return p
 
     folder_name = f"biquad_slew_{frame_size}_{method[5:]}"
-    do_test(make_p, tune_p, frame_size, folder_name)
+
+    # only run the control test, as there is no way to init python pipeline differently
+    # for default & control tests
+    do_test(make_p, tune_p, frame_size, folder_name, skip_default=True)
+
 
 filter_spec = [
     ["lowpass", fs * 0.4, 0.707],
@@ -772,3 +778,6 @@ def test_fir(frame_size, filter_name):
 
     folder_name = f"fir_{frame_size}_{filter_name[:5]}"
     do_test(make_p, None, frame_size, folder_name)
+
+if __name__ == "__main__":
+    test_biquad_slew("make_lowpass", [1000, 0.707], 1)

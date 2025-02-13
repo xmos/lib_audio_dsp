@@ -343,7 +343,7 @@ class biquad_slew(biquad):
         self.target_coeffs = deepcopy(self.coeffs)
         self.target_coeffs_int = deepcopy(self.int_coeffs)
 
-        self.slew_shift = slew_shift if slew_shift > 1 else 1
+        self.slew_shift = slew_shift
         self.remaining_shifts = 0
 
     def update_coeffs(self, new_coeffs: list[float]):
@@ -375,6 +375,15 @@ class biquad_slew(biquad):
                 else:
                     self._y1[chan] = self._y1[chan] * 2**-b_shift_change
                     self._y2[chan] = self._y2[chan] * 2**-b_shift_change
+
+    @property
+    def slew_shift(self):
+        """The shift value used in the exponential slew."""
+        return self._slew_shift
+
+    @slew_shift.setter
+    def slew_shift(self, value):
+        self._slew_shift = value if value > 1 else 1
 
     def process(self, sample: float, channel: int = 0) -> float:
         """

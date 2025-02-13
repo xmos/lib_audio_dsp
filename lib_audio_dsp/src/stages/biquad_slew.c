@@ -64,12 +64,14 @@ void biquad_slew_control(void *module_state, module_control_t *control)
 
     if(control->config_rw_state == config_write_pending)
     {
-        // Finish the write by updating the working copy with the new config
+        // Update the working copy with the new config
         memcpy(&state->config, config, sizeof(biquad_slew_config_t));
-        adsp_biquad_slew_update_coeffs(&(state->slew_state), state->filter_states,
-        state->n_inputs, config->filter_coeffs, config->left_shift);
-        state->slew_state.lsh = config->slew_shift;
         control->config_rw_state = config_none_pending;
+
+        adsp_biquad_slew_update_coeffs(&(state->slew_state), state->filter_states,
+                                       state->n_inputs, config->filter_coeffs,
+                                       config->left_shift);
+        state->slew_state.slew_shift = config->slew_shift < 1 ? 1 : config->slew_shift;
     }
     else if(control->config_rw_state == config_read_pending)
     {
