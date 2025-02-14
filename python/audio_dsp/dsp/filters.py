@@ -74,6 +74,7 @@ class lowpass_1ord(dspg.dsp_block):
         self.coeff_b0 = coeff_b0
         self.coeff_a1 = 1 - self.coeff_b0
         # super critical these add up, but also don't overflow int32...
+        #TODO
         self.coeff_b0_int = max(utils.int32(self.coeff_b0 * 2**rvb.Q_VERB - 1), 1)
         self.coeff_a1_int = utils.int32((2**31 - 1) - self.coeff_b0_int + 1)
 

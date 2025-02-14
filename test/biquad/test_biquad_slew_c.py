@@ -10,8 +10,7 @@ import audio_dsp.dsp.biquad as bq
 from audio_dsp.dsp.generic import Q_SIG
 import audio_dsp.dsp.signal_gen as gen
 import pytest
-from ..test_utils import xdist_safe_bin_write
-from .test_biquad_c import float_to_qxx, qxx_to_float
+from test.test_utils import xdist_safe_bin_write, float_to_qxx, qxx_to_float
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"

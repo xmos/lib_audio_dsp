@@ -16,16 +16,6 @@ gen_dir = Path(__file__).parent / "autogen"
 
 fs=48000
 
-def float_to_qxx(arr_float, q = Q_SIG, dtype = np.int32):
-  arr_int32 = np.clip((np.array(arr_float) * (2**q)), np.iinfo(dtype).min, np.iinfo(dtype).max).astype(dtype)
-  return arr_int32
-
-
-def qxx_to_float(arr_int, q = Q_SIG):
-  arr_float = np.array(arr_int).astype(np.float64) * (2 ** (-q))
-  return arr_float
-
-
 def flt_to_bin_file(sig_fl, out_dir=bin_dir):
   sig_fl32 = np.array(sig_fl).astype(np.float32)
   name = "test_vector"
