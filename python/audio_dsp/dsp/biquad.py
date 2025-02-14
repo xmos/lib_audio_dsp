@@ -594,7 +594,7 @@ def _round_to_q30(coeffs: list[float]) -> tuple[list[float], list[int]]:
         # (2**Q -1) to keep 1.0 as 1.0
         rounded_coeffs[n] = round(coeffs[n] * (1 << Q))
         # check for overflow
-        if not (-(1 << 31)) <= rounded_coeffs[n] <= ((1 << 31) - 1):
+        if not (-(1 << 31)) <= rounded_coeffs[n] <= utils.Q_max(31):
             raise ValueError(
                 "Filter coefficient will overflow (%.4f, %d), reduce gain" % (coeffs[n], n)
             )

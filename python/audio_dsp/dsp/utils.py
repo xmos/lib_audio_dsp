@@ -93,7 +93,7 @@ def saturate_float(val: float, Q_sig: int) -> float:
     """Saturate a single floating point number to the max/min values of
     a given Q format.
     """
-    max_flt = float(((1 << 31) - 1) / (1 << Q_sig))
+    max_flt = float(Q_max(31 - Q_sig))
     min_flt = float(-(1 << (31 - Q_sig)))
     if min_flt <= val <= max_flt:
         return val
@@ -109,8 +109,8 @@ def saturate_float_array(val: np.ndarray, Q_sig: int) -> np.ndarray:
     """Saturate a floating point array to the max/min values of
     a given Q format.
     """
-    max_flt = ((1 << 31) - 1) / (1 << Q_sig)
-    min_flt = -(1 << (31 - Q_sig))
+    max_flt = float(Q_max(31 - Q_sig))
+    min_flt = float(-(1 << (31 - Q_sig)))
 
     if np.any(val < min_flt) or np.any(val > max_flt):
         warnings.warn("Saturation occurred", SaturationWarning)
@@ -137,14 +137,14 @@ def saturate_int32_vpu(val: int) -> int:
     """Symmetrically saturate int32 to ±int32max. This emulates XS3 VPU
     saturation.
     """
-    if -((1 << 31) - 1) <= val <= ((1 << 31) - 1):
+    if -Q_max(31) <= val <= Q_max(31):
         return int(val)
-    elif val < -((1 << 31) - 1):
+    elif val < -Q_max(31):
         warnings.warn("Saturation occurred", SaturationWarning)
-        return int(-((1 << 31) - 1))
+        return -Q_max(31)
     else:
         warnings.warn("Saturation occurred", SaturationWarning)
-        return int(((1 << 31) - 1))
+        return Q_max(31)
 
 
 def int34(val: float):
@@ -207,12 +207,12 @@ def int32_mult_sat_extract(x1: int, x2: int, Q: int):
     shifting.
     """
     y = int64(x1 * x2)
-    if y > ((1 << (31 + Q)) - 1):
+    if y > Q_max(31 - Q):
         warnings.warn("Saturation occurred", SaturationWarning)
-        y = (1 << (31 + Q)) - 1
-    elif y < -(1 << (31 + Q)):
+        y = Q_max(31 - Q)
+    elif y < -Q_max(31 - Q) - 1:
         warnings.warn("Saturation occurred", SaturationWarning)
-        y = -(1 << (31 + Q))
+        y = -Q_max(31 - Q) - 1
     y = int32(y >> Q)
 
     return y
@@ -241,25 +241,30 @@ def vlmaccr(vect1, vect2, out=0):
 
     return int40(out)
 
+def Q_max(Q_format: int) -> int:
+    """Return the maximum value for a give n Q format, i.e.
+    ``(1 << Q_format) - 1``.
+    """
+    return (1 << Q_format) - 1
 
 def float_to_int32(x, Q_sig=31) -> int:
     """Round and scale a floating point number to an int32 in a given
     Q format.
     """
-    return int32(round(x * (1 << Q_sig)))
+    return int32(round(x * Q_max(Q_sig)))
 
 
 def float_list_to_int32(x, Q_sig=31) -> typing.List[int]:
     """Round and scale a list of floating point numbers to a list of
     int32s in a given Q format.
     """
-    return [int32(round(item * (1 << Q_sig))) for item in x]
+    return [int32(round(item * Q_max(Q_sig))) for item in x]
 
 
 def int32_to_float(x: int, Q_sig: int = 31) -> float:
     """Convert an int32 number to floating point, given its Q format."""
     # Note this means the max value is 0.99999999953
-    return float(x) / float(1 << Q_sig)
+    return float(x) / float(Q_max(Q_sig))
 
 
 def hr_s32(x: float_s32):

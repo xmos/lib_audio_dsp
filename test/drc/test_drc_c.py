@@ -9,22 +9,13 @@ import audio_dsp.dsp.drc as drc
 from audio_dsp.dsp.generic import Q_SIG
 from audio_dsp.dsp.signal_gen import quantize_signal
 import pytest
-from .. import test_utils as tu
+from test.test_utils import xdist_safe_bin_write, float_to_qxx, qxx_to_float
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
 
 fs = 48000
 
-
-def float_to_qxx(arr_float, q = Q_SIG, dtype = np.int32):
-  arr_int32 = np.clip((np.array(arr_float) * (2**q)), np.iinfo(dtype).min, np.iinfo(dtype).max).astype(dtype)
-  return arr_int32
-
-
-def qxx_to_float(arr_int, q = Q_SIG):
-  arr_float = np.array(arr_int).astype(np.float64) * (2 ** (-q))
-  return arr_float
 
 
 def get_sig(len=0.05):
@@ -36,7 +27,7 @@ def get_sig(len=0.05):
   name = "sig_48k"
   sig_path = bin_dir /  str(name + ".bin")
 
-  tu.xdist_safe_bin_write(sig_int, sig_path)
+  xdist_safe_bin_write(sig_int, sig_path)
 
 
   # wav file does not need to be locked as it is only used for debugging outside pytest

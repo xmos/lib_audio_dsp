@@ -2,7 +2,18 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import os
 from filelock import FileLock
+import numpy as np
+from audio_dsp.dsp.utils import Q_max
+from audio_dsp.dsp.generic import Q_SIG
 
+def float_to_qxx(arr_float, q = Q_SIG, dtype = np.int32):
+  arr_int32 = np.clip((np.array(arr_float) * Q_max(q)), np.iinfo(dtype).min, np.iinfo(dtype).max).astype(dtype)
+  return arr_int32
+
+
+def qxx_to_float(arr_int, q = Q_SIG):
+  arr_float = np.array(arr_int).astype(np.float64) / Q_max(q)
+  return arr_float
 
 def xdist_safe_bin_write(sig_int, sig_path):
   # write a integer signal (sig_int) to sig_path in a multithread safe way

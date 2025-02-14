@@ -49,7 +49,7 @@ def do_test(p, folder_name, n_outs=1):
         os.makedirs(app_dir / "bin", exist_ok=True)
         shutil.copytree(APP_DIR / "bin", app_dir / "bin", dirs_exist_ok=True)
 
-    sig0 = np.linspace(-2**26, 2**26, n_samps, dtype=np.int32)  << 4 # numbers which should be unmodified through pipeline
+    sig0 = np.linspace(-utils.Q_max(26), utils.Q_max(26), n_samps, dtype=np.int32)  << 4 # numbers which should be unmodified through pipeline
                                                                      # data formats
 
     if type(ref_module) == sc.subtractor:
