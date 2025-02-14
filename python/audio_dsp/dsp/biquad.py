@@ -116,7 +116,7 @@ class biquad(dspg.dsp_block):
         float before outputting
 
         """
-        sample_int = utils.float_to_int32(sample, self.Q_sig)
+        sample_int = utils.float_to_fixed_signal(sample, self.Q_sig)
 
         # process a single sample using direct form 1
         y = utils.int64(
@@ -143,7 +143,7 @@ class biquad(dspg.dsp_block):
         y = utils.int64(y << self.b_shift)
         y = utils.saturate_int32(y)
 
-        y_flt = utils.int32_to_float(y, self.Q_sig)
+        y_flt = utils.fixed_to_float_signal(y, self.Q_sig)
 
         return y_flt
 
@@ -156,7 +156,7 @@ class biquad(dspg.dsp_block):
         float before outputting.
 
         """
-        sample_int = utils.float_to_int32(sample, self.Q_sig)
+        sample_int = utils.float_to_fixed_signal(sample, self.Q_sig)
 
         # process a single sample using direct form 1. In the VPU the
         # ``>> 30`` comes before accumulation
@@ -183,7 +183,7 @@ class biquad(dspg.dsp_block):
         y = utils.int64(y << self.b_shift)
         y = utils.saturate_int32(y)
 
-        y_flt = utils.int32_to_float(y, self.Q_sig)
+        y_flt = utils.fixed_to_float_signal(y, self.Q_sig)
 
         return y_flt
 
@@ -514,7 +514,7 @@ def _round_to_q30(coeffs: list[float]) -> tuple[list[float], list[int]]:
         # (2**Q -1) to keep 1.0 as 1.0
         rounded_coeffs[n] = round(coeffs[n] * (1 << Q))
         # check for overflow
-        if not (-(1 << 31)) <= rounded_coeffs[n] <= ((1 << 31) - 1):
+        if not (-(1 << 31)) <= rounded_coeffs[n] <= utils.Q_max(31):
             raise ValueError(
                 "Filter coefficient will overflow (%.4f, %d), reduce gain" % (coeffs[n], n)
             )

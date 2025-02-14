@@ -49,7 +49,7 @@ def do_test(p, folder_name, n_outs=1):
         os.makedirs(app_dir / "bin", exist_ok=True)
         shutil.copytree(APP_DIR / "bin", app_dir / "bin", dirs_exist_ok=True)
 
-    sig0 = np.linspace(-2**26, 2**26, n_samps, dtype=np.int32)  << 4 # numbers which should be unmodified through pipeline
+    sig0 = np.linspace(-(2**26), 2**26, n_samps, dtype=np.int32)  << 4 # numbers which should be unmodified through pipeline
                                                                      # data formats
 
     if type(ref_module) == sc.subtractor:
@@ -69,11 +69,11 @@ def do_test(p, folder_name, n_outs=1):
     xe = app_dir / f"bin/{target}/pipeline_test_{target}.xe"
     run_pipeline_xcoreai.run(xe, infile, outfile, n_outs, 1)
 
-    out_data, _ = sf.read(outfile, always_2d=True)
+    _, out_data = audio_helpers.read_wav(outfile)
 
     # convert to float scaling and make frames
     frame_size = 1
-    sig_flt = np.float64(sig.T) * 2**-31
+    sig_flt = utils.fixed_to_float_signal(sig.T >> 4, 27)
     signal_frames = utils.frame_signal(sig_flt, frame_size, frame_size)
     out_py = np.zeros((n_outs, sig.shape[0]))
 
@@ -82,9 +82,9 @@ def do_test(p, folder_name, n_outs=1):
         out_py[:, n*frame_size:(n+1)*frame_size] = ref_module.process_frame_xcore(signal_frames[n])
 
     # back to int scaling
-    out_py_int = out_py * 2**31
+    out_py_int = utils.float_to_fixed_signal(out_py, 27) << 4
 
-    np.testing.assert_equal(out_py, out_data.T)
+    np.testing.assert_equal(out_py_int, out_data.T)
 
 @pytest.mark.group0
 def test_adder():

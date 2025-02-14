@@ -14,6 +14,10 @@
  *        q format. If the value of x is outside the fixed point range,
  *        this will overflow.
  * 
+ * @note This function is not intended to be used for converting
+ *       floating point signals scaled between +/- 1.0f to fixed point
+ *       signals scaled between +/- INT32_MAX.
+ * 
  * @param x A floating point value
  * @param q Q format of the output
  * @return int32_t x in q fixed point format
@@ -190,7 +194,7 @@ static inline int32_t db_pow_to_q_sig(float level_db) {
  * @return float level in dB for the signal
  */
 static inline float qxx_to_db(int32_t level, int q_format) {
-  float level_db = 20.0f*log10f((float)level / (float)(1 << q_format));
+  float level_db = 20.0f*log10f((float)level / (float)((1 << q_format) - 1));
   return level_db;
 }
 
@@ -204,7 +208,7 @@ static inline float qxx_to_db(int32_t level, int q_format) {
  * @return float level in dB for the signal
  */
 static inline float qxx_to_db_pow(int32_t level, int q_format) {
-  float level_db = 10.0f*log10f((float)level / (float)(1 << q_format));
+  float level_db = 10.0f*log10f((float)level / (float)((1 << q_format) - 1));
   return level_db;
 }
 

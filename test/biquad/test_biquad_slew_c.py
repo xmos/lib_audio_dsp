@@ -10,8 +10,7 @@ import audio_dsp.dsp.biquad as bq
 from audio_dsp.dsp.generic import Q_SIG
 import audio_dsp.dsp.signal_gen as gen
 import pytest
-from test.test_utils import xdist_safe_bin_write
-from test.biquad.test_biquad_c import float_to_qxx, qxx_to_float
+from test.test_utils import xdist_safe_bin_write, float_to_qxx, qxx_to_float, q_convert_flt
 import os
 
 bin_dir = Path(__file__).parent / "bin"
@@ -97,6 +96,7 @@ def test_slew_c(in_signal, filter_1, filter_2, slew_shift):
 
 def get_sig(len=0.05):
   sig_fl = gen.log_chirp(fs, len, 0.5)
+  sig_fl = q_convert_flt(sig_fl, 23, Q_SIG)
 
   # sig_fl = np.ones(int(len*fs))*0.5
   sig_int = float_to_qxx(sig_fl)

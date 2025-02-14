@@ -14,6 +14,8 @@ from audio_dsp.dsp import generic
 
 def read_wav(path):
     rate, data = scipy.io.wavfile.read(path)
+    if data.ndim == 1:
+        data = np.expand_dims(data, axis=1)
     return rate, data
 
 def write_wav(path, fs, data):

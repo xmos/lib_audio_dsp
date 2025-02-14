@@ -13,7 +13,7 @@ from audio_dsp.dsp.generic import Q_SIG
 import audio_dsp.dsp.signal_gen as gen
 import pytest
 import os 
-from ..test_utils import xdist_safe_bin_write
+from test.test_utils import xdist_safe_bin_write, float_to_qxx, qxx_to_float, q_convert_flt
 
 
 bin_dir = Path(__file__).parent / "bin"
@@ -22,19 +22,10 @@ gen_dir = Path(__file__).parent / "autogen"
 fs = 48000
 
 
-def float_to_qxx(arr_float, q = Q_SIG, dtype = np.int32):
-  arr_int32 = np.clip((np.array(arr_float) * (2**q)), np.iinfo(dtype).min, np.iinfo(dtype).max).astype(dtype)
-  return arr_int32
-
-
-def qxx_to_float(arr_int, q = Q_SIG):
-  arr_float = np.array(arr_int).astype(np.float64) * (2 ** (-q))
-  return arr_float
-
-
 def get_sig(len=0.05):
 
   sig_fl = gen.log_chirp(fs, len, 0.5)
+  sig_fl = q_convert_flt(sig_fl, 23, Q_SIG)
   sig_int = float_to_qxx(sig_fl)
 
   name = "sig_48k"

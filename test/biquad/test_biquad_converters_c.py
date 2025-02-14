@@ -17,20 +17,12 @@ from enum import IntEnum
 
 import audio_dsp.dsp.biquad as bq
 from audio_dsp.dsp.generic import Q_SIG
+from test.test_utils import assert_allclose
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
 
 fs=48000
-
-def float_to_qxx(arr_float, q = Q_SIG, dtype = np.int32):
-  arr_int32 = np.clip((np.array(arr_float) * (2**q)), np.iinfo(dtype).min, np.iinfo(dtype).max).astype(dtype)
-  return arr_int32
-
-
-def qxx_to_float(arr_int, q = Q_SIG):
-  arr_float = np.array(arr_int).astype(np.float64) * (2 ** (-q))
-  return arr_float
 
 
 def flt_to_bin_file(sig_fl, out_dir=bin_dir):
@@ -117,7 +109,7 @@ def test_design_biquad_bypass():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-16, atol=0)
+    assert_allclose(shifted_c, shifted_py, rtol=2**-16, atol=0)
 
 
 def test_design_biquad_mute():
@@ -139,7 +131,7 @@ def test_design_biquad_mute():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-16, atol=0)
+    assert_allclose(shifted_c, shifted_py, rtol=2**-16, atol=0)
 
 
 def test_design_biquad_gain():
@@ -161,7 +153,7 @@ def test_design_biquad_gain():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-16, atol=0)
+    assert_allclose(shifted_c, shifted_py, rtol=2**-16, atol=0)
 
 def test_design_biquad_lowpass():
     test_dir = bin_dir / "coeffs_lowpass"
@@ -189,7 +181,7 @@ def test_design_biquad_lowpass():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-19, atol=1)
+    assert_allclose(shifted_c, shifted_py, rtol=2**-19, atol=1)
 
 
 def test_design_biquad_highpass():
@@ -218,7 +210,7 @@ def test_design_biquad_highpass():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-19, atol=0)
+    assert_allclose(shifted_c, shifted_py, rtol=2**-19, atol=0)
 
 
 def bandx_param_check(ratios):
@@ -261,7 +253,7 @@ def test_design_biquad_bandpass():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-17, atol=1)
+    assert_allclose(shifted_c, shifted_py, rtol=2**-17, atol=1)
 
 def test_design_biquad_bandstop():
     test_dir = bin_dir / "coeffs_bandstop"
@@ -290,7 +282,7 @@ def test_design_biquad_bandstop():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-17, atol=1)
+    assert_allclose(shifted_c, shifted_py, rtol=2**-17, atol=1)
 
 
 def test_design_biquad_notch():
@@ -319,7 +311,7 @@ def test_design_biquad_notch():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-19, atol=0)
+    assert_allclose(shifted_c, shifted_py, rtol=2**-19, atol=0)
 
 
 def test_design_biquad_allpass():
@@ -346,7 +338,7 @@ def test_design_biquad_allpass():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-19, atol=0)
+    assert_allclose(shifted_c, shifted_py, rtol=2**-19, atol=0)
 
 
 def test_design_biquad_peaking():
@@ -376,7 +368,7 @@ def test_design_biquad_peaking():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-13, atol=0)
+    assert_allclose(shifted_c, shifted_py, rtol=2**-13, atol=0)
 
 
 def test_design_biquad_constq():
@@ -406,7 +398,7 @@ def test_design_biquad_constq():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-12, atol=0)
+    assert_allclose(shifted_c, shifted_py, rtol=2**-12, atol=0)
 
 
 def test_design_biquad_high_shelf():
@@ -436,7 +428,7 @@ def test_design_biquad_high_shelf():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-11.2, atol=0)
+    assert_allclose(shifted_c, shifted_py, rtol=2**-11.2, atol=0)
 
 
 def test_design_biquad_low_shelf():
@@ -466,7 +458,7 @@ def test_design_biquad_low_shelf():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-11.2, atol=1)
+    assert_allclose(shifted_c, shifted_py, rtol=2**-11.2, atol=1)
 
 
 
@@ -501,7 +493,7 @@ def test_design_biquad_linkwitz():
     shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(shifted_c[shifted_py!=0], shifted_py[shifted_py!=0], rtol=2**-22, atol=0)
+    assert_allclose(shifted_c, shifted_py, rtol=2**-22, atol=0)
 
 
 if __name__ == "__main__":

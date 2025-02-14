@@ -133,7 +133,7 @@ class envelope_detector_peak(dspg.dsp_block):
 
         """
         if isinstance(sample, float):
-            sample_int = utils.float_to_int32(sample, self.Q_sig)
+            sample_int = utils.float_to_fixed_signal(sample, self.Q_sig)
         elif (isinstance(sample, list) or isinstance(sample, np.ndarray)) and isinstance(
             sample[0], int
         ):
@@ -157,7 +157,7 @@ class envelope_detector_peak(dspg.dsp_block):
         )
 
         if isinstance(sample, float):
-            return utils.int32_to_float(self.envelope_int[channel], self.Q_sig)
+            return utils.fixed_to_float_signal(self.envelope_int[channel], self.Q_sig)
         else:
             return self.envelope_int[channel]
 
@@ -216,7 +216,7 @@ class envelope_detector_rms(envelope_detector_peak):
 
         """
         if isinstance(sample, float):
-            sample_int = utils.float_to_int32(sample, self.Q_sig)
+            sample_int = utils.float_to_fixed_signal(sample, self.Q_sig)
         else:
             sample_int = sample
 
@@ -237,7 +237,7 @@ class envelope_detector_rms(envelope_detector_peak):
 
         # if we got floats, return floats, otherwise return ints
         if isinstance(sample, float):
-            return utils.int32_to_float(self.envelope_int[channel], self.Q_sig)
+            return utils.fixed_to_float_signal(self.envelope_int[channel], self.Q_sig)
         else:
             return self.envelope_int[channel]
 
@@ -301,7 +301,7 @@ class clipper(dspg.dsp_block):
         Input should be scaled with 0 dB = 1.0.
         """
         # convert to int
-        sample_int = utils.float_to_int32(sample, self.Q_sig)
+        sample_int = utils.float_to_fixed_signal(sample, self.Q_sig)
 
         # do the clipping
         if sample_int > self.threshold_int:
@@ -309,7 +309,7 @@ class clipper(dspg.dsp_block):
         elif sample_int < -self.threshold_int:
             sample_int = -self.threshold_int
 
-        return utils.int32_to_float(sample_int, self.Q_sig)
+        return utils.fixed_to_float_signal(sample_int, self.Q_sig)
 
 
 class compressor_limiter_base(dspg.dsp_block):
@@ -527,7 +527,7 @@ class compressor_limiter_base(dspg.dsp_block):
             floating point, scaled by ``2**-self.Q_sig``.
 
         """
-        sample_int = utils.float_to_int32(sample, self.Q_sig)
+        sample_int = utils.float_to_fixed_signal(sample, self.Q_sig)
         # get envelope from envelope detector
         envelope_int = self.env_detector.process_xcore(sample_int, channel)  # type: ignore : base inits to None
         # avoid /0
@@ -553,9 +553,9 @@ class compressor_limiter_base(dspg.dsp_block):
             return y, new_gain_int, envelope_int
         else:
             return (
-                utils.int32_to_float(y, self.Q_sig),
-                utils.int32_to_float(new_gain_int, self.Q_alpha),
-                utils.int32_to_float(envelope_int, self.Q_sig),
+                utils.fixed_to_float_signal(y, self.Q_sig),
+                utils.fixed_to_float_signal(new_gain_int, self.Q_alpha),
+                utils.fixed_to_float_signal(envelope_int, self.Q_sig),
             )
 
     def process_frame(self, frame):
@@ -802,9 +802,9 @@ class hard_limiter_peak(limiter_peak):
             return y, new_gain_int, envelope_int
         else:
             return (
-                utils.int32_to_float(y, self.Q_sig),
-                utils.int32_to_float(new_gain_int, self.Q_alpha),
-                utils.int32_to_float(envelope_int, self.Q_sig),
+                utils.fixed_to_float_signal(y, self.Q_sig),
+                utils.fixed_to_float_signal(new_gain_int, self.Q_alpha),
+                utils.fixed_to_float_signal(envelope_int, self.Q_sig),
             )
 
 

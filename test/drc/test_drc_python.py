@@ -11,6 +11,8 @@ import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.signal_gen as gen
 import audio_dsp.dsp.generic as dspg
 
+from test.test_utils import q_convert_flt
+
 def make_noisy_speech():
     hydra_audio_path = os.environ['hydra_audio_PATH']
     filepath = Path(hydra_audio_path, 'acoustic_team_test_audio',
@@ -476,6 +478,7 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
         signal = gen.log_chirp(fs, (0.1+(rt+at)*2), 0.5)
     else:
         signal = gen.log_chirp(fs, (0.1+(rt+at)*2), 1)
+    signal = q_convert_flt(signal, 23, dspg.Q_SIG)
     signal = utils.saturate_float_array(signal, dspg.Q_SIG)
 
     output_xcore = np.zeros(len(signal))
@@ -552,6 +555,7 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
         t = np.arange(len(signal))/fs
         signal *= np.sin(t*2*np.pi*0.5)
 
+    signal = q_convert_flt(signal, 23, dspg.Q_SIG)
     signal = utils.saturate_float_array(signal, dspg.Q_SIG)
 
     output_xcore = np.zeros(len(signal))
