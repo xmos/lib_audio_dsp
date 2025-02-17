@@ -796,21 +796,44 @@ class switch(dspg.dsp_block):
             self.switch_position = position
         return
 
+
 class switch_slew(switch):
+    """A class representing a switch in a signal chain. When  the switch
+    is moved, a cosine crossfade is used to slew between the positions.
+
+    The cosine crossfade is implemented as a polynomial, with
+    coefficients derived from a Chebyshev polynomial fit.
+
+    Attributes
+    ----------
+    switch_position : int
+        The current position of the switch.
+    switching : bool
+        True if the switch is in the process of moving.
+    step : int
+        Step size used for cosine calculation.
+    counter : int
+        Counter used dor cosine calculation.
+    p_coef : list[float]
+        Polynomial cosine approximation coefficients as floats.
+    p_coef_int : list[int]
+        Polynomial cosine approximation coefficients as ints.
+
+    """
 
     def __init__(self, fs, n_chans, Q_sig: int = dspg.Q_SIG) -> None:
         super().__init__(fs, n_chans, Q_sig)
         self.switching = False
         # slew time in seconds 0.03
-        self.step = (2**31-1)//int(fs*0.03)
-        self.counter = int(-2**30)
+        self.step = (2**31 - 1) // int(fs * 0.03)
+        self.counter = int(-(2**30))
 
         self._gen_coeffs()
 
     def _gen_coeffs(self):
         # Fit a cosine wave with a Chebyshev polynomial
         x = np.linspace(0, 1, 100)
-        y = (np.cos(x*np.pi))
+        y = np.cos(x * np.pi)
 
         # prioritise ends (so it's close to 1/-1, and middle)
         weights = np.ones_like(x)
@@ -830,13 +853,13 @@ class switch_slew(switch):
         # polynomial fit. x must be between -1 and 1. returns cos()+0.5
 
         # Horner's method, nested polynomial multiplication
-        x2 = x*x
+        x2 = x * x
         y = self.p_coef[0]
-        y += x2*self.p_coef[1]
+        y += x2 * self.p_coef[1]
         y *= x
 
         # convert to a gain between 1 and 0
-        y = y/2 + 0.5
+        y = y / 2 + 0.5
         return y
 
     def _sin_approx_int(self, x):
@@ -845,11 +868,11 @@ class switch_slew(switch):
         # gain between 1 and 0 in Q31.
 
         # Horner's method, nested polynomial multiplication
-        x2 = utils.int32(utils.int64(x*x) >> 30)
+        x2 = utils.int32(utils.int64(x * x) >> 30)
         y = self.p_coef_int[0]
-        y += utils.int64(x2*self.p_coef_int[1]) >> 30
+        y += utils.int64(x2 * self.p_coef_int[1]) >> 30
         utils.int32(y)
-        y = utils.int32(utils.int64(x*y) >> 30)
+        y = utils.int32(utils.int64(x * y) >> 30)
 
         # convert from +/-1 in Q30 to a gain between 1 and 0 in Q31
         y += 2**30
@@ -873,12 +896,12 @@ class switch_slew(switch):
             The sample at the current switch position.
         """
         if self.switching:
-            gain_1 = self._sin_approx(self.counter/(2**30))
+            gain_1 = self._sin_approx(self.counter / (2**30))
             gain_2 = 1 - gain_1
 
-            y = gain_2*sample_list[self.switch_position]
-            y += gain_1*sample_list[self.last_position]
-    
+            y = gain_2 * sample_list[self.switch_position]
+            y += gain_1 * sample_list[self.last_position]
+
             self.counter += self.step
             if self.counter > 2**30:
                 self.switching = False
@@ -886,7 +909,6 @@ class switch_slew(switch):
         else:
             y = sample_list[self.switch_position]
         return y
-
 
     def process_channels_xcore(self, sample_list: list[float]) -> float:
         """Return the sample at the current switch position.
@@ -909,7 +931,7 @@ class switch_slew(switch):
 
         if self.switching:
             gain_1 = self._sin_approx_int(self.counter)
-            gain_2 = utils.int32((2**31-1) - gain_1)
+            gain_2 = utils.int32((2**31 - 1) - gain_1)
 
             y = utils.int32_mult_sat_extract(gain_2, samples_int[self.switch_position], self.Q_sig)
             y += utils.int32_mult_sat_extract(gain_1, samples_int[self.last_position], self.Q_sig)
@@ -941,7 +963,7 @@ class switch_slew(switch):
             self.last_position = self.switch_position
             self.switch_position = position
             self.switching = True
-            self.counter = int(-2**30)
+            self.counter = int(-(2**30))
         else:
             self.switch_position = position
         return
