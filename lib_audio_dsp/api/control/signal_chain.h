@@ -96,8 +96,3 @@ void adsp_set_delay(
  * @return uint32_t         Time in samples
  */
 uint32_t time_to_samples(float fs, float time, time_units_t units);
-
-
-typedef struct{
-
-} switch_slew_t;
