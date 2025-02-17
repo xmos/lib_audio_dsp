@@ -323,12 +323,12 @@ class SwitchSlew(Stage):
     """
 
     def __init__(self, index=0, **kwargs):
-        super().__init__(config=find_config("switch"), **kwargs)
+        super().__init__(config=find_config("switch_slew"), **kwargs)
         self.index = index
         self.create_outputs(1)
         self.dsp_block = sc.switch_slew(self.fs, self.n_in)
         self.set_control_field_cb("position", lambda: self.dsp_block.switch_position)
-        self.set_constant("sampling_freq", self.fs, "int32_t")
+        self.set_constant("fs", self.fs, "int32_t")
 
     def move_switch(self, position):
         """

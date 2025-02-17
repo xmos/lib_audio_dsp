@@ -20,7 +20,7 @@ typedef struct
     uint32_t fs;
 } switch_slew_constants_t;
 
-#define switch_slew_STAGE_REQUIRED_MEMORY 0
+#define SWITCH_SLEW_STAGE_REQUIRED_MEMORY 0
 
 void switch_slew_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 

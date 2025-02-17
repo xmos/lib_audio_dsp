@@ -164,7 +164,7 @@ def test_switch_slew(position):
     p["s"].move_switch(position)
     p.set_outputs(switch_dsp)
 
-    do_test(p, f"switch_{position}")
+    do_test(p, f"switchslew_{position}")
 
 
 @pytest.mark.parametrize("position", ([0, 1]))
