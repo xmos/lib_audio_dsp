@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 /** Heap size to allocate for the delay from samples */
 #define DELAY_DSP_REQUIRED_MEMORY_SAMPLES(SAMPLES) (sizeof(int32_t) * (SAMPLES))
 /** Heap size to allocate for the delay from milliseconds */
@@ -51,7 +53,7 @@ typedef struct{
   int32_t last_position;
   int32_t counter;
   int32_t step;
-} switch_slew_t
+} switch_slew_t;
 
 
 /**
@@ -174,8 +176,10 @@ int32_t adsp_delay(
   delay_t * delay,
   int32_t samp);
 
+
+
 switch_slew_t adsp_switch_slew_init(int32_t fs, int32_t init_position);
 
-int32_t adsp_switch_slew(switch_slew_t switch_slew, int32_t sample_current_pos, int32_t sample_last_pos);
+int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t sample_current_pos, int32_t sample_last_pos);
 
 void adsp_switch_slew_move(switch_slew_t* switch_slew, int32_t new_position);

@@ -13,16 +13,15 @@
 void switch_slew_process(int32_t **input, int32_t **output, void *app_data_state)
 {
     switch_slew_state_t *state = app_data_state;
-    int i = 0;
 
-    int32_t *in_current = input[state->switch_state->position];
-    int32_t *in_last = input[state->switch_state->last_position];
-    // int32_t *out = output[i];
+    int32_t *in_current = input[state->switch_state.position];
+    int32_t *in_last = input[state->switch_state.last_position];
+    int32_t *out = output[0];
 
-    for (int i = 0; i < state->frame_size, i++){
-        out[i] = adsp_switch_slew(switch_slew_t state->switch_state,
-                                  int32_t in_current[i],
-                                  int32_t in_last[i]);
+    for (int i = 0; i < state->frame_size; i++){
+        out[i] = adsp_switch_slew(&(state->switch_state),
+                                  in_current[i],
+                                  in_last[i]);
 
     }
 }
@@ -52,7 +51,7 @@ void switch_slew_control(void *module_state, module_control_t *control)
         // Finish the write by updating the working copy with the new config
         memcpy(&state->config, config, sizeof(switch_slew_config_t));
         control->config_rw_state = config_none_pending;
-        adsp_switch_slew_move(state->switch_state, config->position);
+        adsp_switch_slew_move(&(state->switch_state), config->position);
     }
     else if(control->config_rw_state == config_read_pending)
     {
