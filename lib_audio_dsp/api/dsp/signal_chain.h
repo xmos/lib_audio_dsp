@@ -45,6 +45,15 @@ typedef struct{
   int32_t * buffer;
 } delay_t;
 
+typedef struct{
+  bool switching;
+  int32_t position;
+  int32_t last_position;
+  int32_t counter;
+  int32_t step;
+} switch_slew_t
+
+
 /**
  * @brief Convert from Q0.31 to Q_SIG
  *
@@ -165,3 +174,8 @@ int32_t adsp_delay(
   delay_t * delay,
   int32_t samp);
 
+switch_slew_t adsp_switch_slew_init(int32_t fs, int32_t init_position);
+
+int32_t adsp_switch_slew(switch_slew_t switch_slew, int32_t sample_current_pos, int32_t sample_last_pos);
+
+void adsp_switch_slew_move(switch_slew_t* switch_slew, int32_t new_position);

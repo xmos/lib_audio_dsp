@@ -150,3 +150,42 @@ int32_t _sin_approx(int32_t x){
 
   return y;
 }
+
+
+switch_slew_t adsp_switch_slew_init(int32_t fs, int32_t init_position){
+  switch_slew_t out = {.switching = false,
+                       .position = init_position,
+                       .last_position=init_position,
+                       .x = -(1<<30),
+                       .step = INT32_MAX / (int_32_t)(fs * 0.03f)};
+  return out;
+}
+
+int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t samples, int32_t n_chans){
+
+  if (switch_slew->switching){
+    int32_t gain_1 = _sin_approx(switch_slew->counter);
+    int32_t y = (gain_1 * samples[switch_slew->last_position]) >> Q_SIG;
+    int32_t gain_2 = INT32_MAX - gain_1;
+    y += (gain_2 * samples[switch_slew->position]) >> Q_SIG;
+
+    switch_slew.counter += switch_slew->step
+    if (switch_slew->counter > 1 <<30){
+      switch_slew->switching = false;
+    }
+
+    return y;
+  }
+  else{
+    return samples[switch_slew->position];
+  }
+  }
+
+void adsp_switch_slew_move(switch_slew_t* switch_slew, int32_t new_position){
+  if (new_position != switch_slew->position){
+    switch_slew->last_position = switch_slew->position;
+    switch_slew->position = new_position;
+    switch_slew->switching = true;
+    switch_slew->counter = -(1 << 30);
+  }
+}

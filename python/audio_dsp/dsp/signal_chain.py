@@ -803,7 +803,7 @@ class switch_slew(switch):
         self.switching = False
         # slew time in seconds 0.03
         self.step = (2**31-1)//int(fs*0.03)
-        self.x = int(-2**30)
+        self.counter = int(-2**30)
 
         self._gen_coeffs()
 
@@ -873,14 +873,14 @@ class switch_slew(switch):
             The sample at the current switch position.
         """
         if self.switching:
-            gain_1 = self._sin_approx(self.x/(2**30))
+            gain_1 = self._sin_approx(self.counter/(2**30))
             gain_2 = 1 - gain_1
 
             y = gain_2*sample_list[self.switch_position]
             y += gain_1*sample_list[self.last_position]
     
-            self.x += self.step
-            if self.x > 2**30:
+            self.counter += self.step
+            if self.counter > 2**30:
                 self.switching = False
 
         else:
@@ -908,15 +908,15 @@ class switch_slew(switch):
         samples_int = utils.float_list_to_int32(sample_list, self.Q_sig)
 
         if self.switching:
-            gain_1 = self._sin_approx_int(self.x)
+            gain_1 = self._sin_approx_int(self.counter)
             gain_2 = utils.int32((2**31-1) - gain_1)
 
             y = utils.int32_mult_sat_extract(gain_2, samples_int[self.switch_position], self.Q_sig)
             y += utils.int32_mult_sat_extract(gain_1, samples_int[self.last_position], self.Q_sig)
             utils.int32(y)
 
-            self.x += self.step
-            if self.x > 2**30:
+            self.counter += self.step
+            if self.counter > 2**30:
                 self.switching = False
 
             y = utils.int32_to_float(y)
@@ -941,7 +941,7 @@ class switch_slew(switch):
             self.last_position = self.switch_position
             self.switch_position = position
             self.switching = True
-            self.x = int(-2**30)
+            self.counter = int(-2**30)
         else:
             self.switch_position = position
         return
