@@ -153,7 +153,11 @@ def do_test(default_pipeline, tuned_pipeline, dut_frame_size, folder_name, skip_
         if target == "default" and skip_default:
             continue
 
-        xe = app_dir / f"bin/{target}/pipeline_test_{target}.xe"
+        if target == "tuned":
+            xe = app_dir / f"bin/control_commands/pipeline_test_control_commands.xe"
+        else:
+            xe = app_dir / f"bin/{target}/pipeline_test_{target}.xe"
+
         _, _ = audio_helpers.read_wav(infile)
         run_pipeline_xcoreai.run(xe, infile, outfile, pipeline_channels, 1, return_stdout=False)
 
@@ -264,7 +268,7 @@ def generate_test_param_file(config_name, stage_config):
         ("make_bandstop", [1000, 0.707]),
         ("make_notch", [1000, 0.707]),
         ("make_allpass", [1000, 0.707]),
-        ("default_pipelineeaking", [1000, 0.707, -6]),
+        ("make_peaking", [1000, 0.707, -6]),
         ("make_constant_q", [1000, 0.707, -6]),
         ("make_lowshelf", [1000, 0.707, -6]),
         ("make_highshelf", [1000, 0.707, -6]),
@@ -312,7 +316,7 @@ def test_biquad(method, args, frame_size):
         ("make_bandstop", [1000, 0.707]),
         ("make_notch", [1000, 0.707]),
         ("make_allpass", [1000, 0.707]),
-        ("default_pipelineeaking", [1000, 0.707, -6]),
+        ("make_peaking", [1000, 0.707, -6]),
         ("make_constant_q", [1000, 0.707, -6]),
         ("make_lowshelf", [1000, 0.707, -6]),
         ("make_highshelf", [1000, 0.707, 10]),
