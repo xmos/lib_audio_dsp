@@ -142,7 +142,7 @@ def test_compressor_sidechain():
 @pytest.mark.parametrize("position", ([0, 1]))
 def test_switch(position):
     """
-    Test the mixer stage adds the same in Python and C
+    Test the switch stage adds the same in Python and C
     """
     channels = 2
     p = Pipeline(channels)
@@ -156,7 +156,7 @@ def test_switch(position):
 @pytest.mark.parametrize("position", ([0, 1]))
 def test_switch_slew(position):
     """
-    Test the mixer stage adds the same in Python and C
+    Test the slewing switch stage adds the same in Python and C
     """
     channels = 2
     p = Pipeline(channels)
@@ -170,7 +170,7 @@ def test_switch_slew(position):
 @pytest.mark.parametrize("position", ([0, 1]))
 def test_switch_stereo(position):
     """
-    Test the mixer stage adds the same in Python and C
+    Test the stereo switch stage adds the same in Python and C
     """
     channels = 4
     p = Pipeline(channels)
@@ -181,4 +181,4 @@ def test_switch_stereo(position):
     do_test(p, f"switchstereo_{position}", n_outs=2)
 
 if __name__ == "__main__":
-    test_switch_stereo(0)
+    test_switch_slew(0)
