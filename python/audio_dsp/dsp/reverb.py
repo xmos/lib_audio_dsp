@@ -473,31 +473,6 @@ class reverb_room(rvb.reverb_base):
         """
         self.room_size = room_size
 
-    def process_frame(self, frame):
-        """
-        Take a list frames of samples and return the processed frames.
-
-        A frame is defined as a list of 1-D numpy arrays, where the
-        number of arrays is equal to the number of channels, and the
-        length of the arrays is equal to the frame size.
-
-        When calling self.process only take the first output.
-
-        """
-        n_outputs = len(frame)
-        frame_size = frame[0].shape[0]
-        output = deepcopy(frame)
-        if n_outputs == 1:
-            for sample in range(frame_size):
-                output[0][sample] = self.process(output[0][sample])
-        else:
-            for chan in range(n_outputs):
-                this_chan = output[chan]
-                for sample in range(frame_size):
-                    this_chan[sample] = self.process(this_chan[sample], channel=chan)
-
-        return output
-
     def process(self, sample, channel=0):
         """
         Add reverberation to a signal, using floating point maths.

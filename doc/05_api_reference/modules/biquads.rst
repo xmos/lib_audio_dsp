@@ -58,6 +58,10 @@ Single Slewing Biquad
 
 This is similar to `Biquad`_, but when the target coefficients are updated it slew the applied
 coefficients towards the new values. This can be used for real time adjustable filter control.
+If the left-shift of the coefficients changes, this is managed by the ``biquad_slew_t`` object:
+
+.. doxygenstruct:: biquad_slew_t
+    :members:
 
 .. tab:: C API
 
@@ -65,7 +69,23 @@ coefficients towards the new values. This can be used for real time adjustable f
 
         .. rubric:: C API
 
-    .. doxygenfunction:: adsp_biquad_slew
+    Filtering the samples can be carried out using ``adsp_biquad``:
+
+    .. code-block:: C
+
+        for (int j=0; i < n_samples; i++){
+            adsp_biquad_slew_coeffs(&slew_state, states, 1);
+            for (int i=0; i < n_chans; i++){
+              samp_out[i, j] = adsp_biquad(samp_in[i, j], slew_state.active_coeffs, states[i], slew_state.lsh);
+            }
+        }
+
+    .. doxygenfunction:: adsp_biquad_slew_init
+
+    .. doxygenfunction:: adsp_biquad_slew_coeffs
+
+    .. doxygenfunction:: adsp_biquad_slew_update_coeffs
+
 
 .. tab:: Python API
 

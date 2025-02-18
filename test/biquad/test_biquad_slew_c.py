@@ -10,8 +10,9 @@ import audio_dsp.dsp.biquad as bq
 from audio_dsp.dsp.generic import Q_SIG
 import audio_dsp.dsp.signal_gen as gen
 import pytest
-from ..test_utils import xdist_safe_bin_write
-from .test_biquad_c import float_to_qxx, qxx_to_float
+from test.test_utils import xdist_safe_bin_write
+from test.biquad.test_biquad_c import float_to_qxx, qxx_to_float
+import os
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
@@ -37,31 +38,31 @@ def run_py_slew(filt: bq.biquad_slew, sig_fl, coeffs_2):
     out_int = np.zeros(sig_fl.size)
   
     for n in range(sig_fl.size//2):
-        out_int[n] = filt.process_xcore(sig_fl[n])
+        out_int[n] = filt.process_channels_xcore([sig_fl[n]])[0]
 
     filt.update_coeffs(coeffs_2)
 
     for n in range(sig_fl.size//2, sig_fl.size):
-        out_int[n] = filt.process_xcore(sig_fl[n])
+        out_int[n] = filt.process_channels_xcore([sig_fl[n]])[0]
 
     sf.write(gen_dir / "sig_py_int.wav", out_int, fs, "PCM_24")
 
     return out_int
 
 
-def single_slew_test(filt, tname, sig_fl, coeffs_2):
+def single_slew_test(filt, tname, sig_fl, filt_2, coeffs_2):
   test_dir = bin_dir / tname
   test_dir.mkdir(exist_ok = True, parents = True)
   coeffs_arr = np.array(filt.int_coeffs, dtype=np.int32)
   shift_arr = np.array(filt.b_shift, dtype=np.int32)
-  filt_info = np.append(coeffs_arr, shift_arr)
+  slew_arr = np.array(filt.slew_shift, dtype=np.int32)
+  filt_info = np.append(coeffs_arr, (shift_arr, slew_arr))
+
   filt_info.tofile(test_dir / "coeffs.bin")
 
-  _, coeffs_2_int = bq._round_and_check(coeffs_2, filt.b_shift)
-
-  coeffs_2_arr = np.array(coeffs_2_int, dtype=np.int32)
-  slew_arr = np.array(filt.slew_shift, dtype=np.int32)
-  filt_2_info = np.append(coeffs_2_arr, slew_arr)
+  coeffs_arr = np.array(filt_2.int_coeffs, dtype=np.int32)
+  shift_arr = np.array(filt_2.b_shift, dtype=np.int32)
+  filt_2_info = np.append(coeffs_arr, shift_arr)
   filt_2_info.tofile(test_dir / "coeffs_2.bin")
 
   out_py_int = run_py_slew(filt, sig_fl, coeffs_2)
@@ -70,10 +71,14 @@ def single_slew_test(filt, tname, sig_fl, coeffs_2):
 
   np.testing.assert_allclose(out_c, out_py_int, rtol=0, atol=0)
 
-@pytest.mark.parametrize("filter_1", [["biquad_constant_q", 100, 8, -10], ["biquad_gain", 0]])
-@pytest.mark.parametrize("filter_2", [["biquad_constant_q", 10000, 8, -10], ["biquad_gain", -10]])
+
+@pytest.mark.parametrize("filter_1", [["biquad_constant_q", 100, 8, -10], ["biquad_gain", 0], ["biquad_constant_q", 10000, 8, -10], ["biquad_gain", -10],  ["biquad_highshelf", 1000, 1, 10], ["biquad_highshelf", 1000, 1, -6], ["biquad_peaking", 1000, 0.1, 20], ["biquad_highpass", 1000, 1]])
+@pytest.mark.parametrize("filter_2", [["biquad_constant_q", 100, 8, -10], ["biquad_gain", 0], ["biquad_constant_q", 10000, 8, -10], ["biquad_gain", -10],  ["biquad_highshelf", 1000, 1, 10], ["biquad_highshelf", 1000, 1, -6], ["biquad_peaking", 1000, 0.1, 20], ["biquad_highpass", 1000, 1]])
 @pytest.mark.parametrize("slew_shift", [6])
 def test_slew_c(in_signal, filter_1, filter_2, slew_shift):
+
+  print(filter_1)
+  print(filter_2)
 
   filter_type_1 = filter_1[0]
   filter_type_2 = filter_2[0]
@@ -84,12 +89,16 @@ def test_slew_c(in_signal, filter_1, filter_2, slew_shift):
   coeffs_2 = coeffs_hand_2(fs, *filter_2[1:])
 
   filt =bq.biquad_slew(coeffs_1, fs, 1, slew_shift=slew_shift)
-  filter_name = f"slew_{filter_type_1}_{filter_1[1]}_{filter_type_2}_{filter_2[1]}"
-  single_slew_test(filt, filter_name, in_signal, coeffs_2)
+  filt2 =bq.biquad_slew(coeffs_2, fs, 1, slew_shift=slew_shift)
+
+  worker_id = os.environ.get("PYTEST_XDIST_WORKER")
+  filter_name = f"slew_{worker_id}_{filter_type_1}_{filter_type_2}"
+  single_slew_test(filt, filter_name, in_signal, filt2, coeffs_2)
 
 def get_sig(len=0.05):
+  sig_fl = gen.log_chirp(fs, len, 0.5)
 
-  sig_fl = np.ones(int(len*fs))*0.5
+  # sig_fl = np.ones(int(len*fs))*0.5
   sig_int = float_to_qxx(sig_fl)
 
   name = "slew_sig_48k"
@@ -110,7 +119,6 @@ def in_signal():
   return get_sig()
 
 if __name__ == "__main__":
-  from test_biquad_c import get_sig
   bin_dir.mkdir(exist_ok=True, parents=True)
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()

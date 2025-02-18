@@ -11,7 +11,7 @@ typedef struct
 {
     biquad_slew_config_t config;
     int32_t **filter_states;
-    int32_t **coeffs;
+    biquad_slew_t slew_state;
     int n_inputs;
     int n_outputs;
     int frame_size;
@@ -27,7 +27,7 @@ typedef struct
 
 
 #define BIQUAD_SLEW_STAGE_REQUIRED_MEMORY(N_IN) \
-    2*_BQ_SLEW_ALL_FILTER_MEMORY(N_IN) + 2*_BQ_SLEW_ARR_MEMORY(N_IN)
+    _BQ_SLEW_ALL_FILTER_MEMORY(N_IN) + _BQ_SLEW_ARR_MEMORY(N_IN)
 
 void biquad_slew_init(module_instance_t* instance,
                  adsp_bump_allocator_t* allocator,

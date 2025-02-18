@@ -34,6 +34,9 @@ def boolean hasGenericChanges() {
     else if (hasChangesIn("defines")) {
       return true
     }
+    else if (hasChangesIn("generic")) {
+      return true
+    }
     else {
       return false
     }

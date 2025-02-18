@@ -76,7 +76,7 @@ def single_channels_test(filt, test_dir, fname, sig_fl):
   out_py = np.zeros(sig_fl.shape[1])
 
   for n in range(sig_fl.shape[1]):
-    out_py[n] = filt.process_channels_xcore(sig_fl[:, n])
+    out_py[n] = filt.process_channels_xcore(sig_fl[:, n])[0]
   
   sf.write(gen_dir / "sig_py_int.wav", out_py, fs, "PCM_24")
 

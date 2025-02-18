@@ -39,7 +39,75 @@ def _check_gain(value):
     return value
 
 
-class mixer(dspg.dsp_block):
+class _combiners(dspg.dsp_block):
+    """_combiners take multiple inputs and combine them to one output,
+    so the output frame size is different.
+    """
+
+    def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
+        """
+        Take a list frames of samples and return the processed frames,
+        using floating point maths.
+
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When adding, the input channels are combined into a single
+        output channel. This means the output frame will be a list of
+        length 1.
+
+        Parameters
+        ----------
+        frame : list
+            List of frames, where each frame is a 1-D numpy array.
+
+        Returns
+        -------
+        list
+            Length 1 list of processed frames.
+        """
+        frame_np = np.array(frame)
+        frame_size = frame[0].shape[0]
+        output = np.zeros(frame_size)
+        for sample in range(frame_size):
+            output[sample] = self.process_channels(frame_np[:, sample].tolist())[0]
+
+        return [output]
+
+    def process_frame_xcore(self, frame: list[np.ndarray]) -> list[np.ndarray]:
+        """
+        Take a list frames of samples and return the processed frames,
+        using int32 fixed point maths.
+
+        A frame is defined as a list of 1-D numpy arrays, where the
+        number of arrays is equal to the number of channels, and the
+        length of the arrays is equal to the frame size.
+
+        When adding, the input channels are combined into a single
+        output channel. This means the output frame will be a list of
+        length 1.
+
+        Parameters
+        ----------
+        frame : list
+            List of frames, where each frame is a 1-D numpy array.
+
+        Returns
+        -------
+        list
+            Length 1 list of processed frames.
+        """
+        frame_np = np.array(frame)
+        frame_size = frame[0].shape[0]
+        output = np.zeros(frame_size)
+        for sample in range(frame_size):
+            output[sample] = self.process_channels_xcore(frame_np[:, sample].tolist())[0]
+
+        return [output]
+
+
+class mixer(_combiners):
     """
     Mixer class for adding signals with attenuation to maintain
     headroom.
@@ -76,7 +144,7 @@ class mixer(dspg.dsp_block):
         self._gain_db = value
         self.gain, self.gain_int = db_to_qgain(self._gain_db)
 
-    def process_channels(self, sample_list: list[float]) -> float:
+    def process_channels(self, sample_list: list[float]) -> list[float]:
         """
         Process a single sample. Apply the gain to all the input samples
         then sum them using floating point maths.
@@ -88,16 +156,16 @@ class mixer(dspg.dsp_block):
 
         Returns
         -------
-        float
+        list[float]
             Output sample.
 
         """
         scaled_samples = np.array(sample_list) * self.gain
         y = float(np.sum(scaled_samples))
         y = utils.saturate_float(y, self.Q_sig)
-        return y
+        return [y]
 
-    def process_channels_xcore(self, sample_list: list[float]) -> float:
+    def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
         """
         Process a single sample. Apply the gain to all the input samples
         then sum them using int32 fixed point maths.
@@ -112,7 +180,7 @@ class mixer(dspg.dsp_block):
 
         Returns
         -------
-        float
+        list[float]
             Output sample.
 
         """
@@ -127,69 +195,7 @@ class mixer(dspg.dsp_block):
         y = utils.int32_mult_sat_extract(y, 2, 1)
         y_flt = utils.int32_to_float(y, self.Q_sig)
 
-        return y_flt
-
-    def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
-        """
-        Take a list frames of samples and return the processed frames,
-        using floating point maths.
-
-        A frame is defined as a list of 1-D numpy arrays, where the
-        number of arrays is equal to the number of channels, and the
-        length of the arrays is equal to the frame size.
-
-        When adding, the input channels are combined into a single
-        output channel. This means the output frame will be a list of
-        length 1.
-
-        Parameters
-        ----------
-        frame : list
-            List of frames, where each frame is a 1-D numpy array.
-
-        Returns
-        -------
-        list
-            Length 1 list of processed frames.
-        """
-        frame_np = np.array(frame)
-        frame_size = frame[0].shape[0]
-        output = np.zeros(frame_size)
-        for sample in range(frame_size):
-            output[sample] = self.process_channels(frame_np[:, sample].tolist())
-
-        return [output]
-
-    def process_frame_xcore(self, frame: list[np.ndarray]) -> list[np.ndarray]:
-        """
-        Take a list frames of samples and return the processed frames,
-        using int32 fixed point maths.
-
-        A frame is defined as a list of 1-D numpy arrays, where the
-        number of arrays is equal to the number of channels, and the
-        length of the arrays is equal to the frame size.
-
-        When adding, the input channels are combined into a single
-        output channel. This means the output frame will be a list of
-        length 1.
-
-        Parameters
-        ----------
-        frame : list
-            List of frames, where each frame is a 1-D numpy array.
-
-        Returns
-        -------
-        list
-            Length 1 list of processed frames.
-        """
-        frame_np = np.array(frame)
-        frame_size = frame[0].shape[0]
-        output = np.zeros(frame_size)
-        for sample in range(frame_size):
-            output[sample] = self.process_channels_xcore(frame_np[:, sample].tolist())
-
-        return [output]
+        return [y_flt]
 
     def freq_response(self, nfft: int = 512) -> tuple[np.ndarray, np.ndarray]:
         """
@@ -226,14 +232,14 @@ class adder(mixer):
         super().__init__(fs, n_chans, gain_db=0, Q_sig=Q_sig)
 
 
-class subtractor(dspg.dsp_block):
+class subtractor(_combiners):
     """Subtractor class for subtracting two signals."""
 
     def __init__(self, fs: float, Q_sig: int = dspg.Q_SIG) -> None:
         # always has 2 channels
         super().__init__(fs, 2, Q_sig)
 
-    def process_channels(self, sample_list: list[float]) -> float:
+    def process_channels(self, sample_list: list[float]) -> list[float]:
         """
         Subtract the second input sample from the first using floating
         point maths.
@@ -250,9 +256,9 @@ class subtractor(dspg.dsp_block):
         """
         y = sample_list[0] - sample_list[1]
         y = utils.saturate_float(y, self.Q_sig)
-        return y
+        return [y]
 
-    def process_channels_xcore(self, sample_list: list[float]) -> float:
+    def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
         """
         Subtract the second input sample from the first using int32
         fixed point maths.
@@ -280,66 +286,7 @@ class subtractor(dspg.dsp_block):
 
         y_flt = utils.int32_to_float(y, self.Q_sig)
 
-        return y_flt
-
-    def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
-        """
-        Process a frame of samples, using floating point maths.
-
-        When subtracting, the input channels are combined into a single
-        output channel. This means the output frame will be a list of
-        length 1.
-
-        Parameters
-        ----------
-        frame : list[np.ndarray]
-            List of frames, where each frame is a 1-D numpy array.
-
-        Returns
-        -------
-        list[np.ndarray]
-            Length 1 list of processed frames.
-
-        Raises
-        ------
-        ValueError
-            If the length of the input frame is not 2.
-
-        """
-        if len(frame) != 2:
-            raise ValueError("Subtractor requires 2 channels")
-
-        frame_size = frame[0].shape[0]
-        output = np.zeros(frame_size)
-        for sample in range(frame_size):
-            output[sample] = self.process_channels([frame[0][sample], frame[1][sample]])
-
-        return [output]
-
-    def process_frame_xcore(self, frame: list[np.ndarray]) -> list[np.ndarray]:
-        """
-        Process a frame of samples, using int32 fixed point maths.
-
-        When subtracting, the input channels are combined into a single
-        output channel. This means the output frame will be a list of
-        length 1.
-
-        Parameters
-        ----------
-        frame : list[np.ndarray]
-            List of frames, where each frame is a 1-D numpy array.
-
-        Returns
-        -------
-        list[np.ndarray]
-            Length 1 list of processed frames.
-        """
-        frame_size = frame[0].shape[0]
-        output = np.zeros(frame_size)
-        for sample in range(frame_size):
-            output[sample] = self.process_channels_xcore([frame[0][sample], frame[1][sample]])
-
-        return [output]
+        return [y_flt]
 
 
 class fixed_gain(dspg.dsp_block):
@@ -664,7 +611,7 @@ class volume_control(dspg.dsp_block):
             self.target_gain_db = self.saved_gain_db
 
 
-class switch(dspg.dsp_block):
+class switch(_combiners):
     """A class representing a switch in a signal chain.
 
     Attributes
@@ -677,9 +624,11 @@ class switch(dspg.dsp_block):
     def __init__(self, fs, n_chans, Q_sig: int = dspg.Q_SIG) -> None:
         super().__init__(fs, n_chans, Q_sig)
         self.switch_position = 0
+        # don't need separate implementation for float/xcore
+        self.process_channels_xcore = self.process_channels
         return
 
-    def process_channels(self, sample_list: list[float]) -> float:
+    def process_channels(self, sample_list: list[float]) -> list[float]:
         """Return the sample at the current switch position.
 
         This method takes a list of samples and returns the sample at
@@ -692,92 +641,11 @@ class switch(dspg.dsp_block):
 
         Returns
         -------
-        y : float
+        y : list[float]
             The sample at the current switch position.
         """
         y = sample_list[self.switch_position]
-        return y
-
-    def process_channels_xcore(self, sample_list: list[float]) -> float:
-        """Return the sample at the current switch position.
-
-        As there is no DSP, this just calls self.process.
-
-        Parameters
-        ----------
-        sample_list : list
-            A list of samples for each of the switch inputs.
-        channel : int
-            Not used by this DSP module.
-
-        Returns
-        -------
-        y : float
-            The sample at the current switch position.
-        """
-        return self.process_channels(sample_list)
-
-    def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
-        """
-        Take a list frames of samples and return the processed frames,
-        using floating point maths.
-
-        A frame is defined as a list of 1-D numpy arrays, where the
-        number of arrays is equal to the number of channels, and the
-        length of the arrays is equal to the frame size.
-
-        When switching, the input channels are combined into a single
-        output channel. This means the output frame will be a list of
-        length 1.
-
-        Parameters
-        ----------
-        frame : list
-            List of frames, where each frame is a 1-D numpy array.
-
-        Returns
-        -------
-        list
-            Length 1 list of processed frames.
-        """
-        frame_np = np.array(frame)
-        frame_size = frame[0].shape[0]
-        output = np.zeros(frame_size)
-        for sample in range(frame_size):
-            output[sample] = self.process_channels(frame_np[:, sample].tolist())
-
-        return [output]
-
-    def process_frame_xcore(self, frame: list[np.ndarray]) -> list[np.ndarray]:
-        """
-        Take a list frames of samples and return the processed frames,
-        using int32 fixed point maths.
-
-        A frame is defined as a list of 1-D numpy arrays, where the
-        number of arrays is equal to the number of channels, and the
-        length of the arrays is equal to the frame size.
-
-        When switching, the input channels are combined into a single
-        output channel. This means the output frame will be a list of
-        length 1.
-
-        Parameters
-        ----------
-        frame : list
-            List of frames, where each frame is a 1-D numpy array.
-
-        Returns
-        -------
-        list
-            Length 1 list of processed frames.
-        """
-        frame_np = np.array(frame)
-        frame_size = frame[0].shape[0]
-        output = np.zeros(frame_size)
-        for sample in range(frame_size):
-            output[sample] = self.process_channels_xcore(frame_np[:, sample].tolist())
-
-        return [output]
+        return [y]
 
     def move_switch(self, position: int) -> None:
         """Move the switch to the specified position. This will cause
@@ -986,6 +854,8 @@ class switch_stereo(dspg.dsp_block):
         super().__init__(fs, n_chans, Q_sig)
         assert n_chans % 2 == 0
         self.switch_position = 0
+        # don't need separate implementation for float/xcore
+        self.process_channels_xcore = self.process_channels
         return
 
     def process_channels(self, sample_list: list[float]) -> list[float]:
@@ -1006,25 +876,6 @@ class switch_stereo(dspg.dsp_block):
         """
         y = sample_list[(2 * self.switch_position) : (2 * self.switch_position + 2)]
         return y
-
-    def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
-        """Return the stereo samples at the current switch position.
-
-        As there is no DSP, this just calls self.process.
-
-        Parameters
-        ----------
-        sample_list : list
-            A list of samples for each of the stereo switch inputs.
-        channel : int
-            Not used by this DSP module.
-
-        Returns
-        -------
-        y : float
-            The stereo samples at the current switch position.
-        """
-        return self.process_channels(sample_list)
 
     def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
         """
@@ -1158,7 +1009,6 @@ class delay(dspg.dsp_block):
         self.buffer_idx = 0
         # don't need separate implementation for float/xcore
         self.process_channels_xcore = self.process_channels
-        self.process_frame_xcore = self.process_frame
 
         self.reset_state()
 
@@ -1229,7 +1079,7 @@ class delay(dspg.dsp_block):
         self.delay_time = delay
         return
 
-    def process_channels(self, sample: list[float]) -> list[float]:
+    def process_channels(self, sample_list: list[float]) -> list[float]:
         """
         Put the new sample in the buffer and return the oldest sample.
 
@@ -1243,42 +1093,10 @@ class delay(dspg.dsp_block):
         float
             List of delayed samples.
         """
-        y = self.buffer[:, self.buffer_idx].copy().astype(type(sample[0]))
-        self.buffer[:, self.buffer_idx] = sample
+        y = self.buffer[:, self.buffer_idx].copy().astype(type(sample_list[0]))
+        self.buffer[:, self.buffer_idx] = sample_list
         # not using the modulo because it breaks for when delay = 0
         self.buffer_idx += 1
         if self.buffer_idx >= self.delay:
             self.buffer_idx = 0
         return y.tolist()
-
-    def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
-        """
-        Take a list frames of samples and return the processed frames.
-
-        A frame is defined as a list of 1-D numpy arrays, where the
-        number of arrays is equal to the number of channels, and the
-        length of the arrays is equal to the frame size.
-
-        After the delay the output frame will have the same format.
-
-        Parameters
-        ----------
-        frame : list
-            List of frames, where each frame is a 1-D numpy array.
-
-        Returns
-        -------
-        list
-            Length n_chans list of 1-D numpy arrays.
-        """
-        frame_np = np.array(frame)
-        frame_size = frame[0].shape[0]
-        output = np.zeros((len(frame), frame_size))
-        for sample in range(frame_size):
-            output[:, sample] = self.process_channels(frame_np[:, sample].tolist())
-
-        out_list = []
-        for chan in range(len(frame)):
-            out_list.append(output[chan])
-
-        return out_list
