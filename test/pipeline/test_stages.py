@@ -146,7 +146,7 @@ def do_test(default_pipeline, tuned_pipeline, dut_frame_size, folder_name, skip_
         os.makedirs(app_dir / "bin", exist_ok=True)
         shutil.copytree(APP_DIR / "bin", app_dir / "bin", dirs_exist_ok=True)
 
-    for target in ["tuned"]:
+    for target in ["default", "tuned"]:
         # Do not run the control test if tuned_pipeline is not defined
         if not tuned_pipeline and target == "tuned":
             continue
