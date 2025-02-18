@@ -162,6 +162,8 @@ def test_switch_slew(position):
     p = Pipeline(channels)
     switch_dsp = p.stage(SwitchSlew, p.i, "s")
     p["s"].move_switch(position)
+    # temp hack to avoid initialisation issues
+    p["s"].dsp_block.switching=False
     p.set_outputs(switch_dsp)
 
     do_test(p, f"switchslew_{position}")
