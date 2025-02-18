@@ -6,22 +6,6 @@
 #include "xmath/types.h"
 
 /**
- * @brief Biquad filter.
- *  This function implements a biquad filter. The filter is implemented as a direct form 1
- * 
- * @param new_sample      New sample to be filtered
- * @param coeffs          Filter coefficients
- * @param state           Filter state
- * @param lsh             Left shift compensation value, must be positive
- * @return int32_t        Filtered sample
- */
-int32_t adsp_biquad(
-  int32_t new_sample,
-  q2_30 coeffs[5],
-  int32_t state[8],
-  left_shift_t lsh);
-
-/**
  * @brief Slewing biquad state structure
  */
 typedef struct {
@@ -39,40 +23,23 @@ typedef struct {
 
 } biquad_slew_t;
 
-/**
- * @brief Initialise a slewing biquad filter object.
- *  This sets the active filter coefficients to the target value
- * 
- * @param target_coeffs   Filter coefficients
- * @param lsh             Filter left shift compensation value
- * @param slew_shift      Shift value used in the exponential slew
- * @return biquad_slew_t  Slewing biquad object
- */
-biquad_slew_t adsp_biquad_slew_init(
-  q2_30 target_coeffs[8],
-  left_shift_t lsh,
-  left_shift_t slew_shift
-);
 
 /**
- * @brief Update the target coefficients in a slewing biquad filter object.
- *  This updates the target coefficients, and manages any change in filter
- *  coefficient left shift. This may require shifting the active filter
- *  coefficients and states.
+ * @brief Biquad filter.
+ *  This function implements a biquad filter. The filter is implemented as a direct form 1
  * 
- * @param slew_state       Slewing biquad state object
- * @param states           Filter state for each biquad channel
- * @param channels         Number of channels in states
- * @param target_coeffs    New filter coefficients
- * @param lsh              New filter left shift compensation value
+ * @param new_sample      New sample to be filtered
+ * @param coeffs          Filter coefficients
+ * @param state           Filter state
+ * @param lsh             Left shift compensation value, must be positive
+ * @return int32_t        Filtered sample
  */
-void adsp_biquad_slew_update_coeffs(
-  biquad_slew_t* slew_state,
-  int32_t** states,
-  int32_t channels,
-  q2_30 target_coeffs[8],
-  left_shift_t lsh
-);
+int32_t adsp_biquad(
+  int32_t new_sample,
+  q2_30 coeffs[5],
+  int32_t state[8],
+  left_shift_t lsh);
+
 
 /**
  * @brief Slew the active filter coefficients towards the target filter

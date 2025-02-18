@@ -4,6 +4,7 @@
 #include "control/adsp_control.h"
 
 #include <math.h>
+#include <string.h>
 
 #include <xcore/assert.h>
 #include "control/helpers.h"
@@ -45,6 +46,59 @@ static inline left_shift_t _get_b_shift(float b0, float b1, float b2) {
   left_shift_t out = (left_shift_t)tmp;
 
   return out > 0 ? out : 0;
+}
+
+
+
+biquad_slew_t adsp_biquad_slew_init(
+  q2_30 target_coeffs[8],
+  left_shift_t lsh,
+  left_shift_t slew_shift
+){
+  biquad_slew_t slew_state;
+  memcpy(slew_state.target_coeffs, target_coeffs, 5*sizeof(int32_t));
+  memcpy(slew_state.active_coeffs, target_coeffs, 5*sizeof(int32_t));
+  slew_state.remaining_shifts = 0;
+  slew_state.lsh = lsh;
+  slew_state.slew_shift = slew_shift < 1 ? 1 : slew_shift;
+  return slew_state;
+  }
+
+
+void adsp_biquad_slew_update_coeffs(
+  biquad_slew_t* slew_state,
+  int32_t** states,
+  int32_t channels,
+  q2_30 target_coeffs[8],
+  left_shift_t lsh
+){
+  left_shift_t old_shift = slew_state->lsh;
+  slew_state->lsh = lsh;
+  memcpy(slew_state->target_coeffs, target_coeffs, 5*sizeof(int32_t));
+
+  left_shift_t b_shift_change = old_shift - slew_state->lsh;
+
+  if (b_shift_change == 0){
+    return;
+  }
+  else if(b_shift_change < 0){
+    // we can shift down safely as we are increasing headroom
+    b_shift_change = -b_shift_change;
+    for (int i=0; i < 3; i++){
+      slew_state->active_coeffs[i] >>= b_shift_change;
+    }
+    for (int i=0; i < channels; i++){
+      states[i][3] >>= b_shift_change;
+      states[i][4] >>= b_shift_change;
+    }
+    return;
+  }
+  else {
+    // we can't shift safely until we know we have headroom
+    slew_state->remaining_shifts = b_shift_change;
+    slew_state->lsh += slew_state->remaining_shifts;
+  }
+
 }
 
 
