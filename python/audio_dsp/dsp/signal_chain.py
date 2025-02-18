@@ -624,9 +624,10 @@ class switch(_combiners):
     def __init__(self, fs, n_chans, Q_sig: int = dspg.Q_SIG) -> None:
         super().__init__(fs, n_chans, Q_sig)
         self.switch_position = 0
-        # don't need separate implementation for float/xcore
-        self.process_channels_xcore = self.process_channels
+
         return
+
+
 
     def process_channels(self, sample_list: list[float]) -> list[float]:
         """Return the sample at the current switch position.
@@ -646,6 +647,9 @@ class switch(_combiners):
         """
         y = sample_list[self.switch_position]
         return [y]
+
+    # don't need separate implementation for float/xcore
+    process_channels_xcore = process_channels
 
     def move_switch(self, position: int) -> None:
         """Move the switch to the specified position. This will cause
@@ -776,7 +780,7 @@ class switch_slew(switch):
 
         else:
             y = sample_list[self.switch_position]
-        return y
+        return [y]
 
     def process_channels_xcore(self, sample_list: list[float]) -> float:
         """Return the sample at the current switch position.
@@ -800,19 +804,18 @@ class switch_slew(switch):
         if self.switching:
             gain_1 = self._sin_approx_int(self.counter)
             gain_2 = utils.int32((2**31 - 1) - gain_1)
-
-            y = utils.int32_mult_sat_extract(gain_2, samples_int[self.switch_position], self.Q_sig)
-            y += utils.int32_mult_sat_extract(gain_1, samples_int[self.last_position], self.Q_sig)
+            y = utils.int32_mult_sat_extract(gain_2, samples_int[self.switch_position], 31)
+            y += utils.int32_mult_sat_extract(gain_1, samples_int[self.last_position], 31)
             utils.int32(y)
 
             self.counter += self.step
             if self.counter > 2**30:
                 self.switching = False
 
-            y = utils.int32_to_float(y)
+            y = utils.int32_to_float(y, self.Q_sig)
         else:
             y = sample_list[self.switch_position]
-        return y
+        return [y]
 
     def move_switch(self, position: int) -> None:
         """Move the switch to the specified position. This will cause
@@ -854,8 +857,7 @@ class switch_stereo(dspg.dsp_block):
         super().__init__(fs, n_chans, Q_sig)
         assert n_chans % 2 == 0
         self.switch_position = 0
-        # don't need separate implementation for float/xcore
-        self.process_channels_xcore = self.process_channels
+
         return
 
     def process_channels(self, sample_list: list[float]) -> list[float]:
@@ -876,6 +878,9 @@ class switch_stereo(dspg.dsp_block):
         """
         y = sample_list[(2 * self.switch_position) : (2 * self.switch_position + 2)]
         return y
+
+    # don't need separate implementation for float/xcore
+    process_channels_xcore = process_channels
 
     def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
         """
@@ -1007,8 +1012,6 @@ class delay(dspg.dsp_block):
         self.delay_time = starting_delay
 
         self.buffer_idx = 0
-        # don't need separate implementation for float/xcore
-        self.process_channels_xcore = self.process_channels
 
         self.reset_state()
 
@@ -1100,3 +1103,6 @@ class delay(dspg.dsp_block):
         if self.buffer_idx >= self.delay:
             self.buffer_idx = 0
         return y.tolist()
+
+    # don't need separate implementation for float/xcore
+    process_channels_xcore = process_channels

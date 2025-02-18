@@ -141,11 +141,11 @@ int32_t adsp_delay(
 }
 
 int32_t _sin_approx(int32_t x){
-  int32_t x2 = (x*x) >> 30;
+  int32_t x2 = ((int64_t)x*x) >> 30;
   
   int32_t y = -1622688857;
-  y += (x2*549248075) >> 30;
-  y = (x*y) >> 30;
+  y += ((int64_t)x2*549248075) >> 30;
+  y = ((int64_t)x*y) >> 30;
   y += 1 << 30;
 
   return y;
@@ -161,14 +161,13 @@ switch_slew_t adsp_switch_slew_init(int32_t fs, int32_t init_position){
   return out;
 }
 
-// int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t samples, int32_t n_chans){
 int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t sample_current_pos, int32_t sample_last_pos){
 
   if (switch_slew->switching){
     int32_t gain_1 = _sin_approx(switch_slew->counter);
-    int32_t y = (gain_1 * sample_last_pos) >> Q_SIG;
+    int32_t y = ((int64_t)gain_1 * sample_last_pos) >> 31;
     int32_t gain_2 = INT32_MAX - gain_1;
-    y += (gain_2 * sample_current_pos) >> Q_SIG;
+    y += ((int64_t)gain_2 * sample_current_pos) >> 31;
 
     switch_slew->counter += switch_slew->step;
     if (switch_slew->counter > 1 <<30){

@@ -9,7 +9,7 @@ import audio_dsp.dsp.signal_chain as sc
 from audio_dsp.dsp.generic import Q_SIG
 import audio_dsp.dsp.signal_gen as gen
 import pytest
-from ..test_utils import xdist_safe_bin_write
+from test.test_utils import xdist_safe_bin_write
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
@@ -205,6 +205,34 @@ def test_delay_c(in_signal, delay_spec):
   shutil.rmtree(test_dir)
   np.testing.assert_allclose(out_c, out_py[0], rtol=0, atol=0)
 
+
+
+def test_switch_slew_c(in_signal):
+
+  filt = sc.switch_slew(fs, 2)
+
+  test_dir = bin_dir / "switch_slew"
+  test_dir.mkdir(exist_ok = True, parents = True)
+  fname = "switch_slew"
+
+  out_py = np.zeros(in_signal.shape[1])
+
+  for n in range(in_signal.shape[1]//2):
+    out_py[n] = filt.process_channels_xcore(in_signal[:, n])[0]
+
+  filt.move_switch(1)
+
+  for n in range(in_signal.shape[1]//2, in_signal.shape[1]):
+    out_py[n] = filt.process_channels_xcore(in_signal[:, n])[0]
+
+  sf.write(gen_dir / "sig_py_int.wav", out_py, fs, "PCM_24")
+
+  out_c = get_c_wav(test_dir, fname)
+  # shutil.rmtree(test_dir)
+
+
+  np.testing.assert_allclose(out_c, out_py, rtol=0, atol=0)
+
 if __name__ =="__main__":
   bin_dir.mkdir(exist_ok=True, parents=True)
   gen_dir.mkdir(exist_ok=True, parents=True)
@@ -214,4 +242,5 @@ if __name__ =="__main__":
   #test_subtractor_c(sig_fl)
   #test_adder_c(sig_fl)
   #test_mixer_c(sig_fl, -3)
-  test_volume_control_c(sig_fl, [0, -6, 6], 7, False)
+  # test_volume_control_c(sig_fl, [0, -6, 6], 7, False)
+  test_switch_slew_c(sig_fl)
