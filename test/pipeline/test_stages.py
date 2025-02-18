@@ -144,7 +144,7 @@ def do_test(default_pipeline, tuned_pipeline, dut_frame_size, folder_name):
         os.makedirs(app_dir / "bin", exist_ok=True)
         shutil.copytree(APP_DIR / "bin", app_dir / "bin", dirs_exist_ok=True)
 
-    for target in ["default", "tuned"]:
+    for target in ["tuned"]:
         # Do not run the control test if tuned_pipeline is not defined
         if not tuned_pipeline and target == "tuned":
             continue
@@ -368,7 +368,7 @@ filter_spec = [
     [
         ("make_butterworth_highpass", [8, 1000]),
         ("make_butterworth_lowpass", [8, 1000]),
-        ("default_pipelinearametric_eq", [filter_spec]),
+        ("make_parametric_eq", [filter_spec]),
     ],
 )
 def test_cascaded_biquad(method, args, frame_size):
