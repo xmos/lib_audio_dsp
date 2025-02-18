@@ -70,7 +70,7 @@ void biquad_control(void *module_state, module_control_t *control)
         // reset filter states to avoid clicks
         for(int i=0; i<state->n_inputs; i++)
         {
-        memset(state->filter_states[i], 0, _BQ_FILTER_MEMORY);
+            memset(state->filter_states[i], 0, _BQ_FILTER_MEMORY);
         }
     }
     else if(control->config_rw_state == config_read_pending)

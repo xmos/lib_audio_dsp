@@ -112,10 +112,10 @@ def test_saturation(filter_spec, fs):
     output_xcore = np.zeros(signal.shape[1])
 
     for n in range(signal.shape[1]):
-        output_flt[n] = filter.process_channels(signal[:, n])
+        output_flt[n] = filter.process_channels(signal[:, n])[0]
 
     for n in range(signal.shape[1]):
-        output_xcore[n] = filter.process_channels_xcore(signal[:, n])
+        output_xcore[n] = filter.process_channels_xcore(signal[:, n])[0]
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
     # also, int signals can't go above HEADROOM_BITS
@@ -227,10 +227,10 @@ def test_combiners(filter_spec, fs):
     output_xcore = np.zeros(signal.shape[1])
 
     for n in range(signal.shape[1]):
-        output_flt[n] = filter.process_channels(signal[:, n])
+        output_flt[n] = filter.process_channels(signal[:, n])[0]
 
     for n in range(signal.shape[1]):
-        output_xcore[n] = filter.process_channels_xcore(signal[:, n])
+        output_xcore[n] = filter.process_channels_xcore(signal[:, n])[0]
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
     top_half = utils.db(output_flt) > -50

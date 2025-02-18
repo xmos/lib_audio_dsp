@@ -94,6 +94,50 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
 
         return y_flt
 
+    def process_channels(self, sample_list: list[float]) -> list[float]:
+        """
+        Process the sample in each audio channel using floating point maths.
+
+        The generic implementation calls self.process for each channel.
+
+        Parameters
+        ----------
+        sample_list : list[float]
+            The input samples to be processed. Each sample represents a
+            different channel
+
+        Returns
+        -------
+        list[float]
+            The processed samples for each channel.
+        """
+        output_samples = deepcopy(sample_list)
+        for channel in range(len(output_samples)):
+            output_samples[channel] = self.process(sample_list[channel], channel)
+        return output_samples
+
+    def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
+        """
+        Process the sample in each audio channel using fixed point maths.
+
+        The generic implementation calls self.process_xcore for each channel.
+
+        Parameters
+        ----------
+        sample_list : list[float]
+            The input samples to be processed. Each sample represents a
+            different channel
+
+        Returns
+        -------
+        list[float]
+            The processed samples for each channel.
+        """
+        output_samples = deepcopy(sample_list)
+        for channel in range(len(output_samples)):
+            output_samples[channel] = self.process_xcore(sample_list[channel], channel)
+        return output_samples
+
     def process_frame(self, frame: list):
         """
         Take a list frames of samples and return the processed frames.
@@ -116,15 +160,13 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
             List of processed frames, with the same structure as the
             input frame.
         """
-        n_outputs = len(frame)
+        frame_np = np.array(frame)
         frame_size = frame[0].shape[0]
-        output = deepcopy(frame)
-        for chan in range(n_outputs):
-            this_chan = output[chan]
-            for sample in range(frame_size):
-                this_chan[sample] = self.process(this_chan[sample], channel=chan)
+        output = np.zeros((len(frame), frame_size))
+        for sample in range(frame_size):
+            output[:, sample] = self.process_channels(frame_np[:, sample].tolist())
 
-        return output
+        return list(output)
 
     def process_frame_xcore(self, frame: list):
         """
@@ -149,15 +191,13 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
             List of processed frames, with the same structure as the
             input frame.
         """
-        n_outputs = len(frame)
+        frame_np = np.array(frame)
         frame_size = frame[0].shape[0]
-        output = deepcopy(frame)
-        for chan in range(n_outputs):
-            this_chan = output[chan]
-            for sample in range(frame_size):
-                this_chan[sample] = self.process_xcore(this_chan[sample], channel=chan)
+        output = np.zeros((len(frame), frame_size))
+        for sample in range(frame_size):
+            output[:, sample] = self.process_channels_xcore(frame_np[:, sample].tolist())
 
-        return output
+        return list(output)
 
     def freq_response(self, nfft=512):
         """

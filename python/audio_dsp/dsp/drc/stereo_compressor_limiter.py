@@ -130,7 +130,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         self.gain = 1
         self.gain_int = 2**31 - 1
 
-    def process_channels(self, input_samples: list[float]):
+    def process_channels(self, sample_list: list[float]):  # pyright: ignore overload
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using floating point
@@ -142,8 +142,8 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
         """
         # get envelope from envelope detector
-        env0 = self.env_detector.process(input_samples[0], 0)  # type: ignore : base inits to None
-        env1 = self.env_detector.process(input_samples[1], 1)  # type: ignore : base inits to None
+        env0 = self.env_detector.process(sample_list[0], 0)  # type: ignore : base inits to None
+        env1 = self.env_detector.process(sample_list[1], 1)  # type: ignore : base inits to None
         envelope = np.maximum(env0, env1)
         # avoid /0
         envelope = np.maximum(envelope, np.finfo(float).tiny)
@@ -162,10 +162,10 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         self.gain = ((1 - alpha) * self.gain) + (alpha * new_gain)
 
         # apply gain to input
-        y = self.gain * input_samples
+        y = self.gain * sample_list
         return y, new_gain, envelope
 
-    def process_channels_xcore(self, input_samples: list[float]):
+    def process_channels_xcore(self, sample_list: list[float]):  # pyright: ignore overload
         """
         Update the envelopes for a signal, then calculate and apply the
         required gain for compression/limiting, using int32 fixed point
@@ -177,9 +177,9 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         0 dB = 1.0.
 
         """
-        samples_int = [int(0)] * len(input_samples)
-        for i in range(len(input_samples)):
-            samples_int[i] = utils.float_to_int32(input_samples[i], self.Q_sig)
+        samples_int = [int(0)] * len(sample_list)
+        for i in range(len(sample_list)):
+            samples_int[i] = utils.float_to_int32(sample_list[i], self.Q_sig)
 
         # get envelope from envelope detector
         env0_int = self.env_detector.process_xcore(samples_int[0], 0)  # type: ignore : base inits to None
