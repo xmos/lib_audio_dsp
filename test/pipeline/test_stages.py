@@ -300,7 +300,7 @@ def test_biquad(method, args, frame_size):
 @pytest.mark.parametrize(
     "method, args",
     [
-        # ("make_bypass", None),
+        ("make_bypass", None),
         ("make_lowpass", [1000, 0.707]),
         ("make_highpass", [1000, 0.707]),
         ("make_bandpass", [1000, 0.707]),
