@@ -35,7 +35,7 @@ void switch_slew_init(module_instance_t* instance, adsp_bump_allocator_t* alloca
 
     memset(state, 0, sizeof(switch_slew_state_t));
     state->n_inputs = n_inputs;
-    xassert(n_outputs == 1 && "switch_slew should have less than 16 inputs");
+    xassert(n_inputs <= 16 && "switch_slew should have less than 16 inputs");
     state->frame_size = frame_size;
     xassert(n_outputs == 1 && "switch_slew should only have one output");
     state->n_outputs = n_outputs;

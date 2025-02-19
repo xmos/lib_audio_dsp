@@ -290,8 +290,6 @@ class Switch(Stage):
 
     def __init__(self, index=0, **kwargs):
         super().__init__(config=find_config("switch"), **kwargs)
-        if self.n_out != 1:
-            raise ValueError("Switch must have 1 output")
         self.index = index
         self.create_outputs(1)
         self.dsp_block = sc.switch(self.fs, self.n_in)
@@ -328,8 +326,6 @@ class SwitchSlew(Stage):
         super().__init__(config=find_config("switch_slew"), **kwargs)
         if self.n_in > 16:
             raise ValueError("Switch supports up to 16 inputs")
-        if self.n_out != 1:
-            raise ValueError("Switch must have 1 output")
         self.index = index
         self.create_outputs(1)
         self.dsp_block = sc.switch_slew(self.fs, self.n_in)
@@ -367,8 +363,6 @@ class SwitchStereo(Stage):
 
     def __init__(self, index=0, **kwargs):
         super().__init__(config=find_config("switch_stereo"), **kwargs)
-        if self.n_out != 1:
-            raise ValueError("SwitchStereo must have 2 outputs")
         self.index = index
         self.create_outputs(2)
         self.dsp_block = sc.switch_stereo(self.fs, self.n_in)
