@@ -161,13 +161,14 @@ switch_slew_t adsp_switch_slew_init(int32_t fs, int32_t init_position){
   return out;
 }
 
-int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t sample_current_pos, int32_t sample_last_pos){
+
+int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t* samples){
 
   if (switch_slew->switching){
     int32_t gain_1 = _sin_approx(switch_slew->counter);
-    int32_t y = ((int64_t)gain_1 * sample_last_pos) >> 31;
+    int32_t y = ((int64_t)gain_1 * samples[switch_slew->last_position]) >> 31;
     int32_t gain_2 = INT32_MAX - gain_1;
-    y += ((int64_t)gain_2 * sample_current_pos) >> 31;
+    y += ((int64_t)gain_2 * samples[switch_slew->position]) >> 31;
 
     switch_slew->counter += switch_slew->step;
     if (switch_slew->counter > 1 <<30){
@@ -177,8 +178,8 @@ int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t sample_current_pos,
     return y;
   }
   else{
-    return sample_current_pos;
-  }
+    return samples[switch_slew->position];
+    }
   }
 
 void adsp_switch_slew_move(switch_slew_t* switch_slew, int32_t new_position){

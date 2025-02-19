@@ -36,8 +36,7 @@ int main()
     fread(&samples[1], sizeof(int32_t), 1, in1);
     //printf("%ld ", samp);
     samp_out = adsp_switch_slew(&switch_state,
-                                samples[switch_state.position],
-                                samples[switch_state.last_position]);
+                                samples);
     //printf("%ld ", samp_out);
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }
@@ -52,8 +51,7 @@ int main()
     fread(&samples[1], sizeof(int32_t), 1, in1);
     //printf("%ld ", samp);
     samp_out = adsp_switch_slew(&switch_state,
-                                samples[switch_state.position],
-                                samples[switch_state.last_position]);
+                                samples);
     //printf("%ld ", samp_out);
     fwrite(&samp_out, sizeof(int32_t), 1, out);
   }

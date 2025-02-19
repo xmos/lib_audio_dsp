@@ -627,8 +627,6 @@ class switch(_combiners):
 
         return
 
-
-
     def process_channels(self, sample_list: list[float]) -> list[float]:
         """Return the sample at the current switch position.
 
@@ -750,7 +748,7 @@ class switch_slew(switch):
         y += 2**30
         return utils.int32(y)
 
-    def process_channels(self, sample_list: list[float]) -> float:
+    def process_channels(self, sample_list: list[float]) -> list[float]:
         """Return the sample at the current switch position.
 
         This method takes a list of samples and returns the sample at
@@ -782,7 +780,7 @@ class switch_slew(switch):
             y = sample_list[self.switch_position]
         return [y]
 
-    def process_channels_xcore(self, sample_list: list[float]) -> float:
+    def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
         """Return the sample at the current switch position.
 
         This method takes a list of samples and returns the sample at

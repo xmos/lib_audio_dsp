@@ -13,16 +13,17 @@
 void switch_slew_process(int32_t **input, int32_t **output, void *app_data_state)
 {
     switch_slew_state_t *state = app_data_state;
-
-    int32_t *in_current = input[state->switch_state.position];
-    int32_t *in_last = input[state->switch_state.last_position];
     int32_t *out = output[0];
 
     for (int i = 0; i < state->frame_size; i++){
-        out[i] = adsp_switch_slew(&(state->switch_state),
-                                  in_current[i],
-                                  in_last[i]);
+        // put the samples into one array
+        int32_t samples[16];
+        for (int j = 0; j < state -> n_inputs; j++){
+            samples[j] = input[j][i];
+        }
 
+        out[i] = adsp_switch_slew(&(state->switch_state),
+                                  samples);
     }
 }
 
@@ -34,6 +35,7 @@ void switch_slew_init(module_instance_t* instance, adsp_bump_allocator_t* alloca
 
     memset(state, 0, sizeof(switch_slew_state_t));
     state->n_inputs = n_inputs;
+    xassert(n_outputs == 1 && "switch_slew should have less than 16 inputs");
     state->frame_size = frame_size;
     xassert(n_outputs == 1 && "switch_slew should only have one output");
     state->n_outputs = n_outputs;

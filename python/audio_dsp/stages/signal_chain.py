@@ -277,7 +277,7 @@ class VolumeControl(Stage):
 
 class Switch(Stage):
     """
-    Switch the input to one of the outputs. The switch can be used to
+    Switch the output to one of the inputs. The switch can be used to
     select between different signals.
 
     Parameters
@@ -290,6 +290,8 @@ class Switch(Stage):
 
     def __init__(self, index=0, **kwargs):
         super().__init__(config=find_config("switch"), **kwargs)
+        if self.n_out != 1:
+            raise ValueError("Switch must have 1 output")
         self.index = index
         self.create_outputs(1)
         self.dsp_block = sc.switch(self.fs, self.n_in)
@@ -311,8 +313,8 @@ class Switch(Stage):
 
 class SwitchSlew(Stage):
     """
-    Switch the input to one of the outputs. The switch can be used to
-    select between different signals.
+    Switch the output to one of the inputs. The switch can be used to
+    select between different signals. This supports up to 16 inputs.
 
     Parameters
     ----------
@@ -324,6 +326,10 @@ class SwitchSlew(Stage):
 
     def __init__(self, index=0, **kwargs):
         super().__init__(config=find_config("switch_slew"), **kwargs)
+        if self.n_in > 16:
+            raise ValueError("Switch supports up to 16 inputs")
+        if self.n_out != 1:
+            raise ValueError("Switch must have 1 output")
         self.index = index
         self.create_outputs(1)
         self.dsp_block = sc.switch_slew(self.fs, self.n_in)
@@ -361,6 +367,8 @@ class SwitchStereo(Stage):
 
     def __init__(self, index=0, **kwargs):
         super().__init__(config=find_config("switch_stereo"), **kwargs)
+        if self.n_out != 1:
+            raise ValueError("SwitchStereo must have 2 outputs")
         self.index = index
         self.create_outputs(2)
         self.dsp_block = sc.switch_stereo(self.fs, self.n_in)

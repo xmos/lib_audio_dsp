@@ -180,6 +180,7 @@ int32_t adsp_delay(
 
 switch_slew_t adsp_switch_slew_init(int32_t fs, int32_t init_position);
 
-int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t sample_current_pos, int32_t sample_last_pos);
+// int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t sample_current_pos, int32_t sample_last_pos);
+int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t* samples);
 
 void adsp_switch_slew_move(switch_slew_t* switch_slew, int32_t new_position);

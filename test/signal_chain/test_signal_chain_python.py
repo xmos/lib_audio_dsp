@@ -341,20 +341,15 @@ def test_switch_slew():
 
     for n in range(len(signal_frames)//2):
         output_flt[:, n*frame_size:(n+1)*frame_size] = sw.process_frame(signal_frames[n])
-
-    sw.move_switch(1)
-
-    for n in range(len(signal_frames)//2, len(signal_frames)):
-        output_flt[:, n*frame_size:(n+1)*frame_size] = sw.process_frame(signal_frames[n])
- 
-
-    for n in range(len(signal_frames)//2):
         output_xcore[:, n*frame_size:(n+1)*frame_size] = sw_x.process_frame_xcore(signal_frames[n])
 
+    sw.move_switch(1)
     sw_x.move_switch(1)
 
     for n in range(len(signal_frames)//2, len(signal_frames)):
+        output_flt[:, n*frame_size:(n+1)*frame_size] = sw.process_frame(signal_frames[n])
         output_xcore[:, n*frame_size:(n+1)*frame_size] = sw_x.process_frame_xcore(signal_frames[n])
+ 
 
     top_half = utils.db(output_flt) > -50
     if np.any(top_half):
