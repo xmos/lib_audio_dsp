@@ -718,7 +718,7 @@ class switch_slew(switch):
         # max is -1.5 so has to be Q30
         self.p_coef_int = [utils.float_to_int32(x, 30) for x in self.p_coef]
 
-    def _sin_approx(self, x):
+    def _cos_approx(self, x):
         # a two term cosine fade approximation, based on a Chebyshev
         # polynomial fit. x must be between -1 and 1. returns cos()+0.5
 
@@ -732,7 +732,7 @@ class switch_slew(switch):
         y = y / 2 + 0.5
         return y
 
-    def _sin_approx_int(self, x):
+    def _cos_approx_int(self, x):
         # a two term cosine fade approximation, based on a Chebyshev
         # polynomial fit. x must be between -2**30 and 2**30. y is a
         # gain between 1 and 0 in Q31.
@@ -766,7 +766,7 @@ class switch_slew(switch):
             The sample at the current switch position.
         """
         if self.switching:
-            gain_1 = self._sin_approx(self.counter / (2**30))
+            gain_1 = self._cos_approx(self.counter / (2**30))
             gain_2 = 1 - gain_1
 
             y = gain_2 * sample_list[self.switch_position]
@@ -800,7 +800,7 @@ class switch_slew(switch):
         samples_int = utils.float_list_to_int32(sample_list, self.Q_sig)
 
         if self.switching:
-            gain_1 = self._sin_approx_int(self.counter)
+            gain_1 = self._cos_approx_int(self.counter)
             gain_2 = utils.int32((2**31 - 1) - gain_1)
             y = utils.int32_mult_sat_extract(gain_2, samples_int[self.switch_position], 31)
             y += utils.int32_mult_sat_extract(gain_1, samples_int[self.last_position], 31)

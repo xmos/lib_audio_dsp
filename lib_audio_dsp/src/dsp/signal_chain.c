@@ -140,7 +140,8 @@ int32_t adsp_delay(
   return out;
 }
 
-int32_t _sin_approx(int32_t x){
+int32_t _cos_approx(int32_t x){
+  // approximate a cosine fade out with a 2 term polynomial
   int32_t x2 = ((int64_t)x*x) >> 30;
   
   int32_t y = -1622688857;
@@ -165,7 +166,7 @@ switch_slew_t adsp_switch_slew_init(int32_t fs, int32_t init_position){
 int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t* samples){
 
   if (switch_slew->switching){
-    int32_t gain_1 = _sin_approx(switch_slew->counter);
+    int32_t gain_1 = _cos_approx(switch_slew->counter);
     int32_t y = ((int64_t)gain_1 * samples[switch_slew->last_position]) >> 31;
     int32_t gain_2 = INT32_MAX - gain_1;
     y += ((int64_t)gain_2 * samples[switch_slew->position]) >> 31;

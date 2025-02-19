@@ -47,11 +47,20 @@ typedef struct{
   int32_t * buffer;
 } delay_t;
 
+
+/**
+ * @brief Slewing switch state structure
+ */
 typedef struct{
+  /** If slewing, switching is True until slewing is over. */
   bool switching;
+  /** Current switch pole position. */
   int32_t position;
+  /** Last switch pole position. */
   int32_t last_position;
+  /** Counter for timing slew length. */
   int32_t counter;
+  /** Step increment of counter. */
   int32_t step;
 } switch_slew_t;
 
@@ -177,10 +186,32 @@ int32_t adsp_delay(
   int32_t samp);
 
 
-
+/**
+ * @brief Initialise a slewing switch object
+ *
+ * @param fs               Sampling frequency, used to calculate the
+ *                         step size.
+ * @param init_position    Starting position of the switch.
+ * @return switch_slew_t   The slewing switch object.
+ */
 switch_slew_t adsp_switch_slew_init(int32_t fs, int32_t init_position);
 
-// int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t sample_current_pos, int32_t sample_last_pos);
+/**
+ * @brief Process a sample through a slewing switch. If the switch
+ * position has recently changed, this will slew between the desired
+ * input channel and previous channel.
+ * 
+ * @param switch_slew    Slewing switch state object.
+ * @param samples        An array of input samples for each input channel.
+ * @return int32_t       The output of the switch.
+ */
 int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t* samples);
 
+/**
+ * @brief Move the position of the switch. This sets the state of the
+ * switch for slewing on subsequent samples.
+ * 
+ * @param switch_slew     Slewing switch state object.
+ * @param new_position    The desired input channel to switch to.
+ */
 void adsp_switch_slew_move(switch_slew_t* switch_slew, int32_t new_position);

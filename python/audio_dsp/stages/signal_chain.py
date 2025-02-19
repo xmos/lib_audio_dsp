@@ -312,7 +312,8 @@ class Switch(Stage):
 class SwitchSlew(Stage):
     """
     Switch the output to one of the inputs. The switch can be used to
-    select between different signals. This supports up to 16 inputs.
+    select between different signals. When the switch is move, a cosine
+    slew is used to avoid clicks. This supports up to 16 inputs.
 
     Parameters
     ----------
