@@ -84,6 +84,7 @@ def test_pipeline():
     # Generate input
     input_sig_py = np.empty((int(Fs*test_duration), num_in_channels), dtype=np.float64)
     for i in range(num_in_channels):
+        # precision of 28 gives Q27 signal
         input_sig_py[:, i] = (gen.sin(fs=Fs, length=test_duration, freq=1000, amplitude=0.1, precision=28)).T
 
     if (input_dtype == np.int32) or (input_dtype == np.int16):

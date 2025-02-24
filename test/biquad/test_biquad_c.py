@@ -10,8 +10,6 @@ from audio_dsp.dsp.generic import Q_SIG
 import audio_dsp.dsp.signal_gen as gen
 import pytest
 from test.test_utils import xdist_safe_bin_write, float_to_qxx, qxx_to_float, q_convert_flt
-import os
-from audio_dsp.dsp.utils import Q_max
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"

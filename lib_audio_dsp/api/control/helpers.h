@@ -14,10 +14,6 @@
  *        q format. If the value of x is outside the fixed point range,
  *        this will overflow.
  * 
- * @note This function is not intended to be used for converting
- *       floating point signals scaled between +/- 1.0f to fixed point
- *       signals scaled between +/- INT32_MAX.
- * 
  * @param x A floating point value
  * @param q Q format of the output
  * @return int32_t x in q fixed point format

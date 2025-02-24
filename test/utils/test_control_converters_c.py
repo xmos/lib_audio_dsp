@@ -98,7 +98,7 @@ def test_peak_threshold():
     threshold_dbs = utils.db(np.logspace(np.log10(0.001), np.log10(8), 100))
     flt_to_bin_file(threshold_dbs, test_dir)
 
-    out_c = get_c_wav(test_dir, "peak_threshold", dtype=np.int32, verbose=True)
+    out_c = get_c_wav(test_dir, "peak_threshold", dtype=np.int32)
 
     thresh_python = np.zeros_like(threshold_dbs, dtype=np.int32)
 
