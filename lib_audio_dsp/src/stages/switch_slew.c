@@ -9,6 +9,7 @@
 #include "stages/switch_slew.h"
 #include <stdio.h>
 #include "print.h"
+#include "control/adsp_control.h"
 
 void switch_slew_process(int32_t **input, int32_t **output, void *app_data_state)
 {
