@@ -324,7 +324,7 @@ class SwitchSlew(Switch):
     """
 
     def __init__(self, index=0, **kwargs):
-        super().__init__(config=find_config("switch_slew"), **kwargs)
+        Stage.__init__(self, config=find_config("switch_slew"), **kwargs)
         if self.n_in > 16:
             raise ValueError("Switch supports up to 16 inputs")
         self.index = index
