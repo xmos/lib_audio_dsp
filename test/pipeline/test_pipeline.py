@@ -43,7 +43,7 @@ Fs = 48000
 def gen_build(app_dir, p, target):
     with FileLock(build_utils.PIPELINE_BUILD_LOCK):
         # Autogenerate C code
-        generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+        generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_default")
 
         # Build pipeline test executable. This will download xscope_fileio if not present
         build_utils.build(APP_DIR, BUILD_DIR, target)
