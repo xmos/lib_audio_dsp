@@ -70,3 +70,23 @@ void adsp_set_delay(
   uint32_t new_delay = time_to_samples(delay->fs, delay_time, units);
   delay->delay = (new_delay <= delay->max_delay) ? new_delay : delay->max_delay;
 }
+
+
+switch_slew_t adsp_switch_slew_init(float fs, int32_t init_position){
+  switch_slew_t out = {.switching = false,
+                       .position = init_position,
+                       .last_position=init_position,
+                       .counter = -(1<<30),
+                       .step = INT32_MAX / (int32_t)(fs * 0.03f)};
+  return out;
+}
+
+
+void adsp_switch_slew_move(switch_slew_t* switch_slew, int32_t new_position){
+  if (new_position != switch_slew->position){
+    switch_slew->last_position = switch_slew->position;
+    switch_slew->position = new_position;
+    switch_slew->switching = true;
+    switch_slew->counter = -(1 << 30);
+  }
+}

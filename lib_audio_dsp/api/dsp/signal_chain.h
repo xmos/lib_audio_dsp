@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 /** Heap size to allocate for the delay from samples */
 #define DELAY_DSP_REQUIRED_MEMORY_SAMPLES(SAMPLES) (sizeof(int32_t) * (SAMPLES))
 /** Heap size to allocate for the delay from milliseconds */
@@ -44,6 +46,24 @@ typedef struct{
   /** Buffer */
   int32_t * buffer;
 } delay_t;
+
+
+/**
+ * @brief Slewing switch state structure
+ */
+typedef struct{
+  /** If slewing, switching is True until slewing is over. */
+  bool switching;
+  /** Current switch pole position. */
+  int32_t position;
+  /** Last switch pole position. */
+  int32_t last_position;
+  /** Counter for timing slew length. */
+  int32_t counter;
+  /** Step increment of counter. */
+  int32_t step;
+} switch_slew_t;
+
 
 /**
  * @brief Convert from Q0.31 to Q_SIG
@@ -164,4 +184,15 @@ void adsp_volume_control_unmute(
 int32_t adsp_delay(
   delay_t * delay,
   int32_t samp);
+
+/**
+ * @brief Process a sample through a slewing switch. If the switch
+ * position has recently changed, this will slew between the desired
+ * input channel and previous channel.
+ * 
+ * @param switch_slew    Slewing switch state object.
+ * @param samples        An array of input samples for each input channel.
+ * @return int32_t       The output of the switch.
+ */
+int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t* samples);
 

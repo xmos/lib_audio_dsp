@@ -324,8 +324,44 @@ def test_delay(fs, delay_spec, n_chans):
     assert np.all(signal[:, : sig_len] == output_xcore[:, delay_samps :])
 
 
+def test_switch_slew():
+    fs = 48000
+    signal_1 = gen.sin(fs, 1, 500, 0.25) + 0.5
+    signal_2 = gen.sin(fs, 1, 500, 0.25) - 0.5
+    signal = np.stack((signal_1, signal_2))
+
+    sw = sc.switch_slew(fs, 2)
+    sw_x = sc.switch_slew(fs, 2)
+
+    signal_frames = utils.frame_signal(signal, 1, 1)
+
+    output_flt = np.zeros((1, signal.shape[1]))
+    output_xcore = np.zeros_like(output_flt)
+    frame_size = 1
+
+    for n in range(len(signal_frames)//2):
+        output_flt[:, n*frame_size:(n+1)*frame_size] = sw.process_frame(signal_frames[n])
+        output_xcore[:, n*frame_size:(n+1)*frame_size] = sw_x.process_frame_xcore(signal_frames[n])
+
+    sw.move_switch(1)
+    sw_x.move_switch(1)
+
+    for n in range(len(signal_frames)//2, len(signal_frames)):
+        output_flt[:, n*frame_size:(n+1)*frame_size] = sw.process_frame(signal_frames[n])
+        output_xcore[:, n*frame_size:(n+1)*frame_size] = sw_x.process_frame_xcore(signal_frames[n])
+ 
+
+    top_half = utils.db(output_flt) > -50
+    if np.any(top_half):
+        error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
+        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        assert mean_error_flt < 0.055
+
+    pass
+
 if __name__ == "__main__":
     # test_combiners(["adder", 4], 48000)
     # test_volume_change()
     # test_gains(1, 48000, 1)
-    test_delay(48000, [2, 0, "s"], 1)
+    # test_delay(48000, [2, 0, "s"], 1)
+    test_switch_slew()

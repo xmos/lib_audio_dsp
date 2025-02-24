@@ -624,8 +624,7 @@ class switch(_combiners):
     def __init__(self, fs, n_chans, Q_sig: int = dspg.Q_SIG) -> None:
         super().__init__(fs, n_chans, Q_sig)
         self.switch_position = 0
-        # don't need separate implementation for float/xcore
-        self.process_channels_xcore = self.process_channels
+
         return
 
     def process_channels(self, sample_list: list[float]) -> list[float]:
@@ -647,6 +646,9 @@ class switch(_combiners):
         y = sample_list[self.switch_position]
         return [y]
 
+    # don't need separate implementation for float/xcore
+    process_channels_xcore = process_channels
+
     def move_switch(self, position: int) -> None:
         """Move the switch to the specified position. This will cause
         the channel in sample_list[position] to be output.
@@ -660,6 +662,177 @@ class switch(_combiners):
             warnings.warn(
                 f"Switch position {position} is out of range, keeping old switch position"
             )
+        else:
+            self.switch_position = position
+        return
+
+
+class switch_slew(switch):
+    """A class representing a switch in a signal chain. When  the switch
+    is moved, a cosine crossfade is used to slew between the positions.
+
+    The cosine crossfade is implemented as a polynomial, with
+    coefficients derived from a Chebyshev polynomial fit.
+
+    Attributes
+    ----------
+    switch_position : int
+        The current position of the switch.
+    switching : bool
+        True if the switch is in the process of moving.
+    step : int
+        Step size used for cosine calculation.
+    counter : int
+        Counter used dor cosine calculation.
+    p_coef : list[float]
+        Polynomial cosine approximation coefficients as floats.
+    p_coef_int : list[int]
+        Polynomial cosine approximation coefficients as ints.
+
+    """
+
+    def __init__(self, fs, n_chans, Q_sig: int = dspg.Q_SIG) -> None:
+        super().__init__(fs, n_chans, Q_sig)
+        self.switching = False
+        # slew time in seconds 0.03
+        self.step = (2**31 - 1) // int(fs * 0.03)
+        self.counter = int(-(2**30))
+
+        self._gen_coeffs()
+
+    def _gen_coeffs(self):
+        # Fit a cosine wave with a Chebyshev polynomial
+        x = np.linspace(0, 1, 100)
+        y = np.cos(x * np.pi)
+
+        # prioritise ends (so it's close to 1/-1, and middle)
+        weights = np.ones_like(x)
+        weights[[0, 1, 2, 3, 4, 49, 50, -5, -4, -3, -2, -1]] = 100
+
+        # as we're symmetric, we only need odd terms
+        p = np.polynomial.chebyshev.Chebyshev.fit(x, y, [1, 3], w=weights)
+        # convert to regular polynomial
+        p_coef_full = np.polynomial.chebyshev.cheb2poly(p.coef)
+        # take x^1 and x^3 terms only
+        self.p_coef = p_coef_full[1::2]
+        # max is -1.5 so has to be Q30
+        self.p_coef_int = [utils.float_to_int32(x, 30) for x in self.p_coef]
+
+    def _cos_approx(self, x):
+        # a two term cosine fade approximation, based on a Chebyshev
+        # polynomial fit. x must be between -1 and 1. returns cos()+0.5
+
+        # Horner's method, nested polynomial multiplication
+        x2 = x * x
+        y = self.p_coef[0]
+        y += x2 * self.p_coef[1]
+        y *= x
+
+        # convert to a gain between 1 and 0
+        y = y / 2 + 0.5
+        return y
+
+    def _cos_approx_int(self, x):
+        # a two term cosine fade approximation, based on a Chebyshev
+        # polynomial fit. x must be between -2**30 and 2**30. y is a
+        # gain between 1 and 0 in Q31.
+
+        # Horner's method, nested polynomial multiplication
+        x2 = utils.int32(utils.int64(x * x) >> 30)
+        y = self.p_coef_int[0]
+        y += utils.int64(x2 * self.p_coef_int[1]) >> 30
+        utils.int32(y)
+        y = utils.int32(utils.int64(x * y) >> 30)
+
+        # convert from +/-1 in Q30 to a gain between 1 and 0 in Q31
+        y += 2**30
+        return utils.int32(y)
+
+    def process_channels(self, sample_list: list[float]) -> list[float]:
+        """Return the sample at the current switch position.
+
+        This method takes a list of samples and returns the sample at
+        the current switch position. If the switch position has recently
+        changed, it will slew between the inputs.
+
+        Parameters
+        ----------
+        sample_list : list
+            A list of samples for each of the switch inputs.
+
+        Returns
+        -------
+        y : float
+            The sample at the current switch position.
+        """
+        if self.switching:
+            gain_1 = self._cos_approx(self.counter / (2**30))
+            gain_2 = 1 - gain_1
+
+            y = gain_2 * sample_list[self.switch_position]
+            y += gain_1 * sample_list[self.last_position]
+
+            self.counter += self.step
+            if self.counter > 2**30:
+                self.switching = False
+
+        else:
+            y = sample_list[self.switch_position]
+        return [y]
+
+    def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
+        """Return the sample at the current switch position.
+
+        This method takes a list of samples and returns the sample at
+        the current switch position. If the switch position has recently
+        changed, it will slew between the inputs.
+
+        Parameters
+        ----------
+        sample_list : list
+            A list of samples for each of the switch inputs.
+
+        Returns
+        -------
+        y : float
+            The sample at the current switch position.
+        """
+        samples_int = [utils.float_to_fixed(x, self.Q_sig) for x in sample_list]
+
+        if self.switching:
+            gain_1 = self._cos_approx_int(self.counter)
+            gain_2 = utils.int32((2**31 - 1) - gain_1)
+            y = utils.int32_mult_sat_extract(gain_2, samples_int[self.switch_position], 31)
+            y += utils.int32_mult_sat_extract(gain_1, samples_int[self.last_position], 31)
+            utils.int32(y)
+
+            self.counter += self.step
+            if self.counter > 2**30:
+                self.switching = False
+
+            y = utils.fixed_to_float(y, self.Q_sig)
+        else:
+            y = sample_list[self.switch_position]
+        return [y]
+
+    def move_switch(self, position: int) -> None:
+        """Move the switch to the specified position. This will cause
+        the channel in sample_list[position] to be output.
+
+        Parameters
+        ----------
+        position : int
+            The position to move the switch to.
+        """
+        if position < 0 or position >= self.n_chans:
+            warnings.warn(
+                f"Switch position {position} is out of range, keeping old switch position"
+            )
+        elif position != self.switch_position:
+            self.last_position = self.switch_position
+            self.switch_position = position
+            self.switching = True
+            self.counter = int(-(2**30))
         else:
             self.switch_position = position
         return
@@ -682,8 +855,7 @@ class switch_stereo(dspg.dsp_block):
         super().__init__(fs, n_chans, Q_sig)
         assert n_chans % 2 == 0
         self.switch_position = 0
-        # don't need separate implementation for float/xcore
-        self.process_channels_xcore = self.process_channels
+
         return
 
     def process_channels(self, sample_list: list[float]) -> list[float]:
@@ -704,6 +876,9 @@ class switch_stereo(dspg.dsp_block):
         """
         y = sample_list[(2 * self.switch_position) : (2 * self.switch_position + 2)]
         return y
+
+    # don't need separate implementation for float/xcore
+    process_channels_xcore = process_channels
 
     def process_frame(self, frame: list[np.ndarray]) -> list[np.ndarray]:
         """
@@ -835,8 +1010,6 @@ class delay(dspg.dsp_block):
         self.delay_time = starting_delay
 
         self.buffer_idx = 0
-        # don't need separate implementation for float/xcore
-        self.process_channels_xcore = self.process_channels
 
         self.reset_state()
 
@@ -928,3 +1101,6 @@ class delay(dspg.dsp_block):
         if self.buffer_idx >= self.delay:
             self.buffer_idx = 0
         return y.tolist()
+
+    # don't need separate implementation for float/xcore
+    process_channels_xcore = process_channels

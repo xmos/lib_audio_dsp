@@ -78,7 +78,7 @@ More information on implementation can be found in
    .. autoclass:: audio_dsp.dsp.td_block_fir.fir_block_td
         :noindex:
 
-        .. automethod:: process
+        .. automethod:: process_frame
             :noindex:
 
         .. automethod:: reset_state
@@ -132,7 +132,7 @@ More information on implementation can be found in
    .. autoclass:: audio_dsp.dsp.fd_block_fir.fir_block_fd
         :noindex:
 
-        .. automethod:: process
+        .. automethod:: process_frame
             :noindex:
 
         .. automethod:: reset_state

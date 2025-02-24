@@ -240,3 +240,37 @@ The current ``delay`` value can be changed at runtime within the range
 
         .. automethod:: set_delay
             :noindex:
+
+
+================
+Switch with slew
+================
+
+The slewing switch module uses a cosine crossfade when moving switch
+position in order to avoid clicks.
+
+.. doxygenstruct:: switch_slew_t
+    :members:
+
+.. tab:: C API
+
+    .. only:: latex
+
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_switch_slew
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.signal_chain.switch_slew
+        :noindex:
+
+        .. automethod:: process_channels
+            :noindex:
+
+        .. automethod:: move_switch
+            :noindex:

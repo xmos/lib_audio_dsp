@@ -277,7 +277,7 @@ class VolumeControl(Stage):
 
 class Switch(Stage):
     """
-    Switch the input to one of the outputs. The switch can be used to
+    Switch the output to one of the inputs. The switch can be used to
     select between different signals.
 
     Parameters
@@ -307,6 +307,31 @@ class Switch(Stage):
         """
         self.dsp_block.move_switch(position)
         return self
+
+
+class SwitchSlew(Switch):
+    """
+    Switch the output to one of the inputs. The switch can be used to
+    select between different signals. When the switch is move, a cosine
+    slew is used to avoid clicks. This supports up to 16 inputs.
+
+    Parameters
+    ----------
+    index : int
+        The position to which to move the switch. This changes the output
+        signal to the input[index]
+
+    """
+
+    def __init__(self, index=0, **kwargs):
+        Stage.__init__(self, config=find_config("switch_slew"), **kwargs)
+        if self.n_in > 16:
+            raise ValueError("Switch supports up to 16 inputs")
+        self.index = index
+        self.create_outputs(1)
+        self.dsp_block = sc.switch_slew(self.fs, self.n_in)
+        self.set_control_field_cb("position", lambda: self.dsp_block.switch_position)
+        self.set_constant("fs", self.fs, "int32_t")
 
 
 class SwitchStereo(Stage):

@@ -96,3 +96,22 @@ void adsp_set_delay(
  * @return uint32_t         Time in samples
  */
 uint32_t time_to_samples(float fs, float time, time_units_t units);
+
+/**
+ * @brief Initialise a slewing switch object
+ *
+ * @param fs               Sampling frequency, used to calculate the
+ *                         step size.
+ * @param init_position    Starting position of the switch.
+ * @return switch_slew_t   The slewing switch object.
+ */
+switch_slew_t adsp_switch_slew_init(float fs, int32_t init_position);
+
+/**
+ * @brief Move the position of the switch. This sets the state of the
+ * switch for slewing on subsequent samples.
+ * 
+ * @param switch_slew     Slewing switch state object.
+ * @param new_position    The desired input channel to switch to.
+ */
+void adsp_switch_slew_move(switch_slew_t* switch_slew, int32_t new_position);
