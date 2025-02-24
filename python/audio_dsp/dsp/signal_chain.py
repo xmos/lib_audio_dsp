@@ -797,7 +797,7 @@ class switch_slew(switch):
         y : float
             The sample at the current switch position.
         """
-        samples_int = utils.float_list_to_int32(sample_list, self.Q_sig)
+        samples_int = [utils.float_to_fixed(x, self.Q_sig) for x in sample_list]
 
         if self.switching:
             gain_1 = self._cos_approx_int(self.counter)
@@ -810,7 +810,7 @@ class switch_slew(switch):
             if self.counter > 2**30:
                 self.switching = False
 
-            y = utils.int32_to_float(y, self.Q_sig)
+            y = utils.fixed_to_float(y, self.Q_sig)
         else:
             y = sample_list[self.switch_position]
         return [y]
