@@ -76,7 +76,7 @@ def envelope(x, N=None):
     return np.abs(y)  # pyright: ignore, not sure why pyright hates this
 
 
-def int32(val: float) -> int:
+def int32(val: float | int) -> int:
     """32 bit integer type.
     Integers in Python are larger than 64b, so checks the value is
     within the valid range.
@@ -93,8 +93,8 @@ def saturate_float(val: float, Q_sig: int) -> float:
     """Saturate a single floating point number to the max/min values of
     a given Q format.
     """
-    max_flt = float(((1 << 31) - 1) / (1 << Q_sig))
-    min_flt = float(-(1 << (31 - Q_sig)))
+    max_flt = float((Q_max(31)) / Q_max(Q_sig))
+    min_flt = -float((Q_max(31) + 1) / Q_max(Q_sig))
     if min_flt <= val <= max_flt:
         return val
     elif val < min_flt:
@@ -109,8 +109,8 @@ def saturate_float_array(val: np.ndarray, Q_sig: int) -> np.ndarray:
     """Saturate a floating point array to the max/min values of
     a given Q format.
     """
-    max_flt = ((1 << 31) - 1) / (1 << Q_sig)
-    min_flt = -(1 << (31 - Q_sig))
+    max_flt = float((Q_max(31)) / Q_max(Q_sig))
+    min_flt = -float((Q_max(31) + 1) / Q_max(Q_sig))
 
     if np.any(val < min_flt) or np.any(val > max_flt):
         warnings.warn("Saturation occurred", SaturationWarning)
@@ -137,14 +137,14 @@ def saturate_int32_vpu(val: int) -> int:
     """Symmetrically saturate int32 to ±int32max. This emulates XS3 VPU
     saturation.
     """
-    if -((1 << 31) - 1) <= val <= ((1 << 31) - 1):
+    if -Q_max(31) <= val <= Q_max(31):
         return int(val)
-    elif val < -((1 << 31) - 1):
+    elif val < -Q_max(31):
         warnings.warn("Saturation occurred", SaturationWarning)
-        return int(-((1 << 31) - 1))
+        return -Q_max(31)
     else:
         warnings.warn("Saturation occurred", SaturationWarning)
-        return int(((1 << 31) - 1))
+        return Q_max(31)
 
 
 def int34(val: float):
@@ -207,12 +207,12 @@ def int32_mult_sat_extract(x1: int, x2: int, Q: int):
     shifting.
     """
     y = int64(x1 * x2)
-    if y > ((1 << (31 + Q)) - 1):
+    if y > Q_max(31 + Q):
         warnings.warn("Saturation occurred", SaturationWarning)
-        y = (1 << (31 + Q)) - 1
-    elif y < -(1 << (31 + Q)):
+        y = Q_max(31 + Q)
+    elif y < -Q_max(31 + Q) - 1:
         warnings.warn("Saturation occurred", SaturationWarning)
-        y = -(1 << (31 + Q))
+        y = -Q_max(31 + Q) - 1
     y = int32(y >> Q)
 
     return y
@@ -240,6 +240,37 @@ def vlmaccr(vect1, vect2, out=0):
         out += vpu_mult(val1, val2)
 
     return int40(out)
+
+
+def Q_max(Q_format: int) -> int:
+    """Return the maximum value for a give n Q format, i.e.
+    ``(1 << Q_format) - 1``.
+    """
+    return int((1 << Q_format) - 1)
+
+
+def float_to_fixed(x: float, Q_sig=31) -> int:
+    """Round and scale a floating point number to an int32 in a given
+    Q format.
+    """
+    return int32(round(x * Q_max(Q_sig)))
+
+
+def fixed_to_float(x: int, Q_sig: int = 31) -> float:
+    """Convert an int32 number to floating point, given its Q format."""
+    return float(x) / float(Q_max(Q_sig))
+
+
+def float_to_fixed_array(x: np.ndarray, Q_sig=31) -> np.ndarray:
+    """Round and scale a floating point array to an int32 in a given
+    Q format.
+    """
+    return (np.round(x * Q_max(Q_sig))).astype(int)
+
+
+def fixed_to_float_array(x: np.ndarray, Q_sig: int = 31) -> np.ndarray:
+    """Convert an int32 array to floating point, given its Q format."""
+    return x.astype(float) / float(Q_max(Q_sig))
 
 
 def float_to_int32(x, Q_sig=31) -> int:

@@ -502,7 +502,7 @@ class reverb_room(rvb.reverb_base):
         Take one new sample and return the sample with reverb.
         Input should be scaled with 0 dB = 1.0.
         """
-        sample_int = utils.float_to_int32(sample, self.Q_sig)
+        sample_int = utils.float_to_fixed(sample, self.Q_sig)
 
         delayed_input = self._predelay.process_channels_xcore([sample_int])[0]
         reverb_input = rvb.apply_gain_xcore(delayed_input, self.pregain_int)
@@ -528,4 +528,4 @@ class reverb_room(rvb.reverb_base):
         utils.int64(output)
         output = utils.saturate_int64_to_int32(output)
 
-        return utils.int32_to_float(output, self.Q_sig)
+        return utils.fixed_to_float(output, self.Q_sig)

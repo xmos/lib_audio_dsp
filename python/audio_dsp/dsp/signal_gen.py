@@ -30,7 +30,7 @@ def quantize_signal(signal: np.ndarray, precision: int) -> np.ndarray:
         The quantized signal.
 
     """
-    signal = np.round(signal * (2 ** (precision - 1) - 1)) / 2 ** (precision - 1)
+    signal = np.round(signal * utils.Q_max(precision - 1)) / utils.Q_max(precision - 1)
     return signal
 
 

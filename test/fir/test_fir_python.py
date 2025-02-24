@@ -7,6 +7,7 @@ from pathlib import Path
 import audio_dsp.dsp.fir as fir
 import audio_dsp.dsp.signal_gen as sg
 import audio_dsp.dsp.utils as utils
+from test.test_utils import q_convert_flt, assert_allclose
 
 gen_dir = Path(__file__).parent / "autogen"
 
@@ -21,6 +22,7 @@ def test_basic(coeff_path):
     fut = fir.fir_direct(48000, 1, Path(gen_dir, coeff_path))
 
     signal = sg.pink_noise(48000, 0.1, 0.5)
+    signal = q_convert_flt(signal, 23, 27)
     # signal = np.zeros(1000)
     # signal[0] = 1
 
@@ -81,7 +83,7 @@ def test_frames(coeff_path, n_chans):
 
     for n in range(1, n_chans):
         # rounding differences can occur between positive and negative signal
-        np.testing.assert_allclose(-out_int[0, :], out_int[n, :], atol=(2**(-fut.Q_sig)))
+        assert_allclose(-out_int[0, :], out_int[n, :], atol=(2**(-fut.Q_sig)))
 
 
 if __name__ =="__main__":

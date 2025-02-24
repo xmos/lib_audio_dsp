@@ -21,6 +21,7 @@ from audio_dsp.stages.limiter import LimiterRMS, LimiterPeak
 from audio_dsp.design.pipeline import generate_dsp_main
 import audio_dsp.dsp.signal_gen as gen
 from audio_dsp.dsp.generic import HEADROOM_BITS
+import audio_dsp.dsp.utils as utils
 
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
 from stages.add_n import AddN
@@ -83,14 +84,19 @@ def test_pipeline():
     # Generate input
     input_sig_py = np.empty((int(Fs*test_duration), num_in_channels), dtype=np.float64)
     for i in range(num_in_channels):
-        input_sig_py[:, i] = (gen.sin(fs=Fs, length=test_duration, freq=1000, amplitude=0.1, precision=27)).T
+        # precision of 28 gives Q27 signal
+        input_sig_py[:, i] = (gen.sin(fs=Fs, length=test_duration, freq=1000, amplitude=0.1, precision=28)).T
 
     if (input_dtype == np.int32) or (input_dtype == np.int16):
+        int_sig = (np.array(input_sig_py) * utils.Q_max(27)).astype(np.int32)
         if input_dtype == np.int32:
             qformat = 31
+            int_sig <<= 4
         else:
             qformat = 15
-        input_sig_c = np.clip((np.array(input_sig_py) * (2**qformat)), np.iinfo(input_dtype).min, np.iinfo(input_dtype).max).astype(input_dtype)
+            int_sig >>= (27-15)
+
+        input_sig_c = np.clip(int_sig, np.iinfo(input_dtype).min, np.iinfo(input_dtype).max).astype(input_dtype)
     else:
         input_sig_c = deepcopy(input_sig_py)
 
@@ -102,7 +108,8 @@ def test_pipeline():
     # Run Python
     sim_sig = p.executor().process(input_sig_py).data
     np.testing.assert_equal(sim_sig, input_sig_py)
-    sim_sig = np.clip((np.array(sim_sig) * (2**qformat)), np.iinfo(input_dtype).min, np.iinfo(input_dtype).max).astype(input_dtype)
+
+    sim_sig = utils.float_to_fixed_array(sim_sig, 27) << 4
     audio_helpers.write_wav(outfile_py, Fs, sim_sig)
 
     # Run C

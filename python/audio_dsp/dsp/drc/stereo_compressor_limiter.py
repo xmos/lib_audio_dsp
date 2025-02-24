@@ -179,7 +179,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         """
         samples_int = [int(0)] * len(sample_list)
         for i in range(len(sample_list)):
-            samples_int[i] = utils.float_to_int32(sample_list[i], self.Q_sig)
+            samples_int[i] = utils.float_to_fixed(sample_list[i], self.Q_sig)
 
         # get envelope from envelope detector
         env0_int = self.env_detector.process_xcore(samples_int[0], 0)  # type: ignore : base inits to None
@@ -205,12 +205,12 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
         for sample_int in samples_int:
             y_uq = drcu.apply_gain_xcore(sample_int, self.gain_int)
-            y.append(utils.int32_to_float(y_uq, self.Q_sig))
+            y.append(utils.fixed_to_float(y_uq, self.Q_sig))
 
         return (
             y,
-            utils.int32_to_float(new_gain_int, self.Q_alpha),
-            utils.int32_to_float(envelope_int, self.Q_sig),
+            utils.fixed_to_float(new_gain_int, self.Q_alpha),
+            utils.fixed_to_float(envelope_int, self.Q_sig),
         )
 
     def process_frame(self, frame: list[np.ndarray]):
