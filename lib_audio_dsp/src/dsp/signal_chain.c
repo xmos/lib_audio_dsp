@@ -140,16 +140,31 @@ int32_t adsp_delay(
   return out;
 }
 
-int32_t _cos_approx(int32_t x){
-  // approximate a cosine fade out with a 2 term polynomial
-  int32_t x2 = ((int64_t)x*x) >> 30;
-  
-  int32_t y = -1622688857;
-  y += ((int64_t)x2*549248075) >> 30;
-  y = ((int64_t)x*y) >> 30;
-  y += 1 << 30;
 
-  return y;
+int32_t _cos_approx(int32_t x) {
+  // A two term cosine fade approximation, based on a Chebyshev
+  // polynomial fit. x must be between -2**30 and 2**30. y is a gain
+  // between 1 and 0 in Q31. This is only for use with the slewing switch.
+
+  // x**2 >> 30
+  int32_t ah = 0, al = 0, q = 30, tmp = 0;
+  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (x), "r" (x), "0" (ah), "1" (al));
+  asm("lextract %0, %1, %2, %3, 32":"=r"(tmp):"r"(ah),"r"(al),"r"(q));
+  
+  // set initial value to -1622688857 << 30 so we can add -1622688857 before shifting
+  al = (int32_t)((((int64_t)-1622688857) << 30) & 0xFFFFFFFF);
+  ah = (int32_t)(((uint64_t)(((int64_t)-1622688857) << 30)) >> 32);
+  // y = ((x^2 * 549248075) >> 30) - 1622688857
+  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (tmp), "r" (549248075), "0" (ah), "1" (al));
+  asm("lextract %0, %1, %2, %3, 32":"=r"(tmp):"r"(ah),"r"(al),"r"(q));
+  
+  // set initial value to 1 << 60 so we can add 1 << 30 before shifting
+  al = 0;
+  ah = 1 << (q - 2);
+  // y = ((x*y) >> 30) + (1 << 30)
+  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (tmp), "r" (x), "0" (ah), "1" (al));
+  asm("lextract %0, %1, %2, %3, 32":"=r"(tmp):"r"(ah),"r"(al),"r"(q));
+  return tmp;
 }
 
 
