@@ -14,7 +14,7 @@ Q_SIG = 27
 # number of bits for the headroom, this will set the maximum gain that
 # can be applied to the signal without overflowing.
 HEADROOM_BITS = 31 - Q_SIG
-HEADROOM_DB = utils.db((utils.Q_max(31))/utils.Q_max(Q_SIG))
+HEADROOM_DB = utils.db((utils.Q_max(31)) / utils.Q_max(Q_SIG))
 
 
 class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):

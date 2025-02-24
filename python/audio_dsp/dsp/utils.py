@@ -93,8 +93,8 @@ def saturate_float(val: float, Q_sig: int) -> float:
     """Saturate a single floating point number to the max/min values of
     a given Q format.
     """
-    max_flt = float((Q_max(31))/Q_max(Q_sig))
-    min_flt = -float((Q_max(31) + 1)/Q_max(Q_sig))
+    max_flt = float((Q_max(31)) / Q_max(Q_sig))
+    min_flt = -float((Q_max(31) + 1) / Q_max(Q_sig))
     if min_flt <= val <= max_flt:
         return val
     elif val < min_flt:
@@ -109,8 +109,8 @@ def saturate_float_array(val: np.ndarray, Q_sig: int) -> np.ndarray:
     """Saturate a floating point array to the max/min values of
     a given Q format.
     """
-    max_flt = float((Q_max(31))/Q_max(Q_sig))
-    min_flt = -float((Q_max(31) + 1)/Q_max(Q_sig))
+    max_flt = float((Q_max(31)) / Q_max(Q_sig))
+    min_flt = -float((Q_max(31) + 1) / Q_max(Q_sig))
 
     if np.any(val < min_flt) or np.any(val > max_flt):
         warnings.warn("Saturation occurred", SaturationWarning)
@@ -249,23 +249,16 @@ def Q_max(Q_format: int) -> int:
     return int((1 << Q_format) - 1)
 
 
-def float_to_fixed_signal(x: float | np.ndarray, Q_sig=31) -> int | np.ndarray:
+def float_to_fixed_signal(x: float, Q_sig=31) -> int:
     """Round and scale a floating point number to an int32 in a given
     Q format.
     """
-    if type(x) is np.ndarray:
-        return (np.round(x * Q_max(Q_sig))).astype(int)
-    else:
-        return int32(round(x * Q_max(Q_sig)))
+    return int32(round(x * Q_max(Q_sig)))
 
 
-def fixed_to_float_signal(x: int | np.ndarray, Q_sig: int = 31) -> float | np.ndarray:
+def fixed_to_float_signal(x: int, Q_sig: int = 31) -> float:
     """Convert an int32 number to floating point, given its Q format."""
-    # Note this means the max value is 0.99999999953
-    if type(x) is np.ndarray:
-        return x.astype(float) / float(Q_max(Q_sig))
-    else:
-        return float(x) / float(Q_max(Q_sig))
+    return float(x) / float(Q_max(Q_sig))
 
 
 def float_to_int32(x, Q_sig=31) -> int:
