@@ -18,7 +18,7 @@ set(APP_COMPILER_FLAGS_default
     ${COMMON_APP_COMPILER_FLAGS}
 )
 
-set(APP_COMPILER_FLAGS_control_commands
+set(APP_COMPILER_FLAGS_tuned
     ${COMMON_APP_COMPILER_FLAGS}
     -DSEND_TEST_CONTROL_COMMANDS=1
 )
@@ -39,7 +39,7 @@ if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/build/dsp_pipeline_default/adsp_generated_au
     list(APPEND APP_C_SRCS build/dsp_pipeline_default/adsp_generated_auto.c)
 endif()
 if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/build/dsp_pipeline_tuned/adsp_generated_auto.c)
-    set(SOURCE_FILES_control_commands build/dsp_pipeline_tuned/adsp_generated_auto.c)
+    set(SOURCE_FILES_tuned build/dsp_pipeline_tuned/adsp_generated_auto.c)
     list(APPEND APP_C_SRCS build/dsp_pipeline_tuned/adsp_generated_auto.c)
 endif()
 

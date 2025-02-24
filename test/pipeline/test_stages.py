@@ -136,10 +136,7 @@ def do_test(default_pipeline, tuned_pipeline, dut_frame_size, folder_name, skip_
             if not tuned_pipeline and target == "tuned":
                 continue
             # Build pipeline test executable. This will download xscope_fileio if not present
-            if target == "tuned":
-                build_utils.build(APP_DIR, BUILD_DIR, "control_commands")
-            else:
-                build_utils.build(APP_DIR, BUILD_DIR, "default")
+            build_utils.build(APP_DIR, BUILD_DIR, target)
 
             # old_xe = APP_DIR / f"bin/{target}/pipeline_test_{target}.xe"
             # new_xe = app_dir / f"bin/{target}/pipeline_test_{target}.xe"
@@ -153,10 +150,7 @@ def do_test(default_pipeline, tuned_pipeline, dut_frame_size, folder_name, skip_
         if target == "default" and skip_default:
             continue
 
-        if target == "tuned":
-            xe = app_dir / f"bin/control_commands/pipeline_test_control_commands.xe"
-        else:
-            xe = app_dir / f"bin/{target}/pipeline_test_{target}.xe"
+        xe = app_dir / f"bin/{target}/pipeline_test_{target}.xe"
 
         _, _ = audio_helpers.read_wav(infile)
         run_pipeline_xcoreai.run(xe, infile, outfile, pipeline_channels, 1, return_stdout=False)
