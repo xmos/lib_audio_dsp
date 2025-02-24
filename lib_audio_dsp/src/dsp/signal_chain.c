@@ -168,16 +168,6 @@ int32_t _cos_approx(int32_t x) {
 }
 
 
-switch_slew_t adsp_switch_slew_init(int32_t fs, int32_t init_position){
-  switch_slew_t out = {.switching = false,
-                       .position = init_position,
-                       .last_position=init_position,
-                       .counter = -(1<<30),
-                       .step = INT32_MAX / (int32_t)(fs * 0.03f)};
-  return out;
-}
-
-
 int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t* samples){
 
   if (switch_slew->switching){
@@ -197,12 +187,3 @@ int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t* samples){
     return samples[switch_slew->position];
     }
   }
-
-void adsp_switch_slew_move(switch_slew_t* switch_slew, int32_t new_position){
-  if (new_position != switch_slew->position){
-    switch_slew->last_position = switch_slew->position;
-    switch_slew->position = new_position;
-    switch_slew->switching = true;
-    switch_slew->counter = -(1 << 30);
-  }
-}

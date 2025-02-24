@@ -309,7 +309,7 @@ class Switch(Stage):
         return self
 
 
-class SwitchSlew(Stage):
+class SwitchSlew(Switch):
     """
     Switch the output to one of the inputs. The switch can be used to
     select between different signals. When the switch is move, a cosine
@@ -332,19 +332,6 @@ class SwitchSlew(Stage):
         self.dsp_block = sc.switch_slew(self.fs, self.n_in)
         self.set_control_field_cb("position", lambda: self.dsp_block.switch_position)
         self.set_constant("fs", self.fs, "int32_t")
-
-    def move_switch(self, position):
-        """
-        Move the switch to the specified position.
-
-        Parameters
-        ----------
-        position : int
-            The position to which to move the switch. This changes the output
-            signal to the input[position]
-        """
-        self.dsp_block.move_switch(position)
-        return self
 
 
 class SwitchStereo(Stage):
