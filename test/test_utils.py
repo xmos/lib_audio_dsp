@@ -15,11 +15,16 @@ def qxx_to_float(arr_int, q = Q_SIG):
   arr_float = np.array(arr_int).astype(np.float64) / Q_max(q)
   return arr_float
 
+
 def q_convert_flt(arr_float, old_q, new_q, dtype = np.int32):
+    # change the Q format of a floating point array.
+    # Since the max changes by (2**old - 1)/(2**new - 1), it is not quite
+    # a multiple of 2 change.
     arr_int32 = np.clip((np.array(arr_float) * Q_max(old_q)), np.iinfo(dtype).min, np.iinfo(dtype).max).astype(dtype)
     arr_int32 <<= (new_q - old_q)
     out_flt = arr_int32 / float(Q_max(new_q))
     return out_flt
+
 
 def xdist_safe_bin_write(sig_int, sig_path):
   # write a integer signal (sig_int) to sig_path in a multithread safe way
@@ -31,5 +36,7 @@ def xdist_safe_bin_write(sig_int, sig_path):
     if not sig_path.is_file() or worker_id is None:
       sig_int.tofile(sig_path)
 
+
 def assert_allclose(actual, desired, rtol=1e-07, atol=0):
+  # numpy assert_all close, but excluding zero values (which break rtol)
   np.testing.assert_allclose(actual[desired!=0], desired[desired!=0], rtol=rtol, atol=atol)
