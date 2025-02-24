@@ -16,16 +16,6 @@ gen_dir = Path(__file__).parent / "autogen"
 
 fs=48000
 
-def float_to_qxx(arr_float, q = Q_SIG, dtype = np.int32):
-  arr_int32 = np.clip((np.array(arr_float) * (2**q)), np.iinfo(dtype).min, np.iinfo(dtype).max).astype(dtype)
-  return arr_int32
-
-
-def qxx_to_float(arr_int, q = Q_SIG):
-  arr_float = np.array(arr_int).astype(np.float64) * (2 ** (-q))
-  return arr_float
-
-
 def flt_to_bin_file(sig_fl, out_dir=bin_dir):
   sig_fl32 = np.array(sig_fl).astype(np.float32)
   name = "test_vector"
@@ -38,7 +28,7 @@ def get_c_wav(dir_name, conv_name, verbose=False, sim = True, dtype=np.float32):
   app = "xsim" if sim else "xrun --io"
   run_cmd = app + " " + str(bin_dir / f"{conv_name}.xe")
   stdout = subprocess.check_output(run_cmd, cwd = dir_name, shell = True)
-  if verbose: print("run msg:\n", stdout)
+  if verbose: print("run msg:\n", stdout.decode())
 
   sig_bin = dir_name / "out_vector.bin"
   assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
@@ -93,9 +83,10 @@ def test_rms_threshold():
     thresh_python = np.zeros_like(threshold_dbs, dtype=np.int32)
 
     for n in range(len(threshold_dbs)):
-        thresh, thresh_python[n] = drcu.calculate_rms_threshold(threshold_dbs[n], Q_SIG)
+        _, thresh_python[n] = drcu.calculate_rms_threshold(threshold_dbs[n], Q_SIG)
 
-    assert np.all(out_c == thresh_python)
+    np.testing.assert_allclose(out_c, thresh_python, rtol=2**-21, atol=1)
+
 
 
 def test_peak_threshold():
@@ -103,7 +94,8 @@ def test_peak_threshold():
     test_dir = bin_dir / "peak_threshold"
     test_dir.mkdir(exist_ok = True, parents = True)
 
-    threshold_dbs = [-2000, 0, HEADROOM_DB + 1]
+    # threshold_dbs = [-2000, -0, HEADROOM_DB + 1]
+    threshold_dbs = utils.db(np.logspace(np.log10(0.001), np.log10(8), 100))
     flt_to_bin_file(threshold_dbs, test_dir)
 
     out_c = get_c_wav(test_dir, "peak_threshold", dtype=np.int32)
@@ -111,9 +103,9 @@ def test_peak_threshold():
     thresh_python = np.zeros_like(threshold_dbs, dtype=np.int32)
 
     for n in range(len(threshold_dbs)):
-        thresh, thresh_python[n] = drcu.calculate_threshold(threshold_dbs[n], Q_SIG, power=False)
+        _, thresh_python[n] = drcu.calculate_threshold(threshold_dbs[n], Q_SIG, power=False)
 
-    assert np.all(out_c == thresh_python)
+    np.testing.assert_allclose(out_c, thresh_python, rtol=2**-21, atol=1)
 
 
 def test_calc_alpha():

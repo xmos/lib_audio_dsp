@@ -22,6 +22,8 @@ import yaml
 from filelock import FileLock
 import shutil
 
+from test.test_utils import q_convert_flt
+
 PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
@@ -41,7 +43,7 @@ def generate_ref(sig, ref_module, pipeline_channels, frame_size):
     """
     Process the signal through a Python stage of a certain frame size
     """
-    sig_flt = np.float64(sig.T) * 2**-31
+    sig_flt = utils.fixed_to_float_array(sig.T >> 4, 27)
     signal_frames = utils.frame_signal(sig_flt, frame_size, frame_size)
     out_py = np.zeros((pipeline_channels, sig.shape[0]))
 
@@ -52,7 +54,7 @@ def generate_ref(sig, ref_module, pipeline_channels, frame_size):
         )
 
     # back to int scaling, and clip so that values are int32
-    out_py_int = out_py * 2**31
+    out_py_int = utils.float_to_fixed_array(out_py, 27) << 4
 
     return out_py_int
 

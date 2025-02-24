@@ -7,7 +7,7 @@ import audio_dsp.dsp.signal_gen as gen
 import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.generic as dspg
 from audio_dsp.dsp.generic import HEADROOM_DB
-
+from test.test_utils import q_convert_flt
 import soundfile as sf
 
 
@@ -107,7 +107,7 @@ def test_saturation(filter_spec, fs):
         signals[1] *= -1
     signal = np.stack(signals, axis=0)
     signal = utils.saturate_float_array(signal, dspg.Q_SIG)
-    
+    signal = q_convert_flt(signal, 23, dspg.Q_SIG)
     output_flt = np.zeros(signal.shape[1])
     output_xcore = np.zeros(signal.shape[1])
 

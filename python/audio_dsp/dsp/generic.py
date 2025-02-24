@@ -14,7 +14,7 @@ Q_SIG = 27
 # number of bits for the headroom, this will set the maximum gain that
 # can be applied to the signal without overflowing.
 HEADROOM_BITS = 31 - Q_SIG
-HEADROOM_DB = utils.db(2**HEADROOM_BITS)
+HEADROOM_DB = utils.db((utils.Q_max(31) + 1) / utils.Q_max(Q_SIG))
 
 
 class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
@@ -88,9 +88,9 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
         float
             The processed output sample.
         """
-        sample_int = utils.float_to_int32(sample, self.Q_sig)
+        sample_int = utils.float_to_fixed(sample, self.Q_sig)
         y = self.process(float(sample_int))
-        y_flt = utils.int32_to_float(y, self.Q_sig)
+        y_flt = utils.fixed_to_float(y, self.Q_sig)
 
         return y_flt
 

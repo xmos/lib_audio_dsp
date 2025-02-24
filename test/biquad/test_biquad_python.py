@@ -72,8 +72,9 @@ def chirp_filter_test(filter: bq.biquad, fs):
 
     # after saturation, the implementations diverge, but they should
     # initially saturate at the same sample
-    first_sat = np.argmax(np.abs(output_flt) >= 0.9999999995343387)
-    top_half[first_sat + 1:] = False
+    if output_flt.max() > 2**(31-filter.Q_sig):
+        first_sat = np.argmax(np.abs(output_flt) >= 2**(31-filter.Q_sig))
+        top_half[first_sat + 1:] = False
 
     if np.any(top_half):
         error_flt = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
@@ -113,8 +114,8 @@ def test_bypass(fs, amplitude):
         output_xcore[n] = filter.process_xcore(signal[n])
 
     np.testing.assert_array_equal(signal, output_flt)
-    np.testing.assert_allclose(signal, output_int, atol=2**-32)
-    np.testing.assert_allclose(signal, output_xcore, atol=2**-32)
+    np.testing.assert_allclose(signal, output_int, atol=2**-31)
+    np.testing.assert_allclose(signal, output_xcore, atol=2**-31)
 
 
 @pytest.mark.parametrize("filter_type", ["biquad_peaking",

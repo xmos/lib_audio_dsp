@@ -135,8 +135,8 @@ class compressor_rms_sidechain_mono(rms_compressor_limiter_base):
 
         """
         # quantize
-        sample_int = utils.float_to_int32(input_sample, self.Q_sig)
-        detect_sample_int = utils.float_to_int32(detect_sample, self.Q_sig)
+        sample_int = utils.float_to_fixed(input_sample, self.Q_sig)
+        detect_sample_int = utils.float_to_fixed(detect_sample, self.Q_sig)
 
         # get envelope from envelope detector
         envelope_int = self.env_detector.process_xcore(detect_sample_int)
@@ -161,9 +161,9 @@ class compressor_rms_sidechain_mono(rms_compressor_limiter_base):
         y = drcu.apply_gain_xcore(sample_int, self.gain_int)
 
         return (
-            utils.int32_to_float(y, self.Q_sig),
-            utils.int32_to_float(new_gain_int, self.Q_alpha),
-            utils.int32_to_float(envelope_int, self.Q_sig),
+            utils.fixed_to_float(y, self.Q_sig),
+            utils.fixed_to_float(new_gain_int, self.Q_alpha),
+            utils.fixed_to_float(envelope_int, self.Q_sig),
         )
 
     def process_frame(self, frame):
@@ -330,8 +330,8 @@ class compressor_rms_sidechain_stereo(rms_compressor_limiter_stereo_base):
         samples_int = [int(0)] * len(input_samples)
         detect_samples_int = [int(0)] * len(input_samples)
         for i in range(len(input_samples)):
-            samples_int[i] = utils.float_to_int32(input_samples[i], self.Q_sig)
-            detect_samples_int[i] = utils.float_to_int32(detect_samples[i], self.Q_sig)
+            samples_int[i] = utils.float_to_fixed(input_samples[i], self.Q_sig)
+            detect_samples_int[i] = utils.float_to_fixed(detect_samples[i], self.Q_sig)
 
         # get envelope from envelope detector
         env0 = self.env_detector.process_xcore(detect_samples_int[0], 0)
@@ -357,12 +357,12 @@ class compressor_rms_sidechain_stereo(rms_compressor_limiter_stereo_base):
         # apply gain in int32
         for i in range(len(input_samples)):
             y_uq = drcu.apply_gain_xcore(samples_int[i], self.gain_int)
-            y[i] = utils.int32_to_float(y_uq, self.Q_sig)
+            y[i] = utils.fixed_to_float(y_uq, self.Q_sig)
 
         return (
             y,
-            utils.int32_to_float(new_gain_int, self.Q_alpha),
-            utils.int32_to_float(envelope_int, self.Q_sig),
+            utils.fixed_to_float(new_gain_int, self.Q_alpha),
+            utils.fixed_to_float(envelope_int, self.Q_sig),
         )
 
     def process_frame(self, frame):

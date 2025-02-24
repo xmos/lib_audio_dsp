@@ -39,7 +39,6 @@ def test_reverb_overflow(signal, freq, algo, param):
         sig = gen.white_noise(fs, 5, 1)
 
     sig = sig/np.max(np.abs(sig))
-    sig = sig* (2**31 - 1)/(2**31)
 
     if algo == "stereo_room":
         sig = np.tile(sig, [2, 1])

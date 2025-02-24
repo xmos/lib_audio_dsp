@@ -9,27 +9,17 @@ import audio_dsp.dsp.biquad as bq
 from audio_dsp.dsp.generic import Q_SIG
 import audio_dsp.dsp.signal_gen as gen
 import pytest
-from test.test_utils import xdist_safe_bin_write
+from test.test_utils import xdist_safe_bin_write, float_to_qxx, qxx_to_float, q_convert_flt
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
 
 fs = 48000
 
-
-def float_to_qxx(arr_float, q = Q_SIG, dtype = np.int32):
-  arr_int32 = np.clip((np.array(arr_float) * (2**q)), np.iinfo(dtype).min, np.iinfo(dtype).max).astype(dtype)
-  return arr_int32
-
-
-def qxx_to_float(arr_int, q = Q_SIG):
-  arr_float = np.array(arr_int).astype(np.float64) * (2 ** (-q))
-  return arr_float
-
-
 def get_sig(len=0.05):
 
   sig_fl = gen.log_chirp(fs, len, 0.5)
+  sig_fl = q_convert_flt(sig_fl, 23, Q_SIG)
   sig_int = float_to_qxx(sig_fl)
 
   name = "sig_48k"
@@ -166,6 +156,6 @@ if __name__ =="__main__":
   sig_fl = get_sig()
   #test_xpass_filters_c(sig_fl, "biquad_notch", 200, 0.7)
   #test_high_gain_c(sig_fl, "biquad_lowshelf", 2000, 0.1, 5)
-  #test_bandx_filters_c(sig_fl, "biquad_bandpass", 200, 10)
+  test_bandx_filters_c(sig_fl, "biquad_bandpass", 200, 10)
   #test_linkwitz_filters_c(sig_fl, 100, 4, 0.5, 2)
-  test_gain_filters_c(sig_fl, -10)
+  # test_gain_filters_c(sig_fl, -10)
