@@ -249,16 +249,28 @@ def Q_max(Q_format: int) -> int:
     return int((1 << Q_format) - 1)
 
 
-def float_to_fixed_signal(x: float, Q_sig=31) -> int:
+def float_to_fixed(x: float, Q_sig=31) -> int:
     """Round and scale a floating point number to an int32 in a given
     Q format.
     """
     return int32(round(x * Q_max(Q_sig)))
 
 
-def fixed_to_float_signal(x: int, Q_sig: int = 31) -> float:
+def fixed_to_float(x: int, Q_sig: int = 31) -> float:
     """Convert an int32 number to floating point, given its Q format."""
     return float(x) / float(Q_max(Q_sig))
+
+
+def float_to_fixed_array(x: np.ndarray, Q_sig=31) -> np.ndarray:
+    """Round and scale a floating point array to an int32 in a given
+    Q format.
+    """
+    return (np.round(x * Q_max(Q_sig))).astype(int)
+
+
+def fixed_to_float_array(x: np.ndarray, Q_sig: int = 31) -> np.ndarray:
+    """Convert an int32 array to floating point, given its Q format."""
+    return x.astype(float) / float(Q_max(Q_sig))
 
 
 def float_to_int32(x, Q_sig=31) -> int:

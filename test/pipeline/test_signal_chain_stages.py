@@ -73,7 +73,7 @@ def do_test(p, folder_name, n_outs=1):
 
     # convert to float scaling and make frames
     frame_size = 1
-    sig_flt = utils.fixed_to_float_signal(sig.T >> 4, 27)
+    sig_flt = utils.fixed_to_float_array(sig.T >> 4, 27)
     signal_frames = utils.frame_signal(sig_flt, frame_size, frame_size)
     out_py = np.zeros((n_outs, sig.shape[0]))
 
@@ -82,7 +82,7 @@ def do_test(p, folder_name, n_outs=1):
         out_py[:, n*frame_size:(n+1)*frame_size] = ref_module.process_frame_xcore(signal_frames[n])
 
     # back to int scaling
-    out_py_int = utils.float_to_fixed_signal(out_py, 27) << 4
+    out_py_int = utils.float_to_fixed_array(out_py, 27) << 4
 
     np.testing.assert_equal(out_py_int, out_data.T)
 

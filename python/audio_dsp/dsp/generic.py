@@ -88,9 +88,9 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
         float
             The processed output sample.
         """
-        sample_int = utils.float_to_fixed_signal(sample, self.Q_sig)
+        sample_int = utils.float_to_fixed(sample, self.Q_sig)
         y = self.process(float(sample_int))
-        y_flt = utils.fixed_to_float_signal(y, self.Q_sig)
+        y_flt = utils.fixed_to_float(y, self.Q_sig)
 
         return y_flt
 

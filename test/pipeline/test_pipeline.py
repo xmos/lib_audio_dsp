@@ -108,7 +108,7 @@ def test_pipeline():
     sim_sig = p.executor().process(input_sig_py).data
     np.testing.assert_equal(sim_sig, input_sig_py)
 
-    sim_sig = utils.float_to_fixed_signal(sim_sig, 27) << 4
+    sim_sig = utils.float_to_fixed_array(sim_sig, 27) << 4
     audio_helpers.write_wav(outfile_py, Fs, sim_sig)
 
     # Run C

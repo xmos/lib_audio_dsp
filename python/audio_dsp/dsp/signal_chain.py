@@ -186,14 +186,14 @@ class mixer(_combiners):
         """
         y = int(0)
         for sample in sample_list:
-            sample_int = utils.float_to_fixed_signal(sample, self.Q_sig)
+            sample_int = utils.float_to_fixed(sample, self.Q_sig)
             acc = 1 << (Q_GAIN - 1)
             acc += sample_int * self.gain_int
             scaled_sample = utils.int32_mult_sat_extract(acc, 1, Q_GAIN)
             y += scaled_sample
 
         y = utils.int32_mult_sat_extract(y, 2, 1)
-        y_flt = utils.fixed_to_float_signal(y, self.Q_sig)
+        y_flt = utils.fixed_to_float(y, self.Q_sig)
 
         return [y_flt]
 
@@ -276,15 +276,15 @@ class subtractor(_combiners):
         float
             Result of the subtraction.
         """
-        sample_int_0 = utils.float_to_fixed_signal(sample_list[0], self.Q_sig)
-        sample_int_1 = utils.float_to_fixed_signal(sample_list[1], self.Q_sig)
+        sample_int_0 = utils.float_to_fixed(sample_list[0], self.Q_sig)
+        sample_int_1 = utils.float_to_fixed(sample_list[1], self.Q_sig)
 
         acc = int(0)
         acc += sample_int_0 * 2
         acc += sample_int_1 * -2
         y = utils.int32_mult_sat_extract(acc, 1, 1)
 
-        y_flt = utils.fixed_to_float_signal(y, self.Q_sig)
+        y_flt = utils.fixed_to_float(y, self.Q_sig)
 
         return [y_flt]
 
@@ -366,7 +366,7 @@ class fixed_gain(dspg.dsp_block):
             The processed output sample.
         """
         if isinstance(sample, float):
-            sample_int = utils.float_to_fixed_signal(sample, self.Q_sig)
+            sample_int = utils.float_to_fixed(sample, self.Q_sig)
         elif isinstance(sample, int):
             sample_int = sample
         else:
@@ -378,7 +378,7 @@ class fixed_gain(dspg.dsp_block):
         y = utils.int32_mult_sat_extract(acc, 1, Q_GAIN)
 
         if isinstance(sample, float):
-            return utils.fixed_to_float_signal(y, self.Q_sig)
+            return utils.fixed_to_float(y, self.Q_sig)
         else:
             return y
 
@@ -557,7 +557,7 @@ class volume_control(dspg.dsp_block):
         float
             The processed output sample.
         """
-        sample_int = utils.float_to_fixed_signal(sample, self.Q_sig)
+        sample_int = utils.float_to_fixed(sample, self.Q_sig)
 
         # do the exponential slew
         self.gain_int[channel] += (
@@ -571,7 +571,7 @@ class volume_control(dspg.dsp_block):
         acc += sample_int * self.gain_int[channel]
         y = utils.int32_mult_sat_extract(acc, 1, Q_GAIN)
 
-        y_flt = utils.fixed_to_float_signal(y, self.Q_sig)
+        y_flt = utils.fixed_to_float(y, self.Q_sig)
 
         return y_flt
 

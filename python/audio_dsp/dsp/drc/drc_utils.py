@@ -62,7 +62,7 @@ def calculate_threshold(threshold_db, Q_sig, power=False) -> tuple[float, int]:
             UserWarning,
         )
 
-    threshold_int = utils.float_to_fixed_signal(threshold, Q_sig)
+    threshold_int = utils.float_to_fixed(threshold, Q_sig)
 
     # this avoids division by zero for expanders
     threshold_int = max(1, threshold_int)

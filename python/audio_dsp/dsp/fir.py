@@ -175,7 +175,7 @@ class fir_direct(dspg.dsp_block):
         float
             The processed output sample.
         """
-        sample_int = utils.float_to_fixed_signal(sample, self.Q_sig)
+        sample_int = utils.float_to_fixed(sample, self.Q_sig)
 
         # put new sample in buffer
         self.buffer_int[channel][self.buffer_idx[channel]] = sample_int
@@ -210,7 +210,7 @@ class fir_direct(dspg.dsp_block):
         # saturate
         y = utils.saturate_int64_to_int32(y)
 
-        y_flt = utils.fixed_to_float_signal(y, self.Q_sig)
+        y_flt = utils.fixed_to_float(y, self.Q_sig)
 
         return y_flt
 
