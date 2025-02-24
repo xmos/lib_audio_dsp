@@ -30,7 +30,7 @@ def do_test(p, in_ch, out_ch, folder_name):
     n_samps, rate = 1024, 48000
 
     with FileLock(build_utils.PIPELINE_BUILD_LOCK):
-        generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+        generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_default")
         target = "default"
         # Build pipeline test executable. This will download xscope_fileio if not present
         build_utils.build(APP_DIR, BUILD_DIR, target)

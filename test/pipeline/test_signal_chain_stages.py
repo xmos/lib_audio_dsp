@@ -41,7 +41,7 @@ def do_test(p, folder_name, n_outs=1):
     ref_module = p.stages[2].dsp_block
     with FileLock(build_utils.PIPELINE_BUILD_LOCK):
 
-        generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_initialized")
+        generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_default")
         target = "default"
 
         # Build pipeline test executable. This will download xscope_fileio if not present
