@@ -58,8 +58,8 @@ def do_test(p, folder_name, n_outs=1):
     else:
         sig1 = np.linspace(2**23, -2**23, n_samps, dtype=np.int32)  << 4
 
-    if type(ref_module) == sc.switch_stereo:
-                sig = np.stack((sig0, sig0, sig1, sig1), axis=1)
+    if type(p.stages[2]) in [SwitchStereo, BlendStereo]:
+        sig = np.stack((sig0, sig0, sig1, sig1), axis=1)
     else:
         sig = np.stack((sig0, sig1), axis=1)
         

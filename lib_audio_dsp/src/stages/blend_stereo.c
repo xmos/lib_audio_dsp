@@ -45,6 +45,7 @@ void blend_stereo_init(module_instance_t* instance, adsp_bump_allocator_t* alloc
     state->n_outputs = n_outputs;
 
     memcpy(&state->config, config, sizeof(blend_stereo_config_t));
+    adsp_blend_mix(state->gains, config->mix);
 }
 
 void blend_stereo_control(void *module_state, module_control_t *control)

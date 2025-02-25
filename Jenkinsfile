@@ -123,7 +123,7 @@ pipeline {
                   withTools(params.TOOLS_VERSION) {
                     dir("test/biquad") {
                       sh "cmake -B build"
-                      sh "cmake --build build"
+                      sh "cmake --build build -j\$(nproc)"
                     } // dir
                   } // tools
                 } // dir
@@ -313,7 +313,7 @@ pipeline {
                   withTools(params.TOOLS_VERSION) {
                     dir("test/biquad") {
                       sh "cmake -B build"
-                      sh "cmake --build build"
+                      sh "cmake --build build -j\$(nproc)"
                     } // dir
                   } // tools
                 } // dir

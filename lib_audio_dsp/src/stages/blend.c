@@ -40,6 +40,8 @@ void blend_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, u
     state->n_outputs = n_outputs;
 
     memcpy(&state->config, config, sizeof(blend_config_t));
+    adsp_blend_mix(state->gains, config->mix);
+
 }
 
 void blend_control(void *module_state, module_control_t *control)
