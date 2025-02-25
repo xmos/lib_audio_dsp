@@ -104,6 +104,8 @@ def run(xe, input_file, output_file, num_out_channels, pipeline_stages=1, return
     with xtagctl.acquire("XCORE-AI-EXPLORER") as adapter_id:
         print("Running on adapter_id ",adapter_id)
         xtagctl.reset_adapter(adapter_id)
+        time.sleep(2) # Wait for adapter to enumerate
+
         if return_stdout == False:
             xscope_fileio.run_on_target(adapter_id, xe)
             time.sleep(0.1)
