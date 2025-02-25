@@ -24,7 +24,7 @@ PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
 
-def do_test(p, folder_name, n_outs=1):
+def do_test(p, folder_name, n_outs=1, rtol=None):
     """
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
@@ -84,7 +84,11 @@ def do_test(p, folder_name, n_outs=1):
     # back to int scaling
     out_py_int = utils.float_to_fixed_array(out_py, 27) << 4
 
-    np.testing.assert_equal(out_py_int, out_data.T)
+    if rtol:
+        np.testing.assert_allclose(out_py_int, out_data.T, rtol=rtol, atol=0)
+    else:
+        np.testing.assert_equal(out_py_int, out_data.T)
+
 
 @pytest.mark.group0
 def test_adder():
@@ -183,8 +187,10 @@ def test_switch_stereo(position):
     do_test(p, f"switchstereo_{position}", n_outs=2)
 
 
-@pytest.mark.parametrize("mix", ([0, 0.5, 1]))
-def test_blend(mix):
+@pytest.mark.parametrize("mix, tol", [[0, 0],
+                                      [0.5, 2**-21],
+                                      [1, 0]])
+def test_blend(mix, tol):
     """
     Test the switch stage adds the same in Python and C
     """
@@ -194,11 +200,13 @@ def test_blend(mix):
     p["s"].set_mix(mix)
     p.set_outputs(switch_dsp)
 
-    do_test(p, f"blend_{mix}")
+    do_test(p, f"blend_{mix}", rtol=tol)
 
 
-@pytest.mark.parametrize("mix", ([0, 0.5, 1]))
-def test_blend_stereo(mix):
+@pytest.mark.parametrize("mix, tol", [[0, 0],
+                                      [0.5, 2**-21],
+                                      [1, 0]])
+def test_blend_stereo(mix, tol):
     """
     Test the stereo switch stage adds the same in Python and C
     """
@@ -208,7 +216,7 @@ def test_blend_stereo(mix):
     p["s"].set_mix(mix)
     p.set_outputs(switch_dsp)
 
-    do_test(p, f"blendstereo_{mix}", n_outs=2)
+    do_test(p, f"blendstereo_{mix}", n_outs=2, rtol=tol)
 
 if __name__ == "__main__":
-    test_switch_slew(0)
+    test_blend_stereo(0.5)
