@@ -1152,7 +1152,7 @@ class blend(_combiners):
             bad_mix = mix
             mix = np.clip(mix, 0, 1)
             warnings.warn(f"Wet/dry mix {bad_mix} saturates to {mix}", UserWarning)
-        self._mix = mix
+        self._mix = np.float32(mix)
         # get an angle [0, pi /2]
         omega = self.mix * np.pi / 2
 
