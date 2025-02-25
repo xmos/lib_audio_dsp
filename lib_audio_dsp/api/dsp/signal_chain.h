@@ -197,11 +197,11 @@ int32_t adsp_delay(
 int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t* samples);
 
 /**
- * @brief Mix stereo wet channels with their gains.
+ * @brief Crossfade between two channels using their gains.
  * Will do: (out1 * gain1) + (out2 * gain2).
  *
- * @param out1      First wet signal
- * @param out2      Second wet signal
+ * @param out1      First signal
+ * @param out2      Second signal
  * @param gain1     First gain
  * @param gain2     Second gain
  * @param q_gain    Q factor of the gain

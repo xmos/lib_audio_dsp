@@ -421,14 +421,8 @@ class Delay(Stage):
 
 class Crossfader(Stage):
     """
-    Switch the output to one of the inputs. The switch can be used to
-    select between different signals.
-
-    Parameters
-    ----------
-    index : int
-        The position to which to move the switch. This changes the output
-        signal to the input[index]
+    The crossfader mixes between two inputs. The
+    mix control sets the respective levels of each input.
 
     """
 
@@ -441,7 +435,11 @@ class Crossfader(Stage):
 
     def set_mix(self, mix):
         """
-        Set the gain of the fixed gain in dB.
+        Set the mix of the crossfader.
+
+        When the mix is set to 0, only the first signal will be out[put. 
+        When the mix is set to 0.5, each channel has a gain of -4.5 dB.
+        When the mix is set to 1, only they second signal will be output. 
 
         Parameters
         ----------
@@ -454,16 +452,9 @@ class Crossfader(Stage):
 
 class CrossfaderStereo(Crossfader):
     """
-    Switch the input to one of the stereo pairs of outputs. The switch
-    can be used to select between different stereo signal pairs. The
-    inputs should be passed in pairs, e.g. ``[0_L, 0_R, 1_L, 1_R, ...]``.
-    Setting the switch position will output the nth pair.
-
-    Parameters
-    ----------
-    index : int
-        The position to which to move the switch. This changes the output
-        signal to the [input[2*index], input[:2*index + 1]]
+    The stereo crossfader mixes between two stereo inputs. The
+    mix control sets the respective levels of each input pair.
+    The inputs should be passed in pairs, e.g. ``[0_L, 0_R, 1_L, 1_R]``.
 
     """
 

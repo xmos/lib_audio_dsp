@@ -32,10 +32,10 @@ def db_to_qgain(db_in):
     return gain, gain_int
 
 
-def float_to_q31(x):
-    """Convert a floating point number to Q_VERB format. The input must
-    be between 0 and 1. As Q_GAIN is typically Q31, care must be taken
-    to not overflow by scaling 1.0f*(2**31).
+def _float_to_q31(x):
+    """Convert a floating point number to Q31 format. The input must
+    be between 0 and 1. Care must be taken to not overflow by scaling
+    1.0f*(2**31).
     """
     if x > 1 or x < 0:
         raise ValueError("input must be between 0 and 1")
@@ -48,6 +48,7 @@ def float_to_q31(x):
         x_int = utils.int32(x * (2**31))
 
     return x_int
+
 
 def _check_gain(value):
     if value > 24:
@@ -1124,6 +1125,20 @@ class delay(dspg.dsp_block):
 
 
 class crossfader(_combiners):
+    """
+    The crossfader mixes between two sets of inputs. The
+    mix control sets the respective levels of each input.
+
+    Parameters
+    ----------
+    mix : float
+        The channel mix, must be set between [0, 1]
+
+    Attributes
+    ----------
+    n_outs : number of outputs, half the number of inputs.
+
+    """
     def __init__(
         self, fs: float, n_chans: int, mix: float = 0.5, Q_sig: int = dspg.Q_SIG
         ) -> None:
@@ -1133,25 +1148,20 @@ class crossfader(_combiners):
 
     @property
     def mix(self):
+        """The channel mix, must be set between [0, 1].
+
+        When the mix is set to 0, only the first signal will be output. 
+        When the mix is set to 0.5, each channel has a gain of -4.5 dB.
+        When the mix is set to 1, only they second signal will be output. 
+        """
         return self._mix
 
     @mix.setter
     def mix(self, mix):
-        """
-        Will mix wet and dry signal by adjusting wet and dry gains.
-        So that when the mix is 0, the output signal is fully dry,
-        when 1, the output signal is fully wet. Tries to maintain a
-        stable signal level using -4.5 dB Pan Law.
-
-        Parameters
-        ----------
-        mix : float
-            The wet/dry mix, must be [0, 1].
-        """
         if not (0 <= mix <= 1):
             bad_mix = mix
             mix = np.clip(mix, 0, 1)
-            warnings.warn(f"Wet/dry mix {bad_mix} saturates to {mix}", UserWarning)
+            warnings.warn(f"Crossfader mix {bad_mix} saturates to {mix}", UserWarning)
         self._mix = np.float32(mix)
         # get an angle [0, pi /2]
         omega = self.mix * np.pi / 2
@@ -1160,13 +1170,13 @@ class crossfader(_combiners):
         self.dry = np.sqrt((1 - self.mix) * np.cos(omega))
         self.wet = np.sqrt(self.mix * np.sin(omega))
 
-        self.dry_int = float_to_q31(self.dry)
-        self.wet_int = float_to_q31(self.wet)
+        self.dry_int = _float_to_q31(self.dry)
+        self.wet_int = _float_to_q31(self.wet)
 
     def process_channels(self, sample_list: list[float]) -> list[float]:
         """
-        Process a single sample. Apply the gain to all the input samples
-        then sum them using floating point maths.
+        Process a single sample. Apply the crossfader gain to all the
+        input samples using floating point maths.
 
         Parameters
         ----------
@@ -1186,8 +1196,8 @@ class crossfader(_combiners):
 
     def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
         """
-        Process a single sample. Apply the gain to all the input samples
-        then sum them using int32 fixed point maths.
+        Process a single sample. Apply the crossfader gain to all the
+        input samples using fixed point maths.
 
         The float input sample is quantized to int32, and returned to
         float before outputting.

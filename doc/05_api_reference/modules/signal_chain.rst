@@ -274,3 +274,30 @@ position in order to avoid clicks.
 
         .. automethod:: move_switch
             :noindex:
+
+
+==========
+Crossfader
+==========
+
+The crossfader mixes between two sets of inputs.
+
+.. tab:: C API
+
+    .. only:: latex
+
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_crossfader
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.signal_chain.crossfader
+        :noindex:
+
+        .. automethod:: process_channels
+            :noindex:

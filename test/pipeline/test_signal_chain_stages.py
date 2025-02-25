@@ -192,7 +192,7 @@ def test_switch_stereo(position):
                                       [1, 0]])
 def test_crossfader(mix, tol):
     """
-    Test the switch stage adds the same in Python and C
+    Test the crossfader crossfades the same in Python and C
     """
     channels = 2
     p = Pipeline(channels)
@@ -208,7 +208,7 @@ def test_crossfader(mix, tol):
                                       [1, 0]])
 def test_crossfader_stereo(mix, tol):
     """
-    Test the stereo switch stage adds the same in Python and C
+    Test the stereo crossfader crossfades the same in Python and C
     """
     channels = 4
     p = Pipeline(channels)
