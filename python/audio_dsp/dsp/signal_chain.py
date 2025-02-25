@@ -1136,7 +1136,7 @@ class blend(_combiners):
         return self._mix
 
     @mix.setter
-    def set_mix(self, mix):
+    def mix(self, mix):
         """
         Will mix wet and dry signal by adjusting wet and dry gains.
         So that when the mix is 0, the output signal is fully dry,
@@ -1152,12 +1152,13 @@ class blend(_combiners):
             bad_mix = mix
             mix = np.clip(mix, 0, 1)
             warnings.warn(f"Wet/dry mix {bad_mix} saturates to {mix}", UserWarning)
+        self._mix = mix
         # get an angle [0, pi /2]
-        omega = mix * np.pi / 2
+        omega = self.mix * np.pi / 2
 
         # -4.5 dB
-        self.dry = np.sqrt((1 - mix) * np.cos(omega))
-        self.wet = np.sqrt(mix * np.sin(omega))
+        self.dry = np.sqrt((1 - self.mix) * np.cos(omega))
+        self.wet = np.sqrt(self.mix * np.sin(omega))
 
         self.dry_int = float_to_q31(self.dry)
         self.wet_int = float_to_q31(self.wet)

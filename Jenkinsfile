@@ -133,13 +133,6 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       sh "pip install -r requirements.txt"
-                      buildApps([
-                        "test/biquad",
-                        "test/cascaded_biquads",
-                        "test/signal_chain",
-                        "test/fir",
-                        "test/utils",
-                      ]) // buildApps
                     } // tools
                   } // withVenv
                 } // dir
@@ -158,6 +151,7 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/biquad"])
                         dir("test/biquad") {
                           runPytest("--dist worksteal")
                         }
@@ -180,6 +174,7 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/cascaded_biquads"])
                         dir("test/cascaded_biquads") {
                           runPytest("--dist worksteal")
                         }
@@ -217,6 +212,7 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/utils"])
                         dir("test/utils") {
                           runPytest("--dist worksteal")
                         }
@@ -238,6 +234,7 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/fir"])
                         dir("test/fir") {
                           runPytest("--dist worksteal")
                         }
@@ -259,6 +256,7 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/signal_chain"])
                         dir("test/signal_chain") {
                           runPytest("--dist worksteal")
                         }
@@ -325,10 +323,6 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       sh "pip install -r requirements.txt"
-                      buildApps([
-                        "test/drc",
-                        "test/reverb",
-                      ]) // buildApps
                     }
                   }
                 }
@@ -348,6 +342,7 @@ pipeline {
                       withMounts([["projects", "projects/hydra_audio", "hydra_audio_test_skype"]]) {
                         withEnv(["hydra_audio_PATH=$hydra_audio_test_skype_PATH"]){
                           catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/drc"])
                             dir("test/drc") {
                               runPytest("--dist worksteal")
                             }
@@ -371,6 +366,7 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/reverb"])
                         dir("test/reverb") {
                           runPytest("--dist worksteal --durations=0")
                         }
