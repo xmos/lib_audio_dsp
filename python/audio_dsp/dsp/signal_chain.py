@@ -32,6 +32,23 @@ def db_to_qgain(db_in):
     return gain, gain_int
 
 
+def float_to_q31(x):
+    """Convert a floating point number to Q_VERB format. The input must
+    be between 0 and 1. As Q_GAIN is typically Q31, care must be taken
+    to not overflow by scaling 1.0f*(2**31).
+    """
+    if x > 1 or x < 0:
+        raise ValueError("input must be between 0 and 1")
+
+    if x == 1:
+        x_int = utils.int32(2**31 - 1)
+    elif x == 0:
+        x_int = 0
+    else:
+        x_int = utils.int32(x * (2**31))
+
+    return x_int
+
 def _check_gain(value):
     if value > 24:
         warnings.warn("Maximum gain is +24 dB, saturating to that value.", UserWarning)
@@ -1104,3 +1121,97 @@ class delay(dspg.dsp_block):
 
     # don't need separate implementation for float/xcore
     process_channels_xcore = process_channels
+
+
+class blend(_combiners):
+    def __init__(
+        self, fs: float, n_chans: int, mix: float = 0.5, Q_sig: int = dspg.Q_SIG
+        ) -> None:
+        super().__init__(fs, n_chans, Q_sig)
+        self.n_outs = n_chans//2
+        self.mix = mix
+
+    @property
+    def mix(self):
+        return self._mix
+
+    @mix.setter
+    def set_mix(self, mix):
+        """
+        Will mix wet and dry signal by adjusting wet and dry gains.
+        So that when the mix is 0, the output signal is fully dry,
+        when 1, the output signal is fully wet. Tries to maintain a
+        stable signal level using -4.5 dB Pan Law.
+
+        Parameters
+        ----------
+        mix : float
+            The wet/dry mix, must be [0, 1].
+        """
+        if not (0 <= mix <= 1):
+            bad_mix = mix
+            mix = np.clip(mix, 0, 1)
+            warnings.warn(f"Wet/dry mix {bad_mix} saturates to {mix}", UserWarning)
+        # get an angle [0, pi /2]
+        omega = mix * np.pi / 2
+
+        # -4.5 dB
+        self.dry = np.sqrt((1 - mix) * np.cos(omega))
+        self.wet = np.sqrt(mix * np.sin(omega))
+
+        self.dry_int = float_to_q31(self.dry)
+        self.wet_int = float_to_q31(self.wet)
+
+    def process_channels(self, sample_list: list[float]) -> list[float]:
+        """
+        Process a single sample. Apply the gain to all the input samples
+        then sum them using floating point maths.
+
+        Parameters
+        ----------
+        sample_list : list
+            List of input samples
+
+        Returns
+        -------
+        list[float]
+            Output sample.
+
+        """
+        y = [0] * self.n_outs
+        for n in range(self.n_outs):
+            y[n] = sample_list[n] * self.dry + sample_list[n + self.n_outs] * self.wet
+        return y
+
+    def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
+        """
+        Process a single sample. Apply the gain to all the input samples
+        then sum them using int32 fixed point maths.
+
+        The float input sample is quantized to int32, and returned to
+        float before outputting.
+
+        Parameters
+        ----------
+        sample_list : list
+            List of input samples
+
+        Returns
+        -------
+        list[float]
+            Output sample.
+
+        """
+        y = [0] * self.n_outs
+        for n in range(self.n_outs):
+            acc = 1 << (31 - 1)
+            this_sample = utils.float_to_fixed(sample_list[n], self.Q_sig)
+            acc += this_sample * self.dry_int
+            this_sample = utils.float_to_fixed(sample_list[n + self.n_outs], self.Q_sig)
+            acc += this_sample * self.wet_int
+
+            y[n] = utils.int32_mult_sat_extract(acc, 1, 31)
+
+        y_flt = [utils.fixed_to_float(x, self.Q_sig) for x in y]
+
+        return y_flt

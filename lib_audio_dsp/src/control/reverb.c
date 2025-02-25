@@ -6,17 +6,18 @@
 #include <math.h>
 
 void adsp_reverb_wet_dry_mix(int32_t gains[2], float mix) {
-  mix = mix > 1.0f ? 1.0f : mix;
-  mix = mix < 0.0f ? 0.0f : mix;
-  const float pi_by_2 = 1.5707963f;
-  // get an angle [0, pi / 2]
-  float omega = mix * pi_by_2;
+  adsp_blend_mix(gains, mix);
+  // mix = mix > 1.0f ? 1.0f : mix;
+  // mix = mix < 0.0f ? 0.0f : mix;
+  // const float pi_by_2 = 1.5707963f;
+  // // get an angle [0, pi / 2]
+  // float omega = mix * pi_by_2;
 
-  // -4.5 dB panning
-  float dry = sqrtf((1.0f - mix) * cosf(omega));
-  float wet = sqrtf(mix * sinf(omega));
-  gains[0] = adsp_reverb_float2int(dry);
-  gains[1] = adsp_reverb_float2int(wet);
+  // // -4.5 dB panning
+  // float dry = sqrtf((1.0f - mix) * cosf(omega));
+  // float wet = sqrtf(mix * sinf(omega));
+  // gains[0] = adsp_reverb_float2int(dry);
+  // gains[1] = adsp_reverb_float2int(wet);
 }
 
 reverb_room_t adsp_reverb_room_init(
