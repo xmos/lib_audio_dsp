@@ -448,7 +448,7 @@ pipeline {
                   withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       sh "xtagctl reset ${adapterIDs[0]}"
                       dir("test/pipeline") {
-                        sh "python -m pytest -m group0 -n 3 --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
+                        sh "python -m pytest -m group0 -n auto --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
                       }
                   }
                 }
@@ -489,7 +489,7 @@ pipeline {
                   withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       sh "xtagctl reset ${adapterIDs[0]}"
                       dir("test/pipeline") {
-                      sh "python -m pytest   -m group1 -n 3 --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO "
+                      sh "python -m pytest   -m group1 -n auto --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO "
                     }
                   }
                 }

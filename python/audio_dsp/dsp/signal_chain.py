@@ -1189,7 +1189,7 @@ class crossfader(_combiners):
             Output sample.
 
         """
-        y = [0] * self.n_outs
+        y = [0.0] * self.n_outs
         for n in range(self.n_outs):
             y[n] = sample_list[n] * self.dry + sample_list[n + self.n_outs] * self.wet
         return y
