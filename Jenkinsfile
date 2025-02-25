@@ -445,11 +445,11 @@ pipeline {
                 withTools(params.TOOLS_VERSION) {
                   sh "pip install -r requirements.txt"
                   sh "pip install -e ${WORKSPACE}/xtagctl"
-                  withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
-                      sh "xtagctl reset ${adapterIDs[0]}"
+                  // withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
+                  //     sh "xtagctl reset ${adapterIDs[0]}"
                       dir("test/pipeline") {
-                        sh "python -m pytest -m group0 -n 3 --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
-                      }
+                        sh "python -m pytest -m group0 -n 3 --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO"
+                      // }
                   }
                 }
               }

@@ -8,55 +8,56 @@ import scipy.io.wavfile
 import pathlib
 from filelock import FileLock
 import time
+import xtagctl
 
-FORCE_ADAPTER_ID = None
+# FORCE_ADAPTER_ID = None
 
-def get_adapter_id():
-    # check the --adapter-id option
-    if FORCE_ADAPTER_ID is not None:
-        return FORCE_ADAPTER_ID
+# def get_adapter_id():
+#     # check the --adapter-id option
+#     if FORCE_ADAPTER_ID is not None:
+#         return FORCE_ADAPTER_ID
 
-    try:
-        xrun_out = subprocess.check_output(['xrun', '-l'], text=True, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        print('Error: %s' % e.output)
-        assert False
+#     try:
+#         xrun_out = subprocess.check_output(['xrun', '-l'], text=True, stderr=subprocess.STDOUT)
+#     except subprocess.CalledProcessError as e:
+#         print('Error: %s' % e.output)
+#         assert False
 
-    xrun_out = xrun_out.split('\n')
-    # Check that the first 4 lines of xrun_out match the expected lines
-    expected_header = ["", "Available XMOS Devices", "----------------------", ""]
-    if len(xrun_out) < len(expected_header):
-        raise RuntimeError(
-            f"Error: xrun output:\n{xrun_out}\n"
-            f"does not contain expected header:\n{expected_header}"
-        )
+#     xrun_out = xrun_out.split('\n')
+#     # Check that the first 4 lines of xrun_out match the expected lines
+#     expected_header = ["", "Available XMOS Devices", "----------------------", ""]
+#     if len(xrun_out) < len(expected_header):
+#         raise RuntimeError(
+#             f"Error: xrun output:\n{xrun_out}\n"
+#             f"does not contain expected header:\n{expected_header}"
+#         )
 
-    header_match = True
-    for i, expected_line in enumerate(expected_header):
-        if xrun_out[i] != expected_line:
-            header_match = False
+#     header_match = True
+#     for i, expected_line in enumerate(expected_header):
+#         if xrun_out[i] != expected_line:
+#             header_match = False
 
-    if not header_match:
-        raise RuntimeError(
-            f"Error: xrun output header:\n{xrun_out[:4]}\n"
-            f"does not match expected header:\n{expected_header}"
-        )
+#     if not header_match:
+#         raise RuntimeError(
+#             f"Error: xrun output header:\n{xrun_out[:4]}\n"
+#             f"does not match expected header:\n{expected_header}"
+#         )
 
-    try:
-        if "No Available Devices Found" in xrun_out[4]:
-            raise RuntimeError(f"Error: No available devices found\n")
-            return
-    except IndexError:
-        raise RuntimeError(f"Error: xrun output is too short:\n{xrun_out}\n")
+#     try:
+#         if "No Available Devices Found" in xrun_out[4]:
+#             raise RuntimeError(f"Error: No available devices found\n")
+#             return
+#     except IndexError:
+#         raise RuntimeError(f"Error: xrun output is too short:\n{xrun_out}\n")
 
-    for line in xrun_out[6:]:
-        if line.strip():
-            adapterID = line[26:34].strip()
-            status = line[34:].strip()
-        else:
-            continue
-    print("adapter_id = ",adapterID)
-    return adapterID
+#     for line in xrun_out[6:]:
+#         if line.strip():
+#             adapterID = line[26:34].strip()
+#             status = line[34:].strip()
+#         else:
+#             continue
+#     print("adapter_id = ",adapterID)
+#     return adapterID
 
 
 def parse_arguments():
@@ -95,13 +96,14 @@ def run(xe, input_file, output_file, num_out_channels, pipeline_stages=1, return
     # Create the cmd line string
     args = f"-i {input_file} -o {output_file} -n {num_out_channels} -t {pipeline_stages - 1}"
 
-    with FileLock("run_pipeline.lock"):
-        with open("args.txt", "w") as fp:
-            fp.write(args)
+    # with FileLock("run_pipeline.lock"):
+    with open("args.txt", "w") as fp:
+        fp.write(args)
 
-        adapter_id = get_adapter_id()
+        # adapter_id = get_adapter_id()
+    with xtagctl.acquire("XCORE-AI-EXPLORER") as adapter_id:
         print("Running on adapter_id ",adapter_id)
-
+        xtagctl.reset_adapter(adapter_id)
         if return_stdout == False:
             xscope_fileio.run_on_target(adapter_id, xe)
             time.sleep(0.1)
