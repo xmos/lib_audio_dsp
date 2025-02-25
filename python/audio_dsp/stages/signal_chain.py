@@ -451,6 +451,7 @@ class Blend(Stage):
         self.dsp_block.mix = mix
         return self
 
+
 class BlendStereo(Blend):
     """
     Switch the input to one of the stereo pairs of outputs. The switch

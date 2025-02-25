@@ -184,31 +184,31 @@ def test_switch_stereo(position):
 
 
 @pytest.mark.parametrize("mix", ([0, 0.5, 1]))
-def test_blend(position):
+def test_blend(mix):
     """
     Test the switch stage adds the same in Python and C
     """
     channels = 2
     p = Pipeline(channels)
     switch_dsp = p.stage(Blend, p.i, "s")
-    p["s"].set_mix(position)
+    p["s"].set_mix(mix)
     p.set_outputs(switch_dsp)
 
-    do_test(p, f"blend_{position}")
+    do_test(p, f"blend_{mix}")
 
 
 @pytest.mark.parametrize("mix", ([0, 0.5, 1]))
-def test_blend_stereo(position):
+def test_blend_stereo(mix):
     """
     Test the stereo switch stage adds the same in Python and C
     """
     channels = 4
     p = Pipeline(channels)
     switch_dsp = p.stage(BlendStereo, p.i, "s")
-    p["s"].set_mix(position)
+    p["s"].set_mix(mix)
     p.set_outputs(switch_dsp)
 
-    do_test(p, f"blendstereo_{position}", n_outs=2)
+    do_test(p, f"blendstereo_{mix}", n_outs=2)
 
 if __name__ == "__main__":
     test_switch_slew(0)

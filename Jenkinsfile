@@ -22,10 +22,10 @@ def boolean hasGenericChanges() {
     else if (env.BRANCH_NAME  ==~ /develop/) {
       return true
     }
-    else if (hasChangesIn("utils")) {
+    else if (hasChangesIn("utils | grep -v reverb_utils")) {
       return true
     }
-    else if (hasChangesIn("helpers")) {
+    else if (hasChangesIn("helpers | grep -v reverb_utils")) {
       return true
     }
     else if (hasChangesIn("adsp")) {
