@@ -472,4 +472,3 @@ class BlendStereo(Blend):
         self.create_outputs(2)
         self.dsp_block = sc.blend(self.fs, 4)
         self.set_control_field_cb("mix", lambda: self.dsp_block.mix)
-s

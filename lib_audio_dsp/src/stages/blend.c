@@ -9,6 +9,7 @@
 #include "stages/blend.h"
 #include <stdio.h>
 #include "print.h"
+#include "control/signal_chain.h"
 
 void blend_process(int32_t **input, int32_t **output, void *app_data_state)
 {
