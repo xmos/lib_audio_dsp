@@ -9,8 +9,6 @@ import pathlib
 from filelock import FileLock
 import time
 import xtagctl
-import socket
-import os
 
 # FORCE_ADAPTER_ID = None
 
@@ -61,60 +59,6 @@ import os
 #     print("adapter_id = ",adapterID)
 #     return adapterID
 
-def _get_open_port(port=0):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(("localhost", port))
-    s.listen(1)
-    port = s.getsockname()[1]
-    s.close()
-    return port
-
-
-def run_on_target(adapter_id, firmware_xe, use_xsim=False, port=0, **kwargs):
-    port = _get_open_port(port)
-    xrun_cmd = (
-        f"--xscope-port localhost:{port} --adapter-id {adapter_id} {firmware_xe}"
-    )
-    xsim_cmd = ["--xscope", f"-realtime localhost:{port}", firmware_xe]
-
-    sh_print = lambda x: xscope_fileio._print_output(x, True)
-
-    # Start and run in background
-    exit_handler = xscope_fileio._XrunExitHandler(adapter_id, firmware_xe)
-    if use_xsim:
-        print(xsim_cmd)
-        xrun_proc = subprocess.Popen(['xsim'] + xsim_cmd)
-    else:
-        print(xrun_cmd)
-        xrun_proc = xscope_fileio.popenAndCall(exit_handler.xcore_done, ["xrun"] + xrun_cmd.split(), **kwargs)
-
-    print("Waiting for xrun", end="")
-    timeout = time.time() + xscope_fileio.XRUN_TIMEOUT
-    while xscope_fileio._test_port_is_open(port):
-        print(".", end="", flush=True)
-        time.sleep(0.1)
-        if time.time() > timeout:
-            xrun_proc.terminate()
-            assert 0, f"xrun timed out - took more than {xscope_fileio.XRUN_TIMEOUT} seconds to start"
-
-    print()
-
-    print("Starting host app...", end="\n")
-
-    host_exe = xscope_fileio._get_host_exe()
-    host_args = f"{port}"
-    host_proc = subprocess.Popen([host_exe] + host_args.split(), **kwargs)
-    exit_handler.set_host_process(host_proc)
-    host_proc.wait()
-
-    if host_proc.returncode != 0:
-        xrun_proc.terminate() # The host app won't have stopped xrun so kill it here
-        assert 0, f'\nERROR: host app exited with error code {host_proc.returncode}\n'
-
-    print("Running on target finished")
-
-    return host_proc.returncode
-
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -127,7 +71,6 @@ def parse_arguments():
 
     args = parser.parse_args()
     return args
-
 
 def run(xe, input_file, output_file, num_out_channels, pipeline_stages=1, return_stdout=False):
     """
@@ -157,20 +100,18 @@ def run(xe, input_file, output_file, num_out_channels, pipeline_stages=1, return
     with open("args.txt", "w") as fp:
         fp.write(args)
 
-    port_n = int(os.environ.get("PYTEST_XDIST_WORKER", "gw0")[2:])
-
-    # adapter_id = get_adapter_id()
+        # adapter_id = get_adapter_id()
     with xtagctl.acquire("XCORE-AI-EXPLORER") as adapter_id:
         print("Running on adapter_id ",adapter_id)
         xtagctl.reset_adapter(adapter_id)
         time.sleep(2) # Wait for adapter to enumerate
 
         if return_stdout == False:
-            run_on_target(adapter_id, xe, port=port_n)
+            xscope_fileio.run_on_target(adapter_id, xe)
             time.sleep(0.1)
         else:
             with open("stdout.txt", "w+") as ff:
-                run_on_target(adapter_id, xe, stdout=ff, port=port_n)
+                xscope_fileio.run_on_target(adapter_id, xe, stdout=ff)
                 ff.seek(0)
                 stdout = ff.readlines()
             return stdout
