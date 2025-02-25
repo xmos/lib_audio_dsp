@@ -6,7 +6,7 @@ number of inputs and outputs
 """
 import pytest
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
-from audio_dsp.stages.signal_chain import Adder, Subtractor, Mixer, Switch, SwitchStereo, SwitchSlew
+from audio_dsp.stages.signal_chain import Adder, Subtractor, Mixer, Switch, SwitchStereo, SwitchSlew, Blend, BlendStereo
 from audio_dsp.stages.compressor_sidechain import CompressorSidechain
 
 import audio_dsp.dsp.utils as utils
@@ -181,6 +181,34 @@ def test_switch_stereo(position):
     p.set_outputs(switch_dsp)
 
     do_test(p, f"switchstereo_{position}", n_outs=2)
+
+
+@pytest.mark.parametrize("mix", ([0, 0.5, 1]))
+def test_blend(position):
+    """
+    Test the switch stage adds the same in Python and C
+    """
+    channels = 2
+    p = Pipeline(channels)
+    switch_dsp = p.stage(Blend, p.i, "s")
+    p["s"].set_mix(position)
+    p.set_outputs(switch_dsp)
+
+    do_test(p, f"blend_{position}")
+
+
+@pytest.mark.parametrize("mix", ([0, 0.5, 1]))
+def test_blend_stereo(position):
+    """
+    Test the stereo switch stage adds the same in Python and C
+    """
+    channels = 4
+    p = Pipeline(channels)
+    switch_dsp = p.stage(BlendStereo, p.i, "s")
+    p["s"].set_mix(position)
+    p.set_outputs(switch_dsp)
+
+    do_test(p, f"blendstereo_{position}", n_outs=2)
 
 if __name__ == "__main__":
     test_switch_slew(0)

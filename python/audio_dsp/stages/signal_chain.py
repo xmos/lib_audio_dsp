@@ -417,3 +417,59 @@ class Delay(Stage):
             Default is 'samples'.
         """
         self.dsp_block.set_delay(delay, units)
+
+
+class Blend(Stage):
+    """
+    Switch the output to one of the inputs. The switch can be used to
+    select between different signals.
+
+    Parameters
+    ----------
+    index : int
+        The position to which to move the switch. This changes the output
+        signal to the input[index]
+
+    """
+
+    def __init__(self, index=0, **kwargs):
+        super().__init__(config=find_config("blend"), **kwargs)
+        self.index = index
+        self.create_outputs(1)
+        self.dsp_block = sc.blend(self.fs, 2)
+        self.set_control_field_cb("mix", lambda: self.dsp_block.mix)
+
+    def set_mix(self, mix):
+        """
+        Set the gain of the fixed gain in dB.
+
+        Parameters
+        ----------
+        gain_db : float
+            The gain of the fixed gain in dB.
+        """
+        self.dsp_block.mix = mix
+        return self
+
+class BlendStereo(Blend):
+    """
+    Switch the input to one of the stereo pairs of outputs. The switch
+    can be used to select between different stereo signal pairs. The
+    inputs should be passed in pairs, e.g. ``[0_L, 0_R, 1_L, 1_R, ...]``.
+    Setting the switch position will output the nth pair.
+
+    Parameters
+    ----------
+    index : int
+        The position to which to move the switch. This changes the output
+        signal to the [input[2*index], input[:2*index + 1]]
+
+    """
+
+    def __init__(self, index=0, **kwargs):
+        Stage.__init__(self, config=find_config("blend_stereo"), **kwargs)
+        self.index = index
+        self.create_outputs(2)
+        self.dsp_block = sc.blend(self.fs, 4)
+        self.set_control_field_cb("mix", lambda: self.dsp_block.mix)
+s
