@@ -25,7 +25,7 @@ import audio_dsp.dsp.utils as utils
 
 from python import build_utils, run_pipeline_xcoreai, audio_helpers
 from stages.add_n import AddN
-from python.run_pipeline_xcoreai import FORCE_ADAPTER_ID
+# from python.run_pipeline_xcoreai import FORCE_ADAPTER_ID
 
 # Test config
 PKG_DIR = Path(__file__).parent

@@ -157,7 +157,7 @@ def run(xe, input_file, output_file, num_out_channels, pipeline_stages=1, return
     with open("args.txt", "w") as fp:
         fp.write(args)
 
-    port_n = os.environ.get("PYTEST_XDIST_WORKER", 0)
+    port_n = int(os.environ.get("PYTEST_XDIST_WORKER", "gw0")[2:])
 
     # adapter_id = get_adapter_id()
     with xtagctl.acquire("XCORE-AI-EXPLORER") as adapter_id:
