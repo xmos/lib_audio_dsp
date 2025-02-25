@@ -6,7 +6,7 @@ number of inputs and outputs
 """
 import pytest
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
-from audio_dsp.stages.signal_chain import Adder, Subtractor, Mixer, Switch, SwitchStereo, SwitchSlew, Blend, BlendStereo
+from audio_dsp.stages.signal_chain import Adder, Subtractor, Mixer, Switch, SwitchStereo, SwitchSlew, Crossfader, CrossfaderStereo
 from audio_dsp.stages.compressor_sidechain import CompressorSidechain
 
 import audio_dsp.dsp.utils as utils
@@ -58,7 +58,7 @@ def do_test(p, folder_name, n_outs=1, rtol=None):
     else:
         sig1 = np.linspace(2**23, -2**23, n_samps, dtype=np.int32)  << 4
 
-    if type(p.stages[2]) in [SwitchStereo, BlendStereo]:
+    if type(p.stages[2]) in [SwitchStereo, CrossfaderStereo]:
         sig = np.stack((sig0, sig0, sig1, sig1), axis=1)
     else:
         sig = np.stack((sig0, sig1), axis=1)
@@ -190,33 +190,33 @@ def test_switch_stereo(position):
 @pytest.mark.parametrize("mix, tol", [[0, 0],
                                       [0.5, 2**-21],
                                       [1, 0]])
-def test_blend(mix, tol):
+def test_crossfader(mix, tol):
     """
     Test the switch stage adds the same in Python and C
     """
     channels = 2
     p = Pipeline(channels)
-    switch_dsp = p.stage(Blend, p.i, "s")
+    switch_dsp = p.stage(Crossfader, p.i, "s")
     p["s"].set_mix(mix)
     p.set_outputs(switch_dsp)
 
-    do_test(p, f"blend_{mix}", rtol=tol)
+    do_test(p, f"crossfader_{mix}", rtol=tol)
 
 
 @pytest.mark.parametrize("mix, tol", [[0, 0],
                                       [0.5, 2**-21],
                                       [1, 0]])
-def test_blend_stereo(mix, tol):
+def test_crossfader_stereo(mix, tol):
     """
     Test the stereo switch stage adds the same in Python and C
     """
     channels = 4
     p = Pipeline(channels)
-    switch_dsp = p.stage(BlendStereo, p.i, "s")
+    switch_dsp = p.stage(CrossfaderStereo, p.i, "s")
     p["s"].set_mix(mix)
     p.set_outputs(switch_dsp)
 
-    do_test(p, f"blendstereo_{mix}", n_outs=2, rtol=tol)
+    do_test(p, f"crossfaderstereo_{mix}", n_outs=2, rtol=tol)
 
 if __name__ == "__main__":
-    test_blend_stereo(0.5)
+    test_crossfader_stereo(0.5)

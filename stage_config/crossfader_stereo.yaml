@@ -1,5 +1,5 @@
 module:
-  blend:
+  crossfader_stereo:
     mix:
       type: float
       help: The current switch position.

@@ -1123,7 +1123,7 @@ class delay(dspg.dsp_block):
     process_channels_xcore = process_channels
 
 
-class blend(_combiners):
+class crossfader(_combiners):
     def __init__(
         self, fs: float, n_chans: int, mix: float = 0.5, Q_sig: int = dspg.Q_SIG
         ) -> None:

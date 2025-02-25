@@ -91,7 +91,7 @@ void adsp_switch_slew_move(switch_slew_t* switch_slew, int32_t new_position){
   }
 }
 
-void adsp_blend_mix(int32_t gains[2], float mix) {
+void adsp_crossfader_mix(int32_t gains[2], float mix) {
   mix = mix > 1.0f ? 1.0f : mix;
   mix = mix < 0.0f ? 0.0f : mix;
   const float pi_by_2 = 1.5707963f;

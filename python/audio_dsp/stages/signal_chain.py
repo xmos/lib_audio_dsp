@@ -419,7 +419,7 @@ class Delay(Stage):
         self.dsp_block.set_delay(delay, units)
 
 
-class Blend(Stage):
+class Crossfader(Stage):
     """
     Switch the output to one of the inputs. The switch can be used to
     select between different signals.
@@ -433,10 +433,10 @@ class Blend(Stage):
     """
 
     def __init__(self, index=0, **kwargs):
-        super().__init__(config=find_config("blend"), **kwargs)
+        super().__init__(config=find_config("crossfader"), **kwargs)
         self.index = index
         self.create_outputs(1)
-        self.dsp_block = sc.blend(self.fs, 2)
+        self.dsp_block = sc.crossfader(self.fs, 2)
         self.set_control_field_cb("mix", lambda: self.dsp_block.mix)
 
     def set_mix(self, mix):
@@ -452,7 +452,7 @@ class Blend(Stage):
         return self
 
 
-class BlendStereo(Blend):
+class CrossfaderStereo(Crossfader):
     """
     Switch the input to one of the stereo pairs of outputs. The switch
     can be used to select between different stereo signal pairs. The
@@ -468,8 +468,8 @@ class BlendStereo(Blend):
     """
 
     def __init__(self, index=0, **kwargs):
-        Stage.__init__(self, config=find_config("blend_stereo"), **kwargs)
+        Stage.__init__(self, config=find_config("crossfader_stereo"), **kwargs)
         self.index = index
         self.create_outputs(2)
-        self.dsp_block = sc.blend(self.fs, 4)
+        self.dsp_block = sc.crossfader(self.fs, 4)
         self.set_control_field_cb("mix", lambda: self.dsp_block.mix)

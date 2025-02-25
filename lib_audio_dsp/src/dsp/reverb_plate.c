@@ -206,11 +206,11 @@ void adsp_reverb_plate(
     }
   }
 
-  int32_t out = adsp_blend(out_l, out_r, rv->wet_gain1, rv->wet_gain2, Q_RVP);
+  int32_t out = adsp_crossfader(out_l, out_r, rv->wet_gain1, rv->wet_gain2, Q_RVP);
   out = mix_wet_dry(out, apply_gain_q31(in_left, rv->dry_gain), EFFECT_GAIN, Q_GAIN);
   outputs_lr[0] = out;
 
-  out = adsp_blend(out_r, out_l, rv->wet_gain1, rv->wet_gain2, Q_RVP);
+  out = adsp_crossfader(out_r, out_l, rv->wet_gain1, rv->wet_gain2, Q_RVP);
   out = mix_wet_dry(out, apply_gain_q31(in_right, rv->dry_gain), EFFECT_GAIN, Q_GAIN);
   outputs_lr[1] = out;
 }

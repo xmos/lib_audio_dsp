@@ -129,4 +129,4 @@ void adsp_switch_slew_move(switch_slew_t* switch_slew, int32_t new_position);
  * @param gains           Output gains: [0] - Dry; [1] - Wet
  * @param mix             Mix applied from 0 to 1
  */
-void adsp_blend_mix(int32_t gains[2], float mix);
+void adsp_crossfader_mix(int32_t gains[2], float mix);

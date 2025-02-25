@@ -6,7 +6,7 @@
 #include <math.h>
 
 void adsp_reverb_wet_dry_mix(int32_t gains[2], float mix) {
-  adsp_blend_mix(gains, mix);
+  adsp_crossfader_mix(gains, mix);
   // mix = mix > 1.0f ? 1.0f : mix;
   // mix = mix < 0.0f ? 0.0f : mix;
   // const float pi_by_2 = 1.5707963f;
