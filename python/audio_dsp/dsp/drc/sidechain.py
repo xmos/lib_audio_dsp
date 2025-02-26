@@ -75,7 +75,7 @@ class compressor_rms_sidechain_mono(rms_compressor_limiter_base):
         if self.env_detector:
             self.env_detector.reset_state()
         self.gain = 1
-        self.gain_int = 2**31 - 1
+        self.gain_int = 2**drcu.Q_drc_gain
 
     def process(self, input_sample: float, detect_sample: float):  # type: ignore : overloading base class
         """
@@ -162,7 +162,7 @@ class compressor_rms_sidechain_mono(rms_compressor_limiter_base):
 
         return (
             utils.fixed_to_float(y, self.Q_sig),
-            utils.fixed_to_float(new_gain_int, self.Q_alpha),
+            utils.fixed_to_float(new_gain_int, self.Q_drc_gain),
             utils.fixed_to_float(envelope_int, self.Q_sig),
         )
 
@@ -361,7 +361,7 @@ class compressor_rms_sidechain_stereo(rms_compressor_limiter_stereo_base):
 
         return (
             y,
-            utils.fixed_to_float(new_gain_int, self.Q_alpha),
+            utils.fixed_to_float(new_gain_int, self.Q_drc_gain),
             utils.fixed_to_float(envelope_int, self.Q_sig),
         )
 

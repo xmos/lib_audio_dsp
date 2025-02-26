@@ -373,8 +373,8 @@ class compressor_limiter_base(dspg.dsp_block):
     def __init__(self, fs, n_chans, attack_t, release_t, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
-        self.Q_alpha = drcu.Q_alpha
-        assert self.Q_alpha == 31, "When changing this the reset value will have to be updated"
+        self.Q_drc_gain = drcu.Q_drc_gain
+        assert self.Q_drc_gain == 30, "When changing this the reset value will have to be updated"
 
         # setting attack and release times sets the EWM coeffs in this and
         # the envelope detector
@@ -429,7 +429,7 @@ class compressor_limiter_base(dspg.dsp_block):
         if self.env_detector:
             self.env_detector.reset_state()
         self.gain = [1] * self.n_chans
-        self.gain_int = [2**31 - 1] * self.n_chans
+        self.gain_int = [2**30] * self.n_chans
 
     def get_gain_curve(self, max_gain=dspg.HEADROOM_DB, min_gain=-96):
         """Get the compression gain curve for the float implementation,
@@ -473,7 +473,7 @@ class compressor_limiter_base(dspg.dsp_block):
                 self.threshold_int,
                 self.slope_f32,
             )  # pyright: ignore : base inits to None
-            out_gains[n] = float(out_gains[n]) * 2**-31
+            out_gains[n] = float(out_gains[n]) * 2**-30
 
         out_gains_db = utils.db(out_gains) + in_gains_db
 
@@ -554,7 +554,7 @@ class compressor_limiter_base(dspg.dsp_block):
         else:
             return (
                 utils.fixed_to_float(y, self.Q_sig),
-                utils.fixed_to_float(new_gain_int, self.Q_alpha),
+                utils.fixed_to_float(new_gain_int, self.Q_drc_gain),
                 utils.fixed_to_float(envelope_int, self.Q_sig),
             )
 
@@ -803,7 +803,7 @@ class hard_limiter_peak(limiter_peak):
         else:
             return (
                 utils.fixed_to_float(y, self.Q_sig),
-                utils.fixed_to_float(new_gain_int, self.Q_alpha),
+                utils.fixed_to_float(new_gain_int, self.Q_drc_gain),
                 utils.fixed_to_float(envelope_int, self.Q_sig),
             )
 

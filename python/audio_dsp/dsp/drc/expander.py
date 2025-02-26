@@ -64,7 +64,7 @@ class expander_base(compressor_limiter_base):
             self.env_detector.envelope = [1] * self.n_chans
             self.env_detector.envelope_int = [utils.int32(2**self.Q_sig - 1)] * self.n_chans
         self.gain = [1] * self.n_chans
-        self.gain_int = [2**31 - 1] * self.n_chans
+        self.gain_int = [2**30] * self.n_chans
 
     def process(self, sample, channel=0):
         """
@@ -139,7 +139,7 @@ class expander_base(compressor_limiter_base):
         else:
             return (
                 utils.fixed_to_float(y, self.Q_sig),
-                utils.fixed_to_float(new_gain_int, self.Q_alpha),
+                utils.fixed_to_float(new_gain_int, self.Q_drc_gain),
                 utils.fixed_to_float(envelope_int, self.Q_sig),
             )
 

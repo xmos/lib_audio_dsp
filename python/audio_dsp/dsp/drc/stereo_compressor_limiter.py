@@ -78,8 +78,8 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         assert n_chans == 2, "has to be stereo"
         super().__init__(fs, n_chans, Q_sig)
 
-        self.Q_alpha = drcu.Q_alpha
-        assert self.Q_alpha == 31, "When changing this the reset value will have to be updated"
+        self.Q_drc_gain = drcu.Q_drc_gain
+        assert self.Q_drc_gain == 30, "When changing this the reset value will have to be updated"
 
         # setting attack and release times sets the EWM coeffs in this and
         # the envelope detector
@@ -128,7 +128,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
         if self.env_detector:
             self.env_detector.reset_state()
         self.gain = 1
-        self.gain_int = 2**31 - 1
+        self.gain_int = 2**30
 
     def process_channels(self, sample_list: list[float]):  # pyright: ignore overload
         """
@@ -209,7 +209,7 @@ class compressor_limiter_stereo_base(dspg.dsp_block):
 
         return (
             y,
-            utils.fixed_to_float(new_gain_int, self.Q_alpha),
+            utils.fixed_to_float(new_gain_int, self.Q_drc_gain),
             utils.fixed_to_float(envelope_int, self.Q_sig),
         )
 

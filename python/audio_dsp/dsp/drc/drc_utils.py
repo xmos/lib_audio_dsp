@@ -13,7 +13,8 @@ from audio_dsp.dsp.types import float32
 FLT_MIN = np.finfo(float).tiny
 
 # Q format for the drc alphas and gains
-Q_alpha = 30
+Q_alpha = 31
+Q_drc_gain = 30
 
 
 def calculate_rms_threshold(threshold_db, Q_sig) -> tuple[float, int]:
@@ -105,7 +106,7 @@ def alpha_from_time(attack_or_release_time, fs):
             UserWarning,
         )
 
-    alpha_int = utils.int32(round(alpha * 2**31)) if alpha != 1.0 else utils.int32(2**31 - 1)
+    alpha_int = utils.int32(round(alpha * 2**Q_alpha)) if alpha != 1.0 else utils.int32(2**Q_alpha - 1)
 
     # This is possible if alpha > (4/fs)*(2**31), which is 49.7 hours @ 48kHz,
     # in which case you should probably use a lower sample rate.
@@ -157,10 +158,10 @@ def calc_ema_xcore(x, y, alpha):
 
 
 def apply_gain_xcore(sample: int, gain: int) -> int:
-    """Apply the gain to a sample using fixed-point math. Assumes that gain is in Q_alpha format."""
-    acc = 1 << (Q_alpha - 1)
+    """Apply the gain to a sample using fixed-point math. Assumes that gain is in Q_drc_gain format."""
+    acc = 1 << (Q_drc_gain - 1)
     acc += sample * gain
-    y = utils.int32_mult_sat_extract(acc, 1, Q_alpha)
+    y = utils.int32_mult_sat_extract(acc, 1, Q_drc_gain)
     return y
 
 
@@ -174,9 +175,9 @@ def limiter_peak_gain_calc(envelope, threshold, slope=None):
 def limiter_peak_gain_calc_xcore(envelope_int, threshold_int, slope=None):
     """Calculate the int gain for the current sample."""
     if threshold_int >= envelope_int:
-        new_gain_int = utils.int32(1 << Q_alpha)
+        new_gain_int = utils.int32(1 << Q_drc_gain)
     else:
-        new_gain_int = int(threshold_int) << Q_alpha
+        new_gain_int = int(threshold_int) << Q_drc_gain
         new_gain_int = utils.int32(new_gain_int // envelope_int)
     return new_gain_int
 
@@ -201,11 +202,11 @@ def limiter_rms_gain_calc_xcore(envelope_int, threshold_int, slope=None):
 
     """
     if threshold_int >= envelope_int:
-        new_gain_int = utils.int32(1 << Q_alpha)
+        new_gain_int = utils.int32(1 << Q_drc_gain)
     else:
-        new_gain_int = int(threshold_int) << Q_alpha
+        new_gain_int = int(threshold_int) << Q_drc_gain
         new_gain_int = utils.int32(new_gain_int // envelope_int)
-        new_gain_int = utils.int32(isqrt(new_gain_int * (1 << Q_alpha)))
+        new_gain_int = utils.int32(isqrt(new_gain_int * (1 << Q_drc_gain)))
     return new_gain_int
 
 
@@ -240,10 +241,10 @@ def compressor_rms_gain_calc_xcore(envelope_int, threshold_int, slope_f32=None):
         new_gain_int = int(threshold_int) << 31
         new_gain_int = utils.int32(new_gain_int // envelope_int)
         new_gain_int = (
-            (float32(new_gain_int * 2**-31) ** slope_f32) * 2**Q_alpha
+            (float32(new_gain_int * 2**-31) ** slope_f32) * float32(2**Q_drc_gain)
         ).as_int32()
     else:
-        new_gain_int = utils.int32(1 << Q_alpha)
+        new_gain_int = utils.int32(1 << Q_drc_gain)
 
     return new_gain_int
 
@@ -262,7 +263,7 @@ def noise_gate_gain_calc_xcore(envelope_int, threshold_int, slope_int=None):
     if envelope_int < threshold_int:
         new_gain_int = utils.int32(0)
     else:
-        new_gain_int = utils.int32(1 << Q_alpha)
+        new_gain_int = utils.int32(1 << Q_drc_gain)
     return new_gain_int
 
 
@@ -288,9 +289,9 @@ def noise_suppressor_expander_gain_calc_xcore(envelope_int, threshold_int, slope
         # it can't overflow
         new_gain_int = utils.int64(envelope_int * invt)
         new_gain_int = (
-            (float32(new_gain_int * 2**-63) ** -slope_f32) * float32(1 << Q_alpha)
+            (float32(new_gain_int * 2**-63) ** -slope_f32) * float32(1 << Q_drc_gain)
         ).as_int32()
     else:
-        new_gain_int = utils.int32(1 << Q_alpha)
+        new_gain_int = utils.int32(1 << Q_drc_gain)
 
     return new_gain_int
