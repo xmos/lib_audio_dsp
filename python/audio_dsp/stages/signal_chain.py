@@ -437,9 +437,9 @@ class Crossfader(Stage):
         """
         Set the mix of the crossfader.
 
-        When the mix is set to 0, only the first signal will be out[put. 
+        When the mix is set to 0, only the first signal will be output.
         When the mix is set to 0.5, each channel has a gain of -4.5 dB.
-        When the mix is set to 1, only they second signal will be output. 
+        When the mix is set to 1, only they second signal will be output.
 
         Parameters
         ----------

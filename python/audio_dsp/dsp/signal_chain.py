@@ -1144,20 +1144,19 @@ class crossfader(_combiners):
         Fixed point gains for each input for a given mix value.
 
     """
-    def __init__(
-        self, fs: float, n_chans: int, mix: float = 0.5, Q_sig: int = dspg.Q_SIG
-        ) -> None:
+
+    def __init__(self, fs: float, n_chans: int, mix: float = 0.5, Q_sig: int = dspg.Q_SIG) -> None:
         super().__init__(fs, n_chans, Q_sig)
-        self.n_outs = n_chans//2
+        self.n_outs = n_chans // 2
         self.mix = mix
 
     @property
     def mix(self):
         """The channel mix, must be set between [0, 1].
 
-        When the mix is set to 0, only the first signal will be output. 
+        When the mix is set to 0, only the first signal will be output.
         When the mix is set to 0.5, each channel has a gain of -4.5 dB.
-        When the mix is set to 1, only they second signal will be output. 
+        When the mix is set to 1, only they second signal will be output.
         """
         return self._mix
 
@@ -1172,11 +1171,11 @@ class crossfader(_combiners):
         omega = self.mix * np.pi / 2
 
         # -4.5 dB
-        self.gains = [0.0]*2
+        self.gains = [0.0] * 2
         self.gains[0] = np.sqrt((1 - self.mix) * np.cos(omega))
         self.gains[1] = np.sqrt(self.mix * np.sin(omega))
 
-        self.gains_int = [0]*2
+        self.gains_int = [0] * 2
         self.gains_int[0] = _float_to_q31(self.gains[0])
         self.gains_int[1] = _float_to_q31(self.gains[1])
 

@@ -21,7 +21,7 @@ from .signal_chain import (
     Bypass,
     Mixer,
     Crossfader,
-    CrossfaderStereo
+    CrossfaderStereo,
 )
 from .compressor import CompressorRMS
 from .reverb import ReverbRoom, ReverbRoomStereo, ReverbPlateStereo
