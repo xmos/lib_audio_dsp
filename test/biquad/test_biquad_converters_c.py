@@ -81,7 +81,7 @@ def get_c_wav(dir_name, conv_name, verbose=True, sim = True, dtype=np.float32):
     app = "xsim" if sim else "xrun --io"
     run_cmd = app + " --args " + str(bin_dir / "coeffs_alltests.xe") + f" {enum}"
     stdout = subprocess.check_output(run_cmd, cwd = dir_name, shell = True)
-    if verbose: print("run msg:\n", stdout)
+    if verbose: print("run msg:\n", stdout.decode())
 
     sig_bin = dir_name / "out_vector.bin"
     assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"

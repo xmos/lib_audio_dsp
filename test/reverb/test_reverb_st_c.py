@@ -39,7 +39,7 @@ def get_c_wav(dir_name, app_name, verbose=False, sim=True):
   app = "xsim" if sim else "xrun --io"
   run_cmd = app + " " + str(bin_dir / app_name)
   stdout = subprocess.check_output(run_cmd, cwd=dir_name, shell=True)
-  if verbose: print("run msg:\n", stdout)
+  if verbose: print("run msg:\n", stdout.decode())
 
   sig_bin = dir_name / "rv_sig_out.bin"
   assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"

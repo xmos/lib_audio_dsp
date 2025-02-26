@@ -1136,7 +1136,12 @@ class crossfader(_combiners):
 
     Attributes
     ----------
-    n_outs : number of outputs, half the number of inputs.
+    n_outs : int
+        Number of outputs, half the number of inputs.
+    gains : list[float]
+        Floating point gains for each input for a given mix value.
+    gains_int : list[int]
+        Fixed point gains for each input for a given mix value.
 
     """
     def __init__(
@@ -1167,11 +1172,13 @@ class crossfader(_combiners):
         omega = self.mix * np.pi / 2
 
         # -4.5 dB
-        self.dry = np.sqrt((1 - self.mix) * np.cos(omega))
-        self.wet = np.sqrt(self.mix * np.sin(omega))
+        self.gains = [0.0]*2
+        self.gains[0] = np.sqrt((1 - self.mix) * np.cos(omega))
+        self.gains[1] = np.sqrt(self.mix * np.sin(omega))
 
-        self.dry_int = _float_to_q31(self.dry)
-        self.wet_int = _float_to_q31(self.wet)
+        self.gains_int = [0]*2
+        self.gains_int[0] = _float_to_q31(self.gains[0])
+        self.gains_int[1] = _float_to_q31(self.gains[1])
 
     def process_channels(self, sample_list: list[float]) -> list[float]:
         """
@@ -1191,7 +1198,7 @@ class crossfader(_combiners):
         """
         y = [0.0] * self.n_outs
         for n in range(self.n_outs):
-            y[n] = sample_list[n] * self.dry + sample_list[n + self.n_outs] * self.wet
+            y[n] = sample_list[n] * self.gains[0] + sample_list[n + self.n_outs] * self.gains[1]
         return y
 
     def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
@@ -1217,9 +1224,9 @@ class crossfader(_combiners):
         for n in range(self.n_outs):
             acc = 1 << (31 - 1)
             this_sample = utils.float_to_fixed(sample_list[n], self.Q_sig)
-            acc += this_sample * self.dry_int
+            acc += this_sample * self.gains_int[0]
             this_sample = utils.float_to_fixed(sample_list[n + self.n_outs], self.Q_sig)
-            acc += this_sample * self.wet_int
+            acc += this_sample * self.gains_int[1]
 
             y[n] = utils.int32_mult_sat_extract(acc, 1, 31)
 
