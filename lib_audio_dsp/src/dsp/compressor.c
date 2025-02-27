@@ -15,6 +15,10 @@ static inline int32_t calc_rms_comp_gain(int32_t th, int32_t env, float slope) {
   r = -Q_alpha + 23;
   asm("fmake %0, %1, %2, %3, %4": "=r" (ng_fl): "r" (0), "r" (r), "r" (0), "r" (new_gain));
   ng_fl = powf(ng_fl, slope);
+  // risk of ng_fl being 1 if thresh/envelope > (1 - 2^-24)
+  if(ng_fl >= 1.0f){
+    return INT32_MAX;
+  }
   asm("fsexp %0, %1, %2": "=r" (al), "=r" (r): "r" (ng_fl));
   asm("fmant %0, %1": "=r" (new_gain): "r" (ng_fl));
   r = -Q_alpha - r + 23;
