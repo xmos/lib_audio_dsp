@@ -36,7 +36,7 @@ int main()
   fclose(comp_info);
 
   compressor_t comp = (compressor_t){
-              (env_detector_t){at_al, re_al, 0}, th, INT32_MAX, sl};
+              (env_detector_t){at_al, re_al, 0}, th, 1 << 30, sl};
 
   for (unsigned i = 0; i < in_len; i++)
   {

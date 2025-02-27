@@ -9,7 +9,7 @@ int32_t adsp_noise_suppressor_expander(
   int32_t new_samp
 ) {
   adsp_env_detector_peak(&nse->env_det, new_samp);
-  int32_t new_gain = INT32_MAX;
+  int32_t new_gain = 1 << Q_drc_gain;
 
   if (-nse->slope > 0 && nse->threshold > nse->env_det.envelope) {
     // This looks a bit scary, but as long as envelope < threshold,
@@ -17,13 +17,13 @@ int32_t adsp_noise_suppressor_expander(
     // has exp of -63.
     int64_t new_gain_i64 =  nse->env_det.envelope * nse->inv_threshold;
     new_gain = new_gain_i64 >> 32;
-    int32_t exp = -Q_alpha - 32 + 23;
+    int32_t exp = -Q_drc_gain - 32 + 23;
     float ng_fl;
     asm("fmake %0, %1, %2, %3, %4": "=r" (ng_fl): "r" (0), "r" (exp), "r" (new_gain), "r" ((uint32_t)new_gain_i64));
     ng_fl = powf(ng_fl, -nse->slope);
     asm("fsexp %0, %1, %2": "=r" (new_gain), "=r" (exp): "r" (ng_fl));
     asm("fmant %0, %1": "=r" (new_gain): "r" (ng_fl));
-    exp = -Q_alpha - exp + 23;
+    exp = -Q_drc_gain - exp + 23;
     new_gain >>= exp;
   }
   int32_t alpha = nse->env_det.attack_alpha;
@@ -32,5 +32,5 @@ int32_t adsp_noise_suppressor_expander(
   }
 
   nse->gain = q31_ema(nse->gain, new_gain, alpha);
-  return apply_gain_q31(new_samp, nse->gain);
+  return apply_gain_q30(new_samp, nse->gain);
 }

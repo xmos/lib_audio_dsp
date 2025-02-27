@@ -10,7 +10,7 @@ int32_t adsp_limiter_peak(
 ) {
   adsp_env_detector_peak(&lim->env_det, new_samp);
   int32_t env = (lim->env_det.envelope == 0) ? 1 : lim->env_det.envelope;
-  int32_t new_gain = INT32_MAX;
+  int32_t new_gain = 1 << Q_drc_gain;
   if(lim->threshold < env) {
     int32_t ah = 0, al = 0, r = 0;
     asm("linsert %0, %1, %2, %3, 32": "=r" (ah), "=r" (al): "r" (lim->threshold), "r" (31), "0" (ah), "1" (al));
@@ -23,7 +23,7 @@ int32_t adsp_limiter_peak(
   }
 
   lim->gain = q31_ema(lim->gain, new_gain, alpha);
-  return apply_gain_q31(new_samp, lim->gain);
+  return apply_gain_q30(new_samp, lim->gain);
 }
 
 int32_t adsp_hard_limiter_peak(
@@ -42,7 +42,7 @@ int32_t adsp_limiter_rms(
 ) {
   adsp_env_detector_rms(&lim->env_det, new_samp);
   int32_t env = (lim->env_det.envelope == 0) ? 1 : lim->env_det.envelope;
-  int32_t new_gain = INT32_MAX;
+  int32_t new_gain = 1 << Q_drc_gain;
   if(lim->threshold < env) {
     int32_t ah = 0, al = 0; int r = 0;
     asm("linsert %0, %1, %2, %3, 32": "=r" (ah), "=r" (al): "r" (lim->threshold), "r" (31), "0" (ah), "1" (al));
@@ -58,7 +58,7 @@ int32_t adsp_limiter_rms(
   }
 
   lim->gain = q31_ema(lim->gain, new_gain, alpha);
-  return apply_gain_q31(new_samp, lim->gain);
+  return apply_gain_q30(new_samp, lim->gain);
   return new_samp;
 }
 

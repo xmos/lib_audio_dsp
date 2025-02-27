@@ -38,7 +38,7 @@ int main()
   fclose(nse_info);
   if (!th) th = 1;
   noise_suppressor_expander_t nse = (noise_suppressor_expander_t){
-              (env_detector_t){at_al, re_al, (1 << (Q_SIG)) - 1}, 0, 0, INT32_MAX, slope};
+              (env_detector_t){at_al, re_al, (1 << (Q_SIG)) - 1}, 0, 0, 1 << 30, slope};
   adsp_noise_suppressor_expander_set_th(&nse, th);
   for (unsigned i = 0; i < in_len; i++)
   {

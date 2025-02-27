@@ -34,7 +34,7 @@ int main()
   fclose(lim_info);
 
   limiter_t lim = (limiter_t){
-              (env_detector_t){at_al, re_al, 0}, th, INT32_MAX};
+              (env_detector_t){at_al, re_al, 0}, th, 1 << 30};
 
   for (unsigned i = 0; i < in_len; i++)
   {

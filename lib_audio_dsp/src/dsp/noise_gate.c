@@ -10,7 +10,7 @@ int32_t adsp_noise_gate(
 ) {
   adsp_env_detector_peak(&ng->env_det, new_samp);
   int32_t env = (ng->env_det.envelope == 0) ? 1 : ng->env_det.envelope;
-  int32_t new_gain = (ng->threshold > env) ? 0 : INT32_MAX;
+  int32_t new_gain = (ng->threshold > env) ? 0 : 1 << Q_drc_gain;
 
   // for the noise gate, the attack and release times are swapped
   // i.e. attack time is after going under threshold instead of over
@@ -20,5 +20,5 @@ int32_t adsp_noise_gate(
   }
 
   ng->gain = q31_ema(ng->gain, new_gain, alpha);
-  return apply_gain_q31(new_samp, ng->gain);
+  return apply_gain_q30(new_samp, ng->gain);
 }

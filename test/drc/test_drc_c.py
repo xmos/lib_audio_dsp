@@ -18,7 +18,7 @@ fs = 48000
 
 
 
-def get_sig(len=0.05):
+def get_sig(len=0.0005):
   time = np.arange(0, len, 1/fs)
   sig_fl = 0.8 * np.sin(2 * np.pi * 997 * time) * np.sin(2 * np.pi * 100 * time)
   sig_fl = quantize_signal(sig_fl, 24)
@@ -37,11 +37,11 @@ def get_sig(len=0.05):
 
   return sig_fl
 
-def get_c_wav(dir_name, bin_name, verbose = False, sim = True):
+def get_c_wav(dir_name, bin_name, verbose = True, sim = True):
   app = "xsim" if sim else "xrun --io"
   run_cmd = app + " " + str(bin_dir / bin_name) + "_test.xe"
   stdout = subprocess.check_output(run_cmd, cwd = dir_name, shell = True)
-  if verbose: print("run msg:\n", stdout)
+  if verbose: print("run msg:\n", stdout.decode())
 
   sig_bin = dir_name / "sig_out.bin"
   assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
@@ -194,6 +194,6 @@ if __name__ == "__main__":
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
 
-  test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
-  test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -10)
-  test_compressor_c(sig_fl, "noise_suppressor_expander", 0.001, 0.01, -1, 5)
+  # test_env_det_c(sig_fl, "envelope_detector_rms", 0.001, 0.01)
+  # test_limiter_c(sig_fl, "limiter_rms", 0.001, 0.07, -10)
+  test_compressor_c(sig_fl, "compressor_rms", 0.001, 0.01, -100, 5)

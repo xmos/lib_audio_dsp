@@ -7,7 +7,7 @@ import numpy as np
 from math import sqrt, isqrt
 import warnings
 
-from audio_dsp.dsp.types import float32
+from audio_dsp.dsp.types import float32, INT32MAX_as_f32
 
 
 FLT_MIN = np.finfo(float).tiny
