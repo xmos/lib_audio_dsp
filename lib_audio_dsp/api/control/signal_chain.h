@@ -115,3 +115,18 @@ switch_slew_t adsp_switch_slew_init(float fs, int32_t init_position);
  * @param new_position    The desired input channel to switch to.
  */
 void adsp_switch_slew_move(switch_slew_t* switch_slew, int32_t new_position);
+
+/**
+ * @brief Calculate the gains for a crossfader according to the mix amount.
+ * 
+ * When the mix is set to 0, only the first signal will be output. 
+ * gains[0] will be max and gains[1] will be 0.
+ * When the mix is set to 1, only they second signal will be output. 
+ * gains[0] will be 0 and gains[1] will be max.
+ * In order to maintain a consistent signal level across all mix values, 
+ * when the mix is set to 0.5, each channel has a gain of -4.5 dB.
+ *
+ * @param gains           Output gains
+ * @param mix             Mix applied from 0 to 1
+ */
+void adsp_crossfader_mix(int32_t gains[2], float mix);

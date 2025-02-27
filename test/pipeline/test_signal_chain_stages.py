@@ -6,7 +6,7 @@ number of inputs and outputs
 """
 import pytest
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
-from audio_dsp.stages.signal_chain import Adder, Subtractor, Mixer, Switch, SwitchStereo, SwitchSlew
+from audio_dsp.stages.signal_chain import Adder, Subtractor, Mixer, Switch, SwitchStereo, SwitchSlew, Crossfader, CrossfaderStereo
 from audio_dsp.stages.compressor_sidechain import CompressorSidechain
 
 import audio_dsp.dsp.utils as utils
@@ -24,7 +24,7 @@ PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
 
-def do_test(p, folder_name, n_outs=1):
+def do_test(p, folder_name, n_outs=1, rtol=None):
     """
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
@@ -58,8 +58,8 @@ def do_test(p, folder_name, n_outs=1):
     else:
         sig1 = np.linspace(2**23, -2**23, n_samps, dtype=np.int32)  << 4
 
-    if type(ref_module) == sc.switch_stereo:
-                sig = np.stack((sig0, sig0, sig1, sig1), axis=1)
+    if type(p.stages[2]) in [SwitchStereo, CrossfaderStereo]:
+        sig = np.stack((sig0, sig0, sig1, sig1), axis=1)
     else:
         sig = np.stack((sig0, sig1), axis=1)
         
@@ -84,7 +84,11 @@ def do_test(p, folder_name, n_outs=1):
     # back to int scaling
     out_py_int = utils.float_to_fixed_array(out_py, 27) << 4
 
-    np.testing.assert_equal(out_py_int, out_data.T)
+    if rtol:
+        np.testing.assert_allclose(out_py_int, out_data.T, rtol=rtol, atol=0)
+    else:
+        np.testing.assert_equal(out_py_int, out_data.T)
+
 
 @pytest.mark.group0
 def test_adder():
@@ -182,5 +186,37 @@ def test_switch_stereo(position):
 
     do_test(p, f"switchstereo_{position}", n_outs=2)
 
+
+@pytest.mark.parametrize("mix, tol", [[0, 0],
+                                      [0.5, 2**-21],
+                                      [1, 0]])
+def test_crossfader(mix, tol):
+    """
+    Test the crossfader crossfades the same in Python and C
+    """
+    channels = 2
+    p = Pipeline(channels)
+    switch_dsp = p.stage(Crossfader, p.i, "s")
+    p["s"].set_mix(mix)
+    p.set_outputs(switch_dsp)
+
+    do_test(p, f"crossfader_{mix}", rtol=tol)
+
+
+@pytest.mark.parametrize("mix, tol", [[0, 0],
+                                      [0.5, 2**-21],
+                                      [1, 0]])
+def test_crossfader_stereo(mix, tol):
+    """
+    Test the stereo crossfader crossfades the same in Python and C
+    """
+    channels = 4
+    p = Pipeline(channels)
+    switch_dsp = p.stage(CrossfaderStereo, p.i, "s")
+    p["s"].set_mix(mix)
+    p.set_outputs(switch_dsp)
+
+    do_test(p, f"crossfaderstereo_{mix}", n_outs=2, rtol=tol)
+
 if __name__ == "__main__":
-    test_switch_slew(0)
+    test_crossfader_stereo(0.5)

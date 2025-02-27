@@ -196,3 +196,22 @@ int32_t adsp_delay(
  */
 int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t* samples);
 
+/**
+ * @brief Crossfade between two channels using their gains.
+ * Will do: (in1 * gain1) + (in2 * gain2).
+ *
+ * @param in1      First signal
+ * @param in2      Second signal
+ * @param gain1     First gain
+ * @param gain2     Second gain
+ * @param q_gain    Q factor of the gain
+ * @return int32_t  Mixed signal
+ */
+static inline int32_t adsp_crossfader(int32_t in1, int32_t in2, int32_t gain1, int32_t gain2, int32_t q_gain) {
+  int32_t ah = 0, al = 1 << (q_gain - 1);
+  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (in1), "r" (gain1), "0" (ah), "1" (al));
+  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (in2), "r" (gain2), "0" (ah), "1" (al));
+  asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (q_gain), "0" (ah), "1" (al));
+  asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (q_gain));
+  return ah;
+}

@@ -417,3 +417,50 @@ class Delay(Stage):
             Default is 'samples'.
         """
         self.dsp_block.set_delay(delay, units)
+
+
+class Crossfader(Stage):
+    """
+    The crossfader mixes between two inputs. The
+    mix control sets the respective levels of each input.
+
+    """
+
+    def __init__(self, index=0, **kwargs):
+        super().__init__(config=find_config("crossfader"), **kwargs)
+        self.index = index
+        self.create_outputs(1)
+        self.dsp_block = sc.crossfader(self.fs, 2)
+        self.set_control_field_cb("mix", lambda: self.dsp_block.mix)
+
+    def set_mix(self, mix):
+        """
+        Set the mix of the crossfader.
+
+        When the mix is set to 0, only the first signal will be output.
+        When the mix is set to 0.5, each channel has a gain of -4.5 dB.
+        When the mix is set to 1, only they second signal will be output.
+
+        Parameters
+        ----------
+        gain_db : float
+            The gain of the fixed gain in dB.
+        """
+        self.dsp_block.mix = mix
+        return self
+
+
+class CrossfaderStereo(Crossfader):
+    """
+    The stereo crossfader mixes between two stereo inputs. The
+    mix control sets the respective levels of each input pair.
+    The inputs should be passed in pairs, e.g. ``[0_L, 0_R, 1_L, 1_R]``.
+
+    """
+
+    def __init__(self, index=0, **kwargs):
+        Stage.__init__(self, config=find_config("crossfader_stereo"), **kwargs)
+        self.index = index
+        self.create_outputs(2)
+        self.dsp_block = sc.crossfader(self.fs, 4)
+        self.set_control_field_cb("mix", lambda: self.dsp_block.mix)

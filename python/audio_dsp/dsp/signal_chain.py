@@ -32,6 +32,24 @@ def db_to_qgain(db_in):
     return gain, gain_int
 
 
+def _float_to_q31(x):
+    """Convert a floating point number to Q31 format. The input must
+    be between 0 and 1. Care must be taken to not overflow by scaling
+    1.0f*(2**31).
+    """
+    if x > 1 or x < 0:
+        raise ValueError("input must be between 0 and 1")
+
+    if x == 1:
+        x_int = utils.int32(2**31 - 1)
+    elif x == 0:
+        x_int = 0
+    else:
+        x_int = utils.int32(x * (2**31))
+
+    return x_int
+
+
 def _check_gain(value):
     if value > 24:
         warnings.warn("Maximum gain is +24 dB, saturating to that value.", UserWarning)
@@ -1104,3 +1122,113 @@ class delay(dspg.dsp_block):
 
     # don't need separate implementation for float/xcore
     process_channels_xcore = process_channels
+
+
+class crossfader(_combiners):
+    """
+    The crossfader mixes between two sets of inputs. The
+    mix control sets the respective levels of each input.
+
+    Parameters
+    ----------
+    mix : float
+        The channel mix, must be set between [0, 1]
+
+    Attributes
+    ----------
+    n_outs : int
+        Number of outputs, half the number of inputs.
+    gains : list[float]
+        Floating point gains for each input for a given mix value.
+    gains_int : list[int]
+        Fixed point gains for each input for a given mix value.
+
+    """
+
+    def __init__(self, fs: float, n_chans: int, mix: float = 0.5, Q_sig: int = dspg.Q_SIG) -> None:
+        super().__init__(fs, n_chans, Q_sig)
+        self.n_outs = n_chans // 2
+        self.mix = mix
+
+    @property
+    def mix(self):
+        """The channel mix, must be set between [0, 1].
+
+        When the mix is set to 0, only the first signal will be output.
+        When the mix is set to 0.5, each channel has a gain of -4.5 dB.
+        When the mix is set to 1, only they second signal will be output.
+        """
+        return self._mix
+
+    @mix.setter
+    def mix(self, mix):
+        if not (0 <= mix <= 1):
+            bad_mix = mix
+            mix = np.clip(mix, 0, 1)
+            warnings.warn(f"Crossfader mix {bad_mix} saturates to {mix}", UserWarning)
+        self._mix = np.float32(mix)
+        # get an angle [0, pi /2]
+        omega = self.mix * np.pi / 2
+
+        # -4.5 dB
+        self.gains = [0.0] * 2
+        self.gains[0] = np.sqrt((1 - self.mix) * np.cos(omega))
+        self.gains[1] = np.sqrt(self.mix * np.sin(omega))
+
+        self.gains_int = [0] * 2
+        self.gains_int[0] = _float_to_q31(self.gains[0])
+        self.gains_int[1] = _float_to_q31(self.gains[1])
+
+    def process_channels(self, sample_list: list[float]) -> list[float]:
+        """
+        Process a single sample. Apply the crossfader gain to all the
+        input samples using floating point maths.
+
+        Parameters
+        ----------
+        sample_list : list
+            List of input samples
+
+        Returns
+        -------
+        list[float]
+            Output sample.
+
+        """
+        y = [0.0] * self.n_outs
+        for n in range(self.n_outs):
+            y[n] = sample_list[n] * self.gains[0] + sample_list[n + self.n_outs] * self.gains[1]
+        return y
+
+    def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
+        """
+        Process a single sample. Apply the crossfader gain to all the
+        input samples using fixed point maths.
+
+        The float input sample is quantized to int32, and returned to
+        float before outputting.
+
+        Parameters
+        ----------
+        sample_list : list
+            List of input samples
+
+        Returns
+        -------
+        list[float]
+            Output sample.
+
+        """
+        y = [0] * self.n_outs
+        for n in range(self.n_outs):
+            acc = 1 << (31 - 1)
+            this_sample = utils.float_to_fixed(sample_list[n], self.Q_sig)
+            acc += this_sample * self.gains_int[0]
+            this_sample = utils.float_to_fixed(sample_list[n + self.n_outs], self.Q_sig)
+            acc += this_sample * self.gains_int[1]
+
+            y[n] = utils.int32_mult_sat_extract(acc, 1, 31)
+
+        y_flt = [utils.fixed_to_float(x, self.Q_sig) for x in y]
+
+        return y_flt

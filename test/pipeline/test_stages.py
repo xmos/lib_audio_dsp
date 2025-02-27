@@ -301,7 +301,7 @@ def test_biquad(method, args, frame_size):
     folder_name = f"biquad_{frame_size}_{method[5:]}"
     do_test(default_pipeline, tuned_pipeline, frame_size, folder_name)
 
-
+@pytest.mark.group0
 @pytest.mark.parametrize(
     "method, args",
     [
@@ -637,7 +637,6 @@ def test_fixed_gain(frame_size):
     folder_name = f"fixed_gain_{frame_size}"
     do_test(default_pipeline, tuned_pipeline, frame_size, folder_name)
 
-@pytest.mark.group0
 @pytest.mark.parametrize("pregain, mix", [
     [0.01, False],
     [0.01, True],

@@ -22,10 +22,10 @@ def boolean hasGenericChanges() {
     else if (env.BRANCH_NAME  ==~ /develop/) {
       return true
     }
-    else if (hasChangesIn("utils")) {
+    else if (hasChangesIn("utils | grep -v reverb_utils")) {
       return true
     }
-    else if (hasChangesIn("helpers")) {
+    else if (hasChangesIn("helpers | grep -v reverb_utils")) {
       return true
     }
     else if (hasChangesIn("adsp")) {
@@ -123,7 +123,7 @@ pipeline {
                   withTools(params.TOOLS_VERSION) {
                     dir("test/biquad") {
                       sh "cmake -B build"
-                      sh "cmake --build build"
+                      sh "cmake --build build -j\$(nproc)"
                     } // dir
                   } // tools
                 } // dir
@@ -133,13 +133,6 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       sh "pip install -r requirements.txt"
-                      buildApps([
-                        "test/biquad",
-                        "test/cascaded_biquads",
-                        "test/signal_chain",
-                        "test/fir",
-                        "test/utils",
-                      ]) // buildApps
                     } // tools
                   } // withVenv
                 } // dir
@@ -158,6 +151,7 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/biquad"])
                         dir("test/biquad") {
                           runPytest("--dist worksteal")
                         }
@@ -180,6 +174,7 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/cascaded_biquads"])
                         dir("test/cascaded_biquads") {
                           runPytest("--dist worksteal")
                         }
@@ -217,6 +212,7 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/utils"])
                         dir("test/utils") {
                           runPytest("--dist worksteal")
                         }
@@ -238,6 +234,7 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/fir"])
                         dir("test/fir") {
                           runPytest("--dist worksteal")
                         }
@@ -259,6 +256,7 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/signal_chain"])
                         dir("test/signal_chain") {
                           runPytest("--dist worksteal")
                         }
@@ -315,7 +313,7 @@ pipeline {
                   withTools(params.TOOLS_VERSION) {
                     dir("test/biquad") {
                       sh "cmake -B build"
-                      sh "cmake --build build"
+                      sh "cmake --build build -j\$(nproc)"
                     } // dir
                   } // tools
                 } // dir
@@ -325,10 +323,6 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       sh "pip install -r requirements.txt"
-                      buildApps([
-                        "test/drc",
-                        "test/reverb",
-                      ]) // buildApps
                     }
                   }
                 }
@@ -348,6 +342,7 @@ pipeline {
                       withMounts([["projects", "projects/hydra_audio", "hydra_audio_test_skype"]]) {
                         withEnv(["hydra_audio_PATH=$hydra_audio_test_skype_PATH"]){
                           catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/drc"])
                             dir("test/drc") {
                               runPytest("--dist worksteal")
                             }
@@ -371,6 +366,7 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/reverb"])
                         dir("test/reverb") {
                           runPytest("--dist worksteal --durations=0")
                         }
@@ -452,7 +448,7 @@ pipeline {
                   withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       sh "xtagctl reset ${adapterIDs[0]}"
                       dir("test/pipeline") {
-                        sh "python -m pytest -m group0 -n 3 --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
+                        sh "python -m pytest -m group0 -n auto --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
                       }
                   }
                 }
@@ -493,7 +489,7 @@ pipeline {
                   withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       sh "xtagctl reset ${adapterIDs[0]}"
                       dir("test/pipeline") {
-                      sh "python -m pytest   -m group1 -n 3 --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO "
+                      sh "python -m pytest   -m group1 -n auto --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO "
                     }
                   }
                 }

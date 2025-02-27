@@ -10,7 +10,7 @@
 #include "control/biquad.h"
 #include "control/cascaded_biquads.h"
 #include "control/drc.h"
-#include "control/reverb.h"
 #include "control/signal_chain.h"
+#include "control/reverb.h"
 #include "control/helpers.h"
 #include "control/reverb_plate.h"

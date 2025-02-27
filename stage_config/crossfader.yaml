@@ -1,0 +1,7 @@
+module:
+  crossfader:
+    mix:
+      type: float
+      help: The current switch position.
+includes:
+  - "stdint.h"
