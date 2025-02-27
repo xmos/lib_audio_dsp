@@ -65,7 +65,7 @@ void hard_limiter_peak_init(module_instance_t* instance, adsp_bump_allocator_t* 
 
     for(int i=0; i<state->n_inputs; i++)
     {
-        state->lim[i].gain = INT32_MAX;
+        state->lim[i].gain = 1 << 30;
         state->lim[i].env_det.envelope = 0;
     }
 

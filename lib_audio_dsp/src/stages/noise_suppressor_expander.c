@@ -77,7 +77,7 @@ void noise_suppressor_expander_init(module_instance_t* instance, adsp_bump_alloc
 
     for(int i=0; i<state->n_inputs; i++)
     {
-        state->nse[i].gain = INT32_MAX;
+        state->nse[i].gain = 1 << 30;
         state->nse[i].env_det.envelope = 1 << (-SIG_EXP);
         // Avoid division by zero
         if (!state->nse[i].threshold) state->nse[i].threshold = 1;

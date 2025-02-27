@@ -67,7 +67,7 @@ void compressor_rms_init(module_instance_t* instance, adsp_bump_allocator_t* all
 
     for(int i=0; i<state->n_inputs; i++)
     {
-        state->comp[i].gain = INT32_MAX;
+        state->comp[i].gain = 1 << 30;
         state->comp[i].env_det.envelope = 0;
     }
 

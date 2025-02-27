@@ -66,7 +66,7 @@ void noise_gate_init(module_instance_t* instance, adsp_bump_allocator_t* allocat
 
     for(int i=0; i<state->n_inputs; i++)
     {
-        state->ng[i].gain = INT32_MAX;
+        state->ng[i].gain = 1 << 30;
         state->ng[i].env_det.envelope = 1 << (-SIG_EXP);
     }
 

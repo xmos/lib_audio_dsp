@@ -24,7 +24,7 @@ limiter_t adsp_limiter_peak_init(
   limiter_t lim;
   lim.env_det = adsp_env_detector_init(fs, attack_t, release_t);
   lim.threshold = db_to_q_sig(threshold_db);
-  lim.gain = INT32_MAX;
+  lim.gain = 1 << 30;
   return lim;
 }
 
@@ -37,7 +37,7 @@ limiter_t adsp_limiter_rms_init(
   limiter_t lim;
   lim.env_det = adsp_env_detector_init(fs, attack_t, release_t);
   lim.threshold = db_pow_to_q_sig(threshold_db);
-  lim.gain = INT32_MAX;
+  lim.gain = 1 << 30;
   return lim;
 }
 
@@ -51,7 +51,7 @@ compressor_t adsp_compressor_rms_init(
   compressor_t comp;
   comp.env_det = adsp_env_detector_init(fs, attack_t, release_t);
   comp.threshold = db_pow_to_q_sig(threshold_db);
-  comp.gain = INT32_MAX;
+  comp.gain = 1 << 30;
   comp.slope = (1.0f - 1.0f / ratio) / 2.0f;
   return comp;
 }
@@ -88,7 +88,7 @@ noise_suppressor_expander_t adsp_noise_suppressor_expander_init(
   nse.env_det = adsp_env_detector_init(fs, attack_t, release_t);
   int32_t th = db_to_q_sig(threshold_db);
   adsp_noise_suppressor_expander_set_th(&nse, th);
-  nse.gain = INT32_MAX;
+  nse.gain = 1 << 30;
   nse.slope = 1 - ratio;
   nse.env_det.envelope = (1 << (-SIG_EXP)) - 1;
   return nse;
