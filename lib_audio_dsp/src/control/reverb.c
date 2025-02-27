@@ -2,12 +2,8 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include <xcore/assert.h>
-#include "control/adsp_control.h"
 #include <math.h>
-
-void adsp_reverb_wet_dry_mix(int32_t gains[2], float mix) {
-  adsp_crossfader_mix(gains, mix);
-}
+#include "control/adsp_control.h"
 
 reverb_room_t adsp_reverb_room_init(
   float fs,

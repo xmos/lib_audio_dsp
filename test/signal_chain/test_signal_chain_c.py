@@ -75,7 +75,7 @@ def single_channels_test(filt, test_dir, fname, sig_fl):
   
   sf.write(gen_dir / "sig_py_int.wav", out_py, fs, "PCM_24")
 
-  out_c = get_c_wav(test_dir, fname, verbose=True)
+  out_c = get_c_wav(test_dir, fname)
   shutil.rmtree(test_dir)
 
   np.testing.assert_allclose(out_c, out_py, rtol=0, atol=0)
