@@ -238,7 +238,7 @@ def compressor_rms_gain_calc_xcore(envelope_int, threshold_int, slope_f32=None):
     if slope_f32 > float32(0) and threshold_int < envelope_int:
         new_gain_int = int(threshold_int) << 31
         new_gain_int = utils.int32(new_gain_int // envelope_int)
-        new_gain_f32 = (float32(new_gain_int * 2**-31) ** slope_f32)
+        new_gain_f32 = float32(new_gain_int * 2**-31) ** slope_f32
         # division result could be < 1 in int32, but ==1 in f32
         if new_gain_f32 >= 1.0:
             return utils.int32(0x7FFFFFFF)
@@ -288,7 +288,7 @@ def noise_suppressor_expander_gain_calc_xcore(envelope_int, threshold_int, slope
         # this looks a bit scary, but as long as envelope < threshold,
         # it can't overflow
         new_gain_int = utils.int64(envelope_int * invt)
-        new_gain_f32 = (float32(new_gain_int * 2**-63) ** -slope_f32)
+        new_gain_f32 = float32(new_gain_int * 2**-63) ** -slope_f32
         # division result could be < 1 in int32, but ==1 in f32
         if new_gain_f32 >= 1.0:
             return utils.int32(0x7FFFFFFF)
