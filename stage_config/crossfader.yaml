@@ -2,6 +2,6 @@ module:
   crossfader:
     mix:
       type: float
-      help: The current switch position.
+      help: The mix between the inputs as a float between 0.0f and 1.0f.
 includes:
   - "stdint.h"
