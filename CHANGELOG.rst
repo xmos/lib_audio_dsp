@@ -1,13 +1,23 @@
 Audio DSP library change log
 ============================
 
-1.3.0-alpha
+1.3.0-alpha.1
 -----------
+
   * ADDED: Block frequency and time domain FIR filters DSP code and examples.
   * ADDED: Slewing biquad Stage.
   * ADDED: Stereo switch Stage.
+  * ADDED: Slewing switch Stage.
+  * ADDED: Crossfader and Stereo Crossfader Stage.
   * ADDED: Stateful ConfigSender to only send updated configs.
+  * ADDED: Contributing guide.
+  * CHANGED: Updated setup instructions.
+  * CHANGED: Improved documentation.
   * CHANGED: Biquad Stage resets state when coefficients change.
+  * CHANGED: Biquad left shift calculated from float coefficients.
+  * CHANGED: Python floating point to fixed point signal conversions use AES standard (1.0f = INT32_MAX).
+  * CHANGED: Python dsp_block base class defines process_channels APIs.
+  * REMOVED: Biquad dsp_blocks for specific biquad types.
 
 1.2.0
 -----
