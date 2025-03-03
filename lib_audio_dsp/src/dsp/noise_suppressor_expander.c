@@ -21,6 +21,10 @@ int32_t adsp_noise_suppressor_expander(
     float ng_fl;
     asm("fmake %0, %1, %2, %3, %4": "=r" (ng_fl): "r" (0), "r" (exp), "r" (new_gain), "r" ((uint32_t)new_gain_i64));
     ng_fl = powf(ng_fl, -nse->slope);
+    // risk of ng_fl being 1 if envelope/thresh > (1 - 2^-24)
+    if(ng_fl >= 1.0f){
+      return INT32_MAX;
+    }
     asm("fsexp %0, %1, %2": "=r" (new_gain), "=r" (exp): "r" (ng_fl));
     asm("fmant %0, %1": "=r" (new_gain): "r" (ng_fl));
     exp = -Q_alpha - exp + 23;

@@ -144,8 +144,9 @@ def test_pipeline_q27(input, add):
     Check for saturation by adding a constant to large values and checking the output hasn't
     overflowed
     """
-    infile = "inq27.wav"
-    outfile = "outq27.wav"
+    name = f"q27_{input}_{add}.wav"
+    infile = "in" + name
+    outfile = "out" + name
     n_samps, channels, rate = 1024, 2, 48000
 
     output = ((input >> HEADROOM_BITS) + add) << HEADROOM_BITS
