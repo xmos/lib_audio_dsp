@@ -139,9 +139,15 @@ function.
 The reference application should then provide instructions for compiling the
 application and running it on the target device.
 
-With that the tuned DSP pipeline will be running on the xcore device and can be
-used to stream audio. The next step is to iterate on the design and tune it to
-perfection. One option is to repeat the steps described above, regenerating the
+.. note::
+   `Application Note AN02014 <https://www.xmos.com/file/an02014-integrating-dsp-into-the-xmos-usb-reference-design/>`_
+   discusses integrating a DSP pipeline into the XMOS USB Reference Design.
+
+The :py:meth:`generate_dsp_main() <audio_dsp.design.pipeline.generate_dsp_main>`
+function will cause the tuned DSP pipeline to run on the xcore device,
+where it can be used to stream audio.
+The next step is to iterate on the design and tune it to perfection.
+One option is to repeat the steps described above, regenerating the
 code with new tuning values until the performance requirements are satisfied.
 
 
