@@ -156,7 +156,12 @@ class biquad(dspg.dsp_block):
         float before outputting.
 
         """
-        sample_int = utils.float_to_fixed(sample, self.Q_sig)
+        if isinstance(sample, float):
+            sample_int = utils.float_to_fixed(sample, self.Q_sig)
+        elif isinstance(sample, int):
+            sample_int = sample
+        else:
+            raise TypeError("input must be float or int")
 
         # process a single sample using direct form 1. In the VPU the
         # ``>> 30`` comes before accumulation
@@ -183,9 +188,10 @@ class biquad(dspg.dsp_block):
         y = utils.int64(y << self.b_shift)
         y = utils.saturate_int32(y)
 
-        y_flt = utils.fixed_to_float(y, self.Q_sig)
-
-        return y_flt
+        if isinstance(sample, float):
+            return utils.fixed_to_float(y, self.Q_sig)
+        else:
+            return y
 
     def process_frame_int(self, frame: list[np.ndarray]) -> list[np.ndarray]:
         """

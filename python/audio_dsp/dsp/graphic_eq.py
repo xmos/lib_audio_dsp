@@ -1,6 +1,14 @@
+# Copyright 2024-2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
+import audio_dsp.dsp.generic as dspg
 import audio_dsp.dsp.biquad as bq
 import numpy as np
 import audio_dsp.dsp.utils as utils
+from copy import deepcopy
+
+
+Q_GEQ = 29 # allow +12 dB
 
 
 class graphic_eq_10_band(dspg.dsp_block):
@@ -52,12 +60,16 @@ class graphic_eq_10_band(dspg.dsp_block):
             bw = [1.5175, 1.6175, 1.5175, 1.5175, 1.5175, 1.5175, 1.5175, 1.5175, 1.5175, 1.1]
             gains = [-0.3, -0.225, 0.1750, 0, 0.01, 0, 0.0, -0.05, -0.3, -0.2]
 
+        # compensation for sum of all bands
+        shift = -0.37
+
+        self.gain_offset = gain_offset
         self.gains_db = gains_db
         self.biquads = []
 
         for f in range(10):
             coeffs = bq.make_biquad_bandpass(fs, cfs[f], bw[f])
-            coeffs = bq._apply_biquad_gain(coeffs, gains[f])
+            coeffs = bq._apply_biquad_gain(coeffs, gains[f] + shift)
             # need extra channels as we use each filter twice
             self.biquads.append(bq.biquad(coeffs, fs, n_chans=2 * self.n_chans))
 
@@ -72,8 +84,8 @@ class graphic_eq_10_band(dspg.dsp_block):
     def gains_db(self, gains_db):
         assert len(gains_db) == 10, "10 gains required for a 10 band EQ"
         self._gains_db = deepcopy(gains_db)
-        self.gain_offset = gain_offset
-        self.gains = utils.db2gain(self.gains_db - self.gain_offset)
+        self.gains = [utils.db2gain(x + self.gain_offset) for x in self.gains_db]
+        self.gains_int = [utils.float_to_int32(x, Q_GEQ) for x in self.gains]
 
     def freq_response(self, nfft=512):
         """
@@ -101,10 +113,10 @@ class graphic_eq_10_band(dspg.dsp_block):
 
         """
         f, h_all = self.biquads[0].freq_response(nfft)
-        h_all = h_all**2
+        h_all = h_all**2 * self.gains[0]
         for n in range(1, 10):
             _, h = self.biquads[n].freq_response(nfft)
-            h_all += ((-1) ** n) * h**2
+            h_all += ((-1) ** n) * h**2 * self.gains[n]
 
         return f, h_all
 
@@ -150,12 +162,16 @@ class graphic_eq_10_band(dspg.dsp_block):
         float
             The processed output sample.
         """
-        y = 0
+        y = utils.int64(1 << (Q_GEQ - 1))
         for n in range(10):
-            this_band = sample
+            this_band = utils.float_to_fixed(sample, self.Q_sig)
             this_band = self.biquads[n].process_xcore(this_band, 2 * channel)
             this_band = self.biquads[n].process_xcore(this_band, 2 * channel + 1)
             if n % 2 != 0:
                 this_band = -this_band
-            y += this_band * self.gains[n]
-        return y
+            y += utils.int64(this_band * self.gains_int[n])
+
+        y = utils.int32_mult_sat_extract(y, 1, Q_GEQ)
+        y_flt = utils.fixed_to_float(y, self.Q_sig)
+
+        return y_flt
