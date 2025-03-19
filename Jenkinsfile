@@ -354,6 +354,28 @@ pipeline {
                 }
               }
             } // test drc
+            stage('Test Graphic EQ') {
+              when {
+                anyOf {
+                  expression{hasGenericChanges()}
+                  expression{hasChangesIn("-e graphic")}
+                  }
+                }
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        // buildApps(["test/graphic_eq"])
+                          dir("test/graphic_eq") {
+                            runPytest("--dist worksteal")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test geq
             stage('Test Reverb') {
               when {
                 anyOf {
