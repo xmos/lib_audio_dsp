@@ -144,6 +144,7 @@ class CascadedBiquads(Stage):
         self.dsp_block = casc_bq.butterworth_lowpass(self.fs, self.n_in, N, fc)
         return self
 
+
 class CascadedBiquads16(Stage):
     """16 cascaded biquad filters. This allows up to 16 second order
     biquad filters to be run in series.
@@ -212,7 +213,7 @@ class CascadedBiquads16(Stage):
         return np.array(a * (2**30), dtype=np.int32)
 
     @_parametric_eq_doc
-    def make_parametric_eq(self, filter_spec: list[list[Any]]) -> "CascadedBiquads":
+    def make_parametric_eq(self, filter_spec: list[list[Any]]) -> "CascadedBiquads16":
         """Configure this instance as a Parametric Equaliser.
 
         This allows each of the 16 biquads to be individually designed using the designer

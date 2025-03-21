@@ -451,7 +451,6 @@ class parametric_eq_16band(cascaded_biquads_16):
         super().__init__(coeffs_list, fs, n_chans, Q_sig=Q_sig)
 
 
-
 if __name__ == "__main__":
     fs = 48000
     filter_spec = [["lowpass", 8000, 0.707], ["highpass", 200, 1], ["peaking", 1000, 5, 10]]
@@ -495,5 +494,3 @@ if __name__ == "__main__":
     plt.show()
 
     pass
-
-
