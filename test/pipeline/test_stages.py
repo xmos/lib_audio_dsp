@@ -402,6 +402,42 @@ def test_cascaded_biquad(method, args, frame_size):
     folder_name = f"cbq_{frame_size}_{method[5:]}"
     do_test(default_pipeline, tuned_pipeline, frame_size, folder_name)
 
+
+@pytest.mark.parametrize(
+    "method, args",
+    [
+        ("make_parametric_eq", [filter_spec + filter_spec]),
+    ],
+)
+def test_cascaded_biquad16(method, args, frame_size):
+    """
+    Test the biquad stage filters the same in Python and C
+    """
+
+    def default_pipeline(fr):
+        p = Pipeline(channels, frame_size=fr)
+        o= p.stage(CascadedBiquads16, p.i, label="control")
+        p.set_outputs(o)
+
+        return p
+
+    def tuned_pipeline(fr):
+        p = default_pipeline(fr)
+
+        # Set initialization parameters of the stage
+        bq_method = getattr(p["control"], method)
+        if args:
+            bq_method(*args)
+        else:
+            bq_method()
+
+        stage_config = p["control"].get_config()
+        generate_test_param_file("CASCADED_BIQUADS_16", stage_config)
+        return p
+
+    folder_name = f"cbq_{frame_size}_{method[5:]}"
+    do_test(default_pipeline, tuned_pipeline, frame_size, folder_name)
+
 @pytest.mark.group0
 def test_limiter_rms(frame_size):
     """
