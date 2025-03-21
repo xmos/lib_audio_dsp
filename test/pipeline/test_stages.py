@@ -12,7 +12,7 @@ import audio_dsp.dsp.biquad as bq
 from copy import deepcopy
 
 import audio_dsp.dsp.utils as utils
-from python import build_utils, run_pipeline_xcoreai, audio_helpers
+from .python import build_utils, run_pipeline_xcoreai, audio_helpers
 
 import os
 from pathlib import Path
@@ -21,7 +21,7 @@ import struct
 import yaml
 from filelock import FileLock
 import shutil
-
+import random
 from test.test_utils import q_convert_flt
 
 PKG_DIR = Path(__file__).parent
@@ -427,6 +427,8 @@ def test_cascaded_biquad16(method, args, frame_size):
         # Set initialization parameters of the stage
         bq_method = getattr(p["control"], method)
         if args:
+            seed = frame_size
+            random.Random(seed*int(fs/1000)).shuffle(args[0])
             bq_method(*args)
         else:
             bq_method()

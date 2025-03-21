@@ -22,21 +22,3 @@ int32_t adsp_cascaded_biquads_8b(
   q2_30 coeffs[40],
   int32_t state[64],
   left_shift_t lsh[8]);
-
-/**
- * @brief 16-band cascaded biquad filter
- * This function implements a 16-band cascaded biquad filter. The filter is implemented as a direct
- * form 1 filter.
- * 
- * @param new_sample    New sample to be filtered
- * @param coeffs        Filter coefficients
- * @param state         Filter state
- * @param lsh           Left shift compensation value
- * @return int32_t      Filtered sample
- * @note The filter coefficients must be in [5][16]
- */
-int32_t adsp_cascaded_biquads_16b(
-  int32_t new_sample,
-  q2_30 coeffs[80],
-  int32_t state[128],
-  left_shift_t lsh[16]);
