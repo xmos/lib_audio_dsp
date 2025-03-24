@@ -13,7 +13,7 @@ module:
       attribute: DWORD_ALIGNED
       help: >
         The normalised biquad filter coefficients for each biquad in the
-        cascade as an array of [5][8], with 5 coefficients for up to 8
+        cascade as an array of [8][5], with 5 coefficients for up to 8
         biquads. The coefficients should be in the same format as
         specified in the individual biquad.
 includes:

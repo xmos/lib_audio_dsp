@@ -87,9 +87,9 @@ class CascadedBiquads(Stage):
     def _get_fixed_point_coeffs(self):
         fc = []
         for bq in self.dsp_block.biquads:
-            fc.extend(bq.coeffs)
-        a = np.array(fc)
-        return np.array(a * (2**30), dtype=np.int32)
+            fc.extend(bq.int_coeffs)
+        a = np.array(fc, dtype=np.int32)
+        return a
 
     @_parametric_eq_doc
     def make_parametric_eq(self, filter_spec: list[list[Any]]) -> "CascadedBiquads":
@@ -208,9 +208,9 @@ class CascadedBiquads16(Stage):
     def _get_fixed_point_coeffs(self):
         fc = []
         for bq in self.dsp_block.biquads:
-            fc.extend(bq.coeffs)
-        a = np.array(fc)
-        return np.array(a * (2**30), dtype=np.int32)
+            fc.extend(bq.int_coeffs)
+        a = np.array(fc, dtype=np.int32)
+        return a
 
     @_parametric_eq_doc
     def make_parametric_eq(self, filter_spec: list[list[Any]]) -> "CascadedBiquads16":
