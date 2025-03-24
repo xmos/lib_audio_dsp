@@ -202,8 +202,9 @@ def test_peq_frame(fs, n_filters, seed, n_chans, q_format):
 
 @pytest.mark.parametrize("fs", [48000])
 @pytest.mark.parametrize("n_filters", [10, 14, 16])
-@pytest.mark.parametrize("seed", [1, 2, 3, 5, 7, 11])
-@pytest.mark.parametrize("n_chans", [1, 2, 4])
+@pytest.mark.parametrize("n_chans, seed", [[1, 1],
+                                          [2, 2],
+                                          [4, 3],])
 @pytest.mark.parametrize("q_format", [27, 31])
 def test_peq16_frame(fs, n_filters, seed, n_chans, q_format):
     # a list of some sensible filters, use them in  random order

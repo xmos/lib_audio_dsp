@@ -401,16 +401,6 @@ class cascaded_biquads_16(cascaded_biquads_8):
     For documentation on individual biquads, see
     :class:`audio_dsp.dsp.biquad.biquad`.
 
-    Parameters
-    ----------
-    coeffs_list : list
-        List of coefficients for each biquad in the cascade.
-
-    Attributes
-    ----------
-    biquads : list
-        List of biquad objects representing each biquad in the cascade.
-
     """
 
     def __init__(self, coeffs_list, fs, n_chans, Q_sig=dspg.Q_SIG):

@@ -414,9 +414,8 @@ def test_cascaded_biquad16(method, args, frame_size):
     Test the biquad stage filters the same in Python and C
     """
 
-    if args:
-        seed = frame_size
-        random.Random(seed*int(fs/1000)).shuffle(args[0])
+    seed = frame_size
+    random.Random(seed*int(fs/1000)).shuffle(args[0])
 
     def default_pipeline(fr):
         p = Pipeline(channels, frame_size=fr)
