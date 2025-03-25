@@ -12,7 +12,7 @@ import audio_dsp.dsp.biquad as bq
 from copy import deepcopy
 
 import audio_dsp.dsp.utils as utils
-from python import build_utils, run_pipeline_xcoreai, audio_helpers
+from .python import build_utils, run_pipeline_xcoreai, audio_helpers
 
 import os
 from pathlib import Path
@@ -21,7 +21,7 @@ import struct
 import yaml
 from filelock import FileLock
 import shutil
-
+import random
 from test.test_utils import q_convert_flt
 
 PKG_DIR = Path(__file__).parent
@@ -204,7 +204,7 @@ def generate_test_param_file(config_name, stage_config):
         Path(__file__).resolve().parent / f"build/control_test_params.h", "w"
     ) as f_op:
         f_op.write('#include "cmds.h"\n\n')
-        f_op.write("#define CMD_PAYLOAD_MAX_SIZE 256\n")
+        f_op.write("#define CMD_PAYLOAD_MAX_SIZE 512\n")
         f_op.write(f"#define CMD_TOTAL_NUM {len(stage_config)}\n\n")
         f_op.write("typedef struct control_data_t {\n")
         f_op.write("\tuint32_t cmd_id;\n")
@@ -397,6 +397,45 @@ def test_cascaded_biquad(method, args, frame_size):
 
         stage_config = p["control"].get_config()
         generate_test_param_file("CASCADED_BIQUADS", stage_config)
+        return p
+
+    folder_name = f"cbq_{frame_size}_{method[5:]}"
+    do_test(default_pipeline, tuned_pipeline, frame_size, folder_name)
+
+
+@pytest.mark.parametrize(
+    "method, args",
+    [
+        ("make_parametric_eq", [filter_spec + filter_spec]),
+    ],
+)
+def test_cascaded_biquad16(method, args, frame_size):
+    """
+    Test the biquad stage filters the same in Python and C
+    """
+
+    seed = frame_size
+    random.Random(seed*int(fs/1000)).shuffle(args[0])
+
+    def default_pipeline(fr):
+        p = Pipeline(channels, frame_size=fr)
+        o= p.stage(CascadedBiquads16, p.i, label="control")
+        p.set_outputs(o)
+
+        return p
+
+    def tuned_pipeline(fr):
+        p = default_pipeline(fr)
+
+        # Set initialization parameters of the stage
+        bq_method = getattr(p["control"], method)
+        if args:
+            bq_method(*args)
+        else:
+            bq_method()
+
+        stage_config = p["control"].get_config()
+        generate_test_param_file("CASCADED_BIQUADS_16", stage_config)
         return p
 
     folder_name = f"cbq_{frame_size}_{method[5:]}"

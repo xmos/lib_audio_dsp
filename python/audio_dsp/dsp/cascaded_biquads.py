@@ -54,7 +54,7 @@ class cascaded_biquads_8(dspg.dsp_block):
         print("{", end="")
         for nn in range(5):
             print("{", end="")
-            for n in range(8):
+            for n in range(len(self.biquads)):
                 this_coeff = self.biquads[n].int_coeffs[nn]
                 print(f"{hex(this_coeff & (2**32 - 1))}, ", end="")
             print("},", end="")
@@ -385,6 +385,60 @@ def make_butterworth_highpass(N, fc, fs):
         coeffs_list.append(coeffs)
 
     return coeffs_list
+
+
+class cascaded_biquads_16(cascaded_biquads_8):
+    """A class representing a cascaded biquad filter with up to 16
+    biquads.
+
+    This can be used to either implement a parametric equaliser or a
+    higher order filter built out of second order sections.
+
+    16 biquad objects are always created, if there are less than 16
+    biquads in the cascade, the remaining biquads are set to bypass
+    (b0 = 1).
+
+    For documentation on individual biquads, see
+    :class:`audio_dsp.dsp.biquad.biquad`.
+
+    """
+
+    def __init__(self, coeffs_list, fs, n_chans, Q_sig=dspg.Q_SIG):
+        dspg.dsp_block.__init__(self, fs, n_chans, Q_sig)
+        self.biquads = []
+        assert len(coeffs_list) <= 16, "Too many biquads in coeffs_list"
+
+        for n in range(16):
+            if n < len(coeffs_list):
+                self.biquads.append(bq.biquad(coeffs_list[n], fs, n_chans, Q_sig=Q_sig))
+            else:
+                self.biquads.append(bq.biquad(bq.make_biquad_bypass(fs), fs, n_chans, Q_sig=Q_sig))
+
+
+class parametric_eq_16band(cascaded_biquads_16):
+    """A parametric equalizer with 16 bands.
+
+    This class extends the `cascaded_biquads_16` class to implement a
+    parametric equalizer with 16 bands. It applies a series of cascaded
+    biquad filters to the audio signal.
+
+    Parameters
+    ----------
+    filter_spec : list
+        A list of tuples specifying the filter parameters for each band.
+        Each tuple should contain the filter type as a string (e.g.,
+        'lowpass', 'highpass', 'peaking'), followed by the filter
+        parameters specific to that type.
+    """
+
+    def __init__(self, fs, n_chans, filter_spec, Q_sig=dspg.Q_SIG):
+        coeffs_list = []
+        for spec in filter_spec:
+            class_name = f"make_biquad_{spec[0]}"
+            class_handle = getattr(bq, class_name)
+            coeffs_list.append(class_handle(fs, *spec[1:]))
+
+        super().__init__(coeffs_list, fs, n_chans, Q_sig=Q_sig)
 
 
 if __name__ == "__main__":
