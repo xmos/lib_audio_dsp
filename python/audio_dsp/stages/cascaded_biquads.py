@@ -17,7 +17,9 @@ def _parametric_eq_doc(wrapped):
 
     # find all the biquad design methods
     design_funcs = [
-        f[1] for f in inspect.getmembers(biquad, inspect.isfunction) if f[0].startswith("make_biquad_")
+        f[1]
+        for f in inspect.getmembers(biquad, inspect.isfunction)
+        if f[0].startswith("make_biquad_")
     ]
     assert design_funcs, "Design functions not found!"
 
