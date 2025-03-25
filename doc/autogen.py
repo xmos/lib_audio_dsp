@@ -91,7 +91,7 @@ def python_doc_stages(src_dir, dst_dir, list_file):
         class_data = {}
         for class_name in classes:
             safe_name = class_name.replace("RMS", "Rms")
-            snake_name = re.sub(r'(?<!^)(?=[A-Z])', '_', safe_name).lower()
+            snake_name = re.sub(r'(?<!^)(?=[A-Z]|(?<!\d)(?=\d))', '_', safe_name).lower()
             yaml_path =  Path(YAML_DIR, snake_name + ".yaml")
             if yaml_path.is_file():
                 with open(yaml_path, "r") as fd:

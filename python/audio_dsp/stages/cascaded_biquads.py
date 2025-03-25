@@ -17,18 +17,20 @@ def _parametric_eq_doc(wrapped):
 
     # find all the biquad design methods
     design_funcs = [
-        f[1] for f in inspect.getmembers(biquad, inspect.isfunction) if f[0].startswith("biquad_")
+        f[1] for f in inspect.getmembers(biquad, inspect.isfunction) if f[0].startswith("make_biquad_")
     ]
+    assert design_funcs, "Design functions not found!"
 
-    # get arg names excluding fs and num channels which are the first 2 args.
-    func_args = [inspect.getfullargspec(f)[0][2:] for f in design_funcs]
+    # get arg names excluding fs which is the first arg.
+    func_args = [inspect.getfullargspec(f)[0][1:] for f in design_funcs]
 
     # construct a string describing all the design options.
     doc_gen = "\n\n"
     for f, args in zip(design_funcs, func_args):
-        arg_str = ", ".join(['"' + f.__name__ + '"', *args])
+        arg_str = ", ".join(['"' + f.__name__.removeprefix("make_biquad_") + '"', *args])
         doc_gen += f"            [{arg_str}]\n"
     wrapped.__doc__ = wrapped.__doc__.format(generated_doc=doc_gen)
+
     return wrapped
 
 
@@ -160,7 +162,7 @@ class CascadedBiquads16(Stage):
 
     Attributes
     ----------
-    dsp_block : :class:`audio_dsp.dsp.cascaded_biquad.cascaded_biquad`
+    dsp_block : :class:`audio_dsp.dsp.cascaded_biquad.cascaded_biquad_16`
         The DSP block class; see :ref:`CascadedBiquads16` for
         implementation details.
 
