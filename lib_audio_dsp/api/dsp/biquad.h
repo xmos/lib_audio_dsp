@@ -35,6 +35,7 @@ typedef struct {
  * @param state           Filter state. Must be double-word aligned
  * @param lsh             Left shift compensation value, must be positive
  * @return int32_t        Filtered sample
+ * @note No saturation applied. If output exceeds INT32_MAX, it will overflow. 
  */
 int32_t adsp_biquad(
   int32_t new_sample,
