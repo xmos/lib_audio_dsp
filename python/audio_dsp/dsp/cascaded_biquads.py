@@ -136,7 +136,7 @@ class cascaded_biquads_8(dspg.dsp_block):
 
         return y
 
-    def freq_response(self, nfft=512):
+    def freq_response(self, nfft=32768):
         """
         Calculate the frequency response of the cascaded biquad filters.
 

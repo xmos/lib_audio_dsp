@@ -215,7 +215,7 @@ class mixer(_combiners):
 
         return [y_flt]
 
-    def freq_response(self, nfft: int = 512) -> tuple[np.ndarray, np.ndarray]:
+    def freq_response(self, nfft: int = 32768) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate the frequency response of the mixer, assumed to be a
         flat response scaled by the gain.
@@ -400,7 +400,7 @@ class fixed_gain(dspg.dsp_block):
         else:
             return y
 
-    def freq_response(self, nfft: int = 512) -> tuple[np.ndarray, np.ndarray]:
+    def freq_response(self, nfft: int = 32768) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate the frequency response of the gain, assumed to be a
         flat response scaled by the gain.
