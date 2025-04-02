@@ -108,6 +108,9 @@ def python_doc_stages(src_dir, dst_dir, list_file):
     # something should be really wrong if this asserts
     assert len(all_classes) == len(all_files)
     gen = Template("""
+
+.. _dsp_stages_list:
+
 DSP Stages List
 ===============
 
