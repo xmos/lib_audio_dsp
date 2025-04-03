@@ -366,7 +366,7 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        // buildApps(["test/graphic_eq"])
+                        buildApps(["test/graphic_eq"])
                           dir("test/graphic_eq") {
                             runPytest("--dist worksteal")
                         }

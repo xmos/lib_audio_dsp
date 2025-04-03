@@ -94,7 +94,7 @@ def test_geq_c(in_signal, gains):
 
   peq = geq.graphic_eq_10_band (fs, 1, gains)
 
-  filter_name = f"geq_{gains[0]}"
+  filter_name = f"geq_{abs(gains[0])}"
   single_test(peq, filter_name, in_signal)
 
 
