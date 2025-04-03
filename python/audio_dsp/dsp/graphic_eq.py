@@ -86,6 +86,12 @@ class graphic_eq_10_band(dspg.dsp_block):
         self.gains = [utils.db2gain(x + self.gain_offset) for x in self.gains_db]
         self.gains_int = [utils.float_to_int32(x, Q_GEQ) for x in self.gains]
 
+    def _get_coeffs(self):
+        all_coeffs = []
+        for biquad in self.biquads:
+            all_coeffs.extend(biquad.int_coeffs)
+        return all_coeffs
+
     def freq_response(self, nfft=512):
         """
         Calculate the frequency response of the graphic equaliser.

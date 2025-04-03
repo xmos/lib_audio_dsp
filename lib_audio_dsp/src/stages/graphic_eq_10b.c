@@ -44,7 +44,7 @@ void graphic_eq_10b_init(module_instance_t* instance, adsp_bump_allocator_t* all
 
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
-    state->filter_coeffs = adsp_graphic_eq_10b_init(constants->sampling_freq);
+    state->filter_coeffs = constants->coeffs;
 
     state->filter_states = adsp_bump_allocator_malloc(allocator, _GEQ10_ARR_MEMORY(n_inputs)); // Allocate memory for the 1D pointers
     for(int i=0; i<n_inputs; i++)

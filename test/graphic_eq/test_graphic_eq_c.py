@@ -67,6 +67,11 @@ def single_test(filt, tname, sig_fl):
   test_dir.mkdir(exist_ok = True, parents = True)
 
   all_filt_info = np.empty(0, dtype=np.int32)
+  for biquad in filt.biquads:
+    all_filt_info = np.append(all_filt_info, np.array(biquad.int_coeffs, dtype=np.int32))
+  all_filt_info.tofile(test_dir / "coeffs.bin")
+
+  all_filt_info = np.empty(0, dtype=np.int32)
   all_filt_info = np.append(all_filt_info, np.array(filt.gains_int, dtype=np.int32))
   all_filt_info.tofile(test_dir / "gains.bin")
 
@@ -87,7 +92,7 @@ def in_signal():
 @pytest.mark.parametrize("gains", [[-6, 0, -5, 1, -4, 2, -3, 3, -2, 4]])
 def test_geq_c(in_signal, gains):
 
-  peq = geq.graphic_eq_10_band (46050, 1, gains)
+  peq = geq.graphic_eq_10_band (fs, 1, gains)
 
   filter_name = f"geq_{gains[0]}"
   single_test(peq, filter_name, in_signal)
@@ -99,4 +104,5 @@ if __name__ =="__main__":
   gen_dir.mkdir(exist_ok=True, parents=True)
   sig_fl = get_sig()
   
-  test_geq_c(sig_fl, [0, -2000,-2000,-2000,-2000,-2000,-2000,-2000,-2000,-2000,])
+#   test_geq_c(sig_fl, [0, -2000,-2000,-2000,-2000,-2000,-2000,-2000,-2000,-2000,])
+  test_geq_c(sig_fl, [-6, 0, -5, 1, -4, 2, -3, 3, -2, 4])
