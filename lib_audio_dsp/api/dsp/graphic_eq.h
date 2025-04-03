@@ -25,4 +25,4 @@ int32_t adsp_graphic_eq_10b(
   int32_t new_sample,
   int32_t gains[10],
   q2_30 coeffs[50],
-  int32_t state[80]);
+  int32_t state[160]);
