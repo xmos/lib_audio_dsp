@@ -27,7 +27,6 @@ class graphic_eq_10_band(dspg.dsp_block):
 
     The frequency response ripple with all the gains set to the same
     level is +/- 0.2 dB
-
     Parameters
     ----------
     gain_offset : float
