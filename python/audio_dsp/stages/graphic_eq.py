@@ -22,10 +22,11 @@ class GraphicEq10b(Stage):
 
     def __init__(self, **kwargs):
         super().__init__(config=find_config("graphic_eq_10b"), **kwargs)
-        self.create_outputs(1)
+        self.create_outputs(self.n_in)
         self.dsp_block = geq.graphic_eq_10_band(self.fs, self.n_in, np.zeros(10))
         self.set_control_field_cb("gains", lambda: self.dsp_block.gains_int)
         self.set_constant("sampling_freq", self.fs, "int32_t")
+        self.stage_memory_parameters = (self.n_in,)
 
     def set_gains(self, gains_db):
         """

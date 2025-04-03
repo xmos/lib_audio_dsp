@@ -4,10 +4,10 @@
 #include "dsp/adsp.h"
 #include <xcore/assert.h>
 
-int32_t* adsp_graphic_eq_10b_init(float fs)
+q2_30* adsp_graphic_eq_10b_init(float fs)
 {
     // coeffs for 44.1k and 48k Hz
-    const int32_t coeffs_46[50] = {2318510, 0, -2318510, 2142455467, -1068732963,
+    static q2_30 coeffs_46[50] = {2318510, 0, -2318510, 2142455467, -1068732963,
         5142803, 0, -5142803, 2136387310, -1062726942,
         9766005, 0, -9766005, 2127198759, -1053766357,
         18966252, 0, -18966252, 2106674201, -1034158569,
@@ -20,7 +20,7 @@ int32_t* adsp_graphic_eq_10b_init(float fs)
         };
 
     // coeffs for 88.2 and 96k Hz
-    const int32_t coeffs_92[50] = {1160608, 0, -1160608, 2144971458, -1071234470,
+    static q2_30 coeffs_92[50] = {1160608, 0, -1160608, 2144971458, -1071234470,
         2578010, 0, -2578010, 2141941635, -1068220228,
         4905803, 0, -4905803, 2137371560, -1063707454,
         9571212, 0, -9571212, 2127198759, -1053766357,
@@ -33,7 +33,7 @@ int32_t* adsp_graphic_eq_10b_init(float fs)
         };
 
     // coeffs for 192000 Hz
-    const int32_t coeffs_192[50] = {557068, 0, -557068, 2146279057, -1072538347,
+    static q2_30 coeffs_192[50] = {557068, 0, -557068, 2146279057, -1072538347,
         1238296, 0, -1238296, 2144826756, -1071089636,
         2358986, 0, -2358986, 2142640633, -1068916736,
         4613504, 0, -4613504, 2137783552, -1064113274,
@@ -45,29 +45,29 @@ int32_t* adsp_graphic_eq_10b_init(float fs)
         171037280, 0, -171037280, 1543437362, -708466129,
         };
 
-    xassert(fs > 44000.0f && "10 band Graphic EQ only supports fs > 44k")
+    xassert(fs > 44000.0f && "10 band Graphic EQ only supports fs > 44k");
 
-    if ( fs < (48000.0f + 88200.0f) / 2.0f){
-        return coeffs_46;
+    if ( fs < ((48000.0f + 88200.0f) / 2.0f)) {
+        return &coeffs_46[0];
     }
     else if (fs < 172000.0f){
-        return coeffs_92;
+        return &coeffs_92[0];
     }
-   else {
-        return coeffs_192;
+    else {
+        return &coeffs_192[0];
     }
 
 }
 
-#define Q_GEQ = 29
+#define Q_GEQ 29
 
 int32_t adsp_graphic_eq_10b(int32_t new_sample,
                                 int32_t gains[10],
                                 q2_30 coeffs[50],
-                                int32_t state[80],
-) {
+                                int32_t state[80])
+{
     int32_t ah = 0, al = 1 << (Q_GEQ - 1);
-    int32_t state_ptr = &state[0];
+    int32_t* state_ptr = &state[0];
     for(unsigned n = 0; n < 10; n++)
     {
         int32_t this_band;
@@ -75,7 +75,7 @@ int32_t adsp_graphic_eq_10b(int32_t new_sample,
         state_ptr += 8;
         this_band = adsp_biquad(this_band, &coeffs[5 * n], state_ptr, 0);
 
-        int32_t this_gain = n % 2 == 0 : gains[n] ? -gains[n];
+        int32_t this_gain = n % 2 == 0 ? gains[n] : -gains[n];
         // out += this_band * this_gain;
         asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (this_band), "r" (this_gain), "0" (ah), "1" (al));
 

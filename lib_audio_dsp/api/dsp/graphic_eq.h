@@ -6,7 +6,7 @@
 #include "xmath/types.h"
 
 
-int32_t* adsp_graphic_eq_10b_init(float fs);
+q2_30* adsp_graphic_eq_10b_init(float fs);
 
 
 
