@@ -782,3 +782,31 @@ def test_fir(frame_size, filter_name):
 
     folder_name = f"fir_{frame_size}_{filter_name[:5]}"
     do_test(default_pipeline, None, frame_size, folder_name)
+
+def test_graphic_eq(frame_size):
+    """
+    Test the volume stage amplifies the same in Python and C
+    """
+
+    def default_pipeline(fr):
+        p = Pipeline(channels, frame_size=fr)
+        o = p.stage(GraphicEq10b, p.i, label="control")
+        p.set_outputs(o)
+
+        return p
+
+    def tuned_pipeline(fr):
+        p = default_pipeline(fr)
+
+        # Set initialization parameters of the stage
+        p["control"].set_gains([-6, 0, -5, 1, -4, 2, -3, 3, -2, 4])
+
+        stage_config = p["control"].get_config()
+        generate_test_param_file("graphic_eq_10b", stage_config)
+        return p
+
+    folder_name = f"geq_{frame_size}"
+    do_test(default_pipeline, tuned_pipeline, frame_size, folder_name)
+
+if __name__ == "__main__":
+    test_graphic_eq(1)

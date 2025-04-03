@@ -42,7 +42,7 @@ class graphic_eq_10_band(dspg.dsp_block):
         super().__init__(fs, n_chans, Q_sig)
 
         if fs < 44000:
-            raise ValueError("10")
+            raise ValueError("Sample rate too low for 10 band graphic EQ")
         elif fs < (48000 + 88200) / 2:
             # hand tuned values for 44.1k and 48k
             cfs = [31.125, 64, 125, 250, 500, 1000, 2000, 4000, 8150, 15000]
@@ -175,3 +175,23 @@ class graphic_eq_10_band(dspg.dsp_block):
         y_flt = utils.fixed_to_float(y, self.Q_sig)
 
         return y_flt
+
+def _print_coeffs():
+    for fs in [(48000 + 44100) / 2, (96000 + 88200) / 2, 192000]:
+        this_geq = graphic_eq_10_band(fs, 1, np.zeros(10))
+        print(f"// coeffs for {fs} Hz")
+        coeffs_arr = []
+        lsh_arr = []
+        str_arr = ""
+        for n in range(10):
+            these_coeffs = this_geq.biquads[n].int_coeffs
+            coeffs_arr.append(these_coeffs)
+            str_arr += ', '.join(str(c) for c in these_coeffs)
+            str_arr += ",\n "
+            lsh_arr.append(this_geq.biquads[n].b_shift)
+        print("int32_t coeffs[50] = {" + str_arr + "}\n")
+
+    assert np.all(lsh_arr==0), "Error, not all lsh equal to zero"
+
+if __name__ == "__main__":
+    _print_coeffs()

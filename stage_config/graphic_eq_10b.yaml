@@ -1,0 +1,9 @@
+module:
+  graphic_eq_10b:
+    gains:
+      type: int32_t
+      size: 10
+      help: >
+        The graphic EQ gains in Q29 format.
+includes:
+  - "stdint.h"
