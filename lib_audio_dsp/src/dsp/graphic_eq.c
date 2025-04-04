@@ -40,7 +40,6 @@ q2_30* adsp_graphic_eq_10b_init(float fs)
 
 }
 
-#define Q_GEQ 29
 
 int32_t adsp_graphic_eq_10b(int32_t new_sample,
                                 int32_t gains[10],
@@ -48,7 +47,6 @@ int32_t adsp_graphic_eq_10b(int32_t new_sample,
                                 int32_t state[160])
 {
     int32_t ah = 0, al = 1 << (Q_GEQ - 1);
-    // int32_t* state_ptr = &state[0];
     int state_idx = 0;
 
     for(unsigned n = 0; n < 10; n++)
@@ -60,11 +58,7 @@ int32_t adsp_graphic_eq_10b(int32_t new_sample,
         this_band = adsp_biquad(this_band, &coeffs[5 * n], &state[state_idx], 0);
         state_idx += 8;
 
-        // this_band = adsp_biquad(new_sample, &coeffs[5 * n], state_ptr, 0);
-        // state_ptr += 8*sizeof(int32_t);
-        // this_band = adsp_biquad(this_band, &coeffs[5 * n], state_ptr, 0);
-        // state_ptr += 8*sizeof(int32_t);
-
+        // alternate phase of bands
         int32_t this_gain = n % 2 == 0 ? gains[n] : -gains[n];
         asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (this_band), "r" (this_gain), "0" (ah), "1" (al));
 

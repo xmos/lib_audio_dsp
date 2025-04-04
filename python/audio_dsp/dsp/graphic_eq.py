@@ -16,7 +16,8 @@ class graphic_eq_10_band(dspg.dsp_block):
     A 10 band graphic equaliser, with octave spaced center frequencies.
 
     The equaliser is implemented as a set of parallel 4th order bandpass
-    filters. The center frequencies are:
+    filters, with a gain controlling the level of each parallel branch.
+    The center frequencies are:
     [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]. Due to the
     nature of the bandpass filters, frequencies below 25 Hz and above
     19 kHz are filtered out. The filter coefficients have been hand
@@ -27,6 +28,7 @@ class graphic_eq_10_band(dspg.dsp_block):
 
     The frequency response ripple with all the gains set to the same
     level is +/- 0.2 dB
+
     Parameters
     ----------
     gain_offset : float
