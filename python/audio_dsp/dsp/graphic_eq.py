@@ -26,6 +26,10 @@ class graphic_eq_10_band(dspg.dsp_block):
     neighbouring bands means the frequency response is not guaranteed to
     be equal to the slider positions.
 
+    Note that for a 32 kHz sample rate, the 16 kHz band is not available,
+    making a 9 band EQ. For a 16 kHz sample rate the 8k and 16 kHz bands
+    are not available, making an 8 band EQ.
+
     The frequency response ripple with all the gains set to the same
     level is +/- 0.2 dB
 
@@ -42,8 +46,18 @@ class graphic_eq_10_band(dspg.dsp_block):
     def __init__(self, fs, n_chans, gains_db, gain_offset=-12, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
-        if fs < 44000:
+        if fs < 12000:
             raise ValueError("Sample rate too low for 10 band graphic EQ")
+        elif fs <= 16000:
+            # hand tuned values 16k (8 band)
+            cfs = [31.125, 64, 125, 250, 500, 1000, 2000, 4200]
+            bw = [1.5175, 1.6175, 1.5175, 1.5175, 1.5175, 1.5175, 1.6175, 1.1]
+            gains = [-0.3, -0.225, 0.175, 0, 0.05,  0.15, -0.4, -0.175]
+        elif fs <= 32000:
+            # hand tuned values 32k (9 band)
+            cfs = [31.125, 64, 125, 250, 500, 1000, 2000, 4000, 8500]
+            bw = [1.5175, 1.6175, 1.5175, 1.5175, 1.5175, 1.5175, 1.5175, 1.5175, 1.1]
+            gains = [-0.3, -0.225, 0.175, 0, 0.01, 0, 0.075, -0.35, -0.1]
         elif fs < (48000 + 88200) / 2:
             # hand tuned values for 44.1k and 48k
             cfs = [31.125, 64, 125, 250, 500, 1000, 2000, 4000, 8150, 15000]
@@ -69,8 +83,12 @@ class graphic_eq_10_band(dspg.dsp_block):
         self.biquads = []
 
         for f in range(10):
-            coeffs = bq.make_biquad_bandpass(fs, cfs[f], bw[f])
-            coeffs = bq._apply_biquad_gain(coeffs, gains[f] + shift)
+            if f < len(cfs):
+                coeffs = bq.make_biquad_bandpass(fs, cfs[f], bw[f])
+                coeffs = bq._apply_biquad_gain(coeffs, gains[f] + shift)
+            else:
+                # below 48k we can't use 16 kHz etc
+                coeffs = bq.make_biquad_mute(fs)
             # need extra channels as we use each filter twice
             self.biquads.append(bq.biquad(coeffs, fs, n_chans=2 * self.n_chans))
 
@@ -184,7 +202,7 @@ class graphic_eq_10_band(dspg.dsp_block):
         return y_flt
 
 def _print_coeffs():
-    for fs in [(48000 + 44100) / 2, (96000 + 88200) / 2, 192000]:
+    for fs in [32000, (44100), (96000 + 88200) / 2, 192000]:
         this_geq = graphic_eq_10_band(fs, 1, np.zeros(10))
         print(f"// coeffs for {fs} Hz")
         coeffs_arr = []
@@ -198,7 +216,7 @@ def _print_coeffs():
             lsh_arr.append(this_geq.biquads[n].b_shift)
         print("int32_t coeffs[50] = {" + str_arr + "}\n")
 
-    assert np.all(lsh_arr==0), "Error, not all lsh equal to zero"
+    assert np.all(np.array(lsh_arr)==0), "Error, not all lsh equal to zero"
 
 if __name__ == "__main__":
     _print_coeffs()
