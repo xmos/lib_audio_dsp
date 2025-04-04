@@ -15,9 +15,9 @@ class GraphicEq10b(Stage):
     """
     A 10 band graphic equaliser, with octave spaced center frequencies.
     The center frequencies are:
-    [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]. The gain of 
+    [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]. The gain of
     each band can be adjusted between -12 and + 12 dB.
-    
+
     Note that for a 32 kHz sample rate, the 16 kHz band is not available,
     making a 9 band EQ. For a 16 kHz sample rate the 8k and 16 kHz bands
     are not available, making an 8 band EQ.

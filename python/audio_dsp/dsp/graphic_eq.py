@@ -1,5 +1,6 @@
 # Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
+"""The graphic equaliser DSP block."""
 
 import audio_dsp.dsp.generic as dspg
 import audio_dsp.dsp.biquad as bq
@@ -8,7 +9,7 @@ import audio_dsp.dsp.utils as utils
 from copy import deepcopy
 
 
-Q_GEQ = 29 # allow +12 dB
+Q_GEQ = 29  # allow +12 dB
 
 
 class graphic_eq_10_band(dspg.dsp_block):
@@ -52,7 +53,7 @@ class graphic_eq_10_band(dspg.dsp_block):
             # hand tuned values 16k (8 band)
             cfs = [31.125, 64, 125, 250, 500, 1000, 2000, 4200]
             bw = [1.5175, 1.6175, 1.5175, 1.5175, 1.5175, 1.5175, 1.6175, 1.1]
-            gains = [-0.3, -0.225, 0.175, 0, 0.05,  0.15, -0.4, -0.175]
+            gains = [-0.3, -0.225, 0.175, 0, 0.05, 0.15, -0.4, -0.175]
         elif fs <= 32000:
             # hand tuned values 32k (9 band)
             cfs = [31.125, 64, 125, 250, 500, 1000, 2000, 4000, 8500]
