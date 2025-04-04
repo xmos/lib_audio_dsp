@@ -9,6 +9,7 @@ Audio DSP library change log
   * ADDED: Stereo switch Stage.
   * ADDED: Slewing switch Stage.
   * ADDED: Crossfader and Stereo Crossfader Stage.
+  * ADDED: 16 Band Cascaded Biquad Stage.
   * ADDED: Stateful ConfigSender to only send updated configs.
   * ADDED: Contributing guide.
   * CHANGED: Updated setup instructions.

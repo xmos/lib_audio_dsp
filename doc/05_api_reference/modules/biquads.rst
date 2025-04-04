@@ -138,3 +138,31 @@ implemented as cascaded second order sections.
 
         .. automethod:: reset_state
             :noindex:
+
+.. _CascadedBiquads16:
+
+===================
+Cascaded Biquads 16
+===================
+
+This extends the CascadedBiquads class to have 16 cascaded filters. However,
+The 8 filter C implementation should still be used.
+
+.. tab:: C API
+
+        See :ref:`CascadedBiquads`.
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.cascaded_biquads.cascaded_biquads_16
+        :noindex:
+
+        .. automethod:: process
+            :noindex:
+
+        .. automethod:: reset_state
+            :noindex:

@@ -26,13 +26,16 @@ typedef struct {
 
 /**
  * @brief Biquad filter.
- *  This function implements a biquad filter. The filter is implemented as a direct form 1
+ *  This function implements a biquad filter. The filter is implemented as a direct form 1.
+ *  The ``coeffs`` parameter should contain b0/a0, b1/a0, b2/a0, -a1/a0, and -a2/a0 in that
+ *  order, all represented by fixed-point values shifted left by ``30-lsh`` bits
  * 
  * @param new_sample      New sample to be filtered
  * @param coeffs          Filter coefficients
- * @param state           Filter state
+ * @param state           Filter state. Must be double-word aligned
  * @param lsh             Left shift compensation value, must be positive
  * @return int32_t        Filtered sample
+ * @note No saturation applied. If output exceeds INT32_MAX, it will overflow. 
  */
 int32_t adsp_biquad(
   int32_t new_sample,

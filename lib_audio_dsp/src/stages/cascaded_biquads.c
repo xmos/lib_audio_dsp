@@ -67,6 +67,10 @@ void cascaded_biquads_control(void *module_state, module_control_t *control)
         // Finish the write by updating the working copy with the new config
         memcpy(&state->config, config, sizeof(cascaded_biquads_config_t));
         control->config_rw_state = config_none_pending;
+        for(int i=0; i<state->n_inputs; i++)
+        {
+            memset(state->filter_states[i], 0, CASCADED_BIQUADS_STATE_LEN * sizeof(int32_t));
+        }
     }
     else if(control->config_rw_state == config_read_pending)
     {
