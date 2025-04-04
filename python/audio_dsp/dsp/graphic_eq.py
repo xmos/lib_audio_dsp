@@ -200,23 +200,3 @@ class graphic_eq_10_band(dspg.dsp_block):
         y_flt = utils.fixed_to_float(y, self.Q_sig)
 
         return y_flt
-
-def _print_coeffs():
-    for fs in [32000, (44100), (96000 + 88200) / 2, 192000]:
-        this_geq = graphic_eq_10_band(fs, 1, np.zeros(10))
-        print(f"// coeffs for {fs} Hz")
-        coeffs_arr = []
-        lsh_arr = []
-        str_arr = ""
-        for n in range(10):
-            these_coeffs = this_geq.biquads[n].int_coeffs
-            coeffs_arr.append(these_coeffs)
-            str_arr += ', '.join(str(c) for c in these_coeffs)
-            str_arr += ",\n "
-            lsh_arr.append(this_geq.biquads[n].b_shift)
-        print("int32_t coeffs[50] = {" + str_arr + "}\n")
-
-    assert np.all(np.array(lsh_arr)==0), "Error, not all lsh equal to zero"
-
-if __name__ == "__main__":
-    _print_coeffs()
