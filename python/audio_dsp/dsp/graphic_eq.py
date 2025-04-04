@@ -36,6 +36,8 @@ class graphic_eq_10_band(dspg.dsp_block):
 
     Parameters
     ----------
+    gains_db : list[float]
+            A list of the 10 gains of the graphic eq in dB.
     gain_offset : float
         Shifts the gains_db values by a number of decibels, by default -12dB
         to allow for an expected gains_db range of -12 to +12 dB.
@@ -94,14 +96,15 @@ class graphic_eq_10_band(dspg.dsp_block):
             self.biquads.append(bq.biquad(coeffs, fs, n_chans=2 * self.n_chans))
 
     @property
-    def gains_db(self):
-        """A list of the gains in decibels for each frequency band. This
+    def gains_db(self) -> list[float]:
+        """
+        A list of the gains in decibels for each frequency band. This
         must be a list with 10 values.
         """
         return self._gains_db
 
     @gains_db.setter
-    def gains_db(self, gains_db):
+    def gains_db(self, gains_db: list[float]):
         assert len(gains_db) == 10, "10 gains required for a 10 band EQ"
         self._gains_db = deepcopy(gains_db)
         self.gains = [utils.db2gain(x + self.gain_offset) for x in self.gains_db]

@@ -24,6 +24,7 @@ each other, allowing for Python prototyping of DSP pipelines.
     biquads.rst
     drc.rst
     fir.rst
+    graphic_eq.rst
     reverb.rst
     signal_chain.rst
     more_python.rst

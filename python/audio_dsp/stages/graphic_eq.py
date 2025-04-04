@@ -25,7 +25,7 @@ class GraphicEq10b(Stage):
     Attributes
     ----------
     dsp_block : :class:`audio_dsp.dsp.graphic_eq.graphic_eq_10_band`
-        The DSP block class; see :ref:`Graphic_Eq` for implementation details
+        The DSP block class; see :ref:`GraphicEq10b` for implementation details
     """
 
     def __init__(self, **kwargs):
@@ -43,8 +43,8 @@ class GraphicEq10b(Stage):
 
         Parameters
         ----------
-        gains_db : float
-            The gains of the graphic eq in dB.
+        gains_db : list[float]
+            A list of the 10 gains of the graphic eq in dB.
         """
         self.dsp_block.gains_db = gains_db
         return self

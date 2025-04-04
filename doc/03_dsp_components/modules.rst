@@ -23,6 +23,10 @@ This a list of all the modules that can be used independently without the DSP pi
   * :ref:`NoiseGate`
   * :ref:`NoiseSuppressorExpander`
 
+- :ref:`geq`
+
+  * :ref:`GraphicEq10b`
+
 - :ref:`fir`
 
   * :ref:`FirDirect`
