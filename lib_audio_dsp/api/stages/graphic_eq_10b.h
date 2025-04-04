@@ -22,7 +22,6 @@ typedef struct
 typedef struct
 {
     q2_30 *coeffs;
-    // uint32_t sampling_freq;
 }graphic_eq_10b_constants_t;
 
 #define _GEQ10_FILTER_MEMORY \

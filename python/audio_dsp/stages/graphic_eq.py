@@ -1,6 +1,8 @@
 # Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""Some words about graphic EQ.
+"""
+Graphic EQs allow frequency response adjustments at fixed center
+frequencies.
 """
 
 from ..design.stage import Stage, find_config, StageOutputList, StageOutput
@@ -11,13 +13,19 @@ import numpy as np
 
 class GraphicEq10b(Stage):
     """
-    Mixes the input signals together. The mixer can be used to add signals
-    together, or to attenuate the input signals.
+    A 10 band graphic equaliser, with octave spaced center frequencies.
+    The center frequencies are:
+    [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]. The gain of 
+    each band can be adjusted between -12 and + 12 dB.
+    
+    Note that for a 32 kHz sample rate, the 16 kHz band is not available,
+    making a 9 band EQ. For a 16 kHz sample rate the 8k and 16 kHz bands
+    are not available, making an 8 band EQ.
 
     Attributes
     ----------
-    dsp_block : :class:`audio_dsp.dsp.signal_chain.mixer`
-        The DSP block class; see :ref:`Mixer` for implementation details
+    dsp_block : :class:`audio_dsp.dsp.graphic_eq.graphic_eq_10_band`
+        The DSP block class; see :ref:`Graphic_Eq` for implementation details
     """
 
     def __init__(self, **kwargs):
@@ -25,7 +33,7 @@ class GraphicEq10b(Stage):
         self.create_outputs(self.n_in)
         self.dsp_block = geq.graphic_eq_10_band(self.fs, self.n_in, np.zeros(10))
         self.set_control_field_cb("gains", lambda: self.dsp_block.gains_int)
-        # self.set_constant("sampling_freq", self.fs, "int32_t")
+
         self.set_constant("coeffs", self.dsp_block._get_coeffs(), "int32_t")
         self.stage_memory_parameters = (self.n_in,)
 
