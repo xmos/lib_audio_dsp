@@ -9,29 +9,25 @@
 #include "stages/compressor_sidechain_stereo.h"
 #include "xmath/xmath.h"
 
-static inline void compressor_stereo_copy_config_to_state(compressor_stereo_t *comp_state, int n_inputs, const compressor_sidechain_stereo_config_t *comp_config)
+static inline void compressor_stereo_copy_config_to_state(compressor_stereo_t *comp_state, const compressor_sidechain_stereo_config_t *comp_config)
 {
-    // Same config for all channels
-    for(int i=0; i<n_inputs; i++)
-    {
-        comp_state[i].env_det_l.attack_alpha = comp_config->attack_alpha;
-        comp_state[i].env_det_l.release_alpha = comp_config->release_alpha;
-        comp_state[i].env_det_r.attack_alpha = comp_config->attack_alpha;
-        comp_state[i].env_det_r.release_alpha = comp_config->release_alpha;
-        comp_state[i].threshold = comp_config->threshold;
-	    comp_state[i].slope = comp_config->slope;
-    }
+    comp_state->env_det_l.attack_alpha = comp_config->attack_alpha;
+    comp_state->env_det_l.release_alpha = comp_config->release_alpha;
+    comp_state->env_det_r.attack_alpha = comp_config->attack_alpha;
+    comp_state->env_det_r.release_alpha = comp_config->release_alpha;
+    comp_state->threshold = comp_config->threshold;
+    comp_state->slope = comp_config->slope;
 }
 
 static inline void compressor_stereo_copy_state_to_config(compressor_sidechain_stereo_config_t *comp_config, const compressor_stereo_t *comp_state)
 {
     // Copy from channel 0 state to the config
-    comp_config->attack_alpha = comp_state[0].env_det_l.attack_alpha;
-    comp_config->release_alpha = comp_state[0].env_det_l.release_alpha;
-    comp_config->envelope = MAX(comp_state[0].env_det_l.envelope, comp_state[0].env_det_r.envelope);
-    comp_config->gain = comp_state[0].gain;
-    comp_config->threshold = comp_state[0].threshold;
-    comp_config->slope = comp_state[0].slope;
+    comp_config->attack_alpha = comp_state->env_det_l.attack_alpha;
+    comp_config->release_alpha = comp_state->env_det_l.release_alpha;
+    comp_config->envelope = MAX(comp_state->env_det_l.envelope, comp_state->env_det_r.envelope);
+    comp_config->gain = comp_state->gain;
+    comp_config->threshold = comp_state->threshold;
+    comp_config->slope = comp_state->slope;
 }
 
 void compressor_sidechain_stereo_process(int32_t **input, int32_t **output, void *app_data_state)
@@ -47,12 +43,12 @@ void compressor_sidechain_stereo_process(int32_t **input, int32_t **output, void
     int32_t *detect_l = input[2];
     int32_t *detect_r = input[3];
     int32_t *out_l = output[0];
-    int32_t *out_r = output[0];
+    int32_t *out_r = output[1];
 
     int j = 0;
     do {
         int32_t outs[2];
-        adsp_compressor_rms_sidechain_stereo(&state->comp[0], outs, *in_l++, *in_r++, *detect_l++, *detect_r++);
+        adsp_compressor_rms_sidechain_stereo(&state->comp, outs, *in_l++, *in_r++, *detect_l++, *detect_r++);
         *out_l++ = outs[0];
         *out_r++ = outs[1];
     } while(++j < state->frame_size);
@@ -70,13 +66,12 @@ void compressor_sidechain_stereo_init(module_instance_t* instance, adsp_bump_all
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    state->comp = adsp_bump_allocator_malloc(allocator, COMPRESSOR_SIDECHAIN_STEREO_STAGE_REQUIRED_MEMORY);
-    memset(state->comp, 0, COMPRESSOR_SIDECHAIN_STEREO_STAGE_REQUIRED_MEMORY);
-    state->comp->gain = INT32_MAX;
-    state->comp->env_det_l.envelope = 0;
-    state->comp->env_det_r.envelope = 0;
+    memset(&state->comp, 0, sizeof(compressor_stereo_t));
+    state->comp.gain = INT32_MAX;
+    state->comp.env_det_l.envelope = 0;
+    state->comp.env_det_r.envelope = 0;
 
-    compressor_stereo_copy_config_to_state(state->comp, state->n_inputs, config);
+    compressor_stereo_copy_config_to_state(&state->comp, config);
 }
 
 void compressor_sidechain_stereo_control(void *module_state, module_control_t *control)
@@ -88,14 +83,13 @@ void compressor_sidechain_stereo_control(void *module_state, module_control_t *c
 
     if(control->config_rw_state == config_write_pending)
     {
-        // Finish the write by updating the working copy with the new config
-        // TODO update only the fields written by the host
-        compressor_stereo_copy_config_to_state(state->comp, state->n_inputs, config);
+
+        compressor_stereo_copy_config_to_state(&state->comp, config);
         control->config_rw_state = config_none_pending;
     }
     else if(control->config_rw_state == config_read_pending)
     {
-        compressor_stereo_copy_state_to_config(config, state->comp);
+        compressor_stereo_copy_state_to_config(config, &state->comp);
         control->config_rw_state = config_read_updated;
     }
     else

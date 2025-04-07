@@ -146,7 +146,7 @@ def test_sidechain_stereo_c(in_signal_4ch, comp_name, at, rt, threshold, ratio):
 
   # when ratio is 1, the result should be bit-exact as we don't have to use powf
   if ratio == 1 or threshold == 0:
-    np.testing.assert_allclose(out_c, out_py, rtol=0, atol=0)
+    np.testing.assert_allclose(out_c_deinter, out_py, rtol=0, atol=0)
   else:
     # tolerace is the 24b float32 mantissa
     tol = 2**(np.ceil(np.log2(np.max(out_c))) - 24)

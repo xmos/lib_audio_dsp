@@ -8,13 +8,13 @@
 
 typedef struct
 {
-    compressor_stereo_t *comp;
+    compressor_stereo_t comp;
     int n_inputs;
     int n_outputs;
     int frame_size;
 }compressor_sidechain_stereo_state_t;
 
-#define COMPRESSOR_SIDECHAIN_STEREO_STAGE_REQUIRED_MEMORY (sizeof(compressor_stereo_t))
+#define COMPRESSOR_SIDECHAIN_STEREO_STAGE_REQUIRED_MEMORY (0)
 
 void compressor_sidechain_stereo_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 
