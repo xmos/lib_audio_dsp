@@ -7,7 +7,7 @@ number of inputs and outputs
 import pytest
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 from audio_dsp.stages.signal_chain import Adder, Subtractor, Mixer, Switch, SwitchStereo, SwitchSlew, Crossfader, CrossfaderStereo
-from audio_dsp.stages.compressor_sidechain import CompressorSidechain
+from audio_dsp.stages.compressor_sidechain import CompressorSidechain, CompressorSidechainStereo
 
 import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.signal_chain as sc
@@ -58,7 +58,7 @@ def do_test(p, folder_name, n_outs=1, rtol=None):
     else:
         sig1 = np.linspace(2**23, -2**23, n_samps, dtype=np.int32)  << 4
 
-    if type(p.stages[2]) in [SwitchStereo, CrossfaderStereo]:
+    if type(p.stages[2]) in [SwitchStereo, CrossfaderStereo, CompressorSidechainStereo]:
         sig = np.stack((sig0, sig0, sig1, sig1), axis=1)
     else:
         sig = np.stack((sig0, sig1), axis=1)
@@ -143,6 +143,20 @@ def test_compressor_sidechain():
 
     do_test(p, "comp_side")
 
+@pytest.mark.group0
+def test_compressor_sidechain_stereo():
+    """
+    Test the compressor stage compresses the same in Python and C
+    """
+    channels = 4
+    p = Pipeline(channels)
+    comp = p.stage(CompressorSidechainStereo, p.i, "c")
+    p.set_outputs(comp)
+
+    p["c"].make_compressor_sidechain(2, -6, 0.001, 0.1)
+
+    do_test(p, "comp_side_stereo")
+
 @pytest.mark.parametrize("position", ([0, 1]))
 def test_switch(position):
     """
@@ -219,4 +233,4 @@ def test_crossfader_stereo(mix, tol):
     do_test(p, f"crossfaderstereo_{mix}", n_outs=2, rtol=tol)
 
 if __name__ == "__main__":
-    test_crossfader_stereo(0.5)
+    test_compressor_sidechain_stereo()

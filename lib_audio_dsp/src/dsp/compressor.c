@@ -77,7 +77,7 @@ int32_t adsp_compressor_rms_sidechain(
 
 
 void adsp_compressor_rms_sidechain_stereo(
-  stereo_compressor_t * comp,
+  compressor_stereo_t * comp,
   int32_t outputs_lr[2],
   int32_t input_samp_l,
   int32_t input_samp_r,

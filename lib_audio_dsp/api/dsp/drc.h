@@ -67,7 +67,7 @@ typedef struct{
   int32_t gain;
   /** Slope of the compression curve */
   float slope;
-}stereo_compressor_t;
+}compressor_stereo_t;
 
 typedef struct{
   /** Envelope detector */
@@ -203,7 +203,7 @@ int32_t adsp_compressor_rms_sidechain(
  * @param detect_samp_r       Right sidechain sample
  */
 void adsp_compressor_rms_sidechain_stereo(
-  stereo_compressor_t * comp,
+  compressor_stereo_t * comp,
   int32_t outputs_lr[2],
   int32_t input_samp_l,
   int32_t input_samp_r,

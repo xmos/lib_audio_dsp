@@ -37,7 +37,7 @@ int main()
   fread(&sl, sizeof(float), 1, comp_info);
   fclose(comp_info);
 
-  stereo_compressor_t comp = (stereo_compressor_t){
+  compressor_stereo_t comp = (compressor_stereo_t){
               (env_detector_t){at_al, re_al, 0},
               (env_detector_t){at_al, re_al, 0}, th, INT32_MAX, sl};
 
