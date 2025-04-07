@@ -59,8 +59,8 @@ void compressor_sidechain_init(module_instance_t* instance, adsp_bump_allocator_
 
     memset(&state->comp, 0, sizeof(compressor_t));
 
-        state->comp.gain = INT32_MAX;
-        state->comp.env_det.envelope = 0;
+    state->comp.gain = INT32_MAX;
+    state->comp.env_det.envelope = 0;
 
     compressor_copy_config_to_state(&state->comp, config);
 }

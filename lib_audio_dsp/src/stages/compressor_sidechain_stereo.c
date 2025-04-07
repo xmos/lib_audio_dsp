@@ -66,7 +66,6 @@ void compressor_sidechain_stereo_init(module_instance_t* instance, adsp_bump_all
     state->n_outputs = n_outputs;
     state->frame_size = frame_size;
 
-    memset(&state->comp, 0, sizeof(compressor_stereo_t));
     state->comp.gain = INT32_MAX;
     state->comp.env_det_l.envelope = 0;
     state->comp.env_det_r.envelope = 0;
