@@ -24,7 +24,7 @@ Software Requirements
 
 - `Graphviz <https://graphviz.org/download/#windows>`_: this software must
   installed and the ``dot`` executable must be on the system path.
-- `XTC 15.3.0 <https://www.xmos.com/software-tools/>`_
+- `XTC 15.3.1 <https://www.xmos.com/software-tools/>`_
 - `Python 3.10 <https://www.python.org/downloads/>`_
 - `CMake 3.21 <https://cmake.org/download/>`_
 
@@ -53,7 +53,7 @@ Setup Steps
 
       .. code-block:: console
 
-         call "C:\Program Files\XMOS\XTC\15.3.0\SetEnv.bat"
+         call "C:\Program Files\XMOS\XTC\15.3.1\SetEnv.bat"
 
    .. tab:: Linux and macOS
 
