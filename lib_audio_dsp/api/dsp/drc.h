@@ -54,6 +54,21 @@ typedef struct{
   float slope;
 }compressor_t;
 
+/**
+ * @brief Compressor state structure
+ */
+typedef struct{
+  /** Envelope detector */
+  env_detector_t env_det_l;
+  env_detector_t env_det_r;
+  /** Linear threshold */
+  int32_t threshold;
+  /** Linear gain */
+  int32_t gain;
+  /** Slope of the compression curve */
+  float slope;
+}stereo_compressor_t;
+
 typedef struct{
   /** Envelope detector */
   env_detector_t env_det;
@@ -176,3 +191,21 @@ int32_t adsp_compressor_rms_sidechain(
   compressor_t * comp,
   int32_t input_samp,
   int32_t detect_samp);
+
+/**
+ * @brief Process a pair of new samples with a stereo sidechain RMS compressor
+ *
+ * @param comp                Compressor object
+ * @param outputs_lr          Pointer to the outputs 0:left, 1:right
+ * @param input_samp_l        Left input sample
+ * @param input_samp_r        Right input sample
+ * @param detect_samp_l       Left sidechain sample
+ * @param detect_samp_r       Right sidechain sample
+ */
+void adsp_compressor_rms_sidechain_stereo(
+  stereo_compressor_t * comp,
+  int32_t outputs_lr[2],
+  int32_t input_samp_l,
+  int32_t input_samp_r,
+  int32_t detect_samp_l,
+  int32_t detect_samp_r);
