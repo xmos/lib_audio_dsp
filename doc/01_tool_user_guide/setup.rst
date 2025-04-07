@@ -1,3 +1,11 @@
+.. |xtc_tools_version| replace:: 15.3.1
+.. |python_version|    replace:: 3.12
+.. |cmake_version|     replace:: 3.21
+
+.. _CMAKE:              https://cmake.org/cmake/help/latest/
+.. _Python:             https://www.python.org/downloads/
+.. _Graphviz:           https://graphviz.org/download/
+
 Setup
 #####
 
@@ -18,15 +26,15 @@ Hardware Requirements
 - xTag debugger and cable
 - 2x Micro USB cable (one for power supply and one for the xTag)
 
+.. _sw_reqs:
 
 Software Requirements
 =====================
 
-- `Graphviz <https://graphviz.org/download/#windows>`_: this software must
-  installed and the ``dot`` executable must be on the system path.
-- `XTC 15.3.1 <https://www.xmos.com/software-tools/>`_
-- `Python 3.10 <https://www.python.org/downloads/>`_
-- `CMake 3.21 <https://cmake.org/download/>`_
+- `XTC tools`_: |xtc_tools_version|.
+- Graphviz_: this software must be installed and the ``dot`` executable must be on the system path.
+- Python_: |python_version| or later.
+- CMAKE_: |cmake_version| or later.
 
 Additionally, on Windows the following is required: 
 
@@ -88,8 +96,8 @@ Setup Steps
    For troubleshooting SSH issues, please see this
    `Github guide <https://docs.github.com/en/authentication/troubleshooting-ssh>`_.
 
-#. Get the sandbox inside *lib_audio_dsp_sandbox*. This step can take several
-   minutes.
+#. Get the lib_audio_dsp library dependencies inside *lib_audio_dsp_sandbox*. 
+   This step can take several minutes.
 
    .. tab:: Windows
 
@@ -112,7 +120,11 @@ Setup Steps
          cd ../../..
 
 #. Create a Python virtualenv inside *lib_audio_dsp_sandbox*, and install
-   lib_audio_dsp and it's requirements.
+   lib_audio_dsp and it's requirements. 
+
+   .. note::
+         
+      Make sure to use the same Python version as the the recommended in the :ref:`Software Requirements <sw_reqs>` section. 
 
    .. tab:: Windows
 
@@ -120,7 +132,7 @@ Setup Steps
 
       .. code-block:: console
 
-         py -3.10 -m venv .venv 
+         python -m venv .venv 
          call .venv/Scripts/activate.bat 
          pip install -e ./lib_audio_dsp/python
 
@@ -130,7 +142,7 @@ Setup Steps
 
       .. code-block:: console
 
-         python3.10 -m venv .venv 
+         python3 -m venv .venv 
          source .venv/bin/activate 
          pip install -e ./lib_audio_dsp/python
 
@@ -169,34 +181,33 @@ Setup Steps
    .. _run_all_cells:
 
    .. figure:: ../images/jupyter_notebook_run_tests.png
-      :width: 100%
+      :width: 80%
 
       Run menu of the Jupyter Notebook
 
-   Any configuration or compilation errors will be displayed in the notebook in
+   Once finished, the setup phase is complete. 
+   The notebook should look like as in the example on :numref:`run_ok`.
+
+   .. _run_ok:
+
+   .. figure:: ../images/config_ok.png
+      :width: 100%
+
+      Run Success of the Jupyter Notebook
+
+   If there are any configuration or compilation errors, they will be displayed in the notebook in
    the *Build and run* cell, as in the example on :numref:`run_error`.
 
    .. _run_error:
 
    .. figure:: ../images/config_error.png
-      :width: 100%
+      :width: 80%
 
       Run error of the Jupyter Notebook
 
-#. Update and run *Pipeline design stage* to add the desired audio processing
-   blocks. A diagram will be generated showing the pipeline IO mapping.
-   A simple pipeline example is shown in :numref:`pipeline_diagram`.
-   See the top of the notebook for more information about this stage.
-
-   .. _pipeline_diagram:
-
-   .. figure:: ../images/pipeline_diagram.png
-      :width: 25%
-
-      Diagram of a simple audio pipeline
-
-#. Update and run the *Tuning Stage* cell to change the parameters before
-   building. See the top of the notebook for more information about this stage.
+Once the setup phase is complete, the user can proceed to either creating a custom pipeline, 
+mapping the pipeline to audio input or output sources, or deploying the pipeline to the xcore.
+The :ref:`Using the Tool <using_the_tool>` section describes how to achieve this.
 
 Running a notebook after the first installation
 ===================================================
@@ -230,11 +241,8 @@ required:
          source .venv/bin/activate
          echo $VIRTUAL_ENV
 
-#. Open the notebook by running
+#. From the ``lib_audio_dsp_sandbox`` folder, open the notebook by running:
 
    .. code-block:: console
 
       jupyter notebook lib_audio_dsp/examples/app_simple_audio_dsp_integration/dsp_design.ipynb
-
-   from ``lib_audio_dsp_sandbox``, as described in the 
-   :ref:`Setup Steps<all_steps>` section.
