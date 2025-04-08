@@ -24,11 +24,13 @@ PKG_DIR = Path(__file__).parent
 APP_DIR = PKG_DIR
 BUILD_DIR = APP_DIR / "build"
 
-def do_test(p, folder_name, n_outs=1, rtol=None):
+def do_test(p, folder_name, rtol=None):
     """
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
     """
+
+    n_outs = p._n_out
 
     app_dir = PKG_DIR / folder_name
     os.makedirs(app_dir, exist_ok=True)
@@ -155,7 +157,7 @@ def test_compressor_sidechain_stereo():
 
     p["c"].make_compressor_sidechain(2, -6, 0.001, 0.1)
 
-    do_test(p, "comp_side_stereo", n_outs=2)
+    do_test(p, "comp_side_stereo")
 
 @pytest.mark.parametrize("position", ([0, 1]))
 def test_switch(position):
@@ -198,7 +200,7 @@ def test_switch_stereo(position):
     p["s"].move_switch(position)
     p.set_outputs(switch_dsp)
 
-    do_test(p, f"switchstereo_{position}", n_outs=2)
+    do_test(p, f"switchstereo_{position}")
 
 
 @pytest.mark.parametrize("mix, tol", [[0, 0],
@@ -230,7 +232,7 @@ def test_crossfader_stereo(mix, tol):
     p["s"].set_mix(mix)
     p.set_outputs(switch_dsp)
 
-    do_test(p, f"crossfaderstereo_{mix}", n_outs=2, rtol=tol)
+    do_test(p, f"crossfaderstereo_{mix}", rtol=tol)
 
 if __name__ == "__main__":
     test_compressor_sidechain_stereo()
