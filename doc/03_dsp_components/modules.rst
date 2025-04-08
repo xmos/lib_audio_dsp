@@ -9,6 +9,7 @@ This a list of all the modules that can be used independently without the DSP pi
   * :ref:`Biquad`
   * :ref:`BiquadSlew`
   * :ref:`CascadedBiquads`
+  * :ref:`CascadedBiquads16`
 
 - :ref:`drc`
 
@@ -20,6 +21,7 @@ This a list of all the modules that can be used independently without the DSP pi
   * :ref:`LimiterRMS`
   * :ref:`CompressorRMS`
   * :ref:`CompressorSidechain`
+  * :ref:`CompressorSidechainStereo`
   * :ref:`NoiseGate`
   * :ref:`NoiseSuppressorExpander`
 

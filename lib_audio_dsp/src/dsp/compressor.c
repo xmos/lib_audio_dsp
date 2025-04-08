@@ -74,3 +74,40 @@ int32_t adsp_compressor_rms_sidechain(
   comp->gain = q31_ema(comp->gain, new_gain, alpha);
   return apply_gain_q31(input_samp, comp->gain);
 }
+
+
+void adsp_compressor_rms_sidechain_stereo(
+  compressor_stereo_t * comp,
+  int32_t outputs_lr[2],
+  int32_t input_samp_l,
+  int32_t input_samp_r,
+  int32_t detect_samp_l,
+  int32_t detect_samp_r
+) {
+  adsp_env_detector_rms(&comp->env_det_l, detect_samp_l);
+  adsp_env_detector_rms(&comp->env_det_r, detect_samp_r);
+
+  int32_t env = MAX(comp->env_det_l.envelope, comp->env_det_r.envelope);
+  env = MAX(env, 1);
+
+  // this assumes that both th and env > 0 and that the slope is [0, 1/2]
+  // basically (th/env)^slope > 1 is th^slope > env^slope
+  // so if th and env both positive we can try to drop the slope
+  // if slope == 0 expression fails, if slope is positive and th > env - passes
+  int32_t new_gain = INT32_MAX;
+  if ((comp->slope > 0) && (comp->threshold < env)) {
+    new_gain = calc_rms_comp_gain(comp->threshold, env, comp->slope);
+  }
+
+  int32_t alpha = comp->env_det_l.release_alpha;
+  if( comp->gain > new_gain ) {
+    alpha = comp->env_det_l.attack_alpha;
+  }
+
+  comp->gain = q31_ema(comp->gain, new_gain, alpha);
+
+  outputs_lr[0] = apply_gain_q31(input_samp_l, comp->gain);
+  outputs_lr[1] = apply_gain_q31(input_samp_r, comp->gain);
+
+  return;
+}
