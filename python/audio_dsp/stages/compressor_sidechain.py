@@ -85,18 +85,18 @@ class CompressorSidechain(Stage):
 
 class CompressorSidechainStereo(Stage):
     """
-    An sidechain compressor based on the RMS envelope of the detect
+    An stereo sidechain compressor based on the RMS envelope of the detect
     signal.
 
-    This stage is limited to accepting 2 channels. The first is the channel that
-    will be compressed. The second is the detect channel. The level of compression
-    depends on the envelope of the second channel.
+    This stage is limited to accepting 4 channels. The first pair are the channels that
+    will be compressed. The second pair are the detect channels. The level of compression
+    depends on the maximum envelope of the detect channels.
 
-    When the RMS envelope of the detect signal exceeds the threshold, the
-    processed signal amplitude is reduced by the compression ratio.
+    When the maximum RMS envelope of the detect signal exceeds the threshold, the
+    processed signal amplitudes are reduced by the compression ratio.
 
     The threshold sets the value above which compression occurs. The
-    ratio sets how much the signal is compressed. A ratio of 1 results
+    ratio sets how much the signals are compressed. A ratio of 1 results
     in no compression, while a ratio of infinity results in the same
     behaviour as a limiter. The attack time sets how fast the compressor
     starts compressing. The release time sets how long the signal takes
@@ -114,7 +114,7 @@ class CompressorSidechainStereo(Stage):
         super().__init__(config=find_config("compressor_sidechain_stereo"), **kwargs)
         self.create_outputs(2)
         if self.n_in != 4:
-            raise ValueError(f"Sidechain compressor requires 4 inputs, got {self.n_in}")
+            raise ValueError(f"Stereo sidechain compressor requires 4 inputs, got {self.n_in}")
 
         threshold = 0
         ratio = 4

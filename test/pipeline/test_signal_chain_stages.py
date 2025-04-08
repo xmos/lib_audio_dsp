@@ -148,7 +148,7 @@ def test_compressor_sidechain():
 @pytest.mark.group0
 def test_compressor_sidechain_stereo():
     """
-    Test the compressor stage compresses the same in Python and C
+    Test the stereo compressor stage compresses the same in Python and C
     """
     channels = 4
     p = Pipeline(channels)

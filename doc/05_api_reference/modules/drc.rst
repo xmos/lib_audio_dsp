@@ -353,6 +353,41 @@ This can be used to reduce the level of the *input* signal when the
         .. automethod:: reset_state
             :noindex:
 
+
+.. _CompressorSidechainStereo:
+
+-------------------------------
+Stereo Sidechain RMS Compressor
+-------------------------------
+
+The stereo sidechain RMS compressor expands the :ref:`CompressorSidechain` to take 2
+input and 2 detection channels. The envelope of each detection channel is taken, and
+the maximum of the envelopes is used to calculate the compression to apply to the
+input channels.
+
+.. tab:: C API
+
+    .. only:: latex
+
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_compressor_rms_sidechain_stereo
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.drc.compressor_rms_sidechain_stereo
+        :noindex:
+
+        .. automethod:: process
+            :noindex:
+
+        .. automethod:: reset_state
+            :noindex:
+
 =========
 Expanders
 =========
