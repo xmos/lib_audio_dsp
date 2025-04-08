@@ -155,7 +155,7 @@ def test_compressor_sidechain_stereo():
 
     p["c"].make_compressor_sidechain(2, -6, 0.001, 0.1)
 
-    do_test(p, "comp_side_stereo")
+    do_test(p, "comp_side_stereo", n_outs=2)
 
 @pytest.mark.parametrize("position", ([0, 1]))
 def test_switch(position):
