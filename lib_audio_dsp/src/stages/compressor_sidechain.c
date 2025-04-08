@@ -13,7 +13,7 @@ static inline void compressor_copy_config_to_state(compressor_t *comp_state, con
         comp_state->env_det.attack_alpha = comp_config->attack_alpha;
         comp_state->env_det.release_alpha = comp_config->release_alpha;
         comp_state->threshold = comp_config->threshold;
-	    comp_state->slope = comp_config->slope;
+        comp_state->slope = comp_config->slope;
 }
 
 static inline void compressor_copy_state_to_config(compressor_sidechain_config_t *comp_config, const compressor_t *comp_state)

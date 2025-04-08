@@ -58,8 +58,9 @@ typedef struct{
  * @brief Stereo compressor state structure
  */
 typedef struct{
-  /** Envelope detectors for each channel */
+  /** Envelope detector for left channel */
   env_detector_t env_det_l;
+  /** Envelope detector for right channel */
   env_detector_t env_det_r;
   /** Linear threshold */
   int32_t threshold;

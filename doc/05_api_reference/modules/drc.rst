@@ -276,9 +276,12 @@ calculation, the ratio is converted to the ``slope`` as
 ``(1 - 1 / ratio) / 2`` . The gain can then be calculated as an
 exponential in the linear domain.
 
-The C struct below is used for all the compressors implementations.
+The C structs below are used for all the compressors implementations.
 
 .. doxygenstruct:: compressor_t
+    :members:
+
+.. doxygenstruct:: compressor_stereo_t
     :members:
 
 .. _CompressorRMS:
