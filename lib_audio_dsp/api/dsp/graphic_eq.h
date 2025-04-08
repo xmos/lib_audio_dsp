@@ -6,7 +6,7 @@
 #include "xmath/types.h"
 
 
-#define Q_GEQ 29
+#define Q_GEQ 31
 
 q2_30* adsp_graphic_eq_10b_init(float fs);
 

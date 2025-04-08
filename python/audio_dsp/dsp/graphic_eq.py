@@ -9,7 +9,7 @@ import audio_dsp.dsp.utils as utils
 from copy import deepcopy
 
 
-Q_GEQ = 29  # allow +12 dB
+Q_GEQ = 31  # allow +12 dB
 
 
 class graphic_eq_10_band(dspg.dsp_block):
@@ -108,7 +108,7 @@ class graphic_eq_10_band(dspg.dsp_block):
         assert len(gains_db) == 10, "10 gains required for a 10 band EQ"
         self._gains_db = deepcopy(gains_db)
         self.gains = [utils.db2gain(x + self.gain_offset) for x in self.gains_db]
-        self.gains_int = [utils.float_to_int32(x, Q_GEQ) for x in self.gains]
+        self.gains_int = [utils.float_to_q31(x) for x in self.gains]
 
     def _get_coeffs(self):
         all_coeffs = []

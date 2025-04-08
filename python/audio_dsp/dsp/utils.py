@@ -293,6 +293,23 @@ def int32_to_float(x: int, Q_sig: int = 31) -> float:
     return float(x) / float(1 << Q_sig)
 
 
+def float_to_q31(x):
+    """Convert a floating point number to Q_31 format. The input must
+    be between 0 and 1. Care must be taken
+    to not overflow by scaling 1.0f*(2**31).
+    """
+    if x > 1 or x < 0:
+        raise ValueError("input must be between 0 and 1")
+
+    if x == 1:
+        x_int = int32(2**31 - 1)
+    elif x == 0:
+        x_int = 0
+    else:
+        x_int = int32(x * (2**31))
+
+    return x_int
+
 def hr_s32(x: float_s32):
     """Calculate number of leading zeros on the mantissa of a float_s32."""
     assert isinstance(x.mant, int)
