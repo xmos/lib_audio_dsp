@@ -55,7 +55,7 @@ Host System Requirements
 Required Tools
 **************
 
-  * XMOS XTC Tools: 15.3.0
+  * XMOS XTC Tools: 15.3.1
 
 Required Libraries (dependencies)
 *********************************

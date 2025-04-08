@@ -1,3 +1,5 @@
+.. _using_the_tool:
+
 Using the Tool
 ##############
 
