@@ -411,6 +411,7 @@ pipeline {
             label 'documentation&&linux&&x86_64'
           }
           steps {
+            runningOn(env.NODE_NAME)
             checkout scm
             createVenv("requirements-format.txt")
             withVenv {
