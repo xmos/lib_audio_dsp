@@ -4,7 +4,7 @@ module:
       type: int32_t
       size: 10
       help: >
-        The graphic EQ gains in Q29 format. To convert a value in decibels to
-        this format, the function ``db_to_qxx`` in ``control/helpers.h``.
+        The graphic EQ gains in Q31 format. To convert a value in decibels to
+        this format, the function ``geq_db_to_gain`` in ``control/helpers.h``.
 includes:
   - "stdint.h"
