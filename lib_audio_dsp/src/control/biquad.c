@@ -586,7 +586,7 @@ left_shift_t adsp_design_biquad_linkwitz(
   return b_sh;
 }
 
-left_shift_t adsp_apply_biquad_gain(q2_30 coeffs[5], left_shift_t b_sh, const float gain_db)
+left_shift_t adsp_apply_biquad_gain(q2_30 coeffs[5], left_shift_t b_sh, float gain_db)
 {
   if (gain_db == 0){
     return b_sh;
@@ -594,8 +594,6 @@ left_shift_t adsp_apply_biquad_gain(q2_30 coeffs[5], left_shift_t b_sh, const fl
 
   float A  = powf(10.0f, (gain_db * (1.0f / 20.0f)));
   int Q = 31 - MAX(0, (int)ceilf(log2f(A)));
-
-  printf("Q: %d\n", Q);
 
   int32_t A_int = _float2fixed(A, Q);
 

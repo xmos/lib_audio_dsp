@@ -98,6 +98,30 @@ def test_geq_c(in_signal, gains):
   single_test(peq, filter_name, in_signal)
 
 
+@pytest.mark.parametrize("fs", [16000, 32000, 44100, 48000, 88200, 96000, 192000])
+def test_geq_coeffs_c(fs):
+  gains = np.zeros(10)
+  peq = geq.graphic_eq_10_band(fs, 1, gains)
+
+  verbose = True
+  tname = f"geq_coeffs_{fs}"
+  test_dir = bin_dir / tname
+  test_dir.mkdir(exist_ok = True, parents = True)
+
+  run_cmd = "xsim --args " + str(bin_dir / "graphic_eq_coeff_test.xe") + f" {fs}"
+  stdout = subprocess.check_output(run_cmd, cwd = test_dir, shell = True)
+  if verbose: print("run msg:\n", stdout.decode())
+
+  sig_bin = test_dir / "coeffs_out.bin"
+  assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
+
+  c_coeffs = np.fromfile(sig_bin, dtype=np.int32)
+  py_coeffs = np.array(peq._get_coeffs())
+
+  if fs == 16000:
+    np.testing.assert_allclose(py_coeffs, c_coeffs, rtol=2**-19.9, atol=1)
+  else:
+    np.testing.assert_allclose(py_coeffs, c_coeffs, rtol=2**-21, atol=1)
 
 if __name__ =="__main__":
   bin_dir.mkdir(exist_ok=True, parents=True)

@@ -318,4 +318,4 @@ left_shift_t adsp_design_biquad_linkwitz(
  * @param gain_db         Gain in dB
  * @return left_shift_t   Left shift compensation value
  */
-left_shift_t adsp_apply_biquad_gain(q2_30 coeffs[5], left_shift_t b_sh, const float gain_db);
+left_shift_t adsp_apply_biquad_gain(q2_30 coeffs[5], left_shift_t b_sh, float gain_db);
