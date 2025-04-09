@@ -25,7 +25,7 @@ Software Requirements
 - `Graphviz <https://graphviz.org/download/#windows>`_: this software must
   installed and the ``dot`` executable must be on the system path.
 - `XTC 15.3.0 <https://www.xmos.com/software-tools/>`_
-- `Python 3.10 <https://www.python.org/downloads/>`_
+- `Python 3.12 <https://www.python.org/downloads/>`_
 - `CMake 3.21 <https://cmake.org/download/>`_
 
 Additionally, on Windows the following is required: 
@@ -120,7 +120,7 @@ Setup Steps
 
       .. code-block:: console
 
-         py -3.10 -m venv .venv 
+         py -3.12 -m venv .venv 
          call .venv/Scripts/activate.bat 
          pip install -e ./lib_audio_dsp/python
 
@@ -130,7 +130,7 @@ Setup Steps
 
       .. code-block:: console
 
-         python3.10 -m venv .venv 
+         python3.12 -m venv .venv 
          source .venv/bin/activate 
          pip install -e ./lib_audio_dsp/python
 
