@@ -8,18 +8,6 @@
 
 #define Q_GEQ 31
 
-/**
- * @brief Generate the filter coefficients for a 10-band graphic equaliser
- * 
- * Returns a pointer to a set of bandpass filters that can use used
- * by ``adsp_graphic_eq_10b``. Sample rates between 16kHz and 192 kHz
- * are supported.
- * 
- * @param fs            Sample rate of the graphic eq
- * @return int32_t*     Pointer to the filter coefficients
- */
-q2_30* adsp_graphic_eq_10b_init(float fs);
-
 
 /**
  * @brief 10-band graphic equaliser

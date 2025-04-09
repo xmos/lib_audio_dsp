@@ -318,3 +318,15 @@ static inline float peak_expander_slope_from_ratio(float ratio){
 static inline int32_t geq_db_to_gain(float level_db) {
   return db_to_qxx(level_db - 12, 31);
 }
+
+/**
+ * @brief Generate the filter coefficients for a 10-band graphic equaliser
+ * 
+ * Returns a pointer to a set of bandpass filters that can use used
+ * by ``adsp_graphic_eq_10b``. Sample rates between 16kHz and 192 kHz
+ * are supported.
+ * 
+ * @param fs            Sample rate of the graphic eq
+ * @return int32_t*     Pointer to the filter coefficients
+ */
+q2_30* adsp_graphic_eq_10b_init(float fs);
