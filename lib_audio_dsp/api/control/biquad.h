@@ -314,6 +314,7 @@ left_shift_t adsp_design_biquad_linkwitz(
  * @brief Modify the gain of a set of biquad filter coefficients
  * 
  * @param coeffs          Existing filter coefficients
+ * @param b_sh            Existing left shift compensation value
  * @param gain_db         Gain in dB
  * @return left_shift_t   Left shift compensation value
  */
