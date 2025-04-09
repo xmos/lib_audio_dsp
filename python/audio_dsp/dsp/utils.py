@@ -310,6 +310,7 @@ def float_to_q31(x):
 
     return x_int
 
+
 def hr_s32(x: float_s32):
     """Calculate number of leading zeros on the mantissa of a float_s32."""
     assert isinstance(x.mant, int)
