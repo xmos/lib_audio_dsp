@@ -203,7 +203,7 @@ Setup Steps
    .. figure:: ../images/config_error.png
       :width: 80%
 
-      Run error of the Jupyter Notebook
+      Run Error of the Jupyter Notebook
 
 Once the setup phase is complete, the user can proceed to either creating a custom pipeline, 
 mapping the pipeline to audio input or output sources, or deploying the pipeline to the xcore.

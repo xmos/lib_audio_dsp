@@ -167,7 +167,7 @@ stage can be split and joined arbitrarily.
 
 
 
-When creating a new DSP pipeline, the initialiser returns the pipeline input channels as an
+When creating a new DSP pipeline, the initialiser returns the pipeline input channels as
 an instance of
 :py:class:`StageOutputList<audio_dsp.design.stage.StageOutputList>`, a list-like container of 
 :py:class:`StageOutput<audio_dsp.design.stage.StageOutput>`.
