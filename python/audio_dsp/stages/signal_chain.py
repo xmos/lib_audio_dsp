@@ -73,7 +73,7 @@ class Fork(Stage):
         self._o = self.ForkOutputList(self.o.edges)
         self._o.forks = forks
 
-    def get_frequency_response(self, nfft=512):
+    def get_frequency_response(self, nfft=32768):
         """Fork has no sensible frequency response, not implemented."""
         # not sure what this looks like!
         raise NotImplementedError

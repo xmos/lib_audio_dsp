@@ -199,7 +199,7 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
 
         return list(output)
 
-    def freq_response(self, nfft=512):
+    def freq_response(self, nfft=32768):
         """
         Calculate the frequency response of the module for a nominal
         input.

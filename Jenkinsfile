@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.35.0')
+@Library('xmos_jenkins_shared_library@v0.38.0')
 
 def boolean hasChangesIn(String module) {
   dir("lib_audio_dsp"){
@@ -69,7 +69,7 @@ pipeline {
   parameters {
     string(
       name: 'TOOLS_VERSION',
-      defaultValue: '15.3.0',
+      defaultValue: '15.3.1',
       description: 'The XTC tools version'
     )
   } // parameters
@@ -411,6 +411,7 @@ pipeline {
             label 'documentation&&linux&&x86_64'
           }
           steps {
+            runningOn(env.NODE_NAME)
             checkout scm
             createVenv("requirements-format.txt")
             withVenv {
