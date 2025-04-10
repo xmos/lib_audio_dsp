@@ -27,7 +27,7 @@ from .compressor import CompressorRMS
 from .reverb import ReverbRoom, ReverbRoomStereo, ReverbPlateStereo
 from .fir import FirDirect
 from .compressor import CompressorRMS
-from .compressor_sidechain import CompressorSidechain
+from .compressor_sidechain import CompressorSidechain, CompressorSidechainStereo
 from .envelope_detector import EnvelopeDetectorPeak, EnvelopeDetectorRMS
 from .graphic_eq import GraphicEq10b
 
