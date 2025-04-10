@@ -12,6 +12,7 @@ Audio DSP library change log
   * ADDED: 16 Band Cascaded Biquad Stage.
   * ADDED: Stateful ConfigSender to only send updated configs.
   * ADDED: Contributing guide.
+  * CHANGED: Use Python v3.12.
   * CHANGED: Updated setup instructions.
   * CHANGED: Improved documentation.
   * CHANGED: Biquad Stage resets state when coefficients change.
