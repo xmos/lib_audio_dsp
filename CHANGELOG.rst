@@ -1,15 +1,17 @@
 Audio DSP library change log
 ============================
 
-1.3.0-alpha.1
------------
+1.3.0
+-----
 
   * ADDED: Block frequency and time domain FIR filters DSP code and examples.
   * ADDED: Slewing biquad Stage.
   * ADDED: Stereo switch Stage.
   * ADDED: Slewing switch Stage.
-  * ADDED: Crossfader and Stereo Crossfader Stage.
-  * ADDED: 16 Band Cascaded Biquad Stage.
+  * ADDED: Crossfader and stereo crossfader Stage.
+  * ADDED: 16 band cascaded biquad Stage.
+  * ADDED: Stereo sidechain compressor Stage.
+  * ADDED: Graphic EQ Stage.
   * ADDED: Stateful ConfigSender to only send updated configs.
   * ADDED: Contributing guide.
   * CHANGED: Use Python v3.12.
