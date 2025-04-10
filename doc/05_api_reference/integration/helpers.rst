@@ -35,6 +35,12 @@ DRC helpers
 .. doxygenfile:: control/drc.h
 
 
+Graphic EQ helpers
+==================
+
+.. doxygenfunction:: geq_db_to_gain
+
+
 Reverb helpers
 ==============
 
