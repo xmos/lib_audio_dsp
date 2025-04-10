@@ -276,9 +276,12 @@ calculation, the ratio is converted to the ``slope`` as
 ``(1 - 1 / ratio) / 2`` . The gain can then be calculated as an
 exponential in the linear domain.
 
-The C struct below is used for all the compressors implementations.
+The C structs below are used for all the compressors implementations.
 
 .. doxygenstruct:: compressor_t
+    :members:
+
+.. doxygenstruct:: compressor_stereo_t
     :members:
 
 .. _CompressorRMS:
@@ -345,6 +348,41 @@ This can be used to reduce the level of the *input* signal when the
         .. rubric:: Python API
 
     .. autoclass:: audio_dsp.dsp.drc.compressor_rms_sidechain_mono
+        :noindex:
+
+        .. automethod:: process
+            :noindex:
+
+        .. automethod:: reset_state
+            :noindex:
+
+
+.. _CompressorSidechainStereo:
+
+-------------------------------
+Stereo Sidechain RMS Compressor
+-------------------------------
+
+The stereo sidechain RMS compressor expands the :ref:`CompressorSidechain` to take 2
+input and 2 detection channels. The envelope of each detection channel is taken, and
+the maximum of the envelopes is used to calculate the compression to apply to the
+input channels.
+
+.. tab:: C API
+
+    .. only:: latex
+
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_compressor_rms_sidechain_stereo
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.drc.compressor_rms_sidechain_stereo
         :noindex:
 
         .. automethod:: process
