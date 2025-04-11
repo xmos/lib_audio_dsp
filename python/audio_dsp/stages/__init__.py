@@ -29,6 +29,7 @@ from .fir import FirDirect
 from .compressor import CompressorRMS
 from .compressor_sidechain import CompressorSidechain, CompressorSidechainStereo
 from .envelope_detector import EnvelopeDetectorPeak, EnvelopeDetectorRMS
+from .graphic_eq import GraphicEq10b
 
 # helper from design which allows listing all the available stages.
 from ..design.stage import all_stages

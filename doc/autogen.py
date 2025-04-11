@@ -82,7 +82,7 @@ def python_doc_stages(src_dir, dst_dir, list_file):
         module_name = (file.parts[-1])[:-3]
         title = module_name.replace("_", " ")
         # Sorry
-        title = title.title().replace("Rms", "RMS").replace("Fir", "FIR")
+        title = title.title().replace("Rms", "RMS").replace("Fir", "FIR").replace("Eq", "EQ")
         docstring, classes = get_file_info(file)
         all_docstrings.append(docstring)
         all_classes.append(classes)

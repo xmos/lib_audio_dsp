@@ -303,3 +303,30 @@ static inline float peak_expander_slope_from_ratio(float ratio){
   float slope = 1.0f - ratio;
   return slope;
 }
+
+
+/**
+ * @brief Convert a graphic equaliser gain in decibels to a fixed point
+ *        int32 number in Q31 format. The input level is shifted by -12 dB.
+ *        This means that all the graphic EQ sliders can be set to +12
+ *        without clipping, at the cost of -12dB level when the slider
+ *        gains are set to 0dB.
+ * 
+ * @param level_db Level in db
+ * @return int32_t level_db as an int32_t
+ */
+static inline int32_t geq_db_to_gain(float level_db) {
+  return db_to_qxx(level_db - 12, 31);
+}
+
+/**
+ * @brief Generate the filter coefficients for a 10-band graphic equaliser
+ * 
+ * Returns a pointer to a set of bandpass filters that can use used
+ * by ``adsp_graphic_eq_10b``. Sample rates between 16kHz and 192 kHz
+ * are supported.
+ * 
+ * @param fs            Sample rate of the graphic eq
+ * @return int32_t*     Pointer to the filter coefficients
+ */
+q2_30* adsp_graphic_eq_10b_init(float fs);

@@ -585,3 +585,24 @@ left_shift_t adsp_design_biquad_linkwitz(
 
   return b_sh;
 }
+
+left_shift_t adsp_apply_biquad_gain(q2_30 coeffs[5], left_shift_t b_sh, float gain_db)
+{
+  if (gain_db == 0){
+    return b_sh;
+  }
+
+  float A  = powf(10.0f, (gain_db * (1.0f / 20.0f)));
+  int Q = 31 - MAX(0, (int)ceilf(log2f(A)));
+
+  int32_t A_int = _float2fixed(A, Q);
+
+  for(int i = 0; i < 3; i++){
+    int32_t ah = 0, al = 1 << (Q - 1);
+    asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (coeffs[i]), "r" (A_int), "0" (ah), "1" (al));
+    asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (Q), "0" (ah), "1" (al));
+    asm("lextract %0, %1, %2, %3, 32": "=r" (coeffs[i]): "r" (ah), "r" (al), "r" (Q));
+  }
+
+  return b_sh + (31 - Q);
+}
