@@ -9,6 +9,8 @@ from typical tuning units (e.g. decibels) to the correct fixed point
 format, the helper functions below have been provided.
 
 
+.. _biquad_helpers:
+
 Biquad helpers
 ==============
 

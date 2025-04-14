@@ -5,41 +5,41 @@ module:
       help: >
         The amount of decay in the plate in Q0.31 format. To convert a
         decay value between 0 and 1 to an ``int32_t`` control value, 
-        use the function `adsp_reverb_float2int`` in ``control/reverb.h``.
+        use the function :c:func:`adsp_reverb_float2int` in ``control/reverb.h``.
     damping:
       type: int32_t
       help: >
         The amount of high frequency attenuation in Q0.31 format.
         To convert a damping value between 0 and 1 to an ``int32_t``
-        control value, use the function ``adsp_reverb_plate_calculate_damping``
+        control value, use the function :c:func:`adsp_reverb_plate_calculate_damping`
         in ``control/reverb.h``. 
     early_diffusion:
       type: int32_t
       help: >
         The amount of diffusion in the early part of the reverb. To
         convert a diffusion value between 0 and 1 to an ``int32_t``
-        control value, use the function `adsp_reverb_float2int`` in
+        control value, use the function :c:func:`adsp_reverb_float2int` in
         ``control/reverb.h``.
     late_diffusion:
       type: int32_t
       help: >
         The amount of diffusion in the late part of the reverb. To
         convert a diffusion value between 0 and 1 to an ``int32_t``
-        control value, use the function `adsp_reverb_plate_calc_late_diffusion`` in
+        control value, use the function :c:func:`adsp_reverb_plate_calc_late_diffusion` in
         ``control/reverb_plate.h``.
     bandwidth:
       type: int32_t
       help: >
         The input low pass coefficient in Q0.31 format. A bandwidth in
         Hertz can be converted to an ``int32_t`` control value using the
-        function `adsp_reverb_plate_calc_bandwidth`` in
+        function :c:func:`adsp_reverb_plate_calc_bandwidth` in
         ``control/reverb_plate.h``.
     wet_gain1:
       type: int32_t
       help: >
         Gain applied to the wet signal in Q0.31 format. To calculate the
         wet gains based on a level in dB and a stereo width, use the
-        function ``adsp_reverb_room_st_calc_wet_gains`` in
+        function :c:func:`adsp_reverb_room_st_calc_wet_gains` in
         ``control/reverb.h``. Alternatively, wet and dry gains can be
         calculated using a wet/dry ratio with the function
         ``adsp_reverb_st_wet_dry_mix``.
@@ -48,7 +48,7 @@ module:
       help: >
         Gain applied to the wet signal in Q0.31 format. To calculate the
         wet gains based on a level in dB and a stereo width, use the
-        function ``adsp_reverb_room_st_calc_wet_gains`` in
+        function :c:func:`adsp_reverb_room_st_calc_wet_gains` in
         ``control/reverb.h``. Alternatively, wet and dry gains can be
         calculated using a wet/dry ratio with the function
         ``adsp_reverb_st_wet_dry_mix``.
@@ -57,7 +57,7 @@ module:
       help: >
         Gain applied to the dry signal in Q0.31 format. To calculate the
         dry gain based on a level in dB, use the function
-        ``adsp_reverb_db2int`` in ``control/reverb.h``. Alternatively,
+        :c:func:`adsp_reverb_db2int` in ``control/reverb.h``. Alternatively,
         wet and dry gains can be calculated using a wet/dry ratio with
         the function ``adsp_reverb_st_wet_dry_mix``.
     pregain:
@@ -66,14 +66,14 @@ module:
         The pregain applied to the signal before the reverb. Changing
         this value is only required if saturation occurs in the reverb
         tank. To convert a linear gain value to an ``int32_t`` control
-        value, use the function ``adsp_reverb_float2int`` in
+        value, use the function :c:func:`adsp_reverb_float2int` in
         ``control/reverb.h``.
     predelay:
       type: uint32_t
       help: >
         The wet channel predelay value in samples. To convert a
         value in other units of time to samples, use
-        ``time_to_samples`` in ``control/signal_chain.h``. Note the
+        :c:func:`time_to_samples` in ``control/signal_chain.h``. Note the
         minimum delay provided by this stage is 1 sample. Setting
         the delay to 0 will still yield a 1 sample delay.
 includes:

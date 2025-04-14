@@ -5,19 +5,19 @@ module:
       help: >
         The attack alpha in Q0.31 format. To convert an attack time in
         seconds to an ``int32_t`` control value, use the function
-        ``calc_alpha(fs, attack_time)`` in ``control/helpers.h``.
+        :c:func:`calc_alpha` in ``control/helpers.h``.
     release_alpha:
       type: int32_t
       help: >
         The release alpha in Q0.31 format. To convert a release time in
         seconds to an ``int32_t`` control value, use the function
-        ``calc_alpha(fs, release_time)`` in ``control/helpers.h``.
+        :c:func:`calc_alpha` in ``control/helpers.h``.
     envelope:
       type: int32_t
       help: > 
         The current RMS² envelope of the signal in Q_SIG format. To read
         the ``int32_t`` control value, use the function
-        ``qxx_to_db_pow(envelope, Q_SIG)`` in ``control/helpers.h``
+        :c:func:`qxx_to_db_pow` in ``control/helpers.h`` with Q=Q_SIG.
       rw_type: CMD_READ_ONLY
 
 includes: []
