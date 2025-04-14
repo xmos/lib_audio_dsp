@@ -466,10 +466,8 @@ pipeline {
               withVenv {
                 withTools(params.TOOLS_VERSION) {
                   sh "pip install -r requirements.txt"
-                  withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       dir("test/pipeline") {
-                        sh "python -m pytest -m group0 -n auto --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
-                      }
+                        sh "python -m pytest -m group0 -n auto --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO"
                   }
                 }
               }
@@ -504,11 +502,9 @@ pipeline {
               withVenv {
                 withTools(params.TOOLS_VERSION) {
                   sh "pip install -r requirements.txt"
-                  withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       dir("test/pipeline") {
                       sh "python -m pytest   -m group1 -n auto --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO "
                     }
-                  }
                 }
               }
             }
