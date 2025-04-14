@@ -9,6 +9,8 @@ from typical tuning units (e.g. decibels) to the correct fixed point
 format, the helper functions below have been provided.
 
 
+.. _biquad_helpers:
+
 Biquad helpers
 ==============
 
@@ -37,6 +39,8 @@ DRC helpers
 
 Graphic EQ helpers
 ==================
+
+.. doxygenfunction:: adsp_graphic_eq_10b_init
 
 .. doxygenfunction:: geq_db_to_gain
 

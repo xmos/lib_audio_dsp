@@ -80,11 +80,12 @@ If the left-shift of the coefficients changes, this is managed by the ``biquad_s
             }
         }
 
-    .. doxygenfunction:: adsp_biquad_slew_init
+    
 
     .. doxygenfunction:: adsp_biquad_slew_coeffs
 
-    .. doxygenfunction:: adsp_biquad_slew_update_coeffs
+
+    See also :c:func:`adsp_biquad_slew_init` and :c:func:`adsp_biquad_slew_update_coeffs`.
 
 
 .. tab:: Python API

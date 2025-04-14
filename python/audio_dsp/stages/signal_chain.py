@@ -321,6 +321,10 @@ class SwitchSlew(Switch):
         The position to which to move the switch. This changes the output
         signal to the input[index]
 
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.signal_chain.switch_slew`
+        The DSP block class; see :ref:`SwitchSlew` for implementation details.
     """
 
     def __init__(self, index=0, **kwargs):
@@ -424,11 +428,15 @@ class Crossfader(Stage):
     The crossfader mixes between two inputs. The
     mix control sets the respective levels of each input.
 
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.signal_chain.crossfader`
+        The DSP block class; see :ref:`Crossfader` for implementation details.
+
     """
 
-    def __init__(self, index=0, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(config=find_config("crossfader"), **kwargs)
-        self.index = index
         self.create_outputs(1)
         self.dsp_block = sc.crossfader(self.fs, 2)
         self.set_control_field_cb("mix", lambda: self.dsp_block.mix)
@@ -443,8 +451,8 @@ class Crossfader(Stage):
 
         Parameters
         ----------
-        gain_db : float
-            The gain of the fixed gain in dB.
+        mix : float
+            The mix of the crossfader between 0 and 1.
         """
         self.dsp_block.mix = mix
         return self
@@ -456,11 +464,15 @@ class CrossfaderStereo(Crossfader):
     mix control sets the respective levels of each input pair.
     The inputs should be passed in pairs, e.g. ``[0_L, 0_R, 1_L, 1_R]``.
 
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.signal_chain.crossfader`
+        The DSP block class; see :ref:`Crossfader` for implementation details.
+
     """
 
-    def __init__(self, index=0, **kwargs):
+    def __init__(self, **kwargs):
         Stage.__init__(self, config=find_config("crossfader_stereo"), **kwargs)
-        self.index = index
         self.create_outputs(2)
         self.dsp_block = sc.crossfader(self.fs, 4)
         self.set_control_field_cb("mix", lambda: self.dsp_block.mix)

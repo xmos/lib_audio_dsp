@@ -241,6 +241,7 @@ The current ``delay`` value can be changed at runtime within the range
         .. automethod:: set_delay
             :noindex:
 
+.. _SwitchSlew:
 
 ================
 Switch with slew
@@ -275,6 +276,8 @@ position in order to avoid clicks.
         .. automethod:: move_switch
             :noindex:
 
+
+.. _Crossfader:
 
 ==========
 Crossfader

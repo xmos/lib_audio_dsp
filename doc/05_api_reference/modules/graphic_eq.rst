@@ -1,6 +1,10 @@
 
 .. _geq:
 
+==================
+Graphic Equalisers
+==================
+
 .. _GraphicEq10b:
 
 
@@ -22,6 +26,8 @@ The center frequencies are:
         .. rubric:: C API
 
     .. doxygenfunction:: adsp_graphic_eq_10b
+
+    See also :c:func:`adsp_graphic_eq_10b_init`.
 
 .. tab:: Python API
 
