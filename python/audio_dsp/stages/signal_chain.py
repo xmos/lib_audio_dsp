@@ -443,8 +443,8 @@ class Crossfader(Stage):
 
         Parameters
         ----------
-        gain_db : float
-            The gain of the fixed gain in dB.
+        mix : float
+            The mix of the crossfader between 0 and 1.
         """
         self.dsp_block.mix = mix
         return self
