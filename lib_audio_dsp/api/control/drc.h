@@ -107,3 +107,21 @@ compressor_t adsp_compressor_rms_init(
   float attack_t,
   float release_t,
   float ratio);
+
+
+  /**
+ * @brief Initialise a stereo compressor object
+ *
+ * @param fs                  Sampling frequency
+ * @param threshold_db        Threshold in dB
+ * @param attack_t            Attack time in seconds
+ * @param release_t           Release time in seconds
+ * @param ratio               Compression ratio
+ * @return compressor_stereo_t       Initialised stereo compressor object
+ */
+compressor_stereo_t adsp_compressor_rms_stereo_init(
+  float fs,
+  float threshold_db,
+  float attack_t,
+  float release_t,
+  float ratio);
