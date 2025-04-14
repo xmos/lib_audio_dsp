@@ -1,5 +1,8 @@
 
 .. _geq:
+==================
+Graphic Equalisers
+==================
 
 .. _GraphicEq10b:
 
@@ -20,6 +23,8 @@ The center frequencies are:
     .. only:: latex
 
         .. rubric:: C API
+
+    .. doxygenfunction:: adsp_graphic_eq_10b_init
 
     .. doxygenfunction:: adsp_graphic_eq_10b
 
