@@ -40,6 +40,8 @@ DRC helpers
 Graphic EQ helpers
 ==================
 
+.. doxygenfunction:: adsp_graphic_eq_10b_init
+
 .. doxygenfunction:: geq_db_to_gain
 
 

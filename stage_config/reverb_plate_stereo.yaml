@@ -11,7 +11,7 @@ module:
       help: >
         The amount of high frequency attenuation in Q0.31 format.
         To convert a damping value between 0 and 1 to an ``int32_t``
-        control value, use the function :c:func:`adsp_reverb_plate_calculate_damping`
+        control value, use the function :c:func:`adsp_reverb_plate_calc_damping`
         in ``control/reverb.h``. 
     early_diffusion:
       type: int32_t
@@ -42,7 +42,7 @@ module:
         function :c:func:`adsp_reverb_room_st_calc_wet_gains` in
         ``control/reverb.h``. Alternatively, wet and dry gains can be
         calculated using a wet/dry ratio with the function
-        ``adsp_reverb_st_wet_dry_mix``.
+        :c:func:`adsp_reverb_st_wet_dry_mix`.
     wet_gain2:
       type: int32_t
       help: >
@@ -51,7 +51,7 @@ module:
         function :c:func:`adsp_reverb_room_st_calc_wet_gains` in
         ``control/reverb.h``. Alternatively, wet and dry gains can be
         calculated using a wet/dry ratio with the function
-        ``adsp_reverb_st_wet_dry_mix``.
+        :c:func:`adsp_reverb_st_wet_dry_mix`.
     dry_gain:
       type: int32_t
       help: >
@@ -59,7 +59,7 @@ module:
         dry gain based on a level in dB, use the function
         :c:func:`adsp_reverb_db2int` in ``control/reverb.h``. Alternatively,
         wet and dry gains can be calculated using a wet/dry ratio with
-        the function ``adsp_reverb_st_wet_dry_mix``.
+        the function :c:func:`adsp_reverb_st_wet_dry_mix`.
     pregain:
       type: int32_t
       help: >

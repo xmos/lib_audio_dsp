@@ -473,7 +473,6 @@ class CrossfaderStereo(Crossfader):
 
     def __init__(self, **kwargs):
         Stage.__init__(self, config=find_config("crossfader_stereo"), **kwargs)
-        self.index = index
         self.create_outputs(2)
         self.dsp_block = sc.crossfader(self.fs, 4)
         self.set_control_field_cb("mix", lambda: self.dsp_block.mix)

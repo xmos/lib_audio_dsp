@@ -49,3 +49,5 @@ This a list of all the modules that can be used independently without the DSP pi
   * :ref:`Mixer`
   * :ref:`VolumeControl`
   * :ref:`Delay`
+  * :ref:`SwitchSlew`
+  * :ref:`Crossfader`
