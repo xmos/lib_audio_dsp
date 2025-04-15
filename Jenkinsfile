@@ -452,7 +452,7 @@ pipeline {
 
         stage ('Hardware Test') {
           agent {
-            label 'xcore.ai'
+            label 'xvf3600'
           }
 
           steps {
@@ -488,7 +488,7 @@ pipeline {
 
         stage ('Hardware Test 2') {
           agent {
-            label 'xcore.ai'
+            label 'xvf3610_int'
           }
 
           steps {
