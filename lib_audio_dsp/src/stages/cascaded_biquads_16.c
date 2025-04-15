@@ -26,11 +26,11 @@ void cascaded_biquads_16_process(int32_t **input, int32_t **output, void *app_da
             // do 16 filters as 2 chunks of 8
             int32_t tmp;
             tmp = adsp_cascaded_biquads_8b((*in++),
-                        state->config.filter_coeffs,
+                        state->config.filter_coeffs_lower,
                         state->filter_states[i],
                         state->config.left_shift);
             *out++ = adsp_cascaded_biquads_8b(tmp,
-                        &(state->config.filter_coeffs[40]),
+                        state->config.filter_coeffs_upper,
                         &(state->filter_states[i][64]),
                         &(state->config.left_shift[8]));
         } while(++j < state->frame_size);
