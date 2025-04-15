@@ -1,25 +1,66 @@
-// Copyright 2024 XMOS LIMITED.
+// Copyright 2024-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #pragma once
 
 #include "xmath/types.h"
+#include "dsp/biquad.h"
+
+
+/**
+ * @brief Initialise a slewing biquad filter object.
+ *  This sets the active filter coefficients to the target value
+ * 
+ * @param target_coeffs   Filter coefficients
+ * @param lsh             Filter left shift compensation value
+ * @param slew_shift      Shift value used in the exponential slew
+ * @return biquad_slew_t  Slewing biquad object
+ */
+biquad_slew_t adsp_biquad_slew_init(
+  q2_30 target_coeffs[8],
+  left_shift_t lsh,
+  left_shift_t slew_shift
+);
+
+
+/**
+ * @brief Update the target coefficients in a slewing biquad filter object.
+ *  This updates the target coefficients, and manages any change in filter
+ *  coefficient left shift. This may require shifting the active filter
+ *  coefficients and states.
+ * 
+ * @param slew_state       Slewing biquad state object
+ * @param states           Filter state for each biquad channel
+ * @param channels         Number of channels in states
+ * @param target_coeffs    New filter coefficients
+ * @param lsh              New filter left shift compensation value
+ */
+void adsp_biquad_slew_update_coeffs(
+  biquad_slew_t* slew_state,
+  int32_t** states,
+  int32_t channels,
+  q2_30 target_coeffs[8],
+  left_shift_t lsh
+);
+
 
 /**
  * @brief Design biquad filter bypass
  * This function creeates a bypass biquad filter. Only the b0 coefficient is set.
  * 
  * @param coeffs          Bypass filter coefficients
+ * @return left_shift_t   Left shift compensation value
  */
-void adsp_design_biquad_bypass(q2_30 coeffs[5]);
+left_shift_t adsp_design_biquad_bypass(q2_30 coeffs[5]);
 
 /**
  * @brief Design mute biquad filter
  * This function creates a mute biquad filter. All the coefficients are 0.
  * 
  * @param coeffs          Mute filter coefficients
+ * @return left_shift_t   Left shift compensation value
  */
-void adsp_design_biquad_mute(q2_30 coeffs[5]);
+left_shift_t adsp_design_biquad_mute(q2_30 coeffs[5]);
 
 /**
  * @brief Design gain biquad filter
@@ -42,8 +83,9 @@ left_shift_t adsp_design_biquad_gain(q2_30 coeffs[5], const float gain_db);
  * @param fc              Cutoff frequency
  * @param fs              Sampling frequency
  * @param filter_Q        Filter Q
+ * @return left_shift_t   Left shift compensation value
  */
-void adsp_design_biquad_lowpass(
+left_shift_t adsp_design_biquad_lowpass(
   q2_30 coeffs[5],
   const float fc,
   const float fs,
@@ -59,8 +101,9 @@ void adsp_design_biquad_lowpass(
  * @param fc              Cutoff frequency
  * @param fs              Sampling frequency
  * @param filter_Q        Filter Q
+ * @return left_shift_t   Left shift compensation value
  */
-void adsp_design_biquad_highpass(
+left_shift_t adsp_design_biquad_highpass(
   q2_30 coeffs[5],
   const float fc,
   const float fs,
@@ -76,8 +119,9 @@ void adsp_design_biquad_highpass(
  * @param fc              Central frequency
  * @param fs              Sampling frequency
  * @param bandwidth       Bandwidth
+ * @return left_shift_t   Left shift compensation value
  */
-void adsp_design_biquad_bandpass(
+left_shift_t adsp_design_biquad_bandpass(
   q2_30 coeffs[5],
   const float fc,
   const float fs,
@@ -93,8 +137,9 @@ void adsp_design_biquad_bandpass(
  * @param fc              Central frequency
  * @param fs              Sampling frequency
  * @param bandwidth       Bandwidth
+ * @return left_shift_t   Left shift compensation value
  */
-void adsp_design_biquad_bandstop(
+left_shift_t adsp_design_biquad_bandstop(
   q2_30 coeffs[5],
   const float fc,
   const float fs,
@@ -110,8 +155,9 @@ void adsp_design_biquad_bandstop(
  * @param fc              Central frequency
  * @param fs              Sampling frequency
  * @param filter_Q        Filter Q
+ * @return left_shift_t   Left shift compensation value
  */
-void adsp_design_biquad_notch(
+left_shift_t adsp_design_biquad_notch(
   q2_30 coeffs[5],
   const float fc,
   const float fs,
@@ -127,8 +173,9 @@ void adsp_design_biquad_notch(
  * @param fc              Central frequency
  * @param fs              Sampling frequency
  * @param filter_Q        Filter Q
+ * @return left_shift_t   Left shift compensation value
  */
-void adsp_design_biquad_allpass(
+left_shift_t adsp_design_biquad_allpass(
   q2_30 coeffs[5],
   const float fc,
   const float fs,
@@ -252,8 +299,9 @@ left_shift_t adsp_design_biquad_highshelf(
  * @param q0              Original quality factor at f0
  * @param fp              Target cutoff frequency
  * @param qp              Target quality factor of the filter
+ * @return left_shift_t   Left shift compensation value
  */
-void adsp_design_biquad_linkwitz(
+left_shift_t adsp_design_biquad_linkwitz(
   q2_30 coeffs[5],
   const float f0,
   const float fs,
@@ -261,3 +309,13 @@ void adsp_design_biquad_linkwitz(
   const float fp,
   const float qp);  
 
+
+/**
+ * @brief Modify the gain of a set of biquad filter coefficients
+ * 
+ * @param coeffs          Existing filter coefficients
+ * @param b_sh            Existing left shift compensation value
+ * @param gain_db         Gain in dB
+ * @return left_shift_t   Left shift compensation value
+ */
+left_shift_t adsp_apply_biquad_gain(q2_30 coeffs[5], left_shift_t b_sh, float gain_db);

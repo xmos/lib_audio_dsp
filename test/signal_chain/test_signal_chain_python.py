@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import pytest
 import numpy as np
@@ -7,7 +7,7 @@ import audio_dsp.dsp.signal_gen as gen
 import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.generic as dspg
 from audio_dsp.dsp.generic import HEADROOM_DB
-
+from test.test_utils import q_convert_flt
 import soundfile as sf
 
 
@@ -76,11 +76,11 @@ def test_gains_frames(filter_n, fs, n_chans, q_format):
     frame_size = 1
 
     for n in range(len(signal_frames)):
-        output_flt[:, n:n+frame_size] = filter.process_frame(signal_frames[n])
+        output_flt[:, n*frame_size:(n+1)*frame_size] = filter.process_frame(signal_frames[n])
     assert np.all(output_flt[0, :] == output_flt)
 
     for n in range(len(signal_frames)):
-        output_xcore[:, n:n+frame_size] = filter.process_frame_xcore(signal_frames[n])
+        output_xcore[:, n*frame_size:(n+1)*frame_size] = filter.process_frame_xcore(signal_frames[n])
     assert np.all(output_xcore[0, :] == output_xcore)
 
 
@@ -107,15 +107,15 @@ def test_saturation(filter_spec, fs):
         signals[1] *= -1
     signal = np.stack(signals, axis=0)
     signal = utils.saturate_float_array(signal, dspg.Q_SIG)
-    
+    signal = q_convert_flt(signal, 23, dspg.Q_SIG)
     output_flt = np.zeros(signal.shape[1])
     output_xcore = np.zeros(signal.shape[1])
 
     for n in range(signal.shape[1]):
-        output_flt[n] = filter.process_channels(signal[:, n])
+        output_flt[n] = filter.process_channels(signal[:, n])[0]
 
     for n in range(signal.shape[1]):
-        output_xcore[n] = filter.process_channels_xcore(signal[:, n])
+        output_xcore[n] = filter.process_channels_xcore(signal[:, n])[0]
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
     # also, int signals can't go above HEADROOM_BITS
@@ -205,7 +205,13 @@ def test_mute():
                                          ['mixer', 4, -12],
                                          ['adder', 2],
                                          ['adder', 4],
-                                         ['subtractor', 2]])
+                                         ['subtractor', 2],
+                                         ["crossfader", 2, 0],
+                                         ["crossfader", 2, 0.95],
+                                         ["crossfader", 2, 1],
+                                         ["crossfader", 4, 0],
+                                         ["crossfader", 4, 0.5],
+                                         ["crossfader", 4, 0.95]])
 def test_combiners(filter_spec, fs):
 
     class_name = f"{filter_spec[0]}"
@@ -227,10 +233,10 @@ def test_combiners(filter_spec, fs):
     output_xcore = np.zeros(signal.shape[1])
 
     for n in range(signal.shape[1]):
-        output_flt[n] = filter.process_channels(signal[:, n])
+        output_flt[n] = filter.process_channels(signal[:, n])[0]
 
     for n in range(signal.shape[1]):
-        output_xcore[n] = filter.process_channels_xcore(signal[:, n])
+        output_xcore[n] = filter.process_channels_xcore(signal[:, n])[0]
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
     top_half = utils.db(output_flt) > -50
@@ -247,7 +253,13 @@ def test_combiners(filter_spec, fs):
                                          ['mixer', 4, -12],
                                          ['adder', 2],
                                          ['adder', 4],
-                                         ['subtractor', 2]])
+                                         ['subtractor', 2],
+                                         ["crossfader", 2, 0],
+                                         ["crossfader", 2, 0.95],
+                                         ["crossfader", 2, 1],
+                                         ["crossfader", 4, 0],
+                                         ["crossfader", 4, 0.5],
+                                         ["crossfader", 4, 0.95]])
 @pytest.mark.parametrize("q_format", [27, 31])
 def test_combiners_frames(filter_spec, fs, q_format):
 
@@ -273,10 +285,10 @@ def test_combiners_frames(filter_spec, fs, q_format):
     frame_size = 1
 
     for n in range(len(signal_frames)):
-        output_flt[:, n:n+frame_size] = filter.process_frame(signal_frames[n])
+        output_flt[:, n*frame_size:(n+1)*frame_size] = filter.process_frame(signal_frames[n])
 
     for n in range(len(signal_frames)):
-        output_xcore[:, n:n+frame_size] = filter.process_frame_xcore(signal_frames[n])
+        output_xcore[:, n*frame_size:(n+1)*frame_size] = filter.process_frame_xcore(signal_frames[n])
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
     top_half = utils.db(output_flt) > -50
@@ -316,16 +328,52 @@ def test_delay(fs, delay_spec, n_chans):
     frame_size = 1
 
     for n in range(len(signal_frames)):
-        output_flt[:, n:n+frame_size] = filter.process_frame(signal_frames[n])
+        output_flt[:, n*frame_size:(n+1)*frame_size] = filter.process_frame(signal_frames[n])
     assert np.all(signal[:, : sig_len] == output_flt[:, delay_samps :])
 
     for n in range(len(signal_frames)):
-        output_xcore[:, n:n+frame_size] = filter.process_frame_xcore(signal_frames[n])
+        output_xcore[:, n*frame_size:(n+1)*frame_size] = filter.process_frame_xcore(signal_frames[n])
     assert np.all(signal[:, : sig_len] == output_xcore[:, delay_samps :])
 
 
+def test_switch_slew():
+    fs = 48000
+    signal_1 = gen.sin(fs, 1, 500, 0.25) + 0.5
+    signal_2 = gen.sin(fs, 1, 500, 0.25) - 0.5
+    signal = np.stack((signal_1, signal_2))
+
+    sw = sc.switch_slew(fs, 2)
+    sw_x = sc.switch_slew(fs, 2)
+
+    signal_frames = utils.frame_signal(signal, 1, 1)
+
+    output_flt = np.zeros((1, signal.shape[1]))
+    output_xcore = np.zeros_like(output_flt)
+    frame_size = 1
+
+    for n in range(len(signal_frames)//2):
+        output_flt[:, n*frame_size:(n+1)*frame_size] = sw.process_frame(signal_frames[n])
+        output_xcore[:, n*frame_size:(n+1)*frame_size] = sw_x.process_frame_xcore(signal_frames[n])
+
+    sw.move_switch(1)
+    sw_x.move_switch(1)
+
+    for n in range(len(signal_frames)//2, len(signal_frames)):
+        output_flt[:, n*frame_size:(n+1)*frame_size] = sw.process_frame(signal_frames[n])
+        output_xcore[:, n*frame_size:(n+1)*frame_size] = sw_x.process_frame_xcore(signal_frames[n])
+ 
+
+    top_half = utils.db(output_flt) > -50
+    if np.any(top_half):
+        error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
+        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        assert mean_error_flt < 0.055
+
+    pass
+
 if __name__ == "__main__":
-    # test_combiners(["adder", 4], 48000)
+    test_combiners(["crossfader", 2, 0], 48000)
     # test_volume_change()
     # test_gains(1, 48000, 1)
-    test_delay(48000, [2, 0, "s"], 1)
+    # test_delay(48000, [2, 0, "s"], 1)
+    # test_switch_slew()

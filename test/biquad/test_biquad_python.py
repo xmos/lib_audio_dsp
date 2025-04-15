@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import pytest
 import numpy as np
@@ -43,10 +43,10 @@ def saturation_test(filter: bq.biquad, fs):
     top_half = utils.db(output_flt) > -50
     if np.any(top_half):
         error_flt = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
-        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        mean_error_flt = np.abs(utils.db(np.nanmean(utils.db2gain(error_flt))))
         assert mean_error_flt < 0.055
         error_vpu = np.abs(utils.db(output_int[top_half])-utils.db(output_vpu[top_half]))
-        mean_error_vpu = utils.db(np.nanmean(utils.db2gain(error_vpu)))
+        mean_error_vpu = np.abs(utils.db(np.nanmean(utils.db2gain(error_vpu))))
         assert mean_error_vpu < 0.05
 
 
@@ -72,15 +72,16 @@ def chirp_filter_test(filter: bq.biquad, fs):
 
     # after saturation, the implementations diverge, but they should
     # initially saturate at the same sample
-    first_sat = np.argmax(np.abs(output_flt) >= 0.9999999995343387)
-    top_half[first_sat + 1:] = False
+    if output_flt.max() > 2**(31-filter.Q_sig):
+        first_sat = np.argmax(np.abs(output_flt) >= 2**(31-filter.Q_sig))
+        top_half[first_sat + 1:] = False
 
     if np.any(top_half):
         error_flt = np.abs(utils.db(output_int[top_half])-utils.db(output_flt[top_half]))
-        mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
+        mean_error_flt = np.abs(utils.db(np.nanmean(utils.db2gain(error_flt))))
         assert mean_error_flt < 0.055
         error_vpu = np.abs(utils.db(output_int[top_half])-utils.db(output_vpu[top_half]))
-        mean_error_vpu = utils.db(np.nanmean(utils.db2gain(error_vpu)))
+        mean_error_vpu = np.abs(utils.db(np.nanmean(utils.db2gain(error_vpu))))
         assert mean_error_vpu < 0.05
 
 
@@ -93,7 +94,7 @@ def test_4_coeff_overflow():
 @pytest.mark.parametrize("fs", [16000, 44100, 48000, 88200, 96000, 192000])
 @pytest.mark.parametrize("amplitude", [0.5, 1, 2, 16])
 def test_bypass(fs, amplitude):
-    filter = bq.biquad_bypass(fs, 1)
+    filter = bq.biquad(bq.make_biquad_bypass(fs), fs, 1)
     length = 0.05
     signal = gen.log_chirp(fs, length, amplitude)
     signal = utils.saturate_float_array(signal, filter.Q_sig)
@@ -113,8 +114,8 @@ def test_bypass(fs, amplitude):
         output_xcore[n] = filter.process_xcore(signal[n])
 
     np.testing.assert_array_equal(signal, output_flt)
-    np.testing.assert_allclose(signal, output_int, atol=2**-32)
-    np.testing.assert_allclose(signal, output_xcore, atol=2**-32)
+    np.testing.assert_allclose(signal, output_int, atol=2**-31)
+    np.testing.assert_allclose(signal, output_xcore, atol=2**-31)
 
 
 @pytest.mark.parametrize("filter_type", ["biquad_peaking",
@@ -127,7 +128,7 @@ def test_peaking_filters(filter_type, f, q, gain, fs):
     if f < fs*5e-4:
         f = max(fs*5e-4, f)
     filter_handle = getattr(bq, "make_%s" % filter_type)
-    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), fs, b_shift=bq.BOOST_BSHIFT)
+    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), fs)
     chirp_filter_test(filter, fs)
 
 
@@ -143,7 +144,7 @@ def test_shelf_filters(filter_type, f, q, gain, fs):
         f = max(fs*5e-4, f)
 
     filter_handle = getattr(bq, "make_%s" % filter_type)
-    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), fs, b_shift=bq.BOOST_BSHIFT)
+    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q, gain), fs)
     chirp_filter_test(filter, fs)
 
 
@@ -160,7 +161,7 @@ def test_xpass_filters(filter_type, f, q, fs):
         f = max(fs*5e-4, f)
 
     filter_handle = getattr(bq, "make_%s" % filter_type)
-    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q), fs, b_shift=0)
+    filter = bq.biquad(filter_handle(fs, np.min([f, fs/2*0.95]), q), fs)
     chirp_filter_test(filter, fs)
 
 
@@ -178,7 +179,7 @@ def test_bandx_filters(filter_type, f, q, fs):
     if q >= 5 and f/(fs/2) > high_q_stability_limit:
         f = high_q_stability_limit*fs/2
 
-    filter = bq.biquad(filter_handle(fs, f, q), fs, b_shift=0)
+    filter = bq.biquad(filter_handle(fs, f, q), fs)
     chirp_filter_test(filter, fs)
 
 
@@ -193,7 +194,7 @@ def test_linkwitz_filters(f0, fp_ratio, q0, qp, fs):
     if fs > 100000 and f0 < 50 and fp_ratio < 1:
         f0 = 30
 
-    filter = bq.biquad_linkwitz(fs, 1, f0, q0, f0*fp_ratio, qp)
+    filter = bq.biquad(bq.make_biquad_linkwitz(fs, f0, q0, f0*fp_ratio, qp), fs, 1)
     chirp_filter_test(filter, fs)
 
 
@@ -201,7 +202,7 @@ def test_linkwitz_filters(f0, fp_ratio, q0, qp, fs):
 @pytest.mark.parametrize("fs", [16000, 44100, 48000, 88200, 96000, 192000])
 def test_gain_filters(gain, fs):
 
-    filter = bq.biquad_gain(fs, 1, gain)
+    filter = bq.biquad(bq.make_biquad_gain(fs, gain), fs, 1)
     chirp_filter_test(filter, fs)
 
 @pytest.mark.parametrize("fs", [48000])
@@ -221,9 +222,8 @@ def test_frames(filter_n, fs, n_chans, q_format):
 
     filter_spec = filter_spec[filter_n]
 
-    class_name = f"biquad_{filter_spec[0]}"
-    class_handle = getattr(bq, class_name)
-    filter = class_handle(fs, n_chans, *filter_spec[1:], Q_sig=q_format)
+    filter_handle = getattr(bq, "make_biquad_%s" % filter_spec[0])
+    filter = bq.biquad(filter_handle(fs, *filter_spec[1:]), fs, n_chans, Q_sig=q_format)
 
     length = 0.05
     signal = gen.log_chirp(fs, length, 0.5)
@@ -236,21 +236,85 @@ def test_frames(filter_n, fs, n_chans, q_format):
     output_vpu = np.zeros_like(signal)
     frame_size = 1
     for n in range(len(signal_frames)):
-        output_int[:, n:n+frame_size] = filter.process_frame_int(signal_frames[n])
+        output_int[:, n*frame_size:(n+1)*frame_size] = filter.process_frame_int(signal_frames[n])
     assert np.all(output_int[0, :] == output_int)
     filter.reset_state()
 
     for n in range(len(signal_frames)):
-        output_flt[:, n:n+frame_size] = filter.process_frame(signal_frames[n])
+        output_flt[:, n*frame_size:(n+1)*frame_size] = filter.process_frame(signal_frames[n])
     assert np.all(output_flt[0, :] == output_flt)
     filter.reset_state()
 
     for n in range(len(signal_frames)):
-        output_vpu[:, n:n+frame_size] = filter.process_frame_xcore(signal_frames[n])
+        output_vpu[:, n*frame_size:(n+1)*frame_size] = filter.process_frame_xcore(signal_frames[n])
     assert np.all(output_vpu[0, :] == output_vpu)
 
 
+def test_coeff_change():
+    fs = 48000
+    coeffs_1 = bq.make_biquad_constant_q(fs, 100, 8, -10)
+    coeffs_2 = bq.make_biquad_constant_q(fs, 10000, 8, -10)
 
+    bq_1 = bq.biquad(coeffs_1, fs, 1)
+    bq_2 = bq.biquad(coeffs_1, fs, 1)
+    bq_3 = bq.biquad_slew(coeffs_1, fs, 1, slew_shift=6)
+    bq_4 = bq.biquad_slew(coeffs_1, fs, 1, slew_shift=6)
+
+    amplitude = 0.1
+    dc = 0
+    signal = gen.sin(fs, 0.2, 10000, amplitude) + dc
+
+    output_flt_reset = np.zeros_like(signal)
+    output_vpu_reset = np.zeros_like(signal)
+    output_flt_slew = np.zeros_like(signal)
+    output_vpu_slew = np.zeros_like(signal)
+
+    for n in range(2000):
+        output_flt_reset[n] = bq_1.process(signal[n])
+        output_vpu_reset[n] = bq_2.process_xcore(signal[n])
+        output_flt_slew[n] = bq_3.process_channels([signal[n]])[0]
+        output_vpu_slew[n] = bq_4.process_channels_xcore([signal[n]])[0]
+
+    bq_1.update_coeffs(coeffs_2)
+    bq_2.update_coeffs(coeffs_2)
+    bq_3.update_coeffs(coeffs_2)
+    bq_4.update_coeffs(coeffs_2)
+
+    for n in range(2000, 5000):
+        output_flt_reset[n] = bq_1.process(signal[n])
+        output_vpu_reset[n] = bq_2.process_xcore(signal[n])
+        output_flt_slew[n] = bq_3.process_channels([signal[n]])[0]
+        output_vpu_slew[n] = bq_4.process_channels_xcore([signal[n]])[0]
+
+    bq_1.update_coeffs(coeffs_1)
+    bq_2.update_coeffs(coeffs_1)
+    bq_3.update_coeffs(coeffs_1)
+    bq_4.update_coeffs(coeffs_1)
+
+    for n in range(5000, len(signal)):
+        output_flt_reset[n] = bq_1.process(signal[n])
+        output_vpu_reset[n] = bq_2.process_xcore(signal[n])
+        output_flt_slew[n] = bq_3.process_channels([signal[n]])[0]
+        output_vpu_slew[n] = bq_4.process_channels_xcore([signal[n]])[0]
+
+    assert np.max(np.abs(output_flt_reset - dc)) < amplitude*1.01
+    assert np.max(np.abs(output_vpu_reset - dc)) < amplitude*1.01
+    assert np.max(np.abs(output_flt_slew - dc)) < amplitude*1.01
+    assert np.max(np.abs(output_vpu_slew - dc)) < amplitude*1.01
+
+    top_half = utils.db(output_flt_reset) > -50
+    if np.any(top_half):
+        error_vpu = np.abs(utils.db(output_flt_reset[top_half])-utils.db(output_vpu_reset[top_half]))
+        mean_error_vpu = np.abs(utils.db(np.nanmean(utils.db2gain(error_vpu))))
+        assert mean_error_vpu < 0.05
+
+    top_half = utils.db(output_flt_slew) > -50
+    if np.any(top_half):
+        error_vpu = np.abs(utils.db(output_flt_slew[top_half])-utils.db(output_vpu_slew[top_half]))
+        mean_error_vpu = np.abs(utils.db(np.nanmean(utils.db2gain(error_vpu))))
+        assert mean_error_vpu < 0.05
+
+    pass
 
 # TODO check biquad actually filters
 # TODO check parameter generation
@@ -262,4 +326,5 @@ if __name__ == "__main__":
     # test_bandx_filters("biquad_bandstop", 10000, 10, 16000)
     # test_bypass(96000, 1)
     # test_gain_filters(5, 16000)
-    test_peaking_filters("biquad_peaking", 20, 0.5, 12, 16000)
+    # test_peaking_filters("biquad_peaking", 20, 0.5, 12, 16000)
+    test_coeff_change()

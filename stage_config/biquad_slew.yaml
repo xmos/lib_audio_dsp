@@ -1,0 +1,33 @@
+module:
+  biquad_slew:
+    left_shift:
+      type: int
+      help: >
+        The number of bits to shift the output left by, in order to compensate for any right shift
+        applied to the biquad b coefficients.
+    filter_coeffs:
+      type: int32_t
+      size: 5
+      attribute: DWORD_ALIGNED
+      help: >
+        The normalised biquad filter coefficients, in the order `[b0, b1, b2, -a1, -a2]/a0`. The
+        coefficients should be in Q1.30 format. If the maximum b coefficient magnitude is greater
+        than 2.0, the b coefficients should be right shifted to fit in Q1.30 format, and the shift
+        value passed as left_shift to correct the gain after filtering. Biquad coefficients can be
+        generated using the helper functions in ``control/biquad.h``. See :ref:`biquad_helpers`.
+    reserved:
+      type: int32_t
+      size: 3
+      hidden: true
+      help: Reserved memory to ensure the VPU receives 8 DWORD_ALIGNED coefficients.
+      rw_type: CMD_READ_ONLY
+    slew_shift:
+      type: int
+      help: >
+        The shift value used to set the slew rate. See the biquad slew
+        control documentation for conversions between slew_shift and
+        time constant.
+
+includes:
+  - "stdint.h"
+  - "xmath/api.h"

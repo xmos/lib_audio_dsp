@@ -5,7 +5,7 @@ lib_audio_dsp: Audio DSP Library for xcore.ai
 #############################################
 
 :vendor: XMOS
-:version: 1.2.0
+:version: 1.3.0
 :scope: General Use
 :description: Audio DSP Library for xcore.ai
 :category: Audio
@@ -15,11 +15,17 @@ lib_audio_dsp: Audio DSP Library for xcore.ai
 Summary
 *******
 
+.. note::
+
+  Some software components in this tool flow are prototypes and will be updated in Version 2 of the library.
+  The underlying Digital Signal Processing (DSP) blocks are however fully functional. Future updates will
+  enhance the features and flexibility of the design tool.
+
 lib_audio_dsp is a DSP library for the XMOS xcore architecture. It facilitates the creation of
 multithreaded audio DSP pipelines that efficiently utilise the xcore architecture.
 
 The library is built around a set of DSP function blocks, referred to in the documentation as “Stages”,
-which have a consistent API and can be combined to create many different designs. 
+which have a consistent API and can be combined to create many different designs.
 
 Features
 ********
@@ -39,15 +45,17 @@ processing, and AI feature extraction.
 Known Issues
 ************
 
+  * None
 
 Host System Requirements
 ************************
 
+  * None
 
 Required Tools
 **************
 
-  * XMOS XTC Tools: 15.3.0
+  * XMOS XTC Tools: 15.3.1
 
 Required Libraries (dependencies)
 *********************************

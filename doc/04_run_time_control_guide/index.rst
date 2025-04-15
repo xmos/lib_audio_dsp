@@ -1,3 +1,7 @@
+.. raw:: latex
+
+    \newpage
+
 .. _run_time_control_guide_section:
 
 Run-Time Control User Guide
@@ -16,4 +20,3 @@ based on user input refer to application note AN02015.
     :maxdepth: 1
 
     control_interface_walkthrough
-    control_helper

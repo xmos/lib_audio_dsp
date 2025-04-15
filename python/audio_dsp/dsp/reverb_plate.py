@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """DSP blocks for plate reverb effects."""
 
@@ -358,7 +358,7 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         Input should be scaled with 0 dB = 1.0.
 
         """
-        sample_list_int = utils.float_list_to_int32(sample_list, self.Q_sig)
+        sample_list_int = [utils.float_to_fixed(x, self.Q_sig) for x in sample_list]
 
         acc = 1 << (rvb.Q_VERB - 1)
         acc += sample_list_int[0] * self.pregain_int
@@ -446,7 +446,7 @@ class reverb_plate_stereo(rvb.reverb_stereo_base):
         utils.int64(output_r)
         output_r = utils.saturate_int64_to_int32(output_r)
 
-        output_l_flt = utils.int32_to_float(output_l_final, self.Q_sig)
-        output_r_flt = utils.int32_to_float(output_r, self.Q_sig)
+        output_l_flt = utils.fixed_to_float(output_l_final, self.Q_sig)
+        output_r_flt = utils.fixed_to_float(output_r, self.Q_sig)
 
         return [output_l_flt, output_r_flt]

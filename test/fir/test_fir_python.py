@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import numpy as np
 import pytest
@@ -7,6 +7,7 @@ from pathlib import Path
 import audio_dsp.dsp.fir as fir
 import audio_dsp.dsp.signal_gen as sg
 import audio_dsp.dsp.utils as utils
+from test.test_utils import q_convert_flt, assert_allclose
 
 gen_dir = Path(__file__).parent / "autogen"
 
@@ -21,6 +22,7 @@ def test_basic(coeff_path):
     fut = fir.fir_direct(48000, 1, Path(gen_dir, coeff_path))
 
     signal = sg.pink_noise(48000, 0.1, 0.5)
+    signal = q_convert_flt(signal, 23, 27)
     # signal = np.zeros(1000)
     # signal[0] = 1
 
@@ -72,16 +74,16 @@ def test_frames(coeff_path, n_chans):
     out_int = np.zeros_like(out_flt)
 
     for n in range(len(signal_frames)):
-        out_flt[:, n:n+frame_size] = fut.process_frame(signal_frames[n])
+        out_flt[:, n*frame_size:(n+1)*frame_size] = fut.process_frame(signal_frames[n])
     assert np.all(-out_flt[0, :] == out_flt[1:, :])
     fut.reset_state()
 
     for n in range(len(signal_frames)):
-        out_int[:, n:n+frame_size] = fut.process_frame_xcore(signal_frames[n])
+        out_int[:, n*frame_size:(n+1)*frame_size] = fut.process_frame_xcore(signal_frames[n])
 
     for n in range(1, n_chans):
         # rounding differences can occur between positive and negative signal
-        np.testing.assert_allclose(-out_int[0, :], out_int[n, :], atol=(2**(-fut.Q_sig)))
+        assert_allclose(-out_int[0, :], out_int[n, :], atol=(2**(-fut.Q_sig)))
 
 
 if __name__ =="__main__":

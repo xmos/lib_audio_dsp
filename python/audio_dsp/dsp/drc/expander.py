@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """The expander DSP blocks."""
 
@@ -110,7 +110,7 @@ class expander_base(compressor_limiter_base):
         Input should be scaled with 0 dB = 1.0.
 
         """
-        sample_int = utils.float_to_int32(sample, self.Q_sig)
+        sample_int = utils.float_to_fixed(sample, self.Q_sig)
         # get envelope from envelope detector
         envelope_int = self.env_detector.process_xcore(sample_int, channel)
         # avoid /0
@@ -138,9 +138,9 @@ class expander_base(compressor_limiter_base):
             return y, new_gain_int, envelope_int
         else:
             return (
-                utils.int32_to_float(y, self.Q_sig),
-                utils.int32_to_float(new_gain_int, self.Q_alpha),
-                utils.int32_to_float(envelope_int, self.Q_sig),
+                utils.fixed_to_float(y, self.Q_sig),
+                utils.fixed_to_float(new_gain_int, self.Q_alpha),
+                utils.fixed_to_float(envelope_int, self.Q_sig),
             )
 
 

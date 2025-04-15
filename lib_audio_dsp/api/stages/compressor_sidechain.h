@@ -1,4 +1,4 @@
-// Copyright 2024 XMOS LIMITED.
+// Copyright 2024-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #pragma once
 
@@ -8,13 +8,13 @@
 
 typedef struct
 {
-    compressor_t *comp;
+    compressor_t comp;
     int n_inputs;
     int n_outputs;
     int frame_size;
 }compressor_sidechain_state_t;
 
-#define COMPRESSOR_SIDECHAIN_STAGE_REQUIRED_MEMORY(N_IN) (N_IN * sizeof(compressor_t))
+#define COMPRESSOR_SIDECHAIN_STAGE_REQUIRED_MEMORY (0)
 
 void compressor_sidechain_init(module_instance_t* instance, adsp_bump_allocator_t* allocator, uint8_t id, int n_inputs, int n_outputs, int frame_size);
 

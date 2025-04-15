@@ -1,7 +1,9 @@
-// Copyright 2024 XMOS LIMITED.
+// Copyright 2024-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #pragma once
+
+#include <stdbool.h>
 
 /** Heap size to allocate for the delay from samples */
 #define DELAY_DSP_REQUIRED_MEMORY_SAMPLES(SAMPLES) (sizeof(int32_t) * (SAMPLES))
@@ -44,6 +46,24 @@ typedef struct{
   /** Buffer */
   int32_t * buffer;
 } delay_t;
+
+
+/**
+ * @brief Slewing switch state structure
+ */
+typedef struct{
+  /** If slewing, switching is True until slewing is over. */
+  bool switching;
+  /** Current switch pole position. */
+  int32_t position;
+  /** Last switch pole position. */
+  int32_t last_position;
+  /** Counter for timing slew length. */
+  int32_t counter;
+  /** Step increment of counter. */
+  int32_t step;
+} switch_slew_t;
+
 
 /**
  * @brief Convert from Q0.31 to Q_SIG
@@ -165,3 +185,33 @@ int32_t adsp_delay(
   delay_t * delay,
   int32_t samp);
 
+/**
+ * @brief Process a sample through a slewing switch. If the switch
+ * position has recently changed, this will slew between the desired
+ * input channel and previous channel.
+ * 
+ * @param switch_slew    Slewing switch state object.
+ * @param samples        An array of input samples for each input channel.
+ * @return int32_t       The output of the switch.
+ */
+int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t* samples);
+
+/**
+ * @brief Crossfade between two channels using their gains.
+ * Will do: (in1 * gain1) + (in2 * gain2).
+ *
+ * @param in1      First signal
+ * @param in2      Second signal
+ * @param gain1     First gain
+ * @param gain2     Second gain
+ * @param q_gain    Q factor of the gain
+ * @return int32_t  Mixed signal
+ */
+static inline int32_t adsp_crossfader(int32_t in1, int32_t in2, int32_t gain1, int32_t gain2, int32_t q_gain) {
+  int32_t ah = 0, al = 1 << (q_gain - 1);
+  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (in1), "r" (gain1), "0" (ah), "1" (al));
+  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (in2), "r" (gain2), "0" (ah), "1" (al));
+  asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (q_gain), "0" (ah), "1" (al));
+  asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (q_gain));
+  return ah;
+}

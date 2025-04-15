@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """The edges and nodes for a DSP pipeline."""
 
@@ -463,7 +463,7 @@ class Stage(Node):
         # use float implementation as it is faster
         return self.dsp_block.process_frame(in_channels)
 
-    def get_frequency_response(self, nfft=512) -> tuple[numpy.ndarray, numpy.ndarray]:
+    def get_frequency_response(self, nfft=32768) -> tuple[numpy.ndarray, numpy.ndarray]:
         """
         Return the frequency response of this instance's dsp_block attribute.
 
@@ -481,7 +481,7 @@ class Stage(Node):
             raise RuntimeError("This stage has not set its dsp_block")
         return self.dsp_block.freq_response(nfft)
 
-    def plot_frequency_response(self, nfft=512):
+    def plot_frequency_response(self, nfft=32768):
         """
         Plot magnitude and phase response of this stage using matplotlib. Will
         be displayed inline in a jupyter notebook.

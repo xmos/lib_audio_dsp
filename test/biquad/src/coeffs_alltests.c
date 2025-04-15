@@ -1,4 +1,4 @@
-// Copyright 2024 XMOS LIMITED.
+// Copyright 2024-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include <stdio.h>
 #include <stdint.h>
@@ -60,48 +60,48 @@ int main(int argc, char* argv[])
     fread(&samp, sizeof(float), n_inputs, in);
 
     q2_30 coeffs[5] = {0};
-
+    left_shift_t bsh;
     if (this_bq == allpass){
-        adsp_design_biquad_allpass(coeffs, samp[0], samp[1], samp[2]);
+        bsh = adsp_design_biquad_allpass(coeffs, samp[0], samp[1], samp[2]);
     }
     else if (this_bq == bandpass){
-        adsp_design_biquad_bandpass(coeffs, samp[0], samp[1], samp[2]);
+        bsh = adsp_design_biquad_bandpass(coeffs, samp[0], samp[1], samp[2]);
     }
     else if (this_bq == bandstop){
-        adsp_design_biquad_bandstop(coeffs, samp[0], samp[1], samp[2]);
+        bsh = adsp_design_biquad_bandstop(coeffs, samp[0], samp[1], samp[2]);
     }
     else if (this_bq == bypass){
-        adsp_design_biquad_bypass(coeffs);
+        bsh = adsp_design_biquad_bypass(coeffs);
     }
     else if (this_bq == constq){
-        adsp_design_biquad_const_q(coeffs, samp[0], samp[1], samp[2], samp[3]);
+        bsh = adsp_design_biquad_const_q(coeffs, samp[0], samp[1], samp[2], samp[3]);
     }
     else if (this_bq == gain){
-        adsp_design_biquad_gain(coeffs, samp[0]);
+        bsh = adsp_design_biquad_gain(coeffs, samp[0]);
     }
     else if (this_bq == high_shelf){
-        adsp_design_biquad_highshelf(coeffs, samp[0], samp[1], samp[2], samp[3]);
+        bsh = adsp_design_biquad_highshelf(coeffs, samp[0], samp[1], samp[2], samp[3]);
     }
     else if (this_bq == highpass){
-        adsp_design_biquad_highpass(coeffs, samp[0], samp[1], samp[2]);
+        bsh = adsp_design_biquad_highpass(coeffs, samp[0], samp[1], samp[2]);
     }
     else if (this_bq == linkwitz){
-        adsp_design_biquad_linkwitz(coeffs, samp[0], samp[1], samp[2], samp[3], samp[4]);
+        bsh = adsp_design_biquad_linkwitz(coeffs, samp[0], samp[1], samp[2], samp[3], samp[4]);
     }
     else if (this_bq == lowpass){
-        adsp_design_biquad_lowpass(coeffs, samp[0], samp[1], samp[2]);
+        bsh = adsp_design_biquad_lowpass(coeffs, samp[0], samp[1], samp[2]);
     }
     else if (this_bq == low_shelf){
-        adsp_design_biquad_lowshelf(coeffs, samp[0], samp[1], samp[2], samp[3]);
+        bsh = adsp_design_biquad_lowshelf(coeffs, samp[0], samp[1], samp[2], samp[3]);
     }
     else if (this_bq == mute){
-        adsp_design_biquad_mute(coeffs);
+        bsh = adsp_design_biquad_mute(coeffs);
     }
     else if (this_bq == notch){
-        adsp_design_biquad_notch(coeffs, samp[0], samp[1], samp[2]);
+        bsh = adsp_design_biquad_notch(coeffs, samp[0], samp[1], samp[2]);
     }
     else if (this_bq == peaking){
-        adsp_design_biquad_peaking(coeffs, samp[0], samp[1], samp[2], samp[3]);
+        bsh = adsp_design_biquad_peaking(coeffs, samp[0], samp[1], samp[2], samp[3]);
     }
     else {
     printf("Unknown biquad type\n");
@@ -109,6 +109,8 @@ int main(int argc, char* argv[])
     }
 
     fwrite(&coeffs, sizeof(int32_t), 5, out);
+    fwrite(&bsh, sizeof(int32_t), 1, out);
+
   }
 
   fclose(in);

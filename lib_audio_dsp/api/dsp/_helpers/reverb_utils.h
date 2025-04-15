@@ -1,4 +1,4 @@
-// Copyright 2024 XMOS LIMITED.
+// Copyright 2024-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #pragma once
@@ -105,26 +105,6 @@ static inline int32_t mix_wet_dry(int32_t wet_sig, int32_t dry_sig, int32_t effe
   asm("linsert %0, %1, %2, %3, 32": "=r" (ah), "=r" (al): "r" (dry_sig), "r" (q_gain), "0" (ah), "1" (al));
   asm("sext %0, %1": "=r" (ah): "r" (q_gain), "0" (ah));
   asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (wet_sig), "r" (effect_gain), "0" (ah), "1" (al));
-  asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (q_gain), "0" (ah), "1" (al));
-  asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (q_gain));
-  return ah;
-}
-
-/**
- * @brief Mix stereo wet channels with their gains.
- * Will do: (out1 * gain1) + (out2 * gain2).
- *
- * @param out1      First wet signal
- * @param out2      Second wet signal
- * @param gain1     First gain
- * @param gain2     Second gain
- * @param q_gain    Q factor of the gain
- * @return int32_t  Mixed signal
- */
-static inline int32_t mix_wet_chans(int32_t out1, int32_t out2, int32_t gain1, int32_t gain2, int32_t q_gain) {
-  int32_t ah = 0, al = 1 << (q_gain - 1);
-  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (out1), "r" (gain1), "0" (ah), "1" (al));
-  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (out2), "r" (gain2), "0" (ah), "1" (al));
   asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (q_gain), "0" (ah), "1" (al));
   asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (q_gain));
   return ah;

@@ -1,4 +1,4 @@
-# Copyright 2022-2024 XMOS LIMITED.
+# Copyright 2022-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import xscope_fileio
 import argparse
@@ -6,6 +6,8 @@ import shutil
 import subprocess
 import scipy.io.wavfile
 import pathlib
+from filelock import FileLock
+import time
 
 FORCE_ADAPTER_ID = None
 
@@ -92,20 +94,23 @@ def run(xe, input_file, output_file, num_out_channels, pipeline_stages=1, return
     """
     # Create the cmd line string
     args = f"-i {input_file} -o {output_file} -n {num_out_channels} -t {pipeline_stages - 1}"
-    with open("args.txt", "w") as fp:
-        fp.write(args)
 
-    adapter_id = get_adapter_id()
-    print("Running on adapter_id ",adapter_id)
+    with FileLock("run_pipeline.lock"):
+        with open("args.txt", "w") as fp:
+            fp.write(args)
 
-    if return_stdout == False:
-        xscope_fileio.run_on_target(adapter_id, xe)
-    else:
-        with open("stdout.txt", "w+") as ff:
-            xscope_fileio.run_on_target(adapter_id, xe, stdout=ff)
-            ff.seek(0)
-            stdout = ff.readlines()
-        return stdout
+        adapter_id = get_adapter_id()
+        print("Running on adapter_id ",adapter_id)
+
+        if return_stdout == False:
+            xscope_fileio.run_on_target(adapter_id, xe)
+            time.sleep(0.1)
+        else:
+            with open("stdout.txt", "w+") as ff:
+                xscope_fileio.run_on_target(adapter_id, xe, stdout=ff)
+                ff.seek(0)
+                stdout = ff.readlines()
+            return stdout
 
 if __name__ == "__main__":
     args = parse_arguments()

@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import numpy as np
 import pytest
@@ -39,7 +39,6 @@ def test_reverb_overflow(signal, freq, algo, param):
         sig = gen.white_noise(fs, 5, 1)
 
     sig = sig/np.max(np.abs(sig))
-    sig = sig* (2**31 - 1)/(2**31)
 
     if algo == "stereo_room":
         sig = np.tile(sig, [2, 1])
@@ -350,10 +349,10 @@ def test_reverb_frames(fs, q_format, algo, param):
     output_flt = np.zeros_like(signal)
 
     for n in range(len(signal_frames)):
-        output_int[:, n:n+frame_size] = reverb.process_frame_xcore(signal_frames[n])
+        output_int[:, n*frame_size:(n+1)*frame_size] = reverb.process_frame_xcore(signal_frames[n])
     reverb.reset_state()
     for n in range(len(signal_frames)):
-        output_flt[:, n:n+frame_size] = reverb.process_frame(signal_frames[n])
+        output_flt[:, n*frame_size:(n+1)*frame_size] = reverb.process_frame(signal_frames[n])
 
     assert np.all(output_int[0, :] == output_int)
     assert np.all(output_flt[0, :] == output_flt)

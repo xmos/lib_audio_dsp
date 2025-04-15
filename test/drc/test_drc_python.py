@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import numpy as np
 import pytest
@@ -10,6 +10,8 @@ import audio_dsp.dsp.drc as drc
 import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.signal_gen as gen
 import audio_dsp.dsp.generic as dspg
+
+from test.test_utils import q_convert_flt
 
 def make_noisy_speech():
     hydra_audio_path = os.environ['hydra_audio_PATH']
@@ -476,6 +478,7 @@ def test_drc_component_bypass(fs, component, at, rt, threshold, ratio):
         signal = gen.log_chirp(fs, (0.1+(rt+at)*2), 0.5)
     else:
         signal = gen.log_chirp(fs, (0.1+(rt+at)*2), 1)
+    signal = q_convert_flt(signal, 23, dspg.Q_SIG)
     signal = utils.saturate_float_array(signal, dspg.Q_SIG)
 
     output_xcore = np.zeros(len(signal))
@@ -552,6 +555,7 @@ def test_drc_component(fs, component, at, rt, threshold, ratio):
         t = np.arange(len(signal))/fs
         signal *= np.sin(t*2*np.pi*0.5)
 
+    signal = q_convert_flt(signal, 23, dspg.Q_SIG)
     signal = utils.saturate_float_array(signal, dspg.Q_SIG)
 
     output_xcore = np.zeros(len(signal))
@@ -658,11 +662,11 @@ def test_drc_component_frames(fs, component, at, rt, threshold, ratio, n_chans, 
     output_flt = np.zeros_like(signal)
 
     for n in range(len(signal_frames)):
-        output_int[:, n:n+frame_size] = drcut.process_frame_xcore(signal_frames[n])
+        output_int[:, n*frame_size:(n+1)*frame_size] = drcut.process_frame_xcore(signal_frames[n])
     if "clipper" not in component:
         drcut.reset_state()
     for n in range(len(signal_frames)):
-        output_flt[:, n:n+frame_size] = drcut.process_frame(signal_frames[n])
+        output_flt[:, n*frame_size:(n+1)*frame_size] = drcut.process_frame(signal_frames[n])
 
     assert np.all(output_int[0, :] == output_int)
     assert np.all(output_flt[0, :] == output_flt)

@@ -1,4 +1,4 @@
-// Copyright 2024 XMOS LIMITED.
+// Copyright 2024-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include <string.h>
 #include <stdlib.h>
@@ -67,6 +67,11 @@ void biquad_control(void *module_state, module_control_t *control)
         // Finish the write by updating the working copy with the new config
         memcpy(&state->config, config, sizeof(biquad_config_t));
         control->config_rw_state = config_none_pending;
+        // reset filter states to avoid clicks
+        for(int i=0; i<state->n_inputs; i++)
+        {
+            memset(state->filter_states[i], 0, _BQ_FILTER_MEMORY);
+        }
     }
     else if(control->config_rw_state == config_read_pending)
     {

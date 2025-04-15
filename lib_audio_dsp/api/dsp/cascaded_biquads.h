@@ -1,4 +1,4 @@
-// Copyright 2024 XMOS LIMITED.
+// Copyright 2024-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #pragma once
@@ -15,7 +15,7 @@
  * @param state         Filter state
  * @param lsh           Left shift compensation value
  * @return int32_t      Filtered sample
- * @note The filter coefficients must be in [5][8]
+ * @note The filter coefficients must be in [8][5]
  */
 int32_t adsp_cascaded_biquads_8b(
   int32_t new_sample,

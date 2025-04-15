@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Signal chain stages allow for the control of signal flow through the
 pipeline. This includes stages for combining and splitting signals, basic
@@ -73,7 +73,7 @@ class Fork(Stage):
         self._o = self.ForkOutputList(self.o.edges)
         self._o.forks = forks
 
-    def get_frequency_response(self, nfft=512):
+    def get_frequency_response(self, nfft=32768):
         """Fork has no sensible frequency response, not implemented."""
         # not sure what this looks like!
         raise NotImplementedError
@@ -277,8 +277,14 @@ class VolumeControl(Stage):
 
 class Switch(Stage):
     """
-    Switch the input to one of the outputs. The switch can be used to
+    Switch the output to one of the inputs. The switch can be used to
     select between different signals.
+
+    Parameters
+    ----------
+    index : int
+        The position to which to move the switch. This changes the output
+        signal to the input[index]
 
     """
 
@@ -298,6 +304,71 @@ class Switch(Stage):
         position : int
             The position to which to move the switch. This changes the output
             signal to the input[position]
+        """
+        self.dsp_block.move_switch(position)
+        return self
+
+
+class SwitchSlew(Switch):
+    """
+    Switch the output to one of the inputs. The switch can be used to
+    select between different signals. When the switch is move, a cosine
+    slew is used to avoid clicks. This supports up to 16 inputs.
+
+    Parameters
+    ----------
+    index : int
+        The position to which to move the switch. This changes the output
+        signal to the input[index]
+
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.signal_chain.switch_slew`
+        The DSP block class; see :ref:`SwitchSlew` for implementation details.
+    """
+
+    def __init__(self, index=0, **kwargs):
+        Stage.__init__(self, config=find_config("switch_slew"), **kwargs)
+        if self.n_in > 16:
+            raise ValueError("Switch supports up to 16 inputs")
+        self.index = index
+        self.create_outputs(1)
+        self.dsp_block = sc.switch_slew(self.fs, self.n_in)
+        self.set_control_field_cb("position", lambda: self.dsp_block.switch_position)
+        self.set_constant("fs", self.fs, "int32_t")
+
+
+class SwitchStereo(Stage):
+    """
+    Switch the input to one of the stereo pairs of outputs. The switch
+    can be used to select between different stereo signal pairs. The
+    inputs should be passed in pairs, e.g. ``[0_L, 0_R, 1_L, 1_R, ...]``.
+    Setting the switch position will output the nth pair.
+
+    Parameters
+    ----------
+    index : int
+        The position to which to move the switch. This changes the output
+        signal to the [input[2*index], input[:2*index + 1]]
+
+    """
+
+    def __init__(self, index=0, **kwargs):
+        super().__init__(config=find_config("switch_stereo"), **kwargs)
+        self.index = index
+        self.create_outputs(2)
+        self.dsp_block = sc.switch_stereo(self.fs, self.n_in)
+        self.set_control_field_cb("position", lambda: self.dsp_block.switch_position)
+
+    def move_switch(self, position):
+        """
+        Move the switch to the specified position.
+
+        Parameters
+        ----------
+        position : int
+            The position to which to move the switch. This changes the output
+            signal to the [input[2*position], input[:2*position + 1]]
         """
         self.dsp_block.move_switch(position)
         return self
@@ -350,3 +421,58 @@ class Delay(Stage):
             Default is 'samples'.
         """
         self.dsp_block.set_delay(delay, units)
+
+
+class Crossfader(Stage):
+    """
+    The crossfader mixes between two inputs. The
+    mix control sets the respective levels of each input.
+
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.signal_chain.crossfader`
+        The DSP block class; see :ref:`Crossfader` for implementation details.
+
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(config=find_config("crossfader"), **kwargs)
+        self.create_outputs(1)
+        self.dsp_block = sc.crossfader(self.fs, 2)
+        self.set_control_field_cb("mix", lambda: self.dsp_block.mix)
+
+    def set_mix(self, mix):
+        """
+        Set the mix of the crossfader.
+
+        When the mix is set to 0, only the first signal will be output.
+        When the mix is set to 0.5, each channel has a gain of -4.5 dB.
+        When the mix is set to 1, only they second signal will be output.
+
+        Parameters
+        ----------
+        mix : float
+            The mix of the crossfader between 0 and 1.
+        """
+        self.dsp_block.mix = mix
+        return self
+
+
+class CrossfaderStereo(Crossfader):
+    """
+    The stereo crossfader mixes between two stereo inputs. The
+    mix control sets the respective levels of each input pair.
+    The inputs should be passed in pairs, e.g. ``[0_L, 0_R, 1_L, 1_R]``.
+
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.signal_chain.crossfader`
+        The DSP block class; see :ref:`Crossfader` for implementation details.
+
+    """
+
+    def __init__(self, **kwargs):
+        Stage.__init__(self, config=find_config("crossfader_stereo"), **kwargs)
+        self.create_outputs(2)
+        self.dsp_block = sc.crossfader(self.fs, 4)
+        self.set_control_field_cb("mix", lambda: self.dsp_block.mix)

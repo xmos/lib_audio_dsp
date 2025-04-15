@@ -1,4 +1,4 @@
-// Copyright 2024 XMOS LIMITED.
+// Copyright 2024-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #pragma once
@@ -96,3 +96,37 @@ void adsp_set_delay(
  * @return uint32_t         Time in samples
  */
 uint32_t time_to_samples(float fs, float time, time_units_t units);
+
+/**
+ * @brief Initialise a slewing switch object
+ *
+ * @param fs               Sampling frequency, used to calculate the
+ *                         step size.
+ * @param init_position    Starting position of the switch.
+ * @return switch_slew_t   The slewing switch object.
+ */
+switch_slew_t adsp_switch_slew_init(float fs, int32_t init_position);
+
+/**
+ * @brief Move the position of the switch. This sets the state of the
+ * switch for slewing on subsequent samples.
+ * 
+ * @param switch_slew     Slewing switch state object.
+ * @param new_position    The desired input channel to switch to.
+ */
+void adsp_switch_slew_move(switch_slew_t* switch_slew, int32_t new_position);
+
+/**
+ * @brief Calculate the gains for a crossfader according to the mix amount.
+ * 
+ * When the mix is set to 0, only the first signal will be output. 
+ * gains[0] will be max and gains[1] will be 0.
+ * When the mix is set to 1, only they second signal will be output. 
+ * gains[0] will be 0 and gains[1] will be max.
+ * In order to maintain a consistent signal level across all mix values, 
+ * when the mix is set to 0.5, each channel has a gain of -4.5 dB.
+ *
+ * @param gains           Output gains
+ * @param mix             Mix applied from 0 to 1
+ */
+void adsp_crossfader_mix(int32_t gains[2], float mix);

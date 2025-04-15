@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Generic utilities for the dynamic range control DSP blocks."""
 
@@ -62,7 +62,7 @@ def calculate_threshold(threshold_db, Q_sig, power=False) -> tuple[float, int]:
             UserWarning,
         )
 
-    threshold_int = utils.float_to_int32(threshold, Q_sig)
+    threshold_int = utils.float_to_fixed(threshold, Q_sig)
 
     # this avoids division by zero for expanders
     threshold_int = max(1, threshold_int)
@@ -234,14 +234,15 @@ def compressor_rms_gain_calc_xcore(envelope_int, threshold_int, slope_f32=None):
     """
     # if envelope below threshold, apply unity gain, otherwise scale
     # down
-    int32_max_as_f32 = float32(np.nextafter(1 << 31, 0, dtype=np.float32))
 
     if slope_f32 > float32(0) and threshold_int < envelope_int:
         new_gain_int = int(threshold_int) << 31
         new_gain_int = utils.int32(new_gain_int // envelope_int)
-        new_gain_int = (
-            (float32(new_gain_int * 2**-31) ** slope_f32) * int32_max_as_f32
-        ).as_int32()
+        new_gain_f32 = float32(new_gain_int * 2**-31) ** slope_f32
+        # division result could be < 1 in int32, but ==1 in f32
+        if new_gain_f32 >= 1.0:
+            return utils.int32(0x7FFFFFFF)
+        new_gain_int = (new_gain_f32 * float32(2**31)).as_int32()
     else:
         new_gain_int = utils.int32(0x7FFFFFFF)
 
@@ -287,9 +288,11 @@ def noise_suppressor_expander_gain_calc_xcore(envelope_int, threshold_int, slope
         # this looks a bit scary, but as long as envelope < threshold,
         # it can't overflow
         new_gain_int = utils.int64(envelope_int * invt)
-        new_gain_int = (
-            (float32(new_gain_int * 2**-63) ** -slope_f32) * float32(1 << 31)
-        ).as_int32()
+        new_gain_f32 = float32(new_gain_int * 2**-63) ** -slope_f32
+        # division result could be < 1 in int32, but ==1 in f32
+        if new_gain_f32 >= 1.0:
+            return utils.int32(0x7FFFFFFF)
+        new_gain_int = (new_gain_f32 * float32(2**31)).as_int32()
     else:
         new_gain_int = utils.int32(0x7FFFFFFF)
 

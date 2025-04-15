@@ -1,4 +1,4 @@
-// Copyright 2024 XMOS LIMITED.
+// Copyright 2024-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include <xcore/assert.h>
@@ -460,8 +460,8 @@ void adsp_reverb_room_st(
         out_r = allpass_fv(&(rv->allpasses[1][ap]), out_r);
     }
 
-    int32_t out = mix_wet_chans(out_l, out_r, rv->wet_gain1, rv->wet_gain2, Q_RVR);
+    int32_t out = adsp_crossfader(out_l, out_r, rv->wet_gain1, rv->wet_gain2, Q_RVR);
     outputs_lr[0] = mix_wet_dry(out, apply_gain_q31(in_left, rv->dry_gain), EFFECT_GAIN, Q_GAIN);
-    out = mix_wet_chans(out_r, out_l, rv->wet_gain1, rv->wet_gain2, Q_RVR);
+    out = adsp_crossfader(out_r, out_l, rv->wet_gain1, rv->wet_gain2, Q_RVR);
     outputs_lr[1] = mix_wet_dry(out, apply_gain_q31(in_right, rv->dry_gain), EFFECT_GAIN, Q_GAIN);
 }

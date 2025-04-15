@@ -1,10 +1,9 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import numpy as np
 import soundfile as sf
 from pathlib import Path
 import shutil
-from .test_reverb_c import float_to_qxx, qxx_to_float
 import audio_dsp.dsp.reverb_stereo as rvs
 import audio_dsp.dsp.reverb_plate as rvp
 import audio_dsp.dsp.signal_gen as gen
@@ -12,7 +11,7 @@ import audio_dsp.dsp.utils as utils
 import audio_dsp.dsp.generic as dspg
 import pytest
 import subprocess
-from .. import test_utils as tu
+from test.test_utils import xdist_safe_bin_write, float_to_qxx, qxx_to_float, q_convert_flt
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
@@ -26,10 +25,12 @@ def get_sig_2ch(len=0.05):
 
   sig_fl_t = np.stack(sig_l, axis=1)
   sig_fl_t = utils.saturate_float_array(sig_fl_t, dspg.Q_SIG)
+  sig_fl_t = q_convert_flt(sig_fl_t, 23, dspg.Q_SIG)
+
 
   sig_int = float_to_qxx(sig_fl_t)
   sig_path = bin_dir / "sig_2ch_48k.bin"
-  tu.xdist_safe_bin_write(sig_int, sig_path)
+  xdist_safe_bin_write(sig_int, sig_path)
 
   sf.write(gen_dir / "sig_2ch_48k.wav", sig_fl_t, int(fs), "PCM_24")
   return sig_fl_t.T
@@ -38,7 +39,7 @@ def get_c_wav(dir_name, app_name, verbose=False, sim=True):
   app = "xsim" if sim else "xrun --io"
   run_cmd = app + " " + str(bin_dir / app_name)
   stdout = subprocess.check_output(run_cmd, cwd=dir_name, shell=True)
-  if verbose: print("run msg:\n", stdout)
+  if verbose: print("run msg:\n", stdout.decode())
 
   sig_bin = dir_name / "rv_sig_out.bin"
   assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"

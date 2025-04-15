@@ -1,4 +1,4 @@
-// Copyright 2024 XMOS LIMITED.
+// Copyright 2024-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #pragma once
@@ -102,6 +102,24 @@ void adsp_noise_suppressor_expander_set_th(
  * @return compressor_t       Initialised compressor object
  */
 compressor_t adsp_compressor_rms_init(
+  float fs,
+  float threshold_db,
+  float attack_t,
+  float release_t,
+  float ratio);
+
+
+  /**
+ * @brief Initialise a stereo compressor object
+ *
+ * @param fs                  Sampling frequency
+ * @param threshold_db        Threshold in dB
+ * @param attack_t            Attack time in seconds
+ * @param release_t           Release time in seconds
+ * @param ratio               Compression ratio
+ * @return compressor_stereo_t       Initialised stereo compressor object
+ */
+compressor_stereo_t adsp_compressor_rms_stereo_init(
   float fs,
   float threshold_db,
   float attack_t,

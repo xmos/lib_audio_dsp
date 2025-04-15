@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 """The FIR dsp block."""
@@ -42,10 +42,10 @@ class fir_direct(dspg.dsp_block):
     n_taps : int
         Number of taps in the filter.
     buffer : np.ndarray
-        Buffer of previous inputs for the convlution in floating point
+        Buffer of previous inputs for the convolution in floating point
         format.
     buffer_int : list
-        Buffer of previous inputs for the convlution in fixed point
+        Buffer of previous inputs for the convolution in fixed point
         format.
     buffer_idx : list
         List of the floating point buffer head for each channel.
@@ -175,7 +175,7 @@ class fir_direct(dspg.dsp_block):
         float
             The processed output sample.
         """
-        sample_int = utils.float_to_int32(sample, self.Q_sig)
+        sample_int = utils.float_to_fixed(sample, self.Q_sig)
 
         # put new sample in buffer
         self.buffer_int[channel][self.buffer_idx[channel]] = sample_int
@@ -210,7 +210,7 @@ class fir_direct(dspg.dsp_block):
         # saturate
         y = utils.saturate_int64_to_int32(y)
 
-        y_flt = utils.int32_to_float(y, self.Q_sig)
+        y_flt = utils.fixed_to_float(y, self.Q_sig)
 
         return y_flt
 

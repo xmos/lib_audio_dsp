@@ -1,4 +1,46 @@
-@Library('xmos_jenkins_shared_library@v0.35.0')
+@Library('xmos_jenkins_shared_library@v0.38.0')
+
+def boolean hasChangesIn(String module) {
+  dir("lib_audio_dsp"){
+    if (env.CHANGE_TARGET == null) {
+      return false
+    } 
+    else {
+      return sh(
+        returnStatus: true,
+        script: "git diff --name-only remotes/origin/${env.CHANGE_TARGET}...remotes/origin/${env.BRANCH_NAME} | grep -v .rst | grep ${module}"
+      ) == 0
+    }
+  }
+}
+
+def boolean hasGenericChanges() {
+    echo env.BRANCH_NAME
+    if (env.BRANCH_NAME ==~ /master|main|release.*/) {
+      return true
+    }
+    else if (env.BRANCH_NAME  ==~ /develop/) {
+      return true
+    }
+    else if (hasChangesIn("utils | grep -v reverb_utils")) {
+      return true
+    }
+    else if (hasChangesIn("helpers | grep -v reverb_utils")) {
+      return true
+    }
+    else if (hasChangesIn("adsp")) {
+      return true
+    }
+    else if (hasChangesIn("defines")) {
+      return true
+    }
+    else if (hasChangesIn("generic")) {
+      return true
+    }
+    else {
+      return false
+    }
+}
 
 def runningOn(machine) {
   println "Stage running on:"
@@ -27,13 +69,14 @@ pipeline {
   parameters {
     string(
       name: 'TOOLS_VERSION',
-      defaultValue: '15.3.0',
+      defaultValue: '15.3.1',
       description: 'The XTC tools version'
     )
   } // parameters
 
   environment {
-    XMOSDOC_VERSION = "v6.1.3"
+    XMOSDOC_VERSION = "v6.3.1"
+    HAS_GENERIC_CHANGES = false
   } // environment
 
   options {
@@ -69,30 +112,27 @@ pipeline {
                 runningOn(env.NODE_NAME)
                 dir("lib_audio_dsp") {
                   checkout scm
+                  script{
+                    env.HAS_GENERIC_CHANGES = hasGenericChanges().toBoolean()
+                  }
+                  echo "env.HAS_GENERIC_CHANGES is '${env.HAS_GENERIC_CHANGES}'"
+                  echo "env.HAS_GENERIC_CHANGES is '${hasGenericChanges()}'"
                   // try building a simple app without venv to check
                   // build that doesn't use design tools won't
                   // need Python
                   withTools(params.TOOLS_VERSION) {
                     dir("test/biquad") {
                       sh "cmake -B build"
-                      sh "cmake --build build"
+                      sh "cmake --build build -j\$(nproc)"
                     } // dir
                   } // tools
                 } // dir
-
                 createVenv("lib_audio_dsp/requirements.txt")
                 dir("lib_audio_dsp") {
                   // build everything
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       sh "pip install -r requirements.txt"
-                      buildApps([
-                        "test/biquad",
-                        "test/cascaded_biquads",
-                        "test/signal_chain",
-                        "test/fir",
-                        "test/utils"
-                      ]) // buildApps
                     } // tools
                   } // withVenv
                 } // dir
@@ -100,11 +140,18 @@ pipeline {
 
             } // Build
             stage('Test Biquad') {
+              when {
+                anyOf {
+                  expression{hasGenericChanges()}
+                  expression{hasChangesIn("biquad")}
+                  }
+              }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/biquad"])
                         dir("test/biquad") {
                           runPytest("--dist worksteal")
                         }
@@ -115,11 +162,19 @@ pipeline {
               }
             } // test biquad
             stage('Test Cascaded Biquads') {
+              when {
+                anyOf {
+                  expression{hasGenericChanges()}
+                  expression{hasChangesIn("biquad")}
+                  expression{hasChangesIn("cascaded_biquad")}
+                  }
+                }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/cascaded_biquads"])
                         dir("test/cascaded_biquads") {
                           runPytest("--dist worksteal")
                         }
@@ -145,11 +200,19 @@ pipeline {
               }
             } // Unit tests
             stage('Test Utils') {
+              when {
+                anyOf {
+                  expression{hasGenericChanges()}
+                  expression{hasChangesIn("utils")}
+                  expression{hasChangesIn("control")}
+                  }
+                }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/utils"])
                         dir("test/utils") {
                           runPytest("--dist worksteal")
                         }
@@ -160,11 +223,18 @@ pipeline {
               }
             } // test utils
             stage('Test FIR') {
+              when {
+                anyOf {
+                  expression{hasGenericChanges()}
+                  expression{hasChangesIn("fir")}
+                  }
+                }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/fir"])
                         dir("test/fir") {
                           runPytest("--dist worksteal")
                         }
@@ -175,11 +245,18 @@ pipeline {
               }
             } // test SC
             stage('Test SC') {
+              when {
+                anyOf {
+                  expression{hasGenericChanges()}
+                  expression{hasChangesIn("signal_chain")}
+                  }
+                }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/signal_chain"])
                         dir("test/signal_chain") {
                           runPytest("--dist worksteal")
                         }
@@ -189,6 +266,27 @@ pipeline {
                 }
               }
             } // test SC
+            stage('Test TD block FIR') {
+              when {
+                anyOf {
+                  expression{hasGenericChanges()}
+                  expression{hasChangesIn("td_block")}
+                  }
+                }
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/td_block_fir") {
+                          runPytest("--dist worksteal --durations=0")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test TD block FIR
           }
           post {
             cleanup {
@@ -206,13 +304,16 @@ pipeline {
                 runningOn(env.NODE_NAME)
                 dir("lib_audio_dsp") {
                   checkout scm
+                  script{
+                    env.HAS_GENERIC_CHANGES = hasGenericChanges()
+                  }
                   // try building a simple app without venv to check
                   // build that doesn't use design tools won't
                   // need Python
                   withTools(params.TOOLS_VERSION) {
                     dir("test/biquad") {
                       sh "cmake -B build"
-                      sh "cmake --build build"
+                      sh "cmake --build build -j\$(nproc)"
                     } // dir
                   } // tools
                 } // dir
@@ -222,16 +323,18 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       sh "pip install -r requirements.txt"
-                      buildApps([
-                        "test/drc",
-                        "test/reverb",
-                      ]) // buildApps
                     }
                   }
                 }
               }
             } // Build
             stage('Test DRC') {
+              when {
+                anyOf {
+                  expression{hasGenericChanges()}
+                  expression{hasChangesIn("-e drc -e env -e limit -e noise -e compressor")}
+                  }
+                }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
@@ -239,6 +342,7 @@ pipeline {
                       withMounts([["projects", "projects/hydra_audio", "hydra_audio_test_skype"]]) {
                         withEnv(["hydra_audio_PATH=$hydra_audio_test_skype_PATH"]){
                           catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/drc"])
                             dir("test/drc") {
                               runPytest("--dist worksteal")
                             }
@@ -250,14 +354,43 @@ pipeline {
                 }
               }
             } // test drc
-            stage('Test Reverb') {
+            stage('Test Graphic EQ') {
+              when {
+                anyOf {
+                  expression{hasGenericChanges()}
+                  expression{hasChangesIn("-e graphic")}
+                  }
+                }
               steps {
                 dir("lib_audio_dsp") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/graphic_eq"])
+                          dir("test/graphic_eq") {
+                            runPytest("--dist worksteal")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test geq
+            stage('Test Reverb') {
+              when {
+                anyOf {
+                  expression{hasGenericChanges()}
+                  expression{hasChangesIn("reverb")}
+                  }
+                }
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/reverb"])
                         dir("test/reverb") {
-                          runPytest("--dist worksteal")
+                          runPytest("--dist worksteal --durations=0")
                         }
                       }
                     }
@@ -265,6 +398,27 @@ pipeline {
                 }
               }
             } // test Reverb
+            stage('Test FD block FIR') {
+              when {
+                anyOf {
+                  expression{hasGenericChanges()}
+                  expression{hasChangesIn("fd_block")}
+                  }
+                }
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        dir("test/fd_block_fir") {
+                          runPytest("--dist worksteal --durations=0")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test FD block FIR
           }
           post {
             cleanup {
@@ -279,12 +433,11 @@ pipeline {
             label 'documentation&&linux&&x86_64'
           }
           steps {
+            runningOn(env.NODE_NAME)
             checkout scm
-            createVenv("requirements.txt")
+            createVenv("requirements-format.txt")
             withVenv {
-              sh 'pip install -e ./python'
-              sh 'pip install "pyright < 2.0"'
-              sh 'pip install "ruff < 0.4"'
+              sh 'pip install --no-deps -r requirements-format.txt'
               sh "make -C python check" // ruff check
               versionChecks checkReleased: false, versionsPairs: versionsPairs
               buildDocs xmosdocVenvPath: "${WORKSPACE}", archiveZipOnly: true // needs python run
@@ -315,12 +468,12 @@ pipeline {
                 withTools(params.TOOLS_VERSION) {
                   sh "pip install -r requirements.txt"
                   sh "pip install -e ${WORKSPACE}/xtagctl"
-                    withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
+                  withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       sh "xtagctl reset ${adapterIDs[0]}"
                       dir("test/pipeline") {
-                        sh "python -m pytest -m group0 --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
+                        sh "python -m pytest -m group0 -n auto --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
                       }
-                    }
+                  }
                 }
               }
             }
@@ -356,12 +509,12 @@ pipeline {
                 withTools(params.TOOLS_VERSION) {
                   sh "pip install -r requirements.txt"
                   sh "pip install -e ${WORKSPACE}/xtagctl"
-                    withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
+                  withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       sh "xtagctl reset ${adapterIDs[0]}"
                       dir("test/pipeline") {
-                        sh "python -m pytest -m group1 --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
-                        }
+                      sh "python -m pytest   -m group1 -n auto --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO "
                     }
+                  }
                 }
               }
             }

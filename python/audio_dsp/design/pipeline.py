@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 """Top level pipeline design class and code generation functions."""
@@ -126,7 +126,7 @@ class Pipeline:
         self._n_in = n_in
         self._n_out = 0
         self._id = identifier
-        self.pipeline_stage: None
+        self.pipeline_stage: None | PipelineStage
         self._labelled_stages = {}
         self._generate_xscope_task = generate_xscope_task
 
@@ -139,7 +139,7 @@ class Pipeline:
         self.next_thread()
 
     @staticmethod
-    def begin(n_in, identifier="auto", frame_size=1, fs=48000):
+    def begin(n_in, identifier="auto", frame_size=1, fs=48000, generate_xscope_task=False):
         """Create a new Pipeline and get the attributes required for design.
 
         Returns
@@ -147,7 +147,7 @@ class Pipeline:
         Pipeline, Thread, StageOutputList
             The pipeline instance, the initial thread and the pipeline input edges.
         """
-        p = Pipeline(n_in, identifier, frame_size, fs)
+        p = Pipeline(n_in, identifier, frame_size, fs, generate_xscope_task)
         return p, p.i
 
     def _add_thread(self) -> Thread:

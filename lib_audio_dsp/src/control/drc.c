@@ -1,4 +1,4 @@
-// Copyright 2024 XMOS LIMITED.
+// Copyright 2024-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include "control/adsp_control.h"
@@ -50,6 +50,22 @@ compressor_t adsp_compressor_rms_init(
 ) {
   compressor_t comp;
   comp.env_det = adsp_env_detector_init(fs, attack_t, release_t);
+  comp.threshold = db_pow_to_q_sig(threshold_db);
+  comp.gain = INT32_MAX;
+  comp.slope = (1.0f - 1.0f / ratio) / 2.0f;
+  return comp;
+}
+
+compressor_stereo_t adsp_compressor_rms_stereo_init(
+  float fs,
+  float threshold_db,
+  float attack_t,
+  float release_t,
+  float ratio
+) {
+  compressor_stereo_t comp;
+  comp.env_det_l = adsp_env_detector_init(fs, attack_t, release_t);
+  comp.env_det_r = adsp_env_detector_init(fs, attack_t, release_t);
   comp.threshold = db_pow_to_q_sig(threshold_db);
   comp.gain = INT32_MAX;
   comp.slope = (1.0f - 1.0f / ratio) / 2.0f;

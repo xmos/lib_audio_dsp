@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """
 Utility functions for building and running the application within
@@ -10,6 +10,8 @@ from IPython import display
 from pathlib import Path
 import shutil
 import os
+
+PIPELINE_BUILD_LOCK = "test_pipeline_build.lock"
 
 def build(source_dir, build_dir, target):
     """
@@ -33,7 +35,7 @@ def build(source_dir, build_dir, target):
     if os.name == "nt":
         ret = subprocess.run(f"cmake --build {build_dir} --target {target}".split())
     else:
-        ret = subprocess.run(f"cmake --build {build_dir} --target {target}".split())
+        ret = subprocess.run(f"cmake --build {build_dir} --target {target} -j".split())
     if ret.returncode:
         print("ERROR: Building failed, check log for details\r")
         assert(0)

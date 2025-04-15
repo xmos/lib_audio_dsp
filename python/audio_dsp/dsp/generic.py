@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """The generic DSP block and globals."""
 
@@ -14,7 +14,7 @@ Q_SIG = 27
 # number of bits for the headroom, this will set the maximum gain that
 # can be applied to the signal without overflowing.
 HEADROOM_BITS = 31 - Q_SIG
-HEADROOM_DB = utils.db(2**HEADROOM_BITS)
+HEADROOM_DB = utils.db((utils.Q_max(31) + 1) / utils.Q_max(Q_SIG))
 
 
 class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
@@ -88,11 +88,55 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
         float
             The processed output sample.
         """
-        sample_int = utils.float_to_int32(sample, self.Q_sig)
+        sample_int = utils.float_to_fixed(sample, self.Q_sig)
         y = self.process(float(sample_int))
-        y_flt = utils.int32_to_float(y, self.Q_sig)
+        y_flt = utils.fixed_to_float(y, self.Q_sig)
 
         return y_flt
+
+    def process_channels(self, sample_list: list[float]) -> list[float]:
+        """
+        Process the sample in each audio channel using floating point maths.
+
+        The generic implementation calls self.process for each channel.
+
+        Parameters
+        ----------
+        sample_list : list[float]
+            The input samples to be processed. Each sample represents a
+            different channel
+
+        Returns
+        -------
+        list[float]
+            The processed samples for each channel.
+        """
+        output_samples = deepcopy(sample_list)
+        for channel in range(len(output_samples)):
+            output_samples[channel] = self.process(sample_list[channel], channel)
+        return output_samples
+
+    def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
+        """
+        Process the sample in each audio channel using fixed point maths.
+
+        The generic implementation calls self.process_xcore for each channel.
+
+        Parameters
+        ----------
+        sample_list : list[float]
+            The input samples to be processed. Each sample represents a
+            different channel
+
+        Returns
+        -------
+        list[float]
+            The processed samples for each channel.
+        """
+        output_samples = deepcopy(sample_list)
+        for channel in range(len(output_samples)):
+            output_samples[channel] = self.process_xcore(sample_list[channel], channel)
+        return output_samples
 
     def process_frame(self, frame: list):
         """
@@ -116,15 +160,13 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
             List of processed frames, with the same structure as the
             input frame.
         """
-        n_outputs = len(frame)
+        frame_np = np.array(frame)
         frame_size = frame[0].shape[0]
-        output = deepcopy(frame)
-        for chan in range(n_outputs):
-            this_chan = output[chan]
-            for sample in range(frame_size):
-                this_chan[sample] = self.process(this_chan[sample], channel=chan)
+        output = np.zeros((len(frame), frame_size))
+        for sample in range(frame_size):
+            output[:, sample] = self.process_channels(frame_np[:, sample].tolist())
 
-        return output
+        return list(output)
 
     def process_frame_xcore(self, frame: list):
         """
@@ -149,17 +191,15 @@ class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
             List of processed frames, with the same structure as the
             input frame.
         """
-        n_outputs = len(frame)
+        frame_np = np.array(frame)
         frame_size = frame[0].shape[0]
-        output = deepcopy(frame)
-        for chan in range(n_outputs):
-            this_chan = output[chan]
-            for sample in range(frame_size):
-                this_chan[sample] = self.process_xcore(this_chan[sample], channel=chan)
+        output = np.zeros((len(frame), frame_size))
+        for sample in range(frame_size):
+            output[:, sample] = self.process_channels_xcore(frame_np[:, sample].tolist())
 
-        return output
+        return list(output)
 
-    def freq_response(self, nfft=512):
+    def freq_response(self, nfft=32768):
         """
         Calculate the frequency response of the module for a nominal
         input.

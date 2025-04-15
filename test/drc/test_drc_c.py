@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import numpy as np
 import soundfile as sf
@@ -9,7 +9,7 @@ import audio_dsp.dsp.drc as drc
 from audio_dsp.dsp.generic import Q_SIG
 from audio_dsp.dsp.signal_gen import quantize_signal
 import pytest
-from .. import test_utils as tu
+from test.test_utils import xdist_safe_bin_write, float_to_qxx, qxx_to_float, q_convert_flt
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
@@ -17,26 +17,18 @@ gen_dir = Path(__file__).parent / "autogen"
 fs = 48000
 
 
-def float_to_qxx(arr_float, q = Q_SIG, dtype = np.int32):
-  arr_int32 = np.clip((np.array(arr_float) * (2**q)), np.iinfo(dtype).min, np.iinfo(dtype).max).astype(dtype)
-  return arr_int32
-
-
-def qxx_to_float(arr_int, q = Q_SIG):
-  arr_float = np.array(arr_int).astype(np.float64) * (2 ** (-q))
-  return arr_float
-
 
 def get_sig(len=0.05):
   time = np.arange(0, len, 1/fs)
   sig_fl = 0.8 * np.sin(2 * np.pi * 997 * time) * np.sin(2 * np.pi * 100 * time)
   sig_fl = quantize_signal(sig_fl, 24)
+  sig_fl = q_convert_flt(sig_fl, 23, Q_SIG)
   sig_int = float_to_qxx(sig_fl)
 
   name = "sig_48k"
   sig_path = bin_dir /  str(name + ".bin")
 
-  tu.xdist_safe_bin_write(sig_int, sig_path)
+  xdist_safe_bin_write(sig_int, sig_path)
 
 
   # wav file does not need to be locked as it is only used for debugging outside pytest
@@ -49,7 +41,7 @@ def get_c_wav(dir_name, bin_name, verbose = False, sim = True):
   app = "xsim" if sim else "xrun --io"
   run_cmd = app + " " + str(bin_dir / bin_name) + "_test.xe"
   stdout = subprocess.check_output(run_cmd, cwd = dir_name, shell = True)
-  if verbose: print("run msg:\n", stdout)
+  if verbose: print("run msg:\n", stdout.decode())
 
   sig_bin = dir_name / "sig_out.bin"
   assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"

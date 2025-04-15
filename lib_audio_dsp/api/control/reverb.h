@@ -1,4 +1,4 @@
-// Copyright 2024 XMOS LIMITED.
+// Copyright 2024-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #pragma once
@@ -6,6 +6,7 @@
 #include "dsp/adsp.h"
 #include "helpers.h"
 #include <stdint.h>
+#include "control/adsp_control.h"
 
 /** 
  * @brief Convert a floating point value to the Q_RVR format, saturate out of
@@ -83,7 +84,9 @@ static inline int32_t adsp_reverb_room_calc_gain(float gain_db) {
  * @param gains           Output gains: [0] - Dry; [1] - Wet
  * @param mix             Mix applied from 0 to 1
  */
-void adsp_reverb_wet_dry_mix(int32_t gains[2], float mix);
+static inline void adsp_reverb_wet_dry_mix(int32_t gains[2], float mix) {
+    adsp_crossfader_mix(gains, mix);
+}
 
 /**
  * @brief Initialise a reverb room object

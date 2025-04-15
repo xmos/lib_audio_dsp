@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """DSP blocks for room reverb effects."""
 
@@ -473,31 +473,6 @@ class reverb_room(rvb.reverb_base):
         """
         self.room_size = room_size
 
-    def process_frame(self, frame):
-        """
-        Take a list frames of samples and return the processed frames.
-
-        A frame is defined as a list of 1-D numpy arrays, where the
-        number of arrays is equal to the number of channels, and the
-        length of the arrays is equal to the frame size.
-
-        When calling self.process only take the first output.
-
-        """
-        n_outputs = len(frame)
-        frame_size = frame[0].shape[0]
-        output = deepcopy(frame)
-        if n_outputs == 1:
-            for sample in range(frame_size):
-                output[0][sample] = self.process(output[0][sample])
-        else:
-            for chan in range(n_outputs):
-                this_chan = output[chan]
-                for sample in range(frame_size):
-                    this_chan[sample] = self.process(this_chan[sample], channel=chan)
-
-        return output
-
     def process(self, sample, channel=0):
         """
         Add reverberation to a signal, using floating point maths.
@@ -527,7 +502,7 @@ class reverb_room(rvb.reverb_base):
         Take one new sample and return the sample with reverb.
         Input should be scaled with 0 dB = 1.0.
         """
-        sample_int = utils.float_to_int32(sample, self.Q_sig)
+        sample_int = utils.float_to_fixed(sample, self.Q_sig)
 
         delayed_input = self._predelay.process_channels_xcore([sample_int])[0]
         reverb_input = rvb.apply_gain_xcore(delayed_input, self.pregain_int)
@@ -553,4 +528,4 @@ class reverb_room(rvb.reverb_base):
         utils.int64(output)
         output = utils.saturate_int64_to_int32(output)
 
-        return utils.int32_to_float(output, self.Q_sig)
+        return utils.fixed_to_float(output, self.Q_sig)

@@ -1,4 +1,4 @@
-// Copyright 2024 XMOS LIMITED.
+// Copyright 2024-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include "dsp/adsp.h"
@@ -139,3 +139,51 @@ int32_t adsp_delay(
   }
   return out;
 }
+
+
+int32_t _cos_approx(int32_t x) {
+  // A two term cosine fade approximation, based on a Chebyshev
+  // polynomial fit. x must be between -2**30 and 2**30. y is a gain
+  // between 1 and 0 in Q31. This is only for use with the slewing switch.
+
+  // x**2 >> 30
+  int32_t ah = 0, al = 0, q = 30, tmp = 0;
+  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (x), "r" (x), "0" (ah), "1" (al));
+  asm("lextract %0, %1, %2, %3, 32":"=r"(tmp):"r"(ah),"r"(al),"r"(q));
+  
+  // set initial value to -1622688857 << 30 so we can add -1622688857 before shifting
+  al = (int32_t)((((int64_t)-1622688857) << 30) & 0xFFFFFFFF);
+  ah = (int32_t)(((uint64_t)(((int64_t)-1622688857) << 30)) >> 32);
+  // y = ((x^2 * 549248075) >> 30) - 1622688857
+  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (tmp), "r" (549248075), "0" (ah), "1" (al));
+  asm("lextract %0, %1, %2, %3, 32":"=r"(tmp):"r"(ah),"r"(al),"r"(q));
+  
+  // set initial value to 1 << 60 so we can add 1 << 30 before shifting
+  al = 0;
+  ah = 1 << (q - 2);
+  // y = ((x*y) >> 30) + (1 << 30)
+  asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (tmp), "r" (x), "0" (ah), "1" (al));
+  asm("lextract %0, %1, %2, %3, 32":"=r"(tmp):"r"(ah),"r"(al),"r"(q));
+  return tmp;
+}
+
+
+int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t* samples){
+
+  if (switch_slew->switching){
+    int32_t gain_1 = _cos_approx(switch_slew->counter);
+    int32_t y = ((int64_t)gain_1 * samples[switch_slew->last_position]) >> 31;
+    int32_t gain_2 = INT32_MAX - gain_1;
+    y += ((int64_t)gain_2 * samples[switch_slew->position]) >> 31;
+
+    switch_slew->counter += switch_slew->step;
+    if (switch_slew->counter > 1 <<30){
+      switch_slew->switching = false;
+    }
+
+    return y;
+  }
+  else{
+    return samples[switch_slew->position];
+    }
+  }

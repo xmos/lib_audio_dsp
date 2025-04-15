@@ -1,10 +1,11 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 """Collection of tuning utilities for the pipeline."""
 
 from audio_dsp.design.pipeline import Pipeline
 from audio_dsp.tuning.transport import *
+from typing import Literal
 import numpy as np
 import tabulate
 
@@ -31,8 +32,9 @@ def _validate_pipeline_checksum(pipeline: Pipeline, proto: TuningTransport):
     if equal is False:
         raise RuntimeError(
             (
-                f"Python pipeline checksum {pipeline.pipeline_stage['checksum']} "
-                f"does not match device pipeline checksum {device_pipeline_checksum}"
+                "Device pipeline mismatch; the pipeline on the connected device does not match "
+                "this design. To resolve this, update the firmware on the connected device to use this updated pipeline.\n"
+                f"\n\tExpected checksum: {pipeline.pipeline_stage['checksum']}\n\tGot {device_pipeline_checksum}"
             )
         )
 
@@ -56,6 +58,74 @@ def send_config_to_device(pipeline: Pipeline, protocol: TuningTransport):
             for command, value in stage.get_config().items():
                 payload = CommandPayload(stage, command, value)
                 proto.write(payload)
+
+
+_ValidationMode = Literal["once"] | Literal["never"] | Literal["always"]
+
+
+class ConfigSender:
+    """
+    A stateful config sender which has a memory of the last configs that were sent to
+    the device and only sends configs which have changed.
+
+    Example usage::
+
+        from audio_dsp.tuning.transport.xscope import XScopeTransport
+        from audio_dsp.tuning import ConfigSender
+        from audio_dsp.design.pipeline import Pipeline
+
+        p = Pipeline(generate_xscope_task=True)
+        t = XScopeTransport()
+        c = config_sender(t)
+        # Send config to the device
+        c(p)
+
+
+    Parameters
+    ----------
+    protocol: TuningTransport
+        An initialised subclass of TuningTransport to use for communicating with the
+        device.
+    validation_mode: str
+        One of "always", "never", or "once", determines how ofter the pipeline checksum is validated.
+    """
+
+    def __init__(self, protocol: TuningTransport, validation_mode: _ValidationMode = "always"):
+        self._protocol = protocol
+        self._last_config = {}
+        self._validation_mode = validation_mode
+        if self._validation_mode not in {"once", "always", "never"}:
+            raise ValueError(f"Invalid validation mode {validation_mode}")
+        self._validated = False
+
+    def __call__(self, pipeline: Pipeline) -> None:
+        """
+        Send updated pipeline parameters.
+
+        Parameters
+        ----------
+        pipeline:
+            The pipeline to send to the device.
+        """
+        commands = {}
+        for stage in pipeline.stages:
+            stage_index = stage.index
+            for command, value in stage.get_config().items():
+                c = (stage_index, command, value)
+                commands[str(c)] = c
+
+        with self._protocol as proto:
+            if self._validation_mode == "always" or (
+                self._validation_mode == "once" and not self._validated
+            ):
+                _validate_pipeline_checksum(pipeline, self._protocol)
+                self._validated = True
+            for command_str in (c for c in commands if c not in self._last_config):
+                command = commands[command_str]
+                payload = CommandPayload(pipeline.stages[command[0]], command[1], command[2])
+                proto.write(payload)
+
+        self._last_config = commands
 
 
 def profile_pipeline(pipeline: Pipeline, protocol: TuningTransport):

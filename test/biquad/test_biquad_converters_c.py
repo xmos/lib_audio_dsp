@@ -1,3 +1,5 @@
+# Copyright 2024-2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """
 Test python vs C biquad coeff generators
 
@@ -15,20 +17,12 @@ from enum import IntEnum
 
 import audio_dsp.dsp.biquad as bq
 from audio_dsp.dsp.generic import Q_SIG
+from test.test_utils import assert_allclose
 
 bin_dir = Path(__file__).parent / "bin"
 gen_dir = Path(__file__).parent / "autogen"
 
 fs=48000
-
-def float_to_qxx(arr_float, q = Q_SIG, dtype = np.int32):
-  arr_int32 = np.clip((np.array(arr_float) * (2**q)), np.iinfo(dtype).min, np.iinfo(dtype).max).astype(dtype)
-  return arr_int32
-
-
-def qxx_to_float(arr_int, q = Q_SIG):
-  arr_float = np.array(arr_int).astype(np.float64) * (2 ** (-q))
-  return arr_float
 
 
 def flt_to_bin_file(sig_fl, out_dir=bin_dir):
@@ -56,6 +50,27 @@ class bq_type(IntEnum):
     notch = 12 
     peaking = 13
 
+def convert_coeffs(flt_coeffs):
+    out_coeffs = np.zeros(6)
+    b_shift = bq._get_bshift(np.float32(flt_coeffs))
+    _, out_coeffs[:5] = bq._round_and_check(flt_coeffs, b_shift)
+    out_coeffs[5] = b_shift
+    return out_coeffs
+
+def b_shift_coeffs(coeffs_python, out_c):
+    n_sets = coeffs_python.shape[0]
+    shifted_py = np.zeros((n_sets, 5), dtype=int)
+    shifted_c = np.zeros((n_sets, 5), dtype=int)
+
+    # apply b shifts to coeffs
+    for n in range(n_sets):
+        shifted_c[n, :3] = np.int64(out_c[n, :3]) << out_c[n, 5]
+        shifted_c[n, 3:] = out_c[n, 3:5]
+
+        shifted_py[n, :3] = np.int64(coeffs_python[n, :3]) << coeffs_python[n, 5]
+        shifted_py[n, 3:] = coeffs_python[n, 3:5]
+
+    return shifted_py, shifted_c
 
 def get_c_wav(dir_name, conv_name, verbose=True, sim = True, dtype=np.float32):
 
@@ -66,7 +81,7 @@ def get_c_wav(dir_name, conv_name, verbose=True, sim = True, dtype=np.float32):
     app = "xsim" if sim else "xrun --io"
     run_cmd = app + " --args " + str(bin_dir / "coeffs_alltests.xe") + f" {enum}"
     stdout = subprocess.check_output(run_cmd, cwd = dir_name, shell = True)
-    if verbose: print("run msg:\n", stdout)
+    if verbose: print("run msg:\n", stdout.decode())
 
     sig_bin = dir_name / "out_vector.bin"
     assert sig_bin.is_file(), f"Could not find output bin {sig_bin}"
@@ -83,15 +98,18 @@ def test_design_biquad_bypass():
     flt_to_bin_file(ratios, test_dir)
 
     out_c = get_c_wav(test_dir, "coeffs_bypass", dtype=np.int32)
-    out_c = np.reshape(out_c, newshape=[-1, 5])
+    out_c = np.reshape(out_c, newshape=[-1, 6])
  
-    coeffs_python = np.zeros((len(ratios), 5), dtype=np.int32)
+    coeffs_python = np.zeros((len(ratios), 6), dtype=np.int32)
 
     for n in range(len(ratios)):
         flt_coeffs = bq.make_biquad_bypass(48000)
-        _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
+        coeffs_python[n] = convert_coeffs(flt_coeffs)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-16, atol=0)
+    shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
+
+    # this doesn't work if one of the coefficients is zero
+    assert_allclose(shifted_c, shifted_py, rtol=2**-16, atol=0)
 
 
 def test_design_biquad_mute():
@@ -102,15 +120,18 @@ def test_design_biquad_mute():
     flt_to_bin_file(ratios, test_dir)
 
     out_c = get_c_wav(test_dir, "coeffs_mute", dtype=np.int32)
-    out_c = np.reshape(out_c, newshape=[-1, 5])
+    out_c = np.reshape(out_c, newshape=[-1, 6])
  
-    coeffs_python = np.zeros((len(ratios), 5), dtype=np.int32)
+    coeffs_python = np.zeros((len(ratios), 6), dtype=np.int32)
 
     for n in range(len(ratios)):
         flt_coeffs = bq.make_biquad_mute(48000)
-        _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
+        coeffs_python[n] = convert_coeffs(flt_coeffs)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-16, atol=0)
+    shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
+
+    # this doesn't work if one of the coefficients is zero
+    assert_allclose(shifted_c, shifted_py, rtol=2**-16, atol=0)
 
 
 def test_design_biquad_gain():
@@ -121,16 +142,18 @@ def test_design_biquad_gain():
     flt_to_bin_file(ratios, test_dir)
 
     out_c = get_c_wav(test_dir, "coeffs_gain", dtype=np.int32)
-    out_c = np.reshape(out_c, newshape=[-1, 5])
+    out_c = np.reshape(out_c, newshape=[-1, 6])
  
-    coeffs_python = np.zeros((len(ratios), 5), dtype=np.int32)
+    coeffs_python = np.zeros((len(ratios), 6), dtype=np.int32)
 
     for n in range(len(ratios)):
         flt_coeffs = bq.make_biquad_gain(48000, ratios[n][0])
-        _, coeffs_python[n] = bq._round_and_check(flt_coeffs, bq.BOOST_BSHIFT)
+        coeffs_python[n] = convert_coeffs(flt_coeffs)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-16, atol=0)
+    shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
+    # this doesn't work if one of the coefficients is zero
+    assert_allclose(shifted_c, shifted_py, rtol=2**-16, atol=0)
 
 def test_design_biquad_lowpass():
     test_dir = bin_dir / "coeffs_lowpass"
@@ -147,15 +170,18 @@ def test_design_biquad_lowpass():
     flt_to_bin_file(ratios, test_dir)
 
     out_c = get_c_wav(test_dir, "coeffs_lowpass", dtype=np.int32)
-    out_c = np.reshape(out_c, newshape=[-1, 5])
+    out_c = np.reshape(out_c, newshape=[-1, 6])
  
-    coeffs_python = np.zeros((len(ratios), 5), dtype=np.int32)
+    coeffs_python = np.zeros((len(ratios), 6), dtype=np.int32)
 
     for n in range(len(ratios)):
         flt_coeffs = bq.make_biquad_lowpass(ratios[n][1], ratios[n][0], ratios[n][2])
-        _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
+        coeffs_python[n] = convert_coeffs(flt_coeffs)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-19, atol=1)
+    shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
+
+    # this doesn't work if one of the coefficients is zero
+    assert_allclose(shifted_c, shifted_py, rtol=2**-19, atol=1)
 
 
 def test_design_biquad_highpass():
@@ -173,15 +199,18 @@ def test_design_biquad_highpass():
     flt_to_bin_file(ratios, test_dir)
 
     out_c = get_c_wav(test_dir, "coeffs_highpass", dtype=np.int32)
-    out_c = np.reshape(out_c, newshape=[-1, 5])
+    out_c = np.reshape(out_c, newshape=[-1, 6])
  
-    coeffs_python = np.zeros((len(ratios), 5), dtype=np.int32)
+    coeffs_python = np.zeros((len(ratios), 6), dtype=np.int32)
 
     for n in range(len(ratios)):
         flt_coeffs = bq.make_biquad_highpass(ratios[n][1], ratios[n][0], ratios[n][2])
-        _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
+        coeffs_python[n] = convert_coeffs(flt_coeffs)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-19, atol=0)
+    shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
+
+    # this doesn't work if one of the coefficients is zero
+    assert_allclose(shifted_c, shifted_py, rtol=2**-19, atol=0)
 
 
 def bandx_param_check(ratios):
@@ -213,16 +242,18 @@ def test_design_biquad_bandpass():
     flt_to_bin_file(ratios, test_dir)
 
     out_c = get_c_wav(test_dir, "coeffs_bandpass", dtype=np.int32)
-    out_c = np.reshape(out_c, newshape=[-1, 5])
+    out_c = np.reshape(out_c, newshape=[-1, 6])
  
-    coeffs_python = np.zeros((len(ratios), 5), dtype=np.int32)
+    coeffs_python = np.zeros((len(ratios), 6), dtype=np.int32)
 
     for n in range(len(ratios)):
         flt_coeffs = bq.make_biquad_bandpass(ratios[n][1], ratios[n][0], ratios[n][2])
-        _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
+        coeffs_python[n] = convert_coeffs(flt_coeffs)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-17, atol=1)
+    shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
+    # this doesn't work if one of the coefficients is zero
+    assert_allclose(shifted_c, shifted_py, rtol=2**-17, atol=1)
 
 def test_design_biquad_bandstop():
     test_dir = bin_dir / "coeffs_bandstop"
@@ -240,15 +271,18 @@ def test_design_biquad_bandstop():
     flt_to_bin_file(ratios, test_dir)
 
     out_c = get_c_wav(test_dir, "coeffs_bandstop", dtype=np.int32)
-    out_c = np.reshape(out_c, newshape=[-1, 5])
+    out_c = np.reshape(out_c, newshape=[-1, 6])
  
-    coeffs_python = np.zeros((len(ratios), 5), dtype=np.int32)
+    coeffs_python = np.zeros((len(ratios), 6), dtype=np.int32)
 
     for n in range(len(ratios)):
         flt_coeffs = bq.make_biquad_bandstop(ratios[n][1], ratios[n][0], ratios[n][2])
-        _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
+        coeffs_python[n] = convert_coeffs(flt_coeffs)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-17, atol=1)
+    shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
+
+    # this doesn't work if one of the coefficients is zero
+    assert_allclose(shifted_c, shifted_py, rtol=2**-17, atol=1)
 
 
 def test_design_biquad_notch():
@@ -266,15 +300,18 @@ def test_design_biquad_notch():
     flt_to_bin_file(ratios, test_dir)
 
     out_c = get_c_wav(test_dir, "coeffs_notch", dtype=np.int32)
-    out_c = np.reshape(out_c, newshape=[-1, 5])
+    out_c = np.reshape(out_c, newshape=[-1, 6])
  
-    coeffs_python = np.zeros((len(ratios), 5), dtype=np.int32)
+    coeffs_python = np.zeros((len(ratios), 6), dtype=np.int32)
 
     for n in range(len(ratios)):
         flt_coeffs = bq.make_biquad_notch(ratios[n][1], ratios[n][0], ratios[n][2])
-        _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
+        coeffs_python[n] = convert_coeffs(flt_coeffs)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-19, atol=0)
+    shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
+
+    # this doesn't work if one of the coefficients is zero
+    assert_allclose(shifted_c, shifted_py, rtol=2**-19, atol=0)
 
 
 def test_design_biquad_allpass():
@@ -290,15 +327,18 @@ def test_design_biquad_allpass():
     flt_to_bin_file(ratios, test_dir)
 
     out_c = get_c_wav(test_dir, "coeffs_allpass", dtype=np.int32)
-    out_c = np.reshape(out_c, newshape=[-1, 5])
+    out_c = np.reshape(out_c, newshape=[-1, 6])
  
-    coeffs_python = np.zeros((len(ratios), 5), dtype=np.int32)
+    coeffs_python = np.zeros((len(ratios), 6), dtype=np.int32)
 
     for n in range(len(ratios)):
         flt_coeffs = bq.make_biquad_allpass(ratios[n][1], ratios[n][0], ratios[n][2])
-        _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
+        coeffs_python[n] = convert_coeffs(flt_coeffs)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-19, atol=0)
+    shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
+
+    # this doesn't work if one of the coefficients is zero
+    assert_allclose(shifted_c, shifted_py, rtol=2**-19, atol=0)
 
 
 def test_design_biquad_peaking():
@@ -317,15 +357,18 @@ def test_design_biquad_peaking():
     flt_to_bin_file(ratios, test_dir)
 
     out_c = get_c_wav(test_dir, "coeffs_peaking", dtype=np.int32)
-    out_c = np.reshape(out_c, newshape=[-1, 5])
+    out_c = np.reshape(out_c, newshape=[-1, 6])
  
-    coeffs_python = np.zeros((len(ratios), 5), dtype=np.int32)
+    coeffs_python = np.zeros((len(ratios), 6), dtype=np.int32)
 
     for n in range(len(ratios)):
         flt_coeffs = bq.make_biquad_peaking(ratios[n][1], ratios[n][0], ratios[n][2], ratios[n][3])
-        _, coeffs_python[n] = bq._round_and_check(flt_coeffs, bq.BOOST_BSHIFT)
+        coeffs_python[n] = convert_coeffs(flt_coeffs)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-13, atol=0)
+    shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
+
+    # this doesn't work if one of the coefficients is zero
+    assert_allclose(shifted_c, shifted_py, rtol=2**-13, atol=0)
 
 
 def test_design_biquad_constq():
@@ -344,16 +387,18 @@ def test_design_biquad_constq():
     flt_to_bin_file(ratios, test_dir)
 
     out_c = get_c_wav(test_dir, "coeffs_constq", dtype=np.int32)
-    out_c = np.reshape(out_c, newshape=[-1, 5])
+    out_c = np.reshape(out_c, newshape=[-1, 6])
  
-    coeffs_python = np.zeros((len(ratios), 5), dtype=np.int32)
+    coeffs_python = np.zeros((len(ratios), 6), dtype=np.int32)
 
     for n in range(len(ratios)):
         flt_coeffs = bq.make_biquad_constant_q(ratios[n][1], ratios[n][0], ratios[n][2], ratios[n][3])
-        _, coeffs_python[n] = bq._round_and_check(flt_coeffs, bq.BOOST_BSHIFT)
+        coeffs_python[n] = convert_coeffs(flt_coeffs)
+
+    shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
 
     # this doesn't work if one of the coefficients is zero
-    np.testing.assert_allclose(out_c[coeffs_python>0], coeffs_python[coeffs_python>0], rtol=2**-12, atol=0)
+    assert_allclose(shifted_c, shifted_py, rtol=2**-12, atol=0)
 
 
 def test_design_biquad_high_shelf():
@@ -372,15 +417,18 @@ def test_design_biquad_high_shelf():
     flt_to_bin_file(ratios, test_dir)
 
     out_c = get_c_wav(test_dir, "coeffs_high_shelf", dtype=np.int32)
-    out_c = np.reshape(out_c, newshape=[-1, 5])
+    out_c = np.reshape(out_c, newshape=[-1, 6])
  
-    coeffs_python = np.zeros((len(ratios), 5), dtype=np.int32)
+    coeffs_python = np.zeros((len(ratios), 6), dtype=np.int32)
 
     for n in range(len(ratios)):
         flt_coeffs = bq.make_biquad_highshelf(ratios[n][1], ratios[n][0], ratios[n][2], ratios[n][3])
-        _, coeffs_python[n] = bq._round_and_check(flt_coeffs, bq.BOOST_BSHIFT)
+        coeffs_python[n] = convert_coeffs(flt_coeffs)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-12.8, atol=0)
+    shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
+
+    # this doesn't work if one of the coefficients is zero
+    assert_allclose(shifted_c, shifted_py, rtol=2**-11.2, atol=0)
 
 
 def test_design_biquad_low_shelf():
@@ -399,15 +447,18 @@ def test_design_biquad_low_shelf():
     flt_to_bin_file(ratios, test_dir)
 
     out_c = get_c_wav(test_dir, "coeffs_low_shelf", dtype=np.int32)
-    out_c = np.reshape(out_c, newshape=[-1, 5])
+    out_c = np.reshape(out_c, newshape=[-1, 6])
  
-    coeffs_python = np.zeros((len(ratios), 5), dtype=np.int32)
+    coeffs_python = np.zeros((len(ratios), 6), dtype=np.int32)
 
     for n in range(len(ratios)):
         flt_coeffs = bq.make_biquad_lowshelf(ratios[n][1], ratios[n][0], ratios[n][2], ratios[n][3])
-        _, coeffs_python[n] = bq._round_and_check(flt_coeffs, bq.BOOST_BSHIFT)
+        coeffs_python[n] = convert_coeffs(flt_coeffs)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-12.8, atol=0)
+    shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
+
+    # this doesn't work if one of the coefficients is zero
+    assert_allclose(shifted_c, shifted_py, rtol=2**-11.2, atol=1)
 
 
 
@@ -431,15 +482,18 @@ def test_design_biquad_linkwitz():
     ratios_32 = flt_to_bin_file(ratios, test_dir)
 
     out_c = get_c_wav(test_dir, "coeffs_linkwitz", dtype=np.int32)
-    out_c = np.reshape(out_c, newshape=[-1, 5])
+    out_c = np.reshape(out_c, newshape=[-1, 6])
  
-    coeffs_python = np.zeros((len(ratios), 5), dtype=np.int32)
+    coeffs_python = np.zeros((len(ratios), 6), dtype=np.int32)
 
     for n in range(len(ratios)):
         flt_coeffs = bq.make_biquad_linkwitz(ratios[n][1], ratios[n][0], ratios[n][2], ratios[n][3], ratios[n][4])
-        _, coeffs_python[n] = bq._round_and_check(flt_coeffs, 0)
+        coeffs_python[n] = convert_coeffs(flt_coeffs)
 
-    np.testing.assert_allclose(out_c, coeffs_python, rtol=2**-22, atol=0)
+    shifted_py, shifted_c = b_shift_coeffs(coeffs_python, out_c)
+
+    # this doesn't work if one of the coefficients is zero
+    assert_allclose(shifted_c, shifted_py, rtol=2**-22, atol=0)
 
 
 if __name__ == "__main__":

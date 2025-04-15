@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Signal generator DSP utilities."""
 
@@ -30,7 +30,7 @@ def quantize_signal(signal: np.ndarray, precision: int) -> np.ndarray:
         The quantized signal.
 
     """
-    signal = np.round(signal * (2 ** (precision - 1) - 1)) / 2 ** (precision - 1)
+    signal = np.round(signal * utils.Q_max(precision - 1)) / utils.Q_max(precision - 1)
     return signal
 
 

@@ -1,3 +1,5 @@
+.. _using_the_tool:
+
 Using the Tool
 ##############
 
@@ -24,7 +26,9 @@ with output limiter. In this design the product will stream real time audio
 boosting or suppressing the treble and bass and then limiting the output
 amplitude to protect the output device.
 
-The DSP pipeline will perform the following processes:
+The DSP pipeline will perform the processes shown in :numref:`bass_treble_pipeline`.
+
+.. _bass_treble_pipeline:
 
 .. figure:: ../images/bass_treble_limit.drawio.png
    :width: 100%
@@ -48,9 +52,10 @@ and sample rate must be specified.
    )
 
 
-The pipeline object can now be used to add DSP stages. For high shelf and low 
-shelf use :py:class:`Biquad <audio_dsp.stages.biquad.Biquad>` and for
-the limiter use :py:class:`LimiterPeak <audio_dsp.stages.limiter.LimiterPeak>`.
+The ``Pipeline`` object can now be used to add DSP stages. For high shelf and low 
+shelf use :ref:`Biquad_stage` and for
+the limiter use :ref:`LimiterPeak_stage`.
+For a full list of available DSP stages, see the :ref:`dsp_stages_list`.
 
 .. code-block:: python
 
@@ -76,14 +81,17 @@ the limiter use :py:class:`LimiterPeak <audio_dsp.stages.limiter.LimiterPeak>`.
 
     p.draw()
 
+:numref:`generated_pipeline_diagram` demonstrates the output of the Jupyter Notebook when the above snippet was executed.
+The Jupyter Notebook will illustrate the designed pipeline. For information on creating more complex
+pipeline topologies, see :ref:`complex_pipelines`.
 
-When running the above snippet in a Jupyter Notebook it will output the following 
-image which illustrates the pipeline which has been designed:
+.. _generated_pipeline_diagram:
 
 .. figure:: ../images/pipeline_diagram.png
    :width: 25%
 
    Generated pipeline diagram
+
 
 
 Tuning and simulating a pipeline
@@ -92,8 +100,8 @@ Tuning and simulating a pipeline
 Each stage contains a number of designer methods which can be identified as they
 have the ``make_`` prefix. These can be used to configure the stages. The stages
 also provide a ``plot_frequency_response()`` method which shows the magnitude
-and phase response of the stage with its current configuration. The two biquads
-created above will have a flat frequency response until they are tuned. The code
+and phase response of the stage with its current configuration :numref:`freq_responce_bq_diagram`.
+The two biquads created above will have a flat frequency response until they are tuned. The code
 below shows how to use the designer methods to convert them into the low shelf
 and high shelf that is desired. The individual stages are accessed using the
 labels that were assigned to them when the stage was added to the pipeline.
@@ -108,6 +116,7 @@ labels that were assigned to them when the stage was added to the pipeline.
    p["highshelf"].make_highshelf(4000, 0.7, 6)
    p["highshelf"].plot_frequency_response()
 
+.. _freq_responce_bq_diagram:
 
 .. figure:: ../images/frequency_response.png
    :width: 100%
@@ -123,7 +132,7 @@ Code Generation
 
 With an initial pipeline complete, it is time to generate the xcore source code
 and run it on a device. The code can be generated using the
-:py:class:`generate_dsp_main() <audio_dsp.design.pipeline.generate_dsp_main>`
+:py:meth:`generate_dsp_main() <audio_dsp.design.pipeline.generate_dsp_main>`
 function.
 
 .. code-block:: python
@@ -135,11 +144,19 @@ function.
 The reference application should then provide instructions for compiling the
 application and running it on the target device.
 
-With that the tuned DSP pipeline will be running on the xcore device and can be
-used to stream audio. The next step is to iterate on the design and tune it to
-perfection. One option is to repeat the steps described above, regenerating the
+.. note::
+   `Application Note AN02014 <https://www.xmos.com/file/an02014-integrating-dsp-into-the-xmos-usb-reference-design/>`_
+   discusses integrating a DSP pipeline into the XMOS USB Reference Design.
+
+The :py:meth:`generate_dsp_main() <audio_dsp.design.pipeline.generate_dsp_main>`
+function will cause the tuned DSP pipeline to run on the xcore device,
+where it can be used to stream audio.
+The next step is to iterate on the design and tune it to perfection.
+One option is to repeat the steps described above, regenerating the
 code with new tuning values until the performance requirements are satisfied.
 
+
+.. _complex_pipelines:
 
 Designing Complex Pipelines
 ===========================
@@ -148,34 +165,66 @@ The audio dsp library is not limited to the simple linear pipelines shown above.
 Stages can scale to take an arbitrary number of inputs, and the outputs of each
 stage can be split and joined arbitrarily.
 
-When created, every stage's initialiser returns an instance of
-:py:class:`StageOutputList<audio_dsp.design.stage.StageOutputList>`, 
-a container of 
-:py:class:`StageOutput<audio_dsp.design.stage.StageOutput>`. 
-The stage's outputs can be selected from
-the StageOutputList by indexing into it, creating a new StageOutputList, which
-can be concatenated with other StageOutputList instances using the ``+``
-operator. When creating a stage, it will require a StageOutputList as its
-inputs.
+
+
+When creating a new DSP pipeline, the initialiser returns the pipeline input channels as
+an instance of
+:py:class:`StageOutputList<audio_dsp.design.stage.StageOutputList>`, a list-like container of 
+:py:class:`StageOutput<audio_dsp.design.stage.StageOutput>`.
+When adding a new stage to the pipeline, a ``StageOutputList`` is used to pass the stage inputs.
+The stage initialiser returns a new instance of ``StageOutputList`` containing its outputs.
+
+To select specific channels from a ``StageOutputList`` to pass to another
+stage, standard Python indexing can be used. Channels from multiple instances of
+``StageOutputList`` can be combined by using the ``+`` operator.
 
 The below shows an example of how this could work with a pipeline with 7 inputs.
 
 .. code-block:: python
 
-   # split the pipeline inputs
-   i0 = p.stage(Biquad, i[0:2])      # use the first 2 inputs
-   i1 = p.stage(Biquad, i[2])        # use the third input (index 2)
-   i2 = p.stage(Biquad, i[3, 5, 6])  # use the inputs at index 3, 5, and 6
-   # join biquad outputs
-   i3 = p.stage(Biquad, i0 + i1 + i2[0]) # pass all of i0 and i1, as well as the first channel in i2
+    # start with 7 input channels
+    p, inputs = Pipeline.begin(7, fs=48000)
 
-   p.set_outputs(i3 + i2[1:]) # The pipeline output will be all i3 channels and the 2nd and 3rd channel from i2.
+   # pass the first 2 inputs to a 2-channel Biquad
+   i0 = p.stage(Biquad, i[0:2])
+
+   # pass the third input (index 2) to a 1-channel biquad
+   i1 = p.stage(Biquad, i[2])
+
+   # pass the inputs at index 3, 5, and 6 to a 3 channel biquad
+   i2 = p.stage(Biquad, i[3, 5, 6])
+
+   # pass all of i0 and i1, as well as the first channel in i2
+   # to create a 4 channel biquad
+   i3 = p.stage(Biquad, i0 + i1 + i2[0]) 
+
+   # The pipeline output has 6 channels:
+   # - all four i3 channels 
+   # - the 2nd and 3rd channel from i2
+   p.set_outputs(i3 + i2[1:])
+
+In order to split a signal path, a :ref:`Fork_stage` stage
+should be used. This takes a count parameter that specifies how many times to duplicate each input to
+the ``Fork``. The code block below shows how the signal chain can be forked:
+
+.. code-block:: python
+
+    p, inputs = Pipeline.begin(1, fs=48000)
+
+    # fork the input to create a 2 channel signal
+    x = p.stage(Fork, inputs, count=2)
+
+    # fork again to create a 4 channel signal
+    x = p.stage(Fork, x, count=2)
+
+    # there are now 4 channels in the pipeline output
+    p.set_outputs(x)
 
 As the pipeline grows it may end up consuming more MIPS than are available on a
 single xcore thread. The pipeline design interface allows adding additional
 threads using the 
 :py:meth:`next_thread() <audio_dsp.design.pipeline.Pipeline.next_thread>` 
-method of the Pipeline instance. Each thread
+method of the ``Pipeline`` instance. Each thread
 in the pipeline represents an xcore hardware thread. Do not add more threads
 than are available in your application. The maximum number of threads that
 should be used, if available, is five. This limitation is due to the architecture of the xcore

@@ -1,4 +1,4 @@
-// Copyright 2024 XMOS LIMITED.
+// Copyright 2024-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #pragma once
@@ -53,6 +53,22 @@ typedef struct{
   /** Slope of the compression curve */
   float slope;
 }compressor_t;
+
+/**
+ * @brief Stereo compressor state structure
+ */
+typedef struct{
+  /** Envelope detector for left channel */
+  env_detector_t env_det_l;
+  /** Envelope detector for right channel */
+  env_detector_t env_det_r;
+  /** Linear threshold */
+  int32_t threshold;
+  /** Linear gain */
+  int32_t gain;
+  /** Slope of the compression curve */
+  float slope;
+}compressor_stereo_t;
 
 typedef struct{
   /** Envelope detector */
@@ -176,3 +192,21 @@ int32_t adsp_compressor_rms_sidechain(
   compressor_t * comp,
   int32_t input_samp,
   int32_t detect_samp);
+
+/**
+ * @brief Process a pair of new samples with a stereo sidechain RMS compressor
+ *
+ * @param comp                Compressor object
+ * @param outputs_lr          Pointer to the outputs 0:left, 1:right
+ * @param input_samp_l        Left input sample
+ * @param input_samp_r        Right input sample
+ * @param detect_samp_l       Left sidechain sample
+ * @param detect_samp_r       Right sidechain sample
+ */
+void adsp_compressor_rms_sidechain_stereo(
+  compressor_stereo_t * comp,
+  int32_t outputs_lr[2],
+  int32_t input_samp_l,
+  int32_t input_samp_r,
+  int32_t detect_samp_l,
+  int32_t detect_samp_r);
