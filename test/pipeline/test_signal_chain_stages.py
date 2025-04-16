@@ -204,7 +204,7 @@ def test_switch_stereo(position):
 
 
 @pytest.mark.parametrize("mix, tol", [[0, 0],
-                                      [0.5, 2**-21],
+                                      [0.5, 0],
                                       [1, 0]])
 def test_crossfader(mix, tol):
     """
@@ -220,7 +220,7 @@ def test_crossfader(mix, tol):
 
 
 @pytest.mark.parametrize("mix, tol", [[0, 0],
-                                      [0.5, 2**-21],
+                                      [0.5, 0],
                                       [1, 0]])
 def test_crossfader_stereo(mix, tol):
     """

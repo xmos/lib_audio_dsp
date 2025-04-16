@@ -21,7 +21,7 @@ void crossfader_process(int32_t **input, int32_t **output, void *app_data_state)
     int j = 0;
     do
     {
-        *out++ = adsp_crossfader(*in1++, *in2++, state->gains[0], state->gains[1], 31);
+        *out++ = adsp_crossfader(*in1++, *in2++, state->config.gains[0], state->config.gains[1], 31);
     } while (++j < state->frame_size);
 }
 
@@ -40,8 +40,6 @@ void crossfader_init(module_instance_t* instance, adsp_bump_allocator_t* allocat
     state->n_outputs = n_outputs;
 
     memcpy(&state->config, config, sizeof(crossfader_config_t));
-    adsp_crossfader_mix(state->gains, config->mix);
-
 }
 
 void crossfader_control(void *module_state, module_control_t *control)
@@ -54,7 +52,6 @@ void crossfader_control(void *module_state, module_control_t *control)
         // Finish the write by updating the working copy with the new config
         memcpy(&state->config, config, sizeof(crossfader_config_t));
         control->config_rw_state = config_none_pending;
-        adsp_crossfader_mix(state->gains, config->mix);
     }
     else if(control->config_rw_state == config_read_pending)
     {

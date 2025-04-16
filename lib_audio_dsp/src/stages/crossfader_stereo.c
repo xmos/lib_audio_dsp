@@ -25,8 +25,8 @@ void crossfader_stereo_process(int32_t **input, int32_t **output, void *app_data
     int j = 0;
     do
     {
-        *out_L++ = adsp_crossfader(*in1_L++, *in2_L++, state->gains[0], state->gains[1], 31);
-        *out_R++ = adsp_crossfader(*in1_R++, *in2_R++, state->gains[0], state->gains[1], 31);
+        *out_L++ = adsp_crossfader(*in1_L++, *in2_L++, state->config.gains[0], state->config.gains[1], 31);
+        *out_R++ = adsp_crossfader(*in1_R++, *in2_R++, state->config.gains[0], state->config.gains[1], 31);
     } while (++j < state->frame_size);
 }
 
@@ -45,7 +45,6 @@ void crossfader_stereo_init(module_instance_t* instance, adsp_bump_allocator_t* 
     state->n_outputs = n_outputs;
 
     memcpy(&state->config, config, sizeof(crossfader_stereo_config_t));
-    adsp_crossfader_mix(state->gains, config->mix);
 }
 
 void crossfader_stereo_control(void *module_state, module_control_t *control)
@@ -58,7 +57,6 @@ void crossfader_stereo_control(void *module_state, module_control_t *control)
         // Finish the write by updating the working copy with the new config
         memcpy(&state->config, config, sizeof(crossfader_stereo_config_t));
         control->config_rw_state = config_none_pending;
-        adsp_crossfader_mix(state->gains, config->mix);
     }
     else if(control->config_rw_state == config_read_pending)
     {
