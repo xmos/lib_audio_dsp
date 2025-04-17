@@ -25,8 +25,10 @@ void crossfader_stereo_process(int32_t **input, int32_t **output, void *app_data
     int j = 0;
     do
     {
-        *out_L++ = adsp_crossfader(*in1_L++, *in2_L++, state->config.gains[0], state->config.gains[1], 31);
-        *out_R++ = adsp_crossfader(*in1_R++, *in2_R++, state->config.gains[0], state->config.gains[1], 31);
+        int32_t gain_1 = adsp_slew_gain(&state->cfs.gain_1);
+        int32_t gain_2 = adsp_slew_gain(&state->cfs.gain_2);
+        *out_L++ = adsp_crossfader(*in1_L++, *in2_L++, gain_1, gain_2, 31);
+        *out_R++ = adsp_crossfader(*in1_R++, *in2_R++, gain_1, gain_2, 31);
     } while (++j < state->frame_size);
 }
 
@@ -44,7 +46,9 @@ void crossfader_stereo_init(module_instance_t* instance, adsp_bump_allocator_t* 
     xassert(n_outputs == 2 && "Stereo crossfader should only have two outputs");
     state->n_outputs = n_outputs;
 
-    memcpy(&state->config, config, sizeof(crossfader_stereo_config_t));
+    // memcpy(&state->config, config, sizeof(crossfader_stereo_config_t));
+    state->cfs.gain_1 = adsp_slew_gain_init(config->gains[0], 7);
+    state->cfs.gain_2 = adsp_slew_gain_init(config->gains[1], 7);
 }
 
 void crossfader_stereo_control(void *module_state, module_control_t *control)
@@ -55,12 +59,13 @@ void crossfader_stereo_control(void *module_state, module_control_t *control)
     if(control->config_rw_state == config_write_pending)
     {
         // Finish the write by updating the working copy with the new config
-        memcpy(&state->config, config, sizeof(crossfader_stereo_config_t));
+        state->cfs.gain_1.target_gain = config->gains[0];
+        state->cfs.gain_2.target_gain = config->gains[1];
         control->config_rw_state = config_none_pending;
     }
     else if(control->config_rw_state == config_read_pending)
     {
-        memcpy(config, &state->config, sizeof(crossfader_stereo_config_t));
+        // memcpy(config, &state->config, sizeof(crossfader_stereo_config_t));
         control->config_rw_state = config_read_updated;
     }
     else

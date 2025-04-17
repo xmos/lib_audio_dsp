@@ -8,7 +8,7 @@
 
 typedef struct
 {
-    crossfader_stereo_config_t config;
+    crossfader_slew_t cfs;
     int n_inputs;
     int n_outputs;
     int frame_size;

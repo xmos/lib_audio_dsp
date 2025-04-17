@@ -213,7 +213,6 @@ def test_crossfader(mix, tol):
     channels = 2
     p = Pipeline(channels)
     switch_dsp = p.stage(Crossfader, p.i, "s", mix=mix)
-    # p["s"].set_mix(mix)
     p.set_outputs(switch_dsp)
 
     do_test(p, f"crossfader_{mix}", rtol=tol)
@@ -228,8 +227,7 @@ def test_crossfader_stereo(mix, tol):
     """
     channels = 4
     p = Pipeline(channels)
-    switch_dsp = p.stage(CrossfaderStereo, p.i, "s")
-    p["s"].set_mix(mix)
+    switch_dsp = p.stage(CrossfaderStereo, p.i, "s", mix=mix)
     p.set_outputs(switch_dsp)
 
     do_test(p, f"crossfaderstereo_{mix}", rtol=tol)
