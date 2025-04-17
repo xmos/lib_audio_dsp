@@ -204,7 +204,7 @@ def generate_test_param_file(config_name, stage_config):
         Path(__file__).resolve().parent / f"build/control_test_params.h", "w"
     ) as f_op:
         f_op.write('#include "cmds.h"\n\n')
-        f_op.write("#define CMD_PAYLOAD_MAX_SIZE 512\n")
+        f_op.write("#define CMD_PAYLOAD_MAX_SIZE 256 // must be 256 to fit in EP0\n")
         f_op.write(f"#define CMD_TOTAL_NUM {len(stage_config)}\n\n")
         f_op.write("typedef struct control_data_t {\n")
         f_op.write("\tuint32_t cmd_id;\n")

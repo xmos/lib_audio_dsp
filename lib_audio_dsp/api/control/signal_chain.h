@@ -28,6 +28,29 @@ typedef enum{
 int32_t adsp_dB_to_gain(float dB_gain);
 
 /**
+ * @brief Initialise a slewing gain object
+ *
+ * The slew shift will determine the speed of the volume change.
+ * A list of the first 10 slew shifts is shown below:
+ *
+ * 1  ->  0.03 ms,
+ * 2  ->  0.07 ms,
+ * 3  ->  0.16 ms,
+ * 4  ->  0.32 ms,
+ * 5  ->  0.66 ms,
+ * 6  ->  1.32 ms,
+ * 7  ->  2.66 ms,
+ * 8  ->  5.32 ms,
+ * 9  -> 10.66 ms,
+ * 10 -> 21.32 ms.
+ *
+ * @param init_gain         Initial gain
+ * @param slew_shift        Shift value used in the exponential slew
+ * @return gain_slew_t   The slewing gain object.
+ */
+gain_slew_t adsp_slew_gain_init(int32_t init_gain, int32_t slew_shift);
+
+/**
  * @brief Initialise volume control object.
  * The slew shift will determine the speed of the volume change.
  * A list of the first 10 slew shifts is shown below:

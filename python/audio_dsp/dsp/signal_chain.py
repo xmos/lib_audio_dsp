@@ -8,6 +8,7 @@ import warnings
 from audio_dsp import _deprecated
 from audio_dsp.dsp import generic as dspg
 from audio_dsp.dsp import utils
+from copy import deepcopy
 
 # Q format for signal gains
 Q_GAIN = 27
@@ -1128,11 +1129,19 @@ class crossfader(_combiners):
     """
     The crossfader mixes between two sets of inputs. The
     mix control sets the respective levels of each input.
+    When the mix is updated, an exponential slew is applied to reduce
+    artifacts.
+
+    The slew is implemented as a shift operation. The slew rate can be
+    converted to a time constant using the formula:
+    `time_constant = -1/ln(1 - 2^-slew_shift) * (1/fs)`
 
     Parameters
     ----------
     mix : float
         The channel mix, must be set between [0, 1]
+    slew_shift : int, optional
+        The shift value used in the exponential slew.
 
     Attributes
     ----------
@@ -1142,13 +1151,26 @@ class crossfader(_combiners):
         Floating point gains for each input for a given mix value.
     gains_int : list[int]
         Fixed point gains for each input for a given mix value.
+    slew_shift : int
+        The shift value used in the exponential slew.
 
     """
 
-    def __init__(self, fs: float, n_chans: int, mix: float = 0.5, Q_sig: int = dspg.Q_SIG) -> None:
+    def __init__(
+        self,
+        fs: float,
+        n_chans: int,
+        mix: float = 0.5,
+        slew_shift: int = 7,
+        Q_sig: int = dspg.Q_SIG,
+    ) -> None:
         super().__init__(fs, n_chans, Q_sig)
         self.n_outs = n_chans // 2
         self.mix = mix
+        self.gains = deepcopy(self.target_gains)
+        self.gains_int = deepcopy(self.target_gains_int)
+
+        self.slew_shift = slew_shift
 
     @property
     def mix(self):
@@ -1171,13 +1193,13 @@ class crossfader(_combiners):
         omega = self.mix * np.pi / 2
 
         # -4.5 dB
-        self.gains = [0.0] * 2
-        self.gains[0] = np.sqrt((1 - self.mix) * np.cos(omega))
-        self.gains[1] = np.sqrt(self.mix * np.sin(omega))
+        self.target_gains = [0.0] * 2
+        self.target_gains[0] = np.sqrt((1 - self.mix) * np.cos(omega))
+        self.target_gains[1] = np.sqrt(self.mix * np.sin(omega))
 
-        self.gains_int = [0] * 2
-        self.gains_int[0] = _float_to_q31(self.gains[0])
-        self.gains_int[1] = _float_to_q31(self.gains[1])
+        self.target_gains_int = [0] * 2
+        self.target_gains_int[0] = _float_to_q31(self.target_gains[0])
+        self.target_gains_int[1] = _float_to_q31(self.target_gains[1])
 
     def process_channels(self, sample_list: list[float]) -> list[float]:
         """
@@ -1196,8 +1218,14 @@ class crossfader(_combiners):
 
         """
         y = [0.0] * self.n_outs
+
+        # do the exponential slew
+        self.gains[0] += (self.target_gains[0] - self.gains[0]) * 2**-self.slew_shift
+        self.gains[1] += (self.target_gains[1] - self.gains[1]) * 2**-self.slew_shift
+
         for n in range(self.n_outs):
             y[n] = sample_list[n] * self.gains[0] + sample_list[n + self.n_outs] * self.gains[1]
+
         return y
 
     def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
@@ -1220,6 +1248,10 @@ class crossfader(_combiners):
 
         """
         y = [0] * self.n_outs
+        # do the exponential slew
+        self.gains_int[0] += (self.target_gains_int[0] - self.gains_int[0]) >> self.slew_shift
+        self.gains_int[1] += (self.target_gains_int[1] - self.gains_int[1]) >> self.slew_shift
+
         for n in range(self.n_outs):
             acc = 1 << (31 - 1)
             this_sample = utils.float_to_fixed(sample_list[n], self.Q_sig)

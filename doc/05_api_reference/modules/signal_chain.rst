@@ -299,6 +299,32 @@ The crossfader mixes between two sets of inputs.
 
         .. rubric:: Python API
 
+    Only a slewing crossfader Python API is provided.
+
+====================
+Crossfader with slew
+====================
+
+The crossfader mixes between two sets of inputs, with slew applied to the
+gains when they are changed.
+
+.. doxygenstruct:: crossfader_slew_t
+    :members:
+
+.. tab:: C API
+
+    .. only:: latex
+
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_crossfader_slew
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
     .. autoclass:: audio_dsp.dsp.signal_chain.crossfader
         :noindex:
 

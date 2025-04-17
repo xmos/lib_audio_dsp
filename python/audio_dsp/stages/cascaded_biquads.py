@@ -201,7 +201,10 @@ class CascadedBiquads16(Stage):
             self.left_shift.append(bq.b_shift)
 
         self.set_control_field_cb(
-            "filter_coeffs", lambda: [i for i in self._get_fixed_point_coeffs()]
+            "filter_coeffs_lower", lambda: [i for i in self._get_fixed_point_coeffs_lower()]
+        )
+        self.set_control_field_cb(
+            "filter_coeffs_upper", lambda: [i for i in self._get_fixed_point_coeffs_upper()]
         )
         self.set_control_field_cb(
             "left_shift", lambda: [i.b_shift for i in self.dsp_block.biquads]
@@ -209,9 +212,16 @@ class CascadedBiquads16(Stage):
 
         self.stage_memory_parameters = (self.n_in,)
 
-    def _get_fixed_point_coeffs(self):
+    def _get_fixed_point_coeffs_lower(self):
         fc = []
-        for bq in self.dsp_block.biquads:
+        for bq in self.dsp_block.biquads[:8]:
+            fc.extend(bq.int_coeffs)
+        a = np.array(fc, dtype=np.int32)
+        return a
+
+    def _get_fixed_point_coeffs_upper(self):
+        fc = []
+        for bq in self.dsp_block.biquads[8:]:
             fc.extend(bq.int_coeffs)
         a = np.array(fc, dtype=np.int32)
         return a
