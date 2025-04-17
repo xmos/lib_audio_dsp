@@ -21,7 +21,9 @@ void crossfader_process(int32_t **input, int32_t **output, void *app_data_state)
     int j = 0;
     do
     {
-        *out++ = adsp_crossfader(*in1++, *in2++, state->config.gains[0], state->config.gains[1], 31);
+        // *out++ = adsp_crossfader(*in1++, *in2++, state->config.gains[0], state->config.gains[1], 31);
+        *out++ = adsp_crossfader_slew(&state->cfs, *in1++, *in2++);
+
     } while (++j < state->frame_size);
 }
 
@@ -39,7 +41,9 @@ void crossfader_init(module_instance_t* instance, adsp_bump_allocator_t* allocat
     xassert(n_outputs == 1 && "crossfader should only have one outputs");
     state->n_outputs = n_outputs;
 
-    memcpy(&state->config, config, sizeof(crossfader_config_t));
+    // memcpy(&state->config, config, sizeof(crossfader_config_t));
+    state->cfs.gain_1 = adsp_slew_gain_init(config->gains[0], 7);
+    state->cfs.gain_2 = adsp_slew_gain_init(config->gains[1], 7);
 }
 
 void crossfader_control(void *module_state, module_control_t *control)
@@ -50,12 +54,15 @@ void crossfader_control(void *module_state, module_control_t *control)
     if(control->config_rw_state == config_write_pending)
     {
         // Finish the write by updating the working copy with the new config
-        memcpy(&state->config, config, sizeof(crossfader_config_t));
+        // memcpy(&state->config, config, sizeof(crossfader_config_t));
+        state->cfs.gain_1.target_gain = config->gains[0];
+        state->cfs.gain_2.target_gain = config->gains[1];
+
         control->config_rw_state = config_none_pending;
     }
     else if(control->config_rw_state == config_read_pending)
     {
-        memcpy(config, &state->config, sizeof(crossfader_config_t));
+        // memcpy(config, &state->config, sizeof(crossfader_config_t));
         control->config_rw_state = config_read_updated;
     }
     else

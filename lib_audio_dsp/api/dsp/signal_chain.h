@@ -226,6 +226,8 @@ int32_t adsp_delay(
 int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t* samples);
 
 
+gain_slew_t adsp_slew_gain_init(int32_t init_gain, int32_t slew_shift);
+
 static inline int32_t adsp_slew_gain(gain_slew_t * gain_state) {
   // do the exponential slew
   gain_state->gain += (gain_state->target_gain - gain_state->gain) >> gain_state->slew_shift;

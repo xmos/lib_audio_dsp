@@ -188,6 +188,15 @@ int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t* samples){
     }
   }
 
+gain_slew_t adsp_slew_gain_init(int32_t init_gain, int32_t slew_shift){
+  gain_slew_t gain;
+  gain.target_gain = init_gain;
+  gain.gain = init_gain;
+  gain.slew_shift = slew_shift;
+  return gain;
+}
+
+
 
 int32_t adsp_crossfader_slew(crossfader_slew_t* crossfader, int32_t in1, int32_t in2){
   int32_t gain_1 = adsp_slew_gain(&crossfader->gain_1);
