@@ -15,6 +15,14 @@ int32_t adsp_dB_to_gain(float dB_gain) {
   return db_to_qxx(dB_gain, Q_GAIN);
 }
 
+gain_slew_t adsp_slew_gain_init(int32_t init_gain, int32_t slew_shift){
+  gain_slew_t gain;
+  gain.target_gain = init_gain;
+  gain.gain = init_gain;
+  gain.slew_shift = slew_shift;
+  return gain;
+}
+
 volume_control_t adsp_volume_control_init(
   float gain_dB,
   int32_t slew_shift,

@@ -1,7 +1,10 @@
 module:
   crossfader:
-    mix:
-      type: float
-      help: The mix between the inputs as a float between 0.0f and 1.0f.
+    gains:
+      type: int32_t
+      size: 2
+      help: The gains of each input to the crossfader in Q0.31 format. A
+            mix between 0 and 1 can be converted to gains by using the helper
+            function :c:func`adsp_crossfader_mix` in ``control/signal_chain.h``.
 includes:
   - "stdint.h"

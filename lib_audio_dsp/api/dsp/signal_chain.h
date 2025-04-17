@@ -15,6 +15,19 @@
 /** Gain format to be used in the gain APIs */
 #define Q_GAIN 27
 
+
+/**
+ * @brief Slewing gain state structure
+ */
+typedef struct{
+  /** Target linear gain */
+  int32_t target_gain;
+  /** Current linear gain */
+  int32_t gain;
+  /** Slew shift */
+  int32_t slew_shift;
+} gain_slew_t;
+
 /**
  * @brief Volume control state structure
  */
@@ -64,6 +77,17 @@ typedef struct{
   int32_t step;
 } switch_slew_t;
 
+/**
+ * @brief Slewing crossfader state structure
+ */
+typedef struct{
+  /** Slewing gain struct for first crossfader input. */
+  gain_slew_t gain_1;
+  /** Slewing gain struct for second crossfader input. */
+  gain_slew_t gain_2;
+  /** Mix of the inputs. */
+  float mix;
+} crossfader_slew_t;
 
 /**
  * @brief Convert from Q0.31 to Q_SIG
@@ -197,6 +221,18 @@ int32_t adsp_delay(
 int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t* samples);
 
 /**
+ * @brief Exponentially slew the gain towards the target gain.
+ * 
+ * @param gain_state    Slewing gain state object.
+ * @return int32_t      The current gain.
+ */
+static inline int32_t adsp_slew_gain(gain_slew_t * gain_state) {
+  // do the exponential slew
+  gain_state->gain += (gain_state->target_gain - gain_state->gain) >> gain_state->slew_shift;
+  return gain_state->gain;
+}
+
+/**
  * @brief Crossfade between two channels using their gains.
  * Will do: (in1 * gain1) + (in2 * gain2).
  *
@@ -215,3 +251,14 @@ static inline int32_t adsp_crossfader(int32_t in1, int32_t in2, int32_t gain1, i
   asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (q_gain));
   return ah;
 }
+
+/**
+ * @brief Crossfade between two channels with slew applied to the gains.
+ * Will do: (in1 * crossfader->gain1.gain) + (in2 * crossfader->gain2.gain).
+ *
+ * @param crossfader    Slewing crossfader state object.
+ * @param in1           First signal
+ * @param in2           Second signal
+ * @return int32_t      Mixed signal
+ */
+int32_t adsp_crossfader_slew(crossfader_slew_t* crossfader, int32_t in1, int32_t in2);

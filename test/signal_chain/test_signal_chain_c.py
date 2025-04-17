@@ -236,10 +236,23 @@ def test_switch_slew_c(in_signal):
 
 @pytest.mark.parametrize("mix", [0, 0.1, 0.5, 0.9, 1.0])
 def test_crossfader_c(in_signal, mix):
-  filt = sc.crossfader(fs, 2, mix)
+
+  # initial mix of zero  
+  filt = sc.crossfader(fs, 2, 0)
   test_dir = bin_dir / f"crossfader_{mix}"
   test_dir.mkdir(exist_ok = True, parents = True)
   write_gain(test_dir, filt.gains_int)
+
+  test_info = [0] * 5
+  test_info[0] = filt.slew_shift
+  test_info[1:3] = filt.target_gains_int
+
+  # set mix to desired mix
+  filt.mix = mix
+  test_info[3:] = filt.target_gains_int
+
+  test_info = np.array(test_info, dtype=np.int32)
+  test_info.tofile(test_dir / "gain.bin")
 
   single_channels_test(filt, test_dir, "crossfader", in_signal)
 

@@ -8,11 +8,10 @@
 
 typedef struct
 {
-    crossfader_config_t config;
+    crossfader_slew_t cfs;
     int n_inputs;
     int n_outputs;
     int frame_size;
-    int32_t gains[2];
 }crossfader_state_t;
 
 #define CROSSFADER_STAGE_REQUIRED_MEMORY 0
