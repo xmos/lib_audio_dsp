@@ -132,7 +132,7 @@ pipeline {
                   // build everything
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      sh "pip install -r requirements.txt"
+                      sh "pip install --no-cache-dir -r requirements.txt"
                     } // tools
                   } // withVenv
                 } // dir
@@ -322,7 +322,7 @@ pipeline {
                   // build everything
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      sh "pip install -r requirements.txt"
+                      sh "pip install --no-cache-dir -r requirements.txt"
                     }
                   }
                 }
@@ -437,7 +437,7 @@ pipeline {
             checkout scm
             createVenv("requirements-format.txt")
             withVenv {
-              sh 'pip install --no-deps -r requirements-format.txt'
+              sh 'pip install --no-cache-dir --no-deps -r requirements-format.txt'
               sh "make -C python check" // ruff check
               versionChecks checkReleased: false, versionsPairs: versionsPairs
               buildDocs xmosdocVenvPath: "${WORKSPACE}", archiveZipOnly: true // needs python run
@@ -452,12 +452,11 @@ pipeline {
 
         stage ('Hardware Test') {
           agent {
-            label 'xcore.ai && uhubctl'
+            label 'xvf3600'
           }
 
           steps {
             runningOn(env.NODE_NAME)
-            sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
             dir("lib_audio_dsp") {
               checkout scm
             }
@@ -466,13 +465,9 @@ pipeline {
             dir("lib_audio_dsp") {
               withVenv {
                 withTools(params.TOOLS_VERSION) {
-                  sh "pip install -r requirements.txt"
-                  sh "pip install -e ${WORKSPACE}/xtagctl"
-                  withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
-                      sh "xtagctl reset ${adapterIDs[0]}"
+                  sh "pip install --no-cache-dir -r requirements.txt"
                       dir("test/pipeline") {
-                        sh "python -m pytest -m group0 -n auto --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO --adapter-id " + adapterIDs[0]
-                      }
+                        sh "python -m pytest -m group0 -n auto --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO"
                   }
                 }
               }
@@ -493,12 +488,11 @@ pipeline {
 
         stage ('Hardware Test 2') {
           agent {
-            label 'xcore.ai && uhubctl'
+            label 'xvf3610_int'
           }
 
           steps {
             runningOn(env.NODE_NAME)
-            sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
             dir("lib_audio_dsp") {
               checkout scm
             }
@@ -507,14 +501,10 @@ pipeline {
             dir("lib_audio_dsp") {
               withVenv {
                 withTools(params.TOOLS_VERSION) {
-                  sh "pip install -r requirements.txt"
-                  sh "pip install -e ${WORKSPACE}/xtagctl"
-                  withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
-                      sh "xtagctl reset ${adapterIDs[0]}"
+                  sh "pip install --no-cache-dir -r requirements.txt"
                       dir("test/pipeline") {
                       sh "python -m pytest   -m group1 -n auto --junitxml=pytest_result.xml -rA -v --durations=0 -o junit_logging=all --log-cli-level=INFO "
                     }
-                  }
                 }
               }
             }

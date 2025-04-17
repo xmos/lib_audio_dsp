@@ -1,5 +1,5 @@
 .. |xtc_tools_version| replace:: 15.3.1
-.. |python_version|    replace:: 3.12
+.. |python_version|    replace:: 3.10
 .. |cmake_version|     replace:: 3.21
 
 .. _CMAKE:              https://cmake.org/cmake/help/latest/
