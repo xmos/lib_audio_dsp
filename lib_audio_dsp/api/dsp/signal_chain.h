@@ -15,6 +15,19 @@
 /** Gain format to be used in the gain APIs */
 #define Q_GAIN 27
 
+
+/**
+ * @brief Slewing gain state structure
+ */
+typedef struct{
+  /** Target linear gain */
+  int32_t target_gain;
+  /** Current linear gain */
+  int32_t gain;
+  /** Slew shift */
+  int32_t slew_shift;
+} gain_slew_t;
+
 /**
  * @brief Volume control state structure
  */
@@ -63,6 +76,22 @@ typedef struct{
   /** Step increment of counter. */
   int32_t step;
 } switch_slew_t;
+
+
+/**
+ * @brief Slewing crossfader state structure
+ */
+typedef struct{
+  /** If slewing, switching is True until slewing is over. */
+  gain_slew_t gain_1;
+  /** Current switch pole position. */
+  gain_slew_t gain_2;
+  /** Last switch pole position. */
+  float mix;
+
+} crossfader_slew_t;
+
+
 
 
 /**
@@ -196,6 +225,14 @@ int32_t adsp_delay(
  */
 int32_t adsp_switch_slew(switch_slew_t* switch_slew, int32_t* samples);
 
+
+static inline int32_t adsp_slew_gain(gain_slew_t * gain_state) {
+  // do the exponential slew
+  gain_state->gain += (gain_state->target_gain - gain_state->gain) >> gain_state->slew_shift;
+  return gain_state->gain;
+}
+
+
 /**
  * @brief Crossfade between two channels using their gains.
  * Will do: (in1 * gain1) + (in2 * gain2).
@@ -215,3 +252,6 @@ static inline int32_t adsp_crossfader(int32_t in1, int32_t in2, int32_t gain1, i
   asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (q_gain));
   return ah;
 }
+
+
+int32_t adsp_crossfader_slew(crossfader_slew_t* crossfader, int32_t in1, int32_t in2);
