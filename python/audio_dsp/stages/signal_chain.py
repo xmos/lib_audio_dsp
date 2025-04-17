@@ -426,7 +426,13 @@ class Delay(Stage):
 class Crossfader(Stage):
     """
     The crossfader mixes between two inputs. The
-    mix control sets the respective levels of each input.
+    mix control sets the respective levels of each input. When the mix
+    is changed, the gain is updated with a slew.
+
+    Parameters
+    ----------
+        mix : float
+            The mix of the crossfader between 0 and 1.
 
     Attributes
     ----------
@@ -461,7 +467,8 @@ class Crossfader(Stage):
 class CrossfaderStereo(Crossfader):
     """
     The stereo crossfader mixes between two stereo inputs. The
-    mix control sets the respective levels of each input pair.
+    mix control sets the respective levels of each input pair. When the mix
+    is changed, the gain is updated with a slew.
     The inputs should be passed in pairs, e.g. ``[0_L, 0_R, 1_L, 1_R]``.
 
     Attributes

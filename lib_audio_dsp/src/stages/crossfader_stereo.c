@@ -46,7 +46,6 @@ void crossfader_stereo_init(module_instance_t* instance, adsp_bump_allocator_t* 
     xassert(n_outputs == 2 && "Stereo crossfader should only have two outputs");
     state->n_outputs = n_outputs;
 
-    // memcpy(&state->config, config, sizeof(crossfader_stereo_config_t));
     state->cfs.gain_1 = adsp_slew_gain_init(config->gains[0], 7);
     state->cfs.gain_2 = adsp_slew_gain_init(config->gains[1], 7);
 }
@@ -65,7 +64,8 @@ void crossfader_stereo_control(void *module_state, module_control_t *control)
     }
     else if(control->config_rw_state == config_read_pending)
     {
-        // memcpy(config, &state->config, sizeof(crossfader_stereo_config_t));
+        config->gains[0] = state->cfs.gain_1.target_gain;
+        config->gains[1] = state->cfs.gain_2.target_gain;
         control->config_rw_state = config_read_updated;
     }
     else

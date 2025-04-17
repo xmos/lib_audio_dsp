@@ -1156,7 +1156,14 @@ class crossfader(_combiners):
 
     """
 
-    def __init__(self, fs: float, n_chans: int, mix: float = 0.5, slew_shift: int = 7, Q_sig: int = dspg.Q_SIG,) -> None:
+    def __init__(
+        self,
+        fs: float,
+        n_chans: int,
+        mix: float = 0.5,
+        slew_shift: int = 7,
+        Q_sig: int = dspg.Q_SIG,
+    ) -> None:
         super().__init__(fs, n_chans, Q_sig)
         self.n_outs = n_chans // 2
         self.mix = mix
@@ -1211,7 +1218,7 @@ class crossfader(_combiners):
 
         """
         y = [0.0] * self.n_outs
-        
+
         # do the exponential slew
         self.gains[0] += (self.target_gains[0] - self.gains[0]) * 2**-self.slew_shift
         self.gains[1] += (self.target_gains[1] - self.gains[1]) * 2**-self.slew_shift
