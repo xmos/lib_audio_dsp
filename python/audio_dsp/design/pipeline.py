@@ -129,6 +129,7 @@ class Pipeline:
         self.pipeline_stage: None | PipelineStage
         self._labelled_stages = {}
         self._generate_xscope_task = generate_xscope_task
+        self.frame_size = frame_size
 
         self.i = StageOutputList([StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)])
         self.o: StageOutputList | None = None
@@ -387,6 +388,7 @@ class Pipeline:
             "modules": module_definitions,
             "labels": labels,
             "xscope": self._generate_xscope_task,
+            "frame_size": self.frame_size
         }
 
 
@@ -452,14 +454,22 @@ def _filter_edges_by_thread(resolved_pipeline):
     return ret
 
 
-def _gen_chan_buf_read_q31_to_q27(channel, edge, frame_size):
-    """Generate the C code to read from a channel and convert from q31 to q27."""
-    return f"chan_in_buf_word({channel}, (uint32_t*){edge}, {frame_size}); for(int idx = 0; idx < {frame_size}; ++idx) {edge}[idx] = adsp_from_q31({edge}[idx]);"
+def _gen_chan_buf_read(channel, edge, frame_size):
+    """Generate the C code to read from a channel."""
+    return f"chan_in_buf_word({channel}, (uint32_t*){edge}, {frame_size});\n"
+
+def _gen_q31_to_q27(channel, edge, frame_size):
+    """Generate the C code to convert from q31 to q27."""
+    return f"for(int idx = 0; idx < {frame_size}; ++idx) {edge}[idx] = adsp_from_q31({edge}[idx]);\n"
 
 
-def _gen_chan_buf_write_q27_to_q31(channel, edge, frame_size):
-    """Generate the C code to write to a channel and convert from q27 to q31 and saturate."""
-    return f"for(int idx = 0; idx < {frame_size}; ++idx) {edge}[idx] = adsp_to_q31({edge}[idx]); chan_out_buf_word({channel}, (uint32_t*){edge}, {frame_size});"
+def _gen_q27_to_q31(channel, edge, frame_size):
+    """Generate the C code to convert from q27 to q31 and saturate."""
+    return f"for(int idx = 0; idx < {frame_size}; ++idx) {edge}[idx] = adsp_to_q31({edge}[idx]);\n"
+
+def _gen_chan_buf_write(channel, edge, frame_size):
+    """Generate the C code to write to a channel."""
+    return f"chan_out_buf_word({channel}, (uint32_t*){edge}, {frame_size});\n"
 
 
 def _generate_dsp_threads(resolved_pipeline):
@@ -573,16 +583,30 @@ def _generate_dsp_threads(resolved_pipeline):
             for i, (origin, edges) in enumerate(in_edges.items()):
                 read += f"\t\tcase_{i}: {{\n"
                 for edge in edges:
+                    # do all the chan reads first to avoid blocking
                     if origin == "pipeline_in":
                         read += (
                             "\t\t\t"
-                            + _gen_chan_buf_read_q31_to_q27(
+                            + _gen_chan_buf_read(
                                 f"c_source[{i}]", f"edge{all_edges.index(edge)}", edge.frame_size
                             )
-                            + "\n"
                         )
+                for edge in edges:
+                    # then do pipeline input Q conversions
+                    if origin == "pipeline_in":
+                        read += (
+                            "\t\t\t"
+                            + _gen_q31_to_q27(
+                                f"c_source[{i}]", f"edge{all_edges.index(edge)}", edge.frame_size
+                            )
+                        )
+                for edge in edges:
+                    # then do other edge origins
+                    if origin == "pipeline_in":
+                        pass
                     else:
                         read += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {edge.frame_size});\n"
+
                 read += "\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}\n"
             read += "\t\tdo_control: {\n"
             read += "\t\tstart_control_ts = get_reference_time();\n"
@@ -622,17 +646,29 @@ def _generate_dsp_threads(resolved_pipeline):
         out = ""
         for out_index, (dest, edges) in enumerate(all_output_edges.items()):
             for edge in edges:
+                # do q format conversion first
                 if dest == "pipeline_out":
                     out += (
                         "\t"
-                        + _gen_chan_buf_write_q27_to_q31(
+                        + _gen_q27_to_q31(
                             f"c_dest[{out_index}]", f"edge{all_edges.index(edge)}", edge.frame_size
                         )
-                        + "\n"
                     )
+            for edge in edges:
+                # then send over channels
+                if dest == "pipeline_out":
+                    out += (
+                        "\t"
+                        + _gen_chan_buf_write(
+                            f"c_dest[{out_index}]", f"edge{all_edges.index(edge)}", edge.frame_size
+                        )
+                    )
+            for edge in edges:
+                # finally do other edges
+                if dest == "pipeline_out":
+                    pass
                 else:
                     out += f"\tchan_out_buf_word(c_dest[{out_index}], (void*)edge{all_edges.index(edge)}, {edge.frame_size});\n"
-
         # The pipeline start condition must be that it is already full so reads
         # can be done without worrying about synchronisation. This is done
         # by starting on a read for the input threads, and starting on an
@@ -676,6 +712,7 @@ def _generate_dsp_header(resolved_pipeline, out_dir=Path("build/dsp_pipeline")):
         "#include <xcore/parallel.h>\n"
         "\n"
         f"adsp_pipeline_t * adsp_{resolved_pipeline['identifier']}_pipeline_init();\n\n"
+        f"#define ADSP_{resolved_pipeline['identifier'].upper()}_FRAME_SIZE ({resolved_pipeline['frame_size']})\n\n"
         f"DECLARE_JOB(adsp_{resolved_pipeline['identifier']}_pipeline_main, (adsp_pipeline_t*));\n"
         f"void adsp_{resolved_pipeline['identifier']}_pipeline_main(adsp_pipeline_t* adsp);\n"
         f"void adsp_{resolved_pipeline['identifier']}_print_thread_max_ticks(void);\n"
