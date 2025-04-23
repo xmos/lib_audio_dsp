@@ -515,7 +515,7 @@ def _generate_dsp_threads(resolved_pipeline):
 
         # set high priority thread bit to ensure we get the required
         # MIPS
-        func += "\tlocal_thread_mode_set_bits(thread_mode_high_priority);"
+        func += "\tlocal_thread_mode_set_bits(thread_mode_high_priority); \n"
 
         in_edges, internal_edges, all_output_edges, dead_edges = thread_edges
         is_input_thread = "pipeline_in" in in_edges

@@ -242,3 +242,59 @@ processor.
     # thread 2
     p.next_thread()
     i = p.stage(Biquad, i)
+
+When using multiple threads, the signal paths must cross the same number of 
+threads to reach the output. Failure to do this will result in threads blocking
+one another, and a reduced pipeline throughput. 
+
+The pipeline below is not acceptable, as the 
+first channel crosses 2 threads, whilst the second channel only crosses one.
+
+.. code-block:: python
+
+    p, inputs = Pipeline.begin(2, fs=48000)
+
+    # inputs[1] is not used on thread 0
+    x1 = p.stage(Biquad, inputs[0])
+
+    p.next_thread()
+
+    # inputs[1] first used on thread 1
+    x = p.stage(Biquad, x1 + inputs[1])
+
+    p.set_outputs(x)
+
+To ensure signal paths cross the same number of threads, ``Bypass`` Stages
+can be used.
+
+.. code-block:: python
+
+    p, inputs = Pipeline.begin(2, fs=48000)
+
+    # both inputs are not used on this thread
+    x1 = p.stage(Biquad, inputs[0])
+    x2 = p.stage(Bypass, inputs[1])
+
+    p.next_thread()
+
+    x = p.stage(Biquad, x1 + x2)
+
+    p.set_outputs(x)
+
+Parallel thread paths are also permitted. In the below case, the inputs
+are passed to separate threads before being used in a third.
+
+.. code-block:: python
+
+    p, inputs = Pipeline.begin(2, fs=48000)
+
+    x1 = p.stage(Biquad, inputs[0])
+    p.next_thread()
+
+    x2 = p.stage(Bypass, inputs[1])
+    p.next_thread()
+
+    # x1 and x2 have both crossed 1 thread already
+    x = p.stage(Biquad, x1 + x2)
+
+    p.set_outputs(x)
