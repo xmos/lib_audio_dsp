@@ -388,7 +388,7 @@ class Pipeline:
             "modules": module_definitions,
             "labels": labels,
             "xscope": self._generate_xscope_task,
-            "frame_size": self.frame_size
+            "frame_size": self.frame_size,
         }
 
 
@@ -458,14 +458,18 @@ def _gen_chan_buf_read(channel, edge, frame_size):
     """Generate the C code to read from a channel."""
     return f"chan_in_buf_word({channel}, (uint32_t*){edge}, {frame_size});\n"
 
+
 def _gen_q31_to_q27(channel, edge, frame_size):
     """Generate the C code to convert from q31 to q27."""
-    return f"for(int idx = 0; idx < {frame_size}; ++idx) {edge}[idx] = adsp_from_q31({edge}[idx]);\n"
+    return (
+        f"for(int idx = 0; idx < {frame_size}; ++idx) {edge}[idx] = adsp_from_q31({edge}[idx]);\n"
+    )
 
 
 def _gen_q27_to_q31(channel, edge, frame_size):
     """Generate the C code to convert from q27 to q31 and saturate."""
     return f"for(int idx = 0; idx < {frame_size}; ++idx) {edge}[idx] = adsp_to_q31({edge}[idx]);\n"
+
 
 def _gen_chan_buf_write(channel, edge, frame_size):
     """Generate the C code to write to a channel."""
@@ -585,20 +589,14 @@ def _generate_dsp_threads(resolved_pipeline):
                 for edge in edges:
                     # do all the chan reads first to avoid blocking
                     if origin == "pipeline_in":
-                        read += (
-                            "\t\t\t"
-                            + _gen_chan_buf_read(
-                                f"c_source[{i}]", f"edge{all_edges.index(edge)}", edge.frame_size
-                            )
+                        read += "\t\t\t" + _gen_chan_buf_read(
+                            f"c_source[{i}]", f"edge{all_edges.index(edge)}", edge.frame_size
                         )
                 for edge in edges:
                     # then do pipeline input Q conversions
                     if origin == "pipeline_in":
-                        read += (
-                            "\t\t\t"
-                            + _gen_q31_to_q27(
-                                f"c_source[{i}]", f"edge{all_edges.index(edge)}", edge.frame_size
-                            )
+                        read += "\t\t\t" + _gen_q31_to_q27(
+                            f"c_source[{i}]", f"edge{all_edges.index(edge)}", edge.frame_size
                         )
                 for edge in edges:
                     # then do other edge origins
@@ -648,20 +646,14 @@ def _generate_dsp_threads(resolved_pipeline):
             for edge in edges:
                 # do q format conversion first
                 if dest == "pipeline_out":
-                    out += (
-                        "\t"
-                        + _gen_q27_to_q31(
-                            f"c_dest[{out_index}]", f"edge{all_edges.index(edge)}", edge.frame_size
-                        )
+                    out += "\t" + _gen_q27_to_q31(
+                        f"c_dest[{out_index}]", f"edge{all_edges.index(edge)}", edge.frame_size
                     )
             for edge in edges:
                 # then send over channels
                 if dest == "pipeline_out":
-                    out += (
-                        "\t"
-                        + _gen_chan_buf_write(
-                            f"c_dest[{out_index}]", f"edge{all_edges.index(edge)}", edge.frame_size
-                        )
+                    out += "\t" + _gen_chan_buf_write(
+                        f"c_dest[{out_index}]", f"edge{all_edges.index(edge)}", edge.frame_size
                     )
             for edge in edges:
                 # finally do other edges
