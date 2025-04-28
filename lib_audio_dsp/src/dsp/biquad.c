@@ -1,3 +1,6 @@
+// Copyright 2024-2025 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
 #include "dsp/adsp.h"
 #include "stdio.h"
 #include <stdbool.h>
