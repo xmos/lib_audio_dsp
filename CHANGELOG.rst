@@ -24,7 +24,6 @@ lib_audio_dsp change log
   * CHANGED: Python dsp_block base class defines process_channels APIs.
   * REMOVED: Biquad dsp_blocks for specific biquad types.
 
-
 1.2.0
 -----
 
@@ -75,6 +74,14 @@ lib_audio_dsp change log
   * ADDED: Delay line DSP component and stage.
   * ADDED: C and Python documentation.
 
+  * Changes to dependencies:
+
+    - lib_locks: Added dependency 2.2.0
+
+    - lib_logging: Added dependency 3.2.0
+
+    - lib_xcore_math: Added dependency 2.2.0
+
 0.2.0
 -----
 
@@ -91,4 +98,12 @@ lib_audio_dsp change log
 -----
 
   * Initial release.
+
+  * Changes to dependencies:
+
+    - lib_locks: Added dependency 2.1.0
+
+    - lib_logging: Added dependency 3.1.1
+
+    - lib_xcore_math: Added dependency 2.2.0
 
