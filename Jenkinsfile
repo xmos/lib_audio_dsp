@@ -1,7 +1,7 @@
-@Library('xmos_jenkins_shared_library@v0.38.0')
+@Library('xmos_jenkins_shared_library@v0.39.0')
 
 def boolean hasChangesIn(String module) {
-  dir("lib_audio_dsp"){
+  dir("${REPO}"){
     if (env.CHANGE_TARGET == null) {
       return false
     } 
@@ -16,10 +16,13 @@ def boolean hasChangesIn(String module) {
 
 def boolean hasGenericChanges() {
     echo env.BRANCH_NAME
-    if (env.BRANCH_NAME ==~ /master|main|release.*/) {
+    if (env.BRANCH_NAME ==~ /master|main|release*/) {
       return true
     }
     else if (env.BRANCH_NAME  ==~ /develop/) {
+      return true
+    }
+    else if (env.CHANGE_TARGET ==~ /master|main/){
       return true
     }
     else if (hasChangesIn("utils | grep -v reverb_utils")) {
@@ -66,23 +69,39 @@ getApproval()
 pipeline {
   agent none
 
-  parameters {
-    string(
-      name: 'TOOLS_VERSION',
-      defaultValue: '15.3.1',
-      description: 'The XTC tools version'
-    )
-  } // parameters
+    parameters {
+        string(
+          name: 'TOOLS_VERSION',
+          defaultValue: '15.3.1',
+          description: 'The XTC tools version'
+        )
+        string(
+          name: 'XMOSDOC_VERSION',
+          defaultValue: 'v6.3.1',
+          description: 'The xmosdoc version'
+        )
+        string(
+            name: 'INFR_APPS_VERSION',
+            defaultValue: 'develop',
+            description: 'The infr_apps version'
+        )
+        string(
+            name: 'XTAGCTL_VERSION',
+            defaultValue: 'v2.0.0',
+            description: 'The xtagctl version'
+        )
+    } // parameters
 
   environment {
-    XMOSDOC_VERSION = "v6.3.1"
+    REPO = "lib_audio_dsp"
+    REPO_NAME = "lib_audio_dsp"
     HAS_GENERIC_CHANGES = false
   } // environment
 
   options {
     skipDefaultCheckout()
     timestamps()
-    buildDiscarder(xmosDiscardBuildSettings(onlyArtifacts=false))
+    buildDiscarder(xmosDiscardBuildSettings())
   } // options
 
   stages {
@@ -110,8 +129,8 @@ pipeline {
             stage ('Build') {
               steps {
                 runningOn(env.NODE_NAME)
-                dir("lib_audio_dsp") {
-                  checkout scm
+                dir("${REPO}") {
+                  checkoutScmShallow()
                   script{
                     env.HAS_GENERIC_CHANGES = hasGenericChanges().toBoolean()
                   }
@@ -122,22 +141,13 @@ pipeline {
                   // need Python
                   withTools(params.TOOLS_VERSION) {
                     dir("test/biquad") {
-                      sh "cmake -B build"
+                      sh 'cmake -G "Unix Makefiles" -B build'
                       sh "cmake --build build -j\$(nproc)"
                     } // dir
+                    createVenv(reqFile: "requirements.txt")
                   } // tools
                 } // dir
-                createVenv("lib_audio_dsp/requirements.txt")
-                dir("lib_audio_dsp") {
-                  // build everything
-                  withVenv {
-                    withTools(params.TOOLS_VERSION) {
-                      sh "pip install -r requirements.txt"
-                    } // tools
-                  } // withVenv
-                } // dir
               } // steps
-
             } // Build
             stage('Test Biquad') {
               when {
@@ -147,7 +157,7 @@ pipeline {
                   }
               }
               steps {
-                dir("lib_audio_dsp") {
+                dir("${REPO}") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
@@ -170,7 +180,7 @@ pipeline {
                   }
                 }
               steps {
-                dir("lib_audio_dsp") {
+                dir("${REPO}") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
@@ -186,7 +196,7 @@ pipeline {
             } // test cascaded biquad
             stage('Unit tests') {
               steps {
-                dir("lib_audio_dsp") {
+                dir("${REPO}") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
@@ -208,7 +218,7 @@ pipeline {
                   }
                 }
               steps {
-                dir("lib_audio_dsp") {
+                dir("${REPO}") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
@@ -230,7 +240,7 @@ pipeline {
                   }
                 }
               steps {
-                dir("lib_audio_dsp") {
+                dir("${REPO}") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
@@ -252,7 +262,7 @@ pipeline {
                   }
                 }
               steps {
-                dir("lib_audio_dsp") {
+                dir("${REPO}") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
@@ -274,7 +284,7 @@ pipeline {
                   }
                 }
               steps {
-                dir("lib_audio_dsp") {
+                dir("${REPO}") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
@@ -287,7 +297,7 @@ pipeline {
                 }
               }
             } // test TD block FIR
-          }
+          } // stages
           post {
             cleanup {
               xcoreCleanSandbox()
@@ -302,8 +312,8 @@ pipeline {
             stage ('Build') {
               steps {
                 runningOn(env.NODE_NAME)
-                dir("lib_audio_dsp") {
-                  checkout scm
+                dir("${REPO}") {
+                  checkoutScmShallow()
                   script{
                     env.HAS_GENERIC_CHANGES = hasGenericChanges()
                   }
@@ -312,20 +322,12 @@ pipeline {
                   // need Python
                   withTools(params.TOOLS_VERSION) {
                     dir("test/biquad") {
-                      sh "cmake -B build"
+                      sh 'cmake -G "Unix Makefiles" -B build'
                       sh "cmake --build build -j\$(nproc)"
                     } // dir
+                    createVenv(reqFile: "requirements.txt")
                   } // tools
                 } // dir
-                createVenv("lib_audio_dsp/requirements.txt")
-                dir("lib_audio_dsp") {
-                  // build everything
-                  withVenv {
-                    withTools(params.TOOLS_VERSION) {
-                      sh "pip install -r requirements.txt"
-                    }
-                  }
-                }
               }
             } // Build
             stage('Test DRC') {
@@ -336,7 +338,7 @@ pipeline {
                   }
                 }
               steps {
-                dir("lib_audio_dsp") {
+                dir("${REPO}") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       withMounts([["projects", "projects/hydra_audio", "hydra_audio_test_skype"]]) {
@@ -362,7 +364,7 @@ pipeline {
                   }
                 }
               steps {
-                dir("lib_audio_dsp") {
+                dir("${REPO}") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
@@ -384,7 +386,7 @@ pipeline {
                   }
                 }
               steps {
-                dir("lib_audio_dsp") {
+                dir("${REPO}") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
@@ -406,7 +408,7 @@ pipeline {
                   }
                 }
               steps {
-                dir("lib_audio_dsp") {
+                dir("${REPO}") {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
@@ -434,13 +436,23 @@ pipeline {
           }
           steps {
             runningOn(env.NODE_NAME)
-            checkout scm
-            createVenv("requirements-format.txt")
-            withVenv {
-              sh 'pip install --no-deps -r requirements-format.txt'
-              sh "make -C python check" // ruff check
-              versionChecks checkReleased: false, versionsPairs: versionsPairs
-              buildDocs xmosdocVenvPath: "${WORKSPACE}", archiveZipOnly: true // needs python run
+            dir("${REPO}") {
+              checkoutScmShallow()
+              createVenv(reqFile: "requirements-format.txt")
+              withVenv {
+                sh 'pip install --no-deps -r requirements-format.txt'
+                sh "make -C python check" // ruff check
+                versionChecks checkReleased: false, versionsPairs: versionsPairs
+                buildDocs()
+                // need sandbox for lib checks
+                withTools(params.TOOLS_VERSION) {
+                  dir("test/biquad") {
+                    xcoreBuild()
+                  } // dir
+                }
+                runLibraryChecks("${WORKSPACE}/${REPO}", "${params.INFR_APPS_VERSION}")
+                archiveSandbox(REPO)
+              }
             }
           }
           post {
@@ -457,16 +469,12 @@ pipeline {
 
           steps {
             runningOn(env.NODE_NAME)
-            sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
-            dir("lib_audio_dsp") {
-              checkout scm
-            }
-            createVenv("lib_audio_dsp/requirements.txt")
-
-            dir("lib_audio_dsp") {
-              withVenv {
-                withTools(params.TOOLS_VERSION) {
-                  sh "pip install -r requirements.txt"
+            sh "git clone -b ${params.XTAGCTL_VERSION} https://github0.xmos.com/xmos-int/xtagctl.git"
+            dir("${REPO}") {
+              checkoutScmShallow()
+              withTools(params.TOOLS_VERSION) {
+                createVenv(reqFile: "requirements.txt")
+                withVenv {
                   sh "pip install -e ${WORKSPACE}/xtagctl"
                   withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       sh "xtagctl reset ${adapterIDs[0]}"
@@ -498,16 +506,12 @@ pipeline {
 
           steps {
             runningOn(env.NODE_NAME)
-            sh 'git clone https://github0.xmos.com/xmos-int/xtagctl.git'
-            dir("lib_audio_dsp") {
-              checkout scm
-            }
-            createVenv("lib_audio_dsp/requirements.txt")
-
-            dir("lib_audio_dsp") {
-              withVenv {
-                withTools(params.TOOLS_VERSION) {
-                  sh "pip install -r requirements.txt"
+            sh "git clone -b ${params.XTAGCTL_VERSION} https://github0.xmos.com/xmos-int/xtagctl.git"
+            dir("${REPO}") {
+              checkoutScmShallow()
+              withTools(params.TOOLS_VERSION) {
+                createVenv(reqFile: "requirements.txt")
+                withVenv {
                   sh "pip install -e ${WORKSPACE}/xtagctl"
                   withXTAG(["XCORE-AI-EXPLORER"]) { adapterIDs ->
                       sh "xtagctl reset ${adapterIDs[0]}"
@@ -519,7 +523,6 @@ pipeline {
               }
             }
           }
-
           post {
             cleanup {
               xcoreCleanSandbox()
