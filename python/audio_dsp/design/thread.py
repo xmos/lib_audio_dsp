@@ -74,7 +74,7 @@ class Thread(CompositeStage):
         label: str | None = None,
         **kwargs,
     ) -> _StageOrComposite:
-        """ 
+        """
         Create a new stage or composite stage and
         register it with this composite stage.
 
@@ -82,6 +82,7 @@ class Thread(CompositeStage):
         but adds a thread crossing counter.
         """
         for i in inputs.edges:
-            i.crossings.append(self.id)
+            if i:
+                i.crossings.append(self.id)
         stage = super().stage(stage_type, inputs, label, **kwargs)
         return stage

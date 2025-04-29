@@ -14,6 +14,7 @@ from typing import Optional
 from types import NotImplementedType
 from copy import deepcopy
 
+
 def find_config(name):
     """
     Find the config yaml file for a stage by looking for it
@@ -342,26 +343,28 @@ class Stage(Node):
         self.stage_memory_string: str = ""
         self.stage_memory_parameters: tuple | None = None
 
-        if len(inputs.edges) >= 1:
+        if len(self.i.edges) >= 1:
             thread_crossings = []
             for edge in inputs.edges:
-                thread_crossings.append(len(set(edge.crossings)))
+                thread_crossings.append(len(set(edge.crossings)))  # pyright: ignore checked above
 
-            if not all(x==thread_crossings[0] for x in thread_crossings):
-
+            if not all(x == thread_crossings[0] for x in thread_crossings):
                 input_msg = "\n"
 
-                for i, edge in enumerate(inputs.edges):
-                    input_msg += f"Input {i} crosses threads {set(edge.crossings)}.\n"
+                for i, edge in enumerate(self.i.edges):
+                    input_msg += f"Input {i} crosses threads {set(edge.crossings)}.\n"  # pyright: ignore checked above
 
-                raise RuntimeError(f"\nAll stage inputs to {type(self).__name__} (label={self.label})"
-                " must cross the same number of threads.\n"
-                f"Currently, inputs cross {thread_crossings} threads.\nInputs with less than "
-                f"{max(thread_crossings)} thread crossings must pass through Stages on"
-                " earlier threads to avoid a latency mismatch and thread blocking.\n"
-                "A Bypass Stage can be added on an earlier thread if no additional DSP is needed." + input_msg)
+                raise RuntimeError(
+                    f"\nAll stage inputs to {type(self).__name__} (label={self.label})"
+                    " must cross the same number of threads.\n"
+                    f"Currently, inputs cross {thread_crossings} threads.\nInputs with less than "
+                    f"{max(thread_crossings)} thread crossings must pass through Stages on"
+                    " earlier threads to avoid a latency mismatch and thread blocking.\n"
+                    "A Bypass Stage can be added on an earlier thread if no additional DSP is needed."
+                    + input_msg
+                )
 
-            self.crossings = list(set(inputs.edges[0].crossings))
+            self.crossings = list(set(self.i.edges[0].crossings))  # pyright: ignore checked above
 
     def __init_subclass__(cls) -> None:
         """Add all subclasses of Stage to a global list for querying."""
