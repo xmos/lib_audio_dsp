@@ -12,7 +12,7 @@ from audio_dsp.design import plot
 from audio_dsp.dsp.generic import dsp_block
 from typing import Optional
 from types import NotImplementedType
-
+from copy import deepcopy
 
 def find_config(name):
     """
@@ -61,7 +61,7 @@ class StageOutput(Edge):
         see frame_size parameter
     """
 
-    def __init__(self, fs=48000, frame_size=1):
+    def __init__(self, fs=48000, frame_size=1, crossings=None):
         super().__init__()
         # index of the multiple outputs that the source node has
         self.source_index = None
@@ -71,6 +71,10 @@ class StageOutput(Edge):
         self.frame_size = frame_size
         # edges will probably need an associated type audio vs. data etc.
         # self.type = q23
+        if crossings:
+            self.crossings = deepcopy(crossings)
+        else:
+            self.crossings = []
 
     @property
     def dest_index(self) -> int | None:
@@ -338,6 +342,27 @@ class Stage(Node):
         self.stage_memory_string: str = ""
         self.stage_memory_parameters: tuple | None = None
 
+        if len(inputs.edges) >= 1:
+            thread_crossings = []
+            for edge in inputs.edges:
+                thread_crossings.append(len(set(edge.crossings)))
+
+            if not all(x==thread_crossings[0] for x in thread_crossings):
+
+                input_msg = "\n"
+
+                for i, edge in enumerate(inputs.edges):
+                    input_msg += f"Input {i} crosses threads {set(edge.crossings)}.\n"
+
+                raise RuntimeError(f"\nAll stage inputs to {type(self).__name__} (label={self.label})"
+                " must cross the same number of threads.\n"
+                f"Currently, inputs cross {thread_crossings} threads.\nInputs with less than "
+                f"{max(thread_crossings)} thread crossings must pass through Stages on"
+                " earlier threads to avoid a latency mismatch and thread blocking.\n"
+                "A Bypass Stage can be added on an earlier thread if no additional DSP is needed." + input_msg)
+
+            self.crossings = list(set(inputs.edges[0].crossings))
+
     def __init_subclass__(cls) -> None:
         """Add all subclasses of Stage to a global list for querying."""
         super().__init_subclass__()
@@ -365,7 +390,7 @@ class Stage(Node):
         self.n_out = n_out
         o = []
         for i in range(n_out):
-            output = StageOutput(fs=self.fs, frame_size=self.frame_size)
+            output = StageOutput(fs=self.fs, frame_size=self.frame_size, crossings=self.crossings)
             output.source_index = i
             output.set_source(self)
             o.append(output)
