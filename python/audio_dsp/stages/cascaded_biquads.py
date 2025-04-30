@@ -76,12 +76,6 @@ class CascadedBiquads(Stage):
         ]
         self.dsp_block = casc_bq.parametric_eq_8band(self.fs, self.n_in, filter_spec)
 
-        self.filter_coeffs = []
-        self.left_shift = []
-        for bq in self.dsp_block.biquads:
-            self.filter_coeffs.extend(bq.coeffs)
-            self.left_shift.append(bq.b_shift)
-
         self.set_control_field_cb(
             "filter_coeffs", lambda: [i for i in self._get_fixed_point_coeffs()]
         )
@@ -93,10 +87,11 @@ class CascadedBiquads(Stage):
 
     def _get_fixed_point_coeffs(self):
         """Get the fixed point coefficients for all biquads."""
-        coeffs = []
+        fc = []
         for bq in self.dsp_block.biquads:
-            coeffs.extend(bq.coeffs)
-        return coeffs
+            fc.extend(bq.int_coeffs)
+        a = np.array(fc, dtype=np.int32)
+        return a
 
     @_parametric_eq_doc
     def make_parametric_eq(self, filter_spec: list[list[Any]]) -> "CascadedBiquads":
@@ -230,12 +225,6 @@ class CascadedBiquads16(Stage):
             ["bypass"],
         ]
         self.dsp_block = casc_bq.parametric_eq_16band(self.fs, self.n_in, filter_spec)
-
-        self.filter_coeffs = []
-        self.left_shift = []
-        for bq in self.dsp_block.biquads:
-            self.filter_coeffs.extend(bq.coeffs)
-            self.left_shift.append(bq.b_shift)
 
         self.set_control_field_cb(
             "filter_coeffs_lower", lambda: [i for i in self._get_fixed_point_coeffs_lower()]
