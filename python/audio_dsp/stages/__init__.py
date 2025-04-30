@@ -4,7 +4,7 @@
 """Collection of all XMOS DSP stages for use in DSP pipeline."""
 
 from .biquad import Biquad, BiquadSlew
-from .cascaded_biquads import CascadedBiquads, CascadedBiquads16, ParametricEq
+from .cascaded_biquads import CascadedBiquads, CascadedBiquads16, ParametricEq8b, ParametricEq16b
 from .limiter import LimiterRMS, LimiterPeak, HardLimiterPeak, Clipper
 from .noise_gate import NoiseGate
 from .noise_suppressor_expander import NoiseSuppressorExpander
