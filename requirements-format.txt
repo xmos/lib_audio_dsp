@@ -8,10 +8,18 @@
 #
 -e file:./python#egg=audio_dsp
     # via -r tools/requirements-format.in
+annotated-types==0.7.0
+    # via
+    #   -c /tmp/tmp2perbxj7/constraints.txt
+    #   pydantic
 asttokens==2.4.1
     # via
     #   -c /tmp/tmp2perbxj7/constraints.txt
     #   stack-data
+colorama==0.4.6
+    # via
+    #   -c /tmp/tmp2perbxj7/constraints.txt
+    #   ipython
 comm==0.2.2
     # via
     #   -c /tmp/tmp2perbxj7/constraints.txt
@@ -126,6 +134,14 @@ pure-eval==0.2.2
     # via
     #   -c /tmp/tmp2perbxj7/constraints.txt
     #   stack-data
+pydantic==2.11.4
+    # via
+    #   -c /tmp/tmp2perbxj7/constraints.txt
+    #   audio-dsp
+pydantic-core==2.33.2
+    # via
+    #   -c /tmp/tmp2perbxj7/constraints.txt
+    #   pydantic
 pygments==2.18.0
     # via
     #   -c /tmp/tmp2perbxj7/constraints.txt
@@ -178,8 +194,14 @@ traitlets==5.14.3
 typing-extensions==4.12.2
     # via
     #   -c /tmp/tmp2perbxj7/constraints.txt
-    #   ipython
+    #   pydantic
+    #   pydantic-core
     #   pyright
+    #   typing-inspection
+typing-inspection==0.4.0
+    # via
+    #   -c /tmp/tmp2perbxj7/constraints.txt
+    #   pydantic
 wcwidth==0.2.13
     # via
     #   -c /tmp/tmp2perbxj7/constraints.txt

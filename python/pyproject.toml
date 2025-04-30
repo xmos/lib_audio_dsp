@@ -16,7 +16,7 @@ classifiers = [
 dependencies = [
     "numpy >= 2.0",
     "scipy",
-    "matplotlib < 3.9.1",
+    "matplotlib",
     "IPyWidgets",
     "graphviz",
     "IPython",
@@ -25,7 +25,8 @@ dependencies = [
     "mako",
     "tabulate",
     "docstring-inheritance",
-    "packaging>=24.1"
+    "packaging>=24.1",
+    "pydantic",
 ]
 
 [tool.ruff]
