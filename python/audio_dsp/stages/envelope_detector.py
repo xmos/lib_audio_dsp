@@ -39,6 +39,7 @@ class EnvelopeDetectorPeak(Stage):
         self.stage_memory_parameters = (self.n_in,)
 
     def set_parameters(self, parameters: EnvelopeDetectorParameters):
+        """Update the parameters of the EnvelopeDetectorPeak stage."""
         self.make_env_det_peak(parameters.attack_t, parameters.release_t)
 
     def make_env_det_peak(self, attack_t, release_t, Q_sig=dspg.Q_SIG):
@@ -89,6 +90,7 @@ class EnvelopeDetectorRMS(Stage):
         self.stage_memory_parameters = (self.n_in,)
 
     def set_parameters(self, parameters: EnvelopeDetectorParameters):
+        """Update the parameters of the EnvelopeDetectorRMS stage."""
         self.make_env_det_rms(parameters.attack_t, parameters.release_t)
 
     def make_env_det_rms(self, attack_t, release_t, Q_sig=dspg.Q_SIG):

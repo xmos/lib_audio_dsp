@@ -10,7 +10,7 @@ import audio_dsp.stages as Stages
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 from audio_dsp.design.stage import StageOutputList, all_stages
 from audio_dsp.models.signal_chain import Fork
-from audio_dsp.models.stage import StageModel, all_models
+from audio_dsp.models.stage import all_models
 
 BAD_NAMES = ["CascadedBiquads"]
 
@@ -46,9 +46,8 @@ class Graph(BaseModel):
     """
     Graph object to hold the pipeline.
 
-    Examples:
+    Examples
     --------
-
     1. EQ + Reverb Example:
 
     ```json

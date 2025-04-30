@@ -4,6 +4,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class edgeProducerBaseModel(BaseModel):
+    """The pydantic model defining an edge producer (e.g. DSP Stage)."""
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
@@ -14,14 +16,24 @@ class _GlobalStageModels:
 
 
 class StageConfig(BaseModel, extra="ignore"):
+    """The pydantic model defining the compile-time configurable configuration of a DSP Stage."""
+
     pass
 
 
 class StageParameters(BaseModel, extra="ignore"):
+    """The pydantic model defining the runtime configurable cparameters of a DSP Stage."""
+
     pass
 
 
 class NodePlacement(BaseModel, extra="forbid"):
+    """The pydantic model that defines the placement of a DSP Stage in the graph.
+    
+    By default this expects inputs and outputs for each stage.
+    This may be subclassed for custom placement behaviour.
+    """
+
     input: list[int] = Field(
         default=[],
         description="List of input edges.",
@@ -39,12 +51,16 @@ class NodePlacement(BaseModel, extra="forbid"):
 
 
 class StageModel[Placement: NodePlacement](edgeProducerBaseModel):
+    """A generic pydantic model of a DSP Stage.
+
+    Stages should subclass this and define their op_type, parameters (optional),
+    compile-time config (optional), and specific placement requirements (optional).
+    """
+
     placement: Placement
 
-    # stage doesn't actually have a model
-    # model: Model
     def __init_subclass__(cls) -> None:
-        """Add all subclasses of Stage to a global list for querying."""
+        """Add all subclasses of StageModel to a global list for querying."""
         super().__init_subclass__()
         _GlobalStageModels.stages.append(cls)
 

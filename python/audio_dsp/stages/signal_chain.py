@@ -13,7 +13,7 @@ from audio_dsp.models.signal_chain import (
     MixerParameters,
     SwitchParameters,
     VolumeControlParameters,
-    DelayParameters
+    DelayParameters,
 )
 from audio_dsp.design.stage import (
     Stage,
@@ -132,6 +132,7 @@ class Mixer(Stage):
         return self
 
     def set_parameters(self, parameters: MixerParameters):
+        """Update the parameters of the Mixer stage."""
         self.set_gain(parameters.gain_db)
 
 
@@ -210,6 +211,7 @@ class FixedGain(Stage):
         return self
 
     def set_parameters(self, parameters: FixedGainParameters):
+        """Update the parameters of the FixedGain stage."""
         self.set_gain(parameters.gain_db)
 
 
@@ -275,7 +277,7 @@ class VolumeControl(Stage):
         gain_db : float
             The gain of the volume control in dB.
         """
-        self.dsp_block.target_gain = gain_dB
+        self.dsp_block.target_gain_db = gain_dB
         return self
 
     def set_mute_state(self, mute_state):
@@ -294,6 +296,7 @@ class VolumeControl(Stage):
         return self
 
     def set_parameters(self, parameters: VolumeControlParameters):
+        """Update the parameters of the VolumeControl stage."""
         self.set_gain(parameters.gain_db)
         self.set_mute_state(parameters.mute_state)
 
@@ -332,7 +335,9 @@ class Switch(Stage):
         return self
 
     def set_parameters(self, parameters: SwitchParameters):
+        """Update the parameters of the Switch stage."""
         self.move_switch(parameters.position)
+
 
 class SwitchSlew(Switch):
     """
@@ -399,6 +404,7 @@ class SwitchStereo(Stage):
         return self
 
     def set_parameters(self, parameters: SwitchParameters):
+        """Update the parameters of the SwitchStereo stage."""
         self.move_switch(parameters.position)
 
 
@@ -433,7 +439,7 @@ class Delay(Stage):
         units: str = "samples",
         config: Optional[dict] = None,
         parameters: Optional[dict] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(config=find_config("delay"), **kwargs)
         self.create_outputs(self.n_in)
@@ -472,19 +478,19 @@ class Delay(Stage):
         self.dsp_block.set_delay(delay, units)
 
     def set_parameters(self, parameters: DelayParameters):
-        """Set delay parameters.
-        
+        """Update the parameters of the Delay stage.
+
         Args:
             parameters: New delay parameters to apply
         """
         if parameters.delay > self.max_delay:
             raise ValueError(
-                f"Delay value {parameters.delay} exceeds maximum "
-                f"delay {self.max_delay}"
+                f"Delay value {parameters.delay} exceeds maximum delay {self.max_delay}"
             )
-            
+
         self.set_delay(parameters.delay, units=parameters.units)
-        self.parameters = parameters 
+        self.parameters = parameters
+
 
 class Crossfader(Stage):
     """

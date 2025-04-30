@@ -26,9 +26,9 @@ class ReverbBaseParameters(StageParameters):
         "the reverb delay lines.",
     )
 
+
 class ReverbStereoBaseParameters(ReverbBaseParameters):
     width: float = Field(default=1.0, ge=0, le=1, description="Range: 0 to 1")
-
 
 
 class ReverbBaseConfig(StageConfig):
@@ -43,6 +43,7 @@ class _ReverbBaseModel[T](StageModel[T]):
 
     # op_type: is not defined as this Stage cannot be pipelined
     config: ReverbBaseConfig = Field(default_factory=ReverbBaseConfig)
+
 
 class ReverbRoomParameters(ReverbBaseParameters):
     damping: float = Field(
@@ -69,6 +70,7 @@ class ReverbRoomParameters(ReverbBaseParameters):
         "values will give a longer reverberation time for "
         "a given room size. Range: 0 to 1",
     )
+
 
 class ReverbRoomStereoParameters(ReverbStereoBaseParameters, ReverbRoomParameters):
     pass

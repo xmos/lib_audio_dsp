@@ -55,6 +55,7 @@ class CompressorSidechain(Stage):
         self.set_control_field_cb("slope", lambda: self.dsp_block.slope_f32)
 
     def set_parameters(self, parameters: CompressorSidechainParameters):
+        """Update the parameters of the CompressorSidechainStereo stage."""
         self.make_compressor_sidechain(
             parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
         )
@@ -88,7 +89,6 @@ class CompressorSidechain(Stage):
             self.fs, ratio, threshold_db, attack_t, release_t, Q_sig
         )
         return self
-
 
 
 class CompressorSidechainStereo(Stage):
@@ -166,6 +166,7 @@ class CompressorSidechainStereo(Stage):
         return self
 
     def set_parameters(self, parameters: CompressorSidechainParameters):
+        """Update the parameters of the CompressorSidechainStereo stage."""
         self.make_compressor_sidechain(
             parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
         )

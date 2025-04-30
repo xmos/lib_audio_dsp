@@ -76,7 +76,5 @@ class NoiseGate(Stage):
             The parameters to update the noise gate with.
         """
         return self.make_noise_gate(
-            parameters.threshold_db,
-            parameters.attack_t,
-            parameters.release_t
+            parameters.threshold_db, parameters.attack_t, parameters.release_t
         )

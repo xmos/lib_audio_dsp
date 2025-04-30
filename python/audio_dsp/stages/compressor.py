@@ -50,17 +50,14 @@ class CompressorRMS(Stage):
 
     def set_parameters(self, parameters: CompressorParameters):
         """Update compressor parameters.
-        
+
         Parameters
         ----------
         parameters : CompressorParameters
             The new parameters to apply to the compressor.
         """
         self.make_compressor_rms(
-            parameters.ratio,
-            parameters.threshold_db,
-            parameters.attack_t,
-            parameters.release_t
+            parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
         )
 
     def make_compressor_rms(self, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):

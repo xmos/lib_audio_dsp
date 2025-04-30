@@ -269,17 +269,18 @@ class Biquad(Stage):
 
     def set_parameters(self, parameters):
         """Set biquad filter parameters.
-        
+
         Args:
             parameters: New biquad parameters to apply
         """
         # If parameters is a dict, convert to BiquadParameters
         if isinstance(parameters, dict):
             from audio_dsp.models.biquad_model import BiquadParameters
+
             parameters = BiquadParameters(**parameters)
-            
+
         filter_type = parameters.filter_type
-        
+
         # Call the appropriate make_* method based on the filter type
         if filter_type.type == "lowpass":
             self.make_lowpass(filter_type.filter_freq, filter_type.q_factor)
@@ -296,18 +297,22 @@ class Biquad(Stage):
         elif filter_type.type == "peaking":
             self.make_peaking(filter_type.filter_freq, filter_type.q_factor, filter_type.boost_db)
         elif filter_type.type == "constant_q":
-            self.make_constant_q(filter_type.filter_freq, filter_type.q_factor, filter_type.boost_db)
+            self.make_constant_q(
+                filter_type.filter_freq, filter_type.q_factor, filter_type.boost_db
+            )
         elif filter_type.type == "lowshelf":
             self.make_lowshelf(filter_type.filter_freq, filter_type.q_factor, filter_type.boost_db)
         elif filter_type.type == "highshelf":
-            self.make_highshelf(filter_type.filter_freq, filter_type.q_factor, filter_type.boost_db)
+            self.make_highshelf(
+                filter_type.filter_freq, filter_type.q_factor, filter_type.boost_db
+            )
         elif filter_type.type == "linkwitz":
             self.make_linkwitz(filter_type.f0, filter_type.q0, filter_type.fp, filter_type.qp)
         elif filter_type.type == "bypass":
             self.make_bypass()
         else:
             raise ValueError(f"Unknown filter type: {filter_type.type}")
-            
+
         # Set slew rate if specified
         if hasattr(parameters, "slew_rate"):
             # Convert slew_rate to slew_shift
@@ -315,7 +320,7 @@ class Biquad(Stage):
             # For now using a simple mapping
             slew_shift = max(0, min(31, int(-np.log2(parameters.slew_rate))))
             self.dsp_block.slew_shift = slew_shift
-            
+
         # Store the parameters
         self.parameters = parameters
 

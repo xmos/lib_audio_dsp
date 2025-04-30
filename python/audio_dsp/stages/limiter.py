@@ -75,9 +75,7 @@ class LimiterRMS(Stage):
             The parameters to update the limiter with.
         """
         return self.make_limiter_rms(
-            parameters.threshold_db,
-            parameters.attack_t,
-            parameters.release_t
+            parameters.threshold_db, parameters.attack_t, parameters.release_t
         )
 
 
@@ -148,9 +146,7 @@ class LimiterPeak(Stage):
             The parameters to update the limiter with.
         """
         return self.make_limiter_peak(
-            parameters.threshold_db,
-            parameters.attack_t,
-            parameters.release_t
+            parameters.threshold_db, parameters.attack_t, parameters.release_t
         )
 
 
@@ -222,9 +218,7 @@ class HardLimiterPeak(Stage):
             The parameters to update the limiter with.
         """
         return self.make_hard_limiter_peak(
-            parameters.threshold_db,
-            parameters.attack_t,
-            parameters.release_t
+            parameters.threshold_db, parameters.attack_t, parameters.release_t
         )
 
 

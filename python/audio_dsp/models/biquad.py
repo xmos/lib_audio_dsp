@@ -26,12 +26,9 @@ DEFAULT_Q = partial(Field, 0.707, gt=0, le=10, description="Q factor of the filt
 DEFAULT_FILTER_FREQ = partial(
     Field, 500, gt=0, lt=24000, description="Frequency of the filter in Hz."
 )  # 48kHz sample rate
-DEFAULT_BW = partial(
-    Field, 1, gt=0, le=10, description="Bandwidth of the filter in octaves."
-)
-DEFAULT_BOOST_DB = partial(
-    Field, 0, ge=-24, le=24, description="Gain of the filter in dB."
-)
+DEFAULT_BW = partial(Field, 1, gt=0, le=10, description="Bandwidth of the filter in octaves.")
+DEFAULT_BOOST_DB = partial(Field, 0, ge=-24, le=24, description="Gain of the filter in dB.")
+
 
 class biquad_allpass(StageParameters):
     type: Literal["allpass"] = "allpass"

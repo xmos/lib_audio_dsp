@@ -7,7 +7,12 @@ import audio_dsp.dsp.reverb as rvrb
 import audio_dsp.dsp.reverb_stereo as rvbs
 import audio_dsp.dsp.reverb_plate as rvp
 
-from audio_dsp.models.reverb import ReverbRoomParameters, ReverbRoomStereoParameters, ReverbPlateParameters
+from audio_dsp.models.reverb import (
+    ReverbRoomParameters,
+    ReverbRoomStereoParameters,
+    ReverbPlateParameters,
+)
+
 
 class _ReverbBase(Stage):
     """
@@ -180,6 +185,7 @@ class ReverbRoom(_ReverbBase):
         self.dsp_block.decay = decay
 
     def set_parameters(self, parameters: ReverbRoomParameters):
+        """Update the parameters of the ReverbRoom stage."""
         self.set_damping(parameters.damping)
         self.set_decay(parameters.decay)
         self.set_room_size(parameters.room_size)
@@ -269,6 +275,7 @@ class ReverbRoomStereo(ReverbRoom):
         self.dsp_block.width = width
 
     def set_parameters(self, parameters: ReverbRoomStereoParameters):
+        """Update the parameters of the ReverbRoomStereo stage."""
         self.set_damping(parameters.damping)
         self.set_decay(parameters.decay)
         self.set_room_size(parameters.room_size)
@@ -277,6 +284,7 @@ class ReverbRoomStereo(ReverbRoom):
         self.set_predelay(parameters.predelay)
         self.set_pre_gain(parameters.pregain)
         self.set_wet_dry_mix(parameters.wet_dry_mix)
+
 
 class ReverbPlateStereo(_ReverbBase):
     """
@@ -422,6 +430,7 @@ class ReverbPlateStereo(_ReverbBase):
         self.dsp_block.bandwidth = bandwidth
 
     def set_parameters(self, parameters: ReverbPlateParameters):
+        """Update the parameters of the ReverbPlate stage."""
         self.set_damping(parameters.damping)
         self.set_decay(parameters.decay)
         self.set_early_diffusion(parameters.early_diffusion)

@@ -52,6 +52,7 @@ class NoiseSuppressorExpander(Stage):
         self.stage_memory_parameters = (self.n_in,)
 
     def set_parameters(self, parameters: NoiseSuppressorExpanderParameters):
+        """Update the parameters of the NoiseSuppressorExpander stage."""
         self.make_noise_suppressor_expander(
             parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
         )
