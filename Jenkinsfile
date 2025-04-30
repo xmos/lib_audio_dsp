@@ -328,6 +328,22 @@ pipeline {
                 }
               }
             } // Build
+            stage('Test JSON') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        buildApps(["test/json"])
+                          dir("test/json") {
+                            runPytest("--dist worksteal")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test json
             stage('Test DRC') {
               when {
                 anyOf {
