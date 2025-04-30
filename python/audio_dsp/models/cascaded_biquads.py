@@ -1,3 +1,5 @@
+"""Pydantic models of the cascaded biquad DSP Stages."""
+
 from typing import Annotated, Literal
 
 from annotated_types import Len
@@ -18,6 +20,8 @@ def _16biquads():
 
 
 class CascadedBiquadParameters(StageParameters):
+    """Parameters for CascadedBiquad Stage."""
+
     filters: Annotated[list[bq.BIQUAD_TYPES], Len(8)] = Field(
         default_factory=_8biquads, max_length=8
     )
@@ -39,16 +43,20 @@ class CascadedBiquads(StageModel):
 
 
 class CascadedBiquad16Parameters(StageParameters):
+    """Parameters for CascadedBiquad16 Stage."""
+
     filters: Annotated[list[bq.BIQUAD_TYPES], Len(16)] = Field(
         default_factory=_8biquads, max_length=16
     )
 
 
 class ParametricEq8b(CascadedBiquads):
-    # class Model(Stage.Model):
+    """Pydantic model of the ParametricEq8b Stage."""
+
     op_type: Literal["ParametricEq8b"] = "ParametricEq8b"
 
 
 class ParametricEq16b(CascadedBiquads):
-    # class Model(Stage.Model):
+    """Pydantic model of the ParametricEq16b Stage."""
+
     op_type: Literal["ParametricEq16b"] = "ParametricEq16b"

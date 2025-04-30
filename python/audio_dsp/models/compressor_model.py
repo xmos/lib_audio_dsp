@@ -7,15 +7,7 @@ from audio_dsp.models.stage import StageModel, StageParameters
 
 
 class CompressorParameters(StageParameters):
-    """Parameters for compressor stage.
-
-    Attributes
-    ----------
-        ratio: Compression ratio applied when signal exceeds threshold
-        threshold_db: Level in dB above which compression occurs
-        attack_t: Time for compressor to start compressing (seconds)
-        release_t: Time for signal to return to original level (seconds)
-    """
+    """Parameters for compressor stage."""
 
     ratio: float = Field(
         default=4.0,

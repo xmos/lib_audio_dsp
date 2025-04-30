@@ -1,3 +1,5 @@
+"""Pydantic models for signal chain DSP Stages."""
+
 from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
@@ -6,10 +8,14 @@ from audio_dsp.models.stage import NodePlacement, StageConfig, StageModel, Stage
 
 
 class ForkConfig(StageConfig):
+    """Compile time configuration for a Fork Stage."""
+
     count: int = Field(default=1)
 
 
 class ForkPlacement(NodePlacement, extra="forbid"):
+    """Graph placement for a Fork Stage."""
+
     input: list[int] = Field(default=set(), min_length=1)
     output: list[int] = Field(default=set())
     name: str
@@ -31,6 +37,7 @@ class Fork(StageModel[ForkPlacement]):
 
     @model_validator(mode="after")
     def check_fork(self):
+        """Check that the fork has been validly connected."""
         try:
             in_len = len(self.placement.input)
         except TypeError:
@@ -49,10 +56,14 @@ class Fork(StageModel[ForkPlacement]):
 
 
 class MixerParameters(StageParameters):
+    """Parameters for Mixer Stage."""
+
     gain_db: float = Field(default=0)
 
 
 class MixerPlacement(NodePlacement, extra="forbid"):
+    """Graph placement for a Mixer Stage."""
+
     input: list[int] = Field(default=[])
     output: list[int] = Field(default=[], max_length=1, min_length=1)
     name: str
@@ -86,6 +97,8 @@ class Adder(StageModel):
 
 
 class FixedGainParameters(StageParameters):
+    """Parameters for FixedGain Stage."""
+
     gain_db: float = Field(default=0)
 
 
@@ -105,6 +118,8 @@ class FixedGain(StageModel):
 
 
 class VolumeControlParameters(StageParameters):
+    """Parameters for VolumeControl Stage."""
+
     gain_db: float = Field(default=0)
     mute_state: int = Field(default=0)
 
@@ -122,6 +137,8 @@ class VolumeControl(StageModel):
 
 
 class SwitchParameters(StageParameters):
+    """Parameters for Switch Stage."""
+
     position: int = Field(default=0)
 
 

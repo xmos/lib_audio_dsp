@@ -1,3 +1,5 @@
+"""Functions to convert JSON files to Python DSP pipelines."""
+
 from collections import defaultdict
 from pathlib import Path
 from pprint import pprint
@@ -23,6 +25,8 @@ _stage_Models = Annotated[
 
 
 class Input(BaseModel, extra="ignore"):
+    """Pydantic model of the inputs to a DSP graph."""
+
     name: str = Field(..., description="Name of the input")
     output: list[int] = Field(
         ...,
@@ -33,6 +37,8 @@ class Input(BaseModel, extra="ignore"):
 
 
 class Output(BaseModel, extra="ignore"):
+    """Pydantic model of the outputs of a DSP graph."""
+
     name: str = Field(..., description="Name of the output")
     input: list[int] = Field(
         ...,
@@ -96,6 +102,8 @@ class Graph(BaseModel):
 
 
 class DspJson(BaseModel):
+    """Pydantic model of the JSON file describing a DSP graph."""
+
     ir_version: int
     producer_name: str
     producer_version: str
@@ -103,6 +111,9 @@ class DspJson(BaseModel):
 
 
 def insert_forks(graph: Graph) -> Graph:
+    """Automatically insert forks in the graph where edges have been used
+    multiple times.
+    """
     new_graph = graph.model_copy(deep=True)
     consumer_map: dict[int, list[tuple[str, Any, int]]] = defaultdict(list)
     for node_index, node in enumerate(new_graph.nodes):
@@ -167,10 +178,14 @@ def insert_forks(graph: Graph) -> Graph:
 
 
 def stage_handle(model):
+    """Get the function handle of a DSP Stage from its pydantic model."""
     return getattr(Stages, model.op_type)
 
 
 def make_pipeline(json_obj: DspJson) -> Pipeline:
+    """Create a Python DSP pipeline from a Pydantic model of the JSON file
+    describing a DSP graph.
+    """
     graph = insert_forks(json_obj.graph)
     flat_input_edges: list[int] = []
     total_channels = 0
@@ -233,16 +248,20 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="JSON-to-DSP pipeline generator")
-    parser.add_argument(
-        "json_path", type=Path, help="path to the JSON describing the DSP pipeline"
-    )
-    parser.add_argument("out_path", type=Path, help="path for the generated DSP code output")
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(description="JSON-to-DSP pipeline generator")
+    # parser.add_argument(
+    #     "json_path", type=Path, help="path to the JSON describing the DSP pipeline"
+    # )
+    # parser.add_argument("out_path", type=Path, help="path for the generated DSP code output")
+    # args = parser.parse_args()
 
-    output_path = Path(args.out_path)
-    json_path = Path(args.json_path)
+    # output_path = Path(args.out_path)
+    # json_path = Path(args.json_path)
 
-    p = make_pipeline(json_path)
+    # json_path = Path(r"C:\Users\allanskellett\Documents\051_dsp_txt\dsp_lang_1.json")
+    json_path = Path(r"C:\Users\allanskellett\Documents\040_dsp_ultra\scio_0_new_forks.json")
+    output_path = "tmpdir"
+    json_obj = DspJson.model_validate_json(json_path.read_text())
+    p = make_pipeline(json_obj)
     generate_dsp_main(p, output_path)
     p.draw(Path(output_path, "dsp_pipeline"))

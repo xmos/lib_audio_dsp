@@ -1,11 +1,21 @@
+"""Pydantic models for reverb DSP Stages."""
+
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from audio_dsp.models.stage import StageConfig, StageModel, StageParameters
+from audio_dsp.models.stage import (
+    StageConfig,
+    StageModel,
+    StageParameters,
+    MonoPlacement,
+    StereoPlacement,
+)
 
 
 class ReverbBaseParameters(StageParameters):
+    """Parameters for all Reverb Stages."""
+
     predelay: float = Field(
         default=15, ge=0, le=30, description="Set the predelay in milliseconds."
     )
@@ -28,10 +38,14 @@ class ReverbBaseParameters(StageParameters):
 
 
 class ReverbStereoBaseParameters(ReverbBaseParameters):
+    """Parameters for all stereo Reverb Stages."""
+
     width: float = Field(default=1.0, ge=0, le=1, description="Range: 0 to 1")
 
 
 class ReverbBaseConfig(StageConfig):
+    """Compile time configuration for a ReverbRoom Stage."""
+
     predelay: float = Field(default=30)
 
 
@@ -46,6 +60,8 @@ class _ReverbBaseModel[T](StageModel[T]):
 
 
 class ReverbRoomParameters(ReverbBaseParameters):
+    """Parameters for a ReverbRoom Stage."""
+
     damping: float = Field(
         default=0.5,
         ge=0,
@@ -73,10 +89,14 @@ class ReverbRoomParameters(ReverbBaseParameters):
 
 
 class ReverbRoomStereoParameters(ReverbStereoBaseParameters, ReverbRoomParameters):
+    """Parameters for a ReverbRoomStereo Stage."""
+
     pass
 
 
 class ReverbPlateParameters(ReverbStereoBaseParameters):
+    """Parameters for a ReverbPlate Stage."""
+
     damping: float = Field(
         default=0.5,
         ge=0,
@@ -98,28 +118,33 @@ class ReverbPlateParameters(ReverbStereoBaseParameters):
     bandwidth: float = Field(default=8000, ge=0, le=24000, description="Range: 0 to 1")
 
 
-class ReverbBasePlacement(BaseModel, extra="forbid"):
-    input: list[int] = Field(
-        default=[],
-        description="List of input edges.",
-        min_length=2,
-        max_length=2,
-    )
-    output: list[int] = Field(
-        default=[], description="IDs of output edges.", min_length=2, max_length=2
-    )
-    name: str
-    thread: int = Field(ge=0, lt=5)
+class ReverbRoomStereo(_ReverbBaseModel[MonoPlacement]):
+    """
+    The stereo room plate stage. This is based on Dattorro's 1997
+    paper. This reverb consists of 4 allpass filters for input diffusion,
+    followed by a figure of 8 reverb tank of allpasses, low-pass filters,
+    and delays. The output is taken from multiple taps in the delay lines
+    to get a desirable echo density.
+    """
 
-    @field_validator("input", "output", mode="before")
-    def _single_to_list(cls, value: int | list) -> list:
-        if isinstance(value, list):
-            return value
-        else:
-            return [value]
+    op_type: Literal["ReverbRoomStereo"] = "ReverbRoomStereo"
+    parameters: ReverbRoomStereoParameters = Field(default_factory=ReverbRoomStereoParameters)
 
 
-class ReverbPlateStereo(_ReverbBaseModel[ReverbBasePlacement]):
+class ReverbRoomStereo(_ReverbBaseModel[StereoPlacement]):
+    """
+    The stereo room plate stage. This is based on Dattorro's 1997
+    paper. This reverb consists of 4 allpass filters for input diffusion,
+    followed by a figure of 8 reverb tank of allpasses, low-pass filters,
+    and delays. The output is taken from multiple taps in the delay lines
+    to get a desirable echo density.
+    """
+
+    op_type: Literal["ReverbRoomStereo"] = "ReverbRoomStereo"
+    parameters: ReverbRoomStereoParameters = Field(default_factory=ReverbRoomStereoParameters)
+
+
+class ReverbPlateStereo(_ReverbBaseModel[StereoPlacement]):
     """
     The stereo room plate stage. This is based on Dattorro's 1997
     paper. This reverb consists of 4 allpass filters for input diffusion,

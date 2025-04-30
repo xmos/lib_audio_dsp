@@ -10,27 +10,22 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from .stage import StageConfig, StageModel, StageParameters
+from audio_dsp.models.stage import StageConfig, StageModel, StageParameters, NodePlacement
 
 
-class EnvelopeDetectorPlacement(BaseModel, extra="forbid"):
+class EnvelopeDetectorPlacement(NodePlacement):
+    """Graph placement for an Envelope Stage. This stage has no outputs."""
+
     input: list[int] = Field(
         default=[],
         description="Set of input edges.",
     )
     output: list[int] = Field([], max_length=0)
-    name: str
-    thread: int = Field(ge=0, lt=5)
-
-    @field_validator("input", "output", mode="before")
-    def _single_to_list(cls, value: int | list) -> list:
-        if isinstance(value, list):
-            return value
-        else:
-            return [value]
 
 
 class EnvelopeDetectorParameters(StageParameters):
+    """Parameters for an EnvelopeDetector Stage."""
+
     attack_t: float = Field(default=0)
     release_t: float = Field(default=0)
 

@@ -1,3 +1,5 @@
+"""Generic pydantic models for DSP Stages."""
+
 from typing import Type, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -48,6 +50,34 @@ class NodePlacement(BaseModel, extra="forbid"):
             return value
         else:
             return [value]
+
+
+class MonoPlacement(NodePlacement):
+    """The placement of a mono stage that must have 1 input and 1 output."""
+
+    input: list[int] = Field(
+        default=[],
+        description="List of input edges.",
+        min_length=1,
+        max_length=1,
+    )
+    output: list[int] = Field(
+        default=[], description="IDs of output edges.", min_length=1, max_length=1
+    )
+
+
+class StereoPlacement(NodePlacement):
+    """The placement of a stereo stage that must have 2 inputs and 2 outputs."""
+
+    input: list[int] = Field(
+        default=[],
+        description="List of input edges.",
+        min_length=2,
+        max_length=2,
+    )
+    output: list[int] = Field(
+        default=[], description="IDs of output edges.", min_length=2, max_length=2
+    )
 
 
 class StageModel[Placement: NodePlacement](edgeProducerBaseModel):

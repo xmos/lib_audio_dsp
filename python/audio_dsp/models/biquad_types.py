@@ -1,3 +1,5 @@
+"""Pydantic models of the different biquad types."""
+
 from audio_dsp.models.stage import StageParameters
 from functools import partial
 from pydantic import BaseModel, RootModel, Field, create_model
@@ -31,28 +33,38 @@ DEFAULT_BOOST_DB = partial(Field, 0, ge=-24, le=24, description="Gain of the fil
 
 
 class biquad_allpass(StageParameters):
+    """Parameters for a Biquad Stage configured to allpass."""
+
     type: Literal["allpass"] = "allpass"
     filter_freq: float = DEFAULT_FILTER_FREQ()
     q_factor: float = DEFAULT_Q()
 
 
 class biquad_bandpass(StageParameters):
+    """Parameters for a Biquad Stage configured to bandpass."""
+
     type: Literal["bandpass"] = "bandpass"
     filter_freq: float = DEFAULT_FILTER_FREQ()
     bw: float = DEFAULT_BW()
 
 
 class biquad_bandstop(StageParameters):
+    """Parameters for a Biquad Stage configured to bandstop."""
+
     type: Literal["bandstop"] = "bandstop"
     filter_freq: float = DEFAULT_FILTER_FREQ()
     bw: float = DEFAULT_BW()
 
 
 class biquad_bypass(StageParameters):
+    """Parameters for a Biquad Stage configured to bypass."""
+
     type: Literal["bypass"] = "bypass"
 
 
 class biquad_constant_q(StageParameters):
+    """Parameters for a Biquad Stage configured to constant_q."""
+
     type: Literal["constant_q"] = "constant_q"
     filter_freq: float = DEFAULT_FILTER_FREQ()
     q_factor: float = DEFAULT_Q()
@@ -60,17 +72,23 @@ class biquad_constant_q(StageParameters):
 
 
 class biquad_gain(StageParameters):
+    """Parameters for a Biquad Stage configured to gain."""
+
     type: Literal["gain"] = "gain"
     gain_db: float = 0
 
 
 class biquad_highpass(StageParameters):
+    """Parameters for a Biquad Stage configured to highpass."""
+
     type: Literal["highpass"] = "highpass"
     filter_freq: float = DEFAULT_FILTER_FREQ()
     q_factor: float = DEFAULT_Q()
 
 
 class biquad_highshelf(StageParameters):
+    """Parameters for a Biquad Stage configured to highshelf."""
+
     type: Literal["highshelf"] = "highshelf"
     filter_freq: float = DEFAULT_FILTER_FREQ()
     q_factor: float = DEFAULT_Q()
@@ -78,6 +96,8 @@ class biquad_highshelf(StageParameters):
 
 
 class biquad_linkwitz(StageParameters):
+    """Parameters for a Biquad Stage configured to linkwitz."""
+
     type: Literal["linkwitz"] = "linkwitz"
     f0: float = 500
     q0: float = DEFAULT_Q()
@@ -86,12 +106,16 @@ class biquad_linkwitz(StageParameters):
 
 
 class biquad_lowpass(StageParameters):
+    """Parameters for a Biquad Stage configured to lowpass."""
+
     type: Literal["lowpass"] = "lowpass"
     filter_freq: float = DEFAULT_FILTER_FREQ()
     q_factor: float = DEFAULT_Q()
 
 
 class biquad_lowshelf(StageParameters):
+    """Parameters for a Biquad Stage configured to lowshelf."""
+
     type: Literal["lowshelf"] = "lowshelf"
     filter_freq: float = DEFAULT_FILTER_FREQ()
     q_factor: float = DEFAULT_Q()
@@ -99,12 +123,16 @@ class biquad_lowshelf(StageParameters):
 
 
 class biquad_notch(StageParameters):
+    """Parameters for a Biquad Stage configured to notch."""
+
     type: Literal["notch"] = "notch"
     filter_freq: float = DEFAULT_FILTER_FREQ()
     q_factor: float = DEFAULT_Q()
 
 
 class biquad_peaking(StageParameters):
+    """Parameters for a Biquad Stage configured to peaking."""
+
     type: Literal["peaking"] = "peaking"
     filter_freq: float = DEFAULT_FILTER_FREQ()
     q_factor: float = DEFAULT_Q()
