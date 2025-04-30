@@ -5,10 +5,21 @@ pipeline. This includes stages for combining and splitting signals, basic
 gain components, and delays.
 """
 
-from ..design.stage import Stage, find_config, StageOutputList, StageOutput
-from ..dsp import generic as dspg
-import audio_dsp.dsp.signal_chain as sc
 import numpy as np
+import audio_dsp.dsp.signal_chain as sc
+from audio_dsp.models.signal_chain import (
+    FixedGainParameters,
+    MixerParameters,
+    SwitchParameters,
+    VolumeControlParameters,
+)
+from audio_dsp.design.stage import (
+    Stage,
+    StageOutput,
+    StageOutputList,
+    find_config,
+)
+from audio_dsp.dsp import generic as dspg
 
 
 class Bypass(Stage):
@@ -118,6 +129,9 @@ class Mixer(Stage):
         self.dsp_block = sc.mixer(self.fs, self.n_in, gain_db)
         return self
 
+    def set_parameters(self, parameters: MixerParameters):
+        self.set_gain(parameters.gain_db)
+
 
 class Adder(Stage):
     """
@@ -192,6 +206,9 @@ class FixedGain(Stage):
         """
         self.dsp_block = sc.fixed_gain(self.fs, self.n_in, gain_db)
         return self
+
+    def set_parameters(self, parameters: FixedGainParameters):
+        self.set_gain(parameters.gain_db)
 
 
 class VolumeControl(Stage):
@@ -274,6 +291,10 @@ class VolumeControl(Stage):
             self.dsp_block.unmute()
         return self
 
+    def set_parameters(self, parameters: VolumeControlParameters):
+        self.set_gain(parameters.gain_db)
+        self.set_mute_state(parameters.mute_state)
+
 
 class Switch(Stage):
     """
@@ -308,6 +329,8 @@ class Switch(Stage):
         self.dsp_block.move_switch(position)
         return self
 
+    def set_parameters(self, parameters: SwitchParameters):
+        self.move_switch(parameters.position)
 
 class SwitchSlew(Switch):
     """
@@ -372,6 +395,9 @@ class SwitchStereo(Stage):
         """
         self.dsp_block.move_switch(position)
         return self
+
+    def set_parameters(self, parameters: SwitchParameters):
+        self.move_switch(parameters.position)
 
 
 class Delay(Stage):

@@ -4,9 +4,10 @@
 signal, such as reducing the level of loud sounds.
 """
 
-from ..design.stage import Stage, find_config
-from ..dsp import drc as drc
-from ..dsp import generic as dspg
+from audio_dsp.design.stage import Stage, find_config
+from audio_dsp.dsp import drc as drc
+from audio_dsp.dsp import generic as dspg
+from audio_dsp.models.compressor_model import CompressorParameters
 
 
 class CompressorRMS(Stage):
@@ -46,6 +47,21 @@ class CompressorRMS(Stage):
         self.set_control_field_cb("slope", lambda: self.dsp_block.slope_f32)
 
         self.stage_memory_parameters = (self.n_in,)
+
+    def set_parameters(self, parameters: CompressorParameters):
+        """Update compressor parameters.
+        
+        Parameters
+        ----------
+        parameters : CompressorParameters
+            The new parameters to apply to the compressor.
+        """
+        self.make_compressor_rms(
+            parameters.ratio,
+            parameters.threshold_db,
+            parameters.attack_t,
+            parameters.release_t
+        )
 
     def make_compressor_rms(self, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         """Update compressor configuration based on new parameters.
