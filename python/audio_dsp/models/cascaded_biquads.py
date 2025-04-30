@@ -44,6 +44,10 @@ class CascadedBiquad16Parameters(StageParameters):
     )
 
 
-class ParametricEq(CascadedBiquads):
+class ParametricEq8b(CascadedBiquads):
     # class Model(Stage.Model):
-    op_type: Literal["ParametricEq"] = "ParametricEq"
+    op_type: Literal["ParametricEq8b"] = "ParametricEq8b"
+
+class ParametricEq16b(CascadedBiquads):
+    # class Model(Stage.Model):
+    op_type: Literal["ParametricEq16b"] = "ParametricEq16b"

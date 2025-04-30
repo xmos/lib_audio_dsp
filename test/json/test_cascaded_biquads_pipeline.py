@@ -17,7 +17,7 @@ def test_parametric_eq_pipeline():
             "fs": 48000,
             "nodes": [
                 {
-                    "op_type": "ParametricEq",
+                    "op_type": "ParametricEq8b",
                     "config": {},
                     "parameters": {
                         "filters": [

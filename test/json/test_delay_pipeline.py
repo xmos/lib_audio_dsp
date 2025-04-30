@@ -1,7 +1,7 @@
 """Test delay pipeline creation."""
 
 from audio_dsp.design.parse_json import DspJson, make_pipeline
-from audio_dsp.stages.delay import DelayStage
+from audio_dsp.stages.signal_chain import Delay
 
 
 def test_simple_delay_pipeline():
@@ -57,7 +57,7 @@ def test_simple_delay_pipeline():
     # Find our delay stage
     delay_stage = None
     for stage in pipeline.stages:
-        if isinstance(stage, DelayStage):
+        if isinstance(stage, Delay):
             delay_stage = stage
             break
             

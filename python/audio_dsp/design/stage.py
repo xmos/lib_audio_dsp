@@ -585,8 +585,3 @@ class Stage(Node):
 def all_stages() -> dict[str, Type[Stage]]:
     """Get a dict containing all stages in scope."""
     return {s.__name__: s for s in _GlobalStages.stages}
-
-
-def all_useable_stages() -> dict[str, Type[Stage]]:
-    """Get a dict containing all stages useable via the JSON interface."""
-    return {s.__name__: s for s in _GlobalStages.stages if "op_type" in s.Model.model_fields}

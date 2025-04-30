@@ -6,7 +6,7 @@ from .signal_chain import (
     Delay
 )
 
-from .cascaded_biquads import ParametricEq
+from .cascaded_biquads import ParametricEq8b, ParametricEq16b
 from .reverb import ReverbPlateStereo
 from .envelope_detector import EnvelopeDetectorPeak, EnvelopeDetectorRMS
 from .noise_suppressor_expander import NoiseSuppressorExpander

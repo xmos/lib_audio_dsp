@@ -10,7 +10,7 @@ class ForkConfig(StageConfig):
 
 
 class ForkPlacement(NodePlacement, extra="forbid"):
-    input: list[int] = Field(default=set(), max_length=1, min_length=1)
+    input: list[int] = Field(default=set(), min_length=1)
     output: list[int] = Field(default=set())
     name: str
     thread: int = Field(ge=0, lt=5)

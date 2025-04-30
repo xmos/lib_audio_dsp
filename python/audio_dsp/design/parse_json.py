@@ -7,12 +7,12 @@ from pydantic import BaseModel, Field
 from pydantic.json_schema import SkipJsonSchema
 
 import audio_dsp.stages as Stages
-from audio_dsp.design.pipeline import Pipeline
-from audio_dsp.design.stage import StageOutputList
+from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
+from audio_dsp.design.stage import StageOutputList, all_stages
 from audio_dsp.models.signal_chain import Fork
 from audio_dsp.models.stage import StageModel, all_models
 
-BAD_NAMES = ["CascadedBiquads", "Fork"]
+BAD_NAMES = ["CascadedBiquads"]
 
 _stage_Models = Annotated[
     Union[

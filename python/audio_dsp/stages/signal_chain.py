@@ -275,7 +275,7 @@ class VolumeControl(Stage):
         gain_db : float
             The gain of the volume control in dB.
         """
-        self.dsp_block.set_gain(gain_dB)
+        self.dsp_block.target_gain = gain_dB
         return self
 
     def set_mute_state(self, mute_state):
