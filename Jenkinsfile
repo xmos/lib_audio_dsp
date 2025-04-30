@@ -132,7 +132,7 @@ pipeline {
                   // build everything
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      sh "pip install -r requirements.txt"
+                      sh "pip install -r requirements.txt --no-cache"
                     } // tools
                   } // withVenv
                 } // dir
@@ -322,7 +322,7 @@ pipeline {
                   // build everything
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      sh "pip install -r requirements.txt"
+                      sh "pip install -r requirements.txt --no-cache"
                     }
                   }
                 }
