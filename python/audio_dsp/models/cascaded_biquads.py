@@ -4,7 +4,7 @@ from annotated_types import Len
 from pydantic import Field
 from pydantic.json_schema import SkipJsonSchema
 
-import audio_dsp.models.biquad as bq
+import audio_dsp.models.biquad_types as bq
 
 from .stage import StageConfig, StageModel, StageParameters
 

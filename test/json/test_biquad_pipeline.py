@@ -49,7 +49,7 @@ First, locate and check these files for the stage you're fixing:
 """
 
 from audio_dsp.design.parse_json import DspJson, make_pipeline
-from audio_dsp.models.biquad_model import Biquad
+from audio_dsp.models.biquad import Biquad
 
 
 def test_simple_biquad_pipeline():

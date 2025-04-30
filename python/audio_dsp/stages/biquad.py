@@ -6,6 +6,8 @@ from audio_dsp.design.stage import Stage, find_config
 import audio_dsp.dsp.biquad as bq
 import numpy as np
 
+from audio_dsp.models.biquad import BiquadParameters
+
 
 def _ws(locals):
     """
@@ -267,7 +269,7 @@ class Biquad(Stage):
         self.dsp_block.update_coeffs(new_coeffs)
         return self
 
-    def set_parameters(self, parameters):
+    def set_parameters(self, parameters: BiquadParameters):
         """Set biquad filter parameters.
 
         Args:
@@ -275,8 +277,6 @@ class Biquad(Stage):
         """
         # If parameters is a dict, convert to BiquadParameters
         if isinstance(parameters, dict):
-            from audio_dsp.models.biquad_model import BiquadParameters
-
             parameters = BiquadParameters(**parameters)
 
         filter_type = parameters.filter_type
