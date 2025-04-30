@@ -334,7 +334,7 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        buildApps(["test/json"])
+                        // buildApps(["test/json"])
                           dir("test/json") {
                             runPytest("--dist worksteal")
                         }
