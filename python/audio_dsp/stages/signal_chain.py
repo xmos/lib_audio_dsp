@@ -5,6 +5,7 @@ pipeline. This includes stages for combining and splitting signals, basic
 gain components, and delays.
 """
 
+from typing import Optional
 import numpy as np
 import audio_dsp.dsp.signal_chain as sc
 from audio_dsp.models.signal_chain import (
@@ -12,6 +13,7 @@ from audio_dsp.models.signal_chain import (
     MixerParameters,
     SwitchParameters,
     VolumeControlParameters,
+    DelayParameters
 )
 from audio_dsp.design.stage import (
     Stage,

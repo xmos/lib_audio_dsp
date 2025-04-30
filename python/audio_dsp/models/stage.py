@@ -38,7 +38,7 @@ class NodePlacement(BaseModel, extra="forbid"):
             return [value]
 
 
-class StageModel[Placement = NodePlacement](edgeProducerBaseModel):
+class StageModel[Placement](edgeProducerBaseModel):
     placement: Placement
 
     # stage doesn't actually have a model

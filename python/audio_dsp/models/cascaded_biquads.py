@@ -12,6 +12,8 @@ from .stage import StageConfig, StageModel, StageParameters
 def _8biquads():
     return [bq.biquad_bypass() for _ in range(8)]
 
+def _16biquads():
+    return [bq.biquad_bypass() for _ in range(16)]
 
 class CascadedBiquadParameters(StageParameters):
     filters: Annotated[list[bq.BIQUAD_TYPES], Len(8)] = Field(
@@ -33,6 +35,12 @@ class CascadedBiquads(StageModel):
     op_type: Literal["CascadedBiquads"] = "CascadedBiquads"
     parameters: CascadedBiquadParameters = Field(
         default_factory=CascadedBiquadParameters
+    )
+
+
+class CascadedBiquad16Parameters(StageParameters):
+    filters: Annotated[list[bq.BIQUAD_TYPES], Len(16)] = Field(
+        default_factory=_8biquads, max_length=16
     )
 
 

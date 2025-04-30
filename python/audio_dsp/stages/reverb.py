@@ -7,6 +7,7 @@ import audio_dsp.dsp.reverb as rvrb
 import audio_dsp.dsp.reverb_stereo as rvbs
 import audio_dsp.dsp.reverb_plate as rvp
 
+from audio_dsp.models.reverb import ReverbRoomParameters, ReverbRoomStereoParameters, ReverbPlateParameters
 
 class _ReverbBase(Stage):
     """
@@ -267,7 +268,7 @@ class ReverbRoomStereo(ReverbRoom):
         """
         self.dsp_block.width = width
 
-    def set_parameters(self, parameters: ReverbRoomParameters):
+    def set_parameters(self, parameters: ReverbRoomStereoParameters):
         self.set_damping(parameters.damping)
         self.set_decay(parameters.decay)
         self.set_room_size(parameters.room_size)

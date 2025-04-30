@@ -78,3 +78,16 @@ class HardLimiterPeak(StageModel):
     """
     op_type: Literal["HardLimiterPeak"] = "HardLimiterPeak"
     parameters: LimiterParameters = Field(default_factory=LimiterParameters) 
+
+class ClipperParameters(StageParameters):
+    """Parameters for clipper stage.
+
+    Attributes:
+        threshold_db: Level in dB above which clipping occurs
+    """
+    threshold_db: float = Field(
+        default=0.0,
+        ge=-96.0,
+        le=0.0,
+        description="Level in dB above which clipping occurs"
+    )

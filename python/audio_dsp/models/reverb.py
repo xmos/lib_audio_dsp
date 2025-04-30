@@ -9,7 +9,6 @@ class ReverbBaseParameters(StageParameters):
     predelay: float = Field(
         default=15, ge=0, le=30, description="Set the predelay in milliseconds."
     )
-    width: float = Field(default=1.0, ge=0, le=1, description="Range: 0 to 1")
     pregain: float = Field(
         default=0.5,
         ge=0,
@@ -27,6 +26,10 @@ class ReverbBaseParameters(StageParameters):
         "the reverb delay lines.",
     )
 
+class ReverbStereoBaseParameters(ReverbBaseParameters):
+    width: float = Field(default=1.0, ge=0, le=1, description="Range: 0 to 1")
+
+
 
 class ReverbBaseConfig(StageConfig):
     predelay: float = Field(default=30)
@@ -41,8 +44,37 @@ class _ReverbBaseModel[T](StageModel[T]):
     # op_type: is not defined as this Stage cannot be pipelined
     config: ReverbBaseConfig = Field(default_factory=ReverbBaseConfig)
 
+class ReverbRoomParameters(ReverbBaseParameters):
+    damping: float = Field(
+        default=0.5,
+        ge=0,
+        le=1,
+        description="This controls how much high frequency attenuation "
+        "is in the room. Higher values yield shorter "
+        "reverberation times at high frequencies. Range: 0 to 1",
+    )
+    decay: float = Field(
+        default=0.5,
+        ge=0,
+        le=1,
+        description="This sets how reverberant the room is. Higher "
+        "values will give a longer reverberation time for "
+        "a given room size. Range: 0 to 1",
+    )
+    room_size: float = Field(
+        default=0.5,
+        ge=0,
+        le=1,
+        description="This sets how reverberant the room is. Higher "
+        "values will give a longer reverberation time for "
+        "a given room size. Range: 0 to 1",
+    )
 
-class ReverbPlateParameters(ReverbBaseParameters):
+class ReverbRoomStereoParameters(ReverbStereoBaseParameters, ReverbRoomParameters):
+    pass
+
+
+class ReverbPlateParameters(ReverbStereoBaseParameters):
     damping: float = Field(
         default=0.5,
         ge=0,
