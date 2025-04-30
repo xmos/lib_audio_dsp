@@ -4,7 +4,7 @@ from typing import Literal
 from pydantic import Field
 
 from audio_dsp.models.stage import StageModel, StageParameters
-from audio_dsp.models.biquad_types import BIQUAD_TYPES
+from audio_dsp.models.biquad_types import BIQUAD_TYPES, biquad_bypass
 
 
 class BiquadParameters(StageParameters):
@@ -32,4 +32,6 @@ class Biquad(StageModel):
     """
 
     op_type: Literal["Biquad"] = "Biquad"
-    parameters: BiquadParameters = Field(default_factory=BiquadParameters)
+    parameters: BiquadParameters = Field(
+        default_factory=lambda: BiquadParameters(filter_type=biquad_bypass())
+    )

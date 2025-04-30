@@ -8,7 +8,7 @@ in the signal.
 from audio_dsp.design.stage import Stage, find_config
 from audio_dsp.dsp import drc as drc
 from audio_dsp.dsp import generic as dspg
-from audio_dsp.models.noise_suppressor_expander import NoiseSuppressorExpanderParameters
+from audio_dsp.models.noise_suppressor_expander_model import NoiseSuppressorExpanderParameters
 
 
 class NoiseSuppressorExpander(Stage):

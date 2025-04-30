@@ -177,7 +177,7 @@ class CascadedBiquads(Stage):
         """
         model = parameters.model_dump()
         biquads = [[*spec.values()] for spec in model["filters"]]
-        return self.make_parametric_eq(biquads)
+        self.make_parametric_eq(biquads)
 
 
 class CascadedBiquads16(Stage):
@@ -293,7 +293,7 @@ class CascadedBiquads16(Stage):
         """
         model = parameters.model_dump()
         biquads = [[*spec.values()] for spec in model["filters"]]
-        return self.make_parametric_eq(biquads)
+        self.make_parametric_eq(biquads)
 
 
 class ParametricEq8b(CascadedBiquads):
@@ -313,7 +313,13 @@ class ParametricEq8b(CascadedBiquads):
     """
 
     def set_parameters(self, parameters: CascadedBiquadParameters):
-        """Update the parameters of the ParametricEq8b stage."""
+        """Update the parameters of the ParametricEq8b stage.
+
+        Parameters
+        ----------
+        parameters : CascadedBiquadParameters
+            The parameters to update the cascaded biquads with.
+        """
         model = parameters.model_dump()
         biquads = [[*spec.values()] for spec in model["filters"]]
         self.make_parametric_eq(biquads)

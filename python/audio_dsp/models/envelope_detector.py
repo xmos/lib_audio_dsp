@@ -20,7 +20,7 @@ class EnvelopeDetectorPlacement(NodePlacement):
         default=[],
         description="Set of input edges.",
     )
-    output: list[int] = Field([], max_length=0)
+    output: list[int] = Field(default=[], max_length=0)
 
 
 class EnvelopeDetectorParameters(StageParameters):

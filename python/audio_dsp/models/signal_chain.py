@@ -187,7 +187,7 @@ class DelayParameters(StageParameters):
     """
 
     delay: int = Field(default=0, ge=0, description="Current delay length in samples")
-    units: Literal["samples", "seconds"] = Field(
+    units: Literal["samples", "s", "ms"] = Field(
         default="samples", description="Units for delay values"
     )
 

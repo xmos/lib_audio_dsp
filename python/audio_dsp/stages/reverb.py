@@ -274,7 +274,7 @@ class ReverbRoomStereo(ReverbRoom):
         """
         self.dsp_block.width = width
 
-    def set_parameters(self, parameters: ReverbRoomStereoParameters):
+    def set_parameters(self, parameters: ReverbRoomStereoParameters):  # pyright: ignore overload
         """Update the parameters of the ReverbRoomStereo stage."""
         self.set_damping(parameters.damping)
         self.set_decay(parameters.decay)

@@ -53,10 +53,10 @@ class CascadedBiquad16Parameters(StageParameters):
 class ParametricEq8b(CascadedBiquads):
     """Pydantic model of the ParametricEq8b Stage."""
 
-    op_type: Literal["ParametricEq8b"] = "ParametricEq8b"
+    op_type: Literal["ParametricEq8b"] = "ParametricEq8b"  # pyright: ignore override
 
 
 class ParametricEq16b(CascadedBiquads):
     """Pydantic model of the ParametricEq16b Stage."""
 
-    op_type: Literal["ParametricEq16b"] = "ParametricEq16b"
+    op_type: Literal["ParametricEq16b"] = "ParametricEq16b"  # pyright: ignore override

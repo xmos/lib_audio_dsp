@@ -118,27 +118,15 @@ class ReverbPlateParameters(ReverbStereoBaseParameters):
     bandwidth: float = Field(default=8000, ge=0, le=24000, description="Range: 0 to 1")
 
 
-class ReverbRoomStereo(_ReverbBaseModel[MonoPlacement]):
-    """
-    The stereo room plate stage. This is based on Dattorro's 1997
-    paper. This reverb consists of 4 allpass filters for input diffusion,
-    followed by a figure of 8 reverb tank of allpasses, low-pass filters,
-    and delays. The output is taken from multiple taps in the delay lines
-    to get a desirable echo density.
-    """
+class ReverbRoom(_ReverbBaseModel[MonoPlacement]):
+    """ """
 
-    op_type: Literal["ReverbRoomStereo"] = "ReverbRoomStereo"
-    parameters: ReverbRoomStereoParameters = Field(default_factory=ReverbRoomStereoParameters)
+    op_type: Literal["ReverbRoom"] = "ReverbRoom"
+    parameters: ReverbRoomParameters = Field(default_factory=ReverbRoomParameters)
 
 
 class ReverbRoomStereo(_ReverbBaseModel[StereoPlacement]):
-    """
-    The stereo room plate stage. This is based on Dattorro's 1997
-    paper. This reverb consists of 4 allpass filters for input diffusion,
-    followed by a figure of 8 reverb tank of allpasses, low-pass filters,
-    and delays. The output is taken from multiple taps in the delay lines
-    to get a desirable echo density.
-    """
+    """ """
 
     op_type: Literal["ReverbRoomStereo"] = "ReverbRoomStereo"
     parameters: ReverbRoomStereoParameters = Field(default_factory=ReverbRoomStereoParameters)

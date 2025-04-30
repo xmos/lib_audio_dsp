@@ -51,11 +51,18 @@ class CompressorSidechainPlacement(NodePlacement):
     - Output 0: Compressed version of input 0
     """
 
-    n_in: Literal[2] = 2
-    n_out: Literal[1] = 1
+    input: list[int] = Field(
+        default=[],
+        description="List of input edges.",
+        min_length=2,
+        max_length=2,
+    )
+    output: list[int] = Field(
+        default=[], description="IDs of output edges.", min_length=1, max_length=1
+    )
 
 
-class CompressorSidechain(StageModel):
+class CompressorSidechain(StageModel[CompressorSidechainPlacement]):
     """Sidechain compressor stage based on RMS envelope of detect signal.
 
     This stage requires exactly 2 input channels:
@@ -77,4 +84,3 @@ class CompressorSidechain(StageModel):
     parameters: CompressorSidechainParameters = Field(
         default_factory=CompressorSidechainParameters
     )
-    placement: CompressorSidechainPlacement = Field(default_factory=CompressorSidechainPlacement)

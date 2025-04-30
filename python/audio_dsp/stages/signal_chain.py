@@ -5,7 +5,7 @@ pipeline. This includes stages for combining and splitting signals, basic
 gain components, and delays.
 """
 
-from typing import Optional
+from typing import Optional, LiteralString
 import numpy as np
 import audio_dsp.dsp.signal_chain as sc
 from audio_dsp.models.signal_chain import (
@@ -14,6 +14,7 @@ from audio_dsp.models.signal_chain import (
     SwitchParameters,
     VolumeControlParameters,
     DelayParameters,
+    DelayConfig,
 )
 from audio_dsp.design.stage import (
     Stage,
@@ -434,11 +435,11 @@ class Delay(Stage):
 
     def __init__(
         self,
-        max_delay: Optional[int] = 1024,
-        starting_delay: Optional[int] = 0,
+        max_delay: float = 1024,
+        starting_delay: float = 0,
         units: str = "samples",
-        config: Optional[dict] = None,
-        parameters: Optional[dict] = None,
+        config: DelayConfig = None,
+        parameters: DelayParameters = None,
         **kwargs,
     ):
         super().__init__(config=find_config("delay"), **kwargs)
@@ -446,13 +447,13 @@ class Delay(Stage):
 
         # Get config values
         if config is not None:
-            max_delay = config.get("max_delay", max_delay)
+            max_delay = config.max_delay
         # Get parameter values
         if parameters is not None:
-            starting_delay = parameters.get("delay", starting_delay)
-            units = parameters.get("units", units)
+            starting_delay = parameters.delay
+            units = parameters.units
 
-        self.dsp_block = sc.delay(self.fs, self.n_in, max_delay, starting_delay, units)
+        self.dsp_block: sc.delay = sc.delay(self.fs, self.n_in, max_delay, starting_delay, units)
         self["max_delay"] = max_delay
         self.set_control_field_cb("max_delay", lambda: self.dsp_block._max_delay)
         self.set_control_field_cb("delay", lambda: self.dsp_block.delay)
@@ -461,7 +462,7 @@ class Delay(Stage):
 
         # Store parameters
         self.max_delay = max_delay
-        self.parameters = DelayParameters(delay=starting_delay, units=units)
+        self.parameters = DelayParameters(delay=starting_delay, units=(units))
 
     def set_delay(self, delay, units="samples"):
         """
