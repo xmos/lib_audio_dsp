@@ -16,17 +16,11 @@ class ForkConfig(StageConfig):
 class ForkPlacement(NodePlacement, extra="forbid"):
     """Graph placement for a Fork Stage."""
 
-    input: list[int] = Field(default=set(), min_length=1)
-    output: list[int] = Field(default=set())
-    name: str
-    thread: int = Field(ge=0, lt=5)
-
-    @field_validator("input", "output", mode="before")
-    def _single_to_list(cls, value: int | list) -> list:
-        if isinstance(value, list):
-            return value
-        else:
-            return [value]
+    input: list[int] = Field(
+        default=[],
+        description="List of input edges.",
+        min_length=1
+    )
 
 
 class Fork(StageModel[ForkPlacement]):
@@ -186,7 +180,7 @@ class DelayParameters(StageParameters):
         units: Units for delay values, either "samples" or "seconds"
     """
 
-    delay: int = Field(default=0, ge=0, description="Current delay length in samples")
+    delay: float = Field(default=0, ge=0, description="Current delay length in (units)")
     units: Literal["samples", "s", "ms"] = Field(
         default="samples", description="Units for delay values"
     )

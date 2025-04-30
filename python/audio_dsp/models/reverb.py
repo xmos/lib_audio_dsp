@@ -10,6 +10,7 @@ from audio_dsp.models.stage import (
     StageParameters,
     MonoPlacement,
     StereoPlacement,
+    NodePlacement
 )
 
 
@@ -49,7 +50,7 @@ class ReverbBaseConfig(StageConfig):
     predelay: float = Field(default=30)
 
 
-class _ReverbBaseModel[T](StageModel[T]):
+class _ReverbBaseModel[Placement: NodePlacement](StageModel):
     """
     The base class for reverb stages, containing pre delays, and wet/dry
     mixes and pregain.
