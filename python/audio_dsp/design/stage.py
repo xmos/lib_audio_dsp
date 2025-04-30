@@ -2,17 +2,21 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """The edges and nodes for a DSP pipeline."""
 
-from typing import Iterable, Type
+from pathlib import Path
+from types import NotImplementedType
+from typing import Optional, Type, TypeVar
 
 import numpy
-from .graph import Edge, Node
 import yaml
-from pathlib import Path
+
 from audio_dsp.design import plot
 from audio_dsp.dsp.generic import dsp_block
 from typing import Optional
 from types import NotImplementedType
 from copy import deepcopy
+
+from audio_dsp.models.stage import StageParameters
+from audio_dsp.design.graph import Edge, Node
 
 
 def find_config(name):
@@ -86,7 +90,7 @@ class StageOutput(Edge):
     def dest_index(self, value):
         if self._dest_index is not None:
             raise RuntimeError(
-                f"This edge has already been connected, edges cannot have multiple destinations."
+                f"This edge has already been connected, edges cannot have multiple destinations: {value = }."
             )
         self._dest_index = value
 
@@ -202,7 +206,10 @@ class StageOutputList:
 
     def __eq__(self, other):
         """Check if this list contains the same edges as another."""
-        return all(a is b for a, b in zip(self.edges, other.edges))
+        if other is None:
+            return False
+        else:
+            return all(a is b for a, b in zip(self.edges, other.edges))
 
 
 class PropertyControlField:
@@ -241,6 +248,10 @@ class _GlobalStages:
     """Class to hold some globals."""
 
     stages = []
+
+
+# This defines the types of instances of the config/parameter classes
+StageParameterType = TypeVar("StageParameterType", bound="StageParameters")
 
 
 class Stage(Node):
@@ -370,6 +381,15 @@ class Stage(Node):
         """Add all subclasses of Stage to a global list for querying."""
         super().__init_subclass__()
         _GlobalStages.stages.append(cls)
+
+    def set_parameters(self, parameters: StageParameterType):
+        if isinstance(parameters, StageParameters) and type(parameters) != StageParameters:
+            raise NotImplementedError(
+                f"A subclass of StageParameters ({type(parameters).__name__}) "
+                "was passed to the generic implementation, of set_parameters, resulting in the "
+                "parameters not being used. Please define set_parameters for the specific Stage class."
+            )
+        pass
 
     @property
     def o(self) -> StageOutputList:
@@ -565,3 +585,8 @@ class Stage(Node):
 def all_stages() -> dict[str, Type[Stage]]:
     """Get a dict containing all stages in scope."""
     return {s.__name__: s for s in _GlobalStages.stages}
+
+
+def all_useable_stages() -> dict[str, Type[Stage]]:
+    """Get a dict containing all stages useable via the JSON interface."""
+    return {s.__name__: s for s in _GlobalStages.stages if "op_type" in s.Model.model_fields}
