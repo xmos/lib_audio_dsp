@@ -424,15 +424,36 @@ class Delay(Stage):
         The DSP block class; see :ref:`Delay` for implementation details.
     """
 
-    def __init__(self, max_delay, starting_delay, units="samples", **kwargs):
+    def __init__(
+        self,
+        max_delay: Optional[int] = 1024,
+        starting_delay: Optional[int] = 0,
+        units: str = "samples",
+        config: Optional[dict] = None,
+        parameters: Optional[dict] = None,
+        **kwargs
+    ):
         super().__init__(config=find_config("delay"), **kwargs)
         self.create_outputs(self.n_in)
+
+        # Get config values
+        if config is not None:
+            max_delay = config.get("max_delay", max_delay)
+        # Get parameter values
+        if parameters is not None:
+            starting_delay = parameters.get("delay", starting_delay)
+            units = parameters.get("units", units)
+
         self.dsp_block = sc.delay(self.fs, self.n_in, max_delay, starting_delay, units)
         self["max_delay"] = max_delay
         self.set_control_field_cb("max_delay", lambda: self.dsp_block._max_delay)
         self.set_control_field_cb("delay", lambda: self.dsp_block.delay)
 
         self.stage_memory_parameters = (self.n_in, self["max_delay"])
+
+        # Store parameters
+        self.max_delay = max_delay
+        self.parameters = DelayParameters(delay=starting_delay, units=units)
 
     def set_delay(self, delay, units="samples"):
         """
@@ -448,6 +469,20 @@ class Delay(Stage):
         """
         self.dsp_block.set_delay(delay, units)
 
+    def set_parameters(self, parameters: DelayParameters):
+        """Set delay parameters.
+        
+        Args:
+            parameters: New delay parameters to apply
+        """
+        if parameters.delay > self.max_delay:
+            raise ValueError(
+                f"Delay value {parameters.delay} exceeds maximum "
+                f"delay {self.max_delay}"
+            )
+            
+        self.set_delay(parameters.delay, units=parameters.units)
+        self.parameters = parameters 
 
 class Crossfader(Stage):
     """
