@@ -4,9 +4,10 @@
 a signal varies over time.
 """
 
-from ..design.stage import Stage, find_config
-from ..dsp import drc as drc
-from ..dsp import generic as dspg
+from audio_dsp.design.stage import Stage, find_config
+from audio_dsp.dsp import drc as drc
+from audio_dsp.dsp import generic as dspg
+from audio_dsp.models.envelope_detector import EnvelopeDetectorParameters
 
 
 class EnvelopeDetectorPeak(Stage):
@@ -36,6 +37,9 @@ class EnvelopeDetectorPeak(Stage):
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
 
         self.stage_memory_parameters = (self.n_in,)
+
+    def set_parameters(self, parameters: EnvelopeDetectorParameters):
+        self.make_env_det_peak(parameters.attack_t, parameters.release_t)
 
     def make_env_det_peak(self, attack_t, release_t, Q_sig=dspg.Q_SIG):
         """Update envelope detector configuration based on new parameters.
@@ -83,6 +87,9 @@ class EnvelopeDetectorRMS(Stage):
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
 
         self.stage_memory_parameters = (self.n_in,)
+
+    def set_parameters(self, parameters: EnvelopeDetectorParameters):
+        self.make_env_det_rms(parameters.attack_t, parameters.release_t)
 
     def make_env_det_rms(self, attack_t, release_t, Q_sig=dspg.Q_SIG):
         """Update envelope detector configuration based on new parameters.

@@ -2,7 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Reverb Stages emulate the natural reverberance of rooms."""
 
-from ..design.stage import Stage, find_config
+from audio_dsp.design.stage import Stage, find_config
 import audio_dsp.dsp.reverb as rvrb
 import audio_dsp.dsp.reverb_stereo as rvbs
 import audio_dsp.dsp.reverb_plate as rvp
@@ -178,6 +178,15 @@ class ReverbRoom(_ReverbBase):
         """
         self.dsp_block.decay = decay
 
+    def set_parameters(self, parameters: ReverbRoomParameters):
+        self.set_damping(parameters.damping)
+        self.set_decay(parameters.decay)
+        self.set_room_size(parameters.room_size)
+        # base parameters
+        self.set_predelay(parameters.predelay)
+        self.set_pre_gain(parameters.pregain)
+        self.set_wet_dry_mix(parameters.wet_dry_mix)
+
 
 class ReverbRoomStereo(ReverbRoom):
     """
@@ -258,6 +267,15 @@ class ReverbRoomStereo(ReverbRoom):
         """
         self.dsp_block.width = width
 
+    def set_parameters(self, parameters: ReverbRoomParameters):
+        self.set_damping(parameters.damping)
+        self.set_decay(parameters.decay)
+        self.set_room_size(parameters.room_size)
+        self.set_width(parameters.width)
+        # base parameters
+        self.set_predelay(parameters.predelay)
+        self.set_pre_gain(parameters.pregain)
+        self.set_wet_dry_mix(parameters.wet_dry_mix)
 
 class ReverbPlateStereo(_ReverbBase):
     """
@@ -401,3 +419,15 @@ class ReverbPlateStereo(_ReverbBase):
             The bandwidth of the plate input signal, between 0 and 1.
         """
         self.dsp_block.bandwidth = bandwidth
+
+    def set_parameters(self, parameters: ReverbPlateParameters):
+        self.set_damping(parameters.damping)
+        self.set_decay(parameters.decay)
+        self.set_early_diffusion(parameters.early_diffusion)
+        self.set_late_diffusion(parameters.late_diffusion)
+        self.set_bandwidth(parameters.bandwidth)
+        self.set_width(parameters.width)
+        # base parameters
+        self.set_predelay(parameters.predelay)
+        self.set_pre_gain(parameters.pregain)
+        self.set_wet_dry_mix(parameters.wet_dry_mix)
