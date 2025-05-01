@@ -438,8 +438,8 @@ class Delay(Stage):
         max_delay: float = 1024,
         starting_delay: float = 0,
         units: str = "samples",
-        config: DelayConfig = None,
-        parameters: DelayParameters = None,
+        config: Optional[DelayConfig] = None,
+        parameters: Optional[DelayParameters] = None,
         **kwargs,
     ):
         super().__init__(config=find_config("delay"), **kwargs)
@@ -453,16 +453,16 @@ class Delay(Stage):
             starting_delay = parameters.delay
             units = parameters.units
 
-        self.dsp_block: sc.delay = sc.delay(self.fs, self.n_in, max_delay, starting_delay, units)
+        self.dsp_block = sc.delay(self.fs, self.n_in, max_delay, starting_delay, units)
         self["max_delay"] = max_delay
-        self.set_control_field_cb("max_delay", lambda: self.dsp_block._max_delay)
-        self.set_control_field_cb("delay", lambda: self.dsp_block.delay)
+        self.set_control_field_cb("max_delay", lambda: self.dsp_block._max_delay) #  pyright: ignore
+        self.set_control_field_cb("delay", lambda: self.dsp_block.delay) #  pyright: ignore
 
         self.stage_memory_parameters = (self.n_in, self["max_delay"])
 
         # Store parameters
         self.max_delay = max_delay
-        self.parameters = DelayParameters(delay=starting_delay, units=(units))
+        self.parameters = DelayParameters(delay=starting_delay, units=(units)) # pyright: ignore
 
     def set_delay(self, delay, units="samples"):
         """
