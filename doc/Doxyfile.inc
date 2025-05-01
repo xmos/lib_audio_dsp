@@ -3,8 +3,8 @@
 # these values, edit doxygen overrides in settings.yml
 # for higher priority settings
 
-PROJECT_NAME = Lib audio dsp
-PROJECT_BRIEF = "Audio DSP for the xcore"
+PROJECT_NAME = lib_audio_dsp
+PROJECT_BRIEF = "Audio DSP Library"
 
 INPUT += ../lib_audio_dsp/api/dsp \
          ../lib_audio_dsp/api/stages/adsp_control.h \

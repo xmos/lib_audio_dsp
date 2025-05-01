@@ -87,7 +87,7 @@ thread 1.
 
 The generated DSP threads and the APIs for exchanging inputs with the pipeline all use channels to communicate audio. 
 
-.. literalinclude:: ../../test/pipeline/doc_examples/design_guide_resources.py
+.. literalinclude:: ../../../test/pipeline/doc_examples/design_guide_resources.py
    :language: python
    :start-after: # start example
    :end-before: # end example
