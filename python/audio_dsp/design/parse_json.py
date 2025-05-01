@@ -96,7 +96,7 @@ class Graph(BaseModel):
 
     name: str = Field(..., description="Name of the graph")
     fs: int = Field(..., description="Sampling frequency for the graph")
-    nodes: list[_stage_Models] # pyright: ignore
+    nodes: list[_stage_Models]  # pyright: ignore
     inputs: list[Input]
     outputs: list[Output]
 

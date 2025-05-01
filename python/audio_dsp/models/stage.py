@@ -40,7 +40,7 @@ class NodePlacement(BaseModel, extra="forbid"):
         default=[],
         description="List of input edges.",
     )
-    output: list[int] = Field(default=[], description="IDs of output edges.") 
+    output: list[int] = Field(default=[], description="IDs of output edges.")
     name: str
     thread: int = Field(ge=0, lt=5)
 
