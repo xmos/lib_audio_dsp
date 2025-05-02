@@ -13,6 +13,8 @@ from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 from audio_dsp.design.stage import StageOutputList, all_stages
 from audio_dsp.models.signal_chain import Fork
 from audio_dsp.models.stage import all_models
+import json
+import re
 
 BAD_NAMES = ["CascadedBiquads"]
 
@@ -108,6 +110,36 @@ class DspJson(BaseModel):
     producer_name: str
     producer_version: str
     graph: Graph
+
+    def model_dump_json(self, indent):
+        d = self.model_dump()
+        # Move 'op_type' to the front
+        for i, node in enumerate(d["graph"]["nodes"]):
+            if 'op_type' in node:
+                items = [('op_type', node.pop('op_type'))] + list(node.items())
+                d["graph"]["nodes"][i] = dict(items)
+                # return json.dumps(dict(items))
+        dump = json.dumps(d, indent=2)
+
+        def compact_array_newlines(s):
+            # Finds square brackets with their content (non-greedy, so not nested)
+            pattern = re.compile(r'\[(.*?)\]', re.DOTALL)
+            def repl(match):
+                inner = match.group(1)
+                if '[' in inner:
+                    # catch the first node
+                    return f'[{compact_array_newlines(inner + ']')}'
+                elif '{' in inner or '}' in inner:
+                    # catch other lists
+                    return match.group(0)
+                # Remove leading/trailing whitespace just inside the brackets
+                stripped_inner = inner.strip()
+                # Replace inner newlines+whitespace with a space
+                compact_inner = re.sub(r'\s*\n\s*', ' ', stripped_inner)
+                return f'[{compact_inner}]'
+            return pattern.sub(repl, s)
+
+        return compact_array_newlines(dump)
 
 
 def insert_forks(graph: Graph) -> Graph:

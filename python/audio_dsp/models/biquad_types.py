@@ -99,9 +99,9 @@ class biquad_linkwitz(StageParameters):
     """Parameters for a Biquad Stage configured to linkwitz."""
 
     type: Literal["linkwitz"] = "linkwitz"
-    f0: float = 500
+    f0: float = DEFAULT_FILTER_FREQ()
     q0: float = DEFAULT_Q()
-    fp: float = 1000
+    fp: float = DEFAULT_FILTER_FREQ()
     qp: float = DEFAULT_Q()
 
 
