@@ -132,7 +132,7 @@ pipeline {
                   // build everything
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      sh "pip install -r requirements.txt"
+                      sh "pip install -r requirements.txt --no-cache"
                     } // tools
                   } // withVenv
                 } // dir
@@ -322,12 +322,28 @@ pipeline {
                   // build everything
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
-                      sh "pip install -r requirements.txt"
+                      sh "pip install -r requirements.txt --no-cache"
                     }
                   }
                 }
               }
             } // Build
+            stage('Test JSON') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        // buildApps(["test/json"])
+                          dir("test/json") {
+                            runPytest("--dist worksteal")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test json
             stage('Test DRC') {
               when {
                 anyOf {

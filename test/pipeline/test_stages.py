@@ -438,7 +438,7 @@ def test_cascaded_biquad16(method, args, frame_size):
         generate_test_param_file("CASCADED_BIQUADS_16", stage_config)
         return p
 
-    folder_name = f"cbq_{frame_size}_{method[5:]}"
+    folder_name = f"cbq16_{frame_size}_{method[5:]}"
     do_test(default_pipeline, tuned_pipeline, frame_size, folder_name)
 
 @pytest.mark.group0
