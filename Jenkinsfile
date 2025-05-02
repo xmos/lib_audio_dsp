@@ -96,6 +96,7 @@ pipeline {
     REPO = "lib_audio_dsp"
     REPO_NAME = "lib_audio_dsp"
     HAS_GENERIC_CHANGES = false
+    DEPS_CHECK = "strict"
   } // environment
 
   options {
