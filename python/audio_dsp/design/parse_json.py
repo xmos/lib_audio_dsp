@@ -3,7 +3,7 @@
 from collections import defaultdict
 from pathlib import Path
 from pprint import pprint
-from typing import Annotated, Any, Optional, Union
+from typing import Annotated, Any, Optional, Union, List
 
 from pydantic import BaseModel, Field
 from pydantic.json_schema import SkipJsonSchema
@@ -15,6 +15,7 @@ from audio_dsp.models.signal_chain import Fork
 from audio_dsp.models.stage import all_models
 import json
 import re
+import warnings
 
 BAD_NAMES = ["CascadedBiquads"]
 
@@ -110,6 +111,7 @@ class DspJson(BaseModel):
     producer_name: str
     producer_version: str
     graph: Graph
+    # checksum: List
 
     def model_dump_json(self, indent):
         d = self.model_dump()
@@ -278,6 +280,22 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
     p.set_outputs(output_nodes)
     return p
 
+
+def update_pipeline(p: Pipeline, params: DspJson):
+
+    for stage in p.stages[1:]:
+        if stage.name in ["pipeline", "dsp_thread"]:
+            continue
+        updated = False
+        for node in params.graph.nodes:
+            if node.placement.name == stage.label:
+                updated=True
+                if hasattr(node, "parameters"):
+                    stage.set_parameters(node.parameters)
+                break
+
+        if not updated:
+            warnings.warn(f"Stage {stage.label} could not be found in the JSON file")
 
 if __name__ == "__main__":
     # parser = argparse.ArgumentParser(description="JSON-to-DSP pipeline generator")
