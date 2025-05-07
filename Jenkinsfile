@@ -50,13 +50,6 @@ def runningOn(machine) {
   println machine
 }
 
-def buildApps(appList) {
-  appList.each { app ->
-    sh "cmake -G 'Unix Makefiles' -S ${app} -B ${app}/build"
-    sh "xmake -C ${app}/build -j\$(nproc)"
-  }
-}
-
 def versionsPairs = [
     "python/pyproject.toml": /version[\s='\"]*([\d.]+)/,
     "settings.yml": /version[\s:'\"]*([\d.]+)/,
@@ -142,8 +135,7 @@ pipeline {
                   // need Python
                   withTools(params.TOOLS_VERSION) {
                     dir("test/biquad") {
-                      sh 'cmake -G "Unix Makefiles" -B build'
-                      sh "cmake --build build -j\$(nproc)"
+                      xcoreBuild()
                     } // dir
                     createVenv(reqFile: "requirements.txt")
                   } // tools
@@ -162,8 +154,8 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        buildApps(["test/biquad"])
                         dir("test/biquad") {
+                          xcoreBuild()
                           runPytest("--dist worksteal")
                         }
                       }
@@ -185,8 +177,8 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        buildApps(["test/cascaded_biquads"])
                         dir("test/cascaded_biquads") {
+                          xcoreBuild()
                           runPytest("--dist worksteal")
                         }
                       }
@@ -223,8 +215,8 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        buildApps(["test/utils"])
                         dir("test/utils") {
+                          xcoreBuild()
                           runPytest("--dist worksteal")
                         }
                       }
@@ -245,8 +237,8 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        buildApps(["test/fir"])
                         dir("test/fir") {
+                          xcoreBuild()
                           runPytest("--dist worksteal")
                         }
                       }
@@ -267,8 +259,8 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        buildApps(["test/signal_chain"])
                         dir("test/signal_chain") {
+                          xcoreBuild()
                           runPytest("--dist worksteal")
                         }
                       }
@@ -323,8 +315,7 @@ pipeline {
                   // need Python
                   withTools(params.TOOLS_VERSION) {
                     dir("test/biquad") {
-                      sh 'cmake -G "Unix Makefiles" -B build'
-                      sh "cmake --build build -j\$(nproc)"
+                      xcoreBuild()
                     } // dir
                     createVenv(reqFile: "requirements.txt")
                   } // tools
@@ -345,8 +336,8 @@ pipeline {
                       withMounts([["projects", "projects/hydra_audio", "hydra_audio_test_skype"]]) {
                         withEnv(["hydra_audio_PATH=$hydra_audio_test_skype_PATH"]){
                           catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        buildApps(["test/drc"])
                             dir("test/drc") {
+                              xcoreBuild()
                               runPytest("--dist worksteal")
                             }
                           }
@@ -369,8 +360,8 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        buildApps(["test/graphic_eq"])
                           dir("test/graphic_eq") {
+                            xcoreBuild()
                             runPytest("--dist worksteal")
                         }
                       }
@@ -391,8 +382,8 @@ pipeline {
                   withVenv {
                     withTools(params.TOOLS_VERSION) {
                       catchError(stageResult: 'FAILURE', catchInterruptions: false){
-                        buildApps(["test/reverb"])
                         dir("test/reverb") {
+                          xcoreBuild()
                           runPytest("--dist worksteal --durations=0")
                         }
                       }
