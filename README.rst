@@ -12,8 +12,11 @@ lib_audio_dsp: Audio DSP Library for xcore.ai
 :keywords: library, DSP, Audio, Audio Effects, Audio Pipeline
 :devices: xcore.ai
 
+*******
 Summary
 *******
+
+``lib_audio_dsp``
 
 .. note::
 
@@ -24,9 +27,10 @@ Summary
 lib_audio_dsp is a DSP library for the XMOS xcore architecture. It facilitates the creation of
 multithreaded audio DSP pipelines that efficiently utilise the xcore architecture.
 
-The library is built around a set of DSP function blocks, referred to in the documentation as “Stages”,
+The library is built around a set of DSP function blocks, referred to in the documentation as "Stages",
 which have a consistent API and can be combined to create many different designs.
 
+********
 Features
 ********
 
@@ -41,30 +45,41 @@ These can be combined together to make complex audio pipelines for many
 different applications, such as home audio, music production, voice
 processing, and AI feature extraction.
 
-
-Known Issues
+************
+Known issues
 ************
 
   * None
 
-Host System Requirements
+
+****************
+Development repo
+****************
+
+  * `lib_audio_dsp <https://www.github.com/xmos/lib_audio_dsp>`_
+
+**************
+Required tools
+**************
+
+  * XMOS XTC Tools: 15.3.1
+  
+************************
+Host system requirements
 ************************
 
   * None
 
-Required Tools
-**************
-
-  * XMOS XTC Tools: 15.3.1
-
-Required Libraries (dependencies)
+*********************************
+Required libraries (dependencies)
 *********************************
 
   * lib_xcore_math (www.github.com/xmos/lib_xcore_math)
   * lib_logging (www.github.com/xmos/lib_logging)
   * lib_locks (www.github.com/xmos/lib_locks)
 
-Related Application Notes
+*************************
+Related application notes
 *************************
 
 The following application notes use this library:
@@ -72,6 +87,7 @@ The following application notes use this library:
   * `AN02014: Integrating DSP Into The XMOS USB Reference Design <https://www.xmos.com/file/an02014-integrating-dsp-into-the-xmos-usb-reference-design/>`_.
   * `AN02015: Run-time DSP control in a USB Audio Application <https://www.xmos.com/file/an02015-run-time-dsp-control-in-a-usb-audio-application/>`_.
 
+*******
 Support
 *******
 

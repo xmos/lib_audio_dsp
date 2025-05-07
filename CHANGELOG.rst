@@ -1,5 +1,5 @@
-Audio DSP library change log
-============================
+lib_audio_dsp change log
+========================
 
 1.3.0
 -----
@@ -19,7 +19,8 @@ Audio DSP library change log
   * CHANGED: Improved documentation.
   * CHANGED: Biquad Stage resets state when coefficients change.
   * CHANGED: Biquad left shift calculated from float coefficients.
-  * CHANGED: Python floating point to fixed point signal conversions use AES standard (1.0f = INT32_MAX).
+  * CHANGED: Python floating point to fixed point signal conversions use AES
+    standard (1.0f = INT32_MAX).
   * CHANGED: Python dsp_block base class defines process_channels APIs.
   * REMOVED: Biquad dsp_blocks for specific biquad types.
 
@@ -39,9 +40,11 @@ Audio DSP library change log
   * CHANGED: Moved control related DSP from api/dsp to api/control.
   * CHANGED: Increased reverb wet signal level by 10 dB.
   * CHANGED: Added pre-delay to reverb.
-  * FIXED: Removed configuration parameters from reverb that did not support being changed.
+  * FIXED: Removed configuration parameters from reverb that did not support
+    being changed.
   * ADDED: Biquad design APIs for common filters.
-  * ADDED: Helper functions for converting control parameters to fixed point formats.
+  * ADDED: Helper functions for converting control parameters to fixed point
+    formats.
   * ADDED: Improved documentation on control parameters.
   * ADDED: Wet-dry mix helper for reverb.
   * ADDED: Use Python properties for controllable parameters.
@@ -55,7 +58,8 @@ Audio DSP library change log
 0.3.0
 -----
 
-  * CHANGED: Pipeline design API breaking change to simplify pipeline definitions.
+  * CHANGED: Pipeline design API breaking change to simplify pipeline
+    definitions.
   * CHANGED: Control API breaking change to support multiple control threads.
   * CHANGED: XCommon CMake version changed to v1.0.0.
   * CHANGED: Host app moved into this repository.
@@ -64,11 +68,19 @@ Audio DSP library change log
   * CHANGED: Reverb stage renamed to reverb room.
   * CHANGED: Faster envelope detector implementation.
   * CHANGED: DSP components saturate instead of overflowing.
-  * ADDED: Full control of reverb component parameters 
+  * ADDED: Full control of reverb component parameters
   * ADDED: FIR filter DSP components and stages.
   * ADDED: Hard peak limiter and clipper DSP components and stages.
   * ADDED: Delay line DSP component and stage.
   * ADDED: C and Python documentation.
+
+  * Changes to dependencies:
+
+    - lib_locks: Added dependency 2.2.0
+
+    - lib_logging: Added dependency 3.2.0
+
+    - lib_xcore_math: Added dependency 2.2.0
 
 0.2.0
 -----
@@ -86,4 +98,12 @@ Audio DSP library change log
 -----
 
   * Initial release.
+
+  * Changes to dependencies:
+
+    - lib_locks: Added dependency 2.1.0
+
+    - lib_logging: Added dependency 3.1.1
+
+    - lib_xcore_math: Added dependency 2.2.0
 

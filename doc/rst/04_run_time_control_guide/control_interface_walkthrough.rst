@@ -8,7 +8,7 @@ describes a simple DSP process with a volume control and a limiter. In the end a
 volume can be set by the application.
 This code snippet will generate the pipeline diagram shown in :numref:`run_time_example_fig`.
 
-.. literalinclude:: ../../test/pipeline/doc_examples/run_time_control.py
+.. literalinclude:: ../../../test/pipeline/doc_examples/run_time_control.py
    :language: python
    :start-after: # start example
    :end-before: # end example
@@ -29,7 +29,7 @@ this example is ``volume``. After generating the source code for this pipeline, 
 be created in the specified directory named ``adsp_instance_id_auto.h`` (assuming that the pipeline
 identifier has been left as its default value of "auto"). The contents of the generated file are shown below:
 
-.. literalinclude:: ../../test/pipeline/doc_examples/run_time_dsp/src/dsp/adsp_instance_id_auto.h
+.. literalinclude:: ../../../test/pipeline/doc_examples/run_time_dsp/src/dsp/adsp_instance_id_auto.h
    :language: C
 
 In this file the macro ``volume_stage_index`` is defined. The value of this macro can be used by
@@ -50,14 +50,14 @@ the command IDs for all the stage types that CMake found.
 It is also possible to see the available control parameters, along with the values they will be set to, while
 designing the pipeline in Python. This can be done using the ``get_config`` method of the stage as shown below.
 
-.. literalinclude:: ../../test/pipeline/doc_examples/run_time_control.py
+.. literalinclude:: ../../../test/pipeline/doc_examples/run_time_control.py
    :language: python
    :start-after: # start config
    :end-before: # end config
 
 This will print this dictionary of parameters:
 
-.. literalinclude:: ../../test/pipeline/doc_examples/run_time_dsp/config.txt
+.. literalinclude:: ../../../test/pipeline/doc_examples/run_time_dsp/config.txt
 
 This dictionary does not contain ``CMD_VOLUME_CONTROL_TARGET_GAIN``, but is does contain "target_gain". The final
 command name is constructed as ``CMD_{STAGE_TYPE}_{PARAMETER}`` where stage type and parameter should be replaced with
@@ -92,7 +92,7 @@ following steps:
 
 A full example of a control thread that does this is shown below.
 
-.. literalinclude:: ../../test/pipeline/doc_examples/run_time_dsp/src/main.c
+.. literalinclude:: ../../../test/pipeline/doc_examples/run_time_dsp/src/main.c
    :language: C
    :start-after: // start example
    :end-before: // end example
@@ -109,7 +109,7 @@ is largely the same as writing, except the control API will write to the payload
 This code example shows how to read the current ``CMD_VOLUME_CONTROL_GAIN`` parameter from the "volume" stage that
 is created in the example above.
 
-.. literalinclude:: ../../test/pipeline/doc_examples/run_time_dsp/src/main.c
+.. literalinclude:: ../../../test/pipeline/doc_examples/run_time_dsp/src/main.c
    :language: C
    :start-after: // start read
    :end-before: // end read
