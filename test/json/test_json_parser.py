@@ -1,6 +1,10 @@
 from pathlib import Path
+import annotated_types
 
 from audio_dsp.design.parse_json import Graph, make_pipeline, insert_forks, DspJson
+
+from audio_dsp.models.stage import all_models
+from audio_dsp.stages import all_stages
 
 def test_no_shared_edge():
     json_str = """
@@ -311,3 +315,49 @@ def test_multiple_inputs_outputs_shared():
     print("Test: Multiple Inputs and Outputs Shared Test")
     print(f"Before insert_forks: {graph.model_dump_json(indent=2)}")
     print(f"After insert_forks: {new_graph.model_dump_json(indent=2)}")
+
+
+def test_all_stages_models():
+    all_m = all_models()
+    all_s = all_stages()
+
+    failed = False
+    for s in all_s:
+        if s.startswith("_") or s in ["DSPThreadStage", "PipelineStage"]:
+            continue
+
+        try:
+            assert s in all_m, f"Stage {s} not found in all models"
+            assert s == all_m[s].model_fields["op_type"].default, f"Stage {s} op_type mismatch"
+        except AssertionError as e:
+            print(e)
+            failed = True
+            continue
+
+        if "biquad" in s.lower() or "parametric" in s.lower():
+            continue
+        
+        if "parameters" not in all_m[s].model_fields:
+            continue
+
+        for field, value in all_m[s].model_fields["parameters"].default_factory().model_fields.items():
+            try:
+                meta = value.metadata
+                min = [g.ge for g in meta if isinstance(g, annotated_types.Ge)] or [
+                g.gt for g in meta if isinstance(g, annotated_types.Gt)]
+                max = [g.le for g in meta if isinstance(g, annotated_types.Le)] or [
+                g.lt for g in meta if isinstance(g, annotated_types.Lt)]
+                assert min, f"Minimum not defined for field {field} in {s}"
+                assert max, f"Maximum not defined for field {field} in {s}"
+                assert min[0] < max[0], f"Range not correct for field {field} in {s}"
+            except AssertionError as e:
+                print(e)
+                failed = True
+                continue
+
+    assert not failed, "Some stages failed the test."
+
+
+
+if __name__ == "__main__":
+  test_all_stages_models()

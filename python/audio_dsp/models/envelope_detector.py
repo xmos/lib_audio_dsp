@@ -11,7 +11,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, field_validator
 
 from audio_dsp.models.stage import StageConfig, StageModel, StageParameters, NodePlacement
-
+from audio_dsp.models.fields import DEFAULT_ATTACK_T, DEFAULT_RELEASE_T
 
 class EnvelopeDetectorPlacement(NodePlacement):
     """Graph placement for an Envelope Stage. This stage has no outputs."""
@@ -26,8 +26,8 @@ class EnvelopeDetectorPlacement(NodePlacement):
 class EnvelopeDetectorParameters(StageParameters):
     """Parameters for an EnvelopeDetector Stage."""
 
-    attack_t: float = Field(default=0)
-    release_t: float = Field(default=0)
+    attack_t: float = DEFAULT_ATTACK_T()
+    release_t: float = DEFAULT_RELEASE_T()
 
 
 class EnvelopeDetectorPeak(StageModel[EnvelopeDetectorPlacement]):

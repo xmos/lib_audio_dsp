@@ -4,30 +4,26 @@ from typing import Literal
 from pydantic import Field
 
 from audio_dsp.models.stage import StageModel, StageParameters
-
+from audio_dsp.models.fields import (
+    DEFAULT_ATTACK_T,
+    DEFAULT_RELEASE_T,
+    DEFAULT_COMPRESSOR_RATIO,
+    DEFAULT_THRESHOLD_DB,
+)
 
 class NoiseSuppressorExpanderParameters(StageParameters):
     """Parameters for noise suppressor expander stage."""
 
-    ratio: float = Field(
-        default=3.0,
-        gt=1.0,
-        le=20.0,
-        description="Expansion ratio applied when signal falls below threshold",
+    ratio: float = DEFAULT_COMPRESSOR_RATIO(
+    description="Expansion ratio applied when signal falls below threshold",
     )
-    threshold_db: float = Field(
-        default=-35.0, ge=-96.0, le=0.0, description="Level in dB below which expansion occurs"
+    threshold_db: float = DEFAULT_THRESHOLD_DB(
+        default=-35.0, description="Level in dB below which expansion occurs"
     )
-    attack_t: float = Field(
-        default=0.005,
-        gt=0.0,
-        le=1.0,
+    attack_t: float = DEFAULT_ATTACK_T(
         description="Time in seconds for expander to start expanding",
     )
-    release_t: float = Field(
-        default=0.120,
-        gt=0.0,
-        le=5.0,
+    release_t: float = DEFAULT_RELEASE_T(
         description="Time in seconds for signal to return to original level",
     )
 

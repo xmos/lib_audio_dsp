@@ -6,7 +6,7 @@ together in series.
 
 from audio_dsp.design.stage import Stage, find_config
 from audio_dsp.dsp import cascaded_biquads as casc_bq
-from audio_dsp.models.cascaded_biquads import CascadedBiquadParameters, CascadedBiquad16Parameters
+from audio_dsp.models.cascaded_biquads import CascadedBiquadsParameters, CascadedBiquads16Parameters
 
 import numpy as np
 from typing import Any
@@ -167,12 +167,12 @@ class CascadedBiquads(Stage):
         self.dsp_block = casc_bq.butterworth_lowpass(self.fs, self.n_in, N, fc)
         return self
 
-    def set_parameters(self, parameters: CascadedBiquadParameters):
+    def set_parameters(self, parameters: CascadedBiquadsParameters):
         """Update the parameters of the CascadedBiquads stage.
 
         Parameters
         ----------
-        parameters : CascadedBiquadParameters
+        parameters : CascadedBiquadsParameters
             The parameters to update the cascaded biquads with.
         """
         model = parameters.model_dump()
@@ -283,12 +283,12 @@ class CascadedBiquads16(Stage):
         self.dsp_block = casc_bq.parametric_eq_16band(self.fs, self.n_in, filter_spec)
         return self
 
-    def set_parameters(self, parameters: CascadedBiquad16Parameters):
+    def set_parameters(self, parameters: CascadedBiquads16Parameters):
         """Update the parameters of the CascadedBiquads16 stage.
 
         Parameters
         ----------
-        parameters : CascadedBiquad16Parameters
+        parameters : CascadedBiquads16Parameters
             The parameters to update the cascaded biquads with.
         """
         model = parameters.model_dump()
@@ -312,12 +312,12 @@ class ParametricEq8b(CascadedBiquads):
         implementation details.
     """
 
-    def set_parameters(self, parameters: CascadedBiquadParameters):
+    def set_parameters(self, parameters: CascadedBiquadsParameters):
         """Update the parameters of the ParametricEq8b stage.
 
         Parameters
         ----------
-        parameters : CascadedBiquadParameters
+        parameters : CascadedBiquadsParameters
             The parameters to update the cascaded biquads with.
         """
         model = parameters.model_dump()
@@ -341,7 +341,7 @@ class ParametricEq16b(CascadedBiquads16):
         implementation details.
     """
 
-    def set_parameters(self, parameters: CascadedBiquad16Parameters):
+    def set_parameters(self, parameters: CascadedBiquads16Parameters):
         """Update the parameters of the ParametricEq16b stage."""
         model = parameters.model_dump()
         biquads = [[*spec.values()] for spec in model["filters"]]

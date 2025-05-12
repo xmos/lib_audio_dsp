@@ -4,7 +4,17 @@ from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 
-from audio_dsp.models.stage import NodePlacement, StageConfig, StageModel, StageParameters
+from audio_dsp.models.stage import NodePlacement, StageConfig, StageModel, StageParameters, Placement_2i1o, Placement_Ni1o, Placement_4i2o
+from audio_dsp.models.fields import DEFAULT_GAIN_DB
+
+
+class Bypass(StageModel):
+    """
+    This stage implements a bypass. The input signal is passed through
+    unchanged.
+    """
+
+    op_type: Literal["Bypass"] = "Bypass"
 
 
 class ForkConfig(StageConfig):
@@ -48,26 +58,10 @@ class Fork(StageModel[ForkPlacement]):
 class MixerParameters(StageParameters):
     """Parameters for Mixer Stage."""
 
-    gain_db: float = Field(default=0)
+    gain_db: float = DEFAULT_GAIN_DB()
 
 
-class MixerPlacement(NodePlacement, extra="forbid"):
-    """Graph placement for a Mixer Stage."""
-
-    input: list[int] = Field(default=[])
-    output: list[int] = Field(default=[], max_length=1, min_length=1)
-    name: str
-    thread: int = Field(ge=0, lt=5)
-
-    @field_validator("input", "output", mode="before")
-    def _single_to_list(cls, value: int | list) -> list:
-        if isinstance(value, list):
-            return value
-        else:
-            return [value]
-
-
-class Mixer(StageModel[MixerPlacement]):
+class Mixer(StageModel[Placement_Ni1o]):
     """
     Mixes the input signals together. The mixer can be used to add signals together, or to attenuate the input signals.
     It must have exactly one output.
@@ -77,7 +71,7 @@ class Mixer(StageModel[MixerPlacement]):
     parameters: MixerParameters = Field(default_factory=MixerParameters)
 
 
-class Adder(StageModel):
+class Adder(StageModel[Placement_Ni1o]):
     """
     Add the input signals together. The adder can be used to add signals
     together. It must have exactly one output.
@@ -86,10 +80,19 @@ class Adder(StageModel):
     op_type: Literal["Adder"] = "Adder"
 
 
+class Subtractor(StageModel[Placement_2i1o]):
+    """
+    Subtract the input signals. The subtractor can be used to subtract
+    signals together. It must have exactly one output.
+    """
+
+    op_type: Literal["Subtractor"] = "Subtractor"
+
+
 class FixedGainParameters(StageParameters):
     """Parameters for FixedGain Stage."""
 
-    gain_db: float = Field(default=0)
+    gain_db: float = DEFAULT_GAIN_DB()
 
 
 class FixedGain(StageModel):
@@ -102,7 +105,6 @@ class FixedGain(StageModel):
     :class:`VolumeControl` stage instead.
     """
 
-    # class Model(Stage.Model):
     op_type: Literal["FixedGain"] = "FixedGain"
     parameters: FixedGainParameters = Field(default_factory=FixedGainParameters)
 
@@ -110,7 +112,7 @@ class FixedGain(StageModel):
 class VolumeControlParameters(StageParameters):
     """Parameters for VolumeControl Stage."""
 
-    gain_db: float = Field(default=0)
+    gain_db: float = DEFAULT_GAIN_DB()
     mute_state: int = Field(default=0)
 
 
@@ -132,7 +134,7 @@ class SwitchParameters(StageParameters):
     position: int = Field(default=0)
 
 
-class Switch(StageModel):
+class Switch(StageModel[Placement_Ni1o]):
     """
     Switch the input to one of the outputs. The switch can be used to
     select between different signals.
@@ -141,6 +143,16 @@ class Switch(StageModel):
 
     op_type: Literal["Switch"] = "Switch"
     parameters: SwitchParameters = Field(default_factory=SwitchParameters)
+
+
+class SwitchSlew(Switch):
+    """
+    Switch the input to one of the outputs with slew. The switch can be used to
+    select between different signals.
+
+    """
+
+    op_type: Literal["SwitchSlew"] = "SwitchSlew"
 
 
 class SwitchStereo(StageModel):
@@ -182,7 +194,7 @@ class DelayParameters(StageParameters):
     )
 
 
-class Delay(StageModel[NodePlacement]):
+class Delay(StageModel):
     """Delay stage for delaying input signals.
 
     Delays the input signal by a specified amount. The maximum delay is set at
@@ -193,4 +205,27 @@ class Delay(StageModel[NodePlacement]):
     op_type: Literal["Delay"] = "Delay"
     parameters: DelayParameters = Field(default_factory=DelayParameters)
     config: DelayConfig = Field(default_factory=DelayConfig)
-    placement: NodePlacement
+
+
+class CrossfaderParameters(StageParameters):
+    """Parameters for crossfader stage.
+
+    """
+
+    mix: float = Field(default=0.5, le=1, ge=0, description="Set the mix of the crossfader")
+
+
+class Crossfader(StageModel[Placement_2i1o]):
+    """
+    """
+
+    op_type: Literal["Crossfader"] = "Crossfader"
+    parameters: CrossfaderParameters = Field(default_factory=CrossfaderParameters)
+
+
+class CrossfaderStereo(StageModel[Placement_4i2o]):
+    """
+    """
+
+    op_type: Literal["CrossfaderStereo"] = "CrossfaderStereo"
+    parameters: CrossfaderParameters = Field(default_factory=CrossfaderParameters)

@@ -4,7 +4,7 @@ from typing import Literal
 from pydantic import Field
 
 from audio_dsp.models.stage import StageModel, StageParameters
-from audio_dsp.models.biquad_types import BIQUAD_TYPES, biquad_bypass
+from audio_dsp.models.fields import BIQUAD_TYPES, biquad_bypass
 
 
 class BiquadParameters(StageParameters):
@@ -32,6 +32,21 @@ class Biquad(StageModel):
     """
 
     op_type: Literal["Biquad"] = "Biquad"
+    parameters: BiquadParameters = Field(
+        default_factory=lambda: BiquadParameters(filter_type=biquad_bypass())
+    )
+
+
+class BiquadSlew(StageModel):
+    """A single biquad filter stage.
+
+    A biquad filter is a second-order recursive filter that can implement various
+    filter types like lowpass, highpass, bandpass, etc. This stage implements a
+    single biquad section with slew rate limiting to prevent audio artifacts
+    when parameters are changed.
+    """
+
+    op_type: Literal["BiquadSlew"] = "BiquadSlew"
     parameters: BiquadParameters = Field(
         default_factory=lambda: BiquadParameters(filter_type=biquad_bypass())
     )

@@ -4,7 +4,8 @@ from typing import Literal
 from pydantic import Field
 
 from audio_dsp.models.stage import StageModel, StageParameters
-
+from audio_dsp.models.fields import DEFAULT_ATTACK_T, DEFAULT_RELEASE_T, DEFAULT_COMPRESSOR_RATIO
+from audio_dsp.models.fields import DEFAULT_THRESHOLD_DB
 
 class NoiseGateParameters(StageParameters):
     """Parameters for noise gate stage.
@@ -16,22 +17,12 @@ class NoiseGateParameters(StageParameters):
         release_t: Time for gate to close when signal falls below threshold (seconds)
     """
 
-    threshold_db: float = Field(
-        default=-40.0,
-        ge=-96.0,
-        le=0.0,
-        description="Level in dB below which the gate begins to close",
+    threshold_db: float = DEFAULT_THRESHOLD_DB(description="Level in dB below which the gate begins to close",
     )
-    attack_t: float = Field(
-        default=0.010,
-        gt=0.0,
-        le=1.0,
+    attack_t: float = DEFAULT_ATTACK_T(
         description="Time in seconds for gate to open when signal exceeds threshold",
     )
-    release_t: float = Field(
-        default=0.100,
-        gt=0.0,
-        le=5.0,
+    release_t: float = DEFAULT_RELEASE_T(
         description="Time in seconds for gate to close when signal falls below threshold",
     )
 

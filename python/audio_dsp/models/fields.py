@@ -5,7 +5,7 @@ from functools import partial
 from pydantic import BaseModel, RootModel, Field, create_model
 from typing import Literal, Annotated, List, Union
 from annotated_types import Len
-
+from audio_dsp.dsp.generic import HEADROOM_DB, MIN_SIG_DB
 
 def _ws(locals):
     """
@@ -24,13 +24,17 @@ def _ws(locals):
     return {k: v for k, v in locals.items() if k != "self"}
 
 
-DEFAULT_Q = partial(Field, 0.707, gt=0, le=10, description="Q factor of the filter.")
-DEFAULT_FILTER_FREQ = partial(
-    Field, 500, gt=0, lt=24000, description="Frequency of the filter in Hz."
-)  # 48kHz sample rate
-DEFAULT_BW = partial(Field, 1, gt=0, le=10, description="Bandwidth of the filter in octaves.")
-DEFAULT_BOOST_DB = partial(Field, 0, ge=-24, le=24, description="Gain of the filter in dB.")
+DEFAULT_Q = partial(Field, default=0.707, gt=0, le=10, description="Q factor of the filter.")
+DEFAULT_FILTER_FREQ = partial(Field, default=1000, gt=0, lt=24000, description="Frequency of the filter in Hz.")
+DEFAULT_BW = partial(Field, default=1, gt=0, le=10, description="Bandwidth of the filter in octaves.")
+DEFAULT_BOOST_DB = partial(Field, default=0, ge=-24, le=24, description="Gain of the filter in dB.")
 
+DEFAULT_GAIN_DB = partial(Field, default=0, ge=MIN_SIG_DB, le=HEADROOM_DB, description="Gain of the stage in dB.")
+
+DEFAULT_ATTACK_T = partial(Field, default=0.005, gt=0, le=1, description="Attack time of the stage in seconds.")
+DEFAULT_RELEASE_T = partial(Field, default=0.120, gt=0, le=5, description="Release time of the stage in seconds.")
+DEFAULT_COMPRESSOR_RATIO = partial(Field, default=2.0, gt=1, le=20, description="Compression ratio of the stage.")
+DEFAULT_THRESHOLD_DB = DEFAULT_GAIN_DB
 
 class biquad_allpass(StageParameters):
     """Parameters for a Biquad Stage configured to allpass."""
