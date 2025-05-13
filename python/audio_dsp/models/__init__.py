@@ -11,3 +11,5 @@ from .limiter_model import LimiterRMS, LimiterPeak, HardLimiterPeak
 from .noise_gate_model import NoiseGate
 from .compressor_model import CompressorRMS
 from .compressor_sidechain_model import CompressorSidechain
+from .fir import FirDirect
+from .graphic_eq import GraphicEq10b

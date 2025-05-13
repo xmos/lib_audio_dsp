@@ -113,7 +113,7 @@ class VolumeControlParameters(StageParameters):
     """Parameters for VolumeControl Stage."""
 
     gain_db: float = DEFAULT_GAIN_DB()
-    mute_state: int = Field(default=0)
+    mute_state: int = Field(default=0, ge=0, le=1, description="Mute state of the stage")
 
 
 class VolumeControl(StageModel):
@@ -131,7 +131,7 @@ class VolumeControl(StageModel):
 class SwitchParameters(StageParameters):
     """Parameters for Switch Stage."""
 
-    position: int = Field(default=0)
+    position: int = Field(default=0, ge=0, description="Switch position")
 
 
 class Switch(StageModel[Placement_Ni1o]):

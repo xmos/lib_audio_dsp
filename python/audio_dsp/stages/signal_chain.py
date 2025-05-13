@@ -15,6 +15,7 @@ from audio_dsp.models.signal_chain import (
     VolumeControlParameters,
     DelayParameters,
     DelayConfig,
+    CrossfaderParameters
 )
 from audio_dsp.design.stage import (
     Stage,
@@ -533,6 +534,15 @@ class Crossfader(Stage):
         self.dsp_block.mix = mix
         return self
 
+    def set_parameters(self, parameters: CrossfaderParameters):
+        """Update the parameters of the Crossfader stage.
+
+        Args:
+            parameters: New crossfader parameters to apply
+        """
+
+        self.set_mix(parameters.mix)
+        self.parameters = parameters
 
 class CrossfaderStereo(Crossfader):
     """

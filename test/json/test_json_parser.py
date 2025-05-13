@@ -339,7 +339,16 @@ def test_all_stages_models():
         
         if "parameters" not in all_m[s].model_fields:
             continue
+        
 
+        try:
+            set_params_input = all_s[s].set_parameters.__annotations__["parameters"].__name__
+            model_params_type = all_m[s].model_fields["parameters"].default_factory.__name__
+            assert set_params_input == model_params_type, f"Stage {s} set_parameters input type mismatch"
+        except AssertionError as e:
+            print(e)
+            failed = True
+            
         for field, value in all_m[s].model_fields["parameters"].default_factory().model_fields.items():
             try:
                 meta = value.metadata
