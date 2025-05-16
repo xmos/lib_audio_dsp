@@ -1,0 +1,8 @@
+<xSCOPEconfig ioMode="basic" enabled="true">
+  <Probe name="ADSP_PROBE_TSS" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
+  <Probe name="ADSP_PROBE_T0" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
+  <Probe name="ADSP_PROBE_T1" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
+  <Probe name="ADSP_PROBE_T2" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
+  <Probe name="ADSP_PROBE_T3" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
+  <Probe name="ADSP_PROBE_T4" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
+</xSCOPEconfig>

@@ -113,9 +113,10 @@ def run(xe, input_file, output_file, num_out_channels, pipeline_stages=1, return
                 stdout = ff.readlines()
             return stdout
 
-def run_simple(xe):
+def run_simple(xe, xscope_file=""):
     with FileLock("run_pipeline.lock"):
-        subprocess.run(["xrun", "--xscope", "--adapter-id", get_adapter_id(), xe], check=True)
+        arg = ["--xscope-file", xscope_file] if xscope_file else ["--xscope"]
+        subprocess.run(["xrun", *arg, "--adapter-id", get_adapter_id(), xe], check=True)
 
 
 

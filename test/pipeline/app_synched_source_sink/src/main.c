@@ -49,14 +49,13 @@ void test(adsp_pipeline_t* dsp) {
 	int frame_count = 0;
 	uint32_t last_time = get_reference_time();
 	bool failed = false;
-	for(int i = 0; i < LOOP_COUNT; i++) {
+	int32_t worst_elapsed = 0;
+	for(int i = 0; i < LOOP_COUNT*FRAME_SIZE; i++) {
 
 		// check we got back to here fast enough
 		uint32_t elapsed = get_reference_time() - last_time;
-		if((elapsed) > I2S_PERIOD_TICKS) {
-			printf("ERROR Too slow: %lu > %lu\n", elapsed, I2S_PERIOD_TICKS);
-			failed = true;
-			break;
+		if((elapsed) > worst_elapsed) {
+			worst_elapsed = elapsed;
 		}
 
 		// wait for the next I2S period
@@ -71,8 +70,13 @@ void test(adsp_pipeline_t* dsp) {
 
 			adsp_pipeline_source(dsp, source);
 			adsp_pipeline_sink(dsp, sink);
+			adsp_pipeline_clear_probe(dsp);
 		}
 		frame_count -= 1;
+	}
+	if(worst_elapsed > I2S_PERIOD_TICKS) {
+		printf("ERROR Too slow: %lu > %lu\n", worst_elapsed, I2S_PERIOD_TICKS);
+		failed = true;
 	}
 	printf("Done\n");
 	exit(failed);

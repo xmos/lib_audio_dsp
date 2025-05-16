@@ -12,6 +12,7 @@ from python.run_pipeline_xcoreai import FORCE_ADAPTER_ID
 
 APP_NAME = "app_synched_source_sink"
 APP_DIR = Path(__file__).parent / APP_NAME
+VCD_DIR = APP_DIR / "vcd"
 BUILD_DIR = APP_DIR / "build"
 
 TEST_CONFIG = APP_DIR / "config.json"
@@ -32,10 +33,12 @@ def test_synched_source_sync(fs, frame_size, n_chans, threads):
     config = f"{frame_size}_{fs}_{n_chans}_{threads}"
 
     BUILD_DIR.mkdir(exist_ok=True)
+    VCD_DIR.mkdir(exist_ok=True)
     with FileLock(build_utils.SYNCHED_SOURCE_SINK_BUILD_LOCK):
-        generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_default")
+        generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_default", include_probes=True)
         build_utils.build(APP_DIR, BUILD_DIR, f"app_synched_source_sink_{config}")
-    run_pipeline_xcoreai.run_simple(APP_DIR / "bin" / config / f"{APP_NAME}_{config}.xe")
+    vcd_file = VCD_DIR / f"{config}"
+    run_pipeline_xcoreai.run_simple(APP_DIR / "bin" / config / f"{APP_NAME}_{config}.xe", vcd_file)
 
 
 
