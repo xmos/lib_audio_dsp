@@ -1,2 +1,4 @@
+*.lock
 *.wav
 *.txt
+!CMakeLists.txt

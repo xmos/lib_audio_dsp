@@ -12,6 +12,7 @@ import shutil
 import os
 
 PIPELINE_BUILD_LOCK = "test_pipeline_build.lock"
+SYNCHED_SOURCE_SINK_BUILD_LOCK = "test_synched_source_sink_build.lock"
 
 def build(source_dir, build_dir, target):
     """

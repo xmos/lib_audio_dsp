@@ -8,6 +8,7 @@ import scipy.io.wavfile
 import pathlib
 from filelock import FileLock
 import time
+import subprocess
 
 FORCE_ADAPTER_ID = None
 
@@ -111,6 +112,12 @@ def run(xe, input_file, output_file, num_out_channels, pipeline_stages=1, return
                 ff.seek(0)
                 stdout = ff.readlines()
             return stdout
+
+def run_simple(xe):
+    with FileLock("run_pipeline.lock"):
+        subprocess.run(["xrun", "--xscope", "--adapter-id", get_adapter_id(), xe], check=True)
+
+
 
 if __name__ == "__main__":
     args = parse_arguments()
