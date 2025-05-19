@@ -460,7 +460,7 @@ def _gen_chan_buf_read(channel, edge, frame_size):
     return f"chan_in_buf_word({channel}, (uint32_t*){edge}, {frame_size});\n"
 
 
-def _gen_q31_to_q27(channel, edge, frame_size):
+def _gen_q31_to_q27(edge, frame_size):
     """Generate the C code to convert from q31 to q27."""
     return (
         f"for(int idx = 0; idx < {frame_size}; ++idx) {edge}[idx] = adsp_from_q31({edge}[idx]);\n"
@@ -482,7 +482,7 @@ def _generate_dsp_threads(resolved_pipeline):
 
     Output looks approximately like the below::
 
-        void dsp_thread(chanend_t* input_c, chanend_t* output_c, module_states, module_configs) {
+        void dsp_thread(void* input_c, chanend_t* output_c, module_states, module_configs) {
             int32_t edge0[BLOCK_SIZE];
             int32_t edge1[BLOCK_SIZE];
             int32_t edge2[BLOCK_SIZE];
@@ -514,8 +514,8 @@ def _generate_dsp_threads(resolved_pipeline):
     for thread_index, (thread_edges, thread) in enumerate(
         zip(all_thread_edges, resolved_pipeline["threads"])
     ):
-        func = f"DECLARE_JOB(dsp_{resolved_pipeline['identifier']}_thread{thread_index}, (chanend_t*, chanend_t*, module_instance_t**));\n"
-        func += f"void dsp_{resolved_pipeline['identifier']}_thread{thread_index}(chanend_t* c_source, chanend_t* c_dest, module_instance_t** modules) {{\n"
+        func = f"DECLARE_JOB(dsp_{resolved_pipeline['identifier']}_thread{thread_index}, (void**, chanend_t*, module_instance_t**));\n"
+        func += f"void dsp_{resolved_pipeline['identifier']}_thread{thread_index}(void** c_source, chanend_t* c_dest, module_instance_t** modules) {{\n"
 
         # set high priority thread bit to ensure we get the required
         # MIPS
@@ -575,44 +575,64 @@ def _generate_dsp_threads(resolved_pipeline):
             if resolved_pipeline["modules"][stage_index]["yaml_dict"]:
                 control += f"\t\t{name}_control(modules[{i}]->state, &modules[{i}]->control);\n"
 
-        read = f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
-        # the same channel being read twice
-        if len(in_edges.values()):
-            read += "\tSELECT_RES(\n"
-            for i, _ in enumerate(in_edges.values()):
-                read += f"\t\tCASE_THEN(c_source[{i}], case_{i}),\n"
-            read += "\t\tDEFAULT_THEN(do_control)\n"
-            read += "\t) {\n"
+        input_fifos = [o for o in in_edges if o == "pipeline_in"]
+        channels = [o for o in in_edges if o != "pipeline_in"]
+        assert not (input_fifos and channels), "Pipeline input cannot be a fifo and a channel"
 
+        read = ""
+        if input_fifos:
+            n_input_fifos = len(input_fifos)
+            for i in range(n_input_fifos):
+                read += f"\tadsp_fifo_read_start(c_source[{i}]);\n"
             for i, (origin, edges) in enumerate(in_edges.items()):
-                read += f"\t\tcase_{i}: {{\n"
                 for edge in edges:
-                    # do all the chan reads first to avoid blocking
-                    if origin == "pipeline_in":
-                        read += "\t\t\t" + _gen_chan_buf_read(
-                            f"c_source[{i}]", f"edge{all_edges.index(edge)}", edge.frame_size
-                        )
+                    read += f"\tadsp_fifo_read(c_source[{i}], edge{all_edges.index(edge)}, {4*edge.frame_size});\n"
+            for i in range(n_input_fifos):
+                read += f"\tadsp_fifo_read_done(c_source[{i}]);\n"
+            for i, (origin, edges) in enumerate(in_edges.items()):
                 for edge in edges:
-                    # then do pipeline input Q conversions
-                    if origin == "pipeline_in":
-                        read += "\t\t\t" + _gen_q31_to_q27(
-                            f"c_source[{i}]", f"edge{all_edges.index(edge)}", edge.frame_size
-                        )
-                for edge in edges:
-                    # then do other edge origins
-                    if origin == "pipeline_in":
-                        pass
-                    else:
-                        read += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {edge.frame_size});\n"
+                    read += "\t" + _gen_q31_to_q27(
+                        f"edge{all_edges.index(edge)}", edge.frame_size
+                    )
+        if channels:
+            read += f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
+            # the same channel being read twice
+            if len(in_edges.values()):
+                read += "\tSELECT_RES(\n"
+                for i, _ in enumerate(in_edges.values()):
+                    read += f"\t\tCASE_THEN((chanend_t)c_source[{i}], case_{i}),\n"
+                read += "\t\tDEFAULT_THEN(do_control)\n"
+                read += "\t) {\n"
 
-                read += "\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}\n"
-            read += "\t\tdo_control: {\n"
-            read += "\t\tstart_control_ts = get_reference_time();\n"
-            read += control
-            read += "\t\tcontrol_done = true;\n"
-            read += "\t\tcontrol_ticks = get_reference_time() - start_control_ts;\n"
-            read += "\t\tcontinue; }\n"
-            read += "\t}\n"
+                for i, (origin, edges) in enumerate(in_edges.items()):
+                    read += f"\t\tcase_{i}: {{\n"
+                    for edge in edges:
+                        # do all the chan reads first to avoid blocking
+                        # if origin == "pipeline_in":
+                        read += "\t\t\t" + _gen_chan_buf_read(
+                            f"(chanend_t)c_source[{i}]", f"edge{all_edges.index(edge)}", edge.frame_size
+                        )
+                    for edge in edges:
+                        # then do pipeline input Q conversions
+                        if origin == "pipeline_in":
+                            read += "\t\t\t" + _gen_q31_to_q27(
+                                f"edge{all_edges.index(edge)}", edge.frame_size
+                            )
+                    # for edge in edges:
+                    #     # then do other edge origins
+                    #     if origin == "pipeline_in":
+                    #         pass
+                    #     else:
+                    #         read += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {edge.frame_size});\n"
+
+                    read += "\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}\n"
+                read += "\t\tdo_control: {\n"
+                read += "\t\tstart_control_ts = get_reference_time();\n"
+                read += control
+                read += "\t\tcontrol_done = true;\n"
+                read += "\t\tcontrol_ticks = get_reference_time() - start_control_ts;\n"
+                read += "\t\tcontinue; }\n"
+                read += "\t}\n"
 
         read += "\tif(!control_done){\n"
         read += "\t\tstart_control_ts = get_reference_time();\n"
@@ -665,10 +685,10 @@ def _generate_dsp_threads(resolved_pipeline):
         # can be done without worrying about synchronisation. This is done
         # by starting on a read for the input threads, and starting on an
         # out for the other threads
-        if is_input_thread:
-            file_str += func + read + process + profile + out + "\t}\n}\n"
-        else:
-            file_str += func + out + read + process + profile + "\t}\n}\n"
+        # if is_input_thread:
+        #     file_str += func + read + process + profile + out + "\t}\n}\n"
+        # else:
+        file_str += func + out + read + process + profile + "\t}\n}\n"
 
     return file_str
 
@@ -794,7 +814,7 @@ def _generate_dsp_init(resolved_pipeline):
         else:
             link_channels += 1
 
-    ret += f"\tstatic channel_t {adsp}_in_chans[{input_channels}];\n"
+    ret += f"\tstatic adsp_fifo_t {adsp}_in_chans[{input_channels}];\n"
     ret += f"\tstatic channel_t {adsp}_out_chans[{output_channels}];\n"
     ret += f"\tstatic channel_t {adsp}_link_chans[{link_channels}];\n"
 
@@ -806,12 +826,12 @@ def _generate_dsp_init(resolved_pipeline):
     ret += _generate_dsp_muxes(resolved_pipeline)
 
     for chan in range(input_channels):
-        ret += f"\t{adsp}_in_chans[{chan}] = chan_alloc();\n"
+        ret += f"\tadsp_fifo_init(&{adsp}_in_chans[{chan}]);\n"
     for chan in range(output_channels):
         ret += f"\t{adsp}_out_chans[{chan}] = chan_alloc();\n"
     for chan in range(link_channels):
         ret += f"\t{adsp}_link_chans[{chan}] = chan_alloc();\n"
-    ret += f"\t{adsp}.p_in = (channel_t *) {adsp}_in_chans;\n"
+    ret += f"\t{adsp}.p_in = {adsp}_in_chans;\n"
     ret += f"\t{adsp}.n_in = {input_channels};\n"
     ret += f"\t{adsp}.p_out = (channel_t *) {adsp}_out_chans;\n"
     ret += f"\t{adsp}.n_out = {output_channels};\n"
@@ -1042,6 +1062,7 @@ static adsp_controller_t* m_control;
             if source == "pipeline_in":
                 array_source = "adsp->p_in"
                 idx_num = input_chan_idx
+                input_channel_array.append(f"&{array_source}[{idx_num}]")
                 input_chan_idx += 1
             else:
                 array_source = "adsp->p_link"
@@ -1055,9 +1076,9 @@ static adsp_controller_t* m_control;
                             link_idx += 1
                 else:
                     raise RuntimeError("Channel not found")
-            input_channel_array.append(f"{array_source}[{idx_num}].end_b")
+                input_channel_array.append(f"(void*){array_source}[{idx_num}].end_b")
         input_channels = ",\n\t\t".join(input_channel_array)
-        dsp_main += f"\tchanend_t thread_{thread_idx}_inputs[] = {{\n\t\t{input_channels}}};\n"
+        dsp_main += f"\tvoid* thread_{thread_idx}_inputs[] = {{\n\t\t{input_channels}}};\n"
 
         # thread output chanends
         output_channel_array = []

@@ -36,6 +36,13 @@
 
 
 void test(adsp_pipeline_t* dsp) {
+
+	// allow some time to allow DSP threads to start
+	int32_t delay_start = get_reference_time();
+	while(get_reference_time() - delay_start < 10000) {
+		// do nothing
+	}
+
 	int32_t source_buffer[N_CHANS][FRAME_SIZE];
 	int32_t* source[N_CHANS];
 	int32_t sink_buffer[N_CHANS][FRAME_SIZE];
@@ -50,13 +57,16 @@ void test(adsp_pipeline_t* dsp) {
 	uint32_t last_time = get_reference_time();
 	bool failed = false;
 	int32_t worst_elapsed = 0;
+	int32_t times[LOOP_COUNT*FRAME_SIZE];
+	int32_t *ptimes = times;
 	for(int i = 0; i < LOOP_COUNT*FRAME_SIZE; i++) {
 
 		// check we got back to here fast enough
-		uint32_t elapsed = get_reference_time() - last_time;
-		if((elapsed) > worst_elapsed) {
-			worst_elapsed = elapsed;
+		*ptimes = get_reference_time() - last_time;
+		if((*ptimes) > worst_elapsed) {
+			worst_elapsed = *ptimes;
 		}
+		++ptimes;
 
 		// wait for the next I2S period
 		while(get_reference_time() - last_time < I2S_PERIOD_TICKS) {

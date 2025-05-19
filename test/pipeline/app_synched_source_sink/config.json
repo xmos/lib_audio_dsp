@@ -1,7 +1,7 @@
 {
   "FS": [96000],
-  "N_CHANS": [1, 16],
-  "N_THREADS": [1, 3, 5],
-  "FRAME_SIZE": [1, 16]
+  "N_CHANS": [1, 8],
+  "N_THREADS": [1, 5],
+  "FRAME_SIZE": [1, 8, 16]
 }
 

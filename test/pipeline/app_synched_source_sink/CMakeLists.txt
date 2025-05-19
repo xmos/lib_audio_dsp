@@ -7,7 +7,7 @@ project(app_synched_source_sink)
 set(APP_HW_TARGET XCORE-AI-EXPLORER)
 
 set(COMMON_APP_COMPILER_FLAGS
-    -O3
+    -Os
     -g
     -report
     -Wall

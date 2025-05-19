@@ -11,7 +11,7 @@ class Wait(Stage):
     """
     Stage which adds a fixed constant to all inputs, for testing purposes
     """
-    def __init__(self, wait_ratio=0.7, **kwargs):
+    def __init__(self, wait_ratio=0.1, **kwargs):
         super().__init__(name="wait", **kwargs)
         self.create_outputs(self.n_in)
         self.set_constant("ticks",
