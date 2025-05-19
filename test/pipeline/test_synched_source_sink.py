@@ -35,10 +35,11 @@ def test_synched_source_sync(fs, frame_size, n_chans, threads):
     BUILD_DIR.mkdir(exist_ok=True)
     VCD_DIR.mkdir(exist_ok=True)
     with FileLock(build_utils.SYNCHED_SOURCE_SINK_BUILD_LOCK):
-        generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_default", include_probes=True)
+        generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_default")
         build_utils.build(APP_DIR, BUILD_DIR, f"app_synched_source_sink_{config}")
-    vcd_file = VCD_DIR / f"{config}"
-    run_pipeline_xcoreai.run_simple(APP_DIR / "bin" / config / f"{APP_NAME}_{config}.xe", vcd_file)
+    vcd_file = VCD_DIR / f"{config}.vcd"
+    app = APP_DIR / "bin" / config / f"{APP_NAME}_{config}.xe"
+    subprocess.run(["xsim", app, "--vcd-tracing", f"-o {vcd_file} -tile tile[0] -cores -instructions"], check=True)
 
 
 

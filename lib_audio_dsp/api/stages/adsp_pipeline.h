@@ -71,8 +71,6 @@ typedef struct
     /// @privatesection
     adsp_mux_t input_mux;
     adsp_mux_t output_mux;
-    bool probe;
-    int probe_id;
 } adsp_pipeline_t;
 
 /// Pass samples into the DSP pipeline.
@@ -86,11 +84,6 @@ typedef struct
 ///             of samples large enough to pass to the stage that it is connected to.
 static inline void adsp_pipeline_source(adsp_pipeline_t *adsp, int32_t **data)
 {
-    int probe_id = adsp->probe_id;
-    bool probe = adsp->probe;
-    if(probe) {
-        xscope_int(probe_id, 2);
-    }
     for (size_t chan_id = 0; chan_id < adsp->input_mux.n_chan; chan_id++)
     {
         adsp_mux_elem_t cfg = adsp->input_mux.chan_cfg[chan_id];
@@ -109,11 +102,6 @@ static inline void adsp_pipeline_source(adsp_pipeline_t *adsp, int32_t **data)
 ///             of samples large enough to pass to the stage that it is connected to.
 static inline void adsp_pipeline_sink(adsp_pipeline_t *adsp, int32_t **data)
 {
-    int probe_id = adsp->probe_id;
-    bool probe = adsp->probe;
-    if(probe) {
-        xscope_int(probe_id, 1);
-    }
     for (size_t chan_id = 0; chan_id < adsp->output_mux.n_chan; chan_id++)
     {
         adsp_mux_elem_t cfg = adsp->output_mux.chan_cfg[chan_id];
@@ -122,17 +110,6 @@ static inline void adsp_pipeline_sink(adsp_pipeline_t *adsp, int32_t **data)
                          cfg.frame_size);
     }
 }
-
-
-static inline void adsp_pipeline_clear_probe(adsp_pipeline_t *adsp)
-{
-    int probe_id = adsp->probe_id;
-    bool probe = adsp->probe;
-    if(probe) {
-        xscope_int(probe_id, 0);
-    }
-}
-
 
 
 /// Non-blocking receive from the pipeline. It is risky to use this API in an isochronous

@@ -113,13 +113,6 @@ def run(xe, input_file, output_file, num_out_channels, pipeline_stages=1, return
                 stdout = ff.readlines()
             return stdout
 
-def run_simple(xe, xscope_file=""):
-    with FileLock("run_pipeline.lock"):
-        arg = ["--xscope-file", xscope_file] if xscope_file else ["--xscope"]
-        subprocess.run(["xrun", *arg, "--adapter-id", get_adapter_id(), xe], check=True)
-
-
-
 if __name__ == "__main__":
     args = parse_arguments()
     assert args.xe is not None, "Specify vaild .xe file"

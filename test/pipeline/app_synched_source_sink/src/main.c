@@ -68,9 +68,8 @@ void test(adsp_pipeline_t* dsp) {
 		if(0 == frame_count) {
 			frame_count = FRAME_SIZE;
 
-			adsp_pipeline_source(dsp, source);
 			adsp_pipeline_sink(dsp, sink);
-			adsp_pipeline_clear_probe(dsp);
+			adsp_pipeline_source(dsp, source);
 		}
 		frame_count -= 1;
 	}
