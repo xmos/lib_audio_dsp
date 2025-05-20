@@ -33,6 +33,7 @@ void dsp_control_thread(chanend_t c_control, module_instance_t* modules, size_t 
 #if SEND_TEST_CONTROL_COMMANDS
     send_control_cmds(m_dsp, c_control);
 #endif
+    chan_out_word(c_control, 0);
 }
 
 // do dsp

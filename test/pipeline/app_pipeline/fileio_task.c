@@ -6,6 +6,7 @@
 #include <xcore/assert.h>
 #include <xcore/channel.h>
 #include <xcore/chanend.h>
+#include <xcore/select.h>
 #include "fileio.h"
 #include "wav_utils.h"
 #include "app_dsp.h"
@@ -100,8 +101,6 @@ void fileio_task(chanend_t c_control)
     assert(test_config.input_filename != NULL);
     assert(test_config.output_filename != NULL);
 
-    // Send a token to indicate that the control parameters, if any, can be sent
-    chan_out_word(c_control, START_CONTROL_TOKEN);
 
     file_t input_file, output_file;
     int ret = file_open(&input_file, test_config.input_filename, "rb");
@@ -154,11 +153,25 @@ void fileio_task(chanend_t c_control)
 
     int32_t** dsp_input = malloc(sizeof(int32_t*) * input_header_struct.num_channels);
     for(int i = 0; i < input_header_struct.num_channels; ++i) {
-        dsp_input[i] = malloc(sizeof(int32_t) * app_dsp_frame_size());
+        dsp_input[i] = calloc(sizeof(int32_t), app_dsp_frame_size());
     }
     int32_t** dsp_output = malloc(sizeof(int32_t*) * test_config.num_output_channels);
     for(int i = 0; i < test_config.num_output_channels; ++i) {
-        dsp_output[i] = malloc(sizeof(int32_t) * app_dsp_frame_size());
+        dsp_output[i] = calloc(sizeof(int32_t), app_dsp_frame_size());
+    }
+
+
+    // Send a token to indicate that the control parameters, if any, can be sent
+    chan_out_word(c_control, START_CONTROL_TOKEN);
+    SELECT_RES(CASE_THEN(c_control, control_done), DEFAULT_THEN(push_data)) {
+    control_done:
+        chan_in_word(c_control);
+        break;
+    push_data:
+        // push through zeros so the control gets handled.
+        app_dsp_source(dsp_input);
+        app_dsp_sink(dsp_output);
+        continue;
     }
 
     int discard = test_config.num_discard_frames;
@@ -207,6 +220,7 @@ void fileio_task(chanend_t c_control)
     file_close(&output_file);
     shutdown_session();
     adsp_auto_print_thread_max_ticks();
+
     printf("DONE\n");
     _Exit(0);
 }

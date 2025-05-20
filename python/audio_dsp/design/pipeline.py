@@ -476,6 +476,7 @@ def _gen_chan_buf_write(channel, edge, frame_size):
     """Generate the C code to write to a channel."""
     return f"chan_out_buf_word({channel}, (uint32_t*){edge}, {frame_size});\n"
 
+
 def _generate_dsp_threads(resolved_pipeline):
     """
     Create the source string for all of the dsp threads.
@@ -580,59 +581,62 @@ def _generate_dsp_threads(resolved_pipeline):
         assert not (input_fifos and channels), "Pipeline input cannot be a fifo and a channel"
 
         read = ""
-        if input_fifos:
-            n_input_fifos = len(input_fifos)
-            for i in range(n_input_fifos):
-                read += f"\tadsp_fifo_read_start(c_source[{i}]);\n"
-            for i, (origin, edges) in enumerate(in_edges.items()):
-                for edge in edges:
-                    read += f"\tadsp_fifo_read(c_source[{i}], edge{all_edges.index(edge)}, {4*edge.frame_size});\n"
-            for i in range(n_input_fifos):
-                read += f"\tadsp_fifo_read_done(c_source[{i}]);\n"
-            for i, (origin, edges) in enumerate(in_edges.items()):
-                for edge in edges:
-                    read += "\t" + _gen_q31_to_q27(
-                        f"edge{all_edges.index(edge)}", edge.frame_size
-                    )
-        if channels:
-            read += f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
-            # the same channel being read twice
-            if len(in_edges.values()):
-                read += "\tSELECT_RES(\n"
-                for i, _ in enumerate(in_edges.values()):
-                    read += f"\t\tCASE_THEN((chanend_t)c_source[{i}], case_{i}),\n"
-                read += "\t\tDEFAULT_THEN(do_control)\n"
-                read += "\t) {\n"
+        # if input_fifos:
+        #     n_input_fifos = len(input_fifos)
+        #     for i in range(n_input_fifos):
+        #         read += f"\tadsp_fifo_read_start(c_source[{i}]);\n"
+        #     for i, (origin, edges) in enumerate(in_edges.items()):
+        #         for edge in edges:
+        #             read += f"\tadsp_fifo_read(c_source[{i}], edge{all_edges.index(edge)}, {4*edge.frame_size});\n"
+        #     for i in range(n_input_fifos):
+        #         read += f"\tadsp_fifo_read_done(c_source[{i}]);\n"
+        #     for i, (origin, edges) in enumerate(in_edges.items()):
+        #         for edge in edges:
+        #             read += "\t" + _gen_q31_to_q27(
+        #                 f"edge{all_edges.index(edge)}", edge.frame_size
+        #             )
+        # if channels:
 
-                for i, (origin, edges) in enumerate(in_edges.items()):
-                    read += f"\t\tcase_{i}: {{\n"
+        read += f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
+        # the same channel being read twice
+        if len(in_edges.values()):
+            read += "\tSELECT_RES(\n"
+            for i, source in enumerate(in_edges.keys()):
+                if source == "pipeline_in":
+                    read += f"\t\tCASE_THEN(((adsp_fifo_t*)c_source[{i}])->rx_end, case_{i}),\n"
+                else:
+                    read += f"\t\tCASE_THEN((chanend_t)c_source[{i}], case_{i}),\n"
+            read += "\t\tDEFAULT_THEN(do_control)\n"
+            read += "\t) {\n"
+
+            for i, (origin, edges) in enumerate(in_edges.items()):
+                read += f"\t\tcase_{i}: {{\n"
+                if origin != "pipeline_in":
                     for edge in edges:
                         # do all the chan reads first to avoid blocking
                         # if origin == "pipeline_in":
                         read += "\t\t\t" + _gen_chan_buf_read(
-                            f"(chanend_t)c_source[{i}]", f"edge{all_edges.index(edge)}", edge.frame_size
+                            f"(chanend_t)c_source[{i}]",
+                            f"edge{all_edges.index(edge)}",
+                            edge.frame_size,
                         )
+                else:
+                    read += f"\t\t\tadsp_fifo_read_start(c_source[{i}]);\n"
                     for edge in edges:
-                        # then do pipeline input Q conversions
-                        if origin == "pipeline_in":
-                            read += "\t\t\t" + _gen_q31_to_q27(
-                                f"edge{all_edges.index(edge)}", edge.frame_size
-                            )
-                    # for edge in edges:
-                    #     # then do other edge origins
-                    #     if origin == "pipeline_in":
-                    #         pass
-                    #     else:
-                    #         read += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {edge.frame_size});\n"
-
-                    read += "\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}\n"
-                read += "\t\tdo_control: {\n"
-                read += "\t\tstart_control_ts = get_reference_time();\n"
-                read += control
-                read += "\t\tcontrol_done = true;\n"
-                read += "\t\tcontrol_ticks = get_reference_time() - start_control_ts;\n"
-                read += "\t\tcontinue; }\n"
-                read += "\t}\n"
+                        read += f"\t\t\tadsp_fifo_read(c_source[{i}], edge{all_edges.index(edge)}, {4 * edge.frame_size});\n"
+                    read += f"\t\t\tadsp_fifo_read_done(c_source[{i}]);\n"
+                    for edge in edges:
+                        read += "\t\t\t" + _gen_q31_to_q27(
+                            f"edge{all_edges.index(edge)}", edge.frame_size
+                        )
+                read += "\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}\n"
+            read += "\t\tdo_control: {\n"
+            read += "\t\tstart_control_ts = get_reference_time();\n"
+            read += control
+            read += "\t\tcontrol_done = true;\n"
+            read += "\t\tcontrol_ticks = get_reference_time() - start_control_ts;\n"
+            read += "\t\tcontinue; }\n"
+            read += "\t}\n"
 
         read += "\tif(!control_done){\n"
         read += "\t\tstart_control_ts = get_reference_time();\n"
