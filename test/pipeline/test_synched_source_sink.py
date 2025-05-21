@@ -44,7 +44,7 @@ def test_synched_source_sync(fs, frame_size, n_chans, threads):
 
     BUILD_DIR.mkdir(exist_ok=True)
     VCD_DIR.mkdir(exist_ok=True)
-    with FileLock(build_utils.SYNCHED_SOURCE_SINK_BUILD_LOCK):
+    with FileLock(build_utils.BUILD_LOCK):
         generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_default")
         build_utils.build(APP_DIR, BUILD_DIR, f"app_synched_source_sink_{config}")
     vcd_file = VCD_DIR / f"{config}.vcd"

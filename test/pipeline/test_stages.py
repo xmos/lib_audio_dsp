@@ -48,7 +48,7 @@ def generate_ref(sig, ref_module, pipeline_channels, frame_size):
     out_py = np.zeros((pipeline_channels, sig.shape[0]))
 
     # push through zeros to match the test app which does this to support control
-    for _ in range(int(128000/frame_size)):
+    for _ in range(int(2*128000/frame_size)):
         ref_module.process_frame_xcore([np.zeros(frame_size) for _ in range(pipeline_channels)])
 
     # run through Python bit exact implementation
@@ -88,7 +88,7 @@ def do_test(default_pipeline, tuned_pipeline, dut_frame_size, folder_name, skip_
     app_dir = PKG_DIR / folder_name
     os.makedirs(app_dir, exist_ok=True)
 
-    with FileLock(build_utils.PIPELINE_BUILD_LOCK):
+    with FileLock(build_utils.BUILD_LOCK):
 
         for func_p in [default_pipeline, tuned_pipeline]:
             # Exit if tuned_pipeline is not defined

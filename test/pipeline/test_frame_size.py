@@ -41,7 +41,7 @@ def test_frame_size(frame_size):
 
 
 
-    with FileLock(build_utils.PIPELINE_BUILD_LOCK):
+    with FileLock(build_utils.BUILD_LOCK):
         generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_default")
         target = "default"
         # Build pipeline test executable. This will download xscope_fileio if not present
