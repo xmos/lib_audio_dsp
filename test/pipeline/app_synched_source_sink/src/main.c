@@ -1,3 +1,5 @@
+// Copyright 2025 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 /// This test intended to emulate the scenario which the generated pipeline
 /// is used in the XUA application. Source and sink are called on the same
