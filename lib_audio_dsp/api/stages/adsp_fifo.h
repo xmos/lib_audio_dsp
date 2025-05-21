@@ -1,5 +1,18 @@
 // Copyright 2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
+// Very simple FIFO designed to provide channel-like API with asychronous comms.
+//
+// This is single-producer, single-consumer FIFO. The assumption is that the producer
+// will have 1 or more things to send to the receiver in a transation. The producer
+// can therefore call write multiple times before finishing the transaction. The consumer
+// will be blocked until the producer has completed a transaction and will then be able
+// to read from the FIFO.
+//
+// This FIFO also uses a channel to notify the consumer that there is data available.
+// This is to allow the consumer to have a select case which is activated by the FIFO.
+//
+// To do this select on the `rx_end` member of adsp_fifo_t.
 #pragma once
 
 #include <stddef.h>
@@ -9,6 +22,7 @@
 #include "swlock.h"
 #include "xcore/chanend.h"
 #include "xcore/channel.h"
+#include "xcore/assert.h"
 
 #define ADSP_FIFO_SIZE 1024
 
@@ -19,10 +33,6 @@ typedef enum {
     _ADSP_FIFO_WRITE_DONE,
 } adsp_fifo_state_t;
 
-/**
- * Efficient thread-safe FIFO for audio DSP applications.
- * Fixed buffer size of 1024 bytes.
- */
 typedef struct {
     uint8_t buffer[ADSP_FIFO_SIZE];  // Fixed buffer of 1024 bytes
     int32_t head;               // Index of the next byte to read
@@ -44,6 +54,9 @@ static inline void adsp_fifo_init(adsp_fifo_t* fifo) {
     fifo->rx_end = c.end_b;
 }
 
+/**
+ * Start a write, blocks until fifo state is ready for a write.
+ */
 static inline void adsp_fifo_write_start(adsp_fifo_t* fifo) {
     while (fifo->state != _ADSP_FIFO_READ_DONE) {
         // Wait for the FIFO to be ready for writing
@@ -53,24 +66,37 @@ static inline void adsp_fifo_write_start(adsp_fifo_t* fifo) {
 }
 
 /**
- * Write data to the FIFO. Blocks until all data can be written.
- * No divisions or modulo operations are used for efficiency.
+ * Write data to the FIFO.
  *
- * @param fifo Pointer to the FIFO
- * @param data Pointer to data to write
- * @param size_bytes Number of bytes to write
+ * Always call adsp_fifo_write_start() before this function to ensure
+ * the FIFO is in the correct state for writing.
+ *
+ * Always call adsp_fifo_write_done() after this function to notify
+ * The reading thread that the FIFO is ready for reading again.
  */
 static inline void adsp_fifo_write(adsp_fifo_t* fifo, const void* data, size_t size_bytes) {
     memcpy(&fifo->buffer[fifo->head], data, size_bytes);
     fifo->head += size_bytes;
 }
 
+/**
+ * Update FIFO state to indicate the write is finished.
+ *
+ * This also sends a word on the internal channel to notify
+ * a waiting thread that the FIFO is ready for a read.
+ */
 static inline void adsp_fifo_write_done(adsp_fifo_t* fifo) {
+    xassert(fifo->head <= ADSP_FIFO_SIZE);
     fifo->state = _ADSP_FIFO_WRITE_DONE;
     // send notification
     chanend_out_word(fifo->tx_end, 0);
 }
 
+/**
+ * Wait until write is done and update state to show read is in progress.
+ *
+ * Reads from the internal channel to clear the notification.
+ */
 static inline void adsp_fifo_read_start(adsp_fifo_t* fifo) {
     while (fifo->state != _ADSP_FIFO_WRITE_DONE) {
         // Wait for the FIFO to be ready for reading
@@ -82,8 +108,13 @@ static inline void adsp_fifo_read_start(adsp_fifo_t* fifo) {
 }
 
 /**
- * Read data from the FIFO. Blocks until all requested data is available.
- * No divisions or modulo operations are used for efficiency.
+ * Read data from the FIFO.
+ *
+ * Always call adsp_fifo_read_start() before this function to ensure
+ * the FIFO is in the correct state for reading.
+ *
+ * Always call adsp_fifo_read_done() after this function to notify
+ * writing thread that the FIFIO is ready for writing again.
  *
  * @param fifo Pointer to the FIFO
  * @param data Pointer to buffer to store read data
@@ -94,6 +125,9 @@ static inline void adsp_fifo_read(adsp_fifo_t* fifo, void* data, size_t size_byt
     fifo->head += size_bytes;
 }
 
+/**
+ * Update FIFO state to indicate the read is finished.
+ */
 static inline void adsp_fifo_read_done(adsp_fifo_t* fifo) {
     fifo->state = _ADSP_FIFO_READ_DONE;
 }

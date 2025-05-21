@@ -581,21 +581,6 @@ def _generate_dsp_threads(resolved_pipeline):
         assert not (input_fifos and channels), "Pipeline input cannot be a fifo and a channel"
 
         read = ""
-        # if input_fifos:
-        #     n_input_fifos = len(input_fifos)
-        #     for i in range(n_input_fifos):
-        #         read += f"\tadsp_fifo_read_start(c_source[{i}]);\n"
-        #     for i, (origin, edges) in enumerate(in_edges.items()):
-        #         for edge in edges:
-        #             read += f"\tadsp_fifo_read(c_source[{i}], edge{all_edges.index(edge)}, {4*edge.frame_size});\n"
-        #     for i in range(n_input_fifos):
-        #         read += f"\tadsp_fifo_read_done(c_source[{i}]);\n"
-        #     for i, (origin, edges) in enumerate(in_edges.items()):
-        #         for edge in edges:
-        #             read += "\t" + _gen_q31_to_q27(
-        #                 f"edge{all_edges.index(edge)}", edge.frame_size
-        #             )
-        # if channels:
 
         read += f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
         # the same channel being read twice

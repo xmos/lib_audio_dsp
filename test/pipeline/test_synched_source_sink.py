@@ -28,15 +28,17 @@ TEST_PARAMS = json.loads(TEST_CONFIG.read_text())
 def test_synched_source_sync(fs, frame_size, n_chans, threads):
     if (threads, n_chans, frame_size, fs) in [
         (1, 8, 16, 96000),
-        (5, 8, 16, 96000)
+        (5, 8, 16, 96000),
+        (1, 8, 1, 96000)   # would pass with wait_ratio=0.3
     ]:
         pytest.xfail("Current benchmarking shows this should fail")
 
     p, i = Pipeline.begin(n_chans,fs=fs, frame_size=frame_size)
-    i = p.stage(Wait, i)
+    wait_ratio = 0.7 # ratio of thread time spent doing DSP
+    i = p.stage(Wait, i, wait_ratio=wait_ratio)
     for _ in range(threads - 1):
         p.next_thread()
-        i = p.stage(Wait, i)
+        i = p.stage(Wait, i, wait_ratio=wait_ratio)
     p.set_outputs(i)
     config = f"{frame_size}_{fs}_{n_chans}_{threads}"
 
