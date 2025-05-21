@@ -163,15 +163,22 @@ void fileio_task(chanend_t c_control)
 
     // Send a token to indicate that the control parameters, if any, can be sent
     chan_out_word(c_control, START_CONTROL_TOKEN);
-    SELECT_RES(CASE_THEN(c_control, control_done), DEFAULT_THEN(push_data)) {
-    control_done:
-        chan_in_word(c_control);
-        break;
-    push_data:
-        // push through zeros so the control gets handled.
+    for(int i = 0; i < 128000/app_dsp_frame_size(); ++i) {
+        // push data through pipeline so the control works.
+        // the amount of data is fixed so that it matches
+        // the test.
         app_dsp_source(dsp_input);
         app_dsp_sink(dsp_output);
-        continue;
+    }
+    // check that control is done.
+    SELECT_RES(CASE_THEN(c_control, success), DEFAULT_THEN(error)) {
+    success:
+        chan_in_word(c_control);
+        break;
+    error:
+        printf("Error Control should be done by now\n");
+        _Exit(1);
+        break;
     }
 
     int discard = test_config.num_discard_frames;

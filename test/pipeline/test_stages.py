@@ -47,6 +47,10 @@ def generate_ref(sig, ref_module, pipeline_channels, frame_size):
     signal_frames = utils.frame_signal(sig_flt, frame_size, frame_size)
     out_py = np.zeros((pipeline_channels, sig.shape[0]))
 
+    # push through zeros to match the test app which does this to support control
+    for _ in range(int(128000/frame_size)):
+        ref_module.process_frame_xcore([np.zeros(frame_size) for _ in range(pipeline_channels)])
+
     # run through Python bit exact implementation
     for n in range(len(signal_frames)):
         out_py[:, n * frame_size : n * frame_size + frame_size] = (
@@ -105,14 +109,14 @@ def do_test(default_pipeline, tuned_pipeline, dut_frame_size, folder_name, skip_
 
         n_samps, rate = 1024, 48000
         infile = app_dir / "instage.wav"
-        outfile = app_dir / "outstage.wav"
 
 
+        # signal starts at 0 so that there is no step in the signal
         sig0 = (
-            np.linspace(-(2**26), 2**26, n_samps, dtype=np.int32) << 4
+            np.linspace(0, 2**26, n_samps, dtype=np.int32) << 4
         )  # numbers which should be unmodified through pipeline
         # data formats
-        sig1 = np.linspace(-(2**23), 2**23, n_samps, dtype=np.int32) << 4
+        sig1 = np.linspace(0, 2**23, n_samps, dtype=np.int32) << 4
 
         if pipeline_channels == 2:
             sig = np.stack((sig0, sig1), axis=1)
@@ -123,7 +127,7 @@ def do_test(default_pipeline, tuned_pipeline, dut_frame_size, folder_name, skip_
             assert False, f"Unsupported number of channels {pipeline_channels}. Test supports 1 or 2 channels"
 
         audio_helpers.write_wav(infile, rate, sig)
-        
+
         # The reference function should be always tuned_pipeline, it is default_pipeline if tuned_pipeline is not defined
         ref_func_p = tuned_pipeline if tuned_pipeline else default_pipeline
 
@@ -151,6 +155,8 @@ def do_test(default_pipeline, tuned_pipeline, dut_frame_size, folder_name, skip_
             continue
         if target == "default" and skip_default:
             continue
+        print(f"Running {target} pipeline test")
+        outfile = app_dir / f"{target}_outstage.wav"
 
         xe = app_dir / f"bin/{target}/pipeline_test_{target}.xe"
 
@@ -161,9 +167,10 @@ def do_test(default_pipeline, tuned_pipeline, dut_frame_size, folder_name, skip_
         if out_data.ndim == 1:
             out_data = out_data.reshape(len(out_data), 1)
         for out_py_int, ref_frame_size in zip(out_py_int_all, TEST_FRAME_SIZES):
+            print(f"-- Testing frame size {ref_frame_size} with dut frame size {dut_frame_size}")
             for ch in range(pipeline_channels):
                 # Save Python tracks
-                audio_helpers.write_wav(app_dir / "outstage_python_ch{ch}.wav", rate, np.array(out_py_int.T, dtype=np.int32))
+                audio_helpers.write_wav(app_dir / f"outstage_python_frame{ref_frame_size}_ch{ch}.wav", rate, np.array(out_py_int.T, dtype=np.int32))
                 diff = out_py_int.T[:, ch] - out_data[:, ch]
                 print(f"ch {ch}: max diff {max(abs(diff))}")
                 sol = (~np.equal(out_py_int.T, out_data)).astype(int)
