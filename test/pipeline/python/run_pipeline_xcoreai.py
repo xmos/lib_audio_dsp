@@ -103,20 +103,15 @@ def run(xe, input_file, output_file, num_out_channels, pipeline_stages=1, return
         adapter_id = get_adapter_id()
         print("Running on adapter_id ",adapter_id)
 
-        try:
-            if return_stdout == False:
-                xscope_fileio.run_on_target(adapter_id, xe)
-                time.sleep(0.1)
-            else:
-                with open("stdout.txt", "w+") as ff:
-                    xscope_fileio.run_on_target(adapter_id, xe, stdout=ff)
-                    ff.seek(0)
-                    stdout = ff.readlines()
-                return stdout
-        finally:
-            killall = shutil.which("killall")
-            if killall is not None:
-                subprocess.run([killall, "xgdb"])
+        if return_stdout == False:
+            xscope_fileio.run_on_target(adapter_id, xe)
+            time.sleep(0.1)
+        else:
+            with open("stdout.txt", "w+") as ff:
+                xscope_fileio.run_on_target(adapter_id, xe, stdout=ff)
+                ff.seek(0)
+                stdout = ff.readlines()
+            return stdout
 
 if __name__ == "__main__":
     args = parse_arguments()
