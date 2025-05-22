@@ -153,11 +153,11 @@ void fileio_task(chanend_t c_control)
 
     int32_t** dsp_input = malloc(sizeof(int32_t*) * input_header_struct.num_channels);
     for(int i = 0; i < input_header_struct.num_channels; ++i) {
-        dsp_input[i] = calloc(sizeof(int32_t), app_dsp_frame_size());
+        dsp_input[i] = calloc(app_dsp_frame_size(), sizeof(int32_t));
     }
     int32_t** dsp_output = malloc(sizeof(int32_t*) * test_config.num_output_channels);
     for(int i = 0; i < test_config.num_output_channels; ++i) {
-        dsp_output[i] = calloc(sizeof(int32_t), app_dsp_frame_size());
+        dsp_output[i] = calloc(app_dsp_frame_size(), sizeof(int32_t));
     }
 
 
