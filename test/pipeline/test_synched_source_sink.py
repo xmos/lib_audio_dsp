@@ -21,18 +21,37 @@ TEST_CONFIG = APP_DIR / "config.json"
 
 TEST_PARAMS = json.loads(TEST_CONFIG.read_text())
 
-@pytest.mark.parametrize("fs", TEST_PARAMS["FS"])
-@pytest.mark.parametrize("frame_size", TEST_PARAMS["FRAME_SIZE"])
-@pytest.mark.parametrize("n_chans", TEST_PARAMS["N_CHANS"])
-@pytest.mark.parametrize("threads", TEST_PARAMS["N_THREADS"])
-def test_synched_source_sync(fs, frame_size, n_chans, threads):
-    if (threads, n_chans, frame_size, fs) in [
+@pytest.fixture
+def xfail_selected(request):
+    """
+    Mark some known failures which dont meet timing.
+    """
+    get = lambda x: request.getfixturevalue(x)
+
+    if (get("threads"), get("n_chans"), get("frame_size"), get("fs")) in [
         (1, 8, 16, 96000),
         (5, 8, 16, 96000),
         (1, 8, 1, 96000)   # would pass with wait_ratio=0.3
     ]:
-        pytest.xfail("Current benchmarking shows this should fail")
+        request.node.add_marker(pytest.mark.xfail(reason="Current benchmarking shows this should fail", strict=True))
 
+
+@pytest.mark.parametrize("fs", TEST_PARAMS["FS"])
+@pytest.mark.parametrize("frame_size", TEST_PARAMS["FRAME_SIZE"])
+@pytest.mark.parametrize("n_chans", TEST_PARAMS["N_CHANS"])
+@pytest.mark.parametrize("threads", TEST_PARAMS["N_THREADS"])
+@pytest.mark.usefixtures('xfail_selected')
+def test_synched_source_sync(fs, frame_size, n_chans, threads):
+    """
+    Basic benchmarking to find scenarios that fail.
+
+    Test configuration is defined in config.json. This is also read by
+    CMakeLists.txt to ensure the tests align with the DUT application.
+
+    A special "Wait" stage has been written to consume a fixed ratio of each
+    DSP thread time. The remaining time is available for the DSP thread to do
+    control and communication.
+    """
     p, i = Pipeline.begin(n_chans,fs=fs, frame_size=frame_size)
     wait_ratio = 0.7 # ratio of thread time spent doing DSP
     i = p.stage(Wait, i, wait_ratio=wait_ratio)

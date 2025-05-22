@@ -349,6 +349,8 @@ def test_biquad_slew(method, args, frame_size):
         else:
             bq_method()
 
+        p["control"].set_slew_shift(0)
+
         stage_config = p["control"].get_config()
         generate_test_param_file("BIQUAD_SLEW", stage_config)
         return p
