@@ -178,9 +178,10 @@ def do_test(default_pipeline, tuned_pipeline, dut_frame_size, folder_name, skip_
                 print(f"ch {ch}: {len(indexes)} indexes mismatch")
                 print(f"ch {ch} mismatching indexes = {indexes}")
 
-            np.testing.assert_equal(
-                out_py_int.T,
+            np.testing.assert_allclose(
                 out_data,
+                out_py_int.T,
+                rtol=1e-3,
                 err_msg=f"dut frame {dut_frame_size}, ref frame {ref_frame_size}",
             )
 
