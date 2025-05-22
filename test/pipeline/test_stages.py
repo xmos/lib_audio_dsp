@@ -63,7 +63,7 @@ def generate_ref(sig, ref_module, pipeline_channels, frame_size):
     return out_py_int
 
 
-def do_test(default_pipeline, tuned_pipeline, dut_frame_size, folder_name, skip_default=False):
+def do_test(default_pipeline, tuned_pipeline, dut_frame_size, folder_name, skip_default=False, rtol=0):
     """
     Run stereo file into app and check the output matches
     using in_ch and out_ch to decide which channels to compare
@@ -181,7 +181,7 @@ def do_test(default_pipeline, tuned_pipeline, dut_frame_size, folder_name, skip_
             np.testing.assert_allclose(
                 out_data,
                 out_py_int.T,
-                rtol=1e-3,
+                rtol=rtol,
                 err_msg=f"dut frame {dut_frame_size}, ref frame {ref_frame_size}",
             )
 
@@ -311,23 +311,23 @@ def test_biquad(method, args, frame_size):
 
 @pytest.mark.group0
 @pytest.mark.parametrize(
-    "method, args",
+    "method, args, rtol",
     [
-        ("make_bypass", None),
-        ("make_lowpass", [1000, 0.707]),
-        ("make_highpass", [1000, 0.707]),
-        ("make_bandpass", [1000, 0.707]),
-        ("make_bandstop", [1000, 0.707]),
-        ("make_notch", [1000, 0.707]),
-        ("make_allpass", [1000, 0.707]),
-        ("make_peaking", [1000, 0.707, -6]),
-        ("make_constant_q", [1000, 0.707, -6]),
-        ("make_lowshelf", [1000, 0.707, -6]),
-        ("make_highshelf", [1000, 0.707, 10]),
-        ("make_linkwitz", [200, 0.707, 180, 0.707]),
+        ("make_bypass", None, 0),
+        ("make_lowpass", [1000, 0.707], 0),
+        ("make_highpass", [1000, 0.707], 0),
+        ("make_bandpass", [1000, 0.707], 0),
+        ("make_bandstop", [1000, 0.707], 0),
+        ("make_notch", [1000, 0.707], 0),
+        ("make_allpass", [1000, 0.707], 0),
+        ("make_peaking", [1000, 0.707, -6], 0),
+        ("make_constant_q", [1000, 0.707, -6], 0),
+        ("make_lowshelf", [1000, 0.707, -6], 0),
+        ("make_highshelf", [1000, 0.707, 10], 1e-3), # Fixing test to  make it exact is too hard for now
+        ("make_linkwitz", [200, 0.707, 180, 0.707], 0),
     ],
 )
-def test_biquad_slew(method, args, frame_size):
+def test_biquad_slew(method, args, frame_size, rtol):
     """
     Test the biquad stage filters the same in Python and C
     """
@@ -360,7 +360,7 @@ def test_biquad_slew(method, args, frame_size):
 
     # only run the control test, as there is no way to init python pipeline differently
     # for default & control tests
-    do_test(default_pipeline, tuned_pipeline, frame_size, folder_name, skip_default=True)
+    do_test(default_pipeline, tuned_pipeline, frame_size, folder_name, skip_default=True, rtol=rtol)
 
 
 filter_spec = [
