@@ -24,7 +24,7 @@
 #include "xcore/channel.h"
 #include "xcore/assert.h"
 
-#define ADSP_FIFO_SIZE 1024
+#define ADSP_FIFO_SIZE 4096
 
 typedef enum {
     _ADSP_FIFO_READ,

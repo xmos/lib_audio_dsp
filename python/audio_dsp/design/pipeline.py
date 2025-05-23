@@ -670,13 +670,6 @@ def _generate_dsp_threads(resolved_pipeline):
                     pass
                 else:
                     out += f"\tchan_out_buf_word(c_dest[{out_index}], (void*)edge{all_edges.index(edge)}, {edge.frame_size});\n"
-        # The pipeline start condition must be that it is already full so reads
-        # can be done without worrying about synchronisation. This is done
-        # by starting on a read for the input threads, and starting on an
-        # out for the other threads
-        # if is_input_thread:
-        #     file_str += func + read + process + profile + out + "\t}\n}\n"
-        # else:
         file_str += func + out + read + process + profile + "\t}\n}\n"
 
     return file_str

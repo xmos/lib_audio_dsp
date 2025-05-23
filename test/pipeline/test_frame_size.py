@@ -21,7 +21,7 @@ BUILD_DIR = APP_DIR / "build"
 def shift_to_pipeline(i):
     return i << (31 - Q_SIG)
 
-@pytest.mark.parametrize("frame_size", [1, 2, 4, 8, 16, 32, 64, 128, 256]) # TODO , 512, 1024])
+@pytest.mark.parametrize("frame_size", [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024])
 def test_frame_size(frame_size):
     """
     Using a custom test stage that fills each frame of output with the index
