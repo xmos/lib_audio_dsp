@@ -682,11 +682,12 @@ def _determine_channels(resolved_pipeline):
     for s_idx, s_thread_edges in enumerate(all_thread_edges):
         s_in_edges, _, _, _ = s_thread_edges
         # add pipeline entry channels
-        if "pipeline_in" in s_in_edges.keys():
-            ret.append(("pipeline_in", s_idx))
+        for source, edge_list in s_in_edges.items():
+            if source == "pipeline_in":
+                ret.append((source, s_idx, len(edge_list)))
     for s_idx, s_thread_edges in enumerate(all_thread_edges):
         _, _, s_out_edges, _ = s_thread_edges
-        ret.extend((s_idx, dest) for dest in s_out_edges.keys())
+        ret.extend((s_idx, dest, len(edge_list)) for dest, edge_list in s_out_edges.items())
     return ret
 
 
@@ -784,13 +785,15 @@ def _generate_dsp_init(resolved_pipeline):
 
     # Track the number of channels so we can initialise them
     input_channels = 0
+    input_channel_edge_counts = []
     link_channels = 0
     output_channels = 0
 
-    for chan_s, chan_d in chans:
+    for chan_s, chan_d, chan_num_edges in chans:
         # We assume that there is no channel pipeline_in -> pipeline_out
         if chan_s == "pipeline_in":
             input_channels += 1
+            input_channel_edge_counts.append(chan_num_edges)
         elif chan_d == "pipeline_out":
             output_channels += 1
         else:
@@ -808,7 +811,8 @@ def _generate_dsp_init(resolved_pipeline):
     ret += _generate_dsp_muxes(resolved_pipeline)
 
     for chan in range(input_channels):
-        ret += f"\tadsp_fifo_init(&{adsp}_in_chans[{chan}]);\n"
+        ret += f"\tstatic int32_t in_buf_{chan}[{input_channel_edge_counts[chan]}];\n"
+        ret += f"\tadsp_fifo_init(&{adsp}_in_chans[{chan}], in_buf_{chan});\n"
     for chan in range(output_channels):
         ret += f"\t{adsp}_out_chans[{chan}] = chan_alloc();\n"
     for chan in range(link_channels):
@@ -1049,7 +1053,7 @@ static adsp_controller_t* m_control;
             else:
                 array_source = "adsp->p_link"
                 link_idx = 0
-                for chan_s, chan_d in determined_channels:
+                for chan_s, chan_d, _ in determined_channels:
                     if chan_s != "pipeline_in" and chan_d != "pipeline_out":
                         if source == chan_s and thread_idx == chan_d:
                             idx_num = link_idx
@@ -1072,7 +1076,7 @@ static adsp_controller_t* m_control;
             else:
                 array_source = "adsp->p_link"
                 link_idx = 0
-                for chan_s, chan_d in determined_channels:
+                for chan_s, chan_d, _ in determined_channels:
                     if chan_s != "pipeline_in" and chan_d != "pipeline_out":
                         if chan_s == thread_idx and chan_d == dest:
                             idx_num = link_idx

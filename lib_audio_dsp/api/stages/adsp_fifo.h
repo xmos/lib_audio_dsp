@@ -22,9 +22,6 @@
 #include "swlock.h"
 #include "xcore/chanend.h"
 #include "xcore/channel.h"
-#include "xcore/assert.h"
-
-#define ADSP_FIFO_SIZE 4096
 
 typedef enum {
     _ADSP_FIFO_READ,
@@ -34,7 +31,7 @@ typedef enum {
 } adsp_fifo_state_t;
 
 typedef struct {
-    uint8_t buffer[ADSP_FIFO_SIZE];  // Fixed buffer of 1024 bytes
+    uint8_t *buffer;
     int32_t head;               // Index of the next byte to read
     chanend_t tx_end;
     chanend_t rx_end;
@@ -44,14 +41,17 @@ typedef struct {
 /**
  * Initialize a FIFO.
  *
+ * @warning its on you to make sure the buffer is big enough
+ *
  * @param fifo Pointer to FIFO structure to initialize
  */
-static inline void adsp_fifo_init(adsp_fifo_t* fifo) {
+static inline void adsp_fifo_init(adsp_fifo_t* fifo, void* buffer) {
     fifo->head = 0;
     fifo->state = _ADSP_FIFO_READ_DONE;
     channel_t c = chan_alloc();
     fifo->tx_end = c.end_a;
     fifo->rx_end = c.end_b;
+    fifo->buffer = (uint8_t*)buffer;
 }
 
 /**
@@ -86,7 +86,6 @@ static inline void adsp_fifo_write(adsp_fifo_t* fifo, const void* data, size_t s
  * a waiting thread that the FIFO is ready for a read.
  */
 static inline void adsp_fifo_write_done(adsp_fifo_t* fifo) {
-    xassert(fifo->head <= ADSP_FIFO_SIZE);
     fifo->state = _ADSP_FIFO_WRITE_DONE;
     // send notification
     chanend_out_word(fifo->tx_end, 0);
