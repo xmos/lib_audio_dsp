@@ -812,7 +812,7 @@ def _generate_dsp_init(resolved_pipeline):
     ret += _generate_dsp_muxes(resolved_pipeline)
 
     for chan in range(input_channels):
-        ret += f"\tstatic int32_t in_buf_{chan}[{frame_size*input_channel_edge_counts[chan]}];\n"
+        ret += f"\tstatic int32_t in_buf_{chan}[{frame_size * input_channel_edge_counts[chan]}];\n"
         ret += f"\tadsp_fifo_init(&{adsp}_in_chans[{chan}], in_buf_{chan});\n"
     for chan in range(output_channels):
         ret += f"\t{adsp}_out_chans[{chan}] = chan_alloc();\n"
