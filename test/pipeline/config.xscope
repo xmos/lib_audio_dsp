@@ -6,5 +6,6 @@
   <Probe name="seek" type="CONTINUOUS" datatype="UINT" units="Value" enabled="true"/>
   <Probe name="tell" type="CONTINUOUS" datatype="UINT" units="Value" enabled="true"/>
   <Probe name="host_quit" type="CONTINUOUS" datatype="UINT" units="Value" enabled="true"/>
+  <Probe name="host_close" type="CONTINUOUS" datatype="UINT" units="Value" enabled="true"/>
+  <Probe name="check_version" type="CONTINUOUS" datatype="UINT" units="Value" enabled="true"/>
 </xSCOPEconfig>
-

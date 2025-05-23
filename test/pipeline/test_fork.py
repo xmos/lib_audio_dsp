@@ -29,7 +29,7 @@ def do_test(p, in_ch, out_ch, folder_name):
     outfile = app_dir / "outstage.wav"
     n_samps, rate = 1024, 48000
 
-    with FileLock(build_utils.PIPELINE_BUILD_LOCK):
+    with FileLock(build_utils.BUILD_LOCK):
         generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_default")
         target = "default"
         # Build pipeline test executable. This will download xscope_fileio if not present

@@ -11,7 +11,7 @@ from pathlib import Path
 import shutil
 import os
 
-PIPELINE_BUILD_LOCK = "test_pipeline_build.lock"
+BUILD_LOCK = "test_pipeline_build.lock"
 
 def build(source_dir, build_dir, target):
     """

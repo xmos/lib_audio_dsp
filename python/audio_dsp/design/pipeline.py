@@ -3,6 +3,7 @@
 
 """Top level pipeline design class and code generation functions."""
 
+from enum import IntEnum
 from pathlib import Path
 from tabulate import tabulate
 
@@ -459,7 +460,7 @@ def _gen_chan_buf_read(channel, edge, frame_size):
     return f"chan_in_buf_word({channel}, (uint32_t*){edge}, {frame_size});\n"
 
 
-def _gen_q31_to_q27(channel, edge, frame_size):
+def _gen_q31_to_q27(edge, frame_size):
     """Generate the C code to convert from q31 to q27."""
     return (
         f"for(int idx = 0; idx < {frame_size}; ++idx) {edge}[idx] = adsp_from_q31({edge}[idx]);\n"
@@ -482,7 +483,7 @@ def _generate_dsp_threads(resolved_pipeline):
 
     Output looks approximately like the below::
 
-        void dsp_thread(chanend_t* input_c, chanend_t* output_c, module_states, module_configs) {
+        void dsp_thread(void* input_c, chanend_t* output_c, module_states, module_configs) {
             int32_t edge0[BLOCK_SIZE];
             int32_t edge1[BLOCK_SIZE];
             int32_t edge2[BLOCK_SIZE];
@@ -514,8 +515,8 @@ def _generate_dsp_threads(resolved_pipeline):
     for thread_index, (thread_edges, thread) in enumerate(
         zip(all_thread_edges, resolved_pipeline["threads"])
     ):
-        func = f"DECLARE_JOB(dsp_{resolved_pipeline['identifier']}_thread{thread_index}, (chanend_t*, chanend_t*, module_instance_t**));\n"
-        func += f"void dsp_{resolved_pipeline['identifier']}_thread{thread_index}(chanend_t* c_source, chanend_t* c_dest, module_instance_t** modules) {{\n"
+        func = f"DECLARE_JOB(dsp_{resolved_pipeline['identifier']}_thread{thread_index}, (void**, chanend_t*, module_instance_t**));\n"
+        func += f"void dsp_{resolved_pipeline['identifier']}_thread{thread_index}(void** c_source, chanend_t* c_dest, module_instance_t** modules) {{\n"
 
         # set high priority thread bit to ensure we get the required
         # MIPS
@@ -575,36 +576,44 @@ def _generate_dsp_threads(resolved_pipeline):
             if resolved_pipeline["modules"][stage_index]["yaml_dict"]:
                 control += f"\t\t{name}_control(modules[{i}]->state, &modules[{i}]->control);\n"
 
-        read = f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
+        input_fifos = [o for o in in_edges if o == "pipeline_in"]
+        channels = [o for o in in_edges if o != "pipeline_in"]
+        assert not (input_fifos and channels), "Pipeline input cannot be a fifo and a channel"
+
+        read = ""
+
+        read += f"\tint read_count = {len(in_edges)};\n"  # TODO use bitfield and guarded cases to prevent
         # the same channel being read twice
         if len(in_edges.values()):
             read += "\tSELECT_RES(\n"
-            for i, _ in enumerate(in_edges.values()):
-                read += f"\t\tCASE_THEN(c_source[{i}], case_{i}),\n"
+            for i, source in enumerate(in_edges.keys()):
+                if source == "pipeline_in":
+                    read += f"\t\tCASE_THEN(((adsp_fifo_t*)c_source[{i}])->rx_end, case_{i}),\n"
+                else:
+                    read += f"\t\tCASE_THEN((chanend_t)c_source[{i}], case_{i}),\n"
             read += "\t\tDEFAULT_THEN(do_control)\n"
             read += "\t) {\n"
 
             for i, (origin, edges) in enumerate(in_edges.items()):
                 read += f"\t\tcase_{i}: {{\n"
-                for edge in edges:
-                    # do all the chan reads first to avoid blocking
-                    if origin == "pipeline_in":
+                if origin != "pipeline_in":
+                    for edge in edges:
+                        # do all the chan reads first to avoid blocking
+                        # if origin == "pipeline_in":
                         read += "\t\t\t" + _gen_chan_buf_read(
-                            f"c_source[{i}]", f"edge{all_edges.index(edge)}", edge.frame_size
+                            f"(chanend_t)c_source[{i}]",
+                            f"edge{all_edges.index(edge)}",
+                            edge.frame_size,
                         )
-                for edge in edges:
-                    # then do pipeline input Q conversions
-                    if origin == "pipeline_in":
+                else:
+                    read += f"\t\t\tadsp_fifo_read_start(c_source[{i}]);\n"
+                    for edge in edges:
+                        read += f"\t\t\tadsp_fifo_read(c_source[{i}], edge{all_edges.index(edge)}, {4 * edge.frame_size});\n"
+                    read += f"\t\t\tadsp_fifo_read_done(c_source[{i}]);\n"
+                    for edge in edges:
                         read += "\t\t\t" + _gen_q31_to_q27(
-                            f"c_source[{i}]", f"edge{all_edges.index(edge)}", edge.frame_size
+                            f"edge{all_edges.index(edge)}", edge.frame_size
                         )
-                for edge in edges:
-                    # then do other edge origins
-                    if origin == "pipeline_in":
-                        pass
-                    else:
-                        read += f"\t\t\tchan_in_buf_word(c_source[{i}], (void*)edge{all_edges.index(edge)}, {edge.frame_size});\n"
-
                 read += "\t\t\tif(!--read_count) break;\n\t\t\telse continue;\n\t\t}\n"
             read += "\t\tdo_control: {\n"
             read += "\t\tstart_control_ts = get_reference_time();\n"
@@ -661,14 +670,7 @@ def _generate_dsp_threads(resolved_pipeline):
                     pass
                 else:
                     out += f"\tchan_out_buf_word(c_dest[{out_index}], (void*)edge{all_edges.index(edge)}, {edge.frame_size});\n"
-        # The pipeline start condition must be that it is already full so reads
-        # can be done without worrying about synchronisation. This is done
-        # by starting on a read for the input threads, and starting on an
-        # out for the other threads
-        if is_input_thread:
-            file_str += func + read + process + profile + out + "\t}\n}\n"
-        else:
-            file_str += func + out + read + process + profile + "\t}\n}\n"
+        file_str += func + out + read + process + profile + "\t}\n}\n"
 
     return file_str
 
@@ -680,11 +682,12 @@ def _determine_channels(resolved_pipeline):
     for s_idx, s_thread_edges in enumerate(all_thread_edges):
         s_in_edges, _, _, _ = s_thread_edges
         # add pipeline entry channels
-        if "pipeline_in" in s_in_edges.keys():
-            ret.append(("pipeline_in", s_idx))
+        for source, edge_list in s_in_edges.items():
+            if source == "pipeline_in":
+                ret.append((source, s_idx, len(edge_list)))
     for s_idx, s_thread_edges in enumerate(all_thread_edges):
         _, _, s_out_edges, _ = s_thread_edges
-        ret.extend((s_idx, dest) for dest in s_out_edges.keys())
+        ret.extend((s_idx, dest, len(edge_list)) for dest, edge_list in s_out_edges.items())
     return ret
 
 
@@ -782,19 +785,22 @@ def _generate_dsp_init(resolved_pipeline):
 
     # Track the number of channels so we can initialise them
     input_channels = 0
+    input_channel_edge_counts = []
     link_channels = 0
     output_channels = 0
+    frame_size = resolved_pipeline["frame_size"]
 
-    for chan_s, chan_d in chans:
+    for chan_s, chan_d, chan_num_edges in chans:
         # We assume that there is no channel pipeline_in -> pipeline_out
         if chan_s == "pipeline_in":
             input_channels += 1
+            input_channel_edge_counts.append(chan_num_edges)
         elif chan_d == "pipeline_out":
             output_channels += 1
         else:
             link_channels += 1
 
-    ret += f"\tstatic channel_t {adsp}_in_chans[{input_channels}];\n"
+    ret += f"\tstatic adsp_fifo_t {adsp}_in_chans[{input_channels}];\n"
     ret += f"\tstatic channel_t {adsp}_out_chans[{output_channels}];\n"
     ret += f"\tstatic channel_t {adsp}_link_chans[{link_channels}];\n"
 
@@ -806,12 +812,13 @@ def _generate_dsp_init(resolved_pipeline):
     ret += _generate_dsp_muxes(resolved_pipeline)
 
     for chan in range(input_channels):
-        ret += f"\t{adsp}_in_chans[{chan}] = chan_alloc();\n"
+        ret += f"\tstatic int32_t in_buf_{chan}[{frame_size * input_channel_edge_counts[chan]}];\n"
+        ret += f"\tadsp_fifo_init(&{adsp}_in_chans[{chan}], in_buf_{chan});\n"
     for chan in range(output_channels):
         ret += f"\t{adsp}_out_chans[{chan}] = chan_alloc();\n"
     for chan in range(link_channels):
         ret += f"\t{adsp}_link_chans[{chan}] = chan_alloc();\n"
-    ret += f"\t{adsp}.p_in = (channel_t *) {adsp}_in_chans;\n"
+    ret += f"\t{adsp}.p_in = {adsp}_in_chans;\n"
     ret += f"\t{adsp}.n_in = {input_channels};\n"
     ret += f"\t{adsp}.p_out = (channel_t *) {adsp}_out_chans;\n"
     ret += f"\t{adsp}.n_out = {output_channels};\n"
@@ -994,6 +1001,7 @@ def generate_dsp_main(pipeline: Pipeline, out_dir="build/dsp_pipeline"):
 #include <xcore/assert.h>
 #include <xcore/hwtimer.h>
 #include <xcore/thread.h>
+#include <platform.h>
 #include <print.h>
 #include "cmds.h" // Autogenerated
 #include "cmd_offsets.h" // Autogenerated
@@ -1041,11 +1049,12 @@ static adsp_controller_t* m_control;
             if source == "pipeline_in":
                 array_source = "adsp->p_in"
                 idx_num = input_chan_idx
+                input_channel_array.append(f"&{array_source}[{idx_num}]")
                 input_chan_idx += 1
             else:
                 array_source = "adsp->p_link"
                 link_idx = 0
-                for chan_s, chan_d in determined_channels:
+                for chan_s, chan_d, _ in determined_channels:
                     if chan_s != "pipeline_in" and chan_d != "pipeline_out":
                         if source == chan_s and thread_idx == chan_d:
                             idx_num = link_idx
@@ -1054,9 +1063,9 @@ static adsp_controller_t* m_control;
                             link_idx += 1
                 else:
                     raise RuntimeError("Channel not found")
-            input_channel_array.append(f"{array_source}[{idx_num}].end_b")
+                input_channel_array.append(f"(void*){array_source}[{idx_num}].end_b")
         input_channels = ",\n\t\t".join(input_channel_array)
-        dsp_main += f"\tchanend_t thread_{thread_idx}_inputs[] = {{\n\t\t{input_channels}}};\n"
+        dsp_main += f"\tvoid* thread_{thread_idx}_inputs[] = {{\n\t\t{input_channels}}};\n"
 
         # thread output chanends
         output_channel_array = []
@@ -1068,7 +1077,7 @@ static adsp_controller_t* m_control;
             else:
                 array_source = "adsp->p_link"
                 link_idx = 0
-                for chan_s, chan_d in determined_channels:
+                for chan_s, chan_d, _ in determined_channels:
                     if chan_s != "pipeline_in" and chan_d != "pipeline_out":
                         if chan_s == thread_idx and chan_d == dest:
                             idx_num = link_idx

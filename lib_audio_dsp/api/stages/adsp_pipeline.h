@@ -17,6 +17,7 @@
 #include <xcore/select.h>
 
 #include "adsp_module.h"
+#include "stages/adsp_fifo.h"
 
 /// @cond
 ///
@@ -58,7 +59,7 @@ static inline bool check_chanend(chanend_t c) {
 typedef struct
 {
     /// @privatesection
-    channel_t *p_in;
+    adsp_fifo_t *p_in;
     size_t n_in;
     channel_t *p_out;
     size_t n_out;
@@ -72,6 +73,7 @@ typedef struct
     adsp_mux_t output_mux;
 } adsp_pipeline_t;
 
+
 /// Pass samples into the DSP pipeline.
 ///
 /// These samples are sent by value to the other thread, therefore the data buffer can be reused
@@ -83,12 +85,20 @@ typedef struct
 ///             of samples large enough to pass to the stage that it is connected to.
 static inline void adsp_pipeline_source(adsp_pipeline_t *adsp, int32_t **data)
 {
+    for(int i = 0; i < adsp->n_in; i++)
+    {
+        adsp_fifo_write_start(&adsp->p_in[i]);
+    }
     for (size_t chan_id = 0; chan_id < adsp->input_mux.n_chan; chan_id++)
     {
         adsp_mux_elem_t cfg = adsp->input_mux.chan_cfg[chan_id];
-        chan_out_buf_word(adsp->p_in[cfg.channel_idx].end_a,
+        adsp_fifo_write(&adsp->p_in[cfg.channel_idx],
                          (uint32_t *)data[cfg.data_idx],
-                         cfg.frame_size);
+                         cfg.frame_size*4);
+    }
+    for(int i = 0; i < adsp->n_in; i++)
+    {
+        adsp_fifo_write_done(&adsp->p_in[i]);
     }
 }
 
@@ -109,7 +119,6 @@ static inline void adsp_pipeline_sink(adsp_pipeline_t *adsp, int32_t **data)
                          cfg.frame_size);
     }
 }
-
 
 
 /// Non-blocking receive from the pipeline. It is risky to use this API in an isochronous
