@@ -48,7 +48,8 @@ def generate_ref(sig, ref_module, pipeline_channels, frame_size):
     out_py = np.zeros((pipeline_channels, sig.shape[0]))
 
     # push through zeros to match the test app which does this to support control
-    for _ in range(int(2*128000/frame_size)):
+    pretest_zero_cont = 64e3 # MUST MATCH TEST APP
+    for _ in range(int(pretest_zero_cont/frame_size)):
         ref_module.process_frame_xcore([np.zeros(frame_size) for _ in range(pipeline_channels)])
 
     # run through Python bit exact implementation
@@ -112,11 +113,9 @@ def do_test(default_pipeline, tuned_pipeline, dut_frame_size, folder_name, skip_
 
 
         # signal starts at 0 so that there is no step in the signal
-        sig0 = (
-            np.linspace(0, 2**26, n_samps, dtype=np.int32) << 4
-        )  # numbers which should be unmodified through pipeline
-        # data formats
-        sig1 = np.linspace(0, 2**23, n_samps, dtype=np.int32) << 4
+        sig_f = np.sin(np.linspace(0, 2*np.pi, n_samps)) * np.linspace(0, 1, n_samps) # a sin wave with ramped gain from 0
+        sig0 = np.round(sig_f * 2**30).astype(np.int32)
+        sig1 = np.round(sig_f * 2**27).astype(np.int32)
 
         if pipeline_channels == 2:
             sig = np.stack((sig0, sig1), axis=1)

@@ -3,6 +3,9 @@
 
 // Very simple FIFO designed to provide channel-like API with asychronous comms.
 //
+// This utility is used in the generated pipeline and should not be considered safe
+// for use in application code.
+//
 // This is single-producer, single-consumer FIFO. The assumption is that the producer
 // will have 1 or more things to send to the receiver in a transation. The producer
 // can therefore call write multiple times before finishing the transaction. The consumer
@@ -40,6 +43,9 @@ typedef struct {
 
 /**
  * Initialize a FIFO.
+ *
+ * Provide a buffer which will be used to hold the data. The buffer must be big
+ * enough to hold the sum of all data written in a write transaction.
  *
  * @warning its on you to make sure the buffer is big enough
  *
@@ -97,11 +103,11 @@ static inline void adsp_fifo_write_done(adsp_fifo_t* fifo) {
  * Reads from the internal channel to clear the notification.
  */
 static inline void adsp_fifo_read_start(adsp_fifo_t* fifo) {
+    chanend_in_word(fifo->rx_end);
     while (fifo->state != _ADSP_FIFO_WRITE_DONE) {
         // Wait for the FIFO to be ready for reading
     }
     // clear notification
-    chanend_in_word(fifo->rx_end);
     fifo->state = _ADSP_FIFO_READ;
     fifo->head = 0;
 }

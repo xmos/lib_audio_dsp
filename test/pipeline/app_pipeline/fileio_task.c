@@ -163,7 +163,8 @@ void fileio_task(chanend_t c_control)
 
     // Send a token to indicate that the control parameters, if any, can be sent
     chan_out_word(c_control, START_CONTROL_TOKEN);
-    for(int i = 0; i < 2*128000/app_dsp_frame_size(); ++i) {
+    const int pretest_zero_count = 64000; // MUST MATCH test_stages.py !!!!!
+    for(int i = 0; i < pretest_zero_count/app_dsp_frame_size(); ++i) {
         // push data through pipeline so the control works.
         // the amount of data is fixed so that it matches
         // the test.

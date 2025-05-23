@@ -31,7 +31,8 @@ def xfail_selected(request):
     if (get("threads"), get("n_chans"), get("frame_size"), get("fs")) in [
         (1, 8, 16, 96000),
         (5, 8, 16, 96000),
-        (1, 8, 1, 96000)   # would pass with wait_ratio=0.3
+        (1, 8, 1, 96000),   # would pass with wait_ratio=0.3
+        (1, 8, 8, 96000)
     ]:
         request.node.add_marker(pytest.mark.xfail(reason="Current benchmarking shows this should fail", strict=True))
 
