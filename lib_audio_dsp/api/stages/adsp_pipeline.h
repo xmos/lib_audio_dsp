@@ -77,7 +77,13 @@ typedef struct
 /// Pass samples into the DSP pipeline.
 ///
 /// These samples are sent by value to the other thread, therefore the data buffer can be reused
-/// immediately after this function returns.
+/// immediately after this function returns. This function copies the data to a shared buffer where
+/// the DSP pipeline will read them. If called again before the DSP pipeline has emptied the buffer
+/// then this will block. If called when the buffer is empty then it will not block.
+///
+/// If this is called on the same thread as `adsp_pipeline_sink` then it will be most efficient to call
+/// sink first followed by source. This allows the channel transactions internal to the pipeline to be
+/// completed while the app is copying the input data to the buffer.
 ///
 /// @param adsp The initialised pipeline.
 /// @param data An array of arrays of samples. The length of the array shall be the number
@@ -103,6 +109,12 @@ static inline void adsp_pipeline_source(adsp_pipeline_t *adsp, int32_t **data)
 }
 
 /// Receive samples from the DSP pipeline.
+///
+/// Sink is implemented via a blocking channel transaction with the DSP thread and therefore will
+/// block until the output threads are available to send the processed data. It should also be noted
+/// that if `adsp_pipeline_sink` is called late then the DSP pipeline will block waiting for the
+/// application to read the processed data. The application author must take care to ensure that data
+/// is being read in a timely fashion.
 ///
 /// @param adsp The initialised pipeline.
 /// @param data An array of arrays that will be filled with processed samples from the pipeline.
