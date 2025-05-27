@@ -1,8 +1,8 @@
 lib_audio_dsp change log
 ========================
 
-Unreleased
-----------
+1.3.1
+-----
 
   * FIXED: adsp_pipeline_sink updated to use asynchronous FIFO to resolve blocking
     issues.
