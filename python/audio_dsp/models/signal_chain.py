@@ -6,7 +6,7 @@ from pydantic import Field, field_validator, model_validator
 
 from audio_dsp.models.stage import NodePlacement, StageConfig, StageModel, StageParameters, Placement_2i1o, Placement_Ni1o, Placement_4i2o
 from audio_dsp.models.fields import DEFAULT_GAIN_DB
-
+import annotated_types
 
 class Bypass(StageModel):
     """
@@ -143,7 +143,14 @@ class Switch(StageModel[Placement_Ni1o]):
 
     op_type: Literal["Switch"] = "Switch"
     parameters: SwitchParameters = Field(default_factory=SwitchParameters)
-
+    
+    @model_validator(mode="after")
+    def set_max_outputs(self):
+        """Set the maximum number os switch positions"""
+        max_val = len(self.placement.input)
+        self.parameters.model_fields["position"].metadata.append(annotated_types.Le(max_val-1))
+        
+        return self
 
 class SwitchSlew(Switch):
     """
@@ -174,24 +181,23 @@ class DelayConfig(StageConfig):
     Attributes
     ----------
         max_delay: Maximum delay length in samples
+        units: Units for delay values, either "samples" or "seconds"
     """
 
     max_delay: int = Field(default=1024, gt=0, description="Maximum delay length in samples")
-
+    units: Literal["samples", "s", "ms"] = Field(
+        default="samples", description="Units for maximum delay values"
+    )
 
 class DelayParameters(StageParameters):
     """Parameters for delay stage.
 
     Attributes
     ----------
-        delay: Current delay length in samples
-        units: Units for delay values, either "samples" or "seconds"
+        delay: Current delay length in the configured units
     """
 
-    delay: float = Field(default=0, ge=0, description="Current delay length in (units)")
-    units: Literal["samples", "s", "ms"] = Field(
-        default="samples", description="Units for delay values"
-    )
+    delay: float = Field(default=0, ge=0, description="Current delay length")
 
 
 class Delay(StageModel):
@@ -205,6 +211,14 @@ class Delay(StageModel):
     op_type: Literal["Delay"] = "Delay"
     parameters: DelayParameters = Field(default_factory=DelayParameters)
     config: DelayConfig = Field(default_factory=DelayConfig)
+
+    @model_validator(mode="after")
+    def set_max_delay(self):
+        """Set the maximum delay value based on the configuration."""
+        max_val = self.config.max_delay
+        self.parameters.model_fields["delay"].metadata.append(annotated_types.Le(max_val))
+        
+        return self
 
 
 class CrossfaderParameters(StageParameters):

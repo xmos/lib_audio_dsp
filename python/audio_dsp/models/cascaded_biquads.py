@@ -45,7 +45,7 @@ class CascadedBiquads16Parameters(StageParameters):
     """Parameters for CascadedBiquad16 Stage."""
 
     filters: Annotated[list[BIQUAD_TYPES], Len(16)] = Field(
-        default_factory=_8biquads, max_length=16
+        default_factory=_16biquads, max_length=16
     )
 
 
@@ -70,7 +70,7 @@ class ParametricEq8b(CascadedBiquads):
     op_type: Literal["ParametricEq8b"] = "ParametricEq8b"  # pyright: ignore override
 
 
-class ParametricEq16b(CascadedBiquads):
+class ParametricEq16b(CascadedBiquads16):
     """Pydantic model of the ParametricEq16b Stage."""
 
     op_type: Literal["ParametricEq16b"] = "ParametricEq16b"  # pyright: ignore override

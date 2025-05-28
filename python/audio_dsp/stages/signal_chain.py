@@ -452,7 +452,6 @@ class Delay(Stage):
         # Get parameter values
         if parameters is not None:
             starting_delay = parameters.delay
-            units = parameters.units
 
         self.dsp_block = sc.delay(self.fs, self.n_in, max_delay, starting_delay, units)
         self["max_delay"] = max_delay
@@ -463,7 +462,8 @@ class Delay(Stage):
 
         # Store parameters
         self.max_delay = max_delay
-        self.parameters = DelayParameters(delay=starting_delay, units=(units))  # pyright: ignore
+        self.units = units
+        self.parameters = DelayParameters(delay=starting_delay)  # pyright: ignore
 
     def set_delay(self, delay, units="samples"):
         """
@@ -490,7 +490,7 @@ class Delay(Stage):
                 f"Delay value {parameters.delay} exceeds maximum delay {self.max_delay}"
             )
 
-        self.set_delay(parameters.delay, units=parameters.units)
+        self.set_delay(parameters.delay, units=self.units)
         self.parameters = parameters
 
 

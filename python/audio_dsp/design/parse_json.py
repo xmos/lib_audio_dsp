@@ -294,7 +294,7 @@ def update_pipeline(p: Pipeline, params: DspJson):
                     stage.set_parameters(node.parameters)
                 break
 
-        if not updated:
+        if not updated and "AutoFork" not in stage.label:
             warnings.warn(f"Stage {stage.label} could not be found in the JSON file")
 
 if __name__ == "__main__":

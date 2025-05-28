@@ -69,6 +69,19 @@ class Biquad(Stage):
         self.dsp_block.update_coeffs(new_coeffs)
         return self
 
+    def make_gain(self, gain_db: float) -> "Biquad":
+        """Make this biquad a gain stage.
+
+        Parameters
+        ----------
+        gain_db : float
+            Gain of the filter in decibels.
+        """
+        self.details = dict(type="gain", **_ws(locals()))
+        new_coeffs = bq.make_biquad_gain(self.fs, gain_db)
+        self.dsp_block.update_coeffs(new_coeffs)
+        return self
+
     def make_lowpass(self, f: float, q: float) -> "Biquad":
         """Make this biquad a second order low pass filter.
 
@@ -308,6 +321,8 @@ class Biquad(Stage):
             )
         elif filter_type.type == "linkwitz":
             self.make_linkwitz(filter_type.f0, filter_type.q0, filter_type.fp, filter_type.qp)
+        elif filter_type.type == "gain":
+            self.make_gain(filter_type.gain_db)
         elif filter_type.type == "bypass":
             self.make_bypass()
         else:
