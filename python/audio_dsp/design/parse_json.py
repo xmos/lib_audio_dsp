@@ -104,6 +104,12 @@ class Graph(BaseModel):
     outputs: list[Output]
 
 
+def path_encoder(obj):
+    if isinstance(obj, Path):
+        return str(obj)
+    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
+
 class DspJson(BaseModel):
     """Pydantic model of the JSON file describing a DSP graph."""
 
@@ -121,7 +127,7 @@ class DspJson(BaseModel):
                 items = [('op_type', node.pop('op_type'))] + list(node.items())
                 d["graph"]["nodes"][i] = dict(items)
                 # return json.dumps(dict(items))
-        dump = json.dumps(d, indent=2)
+        dump = json.dumps(d, indent=2, default=path_encoder)
 
         def compact_array_newlines(s):
             # Finds square brackets with their content (non-greedy, so not nested)
