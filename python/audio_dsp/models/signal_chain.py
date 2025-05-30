@@ -4,9 +4,18 @@ from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 
-from audio_dsp.models.stage import NodePlacement, StageConfig, StageModel, StageParameters, Placement_2i1o, Placement_Ni1o, Placement_4i2o
+from audio_dsp.models.stage import (
+    NodePlacement,
+    StageConfig,
+    StageModel,
+    StageParameters,
+    Placement_2i1o,
+    Placement_Ni1o,
+    Placement_4i2o,
+)
 from audio_dsp.models.fields import DEFAULT_GAIN_DB
 import annotated_types
+
 
 class Bypass(StageModel):
     """
@@ -137,14 +146,15 @@ class Switch(StageModel[Placement_Ni1o]):
 
     op_type: Literal["Switch"] = "Switch"
     parameters: SwitchParameters = Field(default_factory=SwitchParameters)
-    
+
     @model_validator(mode="after")
     def set_max_outputs(self):
-        """Set the maximum number os switch positions"""
+        """Set the maximum number os switch positions."""
         max_val = len(self.placement.input)
-        self.parameters.model_fields["position"].metadata.append(annotated_types.Le(max_val-1))
-        
+        self.parameters.model_fields["position"].metadata.append(annotated_types.Le(max_val - 1))
+
         return self
+
 
 class SwitchSlew(Switch):
     """
@@ -153,7 +163,7 @@ class SwitchSlew(Switch):
 
     """
 
-    op_type: Literal["SwitchSlew"] = "SwitchSlew"
+    op_type: Literal["SwitchSlew"] = "SwitchSlew"  # pyright: ignore
 
 
 class SwitchStereo(StageModel):
@@ -183,6 +193,7 @@ class DelayConfig(StageConfig):
         default="samples", description="Units for maximum delay values"
     )
 
+
 class DelayParameters(StageParameters):
     """Parameters for delay stage.
 
@@ -211,29 +222,25 @@ class Delay(StageModel):
         """Set the maximum delay value based on the configuration."""
         max_val = self.config.max_delay
         self.parameters.model_fields["delay"].metadata.append(annotated_types.Le(max_val))
-        
+
         return self
 
 
 class CrossfaderParameters(StageParameters):
-    """Parameters for crossfader stage.
-
-    """
+    """Parameters for crossfader stage."""
 
     mix: float = Field(default=0.5, le=1, ge=0, description="Set the mix of the crossfader")
 
 
 class Crossfader(StageModel[Placement_2i1o]):
-    """
-    """
+    """Crossfader stage model for 2-in 1-out placement."""
 
     op_type: Literal["Crossfader"] = "Crossfader"
     parameters: CrossfaderParameters = Field(default_factory=CrossfaderParameters)
 
 
 class CrossfaderStereo(StageModel[Placement_4i2o]):
-    """
-    """
+    """Crossfader stage model for 4-in 2-out placement."""
 
     op_type: Literal["CrossfaderStereo"] = "CrossfaderStereo"
     parameters: CrossfaderParameters = Field(default_factory=CrossfaderParameters)

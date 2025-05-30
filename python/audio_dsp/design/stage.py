@@ -250,6 +250,10 @@ class _GlobalStages:
     stages = []
 
 
+# This defines the types of instances of the config/parameter classes
+StageParameterType = TypeVar("StageParameterType", bound="StageParameters")
+
+
 class Stage(Node):
     """
     Base class for stages in the DSP pipeline. Each subclass
@@ -382,7 +386,7 @@ class Stage(Node):
         super().__init_subclass__()
         _GlobalStages.stages.append(cls)
 
-    def set_parameters(self, parameters: StageParameters):
+    def set_parameters(self, parameters: StageParameterType):  # pyright:ignore
         """Use a pydantic model to update the runtime parameters of a Stage."""
         if isinstance(parameters, StageParameters) and type(parameters) != StageParameters:
             raise NotImplementedError(

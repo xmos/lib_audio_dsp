@@ -11,6 +11,7 @@ import audio_dsp.dsp.graphic_eq as geq
 import numpy as np
 from audio_dsp.models.graphic_eq import GraphicEq10bParameters
 
+
 class GraphicEq10b(Stage):
     """
     A 10 band graphic equaliser, with octave spaced center frequencies.
@@ -59,4 +60,3 @@ class GraphicEq10b(Stage):
             The parameters of the graphic eq.
         """
         self.set_gains(parameters.gains_db)
-        return self

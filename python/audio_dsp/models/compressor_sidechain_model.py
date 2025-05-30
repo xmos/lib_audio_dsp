@@ -3,8 +3,20 @@
 from typing import Literal
 from pydantic import Field
 
-from audio_dsp.models.stage import StageModel, StageParameters, NodePlacement, Placement_2i1o, Placement_4i2o
-from audio_dsp.models.fields import DEFAULT_ATTACK_T, DEFAULT_RELEASE_T, DEFAULT_COMPRESSOR_RATIO, DEFAULT_THRESHOLD_DB
+from audio_dsp.models.stage import (
+    StageModel,
+    StageParameters,
+    NodePlacement,
+    Placement_2i1o,
+    Placement_4i2o,
+)
+from audio_dsp.models.fields import (
+    DEFAULT_ATTACK_T,
+    DEFAULT_RELEASE_T,
+    DEFAULT_COMPRESSOR_RATIO,
+    DEFAULT_THRESHOLD_DB,
+)
+
 
 class CompressorSidechainParameters(StageParameters):
     """Parameters for sidechain compressor stage.
@@ -17,10 +29,18 @@ class CompressorSidechainParameters(StageParameters):
         release_t: Time for signal to return to original level (seconds)
     """
 
-    ratio: float = DEFAULT_COMPRESSOR_RATIO(description="Compression ratio applied when detect signal exceeds threshold")
-    threshold_db: float = DEFAULT_THRESHOLD_DB(description="Level in dB above which compression occurs")
-    attack_t: float = DEFAULT_ATTACK_T(description="Time in seconds for compressor to start compressing")
-    release_t: float = DEFAULT_RELEASE_T(description="Time in seconds for signal to return to original level")
+    ratio: float = DEFAULT_COMPRESSOR_RATIO(
+        description="Compression ratio applied when detect signal exceeds threshold"
+    )
+    threshold_db: float = DEFAULT_THRESHOLD_DB(
+        description="Level in dB above which compression occurs"
+    )
+    attack_t: float = DEFAULT_ATTACK_T(
+        description="Time in seconds for compressor to start compressing"
+    )
+    release_t: float = DEFAULT_RELEASE_T(
+        description="Time in seconds for signal to return to original level"
+    )
 
 
 class CompressorSidechainPlacement(Placement_2i1o):
@@ -33,6 +53,7 @@ class CompressorSidechainPlacement(Placement_2i1o):
     Produces exactly 1 output:
     - Output 0: Compressed version of input 0
     """
+
 
 class CompressorSidechain(StageModel[CompressorSidechainPlacement]):
     """Sidechain compressor stage based on RMS envelope of detect signal.

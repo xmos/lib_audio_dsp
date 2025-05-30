@@ -105,6 +105,7 @@ class Graph(BaseModel):
 
 
 def path_encoder(obj):
+    """Encode Path objects as strings for JSON serialization."""
     if isinstance(obj, Path):
         return str(obj)
     raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
@@ -119,32 +120,35 @@ class DspJson(BaseModel):
     graph: Graph
     # checksum: List
 
-    def model_dump_json(self, indent):
+    def model_dump_xdsp(self, indent):
+        """Dump model in xdsp format with specified indentation."""
         d = self.model_dump()
         # Move 'op_type' to the front
         for i, node in enumerate(d["graph"]["nodes"]):
-            if 'op_type' in node:
-                items = [('op_type', node.pop('op_type'))] + list(node.items())
+            if "op_type" in node:
+                items = [("op_type", node.pop("op_type"))] + list(node.items())
                 d["graph"]["nodes"][i] = dict(items)
                 # return json.dumps(dict(items))
         dump = json.dumps(d, indent=2, default=path_encoder)
 
         def compact_array_newlines(s):
             # Finds square brackets with their content (non-greedy, so not nested)
-            pattern = re.compile(r'\[(.*?)\]', re.DOTALL)
+            pattern = re.compile(r"\[(.*?)\]", re.DOTALL)
+
             def repl(match):
                 inner = match.group(1)
-                if '[' in inner:
+                if "[" in inner:
                     # catch the first node
-                    return f'[{compact_array_newlines(inner + ']')}'
-                elif '{' in inner or '}' in inner:
+                    return f"[{compact_array_newlines(inner + ']')}"
+                elif "{" in inner or "}" in inner:
                     # catch other lists
                     return match.group(0)
                 # Remove leading/trailing whitespace just inside the brackets
                 stripped_inner = inner.strip()
                 # Replace inner newlines+whitespace with a space
-                compact_inner = re.sub(r'\s*\n\s*', ' ', stripped_inner)
-                return f'[{compact_inner}]'
+                compact_inner = re.sub(r"\s*\n\s*", " ", stripped_inner)
+                return f"[{compact_inner}]"
+
             return pattern.sub(repl, s)
 
         return compact_array_newlines(dump)
@@ -288,20 +292,21 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
 
 
 def update_pipeline(p: Pipeline, params: DspJson):
-
+    """Update the pipeline with new DSP JSON parameters."""
     for stage in p.stages[1:]:
         if stage.name in ["pipeline", "dsp_thread"]:
             continue
         updated = False
         for node in params.graph.nodes:
             if node.placement.name == stage.label:
-                updated=True
+                updated = True
                 if hasattr(node, "parameters"):
                     stage.set_parameters(node.parameters)
                 break
 
         if not updated and "AutoFork" not in stage.label:
             warnings.warn(f"Stage {stage.label} could not be found in the JSON file")
+
 
 if __name__ == "__main__":
     # parser = argparse.ArgumentParser(description="JSON-to-DSP pipeline generator")

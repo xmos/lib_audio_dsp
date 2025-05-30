@@ -6,6 +6,7 @@ from pydantic import Field
 from audio_dsp.models.stage import StageModel, StageParameters
 from audio_dsp.models.fields import DEFAULT_ATTACK_T, DEFAULT_RELEASE_T, DEFAULT_THRESHOLD_DB
 
+
 class LimiterParameters(StageParameters):
     """Parameters for limiter stage.
 
@@ -16,10 +17,13 @@ class LimiterParameters(StageParameters):
         release_t: Time for signal to return to original level (seconds)
     """
 
-    threshold_db: float = DEFAULT_THRESHOLD_DB(description="Level in dB above which limiting occurs")
+    threshold_db: float = DEFAULT_THRESHOLD_DB(
+        description="Level in dB above which limiting occurs"
+    )
     attack_t: float = DEFAULT_ATTACK_T(description="Time in seconds for limiter to start limiting")
-    release_t: float = DEFAULT_RELEASE_T(description="Time in seconds for signal to return to original level")
-
+    release_t: float = DEFAULT_RELEASE_T(
+        description="Time in seconds for signal to return to original level"
+    )
 
 
 class LimiterRMS(StageModel):
@@ -79,12 +83,13 @@ class ClipperParameters(StageParameters):
         threshold_db: Level in dB above which clipping occurs
     """
 
-    threshold_db: float = DEFAULT_THRESHOLD_DB(description="Level in dB above which clipping occurs")
+    threshold_db: float = DEFAULT_THRESHOLD_DB(
+        description="Level in dB above which clipping occurs"
+    )
 
 
 class Clipper(StageModel):
-    """
-    """
+    """Clipper stage model for limiting signal amplitude."""
 
     op_type: Literal["Clipper"] = "Clipper"
     parameters: ClipperParameters = Field(default_factory=ClipperParameters)

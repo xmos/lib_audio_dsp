@@ -5,9 +5,16 @@ from annotated_types import Len
 
 from pydantic import Field, field_validator, model_validator
 
-from audio_dsp.models.stage import NodePlacement, StageConfig, StageModel, StageParameters, Placement_2i1o, Placement_Ni1o, Placement_4i2o
+from audio_dsp.models.stage import (
+    NodePlacement,
+    StageConfig,
+    StageModel,
+    StageParameters,
+    Placement_2i1o,
+    Placement_Ni1o,
+    Placement_4i2o,
+)
 from audio_dsp.models.fields import DEFAULT_GAIN_DB
-
 
 
 class GraphicEq10bParameters(StageParameters):
@@ -18,8 +25,8 @@ class GraphicEq10bParameters(StageParameters):
 
     gains_db: Annotated[
         list[Annotated[float, Field(ge=-24, le=24, description="Gain of the band in dB.")]],
-        Len(10)
-    ] = Field(default_factory=lambda: [0.0]*10)
+        Len(10),
+    ] = Field(default_factory=lambda: [0.0] * 10)
 
 
 class GraphicEq10b(StageModel):

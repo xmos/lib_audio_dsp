@@ -11,11 +11,12 @@ from audio_dsp.models.fields import (
     DEFAULT_THRESHOLD_DB,
 )
 
+
 class NoiseSuppressorExpanderParameters(StageParameters):
     """Parameters for noise suppressor expander stage."""
 
     ratio: float = DEFAULT_COMPRESSOR_RATIO(
-    description="Expansion ratio applied when signal falls below threshold",
+        description="Expansion ratio applied when signal falls below threshold",
     )
     threshold_db: float = DEFAULT_THRESHOLD_DB(
         default=-35.0, description="Level in dB below which expansion occurs"

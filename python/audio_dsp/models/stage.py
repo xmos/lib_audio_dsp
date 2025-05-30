@@ -114,7 +114,6 @@ class Placement_Ni1o(NodePlacement, extra="forbid"):
     output: list[int] = Field(default=[], max_length=1, min_length=1)
 
 
-
 class StageModel[Placement: NodePlacement](edgeProducerBaseModel):
     """A generic pydantic model of a DSP Stage.
 

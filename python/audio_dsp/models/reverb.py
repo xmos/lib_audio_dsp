@@ -13,6 +13,7 @@ from audio_dsp.models.stage import (
     NodePlacement,
 )
 
+
 class ReverbBaseParameters(StageParameters):
     """Parameters for all Reverb Stages."""
 
@@ -31,18 +32,27 @@ class ReverbBaseParameters(StageParameters):
         default=0.5,
         ge=0,
         le=1,
-        description=("The mix between the wet and dry signal. When the mix is 0, the output signal is fully dry, "
-        "when 1, the output signal is fully wet.")
+        description=(
+            "The mix between the wet and dry signal. When the mix is 0, the output signal is fully dry, "
+            "when 1, the output signal is fully wet."
+        ),
     )
 
 
 class ReverbStereoBaseParameters(ReverbBaseParameters):
     """Parameters for all stereo Reverb Stages."""
 
-    width: float = Field(default=1.0, ge=0, le=1, description=("How much stereo separation there is between the left and "
-        "right channels. Setting width to 0 will yield a mono signal, "
-        "whilst setting width to 1 will yield the most stereo "
-        "separation."))
+    width: float = Field(
+        default=1.0,
+        ge=0,
+        le=1,
+        description=(
+            "How much stereo separation there is between the left and "
+            "right channels. Setting width to 0 will yield a mono signal, "
+            "whilst setting width to 1 will yield the most stereo "
+            "separation."
+        ),
+    )
 
 
 class ReverbBaseConfig(StageConfig):
@@ -121,20 +131,35 @@ class ReverbPlateParameters(ReverbStereoBaseParameters):
         "values will give a longer reverberation time for "
         "a given room size. Range: 0 to 1",
     )
-    early_diffusion: float = Field(default=0.2, ge=0, le=1, description="Sets how much diffusion is present in the first part of the reverberation. Range: 0 to 1")
-    late_diffusion: float = Field(default=0.6, ge=0, le=1, description="Sets how much diffusion is present in the latter part of the reverberation. Range: 0 to 1")
-    bandwidth: float = Field(default=8000, ge=0, le=24000, description="Sets the low pass cutoff frequency of the reverb input.")
+    early_diffusion: float = Field(
+        default=0.2,
+        ge=0,
+        le=1,
+        description="Sets how much diffusion is present in the first part of the reverberation. Range: 0 to 1",
+    )
+    late_diffusion: float = Field(
+        default=0.6,
+        ge=0,
+        le=1,
+        description="Sets how much diffusion is present in the latter part of the reverberation. Range: 0 to 1",
+    )
+    bandwidth: float = Field(
+        default=8000,
+        ge=0,
+        le=24000,
+        description="Sets the low pass cutoff frequency of the reverb input.",
+    )
 
 
 class ReverbRoom(_ReverbBaseModel[MonoPlacement]):
-    """ """
+    """Reverb room model for mono placement."""
 
     op_type: Literal["ReverbRoom"] = "ReverbRoom"
     parameters: ReverbRoomParameters = Field(default_factory=ReverbRoomParameters)
 
 
 class ReverbRoomStereo(_ReverbBaseModel[StereoPlacement]):
-    """ """
+    """Reverb room model for stereo placement."""
 
     op_type: Literal["ReverbRoomStereo"] = "ReverbRoomStereo"
     parameters: ReverbRoomStereoParameters = Field(default_factory=ReverbRoomStereoParameters)

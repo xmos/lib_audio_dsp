@@ -16,7 +16,9 @@ class BiquadParameters(StageParameters):
         slew_rate: Maximum rate of change for filter coefficients (units/sample)
     """
 
-    filter_type: BIQUAD_TYPES = Field(default=biquad_bypass(), description="Type of biquad filter to implement")
+    filter_type: BIQUAD_TYPES = Field(
+        default=biquad_bypass(), description="Type of biquad filter to implement"
+    )
     slew_rate: float = Field(
         default=1.0, gt=0, description="Maximum rate of change for filter coefficients per sample"
     )

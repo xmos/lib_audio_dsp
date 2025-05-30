@@ -6,7 +6,10 @@ together in series.
 
 from audio_dsp.design.stage import Stage, find_config
 from audio_dsp.dsp import cascaded_biquads as casc_bq
-from audio_dsp.models.cascaded_biquads import CascadedBiquadsParameters, CascadedBiquads16Parameters
+from audio_dsp.models.cascaded_biquads import (
+    CascadedBiquadsParameters,
+    CascadedBiquads16Parameters,
+)
 
 import numpy as np
 from typing import Any

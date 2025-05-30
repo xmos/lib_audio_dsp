@@ -17,6 +17,7 @@ HEADROOM_BITS = 31 - Q_SIG
 HEADROOM_DB = utils.db((utils.Q_max(31) + 1) / utils.Q_max(Q_SIG))
 MIN_SIG_DB = utils.db(1 / 2**Q_SIG)
 
+
 class dsp_block(metaclass=NumpyDocstringInheritanceInitMeta):
     """
     Generic DSP block, all blocks should inherit from this class and

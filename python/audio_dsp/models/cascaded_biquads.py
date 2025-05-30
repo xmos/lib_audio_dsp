@@ -22,9 +22,7 @@ def _16biquads():
 class CascadedBiquadsParameters(StageParameters):
     """Parameters for CascadedBiquad Stage."""
 
-    filters: Annotated[list[BIQUAD_TYPES], Len(8)] = Field(
-        default_factory=_8biquads, max_length=8
-    )
+    filters: Annotated[list[BIQUAD_TYPES], Len(8)] = Field(default_factory=_8biquads, max_length=8)
 
 
 class CascadedBiquads(StageModel):
@@ -61,7 +59,6 @@ class CascadedBiquads16(StageModel):
 
     op_type: Literal["CascadedBiquads16"] = "CascadedBiquads16"
     parameters: CascadedBiquads16Parameters = Field(default_factory=CascadedBiquads16Parameters)
-
 
 
 class ParametricEq8b(CascadedBiquads):

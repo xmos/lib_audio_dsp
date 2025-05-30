@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field, field_validator
 from audio_dsp.models.stage import StageConfig, StageModel, StageParameters, NodePlacement
 from audio_dsp.models.fields import DEFAULT_ATTACK_T, DEFAULT_RELEASE_T
 
+
 class EnvelopeDetectorPlacement(NodePlacement):
     """Graph placement for an Envelope Stage. This stage has no outputs."""
 
