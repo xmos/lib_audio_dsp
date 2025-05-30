@@ -234,6 +234,32 @@ class Pipeline:
             if edge is not None:
                 edge.dest_index = i
         self.o = output_edges
+
+        if len(self.o.edges) >= 1:
+            thread_crossings = []
+            for edge in output_edges.edges:
+                thread_crossings.append(len(set(edge.crossings)))  # pyright: ignore checked above
+
+            if not all(x == thread_crossings[0] for x in thread_crossings):
+                input_msg = "\n"
+
+                for i, edge in enumerate(self.o.edges):
+                    crossings_set = set(edge.crossings)  # pyright: ignore checked above
+                    if not crossings_set:
+                        input_msg += f"Output {i} does not cross any threads.\n"
+                    else:
+                        input_msg += f"Output {i} crosses threads {crossings_set}.\n"
+
+                raise RuntimeError(
+                    f"\nAll edges passed to pipeline.set_outputs"
+                    " must cross the same number of threads.\n"
+                    f"Currently, outputs cross {thread_crossings} threads.\nOutputs with less than "
+                    f"{max(thread_crossings)} thread crossings must pass through Stages on"
+                    " earlier threads to avoid a latency mismatch and thread blocking.\n"
+                    "A Bypass Stage can be added on an earlier thread if no additional DSP is needed."
+                    + input_msg
+                )
+
         self._n_out = i + 1
         self.resolve_pipeline()  # Call it here to generate the pipeline hash
 
