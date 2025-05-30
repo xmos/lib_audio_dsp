@@ -165,10 +165,14 @@ class StageOutputList:
 
     def __radd__(self, other) -> "StageOutputList | NotImplementedType":
         """Other + self."""
+        if other == 0:
+            # happens during sum()
+            return StageOutputList(self.edges)
         if isinstance(other, list):
             other = StageOutputList(other)
         if other is None:
             other = StageOutputList([None])
+
         if not isinstance(other, StageOutputList):
             return NotImplemented
         return StageOutputList(other.edges + self.edges)
