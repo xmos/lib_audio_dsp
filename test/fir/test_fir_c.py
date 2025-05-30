@@ -1,8 +1,6 @@
 # Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
-# Copyright 2024 XMOS LIMITED.
-# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import numpy as np
 import soundfile as sf
 from pathlib import Path

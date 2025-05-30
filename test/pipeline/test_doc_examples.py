@@ -18,7 +18,7 @@ EXAMPLES = list(EXAMPLES_DIR.glob("*.py"))
 @pytest.mark.parametrize("example", EXAMPLES, ids=[e.name for e in EXAMPLES])
 def test_doc_examples(example):
     """Run all the Python scripts in doc_examples/"""
-    with FileLock(build_utils.PIPELINE_BUILD_LOCK):
+    with FileLock(build_utils.BUILD_LOCK):
         run([sys.executable, example], check=True)
     
     

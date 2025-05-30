@@ -359,7 +359,11 @@ class Stage(Node):
                 input_msg = "\n"
 
                 for i, edge in enumerate(self.i.edges):
-                    input_msg += f"Input {i} crosses threads {set(edge.crossings)}.\n"  # pyright: ignore checked above
+                    crossings_set = set(edge.crossings)  # pyright: ignore checked above
+                    if not crossings_set:
+                        input_msg += f"Input {i} does not cross any threads.\n"
+                    else:
+                        input_msg += f"Input {i} crosses threads {crossings_set}.\n"  # pyright: ignore checked above
 
                 raise RuntimeError(
                     f"\nAll stage inputs to {type(self).__name__} (label={self.label})"

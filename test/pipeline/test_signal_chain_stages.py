@@ -41,7 +41,7 @@ def do_test(p, folder_name, rtol=None):
 
     # use the Python dsp_block as a reference implementation
     ref_module = p.stages[2].dsp_block
-    with FileLock(build_utils.PIPELINE_BUILD_LOCK):
+    with FileLock(build_utils.BUILD_LOCK):
 
         generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_default")
         target = "default"

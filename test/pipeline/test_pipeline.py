@@ -40,7 +40,7 @@ Fs = 48000
 
 
 def gen_build(app_dir, p, target):
-    with FileLock(build_utils.PIPELINE_BUILD_LOCK):
+    with FileLock(build_utils.BUILD_LOCK):
         # Autogenerate C code
         generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline_default")
 
@@ -237,7 +237,7 @@ def test_stage_labels():
     p, n_stages = create_pipeline()
 
     # Autogenerate C code
-    with FileLock(build_utils.PIPELINE_BUILD_LOCK):
+    with FileLock(build_utils.BUILD_LOCK):
         generate_dsp_main(p, out_dir = BUILD_DIR / "dsp_pipeline")
         target = "default"
 
