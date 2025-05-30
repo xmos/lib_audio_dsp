@@ -250,10 +250,6 @@ class _GlobalStages:
     stages = []
 
 
-# This defines the types of instances of the config/parameter classes
-StageParameterType = TypeVar("StageParameterType", bound="StageParameters")
-
-
 class Stage(Node):
     """
     Base class for stages in the DSP pipeline. Each subclass
@@ -382,7 +378,7 @@ class Stage(Node):
         super().__init_subclass__()
         _GlobalStages.stages.append(cls)
 
-    def set_parameters(self, parameters: StageParameterType):  # pyright:ignore
+    def set_parameters(self, parameters: StageParameters):
         """Use a pydantic model to update the runtime parameters of a Stage."""
         if isinstance(parameters, StageParameters) and type(parameters) != StageParameters:
             raise NotImplementedError(
@@ -390,6 +386,8 @@ class Stage(Node):
                 "was passed to the generic implementation, of set_parameters, resulting in the "
                 "parameters not being used. Please define set_parameters for the specific Stage class."
             )
+        # This is a generic implementation, so it does nothing.
+        # Subclasses should override this method to set the parameters
         pass
 
     @property

@@ -11,7 +11,10 @@ from audio_dsp.models.fields import DEFAULT_GAIN_DB
 
 
 class GraphicEq10bParameters(StageParameters):
-    """Parameters for VolumeControl Stage."""
+    """Parameters for a 10-band graphic equalizer.
+    This class defines the gain values (in dB) for each of the 10 frequency bands.
+    Each gain value can range from -24 dB to +24 dB.
+    """
 
     gains_db: Annotated[
         list[Annotated[float, Field(ge=-24, le=24, description="Gain of the band in dB.")]],
@@ -21,10 +24,8 @@ class GraphicEq10bParameters(StageParameters):
 
 class GraphicEq10b(StageModel):
     """
-    This stage implements a volume control. The input signal is
-    multiplied by a gain. The gain can be changed at runtime. To avoid
-    pops and clicks during gain changes, a slew is applied to the gain
-    update. The stage can be muted and unmuted at runtime.
+    This stage implements a Graphic EQ with 10 bands.
+    Each band can be adjusted with a gain value ranging from -24 dB to +24 dB.
     """
 
     op_type: Literal["GraphicEq10b"] = "GraphicEq10b"

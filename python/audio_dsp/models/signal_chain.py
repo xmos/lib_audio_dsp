@@ -38,14 +38,8 @@ class Fork(StageModel[ForkPlacement]):
     @model_validator(mode="after")
     def check_fork(self):
         """Check that the fork has been validly connected."""
-        try:
-            in_len = len(self.placement.input)
-        except TypeError:
-            in_len = 1
-        try:
-            out_len = len(self.placement.output)
-        except TypeError:
-            out_len = 1
+        in_len = len(self.placement.input)
+        out_len = len(self.placement.output)
 
         if out_len / in_len != self.config.count:
             if out_len / in_len == out_len // in_len:

@@ -20,7 +20,7 @@ class ReverbBaseParameters(StageParameters):
         default=15, ge=0, le=30, description="Set the predelay in milliseconds."
     )
     pregain: float = Field(
-        default=0.15,
+        default=0.015,
         ge=0,
         le=1,
         description="It is not advised to increase this value above the "
