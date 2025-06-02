@@ -737,6 +737,7 @@ def _generate_dsp_header(resolved_pipeline, out_dir=Path("build/dsp_pipeline")):
         f"DECLARE_JOB(adsp_{resolved_pipeline['identifier']}_pipeline_main, (adsp_pipeline_t*));\n"
         f"void adsp_{resolved_pipeline['identifier']}_pipeline_main(adsp_pipeline_t* adsp);\n"
         f"void adsp_{resolved_pipeline['identifier']}_print_thread_max_ticks(void);\n"
+        f"void adsp_{resolved_pipeline['identifier']}_fast_print_thread_max_ticks(adsp_pipeline_t* adsp);\n"
     )
 
     (out_dir / f"adsp_generated_{resolved_pipeline['identifier']}.h").write_text(header)
@@ -769,7 +770,7 @@ def _generate_dsp_max_thread_ticks(resolved_pipeline):
     )
     fmt_str = "\\n".join(f"{i}:\\t%d" for i in range(n_threads))
     fmt_args = ", ".join(f"thread_ticks[{i}]" for i in range(n_threads))
-    return f"""
+    ret = f"""
 #include "adsp_instance_id_{identifier}.h"
 #include <stdio.h>
 
@@ -796,7 +797,19 @@ void adsp_{identifier}_print_thread_max_ticks(void) {{
     {read_threads_code}
     printf("DSP Thread Ticks:\\n{fmt_str}\\n", {fmt_args});
 }}
+
 """
+
+    ret += f"void adsp_{identifier}_fast_print_thread_max_ticks(adsp_pipeline_t* adsp) {{\n"
+    for i in range(n_threads):
+        ret += f"    module_instance_t module_ptr_{i} = (module_instance_t)adsp->modules[thread{i}_stage_index];\n"
+        ret += f"    uint32_t ticks_{i} = ((dsp_thread_state_t *)(module_ptr_{i}.state)) -> max_cycles;\n"
+        ret += f'    printstr("Thread {i} DSP ticks: ");\n'
+        ret += f"    printuintln(ticks_{i});\n"
+
+    ret += "}\n\n"
+
+    return ret
 
 
 def _generate_dsp_init(resolved_pipeline):
