@@ -150,11 +150,33 @@ miss timing. The current version of lib_audio_dsp provides only limited support 
 thread.
 
 Each thread measures the total number of system ticks (periods of the system clock, by default a 100MHz clock) that pass
-while it is doing work and stores the maximum value that has occured since boot. This measurement can be used to get
+while it is doing work and stores the maximum value that has occurred since boot. This measurement can be used to get
 an estimate of the threads' MIPS utilisations. To access this value, the function ``adsp_auto_print_thread_max_ticks()``
-("auto" may be replaced with a custom pipeline identifier if specified) is generated along with the other generated
-pipeline functions. Calling this function on the same tile as the pipeline will print the measured value. Printing
-is implemented with ``printf``, so the output will only be visible when connected to the device with ``xrun`` or ``xgdb``.
+and ``adsp_auto_fast_print_thread_max_ticks()`` are generated along with the other generated pipeline functions
+("auto" may be replaced with a custom pipeline identifier if specified). Calling one of these functions on the same tile
+as the pipeline will print the measured value. ``adsp_auto_print_thread_max_ticks()`` should be called from the control
+thread of the application, and uses the control command interface to safely retrieve and print the values.
+``adsp_auto_fast_print_thread_max_ticks()`` should be called from the DSP thread itself, and directly access the 
+pipeline object to retrieve the values. This function is faster than the previous one, but is likely to block the DSP
+thread for a short time while it prints the values, causing future calls to have higher max ticks values.
+Both functions are implemented with ``printf``, so the output will only be visible when connected to the device with ``xrun`` or ``xgdb``.
+
+An example call to ``adsp_auto_fast_print_thread_max_ticks()`` is shown below.
+
+.. code-block:: c
+
+    // This code is called from the application thread that sends samples to the DSP
+    static uint32_t frame_counter = 0;
+    frame_counter += 1;
+
+    adsp_pipeline_source(m_dsp, dsp_input);
+    adsp_pipeline_sink(m_dsp, dsp_output);
+    
+    if (frame_counter == fs){
+          // Print the thread ticks after 1s, this will likely block
+          // and cause future ticks to be incorrect
+          adsp_auto_fast_print_thread_max_ticks(m_dsp);
+    }
 
 The number of available ticks on each thread depends on the frame size and sample rate of the data. For example, given
 that the system clock runs by default at 100MHz, if the sample rate is 48000 Hz and frame size is 1 then the available
