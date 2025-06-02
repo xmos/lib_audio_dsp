@@ -152,14 +152,14 @@ class ReverbPlateParameters(ReverbStereoBaseParameters):
 
 
 class ReverbRoom(_ReverbBaseModel[MonoPlacement]):
-    """Reverb room model for mono placement."""
+    """Mono Reverb room model."""
 
     op_type: Literal["ReverbRoom"] = "ReverbRoom"
     parameters: ReverbRoomParameters = Field(default_factory=ReverbRoomParameters)
 
 
 class ReverbRoomStereo(_ReverbBaseModel[StereoPlacement]):
-    """Reverb room model for stereo placement."""
+    """Stereo Reverb room model."""
 
     op_type: Literal["ReverbRoomStereo"] = "ReverbRoomStereo"
     parameters: ReverbRoomStereoParameters = Field(default_factory=ReverbRoomStereoParameters)

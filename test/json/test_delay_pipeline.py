@@ -20,11 +20,11 @@ def test_simple_delay_pipeline():
                 {
                     "op_type": "Delay",
                     "config": {
-                        "max_delay": 2048
+                        "max_delay": 2048,
+                        "units": "samples"
                     },
                     "parameters": {
                         "delay": 1024,
-                        "units": "samples"
                     },
                     "placement": {
                         "input": [0, 1],
@@ -66,12 +66,14 @@ def test_simple_delay_pipeline():
     
     assert delay_stage.max_delay == 2048, f"Expected max_delay 2048, got {delay_stage.max_delay}"
     print("✓ max_delay config is correct")
-    
+
+    assert delay_stage.units == "samples", f"Expected units 'samples', got {delay_stage.units}"
+    print("✓ units parameter is correct")   
+
     assert delay_stage.parameters.delay == 1024, f"Expected delay 1024, got {delay_stage.parameters.delay}"
     print("✓ delay parameter is correct")
     
-    assert delay_stage.parameters.units == "samples", f"Expected units 'samples', got {delay_stage.parameters.units}"
-    print("✓ units parameter is correct")
+
     
     print("\nAll tests passed successfully! 🎉")
 

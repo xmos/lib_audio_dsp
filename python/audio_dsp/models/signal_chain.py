@@ -151,7 +151,7 @@ class Switch(StageModel[Placement_Ni1o]):
     def set_max_outputs(self):
         """Set the maximum number os switch positions."""
         max_val = len(self.placement.input)
-        self.parameters.model_fields["position"].metadata.append(annotated_types.Le(max_val - 1))
+        type(self.parameters).model_fields["position"].metadata.append(annotated_types.Le(max_val - 1))
 
         return self
 
@@ -163,7 +163,7 @@ class SwitchSlew(Switch):
 
     """
 
-    op_type: Literal["SwitchSlew"] = "SwitchSlew"  # pyright: ignore
+    op_type: Literal["SwitchSlew"] = "SwitchSlew" # pyright: ignore
 
 
 class SwitchStereo(StageModel):
@@ -221,7 +221,7 @@ class Delay(StageModel):
     def set_max_delay(self):
         """Set the maximum delay value based on the configuration."""
         max_val = self.config.max_delay
-        self.parameters.model_fields["delay"].metadata.append(annotated_types.Le(max_val))
+        type(self.parameters).model_fields["delay"].metadata.append(annotated_types.Le(max_val))
 
         return self
 
@@ -233,14 +233,14 @@ class CrossfaderParameters(StageParameters):
 
 
 class Crossfader(StageModel[Placement_2i1o]):
-    """Crossfader stage model for 2-in 1-out placement."""
+    """Crossfader stage model."""
 
     op_type: Literal["Crossfader"] = "Crossfader"
     parameters: CrossfaderParameters = Field(default_factory=CrossfaderParameters)
 
 
 class CrossfaderStereo(StageModel[Placement_4i2o]):
-    """Crossfader stage model for 4-in 2-out placement."""
+    """Stereo Crossfader stage model."""
 
     op_type: Literal["CrossfaderStereo"] = "CrossfaderStereo"
     parameters: CrossfaderParameters = Field(default_factory=CrossfaderParameters)

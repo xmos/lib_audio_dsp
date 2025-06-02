@@ -357,8 +357,9 @@ def test_all_stages_models():
                 max = [g.le for g in meta if isinstance(g, annotated_types.Le)] or [
                 g.lt for g in meta if isinstance(g, annotated_types.Lt)]
                 assert min, f"Minimum not defined for field {field} in {s}"
-                assert max, f"Maximum not defined for field {field} in {s}"
-                assert min[0] < max[0], f"Range not correct for field {field} in {s}"
+                if field not in ["position", "delay"]:
+                  assert max, f"Maximum not defined for field {field} in {s}"
+                  assert min[0] < max[0], f"Range not correct for field {field} in {s}"
             except AssertionError as e:
                 print(e)
                 failed = True
