@@ -6,7 +6,7 @@ from annotated_types import Len
 from pydantic import Field
 from pydantic.json_schema import SkipJsonSchema
 
-from audio_dsp.models.fields import BIQUAD_TYPES, biquad_bypass
+from audio_dsp.models.fields import BIQUAD_TYPES, biquad_bypass, DEFAULT_FILTER_FREQ
 
 from .stage import StageConfig, StageModel, StageParameters
 
@@ -71,3 +71,28 @@ class ParametricEq16b(CascadedBiquads16):
     """Pydantic model of the ParametricEq16b Stage."""
 
     op_type: Literal["ParametricEq16b"] = "ParametricEq16b"  # pyright: ignore override
+
+
+class NthOrderFilterParameters(StageParameters):
+    """Parameters for NthOrderFilter Stage."""
+
+    type: Literal["bypass", "highpass", "lowpass"] = "bypass"
+    filter: Literal["butterworth"] = "butterworth"
+    order: Literal[2, 4, 6, 8, 10, 12, 14, 16] = Field(
+        default=2, description="Order of the filter (2-16)"
+    )
+    filter_freq: float = DEFAULT_FILTER_FREQ()
+
+
+class NthOrderFilter(StageModel):
+    """8 cascaded biquad filters. This allows up to 8 second order
+    biquad filters to be run in series.
+
+    This can be used for either:
+
+    - an Nth order filter built out of cascaded second order sections
+    - a parametric EQ, where several biquad filters are used at once.
+    """
+
+    op_type: Literal["NthOrderFilter"] = "NthOrderFilter"
+    parameters: NthOrderFilterParameters = Field(default_factory=NthOrderFilterParameters)

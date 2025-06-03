@@ -2,7 +2,7 @@
 
 from .signal_chain import VolumeControl, FixedGain, Fork, Mixer, Delay
 
-from .cascaded_biquads import ParametricEq8b, ParametricEq16b
+from .cascaded_biquads import ParametricEq8b, ParametricEq16b, NthOrderFilter
 from .reverb import ReverbPlateStereo
 from .envelope_detector import EnvelopeDetectorPeak, EnvelopeDetectorRMS
 from .noise_suppressor_expander_model import NoiseSuppressorExpander

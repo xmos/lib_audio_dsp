@@ -9,6 +9,7 @@ from audio_dsp.dsp import cascaded_biquads as casc_bq
 from audio_dsp.models.cascaded_biquads import (
     CascadedBiquadsParameters,
     CascadedBiquads16Parameters,
+    NthOrderFilterParameters,
 )
 
 import numpy as np
@@ -349,3 +350,48 @@ class ParametricEq16b(CascadedBiquads16):
         model = parameters.model_dump()
         biquads = [[*spec.values()] for spec in model["filters"]]
         self.make_parametric_eq(biquads)
+
+
+class NthOrderFilter(CascadedBiquads):
+    """An Nth order filter stage. This stage allows up a 16th order filter
+    to be created by cascading 8 second order biquad filters.
+
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.cascaded_biquad.cascaded_biquad`
+        The DSP block class; see :ref:`CascadedBiquads` for
+        implementation details.
+    """
+
+    def set_parameters(self, parameters: NthOrderFilterParameters):
+        """Update the parameters of the NthOrderFilterParameters stage.
+
+        Parameters
+        ----------
+        parameters : NthOrderFilterParameters
+            The parameters to update the cascaded biquads with.
+        """
+        # model = parameters.model_dump()
+        # biquads = [[*spec.values()] for spec in model["filters"]]
+        # self.make_parametric_eq(biquads)
+        if parameters.type == "bypass":
+            self.make_parametric_eq(
+                [
+                    ["bypass"],
+                    ["bypass"],
+                    ["bypass"],
+                    ["bypass"],
+                    ["bypass"],
+                    ["bypass"],
+                    ["bypass"],
+                    ["bypass"],
+                ]
+            )
+        elif parameters.type == "lowpass" and parameters.filter == "butterworth":
+            self.make_butterworth_lowpass(parameters.order, parameters.filter_freq)
+        elif parameters.type == "highpass" and parameters.filter == "butterworth":
+            self.make_butterworth_highpass(parameters.order, parameters.filter_freq)
+        else:
+            raise ValueError(
+                f"Unsupported filter type {parameters.type} or filter {parameters.filter}"
+            )
