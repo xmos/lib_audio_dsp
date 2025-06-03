@@ -17,7 +17,7 @@ import json
 import re
 import warnings
 
-BAD_NAMES = ["CascadedBiquads"]
+BAD_NAMES = []
 
 _stage_Models = Annotated[
     Union[
@@ -35,7 +35,7 @@ class Input(BaseModel, extra="ignore"):
         ...,
         description="List of output edges (1 edge for mono, 2 for stereo)",
         min_length=1,
-        max_length=2,
+        max_length=10,
     )
 
 
@@ -47,7 +47,7 @@ class Output(BaseModel, extra="ignore"):
         ...,
         description="List of input edges (1 edge for mono, 2 for stereo)",
         min_length=1,
-        max_length=2,
+        max_length=10,
     )
 
 
@@ -306,35 +306,55 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
     fs = getattr(pipeline, "fs", 48000)
 
     # Extract inputs and outputs
-    inputs = []
-    for inp in getattr(pipeline, "inputs", []):
-        inputs.append(Input(name=inp["name"], output=inp["output"]))
+    inputs =  [Input(
+        name="inputs",
+        output=[pipeline._graph.edges.index(x) for x in pipeline.i.edges],
+    )]
+    outputs = [Output(
+        name="outputs",
+        input=[pipeline._graph.edges.index(x) for x in pipeline.o.edges]
+    )]
 
-    outputs = []
-    for out in getattr(pipeline, "outputs", []):
-        outputs.append(Output(name=out["name"], input=out["input"]))
+
+    # # Extract inputs and outputs
+    # inputs = []
+    # for inp in getattr(pipeline, "inputs", []):
+    #     inputs.append(Input(name=inp["name"], output=pipeline._graph.edges.index(x)))
+
+    # outputs = []
+    # for out in getattr(pipeline, "outputs", []):
+    #     outputs.append(Output(name=out["name"], input=out["input"]))
 
     # Extract nodes
     nodes = []
-    for stage in pipeline.stages:  # skip pipeline root if needed
-        op_type = type(stage).__name__
-        if op_type in ["PipelineStage", "DSPThreadStage"]:
-            continue
-        node_dict = {
-            "op_type": op_type,
-            "placement": stage.placement,  # Should be a dict or Pydantic model
-        }
-        if hasattr(stage, "config") and isinstance(stage.config, BaseModel):
-            node_dict["config"] = stage.config
-        if hasattr(stage, "parameters") and isinstance(stage.parameters, BaseModel):
-            node_dict["parameters"] = stage.parameters
-        # Convert to the correct Pydantic model for the node
-        node_model_cls = type(stage.model) if hasattr(stage, "model") else None
-        if node_model_cls:
-            node = node_model_cls(**node_dict)
-        else:
-            node = node_dict  # fallback, but ideally use the model
-        nodes.append(node)
+    for thread in pipeline.threads:
+        for stage in thread._stages:
+            op_type = type(stage).__name__
+            if op_type in ["PipelineStage", "DSPThreadStage"]:
+                continue
+
+            placement = {
+                "name": stage.label,
+                "input": [pipeline._graph.edges.index(x) for x in stage.i.edges],
+                "output": [pipeline._graph.edges.index(x) for x in stage.o.edges],
+                "thread": thread.id,
+            }
+
+            node_dict = {
+                "op_type": op_type,
+                "placement": placement,  # Should be a dict or Pydantic model
+            }
+            if hasattr(stage, "config") and isinstance(stage.config, BaseModel):
+                node_dict["config"] = stage.config
+            if hasattr(stage, "parameters") and isinstance(stage.parameters, BaseModel):
+                node_dict["parameters"] = stage.parameters
+            # Convert to the correct Pydantic model for the node
+            node_model_cls = type(stage.model) if hasattr(stage, "model") else None
+            if node_model_cls:
+                node = node_model_cls(**node_dict)
+            else:
+                node = node_dict  # fallback, but ideally use the model
+            nodes.append(node)
 
     graph = Graph(
         name=graph_name,
