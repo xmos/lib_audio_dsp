@@ -16,4 +16,4 @@ class FirDirect(StageModel):
     """FIR filter stage using direct form implementation."""
 
     op_type: Literal["FirDirect"] = "FirDirect"
-    config: FirConfig = Field(default_factory=FirConfig)
+    config: FirConfig = Field(..., description="FIR configuration.")

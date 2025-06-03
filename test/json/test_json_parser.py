@@ -6,6 +6,8 @@ from audio_dsp.design.parse_json import Graph, make_pipeline, insert_forks, DspJ
 from audio_dsp.models.stage import all_models
 from audio_dsp.stages import all_stages
 
+from typing import get_origin, get_args
+
 def test_no_shared_edge():
     json_str = """
     {
@@ -351,7 +353,11 @@ def test_all_stages_models():
             
         for field, value in all_m[s].model_fields["parameters"].default_factory().model_fields.items():
             try:
-                meta = value.metadata
+                if get_origin(value.annotation) is list:
+                    item_type = get_args(value.annotation)[0]
+                    meta = get_args(item_type)[1].metadata
+                else:
+                  meta = value.metadata
                 min = [g.ge for g in meta if isinstance(g, annotated_types.Ge)] or [
                 g.gt for g in meta if isinstance(g, annotated_types.Gt)]
                 max = [g.le for g in meta if isinstance(g, annotated_types.Le)] or [

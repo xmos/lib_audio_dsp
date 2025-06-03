@@ -151,7 +151,9 @@ class Switch(StageModel[Placement_Ni1o]):
     def set_max_outputs(self):
         """Set the maximum number os switch positions."""
         max_val = len(self.placement.input)
-        type(self.parameters).model_fields["position"].metadata.append(annotated_types.Le(max_val - 1))
+        type(self.parameters).model_fields["position"].metadata.append(
+            annotated_types.Le(max_val - 1)
+        )
 
         return self
 
@@ -163,7 +165,7 @@ class SwitchSlew(Switch):
 
     """
 
-    op_type: Literal["SwitchSlew"] = "SwitchSlew" # pyright: ignore
+    op_type: Literal["SwitchSlew"] = "SwitchSlew"  # pyright: ignore
 
 
 class SwitchStereo(StageModel):
