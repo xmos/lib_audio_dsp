@@ -308,6 +308,64 @@ def update_pipeline(p: Pipeline, params: DspJson):
             warnings.warn(f"Stage {stage.label} could not be found in the JSON file")
 
 
+
+def pipeline_to_dspjson(pipeline) -> DspJson:
+    """
+    Convert a Pipeline object to a DspJson object.
+    """
+    # Example: Extract graph-level info
+    graph_name = getattr(pipeline, "name", "Generated DSP Graph")
+    fs = getattr(pipeline, "fs", 48000)
+
+    # Extract inputs and outputs
+    inputs = []
+    for inp in getattr(pipeline, "inputs", []):
+        inputs.append(Input(name=inp["name"], output=inp["output"]))
+
+    outputs = []
+    for out in getattr(pipeline, "outputs", []):
+        outputs.append(Output(name=out["name"], input=out["input"]))
+
+    # Extract nodes
+    nodes = []
+    for stage in pipeline.stages:  # skip pipeline root if needed
+        op_type = type(stage).__name__
+        if op_type in ["PipelineStage", "DSPThreadStage"]:
+            continue
+        node_dict = {
+            "op_type": op_type,
+            "placement": stage.placement,  # Should be a dict or Pydantic model
+        }
+        if hasattr(stage, "config") and isinstance(stage.config, BaseModel):
+            node_dict["config"] = stage.config
+        if hasattr(stage, "parameters") and isinstance(stage.parameters, BaseModel):
+            node_dict["parameters"] = stage.parameters
+        # Convert to the correct Pydantic model for the node
+        node_model_cls = type(stage.model) if hasattr(stage, "model") else None
+        if node_model_cls:
+            node = node_model_cls(**node_dict)
+        else:
+            node = node_dict  # fallback, but ideally use the model
+        nodes.append(node)
+
+    graph = Graph(
+        name=graph_name,
+        fs=fs,
+        nodes=nodes,
+        inputs=inputs,
+        outputs=outputs,
+    )
+
+    # Fill in DspJson fields
+    dsp_json = DspJson(
+        ir_version=1,
+        producer_name="pipeline_to_dspjson",
+        producer_version="1.0",
+        graph=graph,
+    )
+    return dsp_json
+
+
 if __name__ == "__main__":
     # parser = argparse.ArgumentParser(description="JSON-to-DSP pipeline generator")
     # parser.add_argument(
