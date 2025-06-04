@@ -54,11 +54,6 @@ class EnvelopeDetectorPeak(Stage):
         release_t : float
             Release time of the envelope detector in seconds.
         """
-        self.details = dict(
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=Q_sig,
-        )
         self.dsp_block = drc.envelope_detector_peak(self.fs, self.n_in, attack_t, release_t, Q_sig)
         return self
 
@@ -107,10 +102,5 @@ class EnvelopeDetectorRMS(Stage):
         release_t : float
             Release time of the envelope detector in seconds.
         """
-        self.details = dict(
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=Q_sig,
-        )
         self.dsp_block = drc.envelope_detector_rms(self.fs, self.n_in, attack_t, release_t, Q_sig)
         return self

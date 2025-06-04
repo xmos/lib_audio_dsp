@@ -267,9 +267,6 @@ class VolumeControl(Stage):
         mute_state
             The mute state of the Volume Control: 0: unmuted, 1: muted.
         """
-        self.details = dict(
-            target_gain=gain_dB, slew_shift=slew_shift, mute_state=mute_state, Q_sig=Q_sig
-        )
         self.dsp_block = sc.volume_control(
             self.fs, self.n_in, gain_dB, slew_shift, mute_state, Q_sig
         )

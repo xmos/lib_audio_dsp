@@ -349,7 +349,7 @@ class Stage(Node):
 
         self.label = label
 
-        self.details = {}
+        self.parameters = None
         self.dsp_block: Optional[dsp_block] = None
         self.stage_memory_string: str = ""
         self.stage_memory_parameters: tuple | None = None
@@ -565,8 +565,13 @@ class Stage(Node):
 
         if self.label:
             center = f"{self.index}: {self.label}\\n"
-        if self.details:
-            details = "\\n".join(f"{k}: {v}" for k, v in self.details.items())
+        if self.parameters:
+            details = ""
+            for key, value in self.parameters.dict().items():
+                if isinstance(value, dict):
+                    details += f"{'\\n'.join(f'{k}: {v}' for k, v in value.items())}\\n"
+                else:
+                    details += f"{key}: {value}\\n"
             label = f"{{ {{ {inputs} }} | {center} | {details} | {{ {outputs} }}}}"
         else:
             label = f"{{ {{ {inputs} }} | {center} | {{ {outputs} }}}}"

@@ -78,13 +78,6 @@ class NoiseSuppressorExpander(Stage):
         release_t : float
             Release time of the noise suppressor in seconds.
         """
-        self.details = dict(
-            ratio=ratio,
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=Q_sig,
-        )
         self.dsp_block = drc.noise_suppressor_expander(
             self.fs, self.n_in, ratio, threshold_db, attack_t, release_t, Q_sig
         )

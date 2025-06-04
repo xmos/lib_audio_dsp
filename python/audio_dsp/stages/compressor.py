@@ -42,7 +42,7 @@ class CompressorRMS(Stage):
             release_t=0.2,
         )
         self.set_parameters(self.parameters)
-        
+
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)
@@ -78,13 +78,6 @@ class CompressorRMS(Stage):
         release_t : float
             Release time of the compressor in seconds.
         """
-        self.details = dict(
-            ratio=ratio,
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=Q_sig,
-        )
         self.dsp_block = drc.compressor_rms(
             self.fs, self.n_in, ratio, threshold_db, attack_t, release_t, Q_sig
         )

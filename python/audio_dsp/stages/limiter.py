@@ -56,12 +56,6 @@ class LimiterRMS(Stage):
         release_t : float
             Release time of the limiter in seconds.
         """
-        self.details = dict(
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=Q_sig,
-        )
         self.dsp_block = drc.limiter_rms(
             self.fs, self.n_in, threshold_db, attack_t, release_t, Q_sig
         )
@@ -129,12 +123,6 @@ class LimiterPeak(Stage):
             Release time of the limiter in seconds.
 
         """
-        self.details = dict(
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=Q_sig,
-        )
         self.dsp_block = drc.limiter_peak(
             self.fs, self.n_in, threshold_db, attack_t, release_t, Q_sig
         )
@@ -203,12 +191,6 @@ class HardLimiterPeak(Stage):
         release_t : float
             Release time of the limiter in seconds.
         """
-        self.details = dict(
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=Q_sig,
-        )
         self.dsp_block = drc.hard_limiter_peak(
             self.fs, self.n_in, threshold_db, attack_t, release_t, Q_sig
         )
@@ -263,10 +245,6 @@ class Clipper(Stage):
             Threshold in decibels above which clipping occurs.
 
         """
-        self.details = dict(
-            threshold_db=threshold_db,
-            Q_sig=Q_sig,
-        )
         self.dsp_block = drc.clipper(self.fs, self.n_in, threshold_db, Q_sig)
         return self
 
