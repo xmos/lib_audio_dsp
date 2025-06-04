@@ -125,7 +125,6 @@ class CascadedBiquads(Stage):
         CascadedBiquads
             self
         """
-        self.details = dict(type="parametric", filter_spec=filter_spec)
         self.dsp_block = casc_bq.parametric_eq_8band(self.fs, self.n_in, filter_spec)
         return self
 
@@ -148,7 +147,6 @@ class CascadedBiquads(Stage):
         CascadedBiquads
             self
         """
-        self.details = dict(type="butterworth highpass", N=N, fc=fc)
         self.dsp_block = casc_bq.butterworth_highpass(self.fs, self.n_in, N, fc)
         return self
 
@@ -168,7 +166,6 @@ class CascadedBiquads(Stage):
         CascadedBiquads
             self
         """
-        self.details = dict(type="butterworth lowpass", N=N, fc=fc)
         self.dsp_block = casc_bq.butterworth_lowpass(self.fs, self.n_in, N, fc)
         return self
 
@@ -286,7 +283,6 @@ class CascadedBiquads16(Stage):
         CascadedBiquads16
             self
         """
-        self.details = dict(type="parametric", filter_spec=filter_spec)
         self.dsp_block = casc_bq.parametric_eq_16band(self.fs, self.n_in, filter_spec)
         return self
 
@@ -328,6 +324,7 @@ class ParametricEq8b(CascadedBiquads):
         parameters : CascadedBiquadsParameters
             The parameters to update the cascaded biquads with.
         """
+        self.parameters = parameters
         model = parameters.model_dump()
         biquads = [[*spec.values()] for spec in model["filters"]]
         self.make_parametric_eq(biquads)
@@ -351,6 +348,7 @@ class ParametricEq16b(CascadedBiquads16):
 
     def set_parameters(self, parameters: CascadedBiquads16Parameters):
         """Update the parameters of the ParametricEq16b stage."""
+        self.parameters = parameters
         model = parameters.model_dump()
         biquads = [[*spec.values()] for spec in model["filters"]]
         self.make_parametric_eq(biquads)
@@ -375,9 +373,7 @@ class NthOrderFilter(CascadedBiquads):
         parameters : NthOrderFilterParameters
             The parameters to update the cascaded biquads with.
         """
-        # model = parameters.model_dump()
-        # biquads = [[*spec.values()] for spec in model["filters"]]
-        # self.make_parametric_eq(biquads)
+        self.parameters = parameters
         if parameters.type == "bypass":
             self.make_parametric_eq(
                 [

@@ -81,13 +81,6 @@ class CompressorSidechain(Stage):
         release_t : float
             Release time of the compressor in seconds.
         """
-        self.details = dict(
-            ratio=ratio,
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=Q_sig,
-        )
         self.dsp_block = drc.compressor_rms_sidechain_mono(
             self.fs, ratio, threshold_db, attack_t, release_t, Q_sig
         )
@@ -158,13 +151,6 @@ class CompressorSidechainStereo(Stage):
         release_t : float
             Release time of the compressor in seconds.
         """
-        self.details = dict(
-            ratio=ratio,
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=Q_sig,
-        )
         self.dsp_block = drc.compressor_rms_sidechain_stereo(
             self.fs, ratio, threshold_db, attack_t, release_t, Q_sig
         )

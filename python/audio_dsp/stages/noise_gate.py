@@ -57,12 +57,6 @@ class NoiseGate(Stage):
         release_t : float
             Release time of the noise gate in seconds.
         """
-        self.details = dict(
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=Q_sig,
-        )
         self.dsp_block = drc.noise_gate(
             self.fs, self.n_in, threshold_db, attack_t, release_t, Q_sig
         )

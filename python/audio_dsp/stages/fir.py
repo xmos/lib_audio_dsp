@@ -49,9 +49,5 @@ class FirDirect(Stage):
             Path to a file containing the coefficients, in a format
             supported by `np.loadtxt <https://numpy.org/doc/stable/reference/generated/numpy.loadtxt.html>`_.
         """
-        self.details = dict(
-            coeffs_path=coeffs_path,
-            Q_sig=Q_sig,
-        )
         self.dsp_block = fir.fir_direct(self.fs, self.n_in, coeffs_path, Q_sig)
         return self
