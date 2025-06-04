@@ -35,12 +35,14 @@ class CompressorRMS(Stage):
         super().__init__(config=find_config("compressor_rms"), **kwargs)
         self.create_outputs(self.n_in)
 
-        threshold = 0
-        ratio = 4
-        at = 0.01
-        rt = 0.2
-        self.dsp_block = drc.compressor_rms(self.fs, self.n_in, ratio, threshold, at, rt)
-
+        self.parameters = CompressorParameters(
+            ratio=4,
+            threshold_db=0,
+            attack_t=0.01,
+            release_t=0.2,
+        )
+        self.set_parameters(self.parameters)
+        
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)
@@ -59,6 +61,7 @@ class CompressorRMS(Stage):
         self.make_compressor_rms(
             parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
         )
+        self.parameters = parameters
 
     def make_compressor_rms(self, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         """Update compressor configuration based on new parameters.

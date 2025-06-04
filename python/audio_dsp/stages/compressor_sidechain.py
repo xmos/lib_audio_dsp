@@ -43,11 +43,13 @@ class CompressorSidechain(Stage):
         if self.n_in != 2:
             raise ValueError(f"Sidechain compressor requires 2 inputs, got {self.n_in}")
 
-        threshold = 0
-        ratio = 4
-        at = 0.01
-        rt = 0.2
-        self.dsp_block = drc.compressor_rms_sidechain_mono(self.fs, ratio, threshold, at, rt)
+        self.parameters = CompressorSidechainParameters(
+            ratio=4,
+            threshold_db=0,
+            attack_t=0.01,
+            release_t=0.2,
+        )
+        self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
@@ -55,7 +57,8 @@ class CompressorSidechain(Stage):
         self.set_control_field_cb("slope", lambda: self.dsp_block.slope_f32)
 
     def set_parameters(self, parameters: CompressorSidechainParameters):
-        """Update the parameters of the CompressorSidechainStereo stage."""
+        """Update the parameters of the CompressorSidechain stage."""
+        self.parameters = parameters
         self.make_compressor_sidechain(
             parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
         )
@@ -124,11 +127,13 @@ class CompressorSidechainStereo(Stage):
         if self.n_in != 4:
             raise ValueError(f"Stereo sidechain compressor requires 4 inputs, got {self.n_in}")
 
-        threshold = 0
-        ratio = 4
-        at = 0.01
-        rt = 0.2
-        self.dsp_block = drc.compressor_rms_sidechain_stereo(self.fs, ratio, threshold, at, rt)
+        self.parameters = CompressorSidechainParameters(
+            ratio=4,
+            threshold_db=0,
+            attack_t=0.01,
+            release_t=0.2,
+        )
+        self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
