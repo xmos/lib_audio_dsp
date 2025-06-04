@@ -116,6 +116,15 @@ class ReverbRoom(_ReverbBase):
 
         max_predelay = predelay if max_predelay == None else max_predelay
 
+        self.parameters = ReverbRoomParameters(
+            room_size=1.0,
+            damping=0.4,
+            decay=0.5,
+            predelay=predelay,
+            pregain=0.015,
+            wet_dry_mix=0.5,
+        )
+
         self.dsp_block = rvrb.reverb_room(
             self.fs,
             self.n_in,
@@ -193,6 +202,7 @@ class ReverbRoom(_ReverbBase):
         self.set_predelay(parameters.predelay)
         self.set_pre_gain(parameters.pregain)
         self.set_wet_dry_mix(parameters.wet_dry_mix)
+        self.parameters = parameters
 
 
 class ReverbRoomStereo(ReverbRoom):
@@ -232,6 +242,16 @@ class ReverbRoomStereo(ReverbRoom):
         self.create_outputs(self.n_in)
 
         max_predelay = predelay if max_predelay == None else max_predelay
+
+        self.parameters = ReverbRoomStereoParameters(
+            room_size=1.0,
+            damping=0.4,
+            decay=0.5,
+            predelay=predelay,
+            pregain=0.015,
+            wet_dry_mix=0.5,
+            width=0.5,  
+        )
 
         self.dsp_block = rvbs.reverb_room_stereo(
             self.fs,
@@ -284,6 +304,7 @@ class ReverbRoomStereo(ReverbRoom):
         self.set_predelay(parameters.predelay)
         self.set_pre_gain(parameters.pregain)
         self.set_wet_dry_mix(parameters.wet_dry_mix)
+        self.parameters = parameters
 
 
 class ReverbPlateStereo(_ReverbBase):
@@ -318,6 +339,18 @@ class ReverbPlateStereo(_ReverbBase):
         self.create_outputs(self.n_in)
 
         max_predelay = predelay if max_predelay == None else max_predelay
+
+        self.parameters = ReverbPlateParameters(
+            decay=0.4,
+            damping=0.75,
+            bandwidth=8000,
+            early_diffusion=0.75,
+            late_diffusion=0.7,
+            width=1.0,
+            wet_dry_mix=0.5,
+            pregain=0.5,
+            predelay=predelay,
+        )
 
         self.dsp_block = rvp.reverb_plate_stereo(
             self.fs,
@@ -441,3 +474,4 @@ class ReverbPlateStereo(_ReverbBase):
         self.set_predelay(parameters.predelay)
         self.set_pre_gain(parameters.pregain)
         self.set_wet_dry_mix(parameters.wet_dry_mix)
+        self.parameters = parameters

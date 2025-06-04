@@ -29,7 +29,6 @@ from .signal_chain import (
     Crossfader,
     CrossfaderStereo,
 )
-from .compressor import CompressorRMS
 from .reverb import ReverbRoom, ReverbRoomStereo, ReverbPlateStereo
 from .fir import FirDirect
 from .compressor import CompressorRMS

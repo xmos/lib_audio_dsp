@@ -7,7 +7,7 @@ import audio_dsp.dsp.biquad as bq
 import numpy as np
 
 from audio_dsp.models.biquad import BiquadParameters
-
+import audio_dsp.models.fields as fields
 
 def _ws(locals):
     """
@@ -65,6 +65,7 @@ class Biquad(Stage):
         1.
         """
         self.details = {}
+        self.parameters = BiquadParameters(filter_type=fields.biquad_bypass())
         new_coeffs = bq.make_biquad_bypass(self.fs)
         self.dsp_block.update_coeffs(new_coeffs)
         return self
@@ -78,6 +79,8 @@ class Biquad(Stage):
             Gain of the filter in decibels.
         """
         self.details = dict(type="gain", **_ws(locals()))
+        self.parameters = BiquadParameters(filter_type=fields.biquad_gain(
+            gain_db=gain_db))
         new_coeffs = bq.make_biquad_gain(self.fs, gain_db)
         self.dsp_block.update_coeffs(new_coeffs)
         return self
@@ -94,6 +97,9 @@ class Biquad(Stage):
             Butterworth response.
         """
         self.details = dict(type="low pass", **_ws(locals()))
+        self.parameters = BiquadParameters(filter_type=fields.biquad_lowpass(
+            filter_freq=f, q_factor=q
+        ))
         new_coeffs = bq.make_biquad_lowpass(self.fs, f, q)
         self.dsp_block.update_coeffs(new_coeffs)
         return self
@@ -110,6 +116,9 @@ class Biquad(Stage):
             Butterworth response.
         """
         self.details = dict(type="high pass", **_ws(locals()))
+        self.parameters = BiquadParameters(filter_type=fields.biquad_highpass(
+            filter_freq=f, q_factor=q
+        ))
         new_coeffs = bq.make_biquad_highpass(self.fs, f, q)
         self.dsp_block.update_coeffs(new_coeffs)
         return self
@@ -125,6 +134,9 @@ class Biquad(Stage):
             Bandwidth of the filter in octaves.
         """
         self.details = dict(type="band pass", **_ws(locals()))
+        self.parameters = BiquadParameters(filter_type=fields.biquad_bandpass(
+            filter_freq=f, q_factor=q
+        ))
         new_coeffs = bq.make_biquad_bandpass(self.fs, f, bw)
         self.dsp_block.update_coeffs(new_coeffs)
         return self
@@ -140,6 +152,9 @@ class Biquad(Stage):
             Bandwidth of the filter in octaves.
         """
         self.details = dict(type="band stop", **_ws(locals()))
+        self.parameters = BiquadParameters(filter_type=fields.biquad_bandstop(
+            filter_freq=f, q_factor=q
+        ))
         new_coeffs = bq.make_biquad_bandstop(self.fs, f, bw)
         self.dsp_block.update_coeffs(new_coeffs)
         return self
@@ -155,6 +170,9 @@ class Biquad(Stage):
             Q factor of the filter.
         """
         self.details = dict(type="notch", **_ws(locals()))
+        self.parameters = BiquadParameters(filter_type=fields.biquad_notch(
+            filter_freq=f, q_factor=q
+        ))
         new_coeffs = bq.make_biquad_notch(self.fs, f, q)
         self.dsp_block.update_coeffs(new_coeffs)
         return self
@@ -170,6 +188,9 @@ class Biquad(Stage):
             Q factor of the filter.
         """
         self.details = dict(type="all pass", **_ws(locals()))
+        self.parameters = BiquadParameters(filter_type=fields.biquad_allpass(
+            filter_freq=f, q_factor=q
+        ))
         new_coeffs = bq.make_biquad_allpass(self.fs, f, q)
         self.dsp_block.update_coeffs(new_coeffs)
         return self
@@ -187,6 +208,9 @@ class Biquad(Stage):
             Gain of the filter in decibels.
         """
         self.details = dict(type="peaking", **_ws(locals()))
+        self.parameters = BiquadParameters(filter_type=fields.biquad_peaking(
+            filter_freq=f, q_factor=q, boost_db=boost_db
+        ))
         new_coeffs = bq.make_biquad_peaking(self.fs, f, q, boost_db)
         self.dsp_block.update_coeffs(new_coeffs)
         return self
@@ -208,6 +232,9 @@ class Biquad(Stage):
             Gain of the filter in decibels.
         """
         self.details = dict(type="constant q", **_ws(locals()))
+        self.parameters = BiquadParameters(filter_type=fields.biquad_constant_q(
+            filter_freq=f, q_factor=q, boost_db=boost_db
+        ))
         new_coeffs = bq.make_biquad_constant_q(self.fs, f, q, boost_db)
         self.dsp_block.update_coeffs(new_coeffs)
         return self
@@ -231,6 +258,9 @@ class Biquad(Stage):
             Gain of the filter in decibels.
         """
         self.details = dict(type="lowshelf", **_ws(locals()))
+        self.parameters = BiquadParameters(filter_type=fields.biquad_lowshelf(
+            filter_freq=f, q_factor=q, boost_db=boost_db
+        ))
         new_coeffs = bq.make_biquad_lowshelf(self.fs, f, q, boost_db)
         self.dsp_block.update_coeffs(new_coeffs)
         return self
@@ -254,6 +284,9 @@ class Biquad(Stage):
             Gain of the filter in decibels.
         """
         self.details = dict(type="highshelf", **_ws(locals()))
+        self.parameters = BiquadParameters(filter_type=fields.biquad_highshelf(
+            filter_freq=f, q_factor=q, boost_db=boost_db
+        ))
         new_coeffs = bq.make_biquad_highshelf(self.fs, f, q, boost_db)
         self.dsp_block.update_coeffs(new_coeffs)
         return self
@@ -278,6 +311,9 @@ class Biquad(Stage):
             The target quality factor for the filter.
         """
         self.details = dict(type="linkwitz", **_ws(locals()))
+        self.parameters = BiquadParameters(filter_type=fields.biquad_linkwitz(
+            f0=f0, q0=q0, fp=fp, qp=qp
+        ))
         new_coeffs = bq.make_biquad_linkwitz(self.fs, f0, q0, fp, qp)
         self.dsp_block.update_coeffs(new_coeffs)
         return self

@@ -29,9 +29,11 @@ class EnvelopeDetectorPeak(Stage):
         super().__init__(config=find_config("envelope_detector_peak"), **kwargs)
         self.create_outputs(0)
 
-        at = 0.01
-        rt = 0.2
-        self.dsp_block = drc.envelope_detector_peak(self.fs, self.n_in, at, rt)
+        self.parameters = EnvelopeDetectorParameters(
+            attack_t=0.01,
+            release_t=0.2,
+        )
+        self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
@@ -80,9 +82,11 @@ class EnvelopeDetectorRMS(Stage):
         super().__init__(config=find_config("envelope_detector_rms"), **kwargs)
         self.create_outputs(0)
 
-        at = 0.01
-        rt = 0.2
-        self.dsp_block = drc.envelope_detector_rms(self.fs, self.n_in, at, rt)
+        self.parameters = EnvelopeDetectorParameters(
+            attack_t=0.01,
+            release_t=0.2,
+        )
+        self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)

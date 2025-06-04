@@ -87,6 +87,7 @@ class CascadedBiquads(Stage):
         )
 
         self.stage_memory_parameters = (self.n_in,)
+        self.parameters = CascadedBiquadsParameters(filters=[{"type": "bypass"} for _ in range(8)])
 
     def _get_fixed_point_coeffs(self):
         """Get the fixed point coefficients for all biquads."""
@@ -179,6 +180,7 @@ class CascadedBiquads(Stage):
         parameters : CascadedBiquadsParameters
             The parameters to update the cascaded biquads with.
         """
+        self.parameters = parameters
         model = parameters.model_dump()
         biquads = [[*spec.values()] for spec in model["filters"]]
         self.make_parametric_eq(biquads)
@@ -240,6 +242,7 @@ class CascadedBiquads16(Stage):
         )
 
         self.stage_memory_parameters = (self.n_in,)
+        self.parameters = CascadedBiquads16Parameters(filters=[{"type": "bypass"} for _ in range(16)])
 
     def _get_fixed_point_coeffs_lower(self):
         fc = []
@@ -295,6 +298,7 @@ class CascadedBiquads16(Stage):
         parameters : CascadedBiquads16Parameters
             The parameters to update the cascaded biquads with.
         """
+        self.parameters = parameters
         model = parameters.model_dump()
         biquads = [[*spec.values()] for spec in model["filters"]]
         self.make_parametric_eq(biquads)
