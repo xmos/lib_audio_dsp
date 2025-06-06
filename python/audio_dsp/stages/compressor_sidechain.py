@@ -158,6 +158,7 @@ class CompressorSidechainStereo(Stage):
 
     def set_parameters(self, parameters: CompressorSidechainParameters):
         """Update the parameters of the CompressorSidechainStereo stage."""
+        self.parameters = parameters
         self.make_compressor_sidechain(
             parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
         )
