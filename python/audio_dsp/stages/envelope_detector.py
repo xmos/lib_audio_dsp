@@ -43,7 +43,9 @@ class EnvelopeDetectorPeak(Stage):
     def set_parameters(self, parameters: EnvelopeDetectorParameters):
         """Update the parameters of the EnvelopeDetectorPeak stage."""
         self.parameters = parameters
-        self.dsp_block = drc.envelope_detector_peak(self.fs, self.n_in, parameters.attack_t, parameters.release_t, dspg.Q_SIG)
+        self.dsp_block = drc.envelope_detector_peak(
+            self.fs, self.n_in, parameters.attack_t, parameters.release_t, dspg.Q_SIG
+        )
 
     def make_env_det_peak(self, attack_t, release_t, Q_sig=dspg.Q_SIG):
         """Update envelope detector configuration based on new parameters.
@@ -92,7 +94,9 @@ class EnvelopeDetectorRMS(Stage):
     def set_parameters(self, parameters: EnvelopeDetectorParameters):
         """Update the parameters of the EnvelopeDetectorRMS stage."""
         self.parameters = parameters
-        self.dsp_block = drc.envelope_detector_rms(self.fs, self.n_in, parameters.attack_t, parameters.release_t, dspg.Q_SIG)
+        self.dsp_block = drc.envelope_detector_rms(
+            self.fs, self.n_in, parameters.attack_t, parameters.release_t, dspg.Q_SIG
+        )
 
     def make_env_det_rms(self, attack_t, release_t, Q_sig=dspg.Q_SIG):
         """Update envelope detector configuration based on new parameters.

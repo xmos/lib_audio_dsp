@@ -244,9 +244,7 @@ class VolumeControl(Stage):
     def __init__(self, gain_dB=0, mute_state=0, **kwargs):
         super().__init__(config=find_config("volume_control"), **kwargs)
         self.create_outputs(self.n_in)
-        self.parameters = VolumeControlParameters(
-            gain_db=gain_dB, mute_state=mute_state
-        )
+        self.parameters = VolumeControlParameters(gain_db=gain_dB, mute_state=mute_state)
         slew_shift = 7
         self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, mute_state)
         self.set_control_field_cb("target_gain", lambda: self.dsp_block.target_gain_int)
@@ -281,7 +279,9 @@ class VolumeControl(Stage):
         gain_db : float
             The gain of the volume control in dB.
         """
-        parameters = VolumeControlParameters(gain_db=gain_dB, mute_state=self.parameters.mute_state)
+        parameters = VolumeControlParameters(
+            gain_db=gain_dB, mute_state=self.parameters.mute_state
+        )
         self.set_parameters(parameters)
 
     def set_mute_state(self, mute_state):
@@ -293,7 +293,9 @@ class VolumeControl(Stage):
         mute_state : bool
             The mute state of the volume control.
         """
-        parameters = VolumeControlParameters(gain_db=self.parameters.gain_db, mute_state=mute_state)
+        parameters = VolumeControlParameters(
+            gain_db=self.parameters.gain_db, mute_state=mute_state
+        )
         self.set_parameters(parameters)
 
     def set_parameters(self, parameters: VolumeControlParameters):

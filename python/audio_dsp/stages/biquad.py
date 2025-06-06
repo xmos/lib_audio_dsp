@@ -9,6 +9,7 @@ import numpy as np
 from audio_dsp.models.biquad import BiquadParameters
 import audio_dsp.models.fields as fields
 
+
 def _ws(locals):
     """
     Without self.
@@ -76,10 +77,8 @@ class Biquad(Stage):
         gain_db : float
             Gain of the filter in decibels.
         """
-        parameters = BiquadParameters(filter_type=fields.biquad_gain(
-            gain_db=gain_db))
+        parameters = BiquadParameters(filter_type=fields.biquad_gain(gain_db=gain_db))
         self.set_parameters(parameters)
-
 
     def make_lowpass(self, f: float, q: float) -> "Biquad":
         """Make this biquad a second order low pass filter.
@@ -92,11 +91,8 @@ class Biquad(Stage):
             Q factor of the filter roll-off. 0.707 is equivalent to a
             Butterworth response.
         """
-        parameters = BiquadParameters(filter_type=fields.biquad_lowpass(
-            filter_freq=f, q_factor=q
-        ))
+        parameters = BiquadParameters(filter_type=fields.biquad_lowpass(filter_freq=f, q_factor=q))
         self.set_parameters(parameters)
-
 
     def make_highpass(self, f: float, q: float) -> "Biquad":
         """Make this biquad a second order high pass filter.
@@ -109,11 +105,10 @@ class Biquad(Stage):
             Q factor of the filter roll-off. 0.707 is equivalent to a
             Butterworth response.
         """
-        parameters = BiquadParameters(filter_type=fields.biquad_highpass(
-            filter_freq=f, q_factor=q
-        ))
+        parameters = BiquadParameters(
+            filter_type=fields.biquad_highpass(filter_freq=f, q_factor=q)
+        )
         self.set_parameters(parameters)
-
 
     def make_bandpass(self, f: float, bw: float) -> "Biquad":
         """Make this biquad a second order bandpass filter.
@@ -125,11 +120,8 @@ class Biquad(Stage):
         bw : float
             Bandwidth of the filter in octaves.
         """
-        parameters = BiquadParameters(filter_type=fields.biquad_bandpass(
-            filter_freq=f, bw=bw
-        ))
+        parameters = BiquadParameters(filter_type=fields.biquad_bandpass(filter_freq=f, bw=bw))
         self.set_parameters(parameters)
-
 
     def make_bandstop(self, f: float, bw: float) -> "Biquad":
         """Make this biquad a second order bandstop filter.
@@ -141,11 +133,8 @@ class Biquad(Stage):
         bw : float
             Bandwidth of the filter in octaves.
         """
-        parameters = BiquadParameters(filter_type=fields.biquad_bandstop(
-            filter_freq=f, bw=bw
-        ))
+        parameters = BiquadParameters(filter_type=fields.biquad_bandstop(filter_freq=f, bw=bw))
         self.set_parameters(parameters)
-
 
     def make_notch(self, f: float, q: float) -> "Biquad":
         """Make this biquad a notch filter.
@@ -157,11 +146,8 @@ class Biquad(Stage):
         q : float
             Q factor of the filter.
         """
-        parameters = BiquadParameters(filter_type=fields.biquad_notch(
-            filter_freq=f, q_factor=q
-        ))
+        parameters = BiquadParameters(filter_type=fields.biquad_notch(filter_freq=f, q_factor=q))
         self.set_parameters(parameters)
-
 
     def make_allpass(self, f: float, q: float) -> "Biquad":
         """Make this biquad an all pass filter.
@@ -173,11 +159,8 @@ class Biquad(Stage):
         q : float
             Q factor of the filter.
         """
-        parameters = BiquadParameters(filter_type=fields.biquad_allpass(
-            filter_freq=f, q_factor=q
-        ))
+        parameters = BiquadParameters(filter_type=fields.biquad_allpass(filter_freq=f, q_factor=q))
         self.set_parameters(parameters)
-
 
     def make_peaking(self, f: float, q: float, boost_db: float) -> "Biquad":
         """Make this biquad a peaking filter.
@@ -191,11 +174,10 @@ class Biquad(Stage):
         boost_db : float
             Gain of the filter in decibels.
         """
-        parameters = BiquadParameters(filter_type=fields.biquad_peaking(
-            filter_freq=f, q_factor=q, boost_db=boost_db
-        ))
+        parameters = BiquadParameters(
+            filter_type=fields.biquad_peaking(filter_freq=f, q_factor=q, boost_db=boost_db)
+        )
         self.set_parameters(parameters)
-
 
     def make_constant_q(self, f: float, q: float, boost_db: float) -> "Biquad":
         """Make this biquad a peaking filter with constant Q.
@@ -213,11 +195,10 @@ class Biquad(Stage):
         boost_db : float
             Gain of the filter in decibels.
         """
-        parameters = BiquadParameters(filter_type=fields.biquad_constant_q(
-            filter_freq=f, q_factor=q, boost_db=boost_db
-        ))
+        parameters = BiquadParameters(
+            filter_type=fields.biquad_constant_q(filter_freq=f, q_factor=q, boost_db=boost_db)
+        )
         self.set_parameters(parameters)
-
 
     def make_lowshelf(self, f: float, q: float, boost_db: float) -> "Biquad":
         """Make this biquad a second order low shelf filter.
@@ -237,9 +218,9 @@ class Biquad(Stage):
         boost_db : float
             Gain of the filter in decibels.
         """
-        parameters = BiquadParameters(filter_type=fields.biquad_lowshelf(
-            filter_freq=f, q_factor=q, boost_db=boost_db
-        ))
+        parameters = BiquadParameters(
+            filter_type=fields.biquad_lowshelf(filter_freq=f, q_factor=q, boost_db=boost_db)
+        )
         self.set_parameters(parameters)
 
     def make_highshelf(self, f: float, q: float, boost_db: float) -> "Biquad":
@@ -260,11 +241,10 @@ class Biquad(Stage):
         boost_db : float
             Gain of the filter in decibels.
         """
-        parameters = BiquadParameters(filter_type=fields.biquad_highshelf(
-            filter_freq=f, q_factor=q, boost_db=boost_db
-        ))
+        parameters = BiquadParameters(
+            filter_type=fields.biquad_highshelf(filter_freq=f, q_factor=q, boost_db=boost_db)
+        )
         self.set_parameters(parameters)
-
 
     def make_linkwitz(self, f0: float, q0: float, fp: float, qp: float) -> "Biquad":
         """Make this biquad a Linkwitz Transform biquad filter.
@@ -285,11 +265,10 @@ class Biquad(Stage):
         qp : float
             The target quality factor for the filter.
         """
-        parameters = BiquadParameters(filter_type=fields.biquad_linkwitz(
-            f0=f0, q0=q0, fp=fp, qp=qp
-        ))
+        parameters = BiquadParameters(
+            filter_type=fields.biquad_linkwitz(f0=f0, q0=q0, fp=fp, qp=qp)
+        )
         self.set_parameters(parameters)
-
 
     def set_parameters(self, parameters: BiquadParameters):
         """Set biquad filter parameters.
@@ -305,27 +284,45 @@ class Biquad(Stage):
 
         # Call the appropriate make_* method based on the filter type
         if filter_type.type == "lowpass":
-            new_coeffs = bq.make_biquad_lowpass(self.fs, filter_type.filter_freq,filter_type.q_factor)
+            new_coeffs = bq.make_biquad_lowpass(
+                self.fs, filter_type.filter_freq, filter_type.q_factor
+            )
         elif filter_type.type == "highpass":
-            new_coeffs = bq.make_biquad_highpass(self.fs, filter_type.filter_freq,filter_type.q_factor)
+            new_coeffs = bq.make_biquad_highpass(
+                self.fs, filter_type.filter_freq, filter_type.q_factor
+            )
         elif filter_type.type == "bandpass":
-            new_coeffs = bq.make_biquad_bandpass(self.fs, filter_type.filter_freq,filter_type.bw)
+            new_coeffs = bq.make_biquad_bandpass(self.fs, filter_type.filter_freq, filter_type.bw)
         elif filter_type.type == "bandstop":
-            new_coeffs = bq.make_biquad_bandstop(self.fs, filter_type.filter_freq,filter_type.bw)
+            new_coeffs = bq.make_biquad_bandstop(self.fs, filter_type.filter_freq, filter_type.bw)
         elif filter_type.type == "notch":
-            new_coeffs = bq.make_biquad_notch(self.fs, filter_type.filter_freq,filter_type.q_factor)
+            new_coeffs = bq.make_biquad_notch(
+                self.fs, filter_type.filter_freq, filter_type.q_factor
+            )
         elif filter_type.type == "allpass":
-            new_coeffs = bq.make_biquad_allpass(self.fs, filter_type.filter_freq,filter_type.q_factor)
+            new_coeffs = bq.make_biquad_allpass(
+                self.fs, filter_type.filter_freq, filter_type.q_factor
+            )
         elif filter_type.type == "peaking":
-            new_coeffs = bq.make_biquad_peaking(self.fs, filter_type.filter_freq,filter_type.q_factor,filter_type.boost_db)
+            new_coeffs = bq.make_biquad_peaking(
+                self.fs, filter_type.filter_freq, filter_type.q_factor, filter_type.boost_db
+            )
         elif filter_type.type == "constant_q":
-            new_coeffs = bq.make_biquad_constant_q(self.fs, filter_type.filter_freq,filter_type.q_factor,filter_type.boost_db)
+            new_coeffs = bq.make_biquad_constant_q(
+                self.fs, filter_type.filter_freq, filter_type.q_factor, filter_type.boost_db
+            )
         elif filter_type.type == "lowshelf":
-            new_coeffs = bq.make_biquad_lowshelf(self.fs, filter_type.filter_freq,filter_type.q_factor,filter_type.boost_db)
+            new_coeffs = bq.make_biquad_lowshelf(
+                self.fs, filter_type.filter_freq, filter_type.q_factor, filter_type.boost_db
+            )
         elif filter_type.type == "highshelf":
-            new_coeffs = bq.make_biquad_highshelf(self.fs, filter_type.filter_freq,filter_type.q_factor,filter_type.boost_db)
+            new_coeffs = bq.make_biquad_highshelf(
+                self.fs, filter_type.filter_freq, filter_type.q_factor, filter_type.boost_db
+            )
         elif filter_type.type == "linkwitz":
-            new_coeffs = bq.make_biquad_linkwitz(self.fs, filter_type.f0, filter_type.q0, filter_type.fp, filter_type.qp)
+            new_coeffs = bq.make_biquad_linkwitz(
+                self.fs, filter_type.f0, filter_type.q0, filter_type.fp, filter_type.qp
+            )
         elif filter_type.type == "gain":
             new_coeffs = bq.make_biquad_gain(self.fs, gain_db)
         elif filter_type.type == "bypass":

@@ -32,10 +32,7 @@ class LimiterRMS(Stage):
         super().__init__(config=find_config("limiter_rms"), **kwargs)
         self.create_outputs(self.n_in)
 
-        self.parameters = LimiterParameters(
-            threshold_db=0,
-            attack_t=0.01,
-            release_t=0.2)
+        self.parameters = LimiterParameters(threshold_db=0, attack_t=0.01, release_t=0.2)
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
@@ -57,9 +54,7 @@ class LimiterRMS(Stage):
             Release time of the limiter in seconds.
         """
         parameters = LimiterParameters(
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t
+            threshold_db=threshold_db, attack_t=attack_t, release_t=release_t
         )
         self.set_parameters(parameters)
 
@@ -73,7 +68,12 @@ class LimiterRMS(Stage):
         """
         self.parameters = parameters
         self.dsp_block = drc.limiter_rms(
-            self.fs, self.n_in, parameters.threshold_db, parameters.attack_t, parameters.release_t, dspg.Q_SIG
+            self.fs,
+            self.n_in,
+            parameters.threshold_db,
+            parameters.attack_t,
+            parameters.release_t,
+            dspg.Q_SIG,
         )
 
 
@@ -100,10 +100,7 @@ class LimiterPeak(Stage):
         super().__init__(config=find_config("limiter_peak"), **kwargs)
         self.create_outputs(self.n_in)
 
-        self.parameters = LimiterParameters(
-            threshold_db=0,
-            attack_t=0.01,
-            release_t=0.2)
+        self.parameters = LimiterParameters(threshold_db=0, attack_t=0.01, release_t=0.2)
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
@@ -126,9 +123,7 @@ class LimiterPeak(Stage):
 
         """
         parameters = LimiterParameters(
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t
+            threshold_db=threshold_db, attack_t=attack_t, release_t=release_t
         )
         self.set_parameters(parameters)
 
@@ -142,7 +137,12 @@ class LimiterPeak(Stage):
         """
         self.parameters = parameters
         self.dsp_block = drc.limiter_peak(
-            self.fs, self.n_in, parameters.threshold_db, parameters.attack_t, parameters.release_t, dspg.Q_SIG
+            self.fs,
+            self.n_in,
+            parameters.threshold_db,
+            parameters.attack_t,
+            parameters.release_t,
+            dspg.Q_SIG,
         )
 
 
@@ -171,10 +171,7 @@ class HardLimiterPeak(Stage):
         super().__init__(config=find_config("hard_limiter_peak"), **kwargs)
         self.create_outputs(self.n_in)
 
-        self.parameters = LimiterParameters(
-            threshold_db=0,
-            attack_t=0.01,
-            release_t=0.2)
+        self.parameters = LimiterParameters(threshold_db=0, attack_t=0.01, release_t=0.2)
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
@@ -196,9 +193,7 @@ class HardLimiterPeak(Stage):
             Release time of the limiter in seconds.
         """
         parameters = LimiterParameters(
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t
+            threshold_db=threshold_db, attack_t=attack_t, release_t=release_t
         )
         self.set_parameters(parameters)
 
@@ -212,7 +207,12 @@ class HardLimiterPeak(Stage):
         """
         self.parameters = parameters
         self.dsp_block = drc.hard_limiter_peak(
-            self.fs, self.n_in, parameters.threshold_db, parameters.attack_t, parameters.release_t, dspg.Q_SIG
+            self.fs,
+            self.n_in,
+            parameters.threshold_db,
+            parameters.attack_t,
+            parameters.release_t,
+            dspg.Q_SIG,
         )
 
 
@@ -234,8 +234,7 @@ class Clipper(Stage):
         super().__init__(config=find_config("clipper"), **kwargs)
         self.create_outputs(self.n_in)
 
-        self.parameters = ClipperParameters(
-            threshold_db=0)
+        self.parameters = ClipperParameters(threshold_db=0)
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)
@@ -264,4 +263,3 @@ class Clipper(Stage):
         """
         self.parameters = parameters
         self.dsp_block = drc.clipper(self.fs, self.n_in, parameters.threshold_db, dspg.Q_SIG)
-

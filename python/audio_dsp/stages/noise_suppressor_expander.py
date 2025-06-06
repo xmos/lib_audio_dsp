@@ -37,10 +37,8 @@ class NoiseSuppressorExpander(Stage):
         self.create_outputs(self.n_in)
 
         self.parameters = NoiseSuppressorExpanderParameters(
-            threshold_db=-35,
-            ratio=3,
-            attack_t=0.005,
-            release_t=0.12)
+            threshold_db=-35, ratio=3, attack_t=0.005, release_t=0.12
+        )
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
@@ -54,7 +52,13 @@ class NoiseSuppressorExpander(Stage):
         """Update noise suppressor/expander configuration based on new parameters."""
         self.parameters = parameters
         self.dsp_block = drc.noise_suppressor_expander(
-            self.fs, self.n_in, parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t, dspg.Q_SIG
+            self.fs,
+            self.n_in,
+            parameters.ratio,
+            parameters.threshold_db,
+            parameters.attack_t,
+            parameters.release_t,
+            dspg.Q_SIG,
         )
 
     def make_noise_suppressor_expander(
@@ -79,9 +83,6 @@ class NoiseSuppressorExpander(Stage):
             Release time of the noise suppressor in seconds.
         """
         parameters = NoiseSuppressorExpanderParameters(
-            ratio=ratio,
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t
+            ratio=ratio, threshold_db=threshold_db, attack_t=attack_t, release_t=release_t
         )
         self.set_parameters(parameters)
