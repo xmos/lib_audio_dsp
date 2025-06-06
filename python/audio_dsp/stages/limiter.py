@@ -56,10 +56,12 @@ class LimiterRMS(Stage):
         release_t : float
             Release time of the limiter in seconds.
         """
-        self.dsp_block = drc.limiter_rms(
-            self.fs, self.n_in, threshold_db, attack_t, release_t, Q_sig
+        parameters = LimiterParameters(
+            threshold_db=threshold_db,
+            attack_t=attack_t,
+            release_t=release_t
         )
-        return self
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: LimiterParameters):
         """Update limiter configuration based on new parameters.
@@ -70,8 +72,8 @@ class LimiterRMS(Stage):
             The parameters to update the limiter with.
         """
         self.parameters = parameters
-        return self.make_limiter_rms(
-            parameters.threshold_db, parameters.attack_t, parameters.release_t
+        self.dsp_block = drc.limiter_rms(
+            self.fs, self.n_in, parameters.threshold_db, parameters.attack_t, parameters.release_t, dspg.Q_SIG
         )
 
 
@@ -123,10 +125,12 @@ class LimiterPeak(Stage):
             Release time of the limiter in seconds.
 
         """
-        self.dsp_block = drc.limiter_peak(
-            self.fs, self.n_in, threshold_db, attack_t, release_t, Q_sig
+        parameters = LimiterParameters(
+            threshold_db=threshold_db,
+            attack_t=attack_t,
+            release_t=release_t
         )
-        return self
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: LimiterParameters):
         """Update limiter configuration based on new parameters.
@@ -137,8 +141,8 @@ class LimiterPeak(Stage):
             The parameters to update the limiter with.
         """
         self.parameters = parameters
-        return self.make_limiter_peak(
-            parameters.threshold_db, parameters.attack_t, parameters.release_t
+        self.dsp_block = drc.limiter_peak(
+            self.fs, self.n_in, parameters.threshold_db, parameters.attack_t, parameters.release_t, dspg.Q_SIG
         )
 
 
@@ -191,10 +195,12 @@ class HardLimiterPeak(Stage):
         release_t : float
             Release time of the limiter in seconds.
         """
-        self.dsp_block = drc.hard_limiter_peak(
-            self.fs, self.n_in, threshold_db, attack_t, release_t, Q_sig
+        parameters = LimiterParameters(
+            threshold_db=threshold_db,
+            attack_t=attack_t,
+            release_t=release_t
         )
-        return self
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: LimiterParameters):
         """Update limiter configuration based on new parameters.
@@ -205,8 +211,8 @@ class HardLimiterPeak(Stage):
             The parameters to update the limiter with.
         """
         self.parameters = parameters
-        return self.make_hard_limiter_peak(
-            parameters.threshold_db, parameters.attack_t, parameters.release_t
+        self.dsp_block = drc.hard_limiter_peak(
+            self.fs, self.n_in, parameters.threshold_db, parameters.attack_t, parameters.release_t, dspg.Q_SIG
         )
 
 
@@ -245,8 +251,8 @@ class Clipper(Stage):
             Threshold in decibels above which clipping occurs.
 
         """
-        self.dsp_block = drc.clipper(self.fs, self.n_in, threshold_db, Q_sig)
-        return self
+        parameters = ClipperParameters(threshold_db=threshold_db)
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: ClipperParameters):
         """Update clipper configuration based on new parameters.
@@ -257,5 +263,5 @@ class Clipper(Stage):
             The parameters to update the clipper with.
         """
         self.parameters = parameters
-        return self.make_clipper(parameters.threshold_db)
+        self.dsp_block = drc.clipper(self.fs, self.n_in, parameters.threshold_db, dspg.Q_SIG)
 

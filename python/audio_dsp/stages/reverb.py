@@ -32,7 +32,6 @@ class _ReverbBase(Stage):
         """
         parameters = self.parameters.copy(update={"wet_dry_mix": mix})
         self.set_parameters(parameters)
-        return self
 
     def set_predelay(self, predelay):
         """
@@ -45,7 +44,6 @@ class _ReverbBase(Stage):
         """
         parameters = self.parameters.copy(update={"predelay": predelay})
         self.set_parameters(parameters)
-        return self
 
     def set_wet_gain(self, gain_dB):
         """
@@ -82,7 +80,6 @@ class _ReverbBase(Stage):
         """
         parameters = self.parameters.copy(update={"pregain": pre_gain})
         self.set_parameters(parameters)
-        return self
 
 
 class ReverbRoom(_ReverbBase):
@@ -173,7 +170,6 @@ class ReverbRoom(_ReverbBase):
         """
         parameters = self.parameters.copy(update={"room_size": new_room_size})
         self.set_parameters(parameters)
-        return self
 
     def set_damping(self, damping):
         """
@@ -188,7 +184,6 @@ class ReverbRoom(_ReverbBase):
         """
         parameters = self.parameters.copy(update={"damping": damping})
         self.set_parameters(parameters)
-        return self
 
     def set_decay(self, decay):
         """
@@ -203,17 +198,16 @@ class ReverbRoom(_ReverbBase):
         """
         parameters = self.parameters.copy(update={"decay": decay})
         self.set_parameters(parameters)
-        return self
 
     def set_parameters(self, parameters: ReverbRoomParameters):
         """Update the parameters of the ReverbRoom stage."""
+        self.parameters = parameters
         self.dsp_block.room_size = parameters.room_size
         self.dsp_block.damping = parameters.damping
         self.dsp_block.decay = parameters.decay
         self.dsp_block.predelay = parameters.predelay
         self.dsp_block.pregain = parameters.pregain
         self.dsp_block.set_wet_dry_mix(parameters.wet_dry_mix)
-        self.parameters = parameters
 
 
 class ReverbRoomStereo(ReverbRoom):
@@ -305,10 +299,10 @@ class ReverbRoomStereo(ReverbRoom):
         """
         parameters = self.parameters.copy(update={"width": width})
         self.set_parameters(parameters)
-        return self
 
     def set_parameters(self, parameters: ReverbRoomStereoParameters):  # pyright: ignore overload
         """Update the parameters of the ReverbRoomStereo stage."""
+        self.parameters = parameters
         self.dsp_block.room_size = parameters.room_size
         self.dsp_block.damping = parameters.damping
         self.dsp_block.decay = parameters.decay
@@ -316,7 +310,6 @@ class ReverbRoomStereo(ReverbRoom):
         self.dsp_block.pregain = parameters.pregain
         self.dsp_block.set_wet_dry_mix(parameters.wet_dry_mix)
         self.dsp_block.width = parameters.width
-        self.parameters = parameters
 
 
 class ReverbPlateStereo(_ReverbBase):
@@ -409,7 +402,6 @@ class ReverbPlateStereo(_ReverbBase):
         """
         parameters = self.parameters.copy(update={"width": width})
         self.set_parameters(parameters)
-        return self
 
     def set_damping(self, damping):
         """
@@ -424,7 +416,6 @@ class ReverbPlateStereo(_ReverbBase):
         """
         parameters = self.parameters.copy(update={"damping": damping})
         self.set_parameters(parameters)
-        return self
 
     def set_decay(self, decay):
         """
@@ -439,7 +430,6 @@ class ReverbPlateStereo(_ReverbBase):
         """
         parameters = self.parameters.copy(update={"decay": decay})
         self.set_parameters(parameters)
-        return self
 
     def set_early_diffusion(self, diffusion):
         """
@@ -454,7 +444,6 @@ class ReverbPlateStereo(_ReverbBase):
         """
         parameters = self.parameters.copy(update={"early_diffusion": diffusion})
         self.set_parameters(parameters)
-        return self
 
     def set_late_diffusion(self, diffusion):
         """
@@ -469,7 +458,6 @@ class ReverbPlateStereo(_ReverbBase):
         """
         parameters = self.parameters.copy(update={"late_diffusion": diffusion})
         self.set_parameters(parameters)
-        return self
 
     def set_bandwidth(self, bandwidth):
         """
@@ -484,10 +472,10 @@ class ReverbPlateStereo(_ReverbBase):
         """
         parameters = self.parameters.copy(update={"bandwidth": bandwidth})
         self.set_parameters(parameters)
-        return self
 
     def set_parameters(self, parameters: ReverbPlateParameters):
         """Update the parameters of the ReverbPlate stage."""
+        self.parameters = parameters
         self.dsp_block.damping = parameters.damping
         self.dsp_block.decay = parameters.decay
         self.dsp_block.early_diffusion = parameters.early_diffusion
@@ -497,4 +485,3 @@ class ReverbPlateStereo(_ReverbBase):
         self.dsp_block.pregain = parameters.pregain
         self.dsp_block.predelay = parameters.predelay
         self.dsp_block.set_wet_dry_mix(parameters.wet_dry_mix)
-        self.parameters = parameters
