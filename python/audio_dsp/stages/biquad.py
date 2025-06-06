@@ -126,7 +126,7 @@ class Biquad(Stage):
             Bandwidth of the filter in octaves.
         """
         parameters = BiquadParameters(filter_type=fields.biquad_bandpass(
-            filter_freq=f, q_factor=q
+            filter_freq=f, bw=bw
         ))
         self.set_parameters(parameters)
 
@@ -142,7 +142,7 @@ class Biquad(Stage):
             Bandwidth of the filter in octaves.
         """
         parameters = BiquadParameters(filter_type=fields.biquad_bandstop(
-            filter_freq=f, q_factor=q
+            filter_freq=f, bw=bw
         ))
         self.set_parameters(parameters)
 
@@ -288,7 +288,7 @@ class Biquad(Stage):
         parameters = BiquadParameters(filter_type=fields.biquad_linkwitz(
             f0=f0, q0=q0, fp=fp, qp=qp
         ))
-        set_parameters(parameters)
+        self.set_parameters(parameters)
 
 
     def set_parameters(self, parameters: BiquadParameters):
