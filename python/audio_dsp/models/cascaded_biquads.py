@@ -36,7 +36,7 @@ class CascadedBiquads(StageModel):
     """
 
     op_type: Literal["CascadedBiquads"] = "CascadedBiquads"
-    parameters: CascadedBiquadsParameters = Field(default_factory=CascadedBiquadsParameters)
+    parameters: CascadedBiquadsParameters | NthOrderFilterParameters = Field(default_factory=CascadedBiquadsParameters)
 
 
 class CascadedBiquads16Parameters(StageParameters):
