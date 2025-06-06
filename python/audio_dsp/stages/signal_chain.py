@@ -246,7 +246,7 @@ class VolumeControl(Stage):
         self.create_outputs(self.n_in)
         self.parameters = VolumeControlParameters(gain_db=gain_dB, mute_state=mute_state)
         slew_shift = 7
-        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, mute_state)
+        self.dsp_block: sc.volume_control = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, mute_state)
         self.set_control_field_cb("target_gain", lambda: self.dsp_block.target_gain_int)
         self.set_control_field_cb("slew_shift", lambda: self.dsp_block.slew_shift)
         self.set_control_field_cb("mute_state", lambda: np.int32(self.dsp_block.mute_state))
@@ -326,7 +326,7 @@ class Switch(Stage):
         self.index = index
         self.create_outputs(1)
         self.parameters = SwitchParameters(position=index)
-        self.dsp_block = sc.switch(self.fs, self.n_in)
+        self.dsp_block: sc.switch = sc.switch(self.fs, self.n_in)
         self.set_control_field_cb("position", lambda: self.dsp_block.switch_position)
 
     def move_switch(self, position):
@@ -398,7 +398,7 @@ class SwitchStereo(Stage):
         self.index = index
         self.create_outputs(2)
         self.parameters = SwitchParameters(position=index)
-        self.dsp_block = sc.switch_stereo(self.fs, self.n_in)
+        self.dsp_block: sc.switch_stereo = sc.switch_stereo(self.fs, self.n_in)
         self.set_control_field_cb("position", lambda: self.dsp_block.switch_position)
 
     def move_switch(self, position):
@@ -463,7 +463,7 @@ class Delay(Stage):
         if parameters is not None:
             starting_delay = parameters.delay
 
-        self.dsp_block = sc.delay(self.fs, self.n_in, max_delay, starting_delay, units)
+        self.dsp_block: sc.delay = sc.delay(self.fs, self.n_in, max_delay, starting_delay, units)
         self["max_delay"] = max_delay
         self.set_control_field_cb("max_delay", lambda: self.dsp_block._max_delay)  #  pyright: ignore
         self.set_control_field_cb("delay", lambda: self.dsp_block.delay)  #  pyright: ignore
@@ -522,7 +522,7 @@ class Crossfader(Stage):
         super().__init__(config=find_config("crossfader"), **kwargs)
         self.create_outputs(1)
         self.parameters = CrossfaderParameters(mix=mix)
-        self.dsp_block = sc.crossfader(self.fs, 2, mix=mix)
+        self.dsp_block: sc.crossfader = sc.crossfader(self.fs, 2, mix=mix)
         self.set_control_field_cb("gains", lambda: self.dsp_block.target_gains_int)
 
     def set_mix(self, mix):

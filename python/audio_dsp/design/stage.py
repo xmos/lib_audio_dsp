@@ -252,6 +252,7 @@ class _GlobalStages:
 
 # This defines the types of instances of the config/parameter classes
 StageParameterType = TypeVar("StageParameterType", bound="StageParameters")
+DspBlockType = TypeVar("DspBlockType", bound="dsp_block")
 
 
 class Stage(Node):
@@ -350,7 +351,7 @@ class Stage(Node):
         self.label = label
 
         self.parameters = None
-        self.dsp_block: Optional[dsp_block] = None
+        self.dsp_block: Optional[DspBlockType] = None  # pyright:ignore
         self.stage_memory_string: str = ""
         self.stage_memory_parameters: tuple | None = None
 

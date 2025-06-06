@@ -128,7 +128,7 @@ class ReverbRoom(_ReverbBase):
             wet_dry_mix=0.5,
         )
 
-        self.dsp_block = rvrb.reverb_room(
+        self.dsp_block: rvrb.reverb_room = rvrb.reverb_room(
             self.fs,
             self.n_in,
             max_room_size=max_room_size,
@@ -258,7 +258,7 @@ class ReverbRoomStereo(ReverbRoom):
             width=0.5,
         )
 
-        self.dsp_block = rvbs.reverb_room_stereo(
+        self.dsp_block: rvbs.reverb_room_stereo = rvbs.reverb_room_stereo(
             self.fs,
             self.n_in,
             max_room_size=max_room_size,
@@ -357,7 +357,7 @@ class ReverbPlateStereo(_ReverbBase):
             predelay=predelay,
         )
 
-        self.dsp_block = rvp.reverb_plate_stereo(
+        self.dsp_block: rvp.reverb_plate_stereo = rvp.reverb_plate_stereo(
             self.fs,
             self.n_in,
             predelay=predelay,
