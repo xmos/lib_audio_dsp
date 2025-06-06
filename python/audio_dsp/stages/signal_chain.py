@@ -133,12 +133,11 @@ class Mixer(Stage):
         """
         parameters = MixerParameters(gain_db=gain_db)
         self.set_parameters(parameters)
-        return self
 
     def set_parameters(self, parameters: MixerParameters):
         """Update the parameters of the Mixer stage."""
-        self.dsp_block = sc.mixer(self.fs, self.n_in, parameters.gain_db)
         self.parameters = parameters
+        self.dsp_block = sc.mixer(self.fs, self.n_in, parameters.gain_db)
 
 
 class Adder(Stage):
@@ -215,12 +214,11 @@ class FixedGain(Stage):
         """
         parameters = FixedGainParameters(gain_db=gain_db)
         self.set_parameters(parameters)
-        return self
 
     def set_parameters(self, parameters: FixedGainParameters):
         """Update the parameters of the FixedGain stage."""
-        self.dsp_block = sc.fixed_gain(self.fs, self.n_in, parameters.gain_db)
         self.parameters = parameters
+        self.dsp_block = sc.fixed_gain(self.fs, self.n_in, parameters.gain_db)
 
 
 class VolumeControl(Stage):
@@ -271,10 +269,8 @@ class VolumeControl(Stage):
         mute_state
             The mute state of the Volume Control: 0: unmuted, 1: muted.
         """
-        self.dsp_block = sc.volume_control(
-            self.fs, self.n_in, gain_dB, slew_shift, mute_state, Q_sig
-        )
-        return self
+        parameters = VolumeControlParameters(gain_db=gain_dB, mute_state=mute_state)
+        self.set_parameters(parameters)
 
     def set_gain(self, gain_dB):
         """
@@ -287,7 +283,6 @@ class VolumeControl(Stage):
         """
         parameters = VolumeControlParameters(gain_db=gain_dB, mute_state=self.parameters.mute_state)
         self.set_parameters(parameters)
-        return self
 
     def set_mute_state(self, mute_state):
         """
@@ -300,16 +295,15 @@ class VolumeControl(Stage):
         """
         parameters = VolumeControlParameters(gain_db=self.parameters.gain_db, mute_state=mute_state)
         self.set_parameters(parameters)
-        return self
 
     def set_parameters(self, parameters: VolumeControlParameters):
         """Update the parameters of the VolumeControl stage."""
+        self.parameters = parameters
         self.dsp_block.target_gain_db = parameters.gain_db
         if parameters.mute_state:
             self.dsp_block.mute()
         else:
             self.dsp_block.unmute()
-        self.parameters = parameters
 
 
 class Switch(Stage):
@@ -344,13 +338,12 @@ class Switch(Stage):
             signal to the input[position]
         """
         parameters = SwitchParameters(position=position)
-        return self.set_parameters(parameters)
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: SwitchParameters):
         """Update the parameters of the Switch stage."""
-        self.dsp_block.move_switch(parameters.position)
         self.parameters = parameters
-        return self
+        self.dsp_block.move_switch(parameters.position)
 
 
 class SwitchSlew(Switch):
@@ -417,13 +410,12 @@ class SwitchStereo(Stage):
             signal to the [input[2*position], input[:2*position + 1]]
         """
         parameters = SwitchParameters(position=position)
-        return self.set_parameters(parameters)
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: SwitchParameters):
         """Update the parameters of the SwitchStereo stage."""
-        self.dsp_block.move_switch(parameters.position)
         self.parameters = parameters
-        return self
+        self.dsp_block.move_switch(parameters.position)
 
 
 class Delay(Stage):
@@ -495,17 +487,15 @@ class Delay(Stage):
         """
         parameters = DelayParameters(delay=delay)
         self.set_parameters(parameters)
-        return self
 
     def set_parameters(self, parameters: DelayParameters):
         """Update the parameters of the Delay stage."""
+        self.parameters = parameters
         if parameters.delay > self.max_delay:
             raise ValueError(
                 f"Delay value {parameters.delay} exceeds maximum delay {self.max_delay}"
             )
         self.dsp_block.set_delay(parameters.delay, units=self.units)
-        self.parameters = parameters
-        return self
 
 
 class Crossfader(Stage):
@@ -548,7 +538,6 @@ class Crossfader(Stage):
         """
         parameters = CrossfaderParameters(mix=mix)
         self.set_parameters(parameters)
-        return self
 
     def set_parameters(self, parameters: CrossfaderParameters):
         """Update the parameters of the Crossfader stage.
@@ -556,8 +545,8 @@ class Crossfader(Stage):
         Args:
             parameters: New crossfader parameters to apply
         """
-        self.dsp_block.mix = parameters.mix
         self.parameters = parameters
+        self.dsp_block.mix = parameters.mix
 
 
 class CrossfaderStereo(Crossfader):
