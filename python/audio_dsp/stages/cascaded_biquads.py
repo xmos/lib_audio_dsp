@@ -111,7 +111,28 @@ class CascadedBiquads(Stage):
             parameters for that filter type. The available filter types
             and their parameters are:{generated_doc}
         """
-        parameters = CascadedBiquadsParameters(filters=[{k: v for k, v in zip(["type", "filter_freq", "q_factor", "bw", "boost_db", "f0", "q0", "fp", "qp"], spec)} for spec in filter_spec])
+        parameters = CascadedBiquadsParameters(
+            filters=[
+                {
+                    k: v
+                    for k, v in zip(
+                        [
+                            "type",
+                            "filter_freq",
+                            "q_factor",
+                            "bw",
+                            "boost_db",
+                            "f0",
+                            "q0",
+                            "fp",
+                            "qp",
+                        ],
+                        spec,
+                    )
+                }
+                for spec in filter_spec
+            ]
+        )
         self.set_parameters(parameters)
 
     def make_butterworth_highpass(self, N: int, fc: float):
@@ -128,7 +149,9 @@ class CascadedBiquads(Stage):
         fc : float
             The -3dB cutoff frequency in Hz.
         """
-        parameters = NthOrderFilterParameters(type="highpass", filter="butterworth", order=N, filter_freq=fc)
+        parameters = NthOrderFilterParameters(
+            type="highpass", filter="butterworth", order=N, filter_freq=fc
+        )
         self.set_parameters(parameters)
 
     def make_butterworth_lowpass(self, N: int, fc: float):
@@ -142,7 +165,9 @@ class CascadedBiquads(Stage):
         fc : float
             The -3dB cutoff frequency in Hz.
         """
-        parameters = NthOrderFilterParameters(type="lowpass", filter="butterworth", order=N, filter_freq=fc)
+        parameters = NthOrderFilterParameters(
+            type="lowpass", filter="butterworth", order=N, filter_freq=fc
+        )
         self.set_parameters(parameters)
 
     def set_parameters(self, parameters: CascadedBiquadsParameters | NthOrderFilterParameters):
@@ -161,13 +186,16 @@ class CascadedBiquads(Stage):
         else:
             if parameters.type == "bypass":
                 self.dsp_block = casc_bq.parametric_eq_8band(
-                    self.fs, self.n_in,
-                    [["bypass"] for _ in range(8)]
+                    self.fs, self.n_in, [["bypass"] for _ in range(8)]
                 )
             elif parameters.type == "lowpass" and parameters.filter == "butterworth":
-                self.dsp_block = casc_bq.butterworth_lowpass(self.fs, self.n_in, parameters.order, parameters.filter_freq)
+                self.dsp_block = casc_bq.butterworth_lowpass(
+                    self.fs, self.n_in, parameters.order, parameters.filter_freq
+                )
             elif parameters.type == "highpass" and parameters.filter == "butterworth":
-                self.dsp_block = casc_bq.butterworth_highpass(self.fs, self.n_in, parameters.order, parameters.filter_freq)
+                self.dsp_block = casc_bq.butterworth_highpass(
+                    self.fs, self.n_in, parameters.order, parameters.filter_freq
+                )
             else:
                 raise ValueError(
                     f"Unsupported filter type {parameters.type} or filter {parameters.filter}"
@@ -213,7 +241,9 @@ class CascadedBiquads16(Stage):
         )
 
         self.stage_memory_parameters = (self.n_in,)
-        self.parameters = CascadedBiquads16Parameters(filters=[{"type": "bypass"} for _ in range(16)])
+        self.parameters = CascadedBiquads16Parameters(
+            filters=[{"type": "bypass"} for _ in range(16)]
+        )
 
     def _get_fixed_point_coeffs_lower(self):
         fc = []
@@ -252,7 +282,28 @@ class CascadedBiquads16(Stage):
             parameters for that filter type. The available filter types
             and their parameters are:{generated_doc}
         """
-        parameters = CascadedBiquads16Parameters(filters=[{k: v for k, v in zip(["type", "filter_freq", "q_factor", "bw", "boost_db", "f0", "q0", "fp", "qp"], spec)} for spec in filter_spec])
+        parameters = CascadedBiquads16Parameters(
+            filters=[
+                {
+                    k: v
+                    for k, v in zip(
+                        [
+                            "type",
+                            "filter_freq",
+                            "q_factor",
+                            "bw",
+                            "boost_db",
+                            "f0",
+                            "q0",
+                            "fp",
+                            "qp",
+                        ],
+                        spec,
+                    )
+                }
+                for spec in filter_spec
+            ]
+        )
         self.set_parameters(parameters)
 
     def set_parameters(self, parameters: CascadedBiquads16Parameters):
@@ -345,13 +396,16 @@ class NthOrderFilter(CascadedBiquads):
         self.parameters = parameters
         if parameters.type == "bypass":
             self.dsp_block = casc_bq.parametric_eq_8band(
-                self.fs, self.n_in,
-                [["bypass"] for _ in range(8)]
+                self.fs, self.n_in, [["bypass"] for _ in range(8)]
             )
         elif parameters.type == "lowpass" and parameters.filter == "butterworth":
-            self.dsp_block = casc_bq.butterworth_lowpass(self.fs, self.n_in, parameters.order, parameters.filter_freq)
+            self.dsp_block = casc_bq.butterworth_lowpass(
+                self.fs, self.n_in, parameters.order, parameters.filter_freq
+            )
         elif parameters.type == "highpass" and parameters.filter == "butterworth":
-            self.dsp_block = casc_bq.butterworth_highpass(self.fs, self.n_in, parameters.order, parameters.filter_freq)
+            self.dsp_block = casc_bq.butterworth_highpass(
+                self.fs, self.n_in, parameters.order, parameters.filter_freq
+            )
         else:
             raise ValueError(
                 f"Unsupported filter type {parameters.type} or filter {parameters.filter}"

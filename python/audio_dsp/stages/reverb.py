@@ -255,7 +255,7 @@ class ReverbRoomStereo(ReverbRoom):
             predelay=predelay,
             pregain=0.015,
             wet_dry_mix=0.5,
-            width=0.5,  
+            width=0.5,
         )
 
         self.dsp_block = rvbs.reverb_room_stereo(

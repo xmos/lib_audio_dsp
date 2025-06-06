@@ -32,10 +32,7 @@ class NoiseGate(Stage):
         super().__init__(config=find_config("noise_gate"), **kwargs)
         self.create_outputs(self.n_in)
 
-        self.parameters = NoiseGateParameters(
-            threshold_db=-35,
-            attack_t=0.005,
-            release_t=0.12)
+        self.parameters = NoiseGateParameters(threshold_db=-35, attack_t=0.005, release_t=0.12)
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
@@ -58,9 +55,7 @@ class NoiseGate(Stage):
             Release time of the noise gate in seconds.
         """
         parameters = NoiseGateParameters(
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t
+            threshold_db=threshold_db, attack_t=attack_t, release_t=release_t
         )
         self.set_parameters(parameters)
 
@@ -68,5 +63,10 @@ class NoiseGate(Stage):
         """Update noise gate configuration based on new parameters."""
         self.parameters = parameters
         self.dsp_block = drc.noise_gate(
-            self.fs, self.n_in, parameters.threshold_db, parameters.attack_t, parameters.release_t, dspg.Q_SIG
+            self.fs,
+            self.n_in,
+            parameters.threshold_db,
+            parameters.attack_t,
+            parameters.release_t,
+            dspg.Q_SIG,
         )
