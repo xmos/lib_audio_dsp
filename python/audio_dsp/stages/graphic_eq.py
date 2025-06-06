@@ -50,7 +50,8 @@ class GraphicEq10b(Stage):
         gains_db : list[float]
             A list of the 10 gains of the graphic eq in dB.
         """
-        self.dsp_block.gains_db = gains_db
+        parameters = GraphicEq10bParameters(gains_db=gains_db)
+        self.set_parameters(parameters)
         return self
 
     def set_parameters(self, parameters: GraphicEq10bParameters):
@@ -62,5 +63,6 @@ class GraphicEq10b(Stage):
         parameters : GraphicEq10bParameters
             The parameters of the graphic eq.
         """
-        self.set_gains(parameters.gains_db)
         self.parameters = parameters
+        self.dsp_block.gains_db = gains_db
+

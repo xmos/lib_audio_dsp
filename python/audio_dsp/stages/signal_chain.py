@@ -131,13 +131,15 @@ class Mixer(Stage):
         gain_db : float
             The gain of the mixer in dB.
         """
-        self.dsp_block = sc.mixer(self.fs, self.n_in, gain_db)
+        parameters = MixerParameters(gain_db=gain_db)
+        self.set_parameters(parameters)
         return self
 
     def set_parameters(self, parameters: MixerParameters):
         """Update the parameters of the Mixer stage."""
-        self.set_gain(parameters.gain_db)
+        self.dsp_block = sc.mixer(self.fs, self.n_in, parameters.gain_db)
         self.parameters = parameters
+
 
 class Adder(Stage):
     """
@@ -211,13 +213,15 @@ class FixedGain(Stage):
         gain_db : float
             The gain of the fixed gain in dB.
         """
-        self.dsp_block = sc.fixed_gain(self.fs, self.n_in, gain_db)
+        parameters = FixedGainParameters(gain_db=gain_db)
+        self.set_parameters(parameters)
         return self
 
     def set_parameters(self, parameters: FixedGainParameters):
         """Update the parameters of the FixedGain stage."""
-        self.set_gain(parameters.gain_db)
+        self.dsp_block = sc.fixed_gain(self.fs, self.n_in, parameters.gain_db)
         self.parameters = parameters
+
 
 class VolumeControl(Stage):
     """
@@ -281,7 +285,8 @@ class VolumeControl(Stage):
         gain_db : float
             The gain of the volume control in dB.
         """
-        self.dsp_block.target_gain_db = gain_dB
+        parameters = VolumeControlParameters(gain_db=gain_dB, mute_state=self.parameters.mute_state)
+        self.set_parameters(parameters)
         return self
 
     def set_mute_state(self, mute_state):
@@ -293,17 +298,19 @@ class VolumeControl(Stage):
         mute_state : bool
             The mute state of the volume control.
         """
-        if mute_state:
-            self.dsp_block.mute()
-        else:
-            self.dsp_block.unmute()
+        parameters = VolumeControlParameters(gain_db=self.parameters.gain_db, mute_state=mute_state)
+        self.set_parameters(parameters)
         return self
 
     def set_parameters(self, parameters: VolumeControlParameters):
         """Update the parameters of the VolumeControl stage."""
-        self.set_gain(parameters.gain_db)
-        self.set_mute_state(parameters.mute_state)
+        self.dsp_block.target_gain_db = parameters.gain_db
+        if parameters.mute_state:
+            self.dsp_block.mute()
+        else:
+            self.dsp_block.unmute()
         self.parameters = parameters
+
 
 class Switch(Stage):
     """
@@ -343,6 +350,7 @@ class Switch(Stage):
         """Update the parameters of the Switch stage."""
         self.move_switch(parameters.position)
         self.parameters = parameters
+
 
 class SwitchSlew(Switch):
     """
@@ -483,7 +491,9 @@ class Delay(Stage):
             The units of the delay, can be 'samples', 'ms' or 's'.
             Default is 'samples'.
         """
-        self.dsp_block.set_delay(delay, units)
+        parameters = DelayParameters(delay=delay)
+        self.set_parameters(parameters)
+        return self
 
     def set_parameters(self, parameters: DelayParameters):
         """Update the parameters of the Delay stage.
@@ -496,7 +506,7 @@ class Delay(Stage):
                 f"Delay value {parameters.delay} exceeds maximum delay {self.max_delay}"
             )
 
-        self.set_delay(parameters.delay, units=self.units)
+        self.dsp_block.set_delay(parameters.delay, units=self.units)
         self.parameters = parameters
 
 
@@ -538,7 +548,8 @@ class Crossfader(Stage):
         mix : float
             The mix of the crossfader between 0 and 1.
         """
-        self.dsp_block.mix = mix
+        parameters = CrossfaderParameters(mix=mix)
+        self.set_parameters(parameters)
         return self
 
     def set_parameters(self, parameters: CrossfaderParameters):
@@ -547,7 +558,7 @@ class Crossfader(Stage):
         Args:
             parameters: New crossfader parameters to apply
         """
-        self.set_mix(parameters.mix)
+        self.dsp_block.mix = parameters.mix
         self.parameters = parameters
 
 
