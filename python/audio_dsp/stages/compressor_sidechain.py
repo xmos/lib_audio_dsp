@@ -59,8 +59,13 @@ class CompressorSidechain(Stage):
     def set_parameters(self, parameters: CompressorSidechainParameters):
         """Update the parameters of the CompressorSidechain stage."""
         self.parameters = parameters
-        self.make_compressor_sidechain(
-            parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
+        self.dsp_block = drc.compressor_rms_sidechain_mono(
+            self.fs,
+            parameters.ratio,
+            parameters.threshold_db,
+            parameters.attack_t,
+            parameters.release_t,
+            dspg.Q_SIG,
         )
 
     def make_compressor_sidechain(
@@ -81,10 +86,13 @@ class CompressorSidechain(Stage):
         release_t : float
             Release time of the compressor in seconds.
         """
-        self.dsp_block = drc.compressor_rms_sidechain_mono(
-            self.fs, ratio, threshold_db, attack_t, release_t, Q_sig
+        parameters = CompressorSidechainParameters(
+            ratio=ratio,
+            threshold_db=threshold_db,
+            attack_t=attack_t,
+            release_t=release_t,
         )
-        return self
+        self.set_parameters(parameters)
 
 
 class CompressorSidechainStereo(Stage):
@@ -133,6 +141,18 @@ class CompressorSidechainStereo(Stage):
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)
         self.set_control_field_cb("slope", lambda: self.dsp_block.slope_f32)
 
+    def set_parameters(self, parameters: CompressorSidechainParameters):
+        """Update the parameters of the CompressorSidechainStereo stage."""
+        self.parameters = parameters
+        self.dsp_block = drc.compressor_rms_sidechain_stereo(
+            self.fs,
+            parameters.ratio,
+            parameters.threshold_db,
+            parameters.attack_t,
+            parameters.release_t,
+            dspg.Q_SIG,
+        )
+
     def make_compressor_sidechain(
         self, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG
     ):
@@ -151,14 +171,10 @@ class CompressorSidechainStereo(Stage):
         release_t : float
             Release time of the compressor in seconds.
         """
-        self.dsp_block = drc.compressor_rms_sidechain_stereo(
-            self.fs, ratio, threshold_db, attack_t, release_t, Q_sig
+        parameters = CompressorSidechainParameters(
+            ratio=ratio,
+            threshold_db=threshold_db,
+            attack_t=attack_t,
+            release_t=release_t,
         )
-        return self
-
-    def set_parameters(self, parameters: CompressorSidechainParameters):
-        """Update the parameters of the CompressorSidechainStereo stage."""
-        self.parameters = parameters
-        self.make_compressor_sidechain(
-            parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
-        )
+        self.set_parameters(parameters)
