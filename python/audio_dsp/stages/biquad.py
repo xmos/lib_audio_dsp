@@ -325,7 +325,7 @@ class Biquad(Stage):
         elif filter_type.type == "highshelf":
             new_coeffs = bq.make_biquad_highshelf(self.fs, filter_type.filter_freq,filter_type.q_factor,filter_type.boost_db)
         elif filter_type.type == "linkwitz":
-            new_coeffs = bq.make_biquad_linkwitz(self.fs, f0, q0, fp, qp)
+            new_coeffs = bq.make_biquad_linkwitz(self.fs, filter_type.f0, filter_type.q0, filter_type.fp, filter_type.qp)
         elif filter_type.type == "gain":
             new_coeffs = bq.make_biquad_gain(self.fs, gain_db)
         elif filter_type.type == "bypass":
