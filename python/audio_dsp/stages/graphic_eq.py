@@ -64,5 +64,5 @@ class GraphicEq10b(Stage):
             The parameters of the graphic eq.
         """
         self.parameters = parameters
-        self.dsp_block.gains_db = gains_db
+        self.dsp_block.gains_db = self.parameters.gains_db
 
