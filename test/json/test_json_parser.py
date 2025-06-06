@@ -7,6 +7,7 @@ from audio_dsp.models.stage import all_models
 from audio_dsp.stages import all_stages
 
 from typing import get_origin, get_args, Literal
+from types import UnionType
 
 def test_no_shared_edge():
     json_str = """
@@ -344,8 +345,13 @@ def test_all_stages_models():
         
 
         try:
-            set_params_input = all_s[s].set_parameters.__annotations__["parameters"].__name__
-            model_params_type = all_m[s].model_fields["parameters"].default_factory.__name__
+            if type(all_s[s].set_parameters.__annotations__["parameters"]) is UnionType:
+              set_params_input = get_args(all_s[s].set_parameters.__annotations__["parameters"])
+              model_params_type =  get_args(all_m[s].model_fields["parameters"].default_factory)
+
+            else:
+              set_params_input = all_s[s].set_parameters.__annotations__["parameters"].__name__
+              model_params_type = all_m[s].model_fields["parameters"].default_factory.__name__
             assert set_params_input == model_params_type, f"Stage {s} set_parameters input type mismatch"
         except AssertionError as e:
             print(e)
