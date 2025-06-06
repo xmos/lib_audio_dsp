@@ -343,13 +343,14 @@ class Switch(Stage):
             The position to which to move the switch. This changes the output
             signal to the input[position]
         """
-        self.dsp_block.move_switch(position)
-        return self
+        parameters = SwitchParameters(position=position)
+        return self.set_parameters(parameters)
 
     def set_parameters(self, parameters: SwitchParameters):
         """Update the parameters of the Switch stage."""
-        self.move_switch(parameters.position)
+        self.dsp_block.move_switch(parameters.position)
         self.parameters = parameters
+        return self
 
 
 class SwitchSlew(Switch):
@@ -415,13 +416,14 @@ class SwitchStereo(Stage):
             The position to which to move the switch. This changes the output
             signal to the [input[2*position], input[:2*position + 1]]
         """
-        self.dsp_block.move_switch(position)
-        return self
+        parameters = SwitchParameters(position=position)
+        return self.set_parameters(parameters)
 
     def set_parameters(self, parameters: SwitchParameters):
         """Update the parameters of the SwitchStereo stage."""
-        self.move_switch(parameters.position)
+        self.dsp_block.move_switch(parameters.position)
         self.parameters = parameters
+        return self
 
 
 class Delay(Stage):
@@ -496,18 +498,14 @@ class Delay(Stage):
         return self
 
     def set_parameters(self, parameters: DelayParameters):
-        """Update the parameters of the Delay stage.
-
-        Args:
-            parameters: New delay parameters to apply
-        """
+        """Update the parameters of the Delay stage."""
         if parameters.delay > self.max_delay:
             raise ValueError(
                 f"Delay value {parameters.delay} exceeds maximum delay {self.max_delay}"
             )
-
         self.dsp_block.set_delay(parameters.delay, units=self.units)
         self.parameters = parameters
+        return self
 
 
 class Crossfader(Stage):
