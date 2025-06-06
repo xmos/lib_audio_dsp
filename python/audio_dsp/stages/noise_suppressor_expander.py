@@ -53,8 +53,8 @@ class NoiseSuppressorExpander(Stage):
     def set_parameters(self, parameters: NoiseSuppressorExpanderParameters):
         """Update noise suppressor/expander configuration based on new parameters."""
         self.parameters = parameters
-        return self.make_noise_suppressor_expander(
-            parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
+        self.dsp_block = drc.noise_suppressor_expander(
+            self.fs, self.n_in, parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t, dspg.Q_SIG
         )
 
     def make_noise_suppressor_expander(
@@ -78,7 +78,10 @@ class NoiseSuppressorExpander(Stage):
         release_t : float
             Release time of the noise suppressor in seconds.
         """
-        self.dsp_block = drc.noise_suppressor_expander(
-            self.fs, self.n_in, ratio, threshold_db, attack_t, release_t, Q_sig
+        parameters = NoiseSuppressorExpanderParameters(
+            ratio=ratio,
+            threshold_db=threshold_db,
+            attack_t=attack_t,
+            release_t=release_t
         )
-        return self
+        self.set_parameters(parameters)

@@ -1,6 +1,7 @@
 # Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""Finite impulse response (FIR) filter Stages allow the use of
+"""
+Finite impulse response (FIR) filter Stages allow the use of
 arbitrary filters with a finite number of taps.
 """
 

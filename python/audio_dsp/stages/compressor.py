@@ -58,10 +58,10 @@ class CompressorRMS(Stage):
         parameters : CompressorParameters
             The new parameters to apply to the compressor.
         """
-        self.make_compressor_rms(
-            parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
-        )
         self.parameters = parameters
+        self.dsp_block = drc.compressor_rms(
+            self.fs, self.n_in, parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t, dspg.Q_SIG
+        )
 
     def make_compressor_rms(self, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
         """Update compressor configuration based on new parameters.
@@ -78,7 +78,10 @@ class CompressorRMS(Stage):
         release_t : float
             Release time of the compressor in seconds.
         """
-        self.dsp_block = drc.compressor_rms(
-            self.fs, self.n_in, ratio, threshold_db, attack_t, release_t, Q_sig
+        parameters = CompressorParameters(
+            ratio=ratio,
+            threshold_db=threshold_db,
+            attack_t=attack_t,
+            release_t=release_t
         )
-        return self
+        self.set_parameters(parameters)
