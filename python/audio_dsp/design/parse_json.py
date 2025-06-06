@@ -308,25 +308,22 @@ def update_pipeline(p: Pipeline, params: DspJson):
             warnings.warn(f"Stage {stage.label} could not be found in the JSON file")
 
 
-
 def pipeline_to_dspjson(pipeline) -> DspJson:
-    """
-    Convert a Pipeline object to a DspJson object.
-    """
+    """Convert a Pipeline object to a DspJson object."""
     # Example: Extract graph-level info
     graph_name = getattr(pipeline, "name", "Generated DSP Graph")
     fs = getattr(pipeline, "fs", 48000)
 
     # Extract inputs and outputs
-    inputs =  [Input(
-        name="inputs",
-        output=[pipeline._graph.edges.index(x) for x in pipeline.i.edges],
-    )]
-    outputs = [Output(
-        name="outputs",
-        input=[pipeline._graph.edges.index(x) for x in pipeline.o.edges]
-    )]
-
+    inputs = [
+        Input(
+            name="inputs",
+            output=[pipeline._graph.edges.index(x) for x in pipeline.i.edges],
+        )
+    ]
+    outputs = [
+        Output(name="outputs", input=[pipeline._graph.edges.index(x) for x in pipeline.o.edges])
+    ]
 
     # # Extract inputs and outputs
     # inputs = []

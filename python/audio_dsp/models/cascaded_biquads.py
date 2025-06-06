@@ -25,6 +25,17 @@ class CascadedBiquadsParameters(StageParameters):
     filters: Annotated[list[BIQUAD_TYPES], Len(8)] = Field(default_factory=_8biquads, max_length=8)
 
 
+class NthOrderFilterParameters(StageParameters):
+    """Parameters for NthOrderFilter Stage."""
+
+    type: Literal["bypass", "highpass", "lowpass"] = "bypass"
+    filter: Literal["butterworth"] = "butterworth"
+    order: Literal[2, 4, 6, 8, 10, 12, 14, 16] = Field(
+        default=2, description="Order of the filter (2-16)"
+    )
+    filter_freq: float = DEFAULT_FILTER_FREQ()
+
+
 class CascadedBiquads(StageModel):
     """8 cascaded biquad filters. This allows up to 8 second order
     biquad filters to be run in series.
@@ -36,7 +47,9 @@ class CascadedBiquads(StageModel):
     """
 
     op_type: Literal["CascadedBiquads"] = "CascadedBiquads"
-    parameters: CascadedBiquadsParameters | NthOrderFilterParameters = Field(default_factory=CascadedBiquadsParameters)
+    parameters: CascadedBiquadsParameters | NthOrderFilterParameters = Field(
+        default_factory=CascadedBiquadsParameters
+    )
 
 
 class CascadedBiquads16Parameters(StageParameters):
@@ -73,15 +86,6 @@ class ParametricEq16b(CascadedBiquads16):
     op_type: Literal["ParametricEq16b"] = "ParametricEq16b"  # pyright: ignore override
 
 
-class NthOrderFilterParameters(StageParameters):
-    """Parameters for NthOrderFilter Stage."""
-
-    type: Literal["bypass", "highpass", "lowpass"] = "bypass"
-    filter: Literal["butterworth"] = "butterworth"
-    order: Literal[2, 4, 6, 8, 10, 12, 14, 16] = Field(
-        default=2, description="Order of the filter (2-16)"
-    )
-    filter_freq: float = DEFAULT_FILTER_FREQ()
 
 
 class NthOrderFilter(StageModel):
