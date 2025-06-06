@@ -68,6 +68,7 @@ class Biquad(Stage):
         """
         parameters = BiquadParameters(filter_type=fields.biquad_bypass())
         self.set_parameters(parameters)
+        return self
 
     def make_gain(self, gain_db: float) -> "Biquad":
         """Make this biquad a gain stage.
@@ -79,6 +80,7 @@ class Biquad(Stage):
         """
         parameters = BiquadParameters(filter_type=fields.biquad_gain(gain_db=gain_db))
         self.set_parameters(parameters)
+        return self
 
     def make_lowpass(self, f: float, q: float) -> "Biquad":
         """Make this biquad a second order low pass filter.
@@ -93,6 +95,7 @@ class Biquad(Stage):
         """
         parameters = BiquadParameters(filter_type=fields.biquad_lowpass(filter_freq=f, q_factor=q))
         self.set_parameters(parameters)
+        return self
 
     def make_highpass(self, f: float, q: float) -> "Biquad":
         """Make this biquad a second order high pass filter.
@@ -109,6 +112,7 @@ class Biquad(Stage):
             filter_type=fields.biquad_highpass(filter_freq=f, q_factor=q)
         )
         self.set_parameters(parameters)
+        return self
 
     def make_bandpass(self, f: float, bw: float) -> "Biquad":
         """Make this biquad a second order bandpass filter.
@@ -122,6 +126,7 @@ class Biquad(Stage):
         """
         parameters = BiquadParameters(filter_type=fields.biquad_bandpass(filter_freq=f, bw=bw))
         self.set_parameters(parameters)
+        return self
 
     def make_bandstop(self, f: float, bw: float) -> "Biquad":
         """Make this biquad a second order bandstop filter.
@@ -135,6 +140,7 @@ class Biquad(Stage):
         """
         parameters = BiquadParameters(filter_type=fields.biquad_bandstop(filter_freq=f, bw=bw))
         self.set_parameters(parameters)
+        return self
 
     def make_notch(self, f: float, q: float) -> "Biquad":
         """Make this biquad a notch filter.
@@ -148,6 +154,7 @@ class Biquad(Stage):
         """
         parameters = BiquadParameters(filter_type=fields.biquad_notch(filter_freq=f, q_factor=q))
         self.set_parameters(parameters)
+        return self
 
     def make_allpass(self, f: float, q: float) -> "Biquad":
         """Make this biquad an all pass filter.
@@ -161,6 +168,7 @@ class Biquad(Stage):
         """
         parameters = BiquadParameters(filter_type=fields.biquad_allpass(filter_freq=f, q_factor=q))
         self.set_parameters(parameters)
+        return self
 
     def make_peaking(self, f: float, q: float, boost_db: float) -> "Biquad":
         """Make this biquad a peaking filter.
@@ -178,6 +186,7 @@ class Biquad(Stage):
             filter_type=fields.biquad_peaking(filter_freq=f, q_factor=q, boost_db=boost_db)
         )
         self.set_parameters(parameters)
+        return self
 
     def make_constant_q(self, f: float, q: float, boost_db: float) -> "Biquad":
         """Make this biquad a peaking filter with constant Q.
@@ -199,6 +208,7 @@ class Biquad(Stage):
             filter_type=fields.biquad_constant_q(filter_freq=f, q_factor=q, boost_db=boost_db)
         )
         self.set_parameters(parameters)
+        return self
 
     def make_lowshelf(self, f: float, q: float, boost_db: float) -> "Biquad":
         """Make this biquad a second order low shelf filter.
@@ -222,6 +232,7 @@ class Biquad(Stage):
             filter_type=fields.biquad_lowshelf(filter_freq=f, q_factor=q, boost_db=boost_db)
         )
         self.set_parameters(parameters)
+        return self
 
     def make_highshelf(self, f: float, q: float, boost_db: float) -> "Biquad":
         """Make this biquad a second order high shelf filter.
@@ -245,6 +256,7 @@ class Biquad(Stage):
             filter_type=fields.biquad_highshelf(filter_freq=f, q_factor=q, boost_db=boost_db)
         )
         self.set_parameters(parameters)
+        return self
 
     def make_linkwitz(self, f0: float, q0: float, fp: float, qp: float) -> "Biquad":
         """Make this biquad a Linkwitz Transform biquad filter.
@@ -269,6 +281,7 @@ class Biquad(Stage):
             filter_type=fields.biquad_linkwitz(f0=f0, q0=q0, fp=fp, qp=qp)
         )
         self.set_parameters(parameters)
+        return self
 
     def set_parameters(self, parameters: BiquadParameters):
         """Set biquad filter parameters.
@@ -324,7 +337,7 @@ class Biquad(Stage):
                 self.fs, filter_type.f0, filter_type.q0, filter_type.fp, filter_type.qp
             )
         elif filter_type.type == "gain":
-            new_coeffs = bq.make_biquad_gain(self.fs, gain_db)
+            new_coeffs = bq.make_biquad_gain(self.fs, filter_type.gain_db)
         elif filter_type.type == "bypass":
             new_coeffs = bq.make_biquad_bypass(self.fs)
         else:
