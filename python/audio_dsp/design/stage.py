@@ -326,10 +326,8 @@ class Stage(Node):
             self.fs = self.i.edges[0].fs
             self.frame_size = self.i.edges[0].frame_size
         else:
-            raise RuntimeError("No inputs provided to Stage, at least one input is required.")
-
-            # self.fs = None
-            # self.frame_size = None
+            self.fs = None
+            self.frame_size = None
 
         self.n_in = len(self.i)
         self.n_out = 0
