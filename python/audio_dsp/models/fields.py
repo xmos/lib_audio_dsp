@@ -142,6 +142,12 @@ class biquad_lowshelf(StageParameters):
     boost_db: float = DEFAULT_BOOST_DB()
 
 
+class biquad_mute(StageParameters):
+    """Parameters for a Biquad Stage configured to mute."""
+
+    type: Literal["mute"] = "mute"
+
+
 class biquad_notch(StageParameters):
     """Parameters for a Biquad Stage configured to notch."""
 
@@ -171,6 +177,7 @@ BIQUAD_TYPES = Union[
     biquad_linkwitz,
     biquad_lowpass,
     biquad_lowshelf,
+    biquad_mute,
     biquad_notch,
     biquad_peaking,
 ]
