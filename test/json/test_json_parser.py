@@ -365,7 +365,7 @@ def test_all_stages_models():
                     item_type = get_args(value.annotation)[0]
                     meta = get_args(item_type)[1].metadata
                 elif get_origin(value.annotation) is Literal:
-                  continue  # Skip Literal types``
+                  continue  # Skip Literal types
                 else:
                   meta = value.metadata
                 min = [g.ge for g in meta if isinstance(g, annotated_types.Ge)] or [
