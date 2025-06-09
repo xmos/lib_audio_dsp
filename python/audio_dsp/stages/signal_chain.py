@@ -137,6 +137,8 @@ class Mixer(Stage):
     def set_parameters(self, parameters: MixerParameters):
         """Update the parameters of the Mixer stage."""
         self.parameters = parameters
+        if not self.fs:
+            raise ValueError("Mixer sample rate not set")
         self.dsp_block = sc.mixer(self.fs, self.n_in, parameters.gain_db)
 
 
@@ -218,6 +220,8 @@ class FixedGain(Stage):
     def set_parameters(self, parameters: FixedGainParameters):
         """Update the parameters of the FixedGain stage."""
         self.parameters = parameters
+        if not self.fs:
+            raise ValueError("Fixed gain sample rate not set")
         self.dsp_block = sc.fixed_gain(self.fs, self.n_in, parameters.gain_db)
 
 
