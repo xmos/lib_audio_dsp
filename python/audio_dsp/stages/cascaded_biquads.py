@@ -113,7 +113,7 @@ class CascadedBiquads(Stage):
             and their parameters are:{generated_doc}
         """
         parameters = CascadedBiquadsParameters(
-            filters=[
+            filters=[  # pyright: ignore
                 {
                     k: v
                     for k, v in zip(
@@ -288,7 +288,7 @@ class CascadedBiquads16(Stage):
             and their parameters are:{generated_doc}
         """
         parameters = CascadedBiquads16Parameters(
-            filters=[
+            filters=[  # pyright: ignore
                 {
                     k: v
                     for k, v in zip(

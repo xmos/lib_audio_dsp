@@ -347,17 +347,19 @@ def test_all_stages_models():
         try:
             if type(all_s[s].set_parameters.__annotations__["parameters"]) is UnionType:
               set_params_input = get_args(all_s[s].set_parameters.__annotations__["parameters"])
-              model_params_type =  get_args(all_m[s].model_fields["parameters"].default_factory)
+              model_params_type =  all_m[s].model_fields["parameters"].default_factory
+              assert model_params_type in set_params_input, f"Stage {s} set_parameters input type mismatch"
 
             else:
               set_params_input = all_s[s].set_parameters.__annotations__["parameters"].__name__
               model_params_type = all_m[s].model_fields["parameters"].default_factory.__name__
-            assert set_params_input == model_params_type, f"Stage {s} set_parameters input type mismatch"
+              assert set_params_input == model_params_type, f"Stage {s} set_parameters input type mismatch"
+
         except AssertionError as e:
             print(e)
             failed = True
             
-        for field, value in all_m[s].model_fields["parameters"].default_factory().model_fields.items():
+        for field, value in type(all_m[s].model_fields["parameters"].default_factory()).model_fields.items():
             try:
                 if get_origin(value.annotation) is list:
                     item_type = get_args(value.annotation)[0]
