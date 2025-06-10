@@ -6,7 +6,9 @@ from audio_dsp.design.parse_json import Graph, make_pipeline, insert_forks, DspJ
 from audio_dsp.models.stage import all_models
 from audio_dsp.stages import all_stages
 
-from typing import get_origin, get_args
+from typing import get_origin, get_args, Literal
+from types import UnionType
+
 
 def test_no_shared_edge():
     json_str = """
@@ -344,18 +346,27 @@ def test_all_stages_models():
         
 
         try:
-            set_params_input = all_s[s].set_parameters.__annotations__["parameters"].__name__
-            model_params_type = all_m[s].model_fields["parameters"].default_factory.__name__
-            assert set_params_input == model_params_type, f"Stage {s} set_parameters input type mismatch"
+            if type(all_s[s].set_parameters.__annotations__["parameters"]) is UnionType:
+              set_params_input = get_args(all_s[s].set_parameters.__annotations__["parameters"])
+              model_params_type =  all_m[s].model_fields["parameters"].default_factory
+              assert model_params_type in set_params_input, f"Stage {s} set_parameters input type mismatch"
+
+            else:
+              set_params_input = all_s[s].set_parameters.__annotations__["parameters"].__name__
+              model_params_type = all_m[s].model_fields["parameters"].default_factory.__name__
+              assert set_params_input == model_params_type, f"Stage {s} set_parameters input type mismatch"
+
         except AssertionError as e:
             print(e)
             failed = True
             
-        for field, value in all_m[s].model_fields["parameters"].default_factory().model_fields.items():
+        for field, value in type(all_m[s].model_fields["parameters"].default_factory()).model_fields.items():
             try:
                 if get_origin(value.annotation) is list:
                     item_type = get_args(value.annotation)[0]
                     meta = get_args(item_type)[1].metadata
+                elif get_origin(value.annotation) is Literal:
+                  continue  # Skip Literal types
                 else:
                   meta = value.metadata
                 min = [g.ge for g in meta if isinstance(g, annotated_types.Ge)] or [

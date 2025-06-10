@@ -363,7 +363,7 @@ class NthOrderFilter(CascadedBiquads):
         implementation details.
     """
 
-    def set_parameters(self, parameters: NthOrderFilterParameters):
+    def set_parameters(self, parameters: NthOrderFilterParameters):  # pyright: ignore
         """Update the parameters of the NthOrderFilterParameters stage.
 
         Parameters
