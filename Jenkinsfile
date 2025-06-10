@@ -458,7 +458,7 @@ pipeline {
                     xcoreBuild()
                   } // dir
                 }
-                // runLibraryChecks("${WORKSPACE}/${REPO}", "${params.INFR_APPS_VERSION}")
+                runLibraryChecks("${WORKSPACE}/${REPO}", "${params.INFR_APPS_VERSION}")
                 archiveSandbox(REPO)
               }
             }
