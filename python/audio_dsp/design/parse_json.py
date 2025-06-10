@@ -52,50 +52,7 @@ class Output(BaseModel, extra="ignore"):
 
 
 class Graph(BaseModel):
-    """
-    Graph object to hold the pipeline.
-
-    Examples
-    --------
-    1. EQ + Reverb Example:
-
-    ```json
-    {
-      "name": "EQ + Reverb Example",
-      "fs": 48000,
-      "nodes": [
-        {"placement": {"input": [0, 1], "output": [2, 3], "name": "VolumeIn", "thread": 0}, "op_type": "VolumeControl"},
-        {"op_type": "ParametricEq", "placement": {"input": [2, 3], "output": [4, 5], "name": "PEQ", "thread": 0}},
-        {"op_type": "ReverbPlateStereo", "config": {"predelay": 30}, "placement": {"input": [4, 5], "output": [6, 7], "name": "StereoReverb", "thread": 0}}
-      ],
-      "inputs": [
-        {"name": "audio_in", "output": [0, 1]}
-      ],
-      "outputs": [
-        {"name": "audio_out", "input": [6, 7]}
-      ]
-    }
-    ```
-
-    2. Stereo Mixer with Volume:
-
-    ```json
-    {
-      "name": "Stereo Mixer with Volume",
-      "fs": 48000,
-      "inputs": [
-        {"name": "stereo_in", "output": [0, 1]}
-      ],
-      "nodes": [
-        {"op_type": "Mixer", "placement": {"input": [0, 1], "name": "Mixer", "output": [2], "thread": 0}},
-        {"op_type": "VolumeControl", "placement": {"input": [2], "name": "Volume", "output": [3], "thread": 0}}
-      ],
-      "outputs": [
-        {"name": "stereo_out", "input": [3, 3]}
-      ]
-    }
-    ```
-    """
+    """Graph object to hold the pipeline information."""
 
     name: str = Field(..., description="Name of the graph")
     fs: int = Field(..., description="Sampling frequency for the graph")

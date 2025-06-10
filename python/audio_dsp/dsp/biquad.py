@@ -402,6 +402,14 @@ class biquad_slew(biquad):
         """
         ``process_int`` is not implemented for the slewing biquad, as the
         coefficient slew is shared across the channels.
+
+        Parameters
+        ----------
+        sample : float
+            The input sample to be processed.
+        channel : int, optional
+            The channel index to process the sample on. Default is 0.
+
         """
         raise NotImplementedError
 
