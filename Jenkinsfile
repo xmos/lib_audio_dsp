@@ -451,7 +451,7 @@ pipeline {
                 sh 'pip install --no-deps -r requirements-format.txt'
                 sh "make -C python check" // ruff check
                 versionChecks checkReleased: false, versionsPairs: versionsPairs
-                buildDocs()
+                buildDocs(xmosdocVenvPath:'.')
                 // need sandbox for lib checks
                 withTools(params.TOOLS_VERSION) {
                   dir("test/biquad") {
