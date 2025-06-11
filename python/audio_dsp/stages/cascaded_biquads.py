@@ -37,7 +37,7 @@ def _parametric_eq_doc(wrapped):
     doc_gen = "\n\n"
     for f, args in zip(design_funcs, func_args):
         arg_str = ", ".join(['"' + f.__name__.removeprefix("make_biquad_") + '"', *args])
-        doc_gen += f"            [{arg_str}]\n"
+        doc_gen += f"            | [{arg_str}]\n"
     wrapped.__doc__ = wrapped.__doc__.format(generated_doc=doc_gen)
 
     return wrapped
