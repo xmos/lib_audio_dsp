@@ -20,7 +20,6 @@ def test_noise_gate_pipeline():
             "nodes": [
                 {
                     "op_type": "NoiseGate",
-                    "config": {},
                     "parameters": {
                         "threshold_db": -40.0,
                         "attack_t": 0.01,
