@@ -12,6 +12,7 @@ from audio_dsp.models.reverb import (
     ReverbRoomStereoParameters,
     ReverbPlateParameters,
     ReverbRoomConfig,
+    ReverbRoomStereoConfig,
     ReverbPlateConfig,
 )
 
