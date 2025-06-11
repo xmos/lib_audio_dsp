@@ -1,3 +1,5 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Test delay pipeline creation."""
 
 from audio_dsp.design.parse_json import DspJson, make_pipeline
