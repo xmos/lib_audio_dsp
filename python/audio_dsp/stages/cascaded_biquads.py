@@ -371,7 +371,6 @@ class NthOrderFilter(CascadedBiquads):
         parameters : NthOrderFilterParameters
             The parameters to update the cascaded biquads with.
         """
-
         if parameters.type == "bypass":
             self.make_parametric_eq(
                 [
