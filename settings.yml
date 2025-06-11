@@ -3,7 +3,7 @@
 lib_name: lib_audio_dsp
 project: '{{lib_name}}'
 title: '{{lib_name}}: Audio DSP Library'
-version: 1.3.1
+version: 1.3.1-alpha
 
 documentation:
   run_before: |
