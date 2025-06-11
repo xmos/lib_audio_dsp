@@ -2,7 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Generic pydantic models for DSP Stages."""
 
-from typing import Type, Union
+from typing import Type, Union, Optional, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -124,6 +124,8 @@ class StageModel[Placement: NodePlacement](edgeProducerBaseModel):
     """
 
     placement: Placement
+    config: Any = None  # Allow child classes to override with specific, non-optional types
+    parameters: Any = None  # Allow child classes to override with specific, non-optional types
 
     def __init_subclass__(cls) -> None:
         """Add all subclasses of StageModel to a global list for querying."""

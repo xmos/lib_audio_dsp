@@ -1,11 +1,11 @@
-# Copyright 2025 XMOS LIMITED.
+﻿# Copyright 2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Functions to convert JSON files to Python DSP pipelines."""
 
 from collections import defaultdict
 from pathlib import Path
 from pprint import pprint
-from typing import Annotated, Any, Optional, Union, List
+from typing import Annotated, Any, Optional, Union, List, TypeVar
 
 from pydantic import BaseModel, Field
 from pydantic.json_schema import SkipJsonSchema
@@ -14,13 +14,14 @@ import audio_dsp.stages as Stages
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 from audio_dsp.design.stage import StageOutputList, all_stages
 from audio_dsp.models.signal_chain import Fork
-from audio_dsp.models.stage import all_models
+from audio_dsp.models.stage import all_models, StageModel
 import json
 import re
 import warnings
 
 BAD_NAMES = []
 
+# Define the union type alias for all stage models
 _stage_Models = Annotated[
     Union[
         tuple((SkipJsonSchema[i] if i.__name__ in BAD_NAMES else i) for i in all_models().values())
@@ -52,6 +53,8 @@ class Output(BaseModel, extra="ignore"):
         max_length=10,
     )
 
+
+StageModelType = TypeVar("StageModelType", bound=StageModel)
 
 class Graph(BaseModel):
     """Graph object to hold the pipeline information."""
