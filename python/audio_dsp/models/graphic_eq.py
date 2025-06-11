@@ -9,7 +9,6 @@ from pydantic import Field, field_validator, model_validator
 
 from audio_dsp.models.stage import (
     NodePlacement,
-    StageConfig,
     StageModel,
     StageParameters,
     Placement_2i1o,

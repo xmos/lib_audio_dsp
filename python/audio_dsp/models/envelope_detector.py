@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from audio_dsp.models.stage import StageConfig, StageModel, StageParameters, NodePlacement
+from audio_dsp.models.stage import StageModel, StageParameters, NodePlacement
 from audio_dsp.models.fields import DEFAULT_ATTACK_T, DEFAULT_RELEASE_T
 
 

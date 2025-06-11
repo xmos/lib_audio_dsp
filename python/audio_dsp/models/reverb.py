@@ -60,7 +60,7 @@ class ReverbStereoBaseParameters(ReverbBaseParameters):
 class ReverbBaseConfig(StageConfig):
     """Compile time configuration for a ReverbRoom Stage."""
 
-    predelay: float = Field(default=30, description="Set the maximum predelay in milliseconds.")
+    max_predelay: float = Field(default=30, description="Set the maximum predelay in milliseconds.")
 
 
 class _ReverbBaseModel[Placement: NodePlacement](StageModel[Placement]):
@@ -71,6 +71,15 @@ class _ReverbBaseModel[Placement: NodePlacement](StageModel[Placement]):
 
     # op_type: is not defined as this Stage cannot be pipelined
     config: ReverbBaseConfig = Field(default_factory=ReverbBaseConfig)
+
+
+class ReverbRoomConfig(ReverbBaseConfig):
+    """Compile time configuration for a ReverbRoom Stage."""
+    max_room_size: float = Field(
+        default=1.0, gt=0, le=4, description=("Sets the maximum room size for this reverb. The"
+        " ``room_size`` parameter sets the fraction of this value actually used at any given time."
+        " For optimal memory usage, max_room_size should be set so that the longest reverb tail"
+        " occurs when ``room_size=1.0``."))
 
 
 class ReverbRoomParameters(ReverbBaseParameters):
@@ -101,9 +110,19 @@ class ReverbRoomParameters(ReverbBaseParameters):
         "a given room size. Range: 0 to 1",
     )
 
+class ReverbRoomStereoConfig(ReverbRoomConfig):
+    """Compile time configuration for a ReverbRoomStereo Stage."""
+
+    pass
 
 class ReverbRoomStereoParameters(ReverbStereoBaseParameters, ReverbRoomParameters):
     """Parameters for a ReverbRoomStereo Stage."""
+
+    pass
+
+
+class ReverbPlateConfig(ReverbBaseConfig):
+    """Compile time configuration for a ReverbPlate Stage."""
 
     pass
 
@@ -158,6 +177,7 @@ class ReverbRoom(_ReverbBaseModel[MonoPlacement]):
 
     op_type: Literal["ReverbRoom"] = "ReverbRoom"
     parameters: ReverbRoomParameters = Field(default_factory=ReverbRoomParameters)
+    config: ReverbRoomConfig = Field(default_factory=ReverbRoomConfig)
 
 
 class ReverbRoomStereo(_ReverbBaseModel[StereoPlacement]):
@@ -165,6 +185,7 @@ class ReverbRoomStereo(_ReverbBaseModel[StereoPlacement]):
 
     op_type: Literal["ReverbRoomStereo"] = "ReverbRoomStereo"
     parameters: ReverbRoomStereoParameters = Field(default_factory=ReverbRoomStereoParameters)
+    config: ReverbRoomStereoConfig = Field(default_factory=ReverbRoomStereoConfig)
 
 
 class ReverbPlateStereo(_ReverbBaseModel[StereoPlacement]):
@@ -178,3 +199,4 @@ class ReverbPlateStereo(_ReverbBaseModel[StereoPlacement]):
 
     op_type: Literal["ReverbPlateStereo"] = "ReverbPlateStereo"
     parameters: ReverbPlateParameters = Field(default_factory=ReverbPlateParameters)
+    config: ReverbPlateConfig = Field(default_factory=ReverbPlateConfig)

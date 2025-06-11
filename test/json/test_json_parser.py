@@ -3,7 +3,7 @@
 from pathlib import Path
 import annotated_types
 
-from audio_dsp.design.parse_json import Graph, make_pipeline, insert_forks, DspJson
+from audio_dsp.design.parse_json import Graph, make_pipeline, insert_forks, DspJson, pipeline_to_dspjson
 
 from audio_dsp.models.stage import all_models
 from audio_dsp.stages import all_stages
@@ -26,7 +26,7 @@ def test_no_shared_edge():
       "name": "No shared edge",
       "fs": 44100,
       "inputs": [{
-          "name": "audio_in",
+          "name": "inputs",
           "output": [0]
       }],
       "nodes": [
@@ -42,23 +42,28 @@ def test_no_shared_edge():
         }
       ],
       "outputs": [{
-          "name": "audio_out",
+          "name": "outputs",
           "input": [1]
       }]
     }
     """
     graph = Graph.model_validate_json(json_str)
-    a = make_pipeline(
-        DspJson(ir_version=1, producer_name="test", producer_version="1.0", graph=graph)
-    )
+    dsp_json = DspJson(ir_version=1, producer_name="test", producer_version="1.0", graph=graph)
+    a = make_pipeline(dsp_json)
+
     a.draw(Path("test_no_shared_edge"))
     new_graph = insert_forks(graph)
     print(f"Before insert_forks: {graph.model_dump_json()}")
     print(f"After insert_forks: {new_graph.model_dump_json()}")
 
+    dsp_json = DspJson(ir_version=1, producer_name="pipeline_to_dspjson", producer_version="1.0", graph=new_graph)
+    new_json = pipeline_to_dspjson(a)
+    assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
+
     for node in graph.nodes:
         if 'AutoFork' in node.placement.name:
             assert False, "AutoFork node found in the graph after insert_forks, but not needed."
+
 
 
 
@@ -68,7 +73,7 @@ def test_shared_edge_from_graph_input():
       "name": "Shared edge from graph input",
       "fs": 44100,
       "inputs": [{
-          "name": "audio_in",
+          "name": "inputs",
           "output": [0]
       }],
       "nodes": [
@@ -94,15 +99,15 @@ def test_shared_edge_from_graph_input():
         }
       ],
       "outputs": [{
-          "name": "audio_out",
+          "name": "outputs",
           "input": [1]
       }]
     }
     """
     graph = Graph.model_validate_json(json_str)
-    a = make_pipeline(
-        DspJson(ir_version=1, producer_name="test", producer_version="1.0", graph=graph)
-    )
+    dsp_json = DspJson(ir_version=1, producer_name="test", producer_version="1.0", graph=graph)
+    a = make_pipeline(dsp_json)
+
     a.draw(Path("test_shared_edge_from_graph_input"))
     new_graph = insert_forks(graph)
     print(f"Before insert_forks: {graph.model_dump_json()}")
@@ -116,7 +121,7 @@ def test_shared_edge_from_producer_node():
       "name": "Shared edge from producer node",
       "fs": 44100,
       "inputs": [{
-          "name": "audio_in",
+          "name": "inputs",
           "output": [0]
       }],
       "nodes": [
@@ -152,15 +157,15 @@ def test_shared_edge_from_producer_node():
         }
       ],
       "outputs": [{
-          "name": "audio_out",
+          "name": "outputs",
           "input": [2]
       }]
     }
     """
     graph = Graph.model_validate_json(json_str)
-    a = make_pipeline(
-        DspJson(ir_version=1, producer_name="test", producer_version="1.0", graph=graph)
-    )
+    dsp_json = DspJson(ir_version=1, producer_name="test", producer_version="1.0", graph=graph)
+    a = make_pipeline(dsp_json)
+    
     a.draw(Path("test_shared_edge_from_producer_node"))
     new_graph = insert_forks(graph)
     print(f"Before insert_forks: {graph.model_dump_json()}")
@@ -174,7 +179,7 @@ def test_shared_edge_with_graph_output():
       "name": "Shared edge with graph output",
       "fs": 44100,
       "inputs": [{
-          "name": "audio_in",
+          "name": "inputs",
           "output": [0]
       }],
       "nodes": [
@@ -200,15 +205,15 @@ def test_shared_edge_with_graph_output():
         }
       ],
       "outputs": [{
-          "name": "audio_out",
+          "name": "outputs",
           "input": [1]
       }]
     }
     """
     graph = Graph.model_validate_json(json_str)
-    a = make_pipeline(
-        DspJson(ir_version=1, producer_name="test", producer_version="1.0", graph=graph)
-    )
+    dsp_json = DspJson(ir_version=1, producer_name="test", producer_version="1.0", graph=graph)
+    a = make_pipeline(dsp_json)
+    
     a.draw(Path("test_shared_edge_with_graph_output"))
     new_graph = insert_forks(graph)
     print(f"Before insert_forks: {graph.model_dump_json()}")
@@ -236,9 +241,9 @@ def test_again():
     }
     """
     graph = Graph.model_validate_json(json_str)
-    a = make_pipeline(
-        DspJson(ir_version=1, producer_name="test", producer_version="1.0", graph=graph)
-    )
+    dsp_json = DspJson(ir_version=1, producer_name="test", producer_version="1.0", graph=graph)
+    a = make_pipeline(dsp_json)
+    
     a.draw(Path("test_again"))
     new_graph = insert_forks(graph)
     print(f"Before insert_forks: {graph.model_dump_json()}")
@@ -288,9 +293,9 @@ def test_multiple_inputs_outputs_non_shared():
     }
     """
     graph = Graph.model_validate_json(json_str)
-    a = make_pipeline(
-        DspJson(ir_version=1, producer_name="test", producer_version="1.0", graph=graph)
-    )
+    dsp_json = DspJson(ir_version=1, producer_name="test", producer_version="1.0", graph=graph)
+    a = make_pipeline(dsp_json)
+    
     a.draw(Path("test_multiple_inputs_outputs_non_shared"))
     new_graph = insert_forks(graph)
     print("Test: Multiple Inputs and Outputs Non-Shared Test")
@@ -331,9 +336,9 @@ def test_multiple_inputs_outputs_shared():
     }
     """
     graph = Graph.model_validate_json(json_str)
-    a = make_pipeline(
-        DspJson(ir_version=1, producer_name="test", producer_version="1.0", graph=graph)
-    )
+    dsp_json = DspJson(ir_version=1, producer_name="test", producer_version="1.0", graph=graph)
+    a = make_pipeline(dsp_json)
+    
     a.draw(Path("test_multiple_inputs_outputs_shared"))
     new_graph = insert_forks(graph)
     print("Test: Multiple Inputs and Outputs Shared Test")
@@ -410,4 +415,4 @@ def test_all_stages_models():
 
 
 if __name__ == "__main__":
-  test_multiple_inputs_outputs_shared()
+  test_no_shared_edge()
