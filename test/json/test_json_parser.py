@@ -415,4 +415,4 @@ def test_all_stages_models():
 
 
 if __name__ == "__main__":
-  test_no_shared_edge()
+  test_all_stages_models()

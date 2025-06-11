@@ -20,7 +20,6 @@ def test_noise_suppressor_expander_pipeline():
             "nodes": [
                 {
                     "op_type": "NoiseSuppressorExpander",
-                    "config": {},
                     "parameters": {
                         "ratio": 3.0,
                         "threshold_db": -35.0,

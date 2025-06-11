@@ -20,7 +20,6 @@ def test_rms_limiter_pipeline():
             "nodes": [
                 {
                     "op_type": "LimiterRMS",
-                    "config": {},
                     "parameters": {
                         "threshold_db": -6.0,
                         "attack_t": 0.01,
@@ -81,7 +80,6 @@ def test_peak_limiter_pipeline():
             "nodes": [
                 {
                     "op_type": "LimiterPeak",
-                    "config": {},
                     "parameters": {
                         "threshold_db": -3.0,
                         "attack_t": 0.005,
@@ -141,7 +139,6 @@ def test_hard_peak_limiter_pipeline():
             "nodes": [
                 {
                     "op_type": "HardLimiterPeak",
-                    "config": {},
                     "parameters": {
                         "threshold_db": -1.0,
                         "attack_t": 0.001,

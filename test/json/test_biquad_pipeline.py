@@ -22,7 +22,6 @@ def test_simple_biquad_pipeline():
             "nodes": [
                 {
                     "op_type": "Biquad",
-                    "config": {},
                     "parameters": {
                         "filter_type": {
                             "type": "lowpass",

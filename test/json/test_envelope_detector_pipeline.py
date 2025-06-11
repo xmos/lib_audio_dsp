@@ -20,7 +20,6 @@ def test_peak_envelope_detector_pipeline():
             "nodes": [
                 {
                     "op_type": "EnvelopeDetectorPeak",
-                    "config": {},
                     "parameters": {
                         "attack_t": 0.01,
                         "release_t": 0.1
@@ -79,7 +78,6 @@ def test_rms_envelope_detector_pipeline():
             "nodes": [
                 {
                     "op_type": "EnvelopeDetectorRMS",
-                    "config": {},
                     "parameters": {
                         "attack_t": 0.05,
                         "release_t": 0.2

@@ -20,7 +20,6 @@ def test_parametric_eq_pipeline():
             "nodes": [
                 {
                     "op_type": "ParametricEq8b",
-                    "config": {},
                     "parameters": {
                         "filters": [
                             {

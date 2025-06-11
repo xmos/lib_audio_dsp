@@ -1,4 +1,4 @@
-﻿# Copyright 2025 XMOS LIMITED.
+# Copyright 2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Functions to convert JSON files to Python DSP pipelines."""
 
@@ -55,6 +55,7 @@ class Output(BaseModel, extra="ignore"):
 
 
 StageModelType = TypeVar("StageModelType", bound=StageModel)
+
 
 class Graph(BaseModel):
     """Graph object to hold the pipeline information."""

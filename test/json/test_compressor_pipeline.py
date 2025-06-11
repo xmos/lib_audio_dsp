@@ -20,7 +20,6 @@ def test_simple_compressor_pipeline():
             "nodes": [
                 {
                     "op_type": "CompressorRMS",
-                    "config": {},
                     "parameters": {
                         "ratio": 4.0,
                         "threshold_db": -20.0,
