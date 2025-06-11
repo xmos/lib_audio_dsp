@@ -8,6 +8,8 @@
 #
 -e file:./python#egg=audio_dsp
     # via -r tools/requirements.in
+annotated-types==0.7.0
+    # via pydantic
 asttokens==2.4.1
     # via stack-data
 build==1.2.1
@@ -102,6 +104,10 @@ pure-eval==0.2.2
     # via stack-data
 pycparser==2.22
     # via cffi
+pydantic==2.11.4
+    # via audio-dsp
+pydantic-core==2.33.2
+    # via pydantic
 pygments==2.18.0
     # via ipython
 pyparsing==3.1.2
@@ -144,7 +150,13 @@ traitlets==5.14.3
     #   ipywidgets
     #   matplotlib-inline
 typing-extensions==4.12.2
-    # via pyright
+    # via
+    #   pydantic
+    #   pydantic-core
+    #   pyright
+    #   typing-inspection
+typing-inspection==0.4.0
+    # via pydantic
 wcwidth==0.2.13
     # via prompt-toolkit
 wheel==0.43.0

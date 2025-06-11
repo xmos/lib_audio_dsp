@@ -322,6 +322,22 @@ pipeline {
                 } // dir
               }
             } // Build
+            stage('Test JSON') {
+              steps {
+                dir("lib_audio_dsp") {
+                  withVenv {
+                    withTools(params.TOOLS_VERSION) {
+                      catchError(stageResult: 'FAILURE', catchInterruptions: false){
+                        // buildApps(["test/json"])
+                          dir("test/json") {
+                            runPytest("--dist worksteal")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } // test json
             stage('Test DRC') {
               when {
                 anyOf {
@@ -435,7 +451,7 @@ pipeline {
                 sh 'pip install --no-deps -r requirements-format.txt'
                 sh "make -C python check" // ruff check
                 versionChecks checkReleased: false, versionsPairs: versionsPairs
-                buildDocs()
+                buildDocs(xmosdocVenvPath:'.')
                 // need sandbox for lib checks
                 withTools(params.TOOLS_VERSION) {
                   dir("test/biquad") {

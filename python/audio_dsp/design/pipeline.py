@@ -5,18 +5,15 @@
 
 from enum import IntEnum
 from pathlib import Path
-from tabulate import tabulate
 
 from audio_dsp.design.composite_stage import CompositeStage
 from audio_dsp.design.pipeline_executor import PipelineExecutor, PipelineView
-from .graph import Graph
-from .stage import Stage, StageOutput, StageOutputList, find_config
-from .thread import Thread
+from audio_dsp.design.graph import Graph
+from audio_dsp.design.stage import Stage, StageOutput, StageOutputList, find_config
+from audio_dsp.design.thread import Thread
 from IPython import display
-import yaml
 import hashlib
 import json
-import numpy as np
 from uuid import uuid4
 from ._draw import new_record_digraph
 from functools import wraps
@@ -184,6 +181,7 @@ class Pipeline:
         stage_type: Type[Stage | CompositeStage],
         inputs: StageOutputList,
         label: str | None = None,
+        thread: int | None = None,
         **kwargs,
     ) -> StageOutputList:
         """
@@ -200,7 +198,11 @@ class Pipeline:
             into a macro in the generated pipeline. Label must be set if tuning or
             run time control is required for this stage.
         """
-        s = self._current_thread.stage(stage_type, inputs, label=label, **kwargs)
+        if thread is not None:
+            s = self.threads[thread].stage(stage_type, inputs, label=label, **kwargs)
+        else:
+            s = self._current_thread.stage(stage_type, inputs, label=label, **kwargs)
+
         if label:
             if label in self._labelled_stages:
                 raise RuntimeError(f"Label {label} is already in use.")

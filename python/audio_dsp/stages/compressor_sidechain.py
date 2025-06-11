@@ -4,9 +4,10 @@
 the level of a different input.
 """
 
-from ..design.stage import Stage, find_config
-from ..dsp import drc as drc
-from ..dsp import generic as dspg
+from audio_dsp.design.stage import Stage, find_config
+from audio_dsp.dsp import drc as drc
+from audio_dsp.dsp import generic as dspg
+from audio_dsp.models.compressor_sidechain_model import CompressorSidechainParameters
 
 
 class CompressorSidechain(Stage):
@@ -53,6 +54,12 @@ class CompressorSidechain(Stage):
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)
         self.set_control_field_cb("slope", lambda: self.dsp_block.slope_f32)
 
+    def set_parameters(self, parameters: CompressorSidechainParameters):
+        """Update the parameters of the CompressorSidechainStereo stage."""
+        self.make_compressor_sidechain(
+            parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
+        )
+
     def make_compressor_sidechain(
         self, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG
     ):
@@ -61,10 +68,11 @@ class CompressorSidechain(Stage):
         Parameters
         ----------
         ratio : float
-            Compression gain ratio applied when the signal is above the
-            threshold.
+            The compression ratio applied to the signal when the envelope
+            exceeds the threshold.
         threshold_db : float
-            Threshold in decibels above which compression occurs.
+            The threshold level in decibels above which the audio signal is
+            compressed.
         attack_t : float
             Attack time of the compressor in seconds.
         release_t : float
@@ -135,10 +143,11 @@ class CompressorSidechainStereo(Stage):
         Parameters
         ----------
         ratio : float
-            Compression gain ratio applied when the signal is above the
-            threshold.
+            The compression ratio applied to the signal when the envelope
+            exceeds the threshold.
         threshold_db : float
-            Threshold in decibels above which compression occurs.
+            The threshold level in decibels above which the audio signal is
+            compressed.
         attack_t : float
             Attack time of the compressor in seconds.
         release_t : float
@@ -155,3 +164,9 @@ class CompressorSidechainStereo(Stage):
             self.fs, ratio, threshold_db, attack_t, release_t, Q_sig
         )
         return self
+
+    def set_parameters(self, parameters: CompressorSidechainParameters):
+        """Update the parameters of the CompressorSidechainStereo stage."""
+        self.make_compressor_sidechain(
+            parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
+        )

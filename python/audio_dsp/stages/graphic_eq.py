@@ -9,6 +9,7 @@ from ..design.stage import Stage, find_config, StageOutputList, StageOutput
 from ..dsp import generic as dspg
 import audio_dsp.dsp.graphic_eq as geq
 import numpy as np
+from audio_dsp.models.graphic_eq import GraphicEq10bParameters
 
 
 class GraphicEq10b(Stage):
@@ -48,3 +49,14 @@ class GraphicEq10b(Stage):
         """
         self.dsp_block.gains_db = gains_db
         return self
+
+    def set_parameters(self, parameters: GraphicEq10bParameters):
+        """
+        Set the parameters of the graphic eq.
+
+        Parameters
+        ----------
+        parameters : GraphicEq10bParameters
+            The parameters of the graphic eq.
+        """
+        self.set_gains(parameters.gains_db)

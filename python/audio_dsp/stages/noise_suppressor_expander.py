@@ -5,9 +5,10 @@ of quiet signals, typically by tring to reduce the audibility of noise
 in the signal.
 """
 
-from ..design.stage import Stage, find_config
-from ..dsp import drc as drc
-from ..dsp import generic as dspg
+from audio_dsp.design.stage import Stage, find_config
+from audio_dsp.dsp import drc as drc
+from audio_dsp.dsp import generic as dspg
+from audio_dsp.models.noise_suppressor_expander_model import NoiseSuppressorExpanderParameters
 
 
 class NoiseSuppressorExpander(Stage):
@@ -49,6 +50,12 @@ class NoiseSuppressorExpander(Stage):
         self.set_control_field_cb("slope", lambda: self.dsp_block.slope_f32)
 
         self.stage_memory_parameters = (self.n_in,)
+
+    def set_parameters(self, parameters: NoiseSuppressorExpanderParameters):
+        """Update the parameters of the NoiseSuppressorExpander stage."""
+        self.make_noise_suppressor_expander(
+            parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
+        )
 
     def make_noise_suppressor_expander(
         self, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG

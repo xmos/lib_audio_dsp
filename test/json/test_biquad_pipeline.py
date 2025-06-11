@@ -1,0 +1,81 @@
+"""Test biquad filter pipeline creation.
+"""
+
+from audio_dsp.design.parse_json import DspJson, make_pipeline
+from audio_dsp.models.biquad import Biquad
+
+
+def test_simple_biquad_pipeline():
+    """Test creating a simple biquad filter pipeline."""
+    print("Creating simple stereo biquad pipeline...")
+    
+    # Create a simple stereo biquad pipeline JSON
+    pipeline_json = {
+        "ir_version": 1,
+        "producer_name": "test_biquad",
+        "producer_version": "0.1",
+        "graph": {
+            "name": "Simple Biquad",
+            "fs": 48000,
+            "nodes": [
+                {
+                    "op_type": "Biquad",
+                    "config": {},
+                    "parameters": {
+                        "filter_type": {
+                            "type": "lowpass",
+                            "filter_freq": 1000,
+                            "q_factor": 0.707
+                        },
+                        "slew_rate": 0.5
+                    },
+                    "placement": {
+                        "input": [0, 1],
+                        "output": [2, 3],
+                        "name": "StereoBiquad",
+                        "thread": 0
+                    }
+                }
+            ],
+            "inputs": [
+                {
+                    "name": "audio_in",
+                    "output": [0, 1]
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "audio_out",
+                    "input": [2, 3]
+                }
+            ]
+        }
+    }
+    
+    dsp_json = DspJson(**pipeline_json)
+    pipeline = make_pipeline(dsp_json)
+    
+    # Find our biquad stage
+    biquad_stage = None
+    for stage in pipeline.stages:
+        if stage.name == "biquad":
+            biquad_stage = stage
+            break
+            
+    assert biquad_stage is not None, "Could not find Biquad stage in pipeline"
+    
+    assert biquad_stage.parameters.filter_type.type == "lowpass", \
+        f"Expected filter_type 'lowpass', got {biquad_stage.parameters.filter_type.type}"
+    
+    assert biquad_stage.parameters.filter_type.filter_freq == 1000, \
+        f"Expected filter_freq 1000, got {biquad_stage.parameters.filter_type.filter_freq}"
+    
+    assert biquad_stage.parameters.filter_type.q_factor == 0.707, \
+        f"Expected q_factor 0.707, got {biquad_stage.parameters.filter_type.q_factor}"
+    
+    assert biquad_stage.parameters.slew_rate == 0.5, \
+        f"Expected slew_rate 0.5, got {biquad_stage.parameters.slew_rate}"
+    
+
+if __name__ == "__main__":
+    test_simple_biquad_pipeline() 

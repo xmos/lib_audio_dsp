@@ -4,9 +4,10 @@
 based on its envelope.
 """
 
-from ..design.stage import Stage, find_config
-from ..dsp import drc as drc
-from ..dsp import generic as dspg
+from audio_dsp.design.stage import Stage, find_config
+from audio_dsp.dsp import drc as drc
+from audio_dsp.dsp import generic as dspg
+from audio_dsp.models.limiter_model import LimiterParameters, ClipperParameters
 
 
 class LimiterRMS(Stage):
@@ -64,6 +65,18 @@ class LimiterRMS(Stage):
             self.fs, self.n_in, threshold_db, attack_t, release_t, Q_sig
         )
         return self
+
+    def set_parameters(self, parameters: LimiterParameters):
+        """Update limiter configuration based on new parameters.
+
+        Parameters
+        ----------
+        parameters : LimiterParameters
+            The parameters to update the limiter with.
+        """
+        return self.make_limiter_rms(
+            parameters.threshold_db, parameters.attack_t, parameters.release_t
+        )
 
 
 class LimiterPeak(Stage):
@@ -123,6 +136,18 @@ class LimiterPeak(Stage):
             self.fs, self.n_in, threshold_db, attack_t, release_t, Q_sig
         )
         return self
+
+    def set_parameters(self, parameters: LimiterParameters):
+        """Update limiter configuration based on new parameters.
+
+        Parameters
+        ----------
+        parameters : LimiterParameters
+            The parameters to update the limiter with.
+        """
+        return self.make_limiter_peak(
+            parameters.threshold_db, parameters.attack_t, parameters.release_t
+        )
 
 
 class HardLimiterPeak(Stage):
@@ -184,6 +209,18 @@ class HardLimiterPeak(Stage):
         )
         return self
 
+    def set_parameters(self, parameters: LimiterParameters):
+        """Update limiter configuration based on new parameters.
+
+        Parameters
+        ----------
+        parameters : LimiterParameters
+            The parameters to update the limiter with.
+        """
+        return self.make_hard_limiter_peak(
+            parameters.threshold_db, parameters.attack_t, parameters.release_t
+        )
+
 
 class Clipper(Stage):
     """
@@ -225,3 +262,13 @@ class Clipper(Stage):
         )
         self.dsp_block = drc.clipper(self.fs, self.n_in, threshold_db, Q_sig)
         return self
+
+    def set_parameters(self, parameters: ClipperParameters):
+        """Update clipper configuration based on new parameters.
+
+        Parameters
+        ----------
+        parameters : LimiterParameters
+            The parameters to update the clipper with.
+        """
+        return self.make_clipper(parameters.threshold_db)
