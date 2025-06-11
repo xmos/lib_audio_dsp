@@ -1,3 +1,5 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Models for noise suppressor expander stages."""
 
 from typing import Literal
