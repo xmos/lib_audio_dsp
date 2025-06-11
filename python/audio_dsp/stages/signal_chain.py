@@ -464,7 +464,7 @@ class Delay(Stage):
         super().__init__(config=find_config("delay"), **kwargs)
         self.create_outputs(self.n_in)
 
-        self.config = DelayConfig(max_delay=max_delay, units=units)
+        self.config = DelayConfig(max_delay=max_delay, units=units)  # pyright: ignore
         max_delay = self.config.max_delay
 
         self.dsp_block: sc.delay = sc.delay(self.fs, self.n_in, max_delay, starting_delay, units)
