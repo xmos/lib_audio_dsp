@@ -124,8 +124,6 @@ class StageModel[Placement: NodePlacement](edgeProducerBaseModel):
     """
 
     placement: Placement
-    config: Any = None  # Allow child classes to override with specific, non-optional types
-    parameters: Any = None  # Allow child classes to override with specific, non-optional types
 
     def __init_subclass__(cls) -> None:
         """Add all subclasses of StageModel to a global list for querying."""

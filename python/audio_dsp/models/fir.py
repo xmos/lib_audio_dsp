@@ -18,4 +18,4 @@ class FirDirect(StageModel):
     """FIR filter stage using direct form implementation."""
 
     op_type: Literal["FirDirect"] = "FirDirect"
-    config: FirConfig  # pyright: ignore Required field, no default or Field(...) needed 
+    config: FirConfig = Field(..., description="FIR configuration.")
