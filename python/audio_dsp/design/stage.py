@@ -568,7 +568,7 @@ class Stage(Node):
             center = f"{self.index}: {self.label}\\n"
         if self.parameters:
             details = ""
-            for key, value in self.parameters.dict().items():
+            for key, value in self.parameters.model_dump().items():
                 if isinstance(value, dict):
                     details += f"{'\\n'.join(f'{k}: {v}' for k, v in value.items())}\\n"
                 else:
