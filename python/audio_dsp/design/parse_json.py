@@ -1,4 +1,4 @@
-﻿# Copyright 2025 XMOS LIMITED.
+# Copyright 2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Functions to convert JSON files to Python DSP pipelines."""
 
@@ -373,5 +373,3 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
         graph=graph,
     )
     return dsp_json
-
-

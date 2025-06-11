@@ -10,6 +10,7 @@ from audio_dsp.dsp import fir as fir
 from audio_dsp.dsp import generic as dspg
 from audio_dsp.models.fir import FirConfig
 
+
 class FirDirect(Stage):
     """A FIR filter implemented in the time domain. The input signal is
     convolved with the filter coefficients. The filter coefficients can
