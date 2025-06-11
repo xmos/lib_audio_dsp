@@ -16,6 +16,7 @@ from audio_dsp.models.signal_chain import (
     DelayParameters,
     DelayConfig,
     CrossfaderParameters,
+    ForkConfig,
 )
 from audio_dsp.design.stage import (
     Stage,
@@ -80,6 +81,8 @@ class Fork(Stage):
     def __init__(self, count=2, **kwargs):
         super().__init__(name="fork", **kwargs)
         self.create_outputs(self.n_in * count)
+
+        self.config = ForkConfig(count=count)
 
         fork_indices = [list(range(i, self.n_in * count, count)) for i in range(count)]
         forks = []
@@ -456,19 +459,13 @@ class Delay(Stage):
         max_delay: float = 1024,
         starting_delay: float = 0,
         units: str = "samples",
-        config: Optional[DelayConfig] = None,
-        parameters: Optional[DelayParameters] = None,
         **kwargs,
     ):
         super().__init__(config=find_config("delay"), **kwargs)
         self.create_outputs(self.n_in)
 
-        # Get config values
-        if config is not None:
-            max_delay = config.max_delay
-        # Get parameter values
-        if parameters is not None:
-            starting_delay = parameters.delay
+        self.config = DelayConfig(max_delay=max_delay, units=units)
+        max_delay = self.config.max_delay
 
         self.dsp_block: sc.delay = sc.delay(self.fs, self.n_in, max_delay, starting_delay, units)
         self["max_delay"] = max_delay

@@ -251,8 +251,8 @@ class _GlobalStages:
 
 
 # This defines the types of instances of the config/parameter classes
-StageParameterType = TypeVar("StageParameterType", bound="StageParameters")
-DspBlockType = TypeVar("DspBlockType", bound="dsp_block")
+StageParameterType = TypeVar("StageParameterType", bound=StageParameters)
+DspBlockType = TypeVar("DspBlockType", bound=dsp_block)
 
 
 class Stage(Node):

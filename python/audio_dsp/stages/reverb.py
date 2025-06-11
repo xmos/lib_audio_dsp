@@ -11,6 +11,8 @@ from audio_dsp.models.reverb import (
     ReverbRoomParameters,
     ReverbRoomStereoParameters,
     ReverbPlateParameters,
+    ReverbRoomConfig,
+    ReverbPlateConfig
 )
 
 
@@ -118,6 +120,8 @@ class ReverbRoom(_ReverbBase):
         self.create_outputs(self.n_in)
 
         max_predelay = predelay if max_predelay == None else max_predelay
+
+        self.config = ReverbRoomConfig(max_room_size=max_room_size, max_predelay=max_predelay)
 
         self.parameters = ReverbRoomParameters(
             room_size=1.0,
@@ -248,6 +252,8 @@ class ReverbRoomStereo(ReverbRoom):
 
         max_predelay = predelay if max_predelay == None else max_predelay
 
+        self.config = ReverbRoomStereoConfig(max_room_size=max_room_size, max_predelay=max_predelay)
+
         self.parameters = ReverbRoomStereoParameters(
             room_size=1.0,
             damping=0.4,
@@ -344,6 +350,8 @@ class ReverbPlateStereo(_ReverbBase):
         self.create_outputs(self.n_in)
 
         max_predelay = predelay if max_predelay == None else max_predelay
+
+        self.config = ReverbPlateConfig( max_predelay=max_predelay)
 
         self.parameters = ReverbPlateParameters(
             decay=0.4,

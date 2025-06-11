@@ -2,7 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Test noise suppressor expander pipeline creation."""
 
-from audio_dsp.design.parse_json import DspJson, make_pipeline
+from audio_dsp.design.parse_json import DspJson, make_pipeline, pipeline_to_dspjson
 
 
 def test_noise_suppressor_expander_pipeline():
@@ -37,13 +37,13 @@ def test_noise_suppressor_expander_pipeline():
             ],
             "inputs": [
                 {
-                    "name": "audio_in",
+                    "name": "inputs",
                     "output": [0, 1]
                 }
             ],
             "outputs": [
                 {
-                    "name": "audio_out",
+                    "name": "outputs",
                     "input": [2, 3]
                 }
             ]
@@ -62,6 +62,9 @@ def test_noise_suppressor_expander_pipeline():
             
     assert suppressor_stage is not None, "Could not find Noise Suppressor Expander stage in pipeline"
 
+    new_json = pipeline_to_dspjson(pipeline)
+    assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
+    
 
 if __name__ == "__main__":
     test_noise_suppressor_expander_pipeline() 

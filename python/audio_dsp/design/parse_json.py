@@ -225,7 +225,7 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
     # Find the maximum edge index to size edge_list
     max_edge = max(edgelist) if edgelist else -1
     # Begin pipeline and get input StageOutput objects
-    p, in_edges = Pipeline.begin(total_channels, fs=graph.fs)
+    p, in_edges = Pipeline.begin(total_channels, fs=graph.fs, identifier=graph.name)
     # Add threads to the pipeline as needed
     thread_max = max(node.placement.thread for node in graph.nodes) if graph.nodes else 0
     for _ in range(thread_max):
@@ -303,8 +303,8 @@ def update_pipeline(p: Pipeline, params: DspJson):
 def pipeline_to_dspjson(pipeline) -> DspJson:
     """Convert a Pipeline object to a DspJson object."""
     # Example: Extract graph-level info
-    graph_name = getattr(pipeline, "name", "Generated DSP Graph")
-    fs = getattr(pipeline, "fs", 48000)
+    graph_name = getattr(pipeline, "_id")
+    fs = getattr(pipeline, "fs")
 
     # Extract inputs and outputs
     inputs = [
@@ -345,9 +345,9 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
                 "op_type": op_type,
                 "placement": placement,  # Should be a dict or Pydantic model
             }
-            if hasattr(stage, "config") and isinstance(stage.config, BaseModel):
+            if hasattr(stage, "config"):
                 node_dict["config"] = stage.config
-            if hasattr(stage, "parameters") and isinstance(stage.parameters, BaseModel):
+            if hasattr(stage, "parameters"):
                 node_dict["parameters"] = stage.parameters
             # Convert to the correct Pydantic model for the node
             node_model_cls = type(stage.model) if hasattr(stage, "model") else None

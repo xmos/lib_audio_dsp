@@ -10,7 +10,7 @@ from pydantic.json_schema import SkipJsonSchema
 
 from audio_dsp.models.fields import BIQUAD_TYPES, biquad_bypass, DEFAULT_FILTER_FREQ
 
-from .stage import StageConfig, StageModel, StageParameters
+from .stage import StageModel, StageParameters
 
 
 def _8biquads():

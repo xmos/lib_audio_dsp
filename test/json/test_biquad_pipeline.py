@@ -3,7 +3,7 @@
 """Test biquad filter pipeline creation.
 """
 
-from audio_dsp.design.parse_json import DspJson, make_pipeline
+from audio_dsp.design.parse_json import DspJson, make_pipeline, pipeline_to_dspjson
 from audio_dsp.models.biquad import Biquad
 
 
@@ -41,13 +41,13 @@ def test_simple_biquad_pipeline():
             ],
             "inputs": [
                 {
-                    "name": "audio_in",
+                    "name": "inputs",
                     "output": [0, 1]
                 }
             ],
             "outputs": [
                 {
-                    "name": "audio_out",
+                    "name": "outputs",
                     "input": [2, 3]
                 }
             ]
@@ -78,6 +78,8 @@ def test_simple_biquad_pipeline():
     assert biquad_stage.parameters.slew_rate == 0.5, \
         f"Expected slew_rate 0.5, got {biquad_stage.parameters.slew_rate}"
     
+    new_json = pipeline_to_dspjson(pipeline)
+    assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
 
 if __name__ == "__main__":
     test_simple_biquad_pipeline() 
