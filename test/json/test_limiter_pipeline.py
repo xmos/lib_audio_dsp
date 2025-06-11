@@ -47,15 +47,9 @@ def test_rms_limiter_pipeline():
         }
     }
     
-    print("Parsing JSON and creating pipeline...")
     dsp_json = DspJson(**pipeline_json)
     pipeline = make_pipeline(dsp_json)
     
-    print("\nStages in pipeline:")
-    for i, stage in enumerate(pipeline.stages):
-        print(f"Stage {i}: {stage.name} (type: {type(stage).__name__})")
-    
-    print("\nValidating pipeline...")
     # Find our limiter stage
     limiter_stage = None
     for stage in pipeline.stages:
@@ -64,9 +58,7 @@ def test_rms_limiter_pipeline():
             break
             
     assert limiter_stage is not None, "Could not find RMS Limiter stage in pipeline"
-    print("✓ Found RMS Limiter stage in pipeline")
-    
-    print("\nAll tests passed successfully! 🎉")
+
 
 
 def test_peak_limiter_pipeline():
@@ -113,15 +105,9 @@ def test_peak_limiter_pipeline():
         }
     }
     
-    print("Parsing JSON and creating pipeline...")
     dsp_json = DspJson(**pipeline_json)
     pipeline = make_pipeline(dsp_json)
-    
-    print("\nStages in pipeline:")
-    for i, stage in enumerate(pipeline.stages):
-        print(f"Stage {i}: {stage.name} (type: {type(stage).__name__})")
-    
-    print("\nValidating pipeline...")
+
     # Find our limiter stage
     limiter_stage = None
     for stage in pipeline.stages:
@@ -130,9 +116,6 @@ def test_peak_limiter_pipeline():
             break
             
     assert limiter_stage is not None, "Could not find Peak Limiter stage in pipeline"
-    print("✓ Found Peak Limiter stage in pipeline")
-    
-    print("\nAll tests passed successfully! 🎉")
 
 
 def test_hard_peak_limiter_pipeline():
@@ -179,15 +162,9 @@ def test_hard_peak_limiter_pipeline():
         }
     }
     
-    print("Parsing JSON and creating pipeline...")
     dsp_json = DspJson(**pipeline_json)
     pipeline = make_pipeline(dsp_json)
     
-    print("\nStages in pipeline:")
-    for i, stage in enumerate(pipeline.stages):
-        print(f"Stage {i}: {stage.name} (type: {type(stage).__name__})")
-    
-    print("\nValidating pipeline...")
     # Find our limiter stage
     limiter_stage = None
     for stage in pipeline.stages:
@@ -196,9 +173,7 @@ def test_hard_peak_limiter_pipeline():
             break
             
     assert limiter_stage is not None, "Could not find Hard Peak Limiter stage in pipeline"
-    print("✓ Found Hard Peak Limiter stage in pipeline")
-    
-    print("\nAll tests passed successfully! 🎉")
+
 
 
 if __name__ == "__main__":

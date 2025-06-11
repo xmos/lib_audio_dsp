@@ -54,15 +54,9 @@ def test_plate_reverb_pipeline():
         }
     }
     
-    print("Parsing JSON and creating pipeline...")
     dsp_json = DspJson(**pipeline_json)
     pipeline = make_pipeline(dsp_json)
     
-    print("\nStages in pipeline:")
-    for i, stage in enumerate(pipeline.stages):
-        print(f"Stage {i}: {stage.name} (type: {type(stage).__name__})")
-    
-    print("\nValidating pipeline...")
     # Find our reverb stage
     reverb_stage = None
     for stage in pipeline.stages:
@@ -71,9 +65,6 @@ def test_plate_reverb_pipeline():
             break
             
     assert reverb_stage is not None, "Could not find Plate Reverb stage in pipeline"
-    print("✓ Found Plate Reverb stage in pipeline")
-    
-    print("\nAll tests passed successfully! 🎉")
 
 
 if __name__ == "__main__":

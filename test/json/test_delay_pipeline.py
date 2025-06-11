@@ -49,11 +49,9 @@ def test_simple_delay_pipeline():
         }
     }
     
-    print("Parsing JSON and creating pipeline...")
     dsp_json = DspJson(**pipeline_json)
     pipeline = make_pipeline(dsp_json)
-    
-    print("Validating pipeline...")
+
     # Find our delay stage
     delay_stage = None
     for stage in pipeline.stages:
@@ -62,20 +60,10 @@ def test_simple_delay_pipeline():
             break
             
     assert delay_stage is not None, "Could not find Delay stage in pipeline"
-    print("✓ Found Delay stage in pipeline")
-    
     assert delay_stage.max_delay == 2048, f"Expected max_delay 2048, got {delay_stage.max_delay}"
-    print("✓ max_delay config is correct")
-
     assert delay_stage.units == "samples", f"Expected units 'samples', got {delay_stage.units}"
-    print("✓ units parameter is correct")   
-
     assert delay_stage.parameters.delay == 1024, f"Expected delay 1024, got {delay_stage.parameters.delay}"
-    print("✓ delay parameter is correct")
-    
 
-    
-    print("\nAll tests passed successfully! 🎉")
 
 
 if __name__ == "__main__":
