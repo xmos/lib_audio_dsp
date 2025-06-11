@@ -1,7 +1,7 @@
 lib_audio_dsp change log
 ========================
 
-1.3.1-alpha
+1.4.0
 -----------
 
   * ADDED: Check for Stage inputs having crossed same number of threads.
