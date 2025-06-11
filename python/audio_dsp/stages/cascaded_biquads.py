@@ -371,9 +371,7 @@ class NthOrderFilter(CascadedBiquads):
         parameters : NthOrderFilterParameters
             The parameters to update the cascaded biquads with.
         """
-        # model = parameters.model_dump()
-        # biquads = [[*spec.values()] for spec in model["filters"]]
-        # self.make_parametric_eq(biquads)
+
         if parameters.type == "bypass":
             self.make_parametric_eq(
                 [

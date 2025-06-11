@@ -10,6 +10,14 @@ from typing import get_origin, get_args, Literal
 from types import UnionType
 
 
+def find_autoforks(graph):
+    for node in graph.nodes:
+        if 'AutoFork' in node.placement.name:
+            return True
+
+    assert False, "No AutoFork node found in the graph after insert_forks."
+
+
 def test_no_shared_edge():
     json_str = """
     {
@@ -45,6 +53,11 @@ def test_no_shared_edge():
     new_graph = insert_forks(graph)
     print(f"Before insert_forks: {graph.model_dump_json()}")
     print(f"After insert_forks: {new_graph.model_dump_json()}")
+
+    for node in graph.nodes:
+        if 'AutoFork' in node.placement.name:
+            assert False, "AutoFork node found in the graph after insert_forks, but not needed."
+
 
 
 def test_shared_edge_from_graph_input():
@@ -92,6 +105,7 @@ def test_shared_edge_from_graph_input():
     new_graph = insert_forks(graph)
     print(f"Before insert_forks: {graph.model_dump_json()}")
     print(f"After insert_forks: {new_graph.model_dump_json()}")
+    find_autoforks(new_graph)
 
 
 def test_shared_edge_from_producer_node():
@@ -149,6 +163,7 @@ def test_shared_edge_from_producer_node():
     new_graph = insert_forks(graph)
     print(f"Before insert_forks: {graph.model_dump_json()}")
     print(f"After insert_forks: {new_graph.model_dump_json()}")
+    find_autoforks(new_graph)
 
 
 def test_shared_edge_with_graph_output():
@@ -196,6 +211,7 @@ def test_shared_edge_with_graph_output():
     new_graph = insert_forks(graph)
     print(f"Before insert_forks: {graph.model_dump_json()}")
     print(f"After insert_forks: {new_graph.model_dump_json()}")
+    find_autoforks(new_graph)
 
 
 def test_again():
@@ -225,6 +241,7 @@ def test_again():
     new_graph = insert_forks(graph)
     print(f"Before insert_forks: {graph.model_dump_json()}")
     print(f"After insert_forks: {new_graph.model_dump_json()}")
+    find_autoforks(new_graph)
 
 
 def test_multiple_inputs_outputs_non_shared():
@@ -277,6 +294,7 @@ def test_multiple_inputs_outputs_non_shared():
     print("Test: Multiple Inputs and Outputs Non-Shared Test")
     print(f"Before insert_forks: {graph.model_dump_json(indent=2)}")
     print(f"After insert_forks: {new_graph.model_dump_json(indent=2)}")
+    find_autoforks(new_graph)
 
 
 def test_multiple_inputs_outputs_shared():
@@ -319,6 +337,9 @@ def test_multiple_inputs_outputs_shared():
     print("Test: Multiple Inputs and Outputs Shared Test")
     print(f"Before insert_forks: {graph.model_dump_json(indent=2)}")
     print(f"After insert_forks: {new_graph.model_dump_json(indent=2)}")
+    
+    find_autoforks(new_graph)
+
 
 
 def test_all_stages_models():
@@ -387,4 +408,4 @@ def test_all_stages_models():
 
 
 if __name__ == "__main__":
-  test_all_stages_models()
+  test_multiple_inputs_outputs_shared()

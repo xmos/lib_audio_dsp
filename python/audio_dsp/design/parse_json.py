@@ -263,23 +263,3 @@ def update_pipeline(p: Pipeline, params: DspJson):
 
         if not updated and "AutoFork" not in stage.label:
             warnings.warn(f"Stage {stage.label} could not be found in the JSON file")
-
-
-if __name__ == "__main__":
-    # parser = argparse.ArgumentParser(description="JSON-to-DSP pipeline generator")
-    # parser.add_argument(
-    #     "json_path", type=Path, help="path to the JSON describing the DSP pipeline"
-    # )
-    # parser.add_argument("out_path", type=Path, help="path for the generated DSP code output")
-    # args = parser.parse_args()
-
-    # output_path = Path(args.out_path)
-    # json_path = Path(args.json_path)
-
-    # json_path = Path(r"C:\Users\allanskellett\Documents\051_dsp_txt\dsp_lang_1.json")
-    json_path = Path(r"C:\Users\allanskellett\Documents\040_dsp_ultra\scio_0_new_forks.json")
-    output_path = "tmpdir"
-    json_obj = DspJson.model_validate_json(json_path.read_text())
-    p = make_pipeline(json_obj)
-    generate_dsp_main(p, output_path)
-    p.draw(Path(output_path, "dsp_pipeline"))
