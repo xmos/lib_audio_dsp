@@ -9,6 +9,7 @@ from pydantic import Field, field_validator, model_validator
 
 from audio_dsp.models.stage import (
     NodePlacement,
+    StageConfig,
     StageModel,
     StageParameters,
     Placement_2i1o,
@@ -18,16 +19,21 @@ from audio_dsp.models.stage import (
 from audio_dsp.models.fields import DEFAULT_GAIN_DB
 
 
+GEQ_GAIN = Field(ge=-24, le=24, description="Gain of the band in dB.")
+
+
 class GraphicEq10bParameters(StageParameters):
-    """Parameters for a 10-band graphic equalizer.
-    This class defines the gain values (in dB) for each of the 10 frequency bands.
-    Each gain value can range from -24 dB to +24 dB.
+    """
+    Parameters for a 10-band graphic equalizer.
+
+    Attributes
+    ----------
+        gains_db (list[float]): Gain values (in dB) for each of the 10 frequency bands.
+            - Each value must be between -24 dB and +24 dB.
+            - The list must have exactly 10 elements.
     """
 
-    gains_db: Annotated[
-        list[Annotated[float, Field(ge=-24, le=24, description="Gain of the band in dB.")]],
-        Len(10),
-    ] = Field(default_factory=lambda: [0.0] * 10)
+    gains_db: Annotated[list[Annotated[float, GEQ_GAIN]], Len(10),] = Field(default_factory=lambda: [0.0] * 10)
 
 
 class GraphicEq10b(StageModel):

@@ -21,9 +21,6 @@ class BiquadParameters(StageParameters):
     filter_type: BIQUAD_TYPES = Field(
         default=biquad_bypass(), description="Type of biquad filter to implement"
     )
-    slew_rate: float = Field(
-        default=1.0, gt=0, description="Maximum rate of change for filter coefficients per sample"
-    )
 
 
 class Biquad(StageModel):
@@ -38,6 +35,14 @@ class Biquad(StageModel):
     op_type: Literal["Biquad"] = "Biquad"
     parameters: BiquadParameters = Field(
         default_factory=lambda: BiquadParameters(filter_type=biquad_bypass())
+    )
+
+
+class BiquadSlewParameters(BiquadParameters):
+    """Parameters for a slewing biquad filter."""
+
+    slew_rate: float = Field(
+        default=1.0, gt=0, description="Maximum rate of change for filter coefficients per sample"
     )
 
 
