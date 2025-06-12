@@ -70,7 +70,7 @@ pipeline {
         )
         string(
           name: 'XMOSDOC_VERSION',
-          defaultValue: 'v7.1.0',
+          defaultValue: 'feature/pydantic-support',
           description: 'The xmosdoc version'
         )
         string(
