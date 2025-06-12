@@ -28,7 +28,6 @@ def test_simple_biquad_pipeline():
                             "filter_freq": 1000,
                             "q_factor": 0.707
                         },
-                        "slew_rate": 0.5
                     },
                     "placement": {
                         "input": [0, 1],
@@ -73,9 +72,6 @@ def test_simple_biquad_pipeline():
     
     assert biquad_stage.parameters.filter_type.q_factor == 0.707, \
         f"Expected q_factor 0.707, got {biquad_stage.parameters.filter_type.q_factor}"
-    
-    assert biquad_stage.parameters.slew_rate == 0.5, \
-        f"Expected slew_rate 0.5, got {biquad_stage.parameters.slew_rate}"
     
     new_json = pipeline_to_dspjson(pipeline)
     assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"

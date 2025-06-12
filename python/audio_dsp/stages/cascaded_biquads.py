@@ -123,9 +123,7 @@ class CascadedBiquads(Stage):
         )
 
         self.stage_memory_parameters = (self.n_in,)
-        self.parameters = CascadedBiquadsParameters(
-            filters=[bqm.biquad_bypass() for _ in range(8)]
-        )
+        self.parameters = CascadedBiquadsParameters()
 
     def _get_fixed_point_coeffs(self):
         """Get the fixed point coefficients for all biquads."""
@@ -270,9 +268,7 @@ class CascadedBiquads16(Stage):
         )
 
         self.stage_memory_parameters = (self.n_in,)
-        self.parameters = CascadedBiquads16Parameters(
-            filters=[{"type": "bypass"} for _ in range(16)]
-        )
+        self.parameters = CascadedBiquads16Parameters()
 
     def _get_fixed_point_coeffs_lower(self):
         fc = []

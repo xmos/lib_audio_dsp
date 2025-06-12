@@ -32,7 +32,7 @@ class NoiseGate(Stage):
         super().__init__(config=find_config("noise_gate"), **kwargs)
         self.create_outputs(self.n_in)
 
-        self.parameters = NoiseGateParameters(threshold_db=-35, attack_t=0.005, release_t=0.12)
+        self.parameters = NoiseGateParameters()
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
