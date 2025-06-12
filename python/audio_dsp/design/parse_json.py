@@ -54,7 +54,7 @@ class Output(BaseModel, extra="ignore"):
 
 StageModelType = TypeVar("StageModelType", bound=StageModel)
 
-stage_models_list: TypeAlias = list[_stage_Models] # pyright: ignore
+stage_models_list: TypeAlias = list[_stage_Models]  # pyright: ignore
 
 
 #

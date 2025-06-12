@@ -393,7 +393,7 @@ class BiquadSlew(Biquad):
         """
         self.dsp_block.slew_shift = slew_shift
 
-    def set_parameters(self, parameters: BiquadSlewParameters):  #pyright: ignore
+    def set_parameters(self, parameters: BiquadSlewParameters):  # pyright: ignore
         """Set the slewing biquad parameters."""
         self.dsp_block.slew_shift = parameters.slew_shift
         super().set_parameters(parameters)
