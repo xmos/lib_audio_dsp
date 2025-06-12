@@ -94,7 +94,7 @@ class ReverbRoomParameters(ReverbBaseParameters):
     """Parameters for a ReverbRoom Stage."""
 
     damping: float = Field(
-        default=0.5,
+        default=0.4,
         ge=0,
         le=1,
         description="This controls how much high frequency attenuation "
@@ -110,7 +110,7 @@ class ReverbRoomParameters(ReverbBaseParameters):
         "a given room size. Range: 0 to 1",
     )
     room_size: float = Field(
-        default=0.5,
+        default=1.0,
         ge=0,
         le=1,
         description="This sets how reverberant the room is. Higher "
@@ -148,14 +148,14 @@ class ReverbPlateStereoParameters(ReverbStereoBaseParameters):
         "default 0.5, as it can result in saturation inside the reverb delay lines.",
     )
     damping: float = Field(
-        default=0.5,
+        default=0.75,
         ge=0,
         le=1,
         description="This controls how much high frequency attenuation is in the room. Higher "
         "values yield shorter reverberation times at high frequencies. Range: 0 to 1",
     )
     decay: float = Field(
-        default=0.5,
+        default=0.4,
         ge=0,
         le=1,
         description="This sets how reverberant the room is. Higher "
@@ -163,13 +163,13 @@ class ReverbPlateStereoParameters(ReverbStereoBaseParameters):
         "a given room size. Range: 0 to 1",
     )
     early_diffusion: float = Field(
-        default=0.2,
+        default=0.75,
         ge=0,
         le=1,
         description="Sets how much diffusion is present in the first part of the reverberation. Range: 0 to 1",
     )
     late_diffusion: float = Field(
-        default=0.6,
+        default=0.7,
         ge=0,
         le=1,
         description="Sets how much diffusion is present in the latter part of the reverberation. Range: 0 to 1",

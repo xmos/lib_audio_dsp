@@ -63,7 +63,7 @@ class Fork(StageModel[ForkPlacement]):
 class MixerParameters(StageParameters):
     """Parameters for Mixer Stage."""
 
-    gain_db: float = DEFAULT_GAIN_DB()
+    gain_db: float = DEFAULT_GAIN_DB(default=-6)
 
 
 class Mixer(StageModel[Placement_Ni1o]):

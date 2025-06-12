@@ -124,14 +124,7 @@ class ReverbRoom(_ReverbBase):
 
         self.config = ReverbRoomConfig(max_room_size=max_room_size, max_predelay=max_predelay)
 
-        self.parameters = ReverbRoomParameters(
-            room_size=1.0,
-            damping=0.4,
-            decay=0.5,
-            predelay=predelay,
-            pregain=0.015,
-            wet_dry_mix=0.5,
-        )
+        self.parameters = ReverbRoomParameters()
 
         self.dsp_block: rvrb.reverb_room = rvrb.reverb_room(
             self.fs,
@@ -257,15 +250,7 @@ class ReverbRoomStereo(ReverbRoom):
             max_room_size=max_room_size, max_predelay=max_predelay
         )
 
-        self.parameters = ReverbRoomStereoParameters(
-            room_size=1.0,
-            damping=0.4,
-            decay=0.5,
-            predelay=predelay,
-            pregain=0.015,
-            wet_dry_mix=0.5,
-            width=0.5,
-        )
+        self.parameters = ReverbRoomStereoParameters()
 
         self.dsp_block: rvbs.reverb_room_stereo = rvbs.reverb_room_stereo(
             self.fs,
@@ -355,18 +340,7 @@ class ReverbPlateStereo(_ReverbBase):
         max_predelay = predelay if max_predelay == None else max_predelay
 
         self.config = ReverbPlateStereoConfig(max_predelay=max_predelay)
-
-        self.parameters = ReverbPlateStereoParameters(
-            decay=0.4,
-            damping=0.75,
-            bandwidth=8000,
-            early_diffusion=0.75,
-            late_diffusion=0.7,
-            width=1.0,
-            wet_dry_mix=0.5,
-            pregain=0.5,
-            predelay=predelay,
-        )
+        self.parameters = ReverbPlateStereoParameters()
 
         self.dsp_block: rvp.reverb_plate_stereo = rvp.reverb_plate_stereo(
             self.fs,

@@ -121,7 +121,7 @@ class Mixer(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=find_config("mixer"), **kwargs)
         self.create_outputs(1)
-        self.parameters = MixerParameters(gain_db=-6)
+        self.parameters = MixerParameters()
         self.set_parameters(self.parameters)
         self.set_control_field_cb("gain", lambda: self.dsp_block.gain_int)
 
