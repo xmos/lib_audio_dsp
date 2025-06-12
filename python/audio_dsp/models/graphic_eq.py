@@ -1,3 +1,5 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Pydantic models for signal chain DSP Stages."""
 
 from typing import Literal, Annotated
@@ -7,7 +9,6 @@ from pydantic import Field, field_validator, model_validator
 
 from audio_dsp.models.stage import (
     NodePlacement,
-    StageConfig,
     StageModel,
     StageParameters,
     Placement_2i1o,

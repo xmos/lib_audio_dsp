@@ -251,7 +251,8 @@ class _GlobalStages:
 
 
 # This defines the types of instances of the config/parameter classes
-StageParameterType = TypeVar("StageParameterType", bound="StageParameters")
+StageParameterType = TypeVar("StageParameterType", bound=StageParameters)
+DspBlockType = TypeVar("DspBlockType", bound=dsp_block)
 
 
 class Stage(Node):
@@ -349,8 +350,8 @@ class Stage(Node):
 
         self.label = label
 
-        self.details = {}
-        self.dsp_block: Optional[dsp_block] = None
+        self.parameters = None
+        self.dsp_block: Optional[DspBlockType] = None  # pyright:ignore
         self.stage_memory_string: str = ""
         self.stage_memory_parameters: tuple | None = None
 
@@ -565,8 +566,13 @@ class Stage(Node):
 
         if self.label:
             center = f"{self.index}: {self.label}\\n"
-        if self.details:
-            details = "\\n".join(f"{k}: {v}" for k, v in self.details.items())
+        if self.parameters:
+            details = ""
+            for key, value in self.parameters.model_dump().items():
+                if isinstance(value, dict):
+                    details += f"{'\\n'.join(f'{k}: {v}' for k, v in value.items())}\\n"
+                else:
+                    details += f"{key}: {value}\\n"
             label = f"{{ {{ {inputs} }} | {center} | {details} | {{ {outputs} }}}}"
         else:
             label = f"{{ {{ {inputs} }} | {center} | {{ {outputs} }}}}"

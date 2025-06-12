@@ -1,3 +1,5 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Pydantic models for signal chain DSP Stages."""
 
 from typing import Literal
@@ -190,7 +192,7 @@ class DelayConfig(StageConfig):
         units: Units for delay values, either "samples" or "seconds"
     """
 
-    max_delay: int = Field(default=1024, gt=0, description="Maximum delay length in samples")
+    max_delay: float = Field(default=1024, gt=0, description="Maximum delay length in units")
     units: Literal["samples", "s", "ms"] = Field(
         default="samples", description="Units for maximum delay values"
     )

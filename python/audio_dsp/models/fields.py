@@ -1,3 +1,5 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Pydantic models of the different biquad types."""
 
 from audio_dsp.models.stage import StageParameters
@@ -142,6 +144,12 @@ class biquad_lowshelf(StageParameters):
     boost_db: float = DEFAULT_BOOST_DB()
 
 
+class biquad_mute(StageParameters):
+    """Parameters for a Biquad Stage configured to mute."""
+
+    type: Literal["mute"] = "mute"
+
+
 class biquad_notch(StageParameters):
     """Parameters for a Biquad Stage configured to notch."""
 
@@ -171,6 +179,7 @@ BIQUAD_TYPES = Union[
     biquad_linkwitz,
     biquad_lowpass,
     biquad_lowshelf,
+    biquad_mute,
     biquad_notch,
     biquad_peaking,
 ]

@@ -1,6 +1,8 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Test envelope detector pipeline creation."""
 
-from audio_dsp.design.parse_json import DspJson, make_pipeline
+from audio_dsp.design.parse_json import DspJson, make_pipeline, pipeline_to_dspjson
 
 
 def test_peak_envelope_detector_pipeline():
@@ -18,7 +20,6 @@ def test_peak_envelope_detector_pipeline():
             "nodes": [
                 {
                     "op_type": "EnvelopeDetectorPeak",
-                    "config": {},
                     "parameters": {
                         "attack_t": 0.01,
                         "release_t": 0.1
@@ -33,14 +34,14 @@ def test_peak_envelope_detector_pipeline():
             ],
             "inputs": [
                 {
-                    "name": "audio_in",
-                    "output": [0]
+                    "name": "inputs",
+                    "output": [0, 1]
                 }
             ],
             "outputs": [
                 {
-                    "name": "audio_out",
-                    "input": [0]
+                    "name": "outputs",
+                    "input": [1]
                 }
             ]
         }
@@ -58,6 +59,9 @@ def test_peak_envelope_detector_pipeline():
             
     assert detector_stage is not None, "Could not find Peak Envelope Detector stage in pipeline"
 
+    new_json = pipeline_to_dspjson(pipeline)
+    assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
+    
 
 def test_rms_envelope_detector_pipeline():
     """Test creating an RMS envelope detector pipeline."""
@@ -74,7 +78,6 @@ def test_rms_envelope_detector_pipeline():
             "nodes": [
                 {
                     "op_type": "EnvelopeDetectorRMS",
-                    "config": {},
                     "parameters": {
                         "attack_t": 0.05,
                         "release_t": 0.2
@@ -89,14 +92,14 @@ def test_rms_envelope_detector_pipeline():
             ],
             "inputs": [
                 {
-                    "name": "audio_in",
-                    "output": [0]
+                    "name": "inputs",
+                    "output": [0, 1]
                 }
             ],
             "outputs": [
                 {
-                    "name": "audio_out",
-                    "input": [0]
+                    "name": "outputs",
+                    "input": [1]
                 }
             ]
         }
@@ -114,6 +117,9 @@ def test_rms_envelope_detector_pipeline():
             
     assert detector_stage is not None, "Could not find RMS Envelope Detector stage in pipeline"
 
+    new_json = pipeline_to_dspjson(pipeline)
+    assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
+    
 
 if __name__ == "__main__":
     test_peak_envelope_detector_pipeline()

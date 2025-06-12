@@ -16,6 +16,7 @@ from audio_dsp.models.signal_chain import (
     DelayParameters,
     DelayConfig,
     CrossfaderParameters,
+    ForkConfig,
 )
 from audio_dsp.design.stage import (
     Stage,
@@ -81,6 +82,8 @@ class Fork(Stage):
         super().__init__(name="fork", **kwargs)
         self.create_outputs(self.n_in * count)
 
+        self.config = ForkConfig(count=count)
+
         fork_indices = [list(range(i, self.n_in * count, count)) for i in range(count)]
         forks = []
         for indices in fork_indices:
@@ -118,7 +121,8 @@ class Mixer(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=find_config("mixer"), **kwargs)
         self.create_outputs(1)
-        self.dsp_block = sc.mixer(self.fs, self.n_in)
+        self.parameters = MixerParameters(gain_db=-6)
+        self.set_parameters(self.parameters)
         self.set_control_field_cb("gain", lambda: self.dsp_block.gain_int)
 
     def set_gain(self, gain_db):
@@ -130,12 +134,15 @@ class Mixer(Stage):
         gain_db : float
             The gain of the mixer in dB.
         """
-        self.dsp_block = sc.mixer(self.fs, self.n_in, gain_db)
-        return self
+        parameters = MixerParameters(gain_db=gain_db)
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: MixerParameters):
         """Update the parameters of the Mixer stage."""
-        self.set_gain(parameters.gain_db)
+        self.parameters = parameters
+        if not self.fs:
+            raise ValueError("Mixer sample rate not set")
+        self.dsp_block = sc.mixer(self.fs, self.n_in, parameters.gain_db)
 
 
 class Adder(Stage):
@@ -197,7 +204,8 @@ class FixedGain(Stage):
     def __init__(self, gain_db=0, **kwargs):
         super().__init__(config=find_config("fixed_gain"), **kwargs)
         self.create_outputs(self.n_in)
-        self.dsp_block = sc.fixed_gain(self.fs, self.n_in, gain_db)
+        self.parameters = FixedGainParameters(gain_db=gain_db)
+        self.set_parameters(self.parameters)
         self.set_control_field_cb("gain", lambda: self.dsp_block.gain_int)
 
     def set_gain(self, gain_db):
@@ -209,12 +217,15 @@ class FixedGain(Stage):
         gain_db : float
             The gain of the fixed gain in dB.
         """
-        self.dsp_block = sc.fixed_gain(self.fs, self.n_in, gain_db)
-        return self
+        parameters = FixedGainParameters(gain_db=gain_db)
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: FixedGainParameters):
         """Update the parameters of the FixedGain stage."""
-        self.set_gain(parameters.gain_db)
+        self.parameters = parameters
+        if not self.fs:
+            raise ValueError("Fixed gain sample rate not set")
+        self.dsp_block = sc.fixed_gain(self.fs, self.n_in, parameters.gain_db)
 
 
 class VolumeControl(Stage):
@@ -240,8 +251,11 @@ class VolumeControl(Stage):
     def __init__(self, gain_dB=0, mute_state=0, **kwargs):
         super().__init__(config=find_config("volume_control"), **kwargs)
         self.create_outputs(self.n_in)
+        self.parameters = VolumeControlParameters(gain_db=gain_dB, mute_state=mute_state)
         slew_shift = 7
-        self.dsp_block = sc.volume_control(self.fs, self.n_in, gain_dB, slew_shift, mute_state)
+        self.dsp_block: sc.volume_control = sc.volume_control(
+            self.fs, self.n_in, gain_dB, slew_shift, mute_state
+        )
         self.set_control_field_cb("target_gain", lambda: self.dsp_block.target_gain_int)
         self.set_control_field_cb("slew_shift", lambda: self.dsp_block.slew_shift)
         self.set_control_field_cb("mute_state", lambda: np.int32(self.dsp_block.mute_state))
@@ -262,13 +276,9 @@ class VolumeControl(Stage):
         mute_state
             The mute state of the Volume Control: 0: unmuted, 1: muted.
         """
-        self.details = dict(
-            target_gain=gain_dB, slew_shift=slew_shift, mute_state=mute_state, Q_sig=Q_sig
-        )
         self.dsp_block = sc.volume_control(
             self.fs, self.n_in, gain_dB, slew_shift, mute_state, Q_sig
         )
-        return self
 
     def set_gain(self, gain_dB):
         """
@@ -279,8 +289,10 @@ class VolumeControl(Stage):
         gain_db : float
             The gain of the volume control in dB.
         """
-        self.dsp_block.target_gain_db = gain_dB
-        return self
+        parameters = VolumeControlParameters(
+            gain_db=gain_dB, mute_state=self.parameters.mute_state
+        )
+        self.set_parameters(parameters)
 
     def set_mute_state(self, mute_state):
         """
@@ -291,16 +303,19 @@ class VolumeControl(Stage):
         mute_state : bool
             The mute state of the volume control.
         """
-        if mute_state:
-            self.dsp_block.mute()
-        else:
-            self.dsp_block.unmute()
-        return self
+        parameters = VolumeControlParameters(
+            gain_db=self.parameters.gain_db, mute_state=mute_state
+        )
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: VolumeControlParameters):
         """Update the parameters of the VolumeControl stage."""
-        self.set_gain(parameters.gain_db)
-        self.set_mute_state(parameters.mute_state)
+        self.parameters = parameters
+        self.dsp_block.target_gain_db = parameters.gain_db
+        if parameters.mute_state:
+            self.dsp_block.mute()
+        else:
+            self.dsp_block.unmute()
 
 
 class Switch(Stage):
@@ -320,7 +335,8 @@ class Switch(Stage):
         super().__init__(config=find_config("switch"), **kwargs)
         self.index = index
         self.create_outputs(1)
-        self.dsp_block = sc.switch(self.fs, self.n_in)
+        self.parameters = SwitchParameters(position=index)
+        self.dsp_block: sc.switch = sc.switch(self.fs, self.n_in)
         self.set_control_field_cb("position", lambda: self.dsp_block.switch_position)
 
     def move_switch(self, position):
@@ -333,12 +349,13 @@ class Switch(Stage):
             The position to which to move the switch. This changes the output
             signal to the input[position]
         """
-        self.dsp_block.move_switch(position)
-        return self
+        parameters = SwitchParameters(position=position)
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: SwitchParameters):
         """Update the parameters of the Switch stage."""
-        self.move_switch(parameters.position)
+        self.parameters = parameters
+        self.dsp_block.move_switch(parameters.position)
 
 
 class SwitchSlew(Switch):
@@ -365,6 +382,7 @@ class SwitchSlew(Switch):
             raise ValueError("Switch supports up to 16 inputs")
         self.index = index
         self.create_outputs(1)
+        self.parameters = SwitchParameters(position=index)
         self.dsp_block = sc.switch_slew(self.fs, self.n_in)
         self.set_control_field_cb("position", lambda: self.dsp_block.switch_position)
         self.set_constant("fs", self.fs, "int32_t")
@@ -389,7 +407,8 @@ class SwitchStereo(Stage):
         super().__init__(config=find_config("switch_stereo"), **kwargs)
         self.index = index
         self.create_outputs(2)
-        self.dsp_block = sc.switch_stereo(self.fs, self.n_in)
+        self.parameters = SwitchParameters(position=index)
+        self.dsp_block: sc.switch_stereo = sc.switch_stereo(self.fs, self.n_in)
         self.set_control_field_cb("position", lambda: self.dsp_block.switch_position)
 
     def move_switch(self, position):
@@ -402,12 +421,13 @@ class SwitchStereo(Stage):
             The position to which to move the switch. This changes the output
             signal to the [input[2*position], input[:2*position + 1]]
         """
-        self.dsp_block.move_switch(position)
-        return self
+        parameters = SwitchParameters(position=position)
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: SwitchParameters):
         """Update the parameters of the SwitchStereo stage."""
-        self.move_switch(parameters.position)
+        self.parameters = parameters
+        self.dsp_block.move_switch(parameters.position)
 
 
 class Delay(Stage):
@@ -439,21 +459,15 @@ class Delay(Stage):
         max_delay: float = 1024,
         starting_delay: float = 0,
         units: str = "samples",
-        config: Optional[DelayConfig] = None,
-        parameters: Optional[DelayParameters] = None,
         **kwargs,
     ):
         super().__init__(config=find_config("delay"), **kwargs)
         self.create_outputs(self.n_in)
 
-        # Get config values
-        if config is not None:
-            max_delay = config.max_delay
-        # Get parameter values
-        if parameters is not None:
-            starting_delay = parameters.delay
+        self.config = DelayConfig(max_delay=max_delay, units=units)  # pyright: ignore
+        max_delay = self.config.max_delay
 
-        self.dsp_block = sc.delay(self.fs, self.n_in, max_delay, starting_delay, units)
+        self.dsp_block: sc.delay = sc.delay(self.fs, self.n_in, max_delay, starting_delay, units)
         self["max_delay"] = max_delay
         self.set_control_field_cb("max_delay", lambda: self.dsp_block._max_delay)  #  pyright: ignore
         self.set_control_field_cb("delay", lambda: self.dsp_block.delay)  #  pyright: ignore
@@ -477,21 +491,17 @@ class Delay(Stage):
             The units of the delay, can be 'samples', 'ms' or 's'.
             Default is 'samples'.
         """
-        self.dsp_block.set_delay(delay, units)
+        parameters = DelayParameters(delay=delay)
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: DelayParameters):
-        """Update the parameters of the Delay stage.
-
-        Args:
-            parameters: New delay parameters to apply
-        """
+        """Update the parameters of the Delay stage."""
+        self.parameters = parameters
         if parameters.delay > self.max_delay:
             raise ValueError(
                 f"Delay value {parameters.delay} exceeds maximum delay {self.max_delay}"
             )
-
-        self.set_delay(parameters.delay, units=self.units)
-        self.parameters = parameters
+        self.dsp_block.set_delay(parameters.delay, units=self.units)
 
 
 class Crossfader(Stage):
@@ -515,7 +525,8 @@ class Crossfader(Stage):
     def __init__(self, mix=0.5, **kwargs):
         super().__init__(config=find_config("crossfader"), **kwargs)
         self.create_outputs(1)
-        self.dsp_block = sc.crossfader(self.fs, 2, mix=mix)
+        self.parameters = CrossfaderParameters(mix=mix)
+        self.dsp_block: sc.crossfader = sc.crossfader(self.fs, 2, mix=mix)
         self.set_control_field_cb("gains", lambda: self.dsp_block.target_gains_int)
 
     def set_mix(self, mix):
@@ -531,8 +542,8 @@ class Crossfader(Stage):
         mix : float
             The mix of the crossfader between 0 and 1.
         """
-        self.dsp_block.mix = mix
-        return self
+        parameters = CrossfaderParameters(mix=mix)
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: CrossfaderParameters):
         """Update the parameters of the Crossfader stage.
@@ -540,8 +551,8 @@ class Crossfader(Stage):
         Args:
             parameters: New crossfader parameters to apply
         """
-        self.set_mix(parameters.mix)
         self.parameters = parameters
+        self.dsp_block.mix = parameters.mix
 
 
 class CrossfaderStereo(Crossfader):
@@ -561,5 +572,6 @@ class CrossfaderStereo(Crossfader):
     def __init__(self, mix=0.5, **kwargs):
         Stage.__init__(self, config=find_config("crossfader_stereo"), **kwargs)
         self.create_outputs(2)
+        self.parameters = CrossfaderParameters(mix=mix)
         self.dsp_block = sc.crossfader(self.fs, 4, mix=mix)
         self.set_control_field_cb("gains", lambda: self.dsp_block.target_gains_int)

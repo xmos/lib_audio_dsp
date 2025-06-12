@@ -1,9 +1,11 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Functions to convert JSON files to Python DSP pipelines."""
 
 from collections import defaultdict
 from pathlib import Path
 from pprint import pprint
-from typing import Annotated, Any, Optional, Union, List
+from typing import Annotated, Any, Optional, Union, List, TypeVar
 
 from pydantic import BaseModel, Field
 from pydantic.json_schema import SkipJsonSchema
@@ -12,13 +14,14 @@ import audio_dsp.stages as Stages
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 from audio_dsp.design.stage import StageOutputList, all_stages
 from audio_dsp.models.signal_chain import Fork
-from audio_dsp.models.stage import all_models
+from audio_dsp.models.stage import all_models, StageModel
 import json
 import re
 import warnings
 
-BAD_NAMES = ["CascadedBiquads"]
+BAD_NAMES = []
 
+# Define the union type alias for all stage models
 _stage_Models = Annotated[
     Union[
         tuple((SkipJsonSchema[i] if i.__name__ in BAD_NAMES else i) for i in all_models().values())
@@ -35,7 +38,6 @@ class Input(BaseModel, extra="ignore"):
         ...,
         description="List of output edges (1 edge for mono, 2 for stereo)",
         min_length=1,
-        max_length=2,
     )
 
 
@@ -46,9 +48,10 @@ class Output(BaseModel, extra="ignore"):
     input: list[int] = Field(
         ...,
         description="List of input edges (1 edge for mono, 2 for stereo)",
-        min_length=1,
-        max_length=2,
     )
+
+
+StageModelType = TypeVar("StageModelType", bound=StageModel)
 
 
 class Graph(BaseModel):
@@ -223,7 +226,7 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
     # Find the maximum edge index to size edge_list
     max_edge = max(edgelist) if edgelist else -1
     # Begin pipeline and get input StageOutput objects
-    p, in_edges = Pipeline.begin(total_channels, fs=graph.fs)
+    p, in_edges = Pipeline.begin(total_channels, fs=graph.fs, identifier=graph.name)
     # Add threads to the pipeline as needed
     thread_max = max(node.placement.thread for node in graph.nodes) if graph.nodes else 0
     for _ in range(thread_max):
@@ -296,3 +299,69 @@ def update_pipeline(p: Pipeline, params: DspJson):
 
         if not updated and "AutoFork" not in stage.label:
             warnings.warn(f"Stage {stage.label} could not be found in the JSON file")
+
+
+def pipeline_to_dspjson(pipeline) -> DspJson:
+    """Convert a Pipeline object to a DspJson object."""
+    # Example: Extract graph-level info
+    graph_name = getattr(pipeline, "_id")
+    fs = getattr(pipeline, "fs")
+
+    # Extract inputs and outputs
+    inputs = [
+        Input(
+            name="inputs",
+            output=[pipeline._graph.edges.index(x) for x in pipeline.i.edges],
+        )
+    ]
+    outputs = [
+        Output(name="outputs", input=[pipeline._graph.edges.index(x) for x in pipeline.o.edges])
+    ]
+
+    # Extract nodes
+    nodes = []
+    for thread in pipeline.threads:
+        for stage in thread._stages:
+            op_type = type(stage).__name__
+            if op_type in ["PipelineStage", "DSPThreadStage"]:
+                continue
+
+            placement = {
+                "name": stage.label,
+                "input": [pipeline._graph.edges.index(x) for x in stage.i.edges],
+                "output": [pipeline._graph.edges.index(x) for x in stage.o.edges],
+                "thread": thread.id,
+            }
+
+            node_dict = {
+                "op_type": op_type,
+                "placement": placement,  # Should be a dict or Pydantic model
+            }
+            if hasattr(stage, "config"):
+                node_dict["config"] = stage.config
+            if hasattr(stage, "parameters"):
+                node_dict["parameters"] = stage.parameters
+            # Convert to the correct Pydantic model for the node
+            node_model_cls = type(stage.model) if hasattr(stage, "model") else None
+            if node_model_cls:
+                node = node_model_cls(**node_dict)
+            else:
+                node = node_dict  # fallback, but ideally use the model
+            nodes.append(node)
+
+    graph = Graph(
+        name=graph_name,
+        fs=fs,
+        nodes=nodes,
+        inputs=inputs,
+        outputs=outputs,
+    )
+
+    # Fill in DspJson fields
+    dsp_json = DspJson(
+        ir_version=1,
+        producer_name="pipeline_to_dspjson",
+        producer_version="1.0",
+        graph=graph,
+    )
+    return dsp_json

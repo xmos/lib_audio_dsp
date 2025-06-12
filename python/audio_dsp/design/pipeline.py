@@ -128,6 +128,7 @@ class Pipeline:
         self._labelled_stages = {}
         self._generate_xscope_task = generate_xscope_task
         self.frame_size = frame_size
+        self.fs = fs
 
         self.i = StageOutputList([StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)])
         self.o: StageOutputList | None = None

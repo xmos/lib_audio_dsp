@@ -1,3 +1,5 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Pydantic models of the cascaded biquad DSP Stages."""
 
 from typing import Annotated, Literal
@@ -8,7 +10,7 @@ from pydantic.json_schema import SkipJsonSchema
 
 from audio_dsp.models.fields import BIQUAD_TYPES, biquad_bypass, DEFAULT_FILTER_FREQ
 
-from .stage import StageConfig, StageModel, StageParameters
+from .stage import StageModel, StageParameters
 
 
 def _8biquads():
@@ -25,6 +27,17 @@ class CascadedBiquadsParameters(StageParameters):
     filters: Annotated[list[BIQUAD_TYPES], Len(8)] = Field(default_factory=_8biquads, max_length=8)
 
 
+class NthOrderFilterParameters(StageParameters):
+    """Parameters for NthOrderFilter Stage."""
+
+    type: Literal["bypass", "highpass", "lowpass"] = "bypass"
+    filter: Literal["butterworth"] = "butterworth"
+    order: Literal[2, 4, 6, 8, 10, 12, 14, 16] = Field(
+        default=2, description="Order of the filter (2-16)"
+    )
+    filter_freq: float = DEFAULT_FILTER_FREQ()
+
+
 class CascadedBiquads(StageModel):
     """8 cascaded biquad filters. This allows up to 8 second order
     biquad filters to be run in series.
@@ -36,7 +49,9 @@ class CascadedBiquads(StageModel):
     """
 
     op_type: Literal["CascadedBiquads"] = "CascadedBiquads"
-    parameters: CascadedBiquadsParameters = Field(default_factory=CascadedBiquadsParameters)
+    parameters: CascadedBiquadsParameters | NthOrderFilterParameters = Field(
+        default=CascadedBiquadsParameters()
+    )
 
 
 class CascadedBiquads16Parameters(StageParameters):
@@ -71,17 +86,6 @@ class ParametricEq16b(CascadedBiquads16):
     """Pydantic model of the ParametricEq16b Stage."""
 
     op_type: Literal["ParametricEq16b"] = "ParametricEq16b"  # pyright: ignore override
-
-
-class NthOrderFilterParameters(StageParameters):
-    """Parameters for NthOrderFilter Stage."""
-
-    type: Literal["bypass", "highpass", "lowpass"] = "bypass"
-    filter: Literal["butterworth"] = "butterworth"
-    order: Literal[2, 4, 6, 8, 10, 12, 14, 16] = Field(
-        default=2, description="Order of the filter (2-16)"
-    )
-    filter_freq: float = DEFAULT_FILTER_FREQ()
 
 
 class NthOrderFilter(StageModel):

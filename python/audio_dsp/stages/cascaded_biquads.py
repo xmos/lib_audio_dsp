@@ -11,6 +11,7 @@ from audio_dsp.models.cascaded_biquads import (
     CascadedBiquads16Parameters,
     NthOrderFilterParameters,
 )
+import audio_dsp.models.fields as bqm
 
 import numpy as np
 from typing import Any
@@ -36,10 +37,54 @@ def _parametric_eq_doc(wrapped):
     doc_gen = "\n\n"
     for f, args in zip(design_funcs, func_args):
         arg_str = ", ".join(['"' + f.__name__.removeprefix("make_biquad_") + '"', *args])
-        doc_gen += f"            [{arg_str}]\n"
+        doc_gen += f"            | [{arg_str}]\n"
     wrapped.__doc__ = wrapped.__doc__.format(generated_doc=doc_gen)
 
     return wrapped
+
+
+def _bq_spec_to_parameters(filter_spec: list[list[Any]]):
+    """Convert a biquad specification to a list of Biquad parameters."""
+    filters = []
+    for spec in filter_spec:
+        if spec[0] == "allpass":
+            filters.append(bqm.biquad_allpass(filter_freq=spec[1], q_factor=spec[2]))
+        if spec[0] == "bandpass":
+            filters.append(bqm.biquad_bandpass(filter_freq=spec[1], bw=spec[2]))
+        if spec[0] == "bandstop":
+            filters.append(bqm.biquad_bandstop(filter_freq=spec[1], bw=spec[2]))
+        if spec[0] == "bypass":
+            filters.append(bqm.biquad_bypass())
+        if spec[0] == "constant_q":
+            filters.append(
+                bqm.biquad_constant_q(filter_freq=spec[1], q_factor=spec[2], boost_db=spec[3])
+            )
+        if spec[0] == "gain":
+            filters.append(bqm.biquad_gain(gain_db=spec[1]))
+        if spec[0] == "highpass":
+            filters.append(bqm.biquad_highpass(filter_freq=spec[1], q_factor=spec[2]))
+        if spec[0] == "highshelf":
+            filters.append(
+                bqm.biquad_highshelf(filter_freq=spec[1], q_factor=spec[2], boost_db=spec[3])
+            )
+        if spec[0] == "linkwitz":
+            filters.append(bqm.biquad_linkwitz(f0=spec[1], q0=spec[2], fp=spec[3], qp=spec[4]))
+        if spec[0] == "lowpass":
+            filters.append(bqm.biquad_lowpass(filter_freq=spec[1], q_factor=spec[2]))
+        if spec[0] == "lowshelf":
+            filters.append(
+                bqm.biquad_lowshelf(filter_freq=spec[1], q_factor=spec[2], boost_db=spec[3])
+            )
+        if spec[0] == "mute":
+            filters.append(bqm.biquad_mute())
+        if spec[0] == "notch":
+            filters.append(bqm.biquad_notch(filter_freq=spec[1], q_factor=spec[2]))
+        if spec[0] == "peaking":
+            filters.append(
+                bqm.biquad_peaking(filter_freq=spec[1], q_factor=spec[2], boost_db=spec[3])
+            )
+
+    return filters
 
 
 class CascadedBiquads(Stage):
@@ -67,16 +112,7 @@ class CascadedBiquads(Stage):
         super().__init__(config=find_config("cascaded_biquads"), **kwargs)
         self.create_outputs(self.n_in)
 
-        filter_spec = [
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-        ]
+        filter_spec = [["bypass"] for _ in range(8)]
         self.dsp_block = casc_bq.parametric_eq_8band(self.fs, self.n_in, filter_spec)
 
         self.set_control_field_cb(
@@ -87,6 +123,9 @@ class CascadedBiquads(Stage):
         )
 
         self.stage_memory_parameters = (self.n_in,)
+        self.parameters = CascadedBiquadsParameters(
+            filters=[bqm.biquad_bypass() for _ in range(8)]
+        )
 
     def _get_fixed_point_coeffs(self):
         """Get the fixed point coefficients for all biquads."""
@@ -97,7 +136,7 @@ class CascadedBiquads(Stage):
         return a
 
     @_parametric_eq_doc
-    def make_parametric_eq(self, filter_spec: list[list[Any]]) -> "CascadedBiquads":
+    def make_parametric_eq(self, filter_spec: list[list[Any]]):
         """Configure this CascadedBiquads instance as a Parametric Equaliser based on new
         parameters.
 
@@ -118,17 +157,11 @@ class CascadedBiquads(Stage):
             is the filter type, the remaining elements are the
             parameters for that filter type. The available filter types
             and their parameters are:{generated_doc}
-
-        Returns
-        -------
-        CascadedBiquads
-            self
         """
-        self.details = dict(type="parametric", filter_spec=filter_spec)
-        self.dsp_block = casc_bq.parametric_eq_8band(self.fs, self.n_in, filter_spec)
-        return self
+        parameters = CascadedBiquadsParameters(filters=_bq_spec_to_parameters(filter_spec))
+        self.set_parameters(parameters)
 
-    def make_butterworth_highpass(self, N: int, fc: float) -> "CascadedBiquads":
+    def make_butterworth_highpass(self, N: int, fc: float):
         """Configure this CascadedBiquads instance as an Nth order Butterworth highpass
         filter using N/2 cascaded biquads.
 
@@ -141,17 +174,15 @@ class CascadedBiquads(Stage):
             The order of the filter. Must be even and less than 16.
         fc : float
             The -3dB cutoff frequency in Hz.
-
-        Returns
-        -------
-        CascadedBiquads
-            self
         """
-        self.details = dict(type="butterworth highpass", N=N, fc=fc)
-        self.dsp_block = casc_bq.butterworth_highpass(self.fs, self.n_in, N, fc)
-        return self
+        if N not in (2, 4, 6, 8, 10, 12, 14, 16):
+            raise ValueError("Order must be one of 2, 4, 6, 8, 10, 12, 14, 16")
+        parameters = NthOrderFilterParameters(
+            type="highpass", filter="butterworth", order=N, filter_freq=fc
+        )
+        self.set_parameters(parameters)
 
-    def make_butterworth_lowpass(self, N: int, fc: float) -> "CascadedBiquads":
+    def make_butterworth_lowpass(self, N: int, fc: float):
         """Configure this CascadedBiquads instance as an Nth order Butterworth lowpass
         filter using N/2 cascaded biquads.
 
@@ -161,27 +192,44 @@ class CascadedBiquads(Stage):
             The order of the filter. Must be even and less than 16.
         fc : float
             The -3dB cutoff frequency in Hz.
-
-        Returns
-        -------
-        CascadedBiquads
-            self
         """
-        self.details = dict(type="butterworth lowpass", N=N, fc=fc)
-        self.dsp_block = casc_bq.butterworth_lowpass(self.fs, self.n_in, N, fc)
-        return self
+        if N not in (2, 4, 6, 8, 10, 12, 14, 16):
+            raise ValueError("Order must be one of 2, 4, 6, 8, 10, 12, 14, 16")
+        parameters = NthOrderFilterParameters(
+            type="lowpass", filter="butterworth", order=N, filter_freq=fc
+        )
+        self.set_parameters(parameters)
 
-    def set_parameters(self, parameters: CascadedBiquadsParameters):
+    def set_parameters(self, parameters: CascadedBiquadsParameters | NthOrderFilterParameters):
         """Update the parameters of the CascadedBiquads stage.
 
         Parameters
         ----------
-        parameters : CascadedBiquadsParameters
+        parameters : CascadedBiquadsParameters | NthOrderFilterParameters
             The parameters to update the cascaded biquads with.
         """
-        model = parameters.model_dump()
-        biquads = [[*spec.values()] for spec in model["filters"]]
-        self.make_parametric_eq(biquads)
+        self.parameters = parameters
+        if isinstance(parameters, CascadedBiquadsParameters):
+            model = parameters.model_dump()
+            biquads = [list(spec.values()) for spec in model["filters"]]
+            self.dsp_block = casc_bq.parametric_eq_8band(self.fs, self.n_in, biquads)
+        else:
+            if parameters.type == "bypass":
+                self.dsp_block = casc_bq.parametric_eq_8band(
+                    self.fs, self.n_in, [["bypass"] for _ in range(8)]
+                )
+            elif parameters.type == "lowpass" and parameters.filter == "butterworth":
+                self.dsp_block = casc_bq.butterworth_lowpass(
+                    self.fs, self.n_in, parameters.order, parameters.filter_freq
+                )
+            elif parameters.type == "highpass" and parameters.filter == "butterworth":
+                self.dsp_block = casc_bq.butterworth_highpass(
+                    self.fs, self.n_in, parameters.order, parameters.filter_freq
+                )
+            else:
+                raise ValueError(
+                    f"Unsupported filter type {parameters.type} or filter {parameters.filter}"
+                )
 
 
 class CascadedBiquads16(Stage):
@@ -209,24 +257,7 @@ class CascadedBiquads16(Stage):
         super().__init__(config=find_config("cascaded_biquads_16"), **kwargs)
         self.create_outputs(self.n_in)
 
-        filter_spec = [
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-            ["bypass"],
-        ]
+        filter_spec = [["bypass"] for _ in range(16)]
         self.dsp_block = casc_bq.parametric_eq_16band(self.fs, self.n_in, filter_spec)
 
         self.set_control_field_cb(
@@ -240,6 +271,9 @@ class CascadedBiquads16(Stage):
         )
 
         self.stage_memory_parameters = (self.n_in,)
+        self.parameters = CascadedBiquads16Parameters(
+            filters=[{"type": "bypass"} for _ in range(16)]
+        )
 
     def _get_fixed_point_coeffs_lower(self):
         fc = []
@@ -256,7 +290,7 @@ class CascadedBiquads16(Stage):
         return a
 
     @_parametric_eq_doc
-    def make_parametric_eq(self, filter_spec: list[list[Any]]) -> "CascadedBiquads16":
+    def make_parametric_eq(self, filter_spec: list[list[Any]]):
         """Configure this CascadedBiquads16 instance as a Parametric Equaliser based on new
         parameters.
 
@@ -277,15 +311,9 @@ class CascadedBiquads16(Stage):
             is the filter type, the remaining elements are the
             parameters for that filter type. The available filter types
             and their parameters are:{generated_doc}
-
-        Returns
-        -------
-        CascadedBiquads16
-            self
         """
-        self.details = dict(type="parametric", filter_spec=filter_spec)
-        self.dsp_block = casc_bq.parametric_eq_16band(self.fs, self.n_in, filter_spec)
-        return self
+        parameters = CascadedBiquads16Parameters(filters=_bq_spec_to_parameters(filter_spec))
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: CascadedBiquads16Parameters):
         """Update the parameters of the CascadedBiquads16 stage.
@@ -295,9 +323,10 @@ class CascadedBiquads16(Stage):
         parameters : CascadedBiquads16Parameters
             The parameters to update the cascaded biquads with.
         """
+        self.parameters = parameters
         model = parameters.model_dump()
         biquads = [[*spec.values()] for spec in model["filters"]]
-        self.make_parametric_eq(biquads)
+        self.dsp_block = casc_bq.parametric_eq_16band(self.fs, self.n_in, biquads)
 
 
 class ParametricEq8b(CascadedBiquads):
@@ -315,18 +344,6 @@ class ParametricEq8b(CascadedBiquads):
         The DSP block class; see :ref:`CascadedBiquads` for
         implementation details.
     """
-
-    def set_parameters(self, parameters: CascadedBiquadsParameters):
-        """Update the parameters of the ParametricEq8b stage.
-
-        Parameters
-        ----------
-        parameters : CascadedBiquadsParameters
-            The parameters to update the cascaded biquads with.
-        """
-        model = parameters.model_dump()
-        biquads = [[*spec.values()] for spec in model["filters"]]
-        self.make_parametric_eq(biquads)
 
 
 class ParametricEq16b(CascadedBiquads16):
@@ -347,9 +364,10 @@ class ParametricEq16b(CascadedBiquads16):
 
     def set_parameters(self, parameters: CascadedBiquads16Parameters):
         """Update the parameters of the ParametricEq16b stage."""
+        self.parameters = parameters
         model = parameters.model_dump()
         biquads = [[*spec.values()] for spec in model["filters"]]
-        self.make_parametric_eq(biquads)
+        self.dsp_block = casc_bq.parametric_eq_16band(self.fs, self.n_in, biquads)
 
 
 class NthOrderFilter(CascadedBiquads):
@@ -362,33 +380,3 @@ class NthOrderFilter(CascadedBiquads):
         The DSP block class; see :ref:`CascadedBiquads` for
         implementation details.
     """
-
-    def set_parameters(self, parameters: NthOrderFilterParameters):  # pyright: ignore
-        """Update the parameters of the NthOrderFilterParameters stage.
-
-        Parameters
-        ----------
-        parameters : NthOrderFilterParameters
-            The parameters to update the cascaded biquads with.
-        """
-        if parameters.type == "bypass":
-            self.make_parametric_eq(
-                [
-                    ["bypass"],
-                    ["bypass"],
-                    ["bypass"],
-                    ["bypass"],
-                    ["bypass"],
-                    ["bypass"],
-                    ["bypass"],
-                    ["bypass"],
-                ]
-            )
-        elif parameters.type == "lowpass" and parameters.filter == "butterworth":
-            self.make_butterworth_lowpass(parameters.order, parameters.filter_freq)
-        elif parameters.type == "highpass" and parameters.filter == "butterworth":
-            self.make_butterworth_highpass(parameters.order, parameters.filter_freq)
-        else:
-            raise ValueError(
-                f"Unsupported filter type {parameters.type} or filter {parameters.filter}"
-            )

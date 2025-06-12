@@ -1,3 +1,5 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """FIR model definitions."""
 
 from audio_dsp.models.stage import StageModel, StageConfig

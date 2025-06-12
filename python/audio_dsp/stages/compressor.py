@@ -35,11 +35,13 @@ class CompressorRMS(Stage):
         super().__init__(config=find_config("compressor_rms"), **kwargs)
         self.create_outputs(self.n_in)
 
-        threshold = 0
-        ratio = 4
-        at = 0.01
-        rt = 0.2
-        self.dsp_block = drc.compressor_rms(self.fs, self.n_in, ratio, threshold, at, rt)
+        self.parameters = CompressorParameters(
+            ratio=4,
+            threshold_db=0,
+            attack_t=0.01,
+            release_t=0.2,
+        )
+        self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
@@ -56,8 +58,15 @@ class CompressorRMS(Stage):
         parameters : CompressorParameters
             The new parameters to apply to the compressor.
         """
-        self.make_compressor_rms(
-            parameters.ratio, parameters.threshold_db, parameters.attack_t, parameters.release_t
+        self.parameters = parameters
+        self.dsp_block = drc.compressor_rms(
+            self.fs,
+            self.n_in,
+            parameters.ratio,
+            parameters.threshold_db,
+            parameters.attack_t,
+            parameters.release_t,
+            dspg.Q_SIG,
         )
 
     def make_compressor_rms(self, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG):
@@ -75,14 +84,7 @@ class CompressorRMS(Stage):
         release_t : float
             Release time of the compressor in seconds.
         """
-        self.details = dict(
-            ratio=ratio,
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=Q_sig,
+        parameters = CompressorParameters(
+            ratio=ratio, threshold_db=threshold_db, attack_t=attack_t, release_t=release_t
         )
-        self.dsp_block = drc.compressor_rms(
-            self.fs, self.n_in, ratio, threshold_db, attack_t, release_t, Q_sig
-        )
-        return self
+        self.set_parameters(parameters)

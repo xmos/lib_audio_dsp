@@ -11,6 +11,9 @@ from audio_dsp.models.reverb import (
     ReverbRoomParameters,
     ReverbRoomStereoParameters,
     ReverbPlateParameters,
+    ReverbRoomConfig,
+    ReverbRoomStereoConfig,
+    ReverbPlateConfig,
 )
 
 
@@ -30,7 +33,8 @@ class _ReverbBase(Stage):
         mix : float
             The wet/dry mix, must be [0, 1].
         """
-        self.dsp_block.set_wet_dry_mix(mix)
+        parameters = self.parameters.copy(update={"wet_dry_mix": mix})
+        self.set_parameters(parameters)
 
     def set_predelay(self, predelay):
         """
@@ -41,7 +45,8 @@ class _ReverbBase(Stage):
         predelay : float
             Predelay in ms, less than max_predelay.
         """
-        self.dsp_block.predelay = predelay
+        parameters = self.parameters.copy(update={"predelay": predelay})
+        self.set_parameters(parameters)
 
     def set_wet_gain(self, gain_dB):
         """
@@ -76,7 +81,8 @@ class _ReverbBase(Stage):
         pre_gain : float
             Pre gain value. Must be less than 1.
         """
-        self.dsp_block.pregain = pre_gain
+        parameters = self.parameters.copy(update={"pregain": pre_gain})
+        self.set_parameters(parameters)
 
 
 class ReverbRoom(_ReverbBase):
@@ -116,7 +122,18 @@ class ReverbRoom(_ReverbBase):
 
         max_predelay = predelay if max_predelay == None else max_predelay
 
-        self.dsp_block = rvrb.reverb_room(
+        self.config = ReverbRoomConfig(max_room_size=max_room_size, max_predelay=max_predelay)
+
+        self.parameters = ReverbRoomParameters(
+            room_size=1.0,
+            damping=0.4,
+            decay=0.5,
+            predelay=predelay,
+            pregain=0.015,
+            wet_dry_mix=0.5,
+        )
+
+        self.dsp_block: rvrb.reverb_room = rvrb.reverb_room(
             self.fs,
             self.n_in,
             max_room_size=max_room_size,
@@ -156,7 +173,8 @@ class ReverbRoom(_ReverbBase):
             How big the room is as a proportion of max_room_size. This
             sets delay line lengths and must be between 0 and 1.
         """
-        self.dsp_block.room_size = new_room_size
+        parameters = self.parameters.copy(update={"room_size": new_room_size})
+        self.set_parameters(parameters)
 
     def set_damping(self, damping):
         """
@@ -169,7 +187,8 @@ class ReverbRoom(_ReverbBase):
         damping : float
             How much high frequency attenuation in the room, between 0 and 1.
         """
-        self.dsp_block.damping = damping
+        parameters = self.parameters.copy(update={"damping": damping})
+        self.set_parameters(parameters)
 
     def set_decay(self, decay):
         """
@@ -182,17 +201,18 @@ class ReverbRoom(_ReverbBase):
         decay : float
             How long the reverberation of the room is, between 0 and 1.
         """
-        self.dsp_block.decay = decay
+        parameters = self.parameters.copy(update={"decay": decay})
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: ReverbRoomParameters):
         """Update the parameters of the ReverbRoom stage."""
-        self.set_damping(parameters.damping)
-        self.set_decay(parameters.decay)
-        self.set_room_size(parameters.room_size)
-        # base parameters
-        self.set_predelay(parameters.predelay)
-        self.set_pre_gain(parameters.pregain)
-        self.set_wet_dry_mix(parameters.wet_dry_mix)
+        self.parameters = parameters
+        self.dsp_block.room_size = parameters.room_size
+        self.dsp_block.damping = parameters.damping
+        self.dsp_block.decay = parameters.decay
+        self.dsp_block.predelay = parameters.predelay
+        self.dsp_block.pregain = parameters.pregain
+        self.dsp_block.set_wet_dry_mix(parameters.wet_dry_mix)
 
 
 class ReverbRoomStereo(ReverbRoom):
@@ -233,7 +253,21 @@ class ReverbRoomStereo(ReverbRoom):
 
         max_predelay = predelay if max_predelay == None else max_predelay
 
-        self.dsp_block = rvbs.reverb_room_stereo(
+        self.config = ReverbRoomStereoConfig(
+            max_room_size=max_room_size, max_predelay=max_predelay
+        )
+
+        self.parameters = ReverbRoomStereoParameters(
+            room_size=1.0,
+            damping=0.4,
+            decay=0.5,
+            predelay=predelay,
+            pregain=0.015,
+            wet_dry_mix=0.5,
+            width=0.5,
+        )
+
+        self.dsp_block: rvbs.reverb_room_stereo = rvbs.reverb_room_stereo(
             self.fs,
             self.n_in,
             max_room_size=max_room_size,
@@ -272,18 +306,19 @@ class ReverbRoomStereo(ReverbRoom):
             indicates no stereo separation (i.e. mono). A width of 1 indicates
             maximum stereo separation.
         """
-        self.dsp_block.width = width
+        parameters = self.parameters.copy(update={"width": width})
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: ReverbRoomStereoParameters):  # pyright: ignore overload
         """Update the parameters of the ReverbRoomStereo stage."""
-        self.set_damping(parameters.damping)
-        self.set_decay(parameters.decay)
-        self.set_room_size(parameters.room_size)
-        self.set_width(parameters.width)
-        # base parameters
-        self.set_predelay(parameters.predelay)
-        self.set_pre_gain(parameters.pregain)
-        self.set_wet_dry_mix(parameters.wet_dry_mix)
+        self.parameters = parameters
+        self.dsp_block.room_size = parameters.room_size
+        self.dsp_block.damping = parameters.damping
+        self.dsp_block.decay = parameters.decay
+        self.dsp_block.predelay = parameters.predelay
+        self.dsp_block.pregain = parameters.pregain
+        self.dsp_block.set_wet_dry_mix(parameters.wet_dry_mix)
+        self.dsp_block.width = parameters.width
 
 
 class ReverbPlateStereo(_ReverbBase):
@@ -319,7 +354,21 @@ class ReverbPlateStereo(_ReverbBase):
 
         max_predelay = predelay if max_predelay == None else max_predelay
 
-        self.dsp_block = rvp.reverb_plate_stereo(
+        self.config = ReverbPlateConfig(max_predelay=max_predelay)
+
+        self.parameters = ReverbPlateParameters(
+            decay=0.4,
+            damping=0.75,
+            bandwidth=8000,
+            early_diffusion=0.75,
+            late_diffusion=0.7,
+            width=1.0,
+            wet_dry_mix=0.5,
+            pregain=0.5,
+            predelay=predelay,
+        )
+
+        self.dsp_block: rvp.reverb_plate_stereo = rvp.reverb_plate_stereo(
             self.fs,
             self.n_in,
             predelay=predelay,
@@ -362,7 +411,8 @@ class ReverbPlateStereo(_ReverbBase):
             indicates no stereo separation (i.e. mono). A width of 1 indicates
             maximum stereo separation.
         """
-        self.dsp_block.width = width
+        parameters = self.parameters.copy(update={"width": width})
+        self.set_parameters(parameters)
 
     def set_damping(self, damping):
         """
@@ -375,7 +425,8 @@ class ReverbPlateStereo(_ReverbBase):
         damping : float
             How much high frequency attenuation in the plate, between 0 and 1.
         """
-        self.dsp_block.damping = damping
+        parameters = self.parameters.copy(update={"damping": damping})
+        self.set_parameters(parameters)
 
     def set_decay(self, decay):
         """
@@ -388,7 +439,8 @@ class ReverbPlateStereo(_ReverbBase):
         decay : float
             How long the reverberation of the plate is, between 0 and 1.
         """
-        self.dsp_block.decay = decay
+        parameters = self.parameters.copy(update={"decay": decay})
+        self.set_parameters(parameters)
 
     def set_early_diffusion(self, diffusion):
         """
@@ -401,7 +453,8 @@ class ReverbPlateStereo(_ReverbBase):
         diffusion : float
             How diffuse the plate is, between 0 and 1.
         """
-        self.dsp_block.early_diffusion = diffusion
+        parameters = self.parameters.copy(update={"early_diffusion": diffusion})
+        self.set_parameters(parameters)
 
     def set_late_diffusion(self, diffusion):
         """
@@ -414,7 +467,8 @@ class ReverbPlateStereo(_ReverbBase):
         diffusion : float
             How diffuse the plate is, between 0 and 1.
         """
-        self.dsp_block.late_diffusion = diffusion
+        parameters = self.parameters.copy(update={"late_diffusion": diffusion})
+        self.set_parameters(parameters)
 
     def set_bandwidth(self, bandwidth):
         """
@@ -427,17 +481,18 @@ class ReverbPlateStereo(_ReverbBase):
         bandwidth : float
             The bandwidth of the plate input signal, between 0 and 1.
         """
-        self.dsp_block.bandwidth = bandwidth
+        parameters = self.parameters.copy(update={"bandwidth": bandwidth})
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: ReverbPlateParameters):
         """Update the parameters of the ReverbPlate stage."""
-        self.set_damping(parameters.damping)
-        self.set_decay(parameters.decay)
-        self.set_early_diffusion(parameters.early_diffusion)
-        self.set_late_diffusion(parameters.late_diffusion)
-        self.set_bandwidth(parameters.bandwidth)
-        self.set_width(parameters.width)
-        # base parameters
-        self.set_predelay(parameters.predelay)
-        self.set_pre_gain(parameters.pregain)
-        self.set_wet_dry_mix(parameters.wet_dry_mix)
+        self.parameters = parameters
+        self.dsp_block.damping = parameters.damping
+        self.dsp_block.decay = parameters.decay
+        self.dsp_block.early_diffusion = parameters.early_diffusion
+        self.dsp_block.late_diffusion = parameters.late_diffusion
+        self.dsp_block.bandwidth = parameters.bandwidth
+        self.dsp_block.width = parameters.width
+        self.dsp_block.pregain = parameters.pregain
+        self.dsp_block.predelay = parameters.predelay
+        self.dsp_block.set_wet_dry_mix(parameters.wet_dry_mix)

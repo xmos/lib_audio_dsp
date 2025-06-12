@@ -1,4 +1,4 @@
-# Copyright 2024 XMOS LIMITED.
+# Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Envelope detector Stages measure how the average or peak amplitude of
 a signal varies over time.
@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from audio_dsp.models.stage import StageConfig, StageModel, StageParameters, NodePlacement
+from audio_dsp.models.stage import StageModel, StageParameters, NodePlacement
 from audio_dsp.models.fields import DEFAULT_ATTACK_T, DEFAULT_RELEASE_T
 
 

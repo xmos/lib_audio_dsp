@@ -1,3 +1,5 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """The pydantic models of the DSP Stages."""
 
 from .signal_chain import VolumeControl, FixedGain, Fork, Mixer, Delay

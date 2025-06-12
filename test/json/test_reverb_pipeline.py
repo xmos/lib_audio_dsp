@@ -1,6 +1,8 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Test reverb pipeline creation."""
 
-from audio_dsp.design.parse_json import DspJson, make_pipeline
+from audio_dsp.design.parse_json import DspJson, make_pipeline, pipeline_to_dspjson
 
 
 def test_plate_reverb_pipeline():
@@ -19,10 +21,10 @@ def test_plate_reverb_pipeline():
                 {
                     "op_type": "ReverbPlateStereo",
                     "config": {
-                        "predelay": 15.0,
                         "max_predelay": 30.0
                     },
                     "parameters": {
+                        "predelay": 15.0,
                         "width": 0.8,
                         "damping": 0.4,
                         "decay": 0.6,
@@ -41,13 +43,13 @@ def test_plate_reverb_pipeline():
             ],
             "inputs": [
                 {
-                    "name": "audio_in",
+                    "name": "inputs",
                     "output": [0, 1]
                 }
             ],
             "outputs": [
                 {
-                    "name": "audio_out",
+                    "name": "outputs",
                     "input": [2, 3]
                 }
             ]
@@ -66,6 +68,9 @@ def test_plate_reverb_pipeline():
             
     assert reverb_stage is not None, "Could not find Plate Reverb stage in pipeline"
 
+    new_json = pipeline_to_dspjson(pipeline)
+    assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
+    
 
 if __name__ == "__main__":
     test_plate_reverb_pipeline()
