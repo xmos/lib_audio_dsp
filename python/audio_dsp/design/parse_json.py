@@ -38,7 +38,6 @@ class Input(BaseModel, extra="ignore"):
         ...,
         description="List of output edges (1 edge for mono, 2 for stereo)",
         min_length=1,
-        max_length=10,
     )
 
 
@@ -49,8 +48,6 @@ class Output(BaseModel, extra="ignore"):
     input: list[int] = Field(
         ...,
         description="List of input edges (1 edge for mono, 2 for stereo)",
-        min_length=1,
-        max_length=10,
     )
 
 
