@@ -131,14 +131,14 @@ class ReverbRoomStereoParameters(ReverbStereoBaseParameters, ReverbRoomParameter
     pass
 
 
-class ReverbPlateConfig(ReverbBaseConfig):
-    """Compile time configuration for a ReverbPlate Stage."""
+class ReverbPlateStereoConfig(ReverbBaseConfig):
+    """Compile time configuration for a ReverbPlateStereo Stage."""
 
     pass
 
 
-class ReverbPlateParameters(ReverbStereoBaseParameters):
-    """Parameters for a ReverbPlate Stage."""
+class ReverbPlateStereoParameters(ReverbStereoBaseParameters):
+    """Parameters for a ReverbPlateStereo Stage."""
 
     pregain: float = Field(
         default=0.5,
@@ -208,5 +208,5 @@ class ReverbPlateStereo(_ReverbBaseModel[StereoPlacement]):
     """
 
     op_type: Literal["ReverbPlateStereo"] = "ReverbPlateStereo"
-    parameters: ReverbPlateParameters = Field(default_factory=ReverbPlateParameters)
-    config: ReverbPlateConfig = Field(default_factory=ReverbPlateConfig)
+    parameters: ReverbPlateStereoParameters = Field(default_factory=ReverbPlateStereoParameters)
+    config: ReverbPlateStereoConfig = Field(default_factory=ReverbPlateStereoConfig)

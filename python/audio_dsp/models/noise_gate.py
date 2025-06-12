@@ -11,14 +11,7 @@ from audio_dsp.models.fields import DEFAULT_THRESHOLD_DB
 
 
 class NoiseGateParameters(StageParameters):
-    """Parameters for noise gate stage.
-
-    Attributes
-    ----------
-        threshold_db: Level below which the gate begins to close (dB)
-        attack_t: Time for gate to open when signal exceeds threshold (seconds)
-        release_t: Time for gate to close when signal falls below threshold (seconds)
-    """
+    """Parameters for noise gate stage."""
 
     threshold_db: float = DEFAULT_THRESHOLD_DB(
         description="Level in dB below which the gate begins to close",

@@ -10,14 +10,7 @@ from audio_dsp.models.fields import DEFAULT_ATTACK_T, DEFAULT_RELEASE_T, DEFAULT
 
 
 class LimiterParameters(StageParameters):
-    """Parameters for limiter stage.
-
-    Attributes
-    ----------
-        threshold_db: Level in dB above which limiting occurs
-        attack_t: Time for limiter to start limiting (seconds)
-        release_t: Time for signal to return to original level (seconds)
-    """
+    """Parameters for limiter stage."""
 
     threshold_db: float = DEFAULT_THRESHOLD_DB(
         description="Level in dB above which limiting occurs"
@@ -78,12 +71,7 @@ class HardLimiterPeak(StageModel):
 
 
 class ClipperParameters(StageParameters):
-    """Parameters for clipper stage.
-
-    Attributes
-    ----------
-        threshold_db: Level in dB above which clipping occurs
-    """
+    """Parameters for clipper stage."""
 
     threshold_db: float = DEFAULT_THRESHOLD_DB(
         description="Level in dB above which clipping occurs"

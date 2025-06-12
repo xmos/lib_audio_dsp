@@ -21,15 +21,7 @@ from audio_dsp.models.fields import (
 
 
 class CompressorSidechainParameters(StageParameters):
-    """Parameters for sidechain compressor stage.
-
-    Attributes
-    ----------
-        ratio: Compression ratio applied when detect signal exceeds threshold
-        threshold_db: Level in dB above which compression occurs
-        attack_t: Time for compressor to start compressing (seconds)
-        release_t: Time for signal to return to original level (seconds)
-    """
+    """Parameters for sidechain compressor stage."""
 
     ratio: float = DEFAULT_COMPRESSOR_RATIO(
         description="Compression ratio applied when detect signal exceeds threshold"

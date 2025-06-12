@@ -10,10 +10,10 @@ import audio_dsp.dsp.reverb_plate as rvp
 from audio_dsp.models.reverb import (
     ReverbRoomParameters,
     ReverbRoomStereoParameters,
-    ReverbPlateParameters,
+    ReverbPlateStereoParameters,
     ReverbRoomConfig,
     ReverbRoomStereoConfig,
-    ReverbPlateConfig,
+    ReverbPlateStereoConfig,
 )
 
 
@@ -354,9 +354,9 @@ class ReverbPlateStereo(_ReverbBase):
 
         max_predelay = predelay if max_predelay == None else max_predelay
 
-        self.config = ReverbPlateConfig(max_predelay=max_predelay)
+        self.config = ReverbPlateStereoConfig(max_predelay=max_predelay)
 
-        self.parameters = ReverbPlateParameters(
+        self.parameters = ReverbPlateStereoParameters(
             decay=0.4,
             damping=0.75,
             bandwidth=8000,
@@ -484,7 +484,7 @@ class ReverbPlateStereo(_ReverbBase):
         parameters = self.parameters.copy(update={"bandwidth": bandwidth})
         self.set_parameters(parameters)
 
-    def set_parameters(self, parameters: ReverbPlateParameters):
+    def set_parameters(self, parameters: ReverbPlateStereoParameters):
         """Update the parameters of the ReverbPlate stage."""
         self.parameters = parameters
         self.dsp_block.damping = parameters.damping

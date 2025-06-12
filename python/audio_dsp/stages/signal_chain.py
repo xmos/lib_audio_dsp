@@ -547,11 +547,7 @@ class Crossfader(Stage):
         self.set_parameters(parameters)
 
     def set_parameters(self, parameters: CrossfaderParameters):
-        """Update the parameters of the Crossfader stage.
-
-        Args:
-            parameters: New crossfader parameters to apply
-        """
+        """Update the parameters of the Crossfader stage."""
         self.parameters = parameters
         self.dsp_block.mix = parameters.mix
 
