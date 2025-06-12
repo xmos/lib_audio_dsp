@@ -2,10 +2,11 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Functions to convert JSON files to Python DSP pipelines."""
 
+from __future__ import annotations
 from collections import defaultdict
 from pathlib import Path
 from pprint import pprint
-from typing import Annotated, Any, Optional, Union, List, TypeVar
+from typing import Annotated, Any, Optional, Union, List, TypeVar, TypeAlias
 
 from pydantic import BaseModel, Field
 from pydantic.json_schema import SkipJsonSchema
@@ -53,13 +54,16 @@ class Output(BaseModel, extra="ignore"):
 
 StageModelType = TypeVar("StageModelType", bound=StageModel)
 
+stage_models_list: TypeAlias = list[_stage_Models] # pyright: ignore
 
+
+#
 class Graph(BaseModel):
     """Graph object to hold the pipeline information."""
 
     name: str = Field(..., description="Name of the graph")
     fs: int = Field(..., description="Sampling frequency for the graph")
-    nodes: list[_stage_Models]  # pyright: ignore
+    nodes: stage_models_list  # pyright: ignore
     inputs: list[Input]
     outputs: list[Output]
 

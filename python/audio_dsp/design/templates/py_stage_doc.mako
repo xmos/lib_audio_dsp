@@ -57,8 +57,7 @@ ${"="*len(cl)}
 .. autopydantic_model:: ${param_cls}
     :noindex:
     :members:
-    :model-show-config-summary: False
-    :model-show-field-summary: False
+    :inherited-members: StageParameters
 % endfor ## for cls in model_cls
 
 

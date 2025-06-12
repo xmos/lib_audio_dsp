@@ -118,7 +118,12 @@ class VolumeControlParameters(StageParameters):
     """Parameters for VolumeControl Stage."""
 
     gain_db: float = DEFAULT_GAIN_DB()
-    mute_state: int = Field(default=0, ge=0, le=1, description="Mute state of the stage")
+    mute_state: int = Field(
+        default=0,
+        ge=0,
+        le=1,
+        description=("The mute state of the VolumeControl: 0: unmuted, 1: muted."),
+    )
 
 
 class VolumeControl(StageModel):
@@ -136,7 +141,11 @@ class VolumeControl(StageModel):
 class SwitchParameters(StageParameters):
     """Parameters for Switch Stage."""
 
-    position: int = Field(default=0, ge=0, description="Switch position")
+    position: int = Field(
+        default=0,
+        ge=0,
+        description="Switch position. This changes the output signal to the input[index]",
+    )
 
 
 class Switch(StageModel[Placement_Ni1o]):
@@ -199,14 +208,11 @@ class DelayConfig(StageConfig):
 
 
 class DelayParameters(StageParameters):
-    """Parameters for delay stage.
+    """Parameters for delay stage."""
 
-    Attributes
-    ----------
-        delay: Current delay length in the configured units
-    """
-
-    delay: float = Field(default=0, ge=0, description="Current delay length")
+    delay: float = Field(
+        default=0, ge=0, description="Current delay length in the configured units"
+    )
 
 
 class Delay(StageModel):

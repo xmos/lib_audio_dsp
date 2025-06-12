@@ -28,12 +28,16 @@ class GraphicEq10bParameters(StageParameters):
 
     Attributes
     ----------
-        gains_db (list[float]): Gain values (in dB) for each of the 10 frequency bands.
+        gains_db: (list[float])
+            Gain values (in dB) for each of the 10 frequency bands.
             - Each value must be between -24 dB and +24 dB.
             - The list must have exactly 10 elements.
     """
 
-    gains_db: Annotated[list[Annotated[float, GEQ_GAIN]], Len(10),] = Field(default_factory=lambda: [0.0] * 10)
+    gains_db: Annotated[
+        list[Annotated[float, GEQ_GAIN]],
+        Len(10),
+    ] = Field(default_factory=lambda: [0.0] * 10)
 
 
 class GraphicEq10b(StageModel):

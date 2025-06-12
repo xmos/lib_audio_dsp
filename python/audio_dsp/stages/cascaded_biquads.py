@@ -236,9 +236,8 @@ class CascadedBiquads16(Stage):
     """16 cascaded biquad filters. This allows up to 16 second order
     biquad filters to be run in series.
 
-    This can be used for either:
+    This can be used for:
 
-    - an Nth order filter built out of cascaded second order sections
     - a parametric EQ, where several biquad filters are used at once.
 
     For documentation on the individual biquad filters, see
@@ -345,6 +344,16 @@ class ParametricEq8b(CascadedBiquads):
         implementation details.
     """
 
+    def set_parameters(self, parameters: CascadedBiquadsParameters):  # pyright: ignore
+        """Update the parameters of the ParametricEq8b stage.
+
+        Parameters
+        ----------
+        parameters : CascadedBiquadsParameter
+            A list of BiquadParameters to update the cascaded biquads with.
+        """
+        super().set_parameters(parameters)
+
 
 class ParametricEq16b(CascadedBiquads16):
     """A 16 band parametric equalizer stage. This stage allows up to 16 biquad
@@ -380,3 +389,13 @@ class NthOrderFilter(CascadedBiquads):
         The DSP block class; see :ref:`CascadedBiquads` for
         implementation details.
     """
+
+    def set_parameters(self, parameters: NthOrderFilterParameters):  # pyright: ignore
+        """Update the parameters of the NthOrderFilter stage.
+
+        Parameters
+        ----------
+        parameters : NthOrderFilter
+            The parameters to update the Nth order filter with.
+        """
+        super().set_parameters(parameters)

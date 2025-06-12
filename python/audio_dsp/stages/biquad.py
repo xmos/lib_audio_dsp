@@ -6,7 +6,7 @@ from audio_dsp.design.stage import Stage, find_config
 import audio_dsp.dsp.biquad as bq
 import numpy as np
 
-from audio_dsp.models.biquad import BiquadParameters
+from audio_dsp.models.biquad import BiquadParameters, BiquadSlewParameters
 import audio_dsp.models.fields as fields
 
 
@@ -345,14 +345,6 @@ class Biquad(Stage):
 
         self.dsp_block.update_coeffs(new_coeffs)
 
-        # Set slew rate if specified
-        if hasattr(parameters, "slew_rate"):
-            # Convert slew_rate to slew_shift
-            # TODO: Implement proper conversion from slew_rate to slew_shift
-            # For now using a simple mapping
-            slew_shift = max(0, min(31, int(-np.log2(parameters.slew_rate))))
-            self.dsp_block.slew_shift = slew_shift
-
         # Store the parameters
         self.parameters = parameters
 
@@ -399,3 +391,8 @@ class BiquadSlew(Biquad):
         filter will slew between filter coefficients.
         """
         self.dsp_block.slew_shift = slew_shift
+
+    def set_parameters(self, parameters: BiquadSlewParameters):  #pyright: ignore
+        """Set the slewing biquad parameters."""
+        self.dsp_block.slew_shift = parameters.slew_shift
+        super().set_parameters(parameters)

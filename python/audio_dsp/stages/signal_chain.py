@@ -238,7 +238,7 @@ class VolumeControl(Stage):
     Parameters
     ----------
     gain_db : float, optional
-        The gain of the mixer in dB.
+        The gain of the Volume Control in dB.
     mute_state : int, optional
         The mute state of the Volume Control: 0: unmuted, 1: muted.
 
@@ -491,6 +491,7 @@ class Delay(Stage):
             The units of the delay, can be 'samples', 'ms' or 's'.
             Default is 'samples'.
         """
+        # TODO unit conversion
         parameters = DelayParameters(delay=delay)
         self.set_parameters(parameters)
 
