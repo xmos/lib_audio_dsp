@@ -321,15 +321,6 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
         Output(name="outputs", input=[pipeline._graph.edges.index(x) for x in pipeline.o.edges])
     ]
 
-    # # Extract inputs and outputs
-    # inputs = []
-    # for inp in getattr(pipeline, "inputs", []):
-    #     inputs.append(Input(name=inp["name"], output=pipeline._graph.edges.index(x)))
-
-    # outputs = []
-    # for out in getattr(pipeline, "outputs", []):
-    #     outputs.append(Output(name=out["name"], input=out["input"]))
-
     # Extract nodes
     nodes = []
     for thread in pipeline.threads:
