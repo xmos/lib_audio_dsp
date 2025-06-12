@@ -80,7 +80,7 @@ class DspJson(BaseModel):
     graph: Graph
     # checksum: List
 
-    def model_dump_xdsp(self, indent):
+    def model_dump_xdsp(self, indent=2):
         """Dump model in xdsp format with specified indentation."""
         d = self.model_dump()
         # Move 'op_type' to the front
