@@ -376,7 +376,7 @@ class BiquadSlew(Biquad):
             raise ValueError("Biquad slew requires inputs with a valid fs")
         self.fs = int(self.fs)
         self.create_outputs(self.n_in)
-        self.parameters = BiquadParameters()
+        self.parameters = BiquadSlewParameters()
         init_coeffs = bq.make_biquad_bypass(self.fs)
         self.dsp_block: bq = bq.biquad_slew(init_coeffs, self.fs, self.n_in)
         self.set_control_field_cb("filter_coeffs", self._get_fixed_point_coeffs)
