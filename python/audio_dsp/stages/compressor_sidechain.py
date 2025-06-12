@@ -7,7 +7,7 @@ the level of a different input.
 from audio_dsp.design.stage import Stage, find_config
 from audio_dsp.dsp import drc as drc
 from audio_dsp.dsp import generic as dspg
-from audio_dsp.models.compressor_sidechain_model import CompressorSidechainParameters
+from audio_dsp.models.compressor_sidechain import CompressorSidechainParameters
 
 
 class CompressorSidechain(Stage):

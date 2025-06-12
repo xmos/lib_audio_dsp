@@ -5,7 +5,7 @@
 from audio_dsp.design.stage import Stage, find_config
 from audio_dsp.dsp import drc as drc
 from audio_dsp.dsp import generic as dspg
-from audio_dsp.models.noise_gate_model import NoiseGateParameters
+from audio_dsp.models.noise_gate import NoiseGateParameters
 
 
 class NoiseGate(Stage):

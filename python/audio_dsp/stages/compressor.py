@@ -7,7 +7,7 @@ signal, such as reducing the level of loud sounds.
 from audio_dsp.design.stage import Stage, find_config
 from audio_dsp.dsp import drc as drc
 from audio_dsp.dsp import generic as dspg
-from audio_dsp.models.compressor_model import CompressorParameters
+from audio_dsp.models.compressor import CompressorParameters
 
 
 class CompressorRMS(Stage):
