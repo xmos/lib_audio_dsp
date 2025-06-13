@@ -43,7 +43,7 @@ def _parametric_eq_doc(wrapped):
     return wrapped
 
 
-def _bq_spec_to_parameters(filter_spec: list[list[Any]]):
+def _bq_spec_to_parameters(filter_spec: list[list[Any]], out_len=8):
     """Convert a biquad specification to a list of Biquad parameters."""
     filters = []
     for spec in filter_spec:
@@ -83,6 +83,10 @@ def _bq_spec_to_parameters(filter_spec: list[list[Any]]):
             filters.append(
                 bqm.biquad_peaking(filter_freq=spec[1], q_factor=spec[2], boost_db=spec[3])
             )
+
+    if len(filters) < out_len:
+        # pad with bypass filters
+        filters.extend([bqm.biquad_bypass()] * (out_len - len(filters)))
 
     return filters
 
@@ -307,7 +311,9 @@ class CascadedBiquads16(Stage):
             parameters for that filter type. The available filter types
             and their parameters are:{generated_doc}
         """
-        parameters = CascadedBiquads16Parameters(filters=_bq_spec_to_parameters(filter_spec))
+        parameters = CascadedBiquads16Parameters(
+            filters=_bq_spec_to_parameters(filter_spec, out_len=16)
+        )
         self.set_parameters(parameters)
 
     def set_parameters(self, parameters: CascadedBiquads16Parameters):

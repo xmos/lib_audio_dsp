@@ -345,6 +345,10 @@ class Biquad(Stage):
 
         self.dsp_block.update_coeffs(new_coeffs)
 
+        # Set slew rate if specified
+        if hasattr(parameters, "slew_shift"):
+            self.dsp_block.slew_shift = parameters.slew_shift  # pyright: ignore
+
         # Store the parameters
         self.parameters = parameters
 
@@ -391,9 +395,9 @@ class BiquadSlew(Biquad):
         """Set the slew shift for a biquad object. This sets how fast the
         filter will slew between filter coefficients.
         """
-        self.dsp_block.slew_shift = slew_shift
+        parameters = self.parameters.copy(update={"slew_shift": slew_shift})
+        self.set_parameters(parameters)
 
     def set_parameters(self, parameters: BiquadSlewParameters):  # pyright: ignore
         """Set the slewing biquad parameters."""
-        self.dsp_block.slew_shift = parameters.slew_shift
         super().set_parameters(parameters)
