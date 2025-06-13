@@ -46,7 +46,7 @@ class Output(BaseModel, extra="ignore"):
     """Pydantic model of the outputs of a DSP graph."""
 
     name: str = Field(..., description="Name of the output")
-    input: list[int] = Field(
+    input: list[str] = Field(
         ...,
         description="List of input edges (1 edge for mono, 2 for stereo)",
     )
@@ -319,8 +319,7 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
         )
     ]
     outputs = [
-        Output(name="outputs", input=[pipeline._graph.edges.index(x) for x in pipeline.o.edges])
-    ]
+        Output(name="outputs", input=[f"{x.source.label or x.source.name}[{x.source_index}]" for x in pipeline.o.edges])]
 
     # Extract nodes
     nodes = []
@@ -330,10 +329,16 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
             if op_type in ["PipelineStage", "DSPThreadStage"]:
                 continue
 
+            stage_in = []
+            for x in stage.i.edges:
+                if x.source is not None:
+                    stage_in.append(f"{x.source.label or x.source.name}[{x.source_index}]")
+                else:
+                    stage_in.append(f"input[{x.source_index}]")
+
             placement = {
-                "name": stage.label,
-                "input": [pipeline._graph.edges.index(x) for x in stage.i.edges],
-                "output": [pipeline._graph.edges.index(x) for x in stage.o.edges],
+                "name": stage.label or stage.name,
+                "input": stage_in,
                 "thread": thread.id,
             }
 

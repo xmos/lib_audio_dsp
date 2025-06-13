@@ -37,7 +37,7 @@ class ForkConfig(StageConfig):
 class ForkPlacement(NodePlacement, extra="forbid"):
     """Graph placement for a Fork Stage."""
 
-    input: list[int] = Field(default=[], description="List of input edges.", min_length=1)
+    input: list[str] = Field(default=[], description="List of input edges.", min_length=1)
 
 
 class Fork(StageModel[ForkPlacement]):
@@ -50,13 +50,13 @@ class Fork(StageModel[ForkPlacement]):
     def check_fork(self):
         """Check that the fork has been validly connected."""
         in_len = len(self.placement.input)
-        out_len = len(self.placement.output)
+        # out_len = len(self.placement.output)
 
-        if out_len / in_len != self.config.count:
-            if out_len / in_len == out_len // in_len:
-                self.config.count = out_len // in_len
-            else:
-                raise ValueError("number of fork outputs not a multiple of inputs")
+        # if out_len / in_len != self.config.count:
+        #     if out_len / in_len == out_len // in_len:
+        #         self.config.count = out_len // in_len
+        #     else:
+        #         raise ValueError("number of fork outputs not a multiple of inputs")
         return self
 
 
