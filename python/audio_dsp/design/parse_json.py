@@ -31,9 +31,9 @@ class Input(BaseModel, extra="ignore"):
     """Pydantic model of the inputs to a DSP graph."""
 
     name: str = Field(..., description="Name of the input")
-    output: list[int] = Field(
+    output: list[str] = Field(
         ...,
-        description="List of output edges (1 edge for mono, 2 for stereo)",
+        description="List of output edges (e.g., ['input[0]', 'input[1]'])",
         min_length=1,
         max_length=10,
     )
@@ -43,9 +43,9 @@ class Output(BaseModel, extra="ignore"):
     """Pydantic model of the outputs of a DSP graph."""
 
     name: str = Field(..., description="Name of the output")
-    input: list[int] = Field(
+    input: list[str] = Field(
         ...,
-        description="List of input edges (1 edge for mono, 2 for stereo)",
+        description="List of input edges (e.g., ['NodeA[0]', 'NodeB[1]'])",
         min_length=1,
         max_length=10,
     )
@@ -159,14 +159,14 @@ def insert_forks(graph: Graph) -> Graph:
     multiple times.
     """
     new_graph = graph.model_copy(deep=True)
-    consumer_map: dict[int, list[tuple[str, Any, int]]] = defaultdict(list)
+    consumer_map: dict[str, list[tuple[str, Any, int]]] = defaultdict(list)
     for node_index, node in enumerate(new_graph.nodes):
         for pos, edge in enumerate(node.placement.input):
             consumer_map[edge].append(("node", node_index, pos))
     for out_idx, out in enumerate(new_graph.outputs):
         for pos, edge in enumerate(out.input):
             consumer_map[edge].append(("graph_output", out_idx, pos))
-    all_edges: list[int] = []
+    all_edges: list[str] = []
     for inp in new_graph.inputs:
         all_edges.extend(inp.output)
     for out in new_graph.outputs:
@@ -174,11 +174,10 @@ def insert_forks(graph: Graph) -> Graph:
     for node in new_graph.nodes:
         all_edges.extend(node.placement.input)
         all_edges.extend(node.placement.output)
-    max_edge = max(all_edges) if all_edges else -1
-    new_edge_id = max_edge + 1
-    producer_of_edge: dict[int, Optional[int]] = {}
+    # Edge names are now strings, so no max_edge/new_edge_id logic
+    producer_of_edge: dict[str, Optional[int]] = {}
     for inp in new_graph.inputs:
-        for edge in inp.output:
+        for idx, edge in enumerate(inp.output):
             producer_of_edge[edge] = None
     for idx, node in enumerate(new_graph.nodes):
         for e in node.placement.output:
@@ -188,9 +187,9 @@ def insert_forks(graph: Graph) -> Graph:
         if len(consumers) > 1:
             num_consumers = len(consumers)
             new_edges = []
-            for _ in range(num_consumers):
-                new_edges.append(new_edge_id)
-                new_edge_id += 1
+            for i in range(num_consumers):
+                # Use the fork node name as the namespace
+                new_edges.append(make_edge_name(f"AutoFork_{edge}", i))
             for new_edge, (cons_type, consumer_idx, pos) in zip(new_edges, consumers):
                 if cons_type == "node":
                     new_graph.nodes[consumer_idx].placement.input[pos] = new_edge
@@ -226,40 +225,41 @@ def stage_handle(model):
     return getattr(Stages, model.op_type)
 
 
+def make_edge_name(node_name: str, idx: int) -> str:
+    """Return the canonical edge name, e.g., 'NodeName[0]'."""
+    return f"{node_name}[{idx}]"
+
+
 def make_pipeline(json_obj: DspJson) -> Pipeline:
     """Create a Python DSP pipeline from a Pydantic model of the JSON file
     describing a DSP graph.
     """
     graph = insert_forks(json_obj.graph)
-    flat_input_edges: list[int] = []
+    edge_map = {}  # edge_name -> pipeline object
+
+    # Collect all input edge names and total channels
+    flat_input_edges = []
     total_channels = 0
     for inp in graph.inputs:
         flat_input_edges.extend(inp.output)
         total_channels += len(inp.output)
-    flat_output_edges: list[int] = []
-    for out in graph.outputs:
-        flat_output_edges.extend(out.input)
-    edgelist: list[int] = []
-    edgelist.extend(flat_input_edges)
-    edgelist.extend(flat_output_edges)
-    for node in graph.nodes:
-        edgelist.extend(node.placement.input)
-        edgelist.extend(node.placement.output)
-    max_edge = max(edgelist) if edgelist else -1
+
     p, in_edges = Pipeline.begin(total_channels, fs=graph.fs)
     thread_max = max(node.placement.thread for node in graph.nodes) if graph.nodes else 0
     for _ in range(thread_max):
         p._add_thread()
-    edge_list = [None] * (max_edge + 1)
-    for i, edge in enumerate(flat_input_edges):
-        edge_list[edge] = in_edges[i]
+
+    # Assign input edges
+    for i, edge_name in enumerate(flat_input_edges):
+        edge_map[edge_name] = in_edges[i]
+
     waiting_nodes = list(range(len(graph.nodes)))
     while waiting_nodes:
         node_idx = waiting_nodes[0]
         node = graph.nodes[node_idx]
         stage_inputs = []
-        for i in node.placement.input:
-            stage_inputs.append(edge_list[i])
+        for edge_name in node.placement.input:
+            stage_inputs.append(edge_map.get(edge_name))
         if None in stage_inputs:
             waiting_nodes.pop(0)
             waiting_nodes.append(node_idx)
@@ -279,13 +279,14 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
             p.stages[-1].set_parameters(node.parameters)
         if len(node_output) != 0:
             for i in range(len(node.placement.output)):
-                if edge_list[node.placement.output[i]] is not None:
+                edge_name = node.placement.output[i]
+                if edge_map.get(edge_name) is not None:
                     raise ValueError("Output already exists")
-                edge_list[node.placement.output[i]] = node_output[i]
+                edge_map[edge_name] = node_output[i]
         waiting_nodes.pop(0)
     output_nodes = []
-    for edge in flat_output_edges:
-        output_nodes.append(edge_list[edge])
+    for edge_name in [e for out in graph.outputs for e in out.input]:
+        output_nodes.append(edge_map[edge_name])
     output_nodes = sum(output_nodes, start=StageOutputList())
     p.set_outputs(output_nodes)
     return p
