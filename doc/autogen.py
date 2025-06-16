@@ -117,9 +117,7 @@ DSP Stages List
 This a list of all the supported stages that can be used with the DSP pipeline tool:
 
 % for i in range(len(titles)):
-*   :ref:`${titles[i]}_stages`
-
-    ${docstrings[i]}
+*   :ref:`${titles[i]}_stages`: ${docstrings[i].split("Stages", 2)[-1].strip()}
 
 % for cl in classes[i]:
     * :ref:`${cl}_stage`
