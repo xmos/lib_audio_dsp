@@ -280,13 +280,14 @@ class Pipeline:
 
     def validate(self):
         """
-        TODO validate pipeline assumptions.
+        Validate pipeline assumptions.
 
         - Thread connections must not lead to a scenario where the pipeline hangs
         - Stages must fit on thread
         - feedback must be within a thread (future)
         - All edges have the same fs and frame_size (until future enhancements)
         """
+        # TODO: Implement validation checks
 
     def draw(self, path: Path | None = None):
         """Render a dot diagram of this pipeline.
