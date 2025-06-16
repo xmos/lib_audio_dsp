@@ -86,7 +86,7 @@ def _bq_spec_to_parameters(filter_spec: list[list[Any]], out_len=8):
 
     if len(filters) < out_len:
         # pad with bypass filters
-        filters.extend([bqm.biquad_bypass()] * (out_len - len(filters)))
+        filters.extend([bqm.biquad_bypass() for _ in range(out_len - len(filters))])
 
     return filters
 
