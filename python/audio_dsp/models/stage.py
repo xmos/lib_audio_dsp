@@ -39,82 +39,68 @@ class NodePlacement(BaseModel, extra="forbid"):
     """
 
     name: str
-    input: list[int] = Field(
+    input: list[str] = Field(
         default=[],
         description="List of input edges.",
     )
-    output: list[int] = Field(default=[], description="IDs of output edges.")
     thread: int = Field(ge=0, lt=5)
 
-    @field_validator("input", "output", mode="before")
-    def _single_to_list(cls, value: Union[int, list]) -> list:
-        if isinstance(value, list):
-            return value
-        else:
-            return [value]
+    # @field_validator("input", "output", mode="before")
+    # def _single_to_list(cls, value: Union[int, list]) -> list:
+    #     if isinstance(value, list):
+    #         return value
+    #     else:
+    #         return [value]
 
 
 class MonoPlacement(NodePlacement):
     """The placement of a mono stage that must have 1 input and 1 output."""
 
-    input: list[int] = Field(
+    input: list[str] = Field(
         default=[],
         description="List of input edges.",
         min_length=1,
         max_length=1,
-    )
-    output: list[int] = Field(
-        default=[], description="IDs of output edges.", min_length=1, max_length=1
     )
 
 
 class StereoPlacement(NodePlacement):
     """The placement of a stereo stage that must have 2 inputs and 2 outputs."""
 
-    input: list[int] = Field(
+    input: list[str] = Field(
         default=[],
         description="List of input edges.",
         min_length=2,
         max_length=2,
     )
-    output: list[int] = Field(
-        default=[], description="IDs of output edges.", min_length=2, max_length=2
-    )
+
 
 
 class Placement_2i1o(NodePlacement):
     """The placement of a stage that must have 2 inputs and 1 outputs."""
 
-    input: list[int] = Field(
+    input: list[str] = Field(
         default=[],
         description="List of input edges.",
         min_length=2,
         max_length=2,
-    )
-    output: list[int] = Field(
-        default=[], description="IDs of output edges.", min_length=1, max_length=1
     )
 
 
 class Placement_4i2o(NodePlacement):
     """The placement of a stage that must have 2 inputs and 1 outputs."""
 
-    input: list[int] = Field(
+    input: list[str] = Field(
         default=[],
         description="List of input edges.",
         min_length=4,
         max_length=4,
     )
-    output: list[int] = Field(
-        default=[], description="IDs of output edges.", min_length=2, max_length=2
-    )
 
 
 class Placement_Ni1o(NodePlacement, extra="forbid"):
     """Graph placement for a Stage that takes many input and one output."""
-
-    output: list[int] = Field(default=[], max_length=1, min_length=1)
-
+    pass
 
 class StageModel[Placement: NodePlacement](edgeProducerBaseModel):
     """A generic pydantic model of a DSP Stage.

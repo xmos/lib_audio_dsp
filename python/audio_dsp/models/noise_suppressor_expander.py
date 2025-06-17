@@ -18,15 +18,18 @@ class NoiseSuppressorExpanderParameters(StageParameters):
     """Parameters for noise suppressor expander stage."""
 
     ratio: float = DEFAULT_COMPRESSOR_RATIO(
+        default=3,
         description="Expansion ratio applied when signal falls below threshold",
     )
     threshold_db: float = DEFAULT_THRESHOLD_DB(
-        default=-35.0, description="Level in dB below which expansion occurs"
+        default=-35, description="Level in dB below which expansion occurs"
     )
     attack_t: float = DEFAULT_ATTACK_T(
+        default=0.005,
         description="Time in seconds for expander to start expanding",
     )
     release_t: float = DEFAULT_RELEASE_T(
+        default=0.12,
         description="Time in seconds for signal to return to original level",
     )
 

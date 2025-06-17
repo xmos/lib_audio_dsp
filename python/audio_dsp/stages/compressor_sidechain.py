@@ -7,7 +7,7 @@ the level of a different input.
 from audio_dsp.design.stage import Stage, find_config
 from audio_dsp.dsp import drc as drc
 from audio_dsp.dsp import generic as dspg
-from audio_dsp.models.compressor_sidechain_model import CompressorSidechainParameters
+from audio_dsp.models.compressor_sidechain import CompressorSidechainParameters
 
 
 class CompressorSidechain(Stage):
@@ -43,12 +43,7 @@ class CompressorSidechain(Stage):
         if self.n_in != 2:
             raise ValueError(f"Sidechain compressor requires 2 inputs, got {self.n_in}")
 
-        self.parameters = CompressorSidechainParameters(
-            ratio=4,
-            threshold_db=0,
-            attack_t=0.01,
-            release_t=0.2,
-        )
+        self.parameters = CompressorSidechainParameters()
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)

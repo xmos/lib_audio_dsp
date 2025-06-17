@@ -2,10 +2,11 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Functions to convert JSON files to Python DSP pipelines."""
 
+from __future__ import annotations
 from collections import defaultdict
 from pathlib import Path
 from pprint import pprint
-from typing import Annotated, Any, Optional, Union, List, TypeVar
+from typing import Annotated, Any, Optional, Union, List, TypeVar, TypeAlias
 
 from pydantic import BaseModel, Field
 from pydantic.json_schema import SkipJsonSchema
@@ -53,13 +54,16 @@ class Output(BaseModel, extra="ignore"):
 
 StageModelType = TypeVar("StageModelType", bound=StageModel)
 
+stage_models_list: TypeAlias = list[_stage_Models]  # pyright: ignore
 
+
+#
 class Graph(BaseModel):
     """Graph object to hold the pipeline information."""
 
     name: str = Field(..., description="Name of the graph")
     fs: int = Field(..., description="Sampling frequency for the graph")
-    nodes: list[_stage_Models]  # pyright: ignore
+    nodes: stage_models_list  # pyright: ignore
     inputs: list[Input]
     outputs: list[Output]
 
@@ -80,7 +84,7 @@ class DspJson(BaseModel):
     graph: Graph
     # checksum: List
 
-    def model_dump_xdsp(self, indent):
+    def model_dump_xdsp(self, indent=2):
         """Dump model in xdsp format with specified indentation."""
         d = self.model_dump()
         # Move 'op_type' to the front
@@ -301,8 +305,7 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
         )
     ]
     outputs = [
-        Output(name="outputs", input=[pipeline._graph.edges.index(x) for x in pipeline.o.edges])
-    ]
+        Output(name="outputs", input=[f"{x.source.label or x.source.name}[{x.source_index}]" for x in pipeline.o.edges])]
 
     # Extract nodes
     nodes = []
@@ -312,10 +315,16 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
             if op_type in ["PipelineStage", "DSPThreadStage"]:
                 continue
 
+            stage_in = []
+            for x in stage.i.edges:
+                if x.source is not None:
+                    stage_in.append(f"{x.source.label or x.source.name}[{x.source_index}]")
+                else:
+                    stage_in.append(f"input[{x.source_index}]")
+
             placement = {
-                "name": stage.label,
-                "input": [pipeline._graph.edges.index(x) for x in stage.i.edges],
-                "output": [pipeline._graph.edges.index(x) for x in stage.o.edges],
+                "name": stage.label or stage.name,
+                "input": stage_in,
                 "thread": thread.id,
             }
 

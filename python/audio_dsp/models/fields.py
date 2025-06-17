@@ -43,13 +43,13 @@ DEFAULT_GAIN_DB = partial(
 )
 
 DEFAULT_ATTACK_T = partial(
-    Field, default=0.005, gt=0, le=1, description="Attack time of the stage in seconds."
+    Field, default=0.01, gt=0, le=1, description="Attack time of the stage in seconds."
 )
 DEFAULT_RELEASE_T = partial(
-    Field, default=0.120, gt=0, le=5, description="Release time of the stage in seconds."
+    Field, default=0.2, gt=0, le=5, description="Release time of the stage in seconds."
 )
 DEFAULT_COMPRESSOR_RATIO = partial(
-    Field, default=2.0, gt=1, le=20, description="Compression ratio of the stage."
+    Field, default=4.0, gt=1, le=20, description="Compression ratio of the stage."
 )
 DEFAULT_THRESHOLD_DB = DEFAULT_GAIN_DB
 

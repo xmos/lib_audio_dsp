@@ -21,21 +21,38 @@ def _16biquads():
     return [biquad_bypass() for _ in range(16)]
 
 
-class CascadedBiquadsParameters(StageParameters):
-    """Parameters for CascadedBiquad Stage."""
+CASCADED_BIQUADS_8 = Annotated[list[BIQUAD_TYPES], Len(8)]
 
-    filters: Annotated[list[BIQUAD_TYPES], Len(8)] = Field(default_factory=_8biquads, max_length=8)
+
+class CascadedBiquadsParameters(StageParameters):
+    """Parameters for CascadedBiquad Stage.
+
+    Attributes
+    ----------
+    filters : list[BIQUAD_TYPES]
+        A list of BiquadParameters to update the cascaded biquads with.
+    """
+
+    filters: CASCADED_BIQUADS_8 = Field(default_factory=_8biquads, max_length=8)
 
 
 class NthOrderFilterParameters(StageParameters):
     """Parameters for NthOrderFilter Stage."""
 
-    type: Literal["bypass", "highpass", "lowpass"] = "bypass"
-    filter: Literal["butterworth"] = "butterworth"
-    order: Literal[2, 4, 6, 8, 10, 12, 14, 16] = Field(
-        default=2, description="Order of the filter (2-16)"
+    type: Literal["bypass", "highpass", "lowpass"] = Field(
+        default="bypass",
+        description="Type of filter to implement. Can be 'bypass', 'highpass', or 'lowpass'.",
     )
-    filter_freq: float = DEFAULT_FILTER_FREQ()
+    filter: Literal["butterworth"] = Field(
+        default="butterworth",
+        description="Class of filter to use. Currently only 'butterworth' is supported.",
+    )
+    order: Literal[2, 4, 6, 8, 10, 12, 14, 16] = Field(
+        default=2, description="The order of the filter. Must be even and less than 16."
+    )
+    filter_freq: float = DEFAULT_FILTER_FREQ(
+        description="-3dB cutoff frequency of the filter in Hz."
+    )
 
 
 class CascadedBiquads(StageModel):

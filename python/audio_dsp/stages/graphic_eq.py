@@ -32,7 +32,7 @@ class GraphicEq10b(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=find_config("graphic_eq_10b"), **kwargs)
         self.create_outputs(self.n_in)
-        self.parameters = GraphicEq10bParameters(gains_db=[0.0] * 10)
+        self.parameters = GraphicEq10bParameters()
         self.dsp_block: geq.graphic_eq_10_band = geq.graphic_eq_10_band(
             self.fs, self.n_in, self.parameters.gains_db
         )

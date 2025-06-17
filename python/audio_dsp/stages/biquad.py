@@ -6,7 +6,7 @@ from audio_dsp.design.stage import Stage, find_config
 import audio_dsp.dsp.biquad as bq
 import numpy as np
 
-from audio_dsp.models.biquad import BiquadParameters
+from audio_dsp.models.biquad import BiquadParameters, BiquadSlewParameters
 import audio_dsp.models.fields as fields
 
 
@@ -53,7 +53,7 @@ class Biquad(Stage):
             raise ValueError("Biquad requires inputs with a valid fs")
         self.fs = int(self.fs)
         self.create_outputs(self.n_in)
-        self.parameters = BiquadParameters(filter_type=fields.biquad_bypass())
+        self.parameters = BiquadParameters()
         self.dsp_block: bq = bq.biquad(bq.make_biquad_bypass(self.fs), self.fs, self.n_in)
         self.set_control_field_cb("filter_coeffs", self._get_fixed_point_coeffs)
         self.set_control_field_cb("left_shift", lambda: self.dsp_block.b_shift)
@@ -345,14 +345,6 @@ class Biquad(Stage):
 
         self.dsp_block.update_coeffs(new_coeffs)
 
-        # Set slew rate if specified
-        if hasattr(parameters, "slew_rate"):
-            # Convert slew_rate to slew_shift
-            # TODO: Implement proper conversion from slew_rate to slew_shift
-            # For now using a simple mapping
-            slew_shift = max(0, min(31, int(-np.log2(parameters.slew_rate))))
-            self.dsp_block.slew_shift = slew_shift
-
         # Store the parameters
         self.parameters = parameters
 
@@ -384,6 +376,7 @@ class BiquadSlew(Biquad):
             raise ValueError("Biquad slew requires inputs with a valid fs")
         self.fs = int(self.fs)
         self.create_outputs(self.n_in)
+        self.parameters = BiquadSlewParameters()
         init_coeffs = bq.make_biquad_bypass(self.fs)
         self.dsp_block: bq = bq.biquad_slew(init_coeffs, self.fs, self.n_in)
         self.set_control_field_cb("filter_coeffs", self._get_fixed_point_coeffs)
@@ -399,3 +392,8 @@ class BiquadSlew(Biquad):
         filter will slew between filter coefficients.
         """
         self.dsp_block.slew_shift = slew_shift
+
+    def set_parameters(self, parameters: BiquadSlewParameters):  # pyright: ignore
+        """Set the slewing biquad parameters."""
+        self.dsp_block.slew_shift = parameters.slew_shift
+        super().set_parameters(parameters)
