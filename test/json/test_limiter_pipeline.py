@@ -1,6 +1,8 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Test limiter pipeline creation."""
 
-from audio_dsp.design.parse_json import DspJson, make_pipeline
+from audio_dsp.design.parse_json import DspJson, make_pipeline, pipeline_to_dspjson
 
 
 def test_rms_limiter_pipeline():
@@ -18,7 +20,6 @@ def test_rms_limiter_pipeline():
             "nodes": [
                 {
                     "op_type": "LimiterRMS",
-                    "config": {},
                     "parameters": {
                         "threshold_db": -6.0,
                         "attack_t": 0.01,
@@ -34,28 +35,22 @@ def test_rms_limiter_pipeline():
             ],
             "inputs": [
                 {
-                    "name": "audio_in",
+                    "name": "inputs",
                     "output": [0, 1]
                 }
             ],
             "outputs": [
                 {
-                    "name": "audio_out",
+                    "name": "outputs",
                     "input": [2, 3]
                 }
             ]
         }
     }
     
-    print("Parsing JSON and creating pipeline...")
     dsp_json = DspJson(**pipeline_json)
     pipeline = make_pipeline(dsp_json)
     
-    print("\nStages in pipeline:")
-    for i, stage in enumerate(pipeline.stages):
-        print(f"Stage {i}: {stage.name} (type: {type(stage).__name__})")
-    
-    print("\nValidating pipeline...")
     # Find our limiter stage
     limiter_stage = None
     for stage in pipeline.stages:
@@ -64,9 +59,10 @@ def test_rms_limiter_pipeline():
             break
             
     assert limiter_stage is not None, "Could not find RMS Limiter stage in pipeline"
-    print("✓ Found RMS Limiter stage in pipeline")
+
+    new_json = pipeline_to_dspjson(pipeline)
+    assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
     
-    print("\nAll tests passed successfully! 🎉")
 
 
 def test_peak_limiter_pipeline():
@@ -84,7 +80,6 @@ def test_peak_limiter_pipeline():
             "nodes": [
                 {
                     "op_type": "LimiterPeak",
-                    "config": {},
                     "parameters": {
                         "threshold_db": -3.0,
                         "attack_t": 0.005,
@@ -100,28 +95,22 @@ def test_peak_limiter_pipeline():
             ],
             "inputs": [
                 {
-                    "name": "audio_in",
+                    "name": "inputs",
                     "output": [0, 1]
                 }
             ],
             "outputs": [
                 {
-                    "name": "audio_out",
+                    "name": "outputs",
                     "input": [2, 3]
                 }
             ]
         }
     }
     
-    print("Parsing JSON and creating pipeline...")
     dsp_json = DspJson(**pipeline_json)
     pipeline = make_pipeline(dsp_json)
-    
-    print("\nStages in pipeline:")
-    for i, stage in enumerate(pipeline.stages):
-        print(f"Stage {i}: {stage.name} (type: {type(stage).__name__})")
-    
-    print("\nValidating pipeline...")
+
     # Find our limiter stage
     limiter_stage = None
     for stage in pipeline.stages:
@@ -130,10 +119,10 @@ def test_peak_limiter_pipeline():
             break
             
     assert limiter_stage is not None, "Could not find Peak Limiter stage in pipeline"
-    print("✓ Found Peak Limiter stage in pipeline")
-    
-    print("\nAll tests passed successfully! 🎉")
 
+    new_json = pipeline_to_dspjson(pipeline)
+    assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
+    
 
 def test_hard_peak_limiter_pipeline():
     """Test creating a hard peak limiter pipeline."""
@@ -150,7 +139,6 @@ def test_hard_peak_limiter_pipeline():
             "nodes": [
                 {
                     "op_type": "HardLimiterPeak",
-                    "config": {},
                     "parameters": {
                         "threshold_db": -1.0,
                         "attack_t": 0.001,
@@ -166,28 +154,22 @@ def test_hard_peak_limiter_pipeline():
             ],
             "inputs": [
                 {
-                    "name": "audio_in",
+                    "name": "inputs",
                     "output": [0, 1]
                 }
             ],
             "outputs": [
                 {
-                    "name": "audio_out",
+                    "name": "outputs",
                     "input": [2, 3]
                 }
             ]
         }
     }
     
-    print("Parsing JSON and creating pipeline...")
     dsp_json = DspJson(**pipeline_json)
     pipeline = make_pipeline(dsp_json)
     
-    print("\nStages in pipeline:")
-    for i, stage in enumerate(pipeline.stages):
-        print(f"Stage {i}: {stage.name} (type: {type(stage).__name__})")
-    
-    print("\nValidating pipeline...")
     # Find our limiter stage
     limiter_stage = None
     for stage in pipeline.stages:
@@ -196,9 +178,10 @@ def test_hard_peak_limiter_pipeline():
             break
             
     assert limiter_stage is not None, "Could not find Hard Peak Limiter stage in pipeline"
-    print("✓ Found Hard Peak Limiter stage in pipeline")
+
+    new_json = pipeline_to_dspjson(pipeline)
+    assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
     
-    print("\nAll tests passed successfully! 🎉")
 
 
 if __name__ == "__main__":

@@ -5,9 +5,10 @@ Finite impulse response (FIR) filter Stages allow the use of
 arbitrary filters with a finite number of taps.
 """
 
-from ..design.stage import Stage, find_config
-from ..dsp import fir as fir
-from ..dsp import generic as dspg
+from audio_dsp.design.stage import Stage, find_config
+from audio_dsp.dsp import fir as fir
+from audio_dsp.dsp import generic as dspg
+from audio_dsp.models.fir import FirConfig
 
 
 class FirDirect(Stage):
@@ -30,6 +31,8 @@ class FirDirect(Stage):
 
     def __init__(self, coeffs_path, **kwargs):
         super().__init__(name="fir_direct", **kwargs)
+
+        self.config = FirConfig(coeffs_path=coeffs_path)
 
         self.create_outputs(self.n_in)
 

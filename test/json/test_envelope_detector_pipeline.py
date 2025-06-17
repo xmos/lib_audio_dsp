@@ -1,6 +1,8 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Test envelope detector pipeline creation."""
 
-from audio_dsp.design.parse_json import DspJson, make_pipeline
+from audio_dsp.design.parse_json import DspJson, make_pipeline, pipeline_to_dspjson
 
 
 def test_peak_envelope_detector_pipeline():
@@ -18,7 +20,6 @@ def test_peak_envelope_detector_pipeline():
             "nodes": [
                 {
                     "op_type": "EnvelopeDetectorPeak",
-                    "config": {},
                     "parameters": {
                         "attack_t": 0.01,
                         "release_t": 0.1
@@ -33,28 +34,22 @@ def test_peak_envelope_detector_pipeline():
             ],
             "inputs": [
                 {
-                    "name": "audio_in",
-                    "output": [0]
+                    "name": "inputs",
+                    "output": [0, 1]
                 }
             ],
             "outputs": [
                 {
-                    "name": "audio_out",
-                    "input": [0]
+                    "name": "outputs",
+                    "input": [1]
                 }
             ]
         }
     }
     
-    print("Parsing JSON and creating pipeline...")
     dsp_json = DspJson(**pipeline_json)
     pipeline = make_pipeline(dsp_json)
-    
-    print("\nStages in pipeline:")
-    for i, stage in enumerate(pipeline.stages):
-        print(f"Stage {i}: {stage.name} (type: {type(stage).__name__})")
-    
-    print("\nValidating pipeline...")
+
     # Find our envelope detector stage
     detector_stage = None
     for stage in pipeline.stages:
@@ -63,10 +58,10 @@ def test_peak_envelope_detector_pipeline():
             break
             
     assert detector_stage is not None, "Could not find Peak Envelope Detector stage in pipeline"
-    print("✓ Found Peak Envelope Detector stage in pipeline")
-    
-    print("\nAll tests passed successfully! 🎉")
 
+    new_json = pipeline_to_dspjson(pipeline)
+    assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
+    
 
 def test_rms_envelope_detector_pipeline():
     """Test creating an RMS envelope detector pipeline."""
@@ -83,7 +78,6 @@ def test_rms_envelope_detector_pipeline():
             "nodes": [
                 {
                     "op_type": "EnvelopeDetectorRMS",
-                    "config": {},
                     "parameters": {
                         "attack_t": 0.05,
                         "release_t": 0.2
@@ -98,28 +92,22 @@ def test_rms_envelope_detector_pipeline():
             ],
             "inputs": [
                 {
-                    "name": "audio_in",
-                    "output": [0]
+                    "name": "inputs",
+                    "output": [0, 1]
                 }
             ],
             "outputs": [
                 {
-                    "name": "audio_out",
-                    "input": [0]
+                    "name": "outputs",
+                    "input": [1]
                 }
             ]
         }
     }
     
-    print("Parsing JSON and creating pipeline...")
     dsp_json = DspJson(**pipeline_json)
     pipeline = make_pipeline(dsp_json)
     
-    print("\nStages in pipeline:")
-    for i, stage in enumerate(pipeline.stages):
-        print(f"Stage {i}: {stage.name} (type: {type(stage).__name__})")
-    
-    print("\nValidating pipeline...")
     # Find our envelope detector stage
     detector_stage = None
     for stage in pipeline.stages:
@@ -128,10 +116,10 @@ def test_rms_envelope_detector_pipeline():
             break
             
     assert detector_stage is not None, "Could not find RMS Envelope Detector stage in pipeline"
-    print("✓ Found RMS Envelope Detector stage in pipeline")
-    
-    print("\nAll tests passed successfully! 🎉")
 
+    new_json = pipeline_to_dspjson(pipeline)
+    assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
+    
 
 if __name__ == "__main__":
     test_peak_envelope_detector_pipeline()

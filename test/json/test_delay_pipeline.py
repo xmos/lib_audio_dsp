@@ -1,6 +1,8 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Test delay pipeline creation."""
 
-from audio_dsp.design.parse_json import DspJson, make_pipeline
+from audio_dsp.design.parse_json import DspJson, make_pipeline, pipeline_to_dspjson
 from audio_dsp.stages.signal_chain import Delay
 
 
@@ -36,24 +38,22 @@ def test_simple_delay_pipeline():
             ],
             "inputs": [
                 {
-                    "name": "audio_in",
+                    "name": "inputs",
                     "output": [0, 1]
                 }
             ],
             "outputs": [
                 {
-                    "name": "audio_out",
+                    "name": "outputs",
                     "input": [2, 3]
                 }
             ]
         }
     }
     
-    print("Parsing JSON and creating pipeline...")
     dsp_json = DspJson(**pipeline_json)
     pipeline = make_pipeline(dsp_json)
-    
-    print("Validating pipeline...")
+
     # Find our delay stage
     delay_stage = None
     for stage in pipeline.stages:
@@ -62,20 +62,13 @@ def test_simple_delay_pipeline():
             break
             
     assert delay_stage is not None, "Could not find Delay stage in pipeline"
-    print("✓ Found Delay stage in pipeline")
-    
     assert delay_stage.max_delay == 2048, f"Expected max_delay 2048, got {delay_stage.max_delay}"
-    print("✓ max_delay config is correct")
-
     assert delay_stage.units == "samples", f"Expected units 'samples', got {delay_stage.units}"
-    print("✓ units parameter is correct")   
-
     assert delay_stage.parameters.delay == 1024, f"Expected delay 1024, got {delay_stage.parameters.delay}"
-    print("✓ delay parameter is correct")
-    
 
+    new_json = pipeline_to_dspjson(pipeline)
+    assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
     
-    print("\nAll tests passed successfully! 🎉")
 
 
 if __name__ == "__main__":

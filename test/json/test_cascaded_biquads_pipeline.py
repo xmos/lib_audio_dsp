@@ -1,6 +1,8 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Test cascaded biquads pipeline creation."""
 
-from audio_dsp.design.parse_json import DspJson, make_pipeline
+from audio_dsp.design.parse_json import DspJson, make_pipeline, pipeline_to_dspjson
 
 
 def test_parametric_eq_pipeline():
@@ -18,7 +20,6 @@ def test_parametric_eq_pipeline():
             "nodes": [
                 {
                     "op_type": "ParametricEq8b",
-                    "config": {},
                     "parameters": {
                         "filters": [
                             {
@@ -64,28 +65,22 @@ def test_parametric_eq_pipeline():
             ],
             "inputs": [
                 {
-                    "name": "audio_in",
+                    "name": "inputs",
                     "output": [0, 1]
                 }
             ],
             "outputs": [
                 {
-                    "name": "audio_out",
+                    "name": "outputs",
                     "input": [2, 3]
                 }
             ]
         }
     }
     
-    print("Parsing JSON and creating pipeline...")
     dsp_json = DspJson(**pipeline_json)
     pipeline = make_pipeline(dsp_json)
-    
-    print("\nStages in pipeline:")
-    for i, stage in enumerate(pipeline.stages):
-        print(f"Stage {i}: {stage.name} (type: {type(stage).__name__})")
-    
-    print("\nValidating pipeline...")
+
     # Find our parametric EQ stage
     eq_stage = None
     for stage in pipeline.stages:
@@ -94,10 +89,9 @@ def test_parametric_eq_pipeline():
             break
             
     assert eq_stage is not None, "Could not find Parametric EQ stage in pipeline"
-    print("✓ Found Parametric EQ stage in pipeline")
-    
-    print("\nAll tests passed successfully! 🎉")
 
+    new_json = pipeline_to_dspjson(pipeline)
+    assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
 
 if __name__ == "__main__":
     test_parametric_eq_pipeline() 

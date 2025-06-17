@@ -1,9 +1,11 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Functions to convert JSON files to Python DSP pipelines."""
 
 from collections import defaultdict
 from pathlib import Path
 from pprint import pprint
-from typing import Annotated, Any, Optional, Union, List
+from typing import Annotated, Any, Optional, Union, List, TypeVar
 
 from pydantic import BaseModel, Field
 from pydantic.json_schema import SkipJsonSchema
@@ -12,13 +14,14 @@ import audio_dsp.stages as Stages
 from audio_dsp.design.pipeline import Pipeline, generate_dsp_main
 from audio_dsp.design.stage import StageOutputList, all_stages
 from audio_dsp.models.signal_chain import Fork
-from audio_dsp.models.stage import all_models
+from audio_dsp.models.stage import all_models, StageModel
 import json
 import re
 import warnings
 
 BAD_NAMES = []
 
+# Define the union type alias for all stage models
 _stage_Models = Annotated[
     Union[
         tuple((SkipJsonSchema[i] if i.__name__ in BAD_NAMES else i) for i in all_models().values())
@@ -35,7 +38,6 @@ class Input(BaseModel, extra="ignore"):
         ...,
         description="List of output edges (e.g., ['input[0]', 'input[1]'])",
         min_length=1,
-        max_length=10,
     )
 
 
@@ -46,56 +48,14 @@ class Output(BaseModel, extra="ignore"):
     input: list[str] = Field(
         ...,
         description="List of input edges (e.g., ['NodeA[0]', 'NodeB[1]'])",
-        min_length=1,
-        max_length=10,
     )
 
 
+StageModelType = TypeVar("StageModelType", bound=StageModel)
+
+
 class Graph(BaseModel):
-    """
-    Graph object to hold the pipeline.
-
-    Examples
-    --------
-    1. EQ + Reverb Example:
-
-    ```json
-    {
-      "name": "EQ + Reverb Example",
-      "fs": 48000,
-      "nodes": [
-        {"placement": {"input": [0, 1], "output": [2, 3], "name": "VolumeIn", "thread": 0}, "op_type": "VolumeControl"},
-        {"op_type": "ParametricEq", "placement": {"input": [2, 3], "output": [4, 5], "name": "PEQ", "thread": 0}},
-        {"op_type": "ReverbPlateStereo", "config": {"predelay": 30}, "placement": {"input": [4, 5], "output": [6, 7], "name": "StereoReverb", "thread": 0}}
-      ],
-      "inputs": [
-        {"name": "audio_in", "output": [0, 1]}
-      ],
-      "outputs": [
-        {"name": "audio_out", "input": [6, 7]}
-      ]
-    }
-    ```
-
-    2. Stereo Mixer with Volume:
-
-    ```json
-    {
-      "name": "Stereo Mixer with Volume",
-      "fs": 48000,
-      "inputs": [
-        {"name": "stereo_in", "output": [0, 1]}
-      ],
-      "nodes": [
-        {"op_type": "Mixer", "placement": {"input": [0, 1], "name": "Mixer", "output": [2], "thread": 0}},
-        {"op_type": "VolumeControl", "placement": {"input": [2], "name": "Volume", "output": [3], "thread": 0}}
-      ],
-      "outputs": [
-        {"name": "stereo_out", "input": [3, 3]}
-      ]
-    }
-    ```
-    """
+    """Graph object to hold the pipeline information."""
 
     name: str = Field(..., description="Name of the graph")
     fs: int = Field(..., description="Sampling frequency for the graph")
@@ -158,11 +118,15 @@ def insert_forks(graph: Graph) -> Graph:
     """Automatically insert forks in the graph where edges have been used
     multiple times.
     """
+    # Create a deep copy of the graph to avoid mutating the original
     new_graph = graph.model_copy(deep=True)
+    # Map from edge name to a list of consumers (node or graph output, index, position)
     consumer_map: dict[str, list[tuple[str, Any, int]]] = defaultdict(list)
+    # Build the consumer map for all node inputs
     for node_index, node in enumerate(new_graph.nodes):
         for pos, edge in enumerate(node.placement.input):
             consumer_map[edge].append(("node", node_index, pos))
+    # Add graph outputs as consumers
     for out_idx, out in enumerate(new_graph.outputs):
         for pos, edge in enumerate(out.input):
             consumer_map[edge].append(("graph_output", out_idx, pos))
@@ -182,7 +146,9 @@ def insert_forks(graph: Graph) -> Graph:
     for idx, node in enumerate(new_graph.nodes):
         for e in node.placement.output:
             producer_of_edge[e] = idx
+    # Map from producer index to a list of Fork nodes to insert after it
     fork_nodes_by_producer: dict[Optional[int], list] = defaultdict(list)
+    # For each edge with multiple consumers, insert a Fork node
     for edge, consumers in consumer_map.items():
         if len(consumers) > 1:
             num_consumers = len(consumers)
@@ -195,6 +161,7 @@ def insert_forks(graph: Graph) -> Graph:
                     new_graph.nodes[consumer_idx].placement.input[pos] = new_edge
                 elif cons_type == "graph_output":
                     new_graph.outputs[consumer_idx].input[pos] = new_edge
+            # Create the Fork node and associate it with the producer
             fork_node_data = {
                 "op_type": "Fork",
                 "config": {"count": num_consumers},
@@ -208,6 +175,7 @@ def insert_forks(graph: Graph) -> Graph:
             fork_node = Fork(**fork_node_data)
             producer_idx = producer_of_edge.get(edge, None)
             fork_nodes_by_producer[producer_idx].append(fork_node)
+    # Build the new node list, inserting Forks after their producers
     new_nodes = []
     if None in fork_nodes_by_producer:
         new_nodes.extend(fork_nodes_by_producer[None])
@@ -234,6 +202,7 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
     """Create a Python DSP pipeline from a Pydantic model of the JSON file
     describing a DSP graph.
     """
+    # Insert Fork nodes where needed to handle shared edges
     graph = insert_forks(json_obj.graph)
     edge_map = {}  # edge_name -> pipeline object
 
@@ -257,6 +226,7 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
     while waiting_nodes:
         node_idx = waiting_nodes[0]
         node = graph.nodes[node_idx]
+        # Gather StageOutput objects for this node's inputs
         stage_inputs = []
         for edge_name in node.placement.input:
             stage_inputs.append(edge_map.get(edge_name))
@@ -264,10 +234,13 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
             waiting_nodes.pop(0)
             waiting_nodes.append(node_idx)
             continue
+        # Combine all inputs into a StageOutputList
         stage_inputs = sum(stage_inputs, start=StageOutputList())
+        # Get config dict for this node
         config = node.config if hasattr(node, "config") else {}
         if isinstance(config, BaseModel):
             config = config.model_dump()
+        # Instantiate the stage and get its outputs
         node_output = p.stage(
             stage_handle(node),
             stage_inputs,
@@ -275,19 +248,24 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
             thread=node.placement.thread,
             **config,
         )
+        # Set parameters if present
         if hasattr(node, "parameters"):
             p.stages[-1].set_parameters(node.parameters)
+        # Map the outputs to the correct edge indices
         if len(node_output) != 0:
             for i in range(len(node.placement.output)):
                 edge_name = node.placement.output[i]
                 if edge_map.get(edge_name) is not None:
                     raise ValueError("Output already exists")
                 edge_map[edge_name] = node_output[i]
+        # Remove this node from waiting list
         waiting_nodes.pop(0)
+    # Gather all output nodes for the pipeline
     output_nodes = []
     for edge_name in [e for out in graph.outputs for e in out.input]:
         output_nodes.append(edge_map[edge_name])
     output_nodes = sum(output_nodes, start=StageOutputList())
+    # Set the pipeline outputs
     p.set_outputs(output_nodes)
     return p
 
@@ -312,8 +290,8 @@ def update_pipeline(p: Pipeline, params: DspJson):
 def pipeline_to_dspjson(pipeline) -> DspJson:
     """Convert a Pipeline object to a DspJson object."""
     # Example: Extract graph-level info
-    graph_name = getattr(pipeline, "name", "Generated DSP Graph")
-    fs = getattr(pipeline, "fs", 48000)
+    graph_name = getattr(pipeline, "_id")
+    fs = getattr(pipeline, "fs")
 
     # Extract inputs and outputs
     inputs = [
@@ -325,15 +303,6 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
     outputs = [
         Output(name="outputs", input=[pipeline._graph.edges.index(x) for x in pipeline.o.edges])
     ]
-
-    # # Extract inputs and outputs
-    # inputs = []
-    # for inp in getattr(pipeline, "inputs", []):
-    #     inputs.append(Input(name=inp["name"], output=pipeline._graph.edges.index(x)))
-
-    # outputs = []
-    # for out in getattr(pipeline, "outputs", []):
-    #     outputs.append(Output(name=out["name"], input=out["input"]))
 
     # Extract nodes
     nodes = []
@@ -354,9 +323,9 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
                 "op_type": op_type,
                 "placement": placement,  # Should be a dict or Pydantic model
             }
-            if hasattr(stage, "config") and isinstance(stage.config, BaseModel):
+            if hasattr(stage, "config"):
                 node_dict["config"] = stage.config
-            if hasattr(stage, "parameters") and isinstance(stage.parameters, BaseModel):
+            if hasattr(stage, "parameters"):
                 node_dict["parameters"] = stage.parameters
             # Convert to the correct Pydantic model for the node
             node_model_cls = type(stage.model) if hasattr(stage, "model") else None
@@ -382,23 +351,3 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
         graph=graph,
     )
     return dsp_json
-
-
-if __name__ == "__main__":
-    # parser = argparse.ArgumentParser(description="JSON-to-DSP pipeline generator")
-    # parser.add_argument(
-    #     "json_path", type=Path, help="path to the JSON describing the DSP pipeline"
-    # )
-    # parser.add_argument("out_path", type=Path, help="path for the generated DSP code output")
-    # args = parser.parse_args()
-
-    # output_path = Path(args.out_path)
-    # json_path = Path(args.json_path)
-
-    # json_path = Path(r"C:\Users\allanskellett\Documents\051_dsp_txt\dsp_lang_1.json")
-    json_path = Path(r"C:\Users\allanskellett\Documents\040_dsp_ultra\scio_0_new_forks.json")
-    output_path = "tmpdir"
-    json_obj = DspJson.model_validate_json(json_path.read_text())
-    p = make_pipeline(json_obj)
-    generate_dsp_main(p, output_path)
-    p.draw(Path(output_path, "dsp_pipeline"))

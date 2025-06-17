@@ -1,3 +1,5 @@
+# Copyright 2025 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Pydantic models of the cascaded biquad DSP Stages."""
 
 from typing import Annotated, Literal
@@ -8,7 +10,7 @@ from pydantic.json_schema import SkipJsonSchema
 
 from audio_dsp.models.fields import BIQUAD_TYPES, biquad_bypass, DEFAULT_FILTER_FREQ
 
-from .stage import StageConfig, StageModel, StageParameters
+from .stage import StageModel, StageParameters
 
 
 def _8biquads():
@@ -48,7 +50,7 @@ class CascadedBiquads(StageModel):
 
     op_type: Literal["CascadedBiquads"] = "CascadedBiquads"
     parameters: CascadedBiquadsParameters | NthOrderFilterParameters = Field(
-        default_factory=CascadedBiquadsParameters
+        default=CascadedBiquadsParameters()
     )
 
 
