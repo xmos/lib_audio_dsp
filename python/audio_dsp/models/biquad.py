@@ -14,15 +14,14 @@ class BiquadParameters(StageParameters):
 
     Attributes
     ----------
-        filter_type: The type of biquad filter to use (e.g., lowpass, highpass, etc.)
-        slew_rate: Maximum rate of change for filter coefficients (units/sample)
+    filter_type : audio_dsp.models.fields.BIQUAD_TYPES
+        The parameters of the type of biquad filter to use (e.g., biquad_lowpass, biquad_highpass, etc.)
+
     """
 
     filter_type: BIQUAD_TYPES = Field(
-        default=biquad_bypass(), description="Type of biquad filter to implement"
-    )
-    slew_rate: float = Field(
-        default=1.0, gt=0, description="Maximum rate of change for filter coefficients per sample"
+        default=biquad_bypass(),
+        description="Type of biquad filter to implement and it's parameters.",
     )
 
 
@@ -41,6 +40,14 @@ class Biquad(StageModel):
     )
 
 
+class BiquadSlewParameters(BiquadParameters):
+    """Parameters for a slewing biquad filter."""
+
+    slew_shift: int = Field(
+        default=6, ge=0, lt=31, description="The shift value used in the exponential slew."
+    )
+
+
 class BiquadSlew(StageModel):
     """A single biquad filter stage.
 
@@ -51,6 +58,6 @@ class BiquadSlew(StageModel):
     """
 
     op_type: Literal["BiquadSlew"] = "BiquadSlew"
-    parameters: BiquadParameters = Field(
-        default_factory=lambda: BiquadParameters(filter_type=biquad_bypass())
+    parameters: BiquadSlewParameters = Field(
+        default_factory=lambda: BiquadSlewParameters(filter_type=biquad_bypass())
     )

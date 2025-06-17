@@ -298,3 +298,37 @@ are passed to separate threads before being used in a third.
     x = p.stage(Biquad, x1 + x2)
 
     p.set_outputs(x)
+
+
+.. _json_format:
+
+DSP Pipeline JSON Format
+========================
+
+For integrating with external tools, such as GUIs, the DSP pipeline can
+be exported to a JSON format. To define and enforce the JSON schema,
+pydantic models of each stage are used. To convert a pipeline to JSON,
+the following steps can be followed:
+
+.. code-block:: python
+
+    from audio_dsp.design.pipeline import Pipeline
+    from audio_dsp.design.parse_json import DspJson, pipeline_to_dspjson, make_pipeline
+    from pathlib import Path
+    from audio_dsp.stages import Biquad
+
+    p, inputs = Pipeline.begin(1, fs=48000)
+    x = p.stage(Biquad, inputs)
+    p.set_outputs(x)
+
+    # Generate the pydantic model of the pipeline
+    json_data = pipeline_to_dspjson(p)
+
+    # write the JSON data to a file
+    filepath = Path("pipeline.json")
+    filepath.write_text(json_data.model_dump_xdsp())
+
+    # read the JSON data back to a DSP pipeline
+    json_text = filepath.read_text()
+    json_data = DspJson.model_validate_json(json_text)
+    p = make_pipeline(json_data)

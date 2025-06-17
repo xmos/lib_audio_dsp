@@ -1,7 +1,7 @@
 # Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """
-Graphic EQs allow frequency response adjustments at fixed center
+Graphic EQ Stages allow frequency response adjustments at fixed center
 frequencies.
 """
 
@@ -32,7 +32,7 @@ class GraphicEq10b(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=find_config("graphic_eq_10b"), **kwargs)
         self.create_outputs(self.n_in)
-        self.parameters = GraphicEq10bParameters(gains_db=[0.0] * 10)
+        self.parameters = GraphicEq10bParameters()
         self.dsp_block: geq.graphic_eq_10_band = geq.graphic_eq_10_band(
             self.fs, self.n_in, self.parameters.gains_db
         )

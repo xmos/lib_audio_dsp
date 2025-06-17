@@ -1,6 +1,6 @@
 # Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""Signal chain stages allow for the control of signal flow through the
+"""Signal chain Stages allow for the control of signal flow through the
 pipeline. This includes stages for combining and splitting signals, basic
 gain components, and delays.
 """
@@ -121,7 +121,7 @@ class Mixer(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=find_config("mixer"), **kwargs)
         self.create_outputs(1)
-        self.parameters = MixerParameters(gain_db=-6)
+        self.parameters = MixerParameters()
         self.set_parameters(self.parameters)
         self.set_control_field_cb("gain", lambda: self.dsp_block.gain_int)
 
@@ -238,7 +238,7 @@ class VolumeControl(Stage):
     Parameters
     ----------
     gain_db : float, optional
-        The gain of the mixer in dB.
+        The gain of the Volume Control in dB.
     mute_state : int, optional
         The mute state of the Volume Control: 0: unmuted, 1: muted.
 
@@ -491,6 +491,7 @@ class Delay(Stage):
             The units of the delay, can be 'samples', 'ms' or 's'.
             Default is 'samples'.
         """
+        # TODO unit conversion
         parameters = DelayParameters(delay=delay)
         self.set_parameters(parameters)
 
@@ -546,11 +547,7 @@ class Crossfader(Stage):
         self.set_parameters(parameters)
 
     def set_parameters(self, parameters: CrossfaderParameters):
-        """Update the parameters of the Crossfader stage.
-
-        Args:
-            parameters: New crossfader parameters to apply
-        """
+        """Update the parameters of the Crossfader stage."""
         self.parameters = parameters
         self.dsp_block.mix = parameters.mix
 

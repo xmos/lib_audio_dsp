@@ -7,7 +7,7 @@ based on its envelope.
 from audio_dsp.design.stage import Stage, find_config
 from audio_dsp.dsp import drc as drc
 from audio_dsp.dsp import generic as dspg
-from audio_dsp.models.limiter_model import LimiterParameters, ClipperParameters
+from audio_dsp.models.limiter import LimiterParameters, ClipperParameters
 
 
 class LimiterRMS(Stage):
@@ -32,7 +32,7 @@ class LimiterRMS(Stage):
         super().__init__(config=find_config("limiter_rms"), **kwargs)
         self.create_outputs(self.n_in)
 
-        self.parameters = LimiterParameters(threshold_db=0, attack_t=0.01, release_t=0.2)
+        self.parameters = LimiterParameters()
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
@@ -100,7 +100,7 @@ class LimiterPeak(Stage):
         super().__init__(config=find_config("limiter_peak"), **kwargs)
         self.create_outputs(self.n_in)
 
-        self.parameters = LimiterParameters(threshold_db=0, attack_t=0.01, release_t=0.2)
+        self.parameters = LimiterParameters()
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
@@ -171,7 +171,7 @@ class HardLimiterPeak(Stage):
         super().__init__(config=find_config("hard_limiter_peak"), **kwargs)
         self.create_outputs(self.n_in)
 
-        self.parameters = LimiterParameters(threshold_db=0, attack_t=0.01, release_t=0.2)
+        self.parameters = LimiterParameters()
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
@@ -234,7 +234,7 @@ class Clipper(Stage):
         super().__init__(config=find_config("clipper"), **kwargs)
         self.create_outputs(self.n_in)
 
-        self.parameters = ClipperParameters(threshold_db=0)
+        self.parameters = ClipperParameters()
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)

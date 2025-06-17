@@ -29,10 +29,7 @@ class EnvelopeDetectorPeak(Stage):
         super().__init__(config=find_config("envelope_detector_peak"), **kwargs)
         self.create_outputs(0)
 
-        self.parameters = EnvelopeDetectorParameters(
-            attack_t=0.01,
-            release_t=0.2,
-        )
+        self.parameters = EnvelopeDetectorParameters()
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
@@ -80,10 +77,7 @@ class EnvelopeDetectorRMS(Stage):
         super().__init__(config=find_config("envelope_detector_rms"), **kwargs)
         self.create_outputs(0)
 
-        self.parameters = EnvelopeDetectorParameters(
-            attack_t=0.01,
-            release_t=0.2,
-        )
+        self.parameters = EnvelopeDetectorParameters()
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)

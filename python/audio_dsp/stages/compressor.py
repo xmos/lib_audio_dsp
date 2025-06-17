@@ -1,13 +1,13 @@
 # Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""Compressor stages allow for control of the dynamic range of the
+"""Compressor Stages allow for control of the dynamic range of the
 signal, such as reducing the level of loud sounds.
 """
 
 from audio_dsp.design.stage import Stage, find_config
 from audio_dsp.dsp import drc as drc
 from audio_dsp.dsp import generic as dspg
-from audio_dsp.models.compressor_model import CompressorParameters
+from audio_dsp.models.compressor import CompressorParameters
 
 
 class CompressorRMS(Stage):
@@ -35,12 +35,7 @@ class CompressorRMS(Stage):
         super().__init__(config=find_config("compressor_rms"), **kwargs)
         self.create_outputs(self.n_in)
 
-        self.parameters = CompressorParameters(
-            ratio=4,
-            threshold_db=0,
-            attack_t=0.01,
-            release_t=0.2,
-        )
+        self.parameters = CompressorParameters()
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)

@@ -8,7 +8,7 @@ in the signal.
 from audio_dsp.design.stage import Stage, find_config
 from audio_dsp.dsp import drc as drc
 from audio_dsp.dsp import generic as dspg
-from audio_dsp.models.noise_suppressor_expander_model import NoiseSuppressorExpanderParameters
+from audio_dsp.models.noise_suppressor_expander import NoiseSuppressorExpanderParameters
 
 
 class NoiseSuppressorExpander(Stage):
@@ -36,9 +36,7 @@ class NoiseSuppressorExpander(Stage):
         super().__init__(config=find_config("noise_suppressor_expander"), **kwargs)
         self.create_outputs(self.n_in)
 
-        self.parameters = NoiseSuppressorExpanderParameters(
-            threshold_db=-35, ratio=3, attack_t=0.005, release_t=0.12
-        )
+        self.parameters = NoiseSuppressorExpanderParameters()
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
