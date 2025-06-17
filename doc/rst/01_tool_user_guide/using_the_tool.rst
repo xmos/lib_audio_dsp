@@ -307,8 +307,8 @@ DSP Pipeline JSON Format
 
 For integrating with external tools, such as GUIs, the DSP pipeline can
 be exported to a JSON format. To define and enforce the JSON schema,
-pydantic models of each stage are use. To convert a pipeline to JSON,
-the following steps can be used:
+pydantic models of each stage are used. To convert a pipeline to JSON,
+the following steps can be followed:
 
 .. code-block:: python
 

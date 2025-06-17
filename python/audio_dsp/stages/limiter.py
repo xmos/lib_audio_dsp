@@ -7,7 +7,7 @@ based on its envelope.
 from audio_dsp.design.stage import Stage, find_config
 from audio_dsp.dsp import drc as drc
 from audio_dsp.dsp import generic as dspg
-from audio_dsp.models.limiter_model import LimiterParameters, ClipperParameters
+from audio_dsp.models.limiter import LimiterParameters, ClipperParameters
 
 
 class LimiterRMS(Stage):

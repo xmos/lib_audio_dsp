@@ -27,11 +27,6 @@ class CompositeStage:
     - process
     - frequency response
 
-    TODO:
-    - Process method on the composite stage will need to know its inputs and
-    the order of the inputs (which input index corresponds to each input edge).
-    However a CompositeStage doesn't know all of its inputs when it is created.
-
     Parameters
     ----------
     graph : audio_dsp.graph.Graph
@@ -39,6 +34,11 @@ class CompositeStage:
     name : str
         Name of this instance to use when drawing the pipeline, defaults to class name.
     """
+
+    # TODO:
+    # - Process method on the composite stage will need to know its inputs and
+    # the order of the inputs (which input index corresponds to each input edge).
+    # However a CompositeStage doesn't know all of its inputs when it is created.
 
     def __init__(self, graph: Graph, name: str = ""):
         self._graph = graph

@@ -1,6 +1,6 @@
 # Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-"""Compressor stages allow for control of the dynamic range of the
+"""Compressor Stages allow for control of the dynamic range of the
 signal, such as reducing the level of loud sounds.
 """
 

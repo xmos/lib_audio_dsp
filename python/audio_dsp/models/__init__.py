@@ -9,7 +9,7 @@ from .reverb import ReverbPlateStereo
 from .envelope_detector import EnvelopeDetectorPeak, EnvelopeDetectorRMS
 from .noise_suppressor_expander import NoiseSuppressorExpander
 from .biquad import Biquad
-from .limiter_model import LimiterRMS, LimiterPeak, HardLimiterPeak
+from .limiter import LimiterRMS, LimiterPeak, HardLimiterPeak
 from .noise_gate import NoiseGate
 from .compressor import CompressorRMS
 from .compressor_sidechain import CompressorSidechain
