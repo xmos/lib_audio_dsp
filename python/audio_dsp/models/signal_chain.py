@@ -2,7 +2,7 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Pydantic models for signal chain DSP Stages."""
 
-from typing import Literal
+from typing import Literal, Tuple
 
 from pydantic import Field, field_validator, model_validator
 
@@ -37,7 +37,7 @@ class ForkConfig(StageConfig):
 class ForkPlacement(NodePlacement, extra="forbid"):
     """Graph placement for a Fork Stage."""
 
-    input: list[str] = Field(default=[], description="List of input edges.", min_length=1)
+    input: list[Tuple[str, int]] = Field(default=[], description="List of input edges.", min_length=1)
 
 
 class Fork(StageModel[ForkPlacement]):

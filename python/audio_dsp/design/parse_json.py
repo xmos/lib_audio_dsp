@@ -1,4 +1,4 @@
-# Copyright 2025 XMOS LIMITED.
+﻿# Copyright 2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Functions to convert JSON files to Python DSP pipelines."""
 
@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections import defaultdict
 from pathlib import Path
 from pprint import pprint
-from typing import Annotated, Any, Optional, Union, List, TypeVar, TypeAlias
+from typing import Annotated, Any, Optional, Union, List, TypeVar, TypeAlias, Tuple
 
 from pydantic import BaseModel, Field
 from pydantic.json_schema import SkipJsonSchema
@@ -31,22 +31,19 @@ _stage_Models = Annotated[
 ]
 
 
+
 class Input(BaseModel, extra="ignore"):
     """Pydantic model of the inputs to a DSP graph."""
 
     name: str = Field(..., description="Name of the input")
-    output: list[str] = Field(
-        ...,
-        description="List of output edges (e.g., ['input[0]', 'input[1]'])",
-        min_length=1,
-    )
+    channels: int
 
 
 class Output(BaseModel, extra="ignore"):
     """Pydantic model of the outputs of a DSP graph."""
 
     name: str = Field(..., description="Name of the output")
-    input: list[str] = Field(
+    input: list[Tuple[str, int]] = Field(
         ...,
         description="List of input edges (e.g., ['NodeA[0]', 'NodeB[1]'])",
     )
@@ -141,7 +138,7 @@ def insert_forks(graph: Graph) -> Graph:
         all_edges.extend(out.input)
     for node in new_graph.nodes:
         all_edges.extend(node.placement.input)
-        all_edges.extend(node.placement.output)
+        # all_edges.extend(node.placement.output)
     # Edge names are now strings, so no max_edge/new_edge_id logic
     producer_of_edge: dict[str, Optional[int]] = {}
     for inp in new_graph.inputs:
@@ -207,7 +204,8 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
     describing a DSP graph.
     """
     # Insert Fork nodes where needed to handle shared edges
-    graph = insert_forks(json_obj.graph)
+    # graph = insert_forks(json_obj.graph)
+    graph = json_obj.graph
     edge_map = {}  # edge_name -> pipeline object
 
     # Collect all input edge names and total channels
@@ -301,11 +299,11 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
     inputs = [
         Input(
             name="inputs",
-            output=[pipeline._graph.edges.index(x) for x in pipeline.i.edges],
+            channels=len(pipeline.i.edges),
         )
     ]
     outputs = [
-        Output(name="outputs", input=[f"{x.source.label or x.source.name}[{x.source_index}]" for x in pipeline.o.edges])]
+        Output(name="outputs", input=[[f"{x.source.label}", x.source_index] for x in pipeline.o.edges])]
 
     # Extract nodes
     nodes = []
@@ -318,9 +316,9 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
             stage_in = []
             for x in stage.i.edges:
                 if x.source is not None:
-                    stage_in.append(f"{x.source.label or x.source.name}[{x.source_index}]")
+                    stage_in.append([f"{x.source.label}", x.source_index])
                 else:
-                    stage_in.append(f"input[{x.source_index}]")
+                    stage_in.append([f"input", x.source_index])
 
             placement = {
                 "name": stage.label or stage.name,

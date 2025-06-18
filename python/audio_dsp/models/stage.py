@@ -1,8 +1,8 @@
-# Copyright 2025 XMOS LIMITED.
+﻿# Copyright 2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Generic pydantic models for DSP Stages."""
 
-from typing import Type, Union, Optional, Any
+from typing import Type, Union, Optional, Any, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -39,7 +39,7 @@ class NodePlacement(BaseModel, extra="forbid"):
     """
 
     name: str
-    input: list[str] = Field(
+    input: list[Tuple[str, int]] = Field(
         default=[],
         description="List of input edges.",
     )
@@ -56,7 +56,7 @@ class NodePlacement(BaseModel, extra="forbid"):
 class MonoPlacement(NodePlacement):
     """The placement of a mono stage that must have 1 input and 1 output."""
 
-    input: list[str] = Field(
+    input: list[Tuple[str, int]] = Field(
         default=[],
         description="List of input edges.",
         min_length=1,
@@ -67,7 +67,7 @@ class MonoPlacement(NodePlacement):
 class StereoPlacement(NodePlacement):
     """The placement of a stereo stage that must have 2 inputs and 2 outputs."""
 
-    input: list[str] = Field(
+    input: list[Tuple[str, int]] = Field(
         default=[],
         description="List of input edges.",
         min_length=2,
@@ -79,7 +79,7 @@ class StereoPlacement(NodePlacement):
 class Placement_2i1o(NodePlacement):
     """The placement of a stage that must have 2 inputs and 1 outputs."""
 
-    input: list[str] = Field(
+    input: list[Tuple[str, int]] = Field(
         default=[],
         description="List of input edges.",
         min_length=2,
@@ -90,7 +90,7 @@ class Placement_2i1o(NodePlacement):
 class Placement_4i2o(NodePlacement):
     """The placement of a stage that must have 2 inputs and 1 outputs."""
 
-    input: list[str] = Field(
+    input: list[Tuple[str, int]] = Field(
         default=[],
         description="List of input edges.",
         min_length=4,
