@@ -7,7 +7,7 @@ from pydantic import Field
 
 from audio_dsp.models.stage import StageModel, StageParameters
 from audio_dsp.models.fields import DEFAULT_ATTACK_T, DEFAULT_RELEASE_T, DEFAULT_COMPRESSOR_RATIO
-from audio_dsp.models.fields import DEFAULT_THRESHOLD_DB
+from audio_dsp.models.fields import DEFAULT_THRESHOLD_DB, DEFAULT_RMS_THRESHOLD_DB
 
 
 class CompressorParameters(StageParameters):
@@ -16,7 +16,7 @@ class CompressorParameters(StageParameters):
     ratio: float = DEFAULT_COMPRESSOR_RATIO(
         description="Compression ratio applied when detect signal exceeds threshold"
     )
-    threshold_db: float = DEFAULT_THRESHOLD_DB(
+    threshold_db: float = DEFAULT_RMS_THRESHOLD_DB(
         description="Level in dB above which compression occurs"
     )
     attack_t: float = DEFAULT_ATTACK_T(
