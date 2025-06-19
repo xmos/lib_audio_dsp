@@ -109,7 +109,7 @@ class biquad_gain(StageParameters):
     """Parameters for a Biquad Stage configured to gain."""
 
     type: Literal["gain"] = "gain"
-    gain_db: float = 0
+    gain_db: float = DEFAULT_GAIN_DB()
 
 
 class biquad_highpass(StageParameters):
