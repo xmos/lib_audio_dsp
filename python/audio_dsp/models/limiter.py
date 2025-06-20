@@ -6,7 +6,12 @@ from typing import Literal
 from pydantic import Field
 
 from audio_dsp.models.stage import StageModel, StageParameters
-from audio_dsp.models.fields import DEFAULT_ATTACK_T, DEFAULT_RELEASE_T, DEFAULT_THRESHOLD_DB
+from audio_dsp.models.fields import (
+    DEFAULT_ATTACK_T,
+    DEFAULT_RELEASE_T,
+    DEFAULT_THRESHOLD_DB,
+    DEFAULT_RMS_THRESHOLD_DB,
+)
 
 
 class LimiterParameters(StageParameters):
@@ -18,6 +23,14 @@ class LimiterParameters(StageParameters):
     attack_t: float = DEFAULT_ATTACK_T(description="Time in seconds for limiter to start limiting")
     release_t: float = DEFAULT_RELEASE_T(
         description="Time in seconds for signal to return to original level"
+    )
+
+
+class LimiterRMSParameters(LimiterParameters):
+    """Parameters for RMS limiter stage."""
+
+    threshold_db: float = DEFAULT_RMS_THRESHOLD_DB(
+        description="Level in dB above which limiting occurs"
     )
 
 
@@ -34,7 +47,7 @@ class LimiterRMS(StageModel):
     """
 
     op_type: Literal["LimiterRMS"] = "LimiterRMS"
-    parameters: LimiterParameters = Field(default_factory=LimiterParameters)
+    parameters: LimiterRMSParameters = Field(default_factory=LimiterRMSParameters)
 
 
 class LimiterPeak(StageModel):

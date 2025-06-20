@@ -7,7 +7,7 @@ based on its envelope.
 from audio_dsp.design.stage import Stage, find_config
 from audio_dsp.dsp import drc as drc
 from audio_dsp.dsp import generic as dspg
-from audio_dsp.models.limiter import LimiterParameters, ClipperParameters
+from audio_dsp.models.limiter import LimiterParameters, ClipperParameters, LimiterRMSParameters
 
 
 class LimiterRMS(Stage):
@@ -32,7 +32,7 @@ class LimiterRMS(Stage):
         super().__init__(config=find_config("limiter_rms"), **kwargs)
         self.create_outputs(self.n_in)
 
-        self.parameters = LimiterParameters()
+        self.parameters = LimiterRMSParameters()
         self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
@@ -53,12 +53,12 @@ class LimiterRMS(Stage):
         release_t : float
             Release time of the limiter in seconds.
         """
-        parameters = LimiterParameters(
+        parameters = LimiterRMSParameters(
             threshold_db=threshold_db, attack_t=attack_t, release_t=release_t
         )
         self.set_parameters(parameters)
 
-    def set_parameters(self, parameters: LimiterParameters):
+    def set_parameters(self, parameters: LimiterRMSParameters):
         """Update limiter configuration based on new parameters.
 
         Parameters

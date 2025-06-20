@@ -7,7 +7,8 @@ from functools import partial
 from pydantic import BaseModel, RootModel, Field, create_model
 from typing import Literal, Annotated, List, Union
 from annotated_types import Len
-from audio_dsp.dsp.generic import HEADROOM_DB, MIN_SIG_DB
+from audio_dsp.dsp.generic import HEADROOM_DB, MIN_SIG_DB, Q_SIG
+from audio_dsp.dsp import utils
 
 
 def _ws(locals):
@@ -49,9 +50,20 @@ DEFAULT_RELEASE_T = partial(
     Field, default=0.2, gt=0, le=5, description="Release time of the stage in seconds."
 )
 DEFAULT_COMPRESSOR_RATIO = partial(
-    Field, default=4.0, gt=1, le=20, description="Compression ratio of the stage."
+    Field, default=4.0, gt=1, le=100, description="Compression ratio of the stage."
 )
 DEFAULT_THRESHOLD_DB = DEFAULT_GAIN_DB
+
+RMS_HEADROOM_DB = utils.db_pow((utils.Q_max(31) + 1) / utils.Q_max(Q_SIG))
+MIN_RMS_SIG_DB = utils.db_pow(1 / 2**Q_SIG)
+
+DEFAULT_RMS_THRESHOLD_DB = partial(
+    Field,
+    default=0.0,
+    ge=MIN_RMS_SIG_DB,
+    le=RMS_HEADROOM_DB,
+    description="Threshold of the stage in dB.",
+)
 
 
 class biquad_allpass(StageParameters):
@@ -97,7 +109,7 @@ class biquad_gain(StageParameters):
     """Parameters for a Biquad Stage configured to gain."""
 
     type: Literal["gain"] = "gain"
-    gain_db: float = 0
+    gain_db: float = DEFAULT_GAIN_DB()
 
 
 class biquad_highpass(StageParameters):
