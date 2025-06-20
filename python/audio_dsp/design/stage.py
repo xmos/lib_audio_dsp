@@ -8,6 +8,7 @@ from typing import Optional, Type, TypeVar
 
 import numpy
 import yaml
+import re
 
 from audio_dsp.design import plot
 from audio_dsp.dsp.generic import dsp_block
@@ -564,15 +565,34 @@ class Stage(Node):
         outputs = "|".join(f"<o{i}> " for i in range(self.n_out))
         center = f"{self.index}: {type(self).__name__}\\n"
 
+        def render_details_r(value, indent="", first=True):
+            """Recursively process the details of a stage."""
+            next_indent = indent + "  "
+            new_line = "\\n" if not first else ""
+            if isinstance(value, dict):
+                return new_line + f"\\n{indent}".join(
+                    f"{k}: {render_details_r(v, next_indent, False)}" for k, v in value.items()
+                )
+            if isinstance(value, (list, tuple)):
+                return new_line + f"\\n{indent}".join(
+                    f"{i}: {render_details_r(v, next_indent, True)}" for i, v in enumerate(value)
+                )
+            return str(value)
+
+        def render_details(value):
+            """
+            Belt and braces - escapes the chars which need escaping.
+
+            As per https://graphviz.org/doc/info/shapes.html#record.
+            """
+            details = render_details_r(value)
+            # replaces the chars [ ] < > | { } with \[ \] \< \> \| \{ \}
+            return re.sub(r"(\||<|>|\[|\]|\{|\})", r"\\\1", details)
+
         if self.label:
             center = f"{self.index}: {self.label}\\n"
         if self.parameters:
-            details = ""
-            for key, value in self.parameters.model_dump().items():
-                if isinstance(value, dict):
-                    details += f"{'\\n'.join(f'{k}: {v}' for k, v in value.items())}\\n"
-                else:
-                    details += f"{key}: {value}\\n"
+            details = render_details(self.parameters.model_dump())
             label = f"{{ {{ {inputs} }} | {center} | {details} | {{ {outputs} }}}}"
         else:
             label = f"{{ {{ {inputs} }} | {center} | {{ {outputs} }}}}"

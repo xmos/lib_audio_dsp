@@ -129,6 +129,7 @@ class Pipeline:
         self._generate_xscope_task = generate_xscope_task
         self.frame_size = frame_size
         self.fs = fs
+        self.stage_dict = {}
 
         self.i = StageOutputList([StageOutput(fs=fs, frame_size=frame_size) for _ in range(n_in)])
         self.o: StageOutputList | None = None
@@ -199,15 +200,27 @@ class Pipeline:
             into a macro in the generated pipeline. Label must be set if tuning or
             run time control is required for this stage.
         """
+        # keep a running count of the number of each stage type in the pipeline
+        type_name = stage_type.__name__
+        if type_name not in self.stage_dict:
+            self.stage_dict[type_name] = 1
+        else:
+            self.stage_dict[type_name] += 1
+
+        # If label is None, use the type name and count to generate a label
+        # If a label is added later, this should keep subsequent labels the same
+        if label is None:
+            label = f"{type_name}_{self.stage_dict[type_name] - 1}"
+
         if thread is not None:
             s = self.threads[thread].stage(stage_type, inputs, label=label, **kwargs)
         else:
             s = self._current_thread.stage(stage_type, inputs, label=label, **kwargs)
 
-        if label:
-            if label in self._labelled_stages:
-                raise RuntimeError(f"Label {label} is already in use.")
-            self._labelled_stages[label] = s
+        if label in self._labelled_stages:
+            raise RuntimeError(f"Label {label} is already in use.")
+        self._labelled_stages[label] = s
+
         return s.o
 
     def __getitem__(self, key: str):
