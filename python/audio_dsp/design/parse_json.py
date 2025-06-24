@@ -31,12 +31,15 @@ _stage_Models = Annotated[
 ]
 
 
-
 class Input(BaseModel, extra="ignore"):
     """Pydantic model of the inputs to a DSP graph."""
 
     name: str = Field(..., description="Name of the input")
     channels: int
+    output: list[Tuple[str, int]] = Field(
+        default_factory=list,
+        description="List of output edges as (node_name, index) tuples",
+    )
 
 
 class Output(BaseModel, extra="ignore"):
@@ -45,7 +48,7 @@ class Output(BaseModel, extra="ignore"):
     name: str = Field(..., description="Name of the output")
     input: list[Tuple[str, int]] = Field(
         ...,
-        description="List of input edges (e.g., ['NodeA[0]', 'NodeB[1]'])",
+        description="List of input edges as (node_name, index) tuples",
     )
 
 
@@ -122,31 +125,31 @@ def insert_forks(graph: Graph) -> Graph:
     # Create a deep copy of the graph to avoid mutating the original
     new_graph = graph.model_copy(deep=True)
     # Map from edge name to a list of consumers (node or graph output, index, position)
-    consumer_map: dict[str, list[tuple[str, Any, int]]] = defaultdict(list)
+    consumer_map: dict[Tuple[str, int], list[tuple[str, Any, int]]] = defaultdict(list)
     # Build the consumer map for all node inputs
     for node_index, node in enumerate(new_graph.nodes):
         for pos, edge in enumerate(node.placement.input):
-            consumer_map[edge].append(("node", node_index, pos))
+            consumer_map[tuple(edge)].append(("node", node_index, pos))
     # Add graph outputs as consumers
     for out_idx, out in enumerate(new_graph.outputs):
         for pos, edge in enumerate(out.input):
-            consumer_map[edge].append(("graph_output", out_idx, pos))
-    all_edges: list[str] = []
+            consumer_map[tuple(edge)].append(("graph_output", out_idx, pos))
+    all_edges: list[Tuple[str, int]] = []
     for inp in new_graph.inputs:
-        all_edges.extend(inp.output)
+        all_edges.extend([tuple(e) for e in inp.output])
     for out in new_graph.outputs:
-        all_edges.extend(out.input)
+        all_edges.extend([tuple(e) for e in out.input])
     for node in new_graph.nodes:
-        all_edges.extend(node.placement.input)
-        # all_edges.extend(node.placement.output)
+        all_edges.extend([tuple(e) for e in node.placement.input])
+        # all_edges.extend([tuple(e) for e in node.placement.output])
     # Edge names are now strings, so no max_edge/new_edge_id logic
-    producer_of_edge: dict[str, Optional[int]] = {}
+    producer_of_edge: dict[Tuple[str, int], Optional[int]] = {}
     for inp in new_graph.inputs:
         for idx, edge in enumerate(inp.output):
-            producer_of_edge[edge] = None
+            producer_of_edge[tuple(edge)] = None
     for idx, node in enumerate(new_graph.nodes):
         for e in node.placement.output:
-            producer_of_edge[e] = idx
+            producer_of_edge[tuple(e)] = idx
     # Map from producer index to a list of Fork nodes to insert after it
     fork_nodes_by_producer: dict[Optional[int], list] = defaultdict(list)
     # For each edge with multiple consumers, insert a Fork node
@@ -156,7 +159,7 @@ def insert_forks(graph: Graph) -> Graph:
             new_edges = []
             for i in range(num_consumers):
                 # Use the fork node name as the namespace
-                new_edges.append(make_edge_name(f"AutoFork_{edge}", i))
+                new_edges.append(make_edge_name(f"AutoFork_{edge[0]}", i))
             for new_edge, (cons_type, consumer_idx, pos) in zip(new_edges, consumers):
                 if cons_type == "node":
                     new_graph.nodes[consumer_idx].placement.input[pos] = new_edge
@@ -167,9 +170,9 @@ def insert_forks(graph: Graph) -> Graph:
                 "op_type": "Fork",
                 "config": {"count": num_consumers},
                 "placement": {
-                    "input": [edge],
-                    "output": new_edges,
-                    "name": f"AutoFork_{edge}",
+                    "input": [list(edge)],
+                    "output": [list(e) for e in new_edges],
+                    "name": f"AutoFork_{edge[0]}",
                     "thread": 0,
                 },
             }
@@ -194,9 +197,9 @@ def stage_handle(model):
     return getattr(Stages, model.op_type)
 
 
-def make_edge_name(node_name: str, idx: int) -> str:
-    """Return the canonical edge name, e.g., 'NodeName[0]'."""
-    return f"{node_name}[{idx}]"
+def make_edge_name(node_name: str, idx: int) -> Tuple[str, int]:
+    """Return the canonical edge name as a tuple, e.g., ('NodeName', 0)."""
+    return (node_name, idx)
 
 
 def make_pipeline(json_obj: DspJson) -> Pipeline:
@@ -206,13 +209,13 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
     # Insert Fork nodes where needed to handle shared edges
     # graph = insert_forks(json_obj.graph)
     graph = json_obj.graph
-    edge_map = {}  # edge_name -> pipeline object
+    edge_map = {}  # edge_name (tuple) -> pipeline object
 
     # Collect all input edge names and total channels
     flat_input_edges = []
     total_channels = 0
     for inp in graph.inputs:
-        flat_input_edges.extend(inp.output)
+        flat_input_edges.extend([tuple(e) for e in inp.output])
         total_channels += len(inp.output)
 
     p, in_edges = Pipeline.begin(total_channels, fs=graph.fs)
@@ -231,7 +234,7 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
         # Gather StageOutput objects for this node's inputs
         stage_inputs = []
         for edge_name in node.placement.input:
-            stage_inputs.append(edge_map.get(edge_name))
+            stage_inputs.append(edge_map.get(tuple(edge_name)))
         if None in stage_inputs:
             waiting_nodes.pop(0)
             waiting_nodes.append(node_idx)
@@ -256,7 +259,7 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
         # Map the outputs to the correct edge indices
         if len(node_output) != 0:
             for i in range(len(node.placement.output)):
-                edge_name = node.placement.output[i]
+                edge_name = tuple(node.placement.output[i])
                 if edge_map.get(edge_name) is not None:
                     raise ValueError("Output already exists")
                 edge_map[edge_name] = node_output[i]
@@ -264,7 +267,7 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
         waiting_nodes.pop(0)
     # Gather all output nodes for the pipeline
     output_nodes = []
-    for edge_name in [e for out in graph.outputs for e in out.input]:
+    for edge_name in [tuple(e) for out in graph.outputs for e in out.input]:
         output_nodes.append(edge_map[edge_name])
     output_nodes = sum(output_nodes, start=StageOutputList())
     # Set the pipeline outputs
