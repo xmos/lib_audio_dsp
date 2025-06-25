@@ -28,7 +28,7 @@ def test_no_shared_edge():
       "fs": 44100,
       "inputs": [{
           "name": "inputs",
-          "output": [["inputs", 0]]
+          "channels": 1
       }],
       "nodes": [
         {
@@ -74,7 +74,7 @@ def test_shared_edge_from_graph_input():
       "fs": 44100,
       "inputs": [{
           "name": "inputs",
-          "output": [["inputs", 0]]
+          "channels": 1
       }],
       "nodes": [
         {
@@ -120,7 +120,7 @@ def test_shared_edge_from_producer_node():
       "fs": 44100,
       "inputs": [{
           "name": "inputs",
-          "output": [["inputs", 0]]
+          "channels": 1
       }],
       "nodes": [
         {
@@ -175,7 +175,7 @@ def test_shared_edge_with_graph_output():
       "fs": 44100,
       "inputs": [{
           "name": "inputs",
-          "output": [["inputs", 0]]
+          "channels": 1
       }],
       "nodes": [
         {
@@ -221,7 +221,7 @@ def test_again():
       "fs": 48000,
       "inputs": [{
           "name": "stereo_in",
-          "output": [["stereo_in", 0], ["stereo_in", 1]]
+          "channels": 2
       }],
       "nodes": [
         {"op_type": "Mixer", "placement": {"input": [["stereo_in", 0], ["stereo_in", 1]], "name": "Mixer", "thread": 0}},
@@ -254,8 +254,8 @@ def test_multiple_inputs_outputs_non_shared():
       "name": "Multiple Inputs and Outputs Non-Shared Test",
       "fs": 48000,
       "inputs": [
-        {"name": "mono_in", "output": [["mono_in", 0]]},
-        {"name": "stereo_in", "output": [["stereo_in", 0], ["stereo_in", 1]]}
+        {"name": "mono_in", "channels": 1},
+        {"name": "stereo_in", "channels": 2}
       ],
       "nodes": [
         {
@@ -305,8 +305,8 @@ def test_multiple_inputs_outputs_shared():
       "name": "Multiple Inputs and Outputs Shared Test",
       "fs": 48000,
       "inputs": [
-        {"name": "input1", "output": [["input1", 0]]},
-        {"name": "input2", "output": [["input2", 0]]}
+        {"name": "input1", "channels": 1},
+        {"name": "input2", "channels": 1}
       ],
       "nodes": [
         {
@@ -405,4 +405,4 @@ def test_all_stages_models():
 
 
 if __name__ == "__main__":
-  test_all_stages_models()
+  test_shared_edge_from_graph_input()
