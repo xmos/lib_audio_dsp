@@ -255,7 +255,6 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
             p.stages[-1].set_parameters(node.parameters)
         # Map the outputs to the correct edge indices
         if len(node_output) != 0:
-            for i in range(len(node.placement.output)):
             for i in range(len(node_output)):
                 edge_name = (node.placement.name, i)
                 if edge_map.get(edge_name) is not None:
