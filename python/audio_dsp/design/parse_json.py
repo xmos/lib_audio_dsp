@@ -1,4 +1,4 @@
-﻿# Copyright 2025 XMOS LIMITED.
+# Copyright 2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Functions to convert JSON files to Python DSP pipelines."""
 
@@ -36,6 +36,7 @@ class Input(BaseModel, extra="ignore"):
 
     name: str = Field(..., description="Name of the input")
     channels: int
+
 
 class Output(BaseModel, extra="ignore"):
     """Pydantic model of the outputs of a DSP graph."""
@@ -137,7 +138,6 @@ def insert_forks(graph: Graph) -> Graph:
     for key in consumer_map:
         # If there are multiple consumers for the same edge, we need to insert a Fork node
         if len(consumer_map[key]) > 1:
-
             # calculate the fork properties
             num_consumers = len(consumer_map[key])
             first_node_idx = consumer_map[key][0][1] + autofork_idx
@@ -165,7 +165,9 @@ def insert_forks(graph: Graph) -> Graph:
                 # Update the consumer map to point to the new edge name,
                 if cons_type == "node":
                     # compmensating for the inserted autofork index
-                    new_graph.nodes[consumer_idx + autofork_idx].placement.input[pos] = new_edge_name
+                    new_graph.nodes[consumer_idx + autofork_idx].placement.input[pos] = (
+                        new_edge_name
+                    )
                 elif cons_type == "graph_output":
                     new_graph.outputs[consumer_idx].input[pos] = new_edge_name
 
@@ -304,8 +306,7 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
             # if the source is None, it means it's a direct input to the pipeline
             output_in.append([f"inputs", x.source_index])
 
-    outputs = [
-        Output(name="outputs", input=output_in)]
+    outputs = [Output(name="outputs", input=output_in)]
 
     # Extract nodes
     nodes = []

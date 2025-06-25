@@ -1,4 +1,4 @@
-﻿# Copyright 2025 XMOS LIMITED.
+# Copyright 2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Generic pydantic models for DSP Stages."""
 
@@ -75,7 +75,6 @@ class StereoPlacement(NodePlacement):
     )
 
 
-
 class Placement_2i1o(NodePlacement):
     """The placement of a stage that must have 2 inputs and 1 outputs."""
 
@@ -100,7 +99,9 @@ class Placement_4i2o(NodePlacement):
 
 class Placement_Ni1o(NodePlacement, extra="forbid"):
     """Graph placement for a Stage that takes many input and one output."""
+
     pass
+
 
 class StageModel[Placement: NodePlacement](edgeProducerBaseModel):
     """A generic pydantic model of a DSP Stage.

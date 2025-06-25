@@ -37,7 +37,9 @@ class ForkConfig(StageConfig):
 class ForkPlacement(NodePlacement, extra="forbid"):
     """Graph placement for a Fork Stage."""
 
-    input: list[Tuple[str, int]] = Field(default=[], description="List of input edges.", min_length=1)
+    input: list[Tuple[str, int]] = Field(
+        default=[], description="List of input edges.", min_length=1
+    )
 
 
 class Fork(StageModel[ForkPlacement]):
