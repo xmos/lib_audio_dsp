@@ -43,7 +43,7 @@ def test_plate_reverb_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [["inputs", 0], ["inputs", 1]]
+                    "channels": 2
                 }
             ],
             "outputs": [

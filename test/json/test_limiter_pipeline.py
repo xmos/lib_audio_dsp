@@ -35,7 +35,7 @@ def test_rms_limiter_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [["inputs", 0], ["inputs", 1]]
+                    "channels": 2
                 }
             ],
             "outputs": [
@@ -94,7 +94,7 @@ def test_peak_limiter_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [["inputs", 0], ["inputs", 1]]
+                    "channels": 2
                 }
             ],
             "outputs": [
@@ -152,7 +152,7 @@ def test_hard_peak_limiter_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [["inputs", 0], ["inputs", 1]]
+                    "channels": 2
                 }
             ],
             "outputs": [

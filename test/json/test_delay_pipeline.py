@@ -38,13 +38,13 @@ def test_simple_delay_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [["inputs", 0], ["inputs", 1]]
+                    "channels": 2
                 }
             ],
             "outputs": [
                 {
                     "name": "outputs",
-                    "input": [["StereoDelay", 0], ["StereoDelay", 1]]
+                    "input": [["StereoDelay", 0], ["StereoDelay", 1]],
                 }
             ]
         }
@@ -71,4 +71,4 @@ def test_simple_delay_pipeline():
 
 
 if __name__ == "__main__":
-    test_simple_delay_pipeline()
+    test_simple_delay_pipeline() 

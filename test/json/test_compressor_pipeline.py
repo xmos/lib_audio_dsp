@@ -36,13 +36,14 @@ def test_simple_compressor_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [["inputs", 0], ["inputs", 1]]
+                    "channels": 2
                 }
             ],
             "outputs": [
                 {
                     "name": "outputs",
-                    "input": [["StereoCompressor", 0], ["StereoCompressor", 1]]
+                    "input": [["StereoCompressor", 0], ["StereoCompressor", 1]],
+
                 }
             ]
         }
@@ -65,4 +66,4 @@ def test_simple_compressor_pipeline():
 
 
 if __name__ == "__main__":
-    test_simple_compressor_pipeline()
+    test_simple_compressor_pipeline() 

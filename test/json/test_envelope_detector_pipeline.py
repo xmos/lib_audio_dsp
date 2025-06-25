@@ -34,7 +34,7 @@ def test_peak_envelope_detector_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [["inputs", 0], ["inputs", 1]]
+                    "channels": 2
                 }
             ],
             "outputs": [
@@ -91,7 +91,7 @@ def test_rms_envelope_detector_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [["inputs", 0], ["inputs", 1]]
+                    "channels": 2
                 }
             ],
             "outputs": [
@@ -122,4 +122,4 @@ def test_rms_envelope_detector_pipeline():
 if __name__ == "__main__":
     test_peak_envelope_detector_pipeline()
     print("\n" + "="*50 + "\n")
-    test_rms_envelope_detector_pipeline()
+    test_rms_envelope_detector_pipeline() 
