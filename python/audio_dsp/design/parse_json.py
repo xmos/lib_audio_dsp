@@ -308,10 +308,8 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
 
             stage_in = []
             for x in stage.i.edges:
-                if x.source is not None:
-                    stage_in.append([f"{x.source.label}", x.source_index])
-                else:
-                    stage_in.append([f"inputs", x.source_index])
+                stage_in.append([f"{x.source.label}", x.source_index])
+
 
             placement = {
                 "name": stage.label or stage.name,

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from audio_dsp.design.composite_stage import CompositeStage
 from audio_dsp.design.pipeline_executor import PipelineExecutor, PipelineView
-from audio_dsp.design.graph import Graph
+from audio_dsp.design.graph import Graph, Node
 from audio_dsp.design.stage import Stage, StageOutput, StageOutputList, find_config
 from audio_dsp.design.thread import Thread
 from IPython import display
@@ -17,7 +17,7 @@ import json
 from uuid import uuid4
 from ._draw import new_record_digraph
 from functools import wraps
-from typing import NamedTuple, Type
+from typing import NamedTuple, Type, Optional
 
 
 class _ResolvedEdge(NamedTuple):
@@ -74,6 +74,24 @@ class PipelineStage(Stage):
         dot instance to add edges to.
         """
         return
+
+
+class InputNode(Node):
+    """
+    InputNode is a Node that represents an input to the pipeline.
+    This allows edges from the input to have a source node.
+
+    Parameters
+    ----------
+    label : str | None
+        Optional label for the input node.
+
+    """
+
+    def __init__(self, label: Optional[str] = None):
+
+        super().__init__()
+        self.label = label
 
 
 class Pipeline:
@@ -136,6 +154,7 @@ class Pipeline:
         for i, input in enumerate(self.i.edges):
             self._graph.add_edge(input)
             input.source_index = i
+            input.source = InputNode(label="inputs")
 
         self.next_thread()
 
