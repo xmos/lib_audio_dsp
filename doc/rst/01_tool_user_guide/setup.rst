@@ -23,8 +23,7 @@ Hardware Requirements
 =====================
 
 - xcore.ai evaluation board (`XK-EVK-XU316`_ or `XK-316-AUDIO-MC-AB`_)
-- xTag debugger and cable
-- 2x Micro USB cable (one for power supply and one for the xTag)
+- 2x Micro USB cable (one for power supply and one for the XTAG)
 
 .. _sw_reqs:
 
@@ -146,7 +145,7 @@ Setup Steps
          source .venv/bin/activate 
          pip install -e ./lib_audio_dsp/python
 
-#. Connect an XCORE-AI-EXPLORER using both USB ports
+#. Connect an XK-EVK-XU316 using both USB ports
 
 #. The examples are presented as a Jupyter notebook for interactive development.
    Install Juptyer notebooks into the Python virtual environment with the command:
@@ -201,7 +200,7 @@ Setup Steps
    .. _run_error:
 
    .. figure:: ../images/config_error.png
-      :width: 80%
+      :width: 100%
 
       Run Error of the Jupyter Notebook
 
@@ -221,7 +220,9 @@ required:
    * Enable the XTC tools: the installation can be tested by running the command
      ``xrun --version`` from the terminal. If the command is not found, the XTC
      tools are not installed correctly.
-   * From your sandbox, enable the Python Virtual Environment and check the path is set:
+   * From your sandbox, enable the Python Virtual Environment and print the
+     path to the virtual environment directory. This can be done with the
+     following commands:
    
    .. tab:: Windows
 

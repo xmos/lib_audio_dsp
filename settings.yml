@@ -33,6 +33,7 @@ documentation:
       pdf_filename: '{{lib_name}}_v{{version}}_readme'
       pdf_short: yes
   latex_toc_depth: 3
+  latex_secnum_depth: 3
   extra_sphinx_opts: [-W]
 
 software:

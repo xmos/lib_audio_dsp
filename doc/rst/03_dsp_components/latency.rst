@@ -7,7 +7,15 @@ latency (except where specified e.g. delay stages). For pipelines that fit on a 
 this means the total pipeline latency is 1 sample.
 
 The pipeline can also be configured to use a higher frame size. This increases latency, but can
-reduce compute for simple functions. For a pipeline consisting of just biquads:
+reduce compute for simple functions, as the function overhead is shared. For a pipeline consisting of just biquads:
 
-* Frame size = 1, latency = 1 sample, compute = 25 biquads per thread @ 48kHz.
-* Frame size = 8, latency = 8 samples, compute = 60 biquads per thread @ 48kHz.
+
+.. table::
+  :widths: 15, 15, 15, 15, 15
+
+  ==========  =======  ==================  ===================  ======================
+  Frame size  Latency  % thread per frame  % thread per sample  Max biquads per thread
+  ==========  =======  ==================  ===================  ======================
+  1           1        4.0%                4.0%                 25
+  8           8        13.3%               1.7%                 60
+  ==========  =======  ==================  ===================  ======================

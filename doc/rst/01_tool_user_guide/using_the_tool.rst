@@ -179,35 +179,54 @@ stage, standard Python indexing can be used. Channels from multiple instances of
 ``StageOutputList`` can be combined by using the ``+`` operator.
 
 The below shows an example of how this could work with a pipeline with 7 inputs.
+The pipeline graph is shown in :numref:`7_chan_biquad_pipeline`.
 
 .. code-block:: python
+
+    from audio_dsp.design.pipeline import Pipeline
+    from audio_dsp.stages import Biquad
 
     # start with 7 input channels
     p, inputs = Pipeline.begin(7, fs=48000)
 
-   # pass the first 2 inputs to a 2-channel Biquad
-   i0 = p.stage(Biquad, i[0:2])
+    # pass the first 2 inputs to a 2-channel Biquad
+    i0 = p.stage(Biquad, inputs[0:2])
+ 
+    # pass the third input (index 2) to a 1-channel biquad
+    i1 = p.stage(Biquad, inputs[2])
+ 
+    # pass the inputs at index 3, 5, and 6 to a 3 channel biquad
+    i2 = p.stage(Biquad, inputs[3, 5, 6])
+ 
+    # pass all of i0 and i1, as well as the first channel in i2
+    # to create a 4 channel biquad
+    i3 = p.stage(Biquad, i0 + i1 + i2[0]) 
+ 
+    # The pipeline output has 6 channels:
+    # - all four i3 channels 
+    # - the 2nd and 3rd channel from i2
+    p.set_outputs(i3 + i2[1:])
 
-   # pass the third input (index 2) to a 1-channel biquad
-   i1 = p.stage(Biquad, i[2])
+.. _7_chan_biquad_pipeline:
 
-   # pass the inputs at index 3, 5, and 6 to a 3 channel biquad
-   i2 = p.stage(Biquad, i[3, 5, 6])
+.. figure:: ../images/complex_pipelines/7_chan_biquad_pipeline.svg
+   :width: 44.9%
 
-   # pass all of i0 and i1, as well as the first channel in i2
-   # to create a 4 channel biquad
-   i3 = p.stage(Biquad, i0 + i1 + i2[0]) 
+   A pipeline splitting and combining inputs.
 
-   # The pipeline output has 6 channels:
-   # - all four i3 channels 
-   # - the 2nd and 3rd channel from i2
-   p.set_outputs(i3 + i2[1:])
+.. raw:: latex
+
+    \newpage
 
 In order to split a signal path, a :ref:`Fork_stage` stage
 should be used. This takes a count parameter that specifies how many times to duplicate each input to
-the ``Fork``. The code block below shows how the signal chain can be forked:
+the ``Fork``. The code block below shows how the signal chain can be forked. 
+The pipeline graph is shown in :numref:`fork_pipeline`.
 
 .. code-block:: python
+
+    from audio_dsp.design.pipeline import Pipeline
+    from audio_dsp.stages import Fork
 
     p, inputs = Pipeline.begin(1, fs=48000)
 
@@ -220,6 +239,17 @@ the ``Fork``. The code block below shows how the signal chain can be forked:
     # there are now 4 channels in the pipeline output
     p.set_outputs(x)
 
+.. _fork_pipeline:
+
+.. figure:: ../images/complex_pipelines/fork_pipeline.svg
+   :width: 16%
+
+   A pipeline with Fork stages.
+
+.. raw:: latex
+
+    \newpage
+
 As the pipeline grows it may end up consuming more MIPS than are available on a
 single xcore thread. The pipeline design interface allows adding additional
 threads using the 
@@ -229,6 +259,8 @@ in the pipeline represents an xcore hardware thread. Do not add more threads
 than are available in your application. The maximum number of threads that
 should be used, if available, is five. This limitation is due to the architecture of the xcore
 processor.
+The pipeline graph is shown in :numref:`multi_thread_pipeline`.
+
 
 .. code-block:: python
 
@@ -243,12 +275,25 @@ processor.
     p.next_thread()
     i = p.stage(Biquad, i)
 
+.. _multi_thread_pipeline:
+
+.. figure:: ../images/complex_pipelines/multi_thread_pipeline.svg
+   :width: 16.5%
+
+   A multi-threaded DSP pipeline.
+
+.. raw:: latex
+
+    \newpage
+
 When using multiple threads, the signal paths must cross the same number of 
 threads to reach the output. Failure to do this will result in threads blocking
 one another, and a reduced pipeline throughput. 
 
 The pipeline below is not acceptable, as the 
 first channel crosses 2 threads, whilst the second channel only crosses one.
+The pipeline graph is shown in :numref:`thread_crossings_bad`.
+
 
 .. code-block:: python
 
@@ -264,8 +309,22 @@ first channel crosses 2 threads, whilst the second channel only crosses one.
 
     p.set_outputs(x)
 
+.. _thread_crossings_bad:
+
+.. figure:: ../images/complex_pipelines/thread_crossings_bad.svg
+   :width: 21.2%
+
+   A bad DSP pipeline with differing thread crossings. The first biquad input
+   crosses 2 threads, the second biquad input only crosses 1 thread.
+
+.. raw:: latex
+
+    \newpage
+
 To ensure signal paths cross the same number of threads, ``Bypass`` Stages
-can be used.
+can be used, as shown in the example below.
+The pipeline graph is shown in :numref:`thread_crossings_bypass`.
+
 
 .. code-block:: python
 
@@ -281,8 +340,21 @@ can be used.
 
     p.set_outputs(x)
 
+.. _thread_crossings_bypass:
+
+.. figure:: ../images/complex_pipelines/thread_crossings_bypass.svg
+   :width: 29.9% 
+
+   A good DSP pipeline with thread crossings using Bypass stages. Both biquad inputs cross 2 threads.
+
+.. raw:: latex
+
+    \newpage
+
 Parallel thread paths are also permitted. In the below case, the inputs
 are passed to separate threads before being used in a third.
+The pipeline graph is shown in :numref:`thread_crossings_parallel`.
+
 
 .. code-block:: python
 
@@ -299,6 +371,16 @@ are passed to separate threads before being used in a third.
 
     p.set_outputs(x)
 
+.. _thread_crossings_parallel:
+
+.. figure:: ../images/complex_pipelines/thread_crossings_parallel.svg
+   :width: 30.7%
+
+   A good DSP pipeline with parallel thread paths. Both biquad inputs cross 1 thread before being combined in a third.
+
+.. raw:: latex
+
+    \newpage
 
 .. _json_format:
 
@@ -307,8 +389,11 @@ DSP Pipeline JSON Format
 
 For integrating with external tools, such as GUIs, the DSP pipeline can
 be exported to a JSON format. To define and enforce the JSON schema,
-pydantic models of each stage are used. To convert a pipeline to JSON,
-the following steps can be followed:
+`pydantic <https://pypi.org/project/pydantic/>`_ models of each stage are
+used. Pydantic provides type hinting and JSON schema verification to ensure that
+DSP pipelines are valid.
+
+To convert a pipeline to JSON, the following steps can be followed:
 
 .. code-block:: python
 
@@ -328,7 +413,15 @@ the following steps can be followed:
     filepath = Path("pipeline.json")
     filepath.write_text(json_data.model_dump_xdsp())
 
+To read a pipeline from a JSON file, the following steps can be followed:
+
+.. code-block:: python
+
     # read the JSON data back to a DSP pipeline
     json_text = filepath.read_text()
     json_data = DspJson.model_validate_json(json_text)
     p = make_pipeline(json_data)
+
+The JSON file can be edited in an external editor. If the edited JSON file
+is not valid, an exception will be raised during ``model_validate_json``
+with a description of the error.
