@@ -1,5 +1,28 @@
 .. _run_time_control_guide_walkthrough:
 
+Control Interface Details
+=========================
+
+Each stage that is included in the generated DSP pipeline has its own state which it will maintain as it processes
+audio. It also has a structure that contains its configuration parameters, and a control state variable
+which is used to communicate between the DSP and control threads. Threads that wish to read or write to the
+configuration of a stage use the control API that is discussed below.
+
+For a write command, the controlling thread will check that a command is not ongoing by querying the control state of
+the stage. If the stage is not processing a control command, then the control thread will update the configuration struct
+for the stage and write to the control state variable that new parameters are available. When the DSP thread next gets
+an opportunity, the stage will see that the parameters have been updated and update its internal state to match. When
+this is complete the control state variable will be cleared. 
+
+For a read command the process is similar. The control thread requests a read by updating the control state variable.
+The stage will see this and update the configuration struct with the latest value. The stage will notify the control thread, via the
+control state variable, that it has completed the request.
+
+The control API ensures thread safety through the use of the ``adsp_controller_t`` struct. As long as each thread uses
+a unique instance of ``adsp_controller_t`` then the control APIs will return ``ADSP_CONTROL_BUSY`` if a command that was
+initialised by another ``adsp_controller_t`` is ongoing.
+
+
 Defining a Controllable Pipeline
 ================================
 
@@ -115,26 +138,3 @@ is created in the example above.
    :end-before: // end read
 
 
-Control Interface Details
-=========================
-
-This section provides a brief overview of how the control interface works.
-
-Each stage that is included in the generated DSP pipeline has its own state which it will maintain as it processes
-audio. It also has a structure that contains its configuration parameters. Finally, it has a control state variable
-which is used to communicate between the DSP and control threads. Threads that wish to read or write to the
-configuration of a stage use the control API that is discussed above.
-
-For a write command, the controlling thread will check that a command is not ongoing by querying the control state of
-the stage. If the stage is not processing a control command then the control thread will update the configuration struct
-for the stage and write to the control state variable that new parameters are available. When the DSP thread next gets
-an opportunity the stage will see that the parameters have been updated and update its internal state to match. When
-this is complete the control state variable will be cleared. 
-
-For a read command the process is similar. The control thread requests a read by updating the control state variable.
-The stage will see this and update the configuration struct with the latest value and notify the control thread, via the
-control state variable, that it has completed the request.
-
-The control API ensures thread safety through the use of the ``adsp_controller_t`` struct. As long as each thread uses
-a unique instance of ``adsp_controller_t`` then the control APIs will return ``ADSP_CONTROL_BUSY`` if a command that was
-initialised by another ``adsp_controller_t`` is ongoing.

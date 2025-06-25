@@ -329,8 +329,11 @@ class Pipeline:
         if path is None:
             display.display_svg(dot)
         else:
-            dot.format = "png"
-            dot.render(path)
+            path = Path(path)
+            if not path.suffix:
+                path = path.with_suffix(".png")
+            dot.format = path.suffix.lstrip(".")
+            dot.render(path.with_suffix(""))
 
     @property
     def stages(self):

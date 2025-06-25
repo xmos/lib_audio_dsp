@@ -23,7 +23,8 @@ This format is defined by the ``Q_SIG`` macro. An additional macro for the signa
 
 To ensure optimal headroom and noise floor, the user should ensure that signals are in the correct
 Q format before processing. Either the input Q format can be converted to ``Q_SIG``, or ``Q_SIG``
-can be changed to the desired value.
+can be changed to the desired value. When using the DSP pipeline too, the Q format is automatically
+converted. The user should ensure that 0 dBFS is aligned with the maximum int32 value.
 
 .. note::
    Not using the DSP pipeline tool means that Q formats
@@ -34,8 +35,30 @@ For example, for more precision, the pipeline can be configured to run with no h
 in Q0.31 format, but this would require manual headroom management (e.g. reducing the signal level
 before a boost to avoid clipping).
 
-To convert between ``Q_SIG`` and Q0.31 in a safe and optimised way, the APIs below are provided.
+If not using the DSP pipeline tool, the APIs below provide conversions between ``Q_SIG`` and Q0.31
+in a safe and optimised method, assuming that 0 dBFS is aligned with the maximum int32 value.
 
 .. doxygenfunction:: adsp_from_q31
 
 .. doxygenfunction:: adsp_to_q31
+
+To convert a 16 bit audio signal into the Q_SIG format and back, the following functions can be used:
+
+.. code-block:: c
+
+    // input signal in Q0.15 format
+    int16_t signal = 1234;
+
+    // Convert to Q0.31
+    int32_t sig_32 = ((int32_t)signal) << 16;
+
+    // Convert to Q_SIG
+    sig_32 = adsp_from_q31(sig_32);
+
+    // Do some processing here
+
+    // Convert back to Q0.31
+    sig_32 = adsp_to_q31(sig_32);
+
+    // Convert back to 16 bit without dithering
+    signal = (int16_t)(sig_32 >> 16);
