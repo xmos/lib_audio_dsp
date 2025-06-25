@@ -27,7 +27,6 @@ def test_noise_gate_pipeline():
                     },
                     "placement": {
                         "input": [["inputs", 0], ["inputs", 1]],
-                        "output": [["StereoNoiseGate", 0], ["StereoNoiseGate", 1]],
                         "name": "StereoNoiseGate",
                         "thread": 0
                     }

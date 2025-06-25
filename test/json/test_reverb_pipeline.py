@@ -35,7 +35,6 @@ def test_plate_reverb_pipeline():
                     },
                     "placement": {
                         "input": [["inputs", 0], ["inputs", 1]],
-                        "output": [["StereoPlateReverb", 0], ["StereoPlateReverb", 1]],
                         "name": "StereoPlateReverb",
                         "thread": 0
                     }

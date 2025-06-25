@@ -30,7 +30,6 @@ def test_simple_delay_pipeline():
                     },
                     "placement": {
                         "input": [["inputs", 0], ["inputs", 1]],
-                        "output": [["StereoDelay", 0], ["StereoDelay", 1]],
                         "name": "StereoDelay",
                         "thread": 0
                     }

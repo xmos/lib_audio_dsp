@@ -57,7 +57,6 @@ def test_parametric_eq_pipeline():
                     },
                     "placement": {
                         "input": [["inputs", 0], ["inputs", 1]],
-                        "output": [["StereoEQ", 0], ["StereoEQ", 1]],
                         "name": "StereoEQ",
                         "thread": 0
                     }

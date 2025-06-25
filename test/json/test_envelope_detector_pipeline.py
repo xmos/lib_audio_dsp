@@ -26,7 +26,6 @@ def test_peak_envelope_detector_pipeline():
                     },
                     "placement": {
                         "input": [["inputs", 0]],
-                        "output": [],
                         "name": "PeakDetector",
                         "thread": 0
                     }
@@ -84,7 +83,6 @@ def test_rms_envelope_detector_pipeline():
                     },
                     "placement": {
                         "input": [["inputs", 0]],
-                        "output": [],
                         "name": "RMSDetector",
                         "thread": 0
                     }

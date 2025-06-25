@@ -28,7 +28,6 @@ def test_noise_suppressor_expander_pipeline():
                     },
                     "placement": {
                         "input": [["inputs", 0], ["inputs", 1]],
-                        "output": [["StereoNoiseSuppressor", 0], ["StereoNoiseSuppressor", 1]],
                         "name": "StereoNoiseSuppressor",
                         "thread": 0
                     }

@@ -36,7 +36,6 @@ def test_no_shared_edge():
           "config": {},
           "placement": {
             "input": [["inputs", 0]],
-            "output": [["VolumeControl_1", 0]],
             "name": "VolumeControl_1",
             "thread": 0
           }
@@ -83,7 +82,6 @@ def test_shared_edge_from_graph_input():
           "config": {},
           "placement": {
             "input": [["inputs", 0]],
-            "output": [["VolumeControl_A", 0]],
             "name": "VolumeControl_A",
             "thread": 0
           }
@@ -93,7 +91,6 @@ def test_shared_edge_from_graph_input():
           "config": {},
           "placement": {
             "input": [["inputs", 0]],
-            "output": [["Mixer_B", 0]],
             "name": "Mixer_B",
             "thread": 0
           }
@@ -131,7 +128,6 @@ def test_shared_edge_from_producer_node():
           "config": {},
           "placement": {
             "input": [["inputs", 0]],
-            "output": [["Producer", 0]],
             "name": "Producer",
             "thread": 0
           }
@@ -141,7 +137,6 @@ def test_shared_edge_from_producer_node():
           "config": {},
           "placement": {
             "input": [["Producer", 0]],
-            "output": [["Consumer_1", 0]],
             "name": "Consumer_1",
             "thread": 0
           }
@@ -151,7 +146,6 @@ def test_shared_edge_from_producer_node():
           "config": {},
           "placement": {
             "input": [["Producer", 0]],
-            "output": [["Consumer_2", 0]],
             "name": "Consumer_2",
             "thread": 0
           }
@@ -189,7 +183,6 @@ def test_shared_edge_with_graph_output():
           "config": {},
           "placement": {
             "input": [["inputs", 0]],
-            "output": [["Producer", 0]],
             "name": "Producer",
             "thread": 0
           }
@@ -199,7 +192,6 @@ def test_shared_edge_with_graph_output():
           "config": {},
           "placement": {
             "input": [["Producer", 0]],
-            "output": [["Consumer", 0]],
             "name": "Consumer",
             "thread": 0
           }
@@ -232,8 +224,8 @@ def test_again():
           "output": [["stereo_in", 0], ["stereo_in", 1]]
       }],
       "nodes": [
-        {"op_type": "Mixer", "placement": {"input": [["stereo_in", 0], ["stereo_in", 1]], "name": "Mixer", "output": [["Mixer", 0]], "thread": 0}},
-        {"op_type": "VolumeControl", "placement": {"input": [["Mixer", 0]], "name": "Volume", "output": [["Volume", 0]], "thread": 0}}
+        {"op_type": "Mixer", "placement": {"input": [["stereo_in", 0], ["stereo_in", 1]], "name": "Mixer", "thread": 0}},
+        {"op_type": "VolumeControl", "placement": {"input": [["Mixer", 0]], "name": "Volume", "thread": 0}}
       ],
       "outputs": [{
           "name": "stereo_out",
@@ -271,7 +263,6 @@ def test_multiple_inputs_outputs_non_shared():
           "config": {},
           "placement": {
             "input": [["mono_in", 0]],
-            "output": [["VolumeControl_A", 0]],
             "name": "VolumeControl_A",
             "thread": 0
           }
@@ -281,7 +272,6 @@ def test_multiple_inputs_outputs_non_shared():
           "config": {},
           "placement": {
             "input": [["stereo_in", 0], ["stereo_in", 1]],
-            "output": [["Mixer_B", 0]],
             "name": "Mixer_B",
             "thread": 0
           }
@@ -324,7 +314,6 @@ def test_multiple_inputs_outputs_shared():
           "config": {},
           "placement": {
             "input": [["input1", 0], ["input2", 0]],
-            "output": [["Mixer", 0]],
             "name": "Mixer",
             "thread": 0
           }

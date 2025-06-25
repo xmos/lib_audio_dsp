@@ -27,7 +27,6 @@ def test_rms_limiter_pipeline():
                     },
                     "placement": {
                         "input": [["inputs", 0], ["inputs", 1]],
-                        "output": [["StereoRMSLimiter", 0], ["StereoRMSLimiter", 1]],
                         "name": "StereoRMSLimiter",
                         "thread": 0
                     }
@@ -87,7 +86,6 @@ def test_peak_limiter_pipeline():
                     },
                     "placement": {
                         "input": [["inputs", 0], ["inputs", 1]],
-                        "output": [["StereoPeakLimiter", 0], ["StereoPeakLimiter", 1]],
                         "name": "StereoPeakLimiter",
                         "thread": 0
                     }
@@ -146,7 +144,6 @@ def test_hard_peak_limiter_pipeline():
                     },
                     "placement": {
                         "input": [["inputs", 0], ["inputs", 1]],
-                        "output": [["StereoHardPeakLimiter", 0], ["StereoHardPeakLimiter", 1]],
                         "name": "StereoHardPeakLimiter",
                         "thread": 0
                     }
