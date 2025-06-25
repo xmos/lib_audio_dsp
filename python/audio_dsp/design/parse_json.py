@@ -259,7 +259,8 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
         # Map the outputs to the correct edge indices
         if len(node_output) != 0:
             for i in range(len(node.placement.output)):
-                edge_name = tuple(node.placement.output[i])
+            for i in range(len(node_output)):
+                edge_name = (node.placement.name, i)
                 if edge_map.get(edge_name) is not None:
                     raise ValueError("Output already exists")
                 edge_map[edge_name] = node_output[i]
