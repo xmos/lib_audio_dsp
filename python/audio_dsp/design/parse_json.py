@@ -295,8 +295,17 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
             channels=len(pipeline.i.edges),
         )
     ]
+
+    output_in = []
+    for x in pipeline.o.edges:
+        if x.source is not None:
+            output_in.append([f"{x.source.label}", x.source_index])
+        else:
+            # if the source is None, it means it's a direct input to the pipeline
+            output_in.append([f"inputs", x.source_index])
+
     outputs = [
-        Output(name="outputs", input=[[f"{x.source.label}", x.source_index] for x in pipeline.o.edges])]
+        Output(name="outputs", input=output_in)]
 
     # Extract nodes
     nodes = []
@@ -311,6 +320,7 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
                 if x.source is not None:
                     stage_in.append([f"{x.source.label}", x.source_index])
                 else:
+                    # if the source is None, it means it's a direct input to the pipeline
                     stage_in.append([f"inputs", x.source_index])
 
             placement = {
