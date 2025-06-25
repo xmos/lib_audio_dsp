@@ -76,4 +76,4 @@ def test_simple_biquad_pipeline():
     assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
 
 if __name__ == "__main__":
-    test_simple_biquad_pipeline() 
+    test_simple_biquad_pipeline()

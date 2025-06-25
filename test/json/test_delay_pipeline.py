@@ -29,8 +29,8 @@ def test_simple_delay_pipeline():
                         "delay": 1024,
                     },
                     "placement": {
-                        "input": [0, 1],
-                        "output": [2, 3],
+                        "input": [["inputs", 0], ["inputs", 1]],
+                        "output": [["StereoDelay", 0], ["StereoDelay", 1]],
                         "name": "StereoDelay",
                         "thread": 0
                     }
@@ -39,13 +39,13 @@ def test_simple_delay_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [0, 1]
+                    "output": [["inputs", 0], ["inputs", 1]]
                 }
             ],
             "outputs": [
                 {
                     "name": "outputs",
-                    "input": [2, 3]
+                    "input": [["StereoDelay", 0], ["StereoDelay", 1]]
                 }
             ]
         }
@@ -72,4 +72,4 @@ def test_simple_delay_pipeline():
 
 
 if __name__ == "__main__":
-    test_simple_delay_pipeline() 
+    test_simple_delay_pipeline()

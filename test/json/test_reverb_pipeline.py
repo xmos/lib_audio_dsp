@@ -34,8 +34,8 @@ def test_plate_reverb_pipeline():
                         "wet_dry_mix": 0.4
                     },
                     "placement": {
-                        "input": [0, 1],
-                        "output": [2, 3],
+                        "input": [["inputs", 0], ["inputs", 1]],
+                        "output": [["StereoPlateReverb", 0], ["StereoPlateReverb", 1]],
                         "name": "StereoPlateReverb",
                         "thread": 0
                     }
@@ -44,13 +44,13 @@ def test_plate_reverb_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [0, 1]
+                    "output": [["inputs", 0], ["inputs", 1]]
                 }
             ],
             "outputs": [
                 {
                     "name": "outputs",
-                    "input": [2, 3]
+                    "input": [["StereoPlateReverb", 0], ["StereoPlateReverb", 1]]
                 }
             ]
         }
