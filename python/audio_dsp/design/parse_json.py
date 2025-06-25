@@ -36,9 +36,6 @@ class Input(BaseModel, extra="ignore"):
 
     name: str = Field(..., description="Name of the input")
     channels: int
-    output: list[tuple[str, int]] = Field(
-        default_factory=list,
-        description="List of output edges as (node_name, index) tuples",
     )
 
 
