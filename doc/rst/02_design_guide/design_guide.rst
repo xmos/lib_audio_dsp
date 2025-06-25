@@ -124,8 +124,8 @@ Thread Usage
 
 Thread usage of the DSP pipeline is discussed in the sections above. Understanding the thread usage of your application
 is a manual process. The application designer must have an understanding of how many threads are in use in their
-application as well as in the DSP pipeline to ensure that the limit of 8 is not exceeded. If this limit is exceeded the
-xcore will trap when the application attempts to fork a ninth thread.
+application, including in the DSP pipeline, to ensure that the limit of 8 is not exceeded (of which up to 5 may be DSP threads).
+If this limit is exceeded the xcore will trap when the application attempts to fork a ninth thread.
 
 .. _design_memory_usage_section:
 
