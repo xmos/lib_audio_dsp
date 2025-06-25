@@ -36,7 +36,6 @@ class Input(BaseModel, extra="ignore"):
 
     name: str = Field(..., description="Name of the input")
     channels: int
-    )
 
 
 class Output(BaseModel, extra="ignore"):
