@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections import defaultdict
 from pathlib import Path
 from pprint import pprint
-from typing import Annotated, Any, Optional, Union, List, TypeVar, TypeAlias, Tuple
+from typing import Annotated, Any, Optional, Union, TypeVar, TypeAlias
 
 from pydantic import BaseModel, Field
 from pydantic.json_schema import SkipJsonSchema
@@ -36,7 +36,7 @@ class Input(BaseModel, extra="ignore"):
 
     name: str = Field(..., description="Name of the input")
     channels: int
-    output: list[Tuple[str, int]] = Field(
+    output: list[tuple[str, int]] = Field(
         default_factory=list,
         description="List of output edges as (node_name, index) tuples",
     )
@@ -46,7 +46,7 @@ class Output(BaseModel, extra="ignore"):
     """Pydantic model of the outputs of a DSP graph."""
 
     name: str = Field(..., description="Name of the output")
-    input: list[Tuple[str, int]] = Field(
+    input: list[tuple[str, int]] = Field(
         ...,
         description="List of input edges as (node_name, index) tuples",
     )
@@ -125,7 +125,7 @@ def insert_forks(graph: Graph) -> Graph:
     # Create a deep copy of the graph to avoid mutating the original
     new_graph = graph.model_copy(deep=True)
     # Map from edge name to a list of consumers (node or graph output, index, position)
-    consumer_map: dict[Tuple[str, int], list[tuple[str, Any, int]]] = defaultdict(list)
+    consumer_map: dict[tuple[str, int], list[tuple[str, Any, int]]] = defaultdict(list)
     # Build the consumer map for all node inputs
     for node_index, node in enumerate(new_graph.nodes):
         for pos, edge in enumerate(node.placement.input):
@@ -134,7 +134,7 @@ def insert_forks(graph: Graph) -> Graph:
     for out_idx, out in enumerate(new_graph.outputs):
         for pos, edge in enumerate(out.input):
             consumer_map[tuple(edge)].append(("graph_output", out_idx, pos))
-    all_edges: list[Tuple[str, int]] = []
+    all_edges: list[tuple[str, int]] = []
     for inp in new_graph.inputs:
         all_edges.extend([tuple(e) for e in inp.output])
     for out in new_graph.outputs:
@@ -143,7 +143,7 @@ def insert_forks(graph: Graph) -> Graph:
         all_edges.extend([tuple(e) for e in node.placement.input])
         # all_edges.extend([tuple(e) for e in node.placement.output])
     # Edge names are now strings, so no max_edge/new_edge_id logic
-    producer_of_edge: dict[Tuple[str, int], Optional[int]] = {}
+    producer_of_edge: dict[tuple[str, int], Optional[int]] = {}
     for inp in new_graph.inputs:
         for idx, edge in enumerate(inp.output):
             producer_of_edge[tuple(edge)] = None
@@ -197,7 +197,7 @@ def stage_handle(model):
     return getattr(Stages, model.op_type)
 
 
-def make_edge_name(node_name: str, idx: int) -> Tuple[str, int]:
+def make_edge_name(node_name: str, idx: int) -> tuple[str, int]:
     """Return the canonical edge name as a tuple, e.g., ('NodeName', 0)."""
     return (node_name, idx)
 
