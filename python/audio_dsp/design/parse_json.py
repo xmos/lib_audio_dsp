@@ -215,8 +215,8 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
     flat_input_edges = []
     total_channels = 0
     for inp in graph.inputs:
-        flat_input_edges.extend([tuple(e) for e in inp.output])
-        total_channels += len(inp.output)
+        flat_input_edges.extend([(inp.name, i) for i in range(inp.channels)])
+        total_channels += inp.channels
 
     p, in_edges = Pipeline.begin(total_channels, fs=graph.fs)
     thread_max = max(node.placement.thread for node in graph.nodes) if graph.nodes else 0
