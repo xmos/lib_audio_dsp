@@ -134,6 +134,8 @@ def insert_forks(graph: Graph) -> Graph:
         for input_idx, edge_tuple in enumerate(out.input):
             consumer_map[edge_tuple].append(("graph_output", out_idx, input_idx))
 
+    node_dict = {node.placement.name: i for i, node in enumerate(graph.nodes)}
+
     autofork_idx = 0
     for key in consumer_map:
         # If there are multiple consumers for the same edge, we need to insert a Fork node
@@ -141,8 +143,14 @@ def insert_forks(graph: Graph) -> Graph:
             # calculate the fork properties
             num_consumers = len(consumer_map[key])
             first_node_idx = consumer_map[key][0][1] + autofork_idx
-            thread = new_graph.nodes[first_node_idx].placement.thread
-
+            if key[0] == "inputs":
+                # If the edge is an input, we can use the first consumer's thread
+                thread = new_graph.nodes[first_node_idx].placement.thread
+            else:
+                # Otherwise, put the fork on the producer thread
+                key_idx = node_dict[key[0]]
+                thread = new_graph.nodes[key_idx].placement.thread
+            
             # Create the Fork node
             fork_node_data = {
                 "op_type": "Fork",
