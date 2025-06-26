@@ -150,7 +150,7 @@ def insert_forks(graph: Graph) -> Graph:
                 # Otherwise, put the fork on the producer thread
                 key_idx = node_dict[key[0]]
                 thread = new_graph.nodes[key_idx].placement.thread
-            
+
             # Create the Fork node
             fork_node_data = {
                 "op_type": "Fork",
