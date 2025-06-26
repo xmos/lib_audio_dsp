@@ -25,8 +25,7 @@ def test_peak_envelope_detector_pipeline():
                         "release_t": 0.1
                     },
                     "placement": {
-                        "input": [0],
-                        "output": [],
+                        "input": [["inputs", 0]],
                         "name": "PeakDetector",
                         "thread": 0
                     }
@@ -35,13 +34,13 @@ def test_peak_envelope_detector_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [0, 1]
+                    "channels": 2
                 }
             ],
             "outputs": [
                 {
                     "name": "outputs",
-                    "input": [1]
+                    "input": [["inputs", 1]]
                 }
             ]
         }
@@ -83,8 +82,7 @@ def test_rms_envelope_detector_pipeline():
                         "release_t": 0.2
                     },
                     "placement": {
-                        "input": [0],
-                        "output": [],
+                        "input": [["inputs", 0]],
                         "name": "RMSDetector",
                         "thread": 0
                     }
@@ -93,13 +91,13 @@ def test_rms_envelope_detector_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [0, 1]
+                    "channels": 2
                 }
             ],
             "outputs": [
                 {
                     "name": "outputs",
-                    "input": [1]
+                    "input": [["inputs", 1]]
                 }
             ]
         }

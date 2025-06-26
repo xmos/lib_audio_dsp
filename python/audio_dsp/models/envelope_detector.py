@@ -4,7 +4,7 @@
 a signal varies over time.
 """
 
-from typing import Literal
+from typing import Literal, Tuple
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -15,11 +15,10 @@ from audio_dsp.models.fields import DEFAULT_ATTACK_T, DEFAULT_RELEASE_T
 class EnvelopeDetectorPlacement(NodePlacement):
     """Graph placement for an Envelope Stage. This stage has no outputs."""
 
-    input: list[int] = Field(
+    input: list[Tuple[str, int]] = Field(
         default=[],
         description="Set of input edges.",
     )
-    output: list[int] = Field(default=[], max_length=0)
 
 
 class EnvelopeDetectorParameters(StageParameters):

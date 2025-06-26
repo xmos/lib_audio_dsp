@@ -26,8 +26,7 @@ def test_rms_limiter_pipeline():
                         "release_t": 0.1
                     },
                     "placement": {
-                        "input": [0, 1],
-                        "output": [2, 3],
+                        "input": [["inputs", 0], ["inputs", 1]],
                         "name": "StereoRMSLimiter",
                         "thread": 0
                     }
@@ -36,13 +35,13 @@ def test_rms_limiter_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [0, 1]
+                    "channels": 2
                 }
             ],
             "outputs": [
                 {
                     "name": "outputs",
-                    "input": [2, 3]
+                    "input": [["StereoRMSLimiter", 0], ["StereoRMSLimiter", 1]]
                 }
             ]
         }
@@ -86,8 +85,7 @@ def test_peak_limiter_pipeline():
                         "release_t": 0.05
                     },
                     "placement": {
-                        "input": [0, 1],
-                        "output": [2, 3],
+                        "input": [["inputs", 0], ["inputs", 1]],
                         "name": "StereoPeakLimiter",
                         "thread": 0
                     }
@@ -96,13 +94,13 @@ def test_peak_limiter_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [0, 1]
+                    "channels": 2
                 }
             ],
             "outputs": [
                 {
                     "name": "outputs",
-                    "input": [2, 3]
+                    "input": [["StereoPeakLimiter", 0], ["StereoPeakLimiter", 1]]
                 }
             ]
         }
@@ -145,8 +143,7 @@ def test_hard_peak_limiter_pipeline():
                         "release_t": 0.02
                     },
                     "placement": {
-                        "input": [0, 1],
-                        "output": [2, 3],
+                        "input": [["inputs", 0], ["inputs", 1]],
                         "name": "StereoHardPeakLimiter",
                         "thread": 0
                     }
@@ -155,13 +152,13 @@ def test_hard_peak_limiter_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [0, 1]
+                    "channels": 2
                 }
             ],
             "outputs": [
                 {
                     "name": "outputs",
-                    "input": [2, 3]
+                    "input": [["StereoHardPeakLimiter", 0], ["StereoHardPeakLimiter", 1]]
                 }
             ]
         }
@@ -189,4 +186,4 @@ if __name__ == "__main__":
     print("\n" + "="*50 + "\n")
     test_peak_limiter_pipeline()
     print("\n" + "="*50 + "\n")
-    test_hard_peak_limiter_pipeline() 
+    test_hard_peak_limiter_pipeline()

@@ -30,8 +30,7 @@ def test_simple_biquad_pipeline():
                         },
                     },
                     "placement": {
-                        "input": [0, 1],
-                        "output": [2, 3],
+                        "input": [["inputs", 0], ["inputs", 1]],
                         "name": "StereoBiquad",
                         "thread": 0
                     }
@@ -40,13 +39,13 @@ def test_simple_biquad_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [0, 1]
+                    "channels": 2
                 }
             ],
             "outputs": [
                 {
                     "name": "outputs",
-                    "input": [2, 3]
+                    "input": [["StereoBiquad", 0], ["StereoBiquad", 1]]
                 }
             ]
         }
@@ -77,4 +76,4 @@ def test_simple_biquad_pipeline():
     assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
 
 if __name__ == "__main__":
-    test_simple_biquad_pipeline() 
+    test_simple_biquad_pipeline()

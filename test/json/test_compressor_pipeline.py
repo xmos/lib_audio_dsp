@@ -27,8 +27,7 @@ def test_simple_compressor_pipeline():
                         "release_t": 0.2
                     },
                     "placement": {
-                        "input": [0, 1],
-                        "output": [2, 3],
+                        "input": [["inputs", 0], ["inputs", 1]],
                         "name": "StereoCompressor",
                         "thread": 0
                     }
@@ -37,13 +36,14 @@ def test_simple_compressor_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [0, 1]
+                    "channels": 2
                 }
             ],
             "outputs": [
                 {
                     "name": "outputs",
-                    "input": [2, 3]
+                    "input": [["StereoCompressor", 0], ["StereoCompressor", 1]],
+
                 }
             ]
         }

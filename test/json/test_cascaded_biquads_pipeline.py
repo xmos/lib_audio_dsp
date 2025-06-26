@@ -56,8 +56,7 @@ def test_parametric_eq_pipeline():
                         ]
                     },
                     "placement": {
-                        "input": [0, 1],
-                        "output": [2, 3],
+                        "input": [["inputs", 0], ["inputs", 1]],
                         "name": "StereoEQ",
                         "thread": 0
                     }
@@ -66,13 +65,13 @@ def test_parametric_eq_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [0, 1]
+                    "channels": 2
                 }
             ],
             "outputs": [
                 {
                     "name": "outputs",
-                    "input": [2, 3]
+                    "input": [["StereoEQ", 0], ["StereoEQ", 1]]
                 }
             ]
         }
@@ -94,4 +93,4 @@ def test_parametric_eq_pipeline():
     assert dsp_json.graph == new_json.graph, "Pipeline JSON does not match original"
 
 if __name__ == "__main__":
-    test_parametric_eq_pipeline() 
+    test_parametric_eq_pipeline()

@@ -26,8 +26,7 @@ def test_noise_gate_pipeline():
                         "release_t": 0.1
                     },
                     "placement": {
-                        "input": [0, 1],
-                        "output": [2, 3],
+                        "input": [["inputs", 0], ["inputs", 1]],
                         "name": "StereoNoiseGate",
                         "thread": 0
                     }
@@ -36,13 +35,13 @@ def test_noise_gate_pipeline():
             "inputs": [
                 {
                     "name": "inputs",
-                    "output": [0, 1]
+                    "channels": 2
                 }
             ],
             "outputs": [
                 {
                     "name": "outputs",
-                    "input": [2, 3]
+                    "input": [["StereoNoiseGate", 0], ["StereoNoiseGate", 1]]
                 }
             ]
         }
@@ -65,4 +64,4 @@ def test_noise_gate_pipeline():
     
 
 if __name__ == "__main__":
-    test_noise_gate_pipeline() 
+    test_noise_gate_pipeline()
