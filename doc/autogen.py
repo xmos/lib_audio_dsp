@@ -21,11 +21,11 @@ API_REFERENCE_DIR       = "05_api_reference"
 # Define paths
 ROOT_DIR = Path(__file__).parents[1]
 PYTHON_ROOT = ROOT_DIR / "python"
-STAGES_LIST_PATH = Path(__file__).parent / DSP_COMP_DIR / "gen" / "stages.rst"
-DSP_GEN_DIR = Path(__file__).parent / API_REFERENCE_DIR / "stages" / "gen"
+STAGES_LIST_PATH = Path(__file__).parent / "rst"/ DSP_COMP_DIR / "gen" / "stages.rst"
+DSP_GEN_DIR = Path(__file__).parent / "rst" / API_REFERENCE_DIR / "stages" / "gen"
 PY_STAGE_MAKO = ROOT_DIR / "python" / "audio_dsp" / "design" / "templates" / "py_stage_doc.mako"
 YAML_DIR = ROOT_DIR / "stage_config"
-API_REF_GEN_DIR = Path(__file__).parent / API_REFERENCE_DIR / "gen"
+API_REF_GEN_DIR = Path(__file__).parent / "rst"/ API_REFERENCE_DIR / "gen"
 
 
 def get_module_from_path(paths):
@@ -117,9 +117,7 @@ DSP Stages List
 This a list of all the supported stages that can be used with the DSP pipeline tool:
 
 % for i in range(len(titles)):
-*   :ref:`${titles[i]}_stages`
-
-    ${docstrings[i]}
+* :ref:`${titles[i]}_stages`: ${docstrings[i].split("Stages", 2)[-1].strip()}
 
 % for cl in classes[i]:
     * :ref:`${cl}_stage`

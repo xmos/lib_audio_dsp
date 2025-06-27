@@ -1,7 +1,7 @@
 # Copyright 2024-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """
-Graphic EQs allow frequency response adjustments at fixed center
+Graphic EQ Stages allow frequency response adjustments at fixed center
 frequencies.
 """
 
@@ -9,6 +9,7 @@ from ..design.stage import Stage, find_config, StageOutputList, StageOutput
 from ..dsp import generic as dspg
 import audio_dsp.dsp.graphic_eq as geq
 import numpy as np
+from audio_dsp.models.graphic_eq import GraphicEq10bParameters
 
 
 class GraphicEq10b(Stage):
@@ -31,7 +32,10 @@ class GraphicEq10b(Stage):
     def __init__(self, **kwargs):
         super().__init__(config=find_config("graphic_eq_10b"), **kwargs)
         self.create_outputs(self.n_in)
-        self.dsp_block = geq.graphic_eq_10_band(self.fs, self.n_in, np.zeros(10))
+        self.parameters = GraphicEq10bParameters()
+        self.dsp_block: geq.graphic_eq_10_band = geq.graphic_eq_10_band(
+            self.fs, self.n_in, self.parameters.gains_db
+        )
         self.set_control_field_cb("gains", lambda: self.dsp_block.gains_int)
 
         self.set_constant("coeffs", self.dsp_block._get_coeffs(), "int32_t")
@@ -46,5 +50,18 @@ class GraphicEq10b(Stage):
         gains_db : list[float]
             A list of the 10 gains of the graphic eq in dB.
         """
-        self.dsp_block.gains_db = gains_db
+        parameters = GraphicEq10bParameters(gains_db=gains_db)
+        self.set_parameters(parameters)
         return self
+
+    def set_parameters(self, parameters: GraphicEq10bParameters):
+        """
+        Set the parameters of the graphic eq.
+
+        Parameters
+        ----------
+        parameters : GraphicEq10bParameters
+            The parameters of the graphic eq.
+        """
+        self.parameters = parameters
+        self.dsp_block.gains_db = self.parameters.gains_db

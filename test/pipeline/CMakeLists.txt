@@ -23,11 +23,11 @@ set(APP_COMPILER_FLAGS_tuned
     -DSEND_TEST_CONTROL_COMMANDS=1
 )
 
-set(APP_DEPENDENT_MODULES lib_audio_dsp "xscope_fileio(develop)")
+set(APP_DEPENDENT_MODULES lib_audio_dsp "xscope_fileio(v1.3.1)")
 
-set(APP_INCLUDES src src/file_utils ../../lib_audio_dsp/api/stages/ build/dsp_pipeline_default/ build/ build/src.autogen/host/ .)
+set(APP_INCLUDES app_pipeline app_pipeline/file_utils ../../lib_audio_dsp/api/stages/ build/dsp_pipeline_default/ build/ build/app_pipeline.autogen/host/ .)
 
-file(GLOB C_SRC CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_LIST_DIR} src/*.c src/*.xc src/file_utils/*.c stages/*.c)
+file(GLOB C_SRC CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_LIST_DIR} app_pipeline/*.c app_pipeline/*.xc app_pipeline/file_utils/*.c stages/*.c)
 
 list(APPEND APP_C_SRCS
     ${C_SRC}

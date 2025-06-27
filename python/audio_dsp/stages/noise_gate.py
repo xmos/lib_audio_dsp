@@ -2,9 +2,10 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Noise gate Stages remove quiet signals from the audio output."""
 
-from ..design.stage import Stage, find_config
-from ..dsp import drc as drc
-from ..dsp import generic as dspg
+from audio_dsp.design.stage import Stage, find_config
+from audio_dsp.dsp import drc as drc
+from audio_dsp.dsp import generic as dspg
+from audio_dsp.models.noise_gate import NoiseGateParameters
 
 
 class NoiseGate(Stage):
@@ -31,10 +32,8 @@ class NoiseGate(Stage):
         super().__init__(config=find_config("noise_gate"), **kwargs)
         self.create_outputs(self.n_in)
 
-        threshold = -35
-        at = 0.005
-        rt = 0.12
-        self.dsp_block = drc.noise_gate(self.fs, self.n_in, threshold, at, rt)
+        self.parameters = NoiseGateParameters()
+        self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
@@ -55,13 +54,19 @@ class NoiseGate(Stage):
         release_t : float
             Release time of the noise gate in seconds.
         """
-        self.details = dict(
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=Q_sig,
+        parameters = NoiseGateParameters(
+            threshold_db=threshold_db, attack_t=attack_t, release_t=release_t
         )
+        self.set_parameters(parameters)
+
+    def set_parameters(self, parameters: NoiseGateParameters):
+        """Update noise gate configuration based on new parameters."""
+        self.parameters = parameters
         self.dsp_block = drc.noise_gate(
-            self.fs, self.n_in, threshold_db, attack_t, release_t, Q_sig
+            self.fs,
+            self.n_in,
+            parameters.threshold_db,
+            parameters.attack_t,
+            parameters.release_t,
+            dspg.Q_SIG,
         )
-        return self

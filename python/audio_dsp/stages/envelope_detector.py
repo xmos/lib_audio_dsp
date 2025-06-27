@@ -4,9 +4,10 @@
 a signal varies over time.
 """
 
-from ..design.stage import Stage, find_config
-from ..dsp import drc as drc
-from ..dsp import generic as dspg
+from audio_dsp.design.stage import Stage, find_config
+from audio_dsp.dsp import drc as drc
+from audio_dsp.dsp import generic as dspg
+from audio_dsp.models.envelope_detector import EnvelopeDetectorParameters
 
 
 class EnvelopeDetectorPeak(Stage):
@@ -28,14 +29,20 @@ class EnvelopeDetectorPeak(Stage):
         super().__init__(config=find_config("envelope_detector_peak"), **kwargs)
         self.create_outputs(0)
 
-        at = 0.01
-        rt = 0.2
-        self.dsp_block = drc.envelope_detector_peak(self.fs, self.n_in, at, rt)
+        self.parameters = EnvelopeDetectorParameters()
+        self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
 
         self.stage_memory_parameters = (self.n_in,)
+
+    def set_parameters(self, parameters: EnvelopeDetectorParameters):
+        """Update the parameters of the EnvelopeDetectorPeak stage."""
+        self.parameters = parameters
+        self.dsp_block = drc.envelope_detector_peak(
+            self.fs, self.n_in, parameters.attack_t, parameters.release_t, dspg.Q_SIG
+        )
 
     def make_env_det_peak(self, attack_t, release_t, Q_sig=dspg.Q_SIG):
         """Update envelope detector configuration based on new parameters.
@@ -47,13 +54,8 @@ class EnvelopeDetectorPeak(Stage):
         release_t : float
             Release time of the envelope detector in seconds.
         """
-        self.details = dict(
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=Q_sig,
-        )
-        self.dsp_block = drc.envelope_detector_peak(self.fs, self.n_in, attack_t, release_t, Q_sig)
-        return self
+        parameters = EnvelopeDetectorParameters(attack_t=attack_t, release_t=release_t)
+        self.set_parameters(parameters)
 
 
 class EnvelopeDetectorRMS(Stage):
@@ -75,14 +77,20 @@ class EnvelopeDetectorRMS(Stage):
         super().__init__(config=find_config("envelope_detector_rms"), **kwargs)
         self.create_outputs(0)
 
-        at = 0.01
-        rt = 0.2
-        self.dsp_block = drc.envelope_detector_rms(self.fs, self.n_in, at, rt)
+        self.parameters = EnvelopeDetectorParameters()
+        self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
 
         self.stage_memory_parameters = (self.n_in,)
+
+    def set_parameters(self, parameters: EnvelopeDetectorParameters):
+        """Update the parameters of the EnvelopeDetectorRMS stage."""
+        self.parameters = parameters
+        self.dsp_block = drc.envelope_detector_rms(
+            self.fs, self.n_in, parameters.attack_t, parameters.release_t, dspg.Q_SIG
+        )
 
     def make_env_det_rms(self, attack_t, release_t, Q_sig=dspg.Q_SIG):
         """Update envelope detector configuration based on new parameters.
@@ -94,10 +102,5 @@ class EnvelopeDetectorRMS(Stage):
         release_t : float
             Release time of the envelope detector in seconds.
         """
-        self.details = dict(
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=Q_sig,
-        )
-        self.dsp_block = drc.envelope_detector_rms(self.fs, self.n_in, attack_t, release_t, Q_sig)
-        return self
+        parameters = EnvelopeDetectorParameters(attack_t=attack_t, release_t=release_t)
+        self.set_parameters(parameters)

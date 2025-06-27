@@ -57,7 +57,7 @@ class fir_direct(dspg.dsp_block):
     def __init__(self, fs: float, n_chans: int, coeffs_path: Path, Q_sig: int = dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
-        self.coeffs = np.loadtxt(coeffs_path)
+        self.coeffs = np.loadtxt(coeffs_path, ndmin=1)
         self.n_taps = len(self.coeffs)
         self.coeffs_int, self.shift = self.check_coeff_scaling()
 
@@ -93,7 +93,7 @@ class fir_direct(dspg.dsp_block):
 
         if coeff_max_gain > headroom:
             warnings.warn(
-                "Headroom of %d dB is not sufficient to guarentee no clipping." % (headroom)
+                "Headroom of %d dB is not sufficient to guarantee no clipping." % (headroom)
             )
 
         # VPU stripes the convolution across 8 40b accumulators

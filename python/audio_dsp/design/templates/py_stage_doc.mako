@@ -17,6 +17,49 @@ ${"="*len(cl)}
     :noindex:
     :members:
     :inherited-members: Stage
+<%
+
+    ## Get the parameter type from the stage.set_parameters method
+    import importlib
+    import inspect
+    from typing import get_type_hints
+    import types
+    import audio_dsp
+    # Import the stage class
+    stages_mod = importlib.import_module('audio_dsp.stages')
+    stage_cls = getattr(stages_mod, cl)
+    # Get the set_parameters method
+    set_params = getattr(stage_cls, 'set_parameters')
+    # Get the type hints for the method
+    hints = get_type_hints(set_params)
+    # Assume the first argument after 'self' is the model class
+    params = inspect.signature(set_params).parameters
+    param_names = list(params.keys())
+    # Skip 'self', get the next parameter
+    param_name = param_names[1]
+    model_cls = hints.get(param_name)
+
+    if model_cls == audio_dsp.design.stage.StageParameterType:
+        # generic StageParameterType, so no specific model class
+        model_cls = []
+    elif type(model_cls) == types.UnionType:
+        # If it's a Union, there's multiple types
+        model_cls = list(model_cls.__args__)
+    else:
+        model_cls = [model_cls]
+
+    for i, cls in enumerate(model_cls):
+        # get the full class path
+        model_cls[i] = f"{cls.__module__}.{cls.__name__}"
+
+%>
+% for param_cls in model_cls:
+.. autopydantic_model:: ${param_cls}
+    :noindex:
+    :members:
+    :inherited-members: StageParameters
+% endfor ## for cls in model_cls
+
 
 ${cl} Control
 ${"="*len(cl)}========

@@ -49,6 +49,8 @@ class graphic_eq_10_band(dspg.dsp_block):
     def __init__(self, fs, n_chans, gains_db, gain_offset=-12, Q_sig=dspg.Q_SIG):
         super().__init__(fs, n_chans, Q_sig)
 
+        self.cfs = [31.125, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
+
         if fs < 12000:
             raise ValueError("Sample rate too low for 10 band graphic EQ")
         elif fs <= 16000:
@@ -84,6 +86,8 @@ class graphic_eq_10_band(dspg.dsp_block):
         self.gain_offset = gain_offset
         self.gains_db = gains_db
         self.biquads = []
+        # trim unavailable bands
+        self.cfs = self.cfs[: len(cfs)]
 
         for f in range(10):
             if f < len(cfs):

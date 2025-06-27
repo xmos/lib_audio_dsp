@@ -5,9 +5,10 @@ of quiet signals, typically by tring to reduce the audibility of noise
 in the signal.
 """
 
-from ..design.stage import Stage, find_config
-from ..dsp import drc as drc
-from ..dsp import generic as dspg
+from audio_dsp.design.stage import Stage, find_config
+from audio_dsp.dsp import drc as drc
+from audio_dsp.dsp import generic as dspg
+from audio_dsp.models.noise_suppressor_expander import NoiseSuppressorExpanderParameters
 
 
 class NoiseSuppressorExpander(Stage):
@@ -35,13 +36,8 @@ class NoiseSuppressorExpander(Stage):
         super().__init__(config=find_config("noise_suppressor_expander"), **kwargs)
         self.create_outputs(self.n_in)
 
-        threshold = -35
-        ratio = 3
-        at = 0.005
-        rt = 0.120
-        self.dsp_block = drc.noise_suppressor_expander(
-            self.fs, self.n_in, ratio, threshold, at, rt
-        )
+        self.parameters = NoiseSuppressorExpanderParameters()
+        self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
@@ -49,6 +45,19 @@ class NoiseSuppressorExpander(Stage):
         self.set_control_field_cb("slope", lambda: self.dsp_block.slope_f32)
 
         self.stage_memory_parameters = (self.n_in,)
+
+    def set_parameters(self, parameters: NoiseSuppressorExpanderParameters):
+        """Update noise suppressor/expander configuration based on new parameters."""
+        self.parameters = parameters
+        self.dsp_block = drc.noise_suppressor_expander(
+            self.fs,
+            self.n_in,
+            parameters.ratio,
+            parameters.threshold_db,
+            parameters.attack_t,
+            parameters.release_t,
+            dspg.Q_SIG,
+        )
 
     def make_noise_suppressor_expander(
         self, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG
@@ -71,14 +80,7 @@ class NoiseSuppressorExpander(Stage):
         release_t : float
             Release time of the noise suppressor in seconds.
         """
-        self.details = dict(
-            ratio=ratio,
-            threshold_db=threshold_db,
-            attack_t=attack_t,
-            release_t=release_t,
-            Q_sig=Q_sig,
+        parameters = NoiseSuppressorExpanderParameters(
+            ratio=ratio, threshold_db=threshold_db, attack_t=attack_t, release_t=release_t
         )
-        self.dsp_block = drc.noise_suppressor_expander(
-            self.fs, self.n_in, ratio, threshold_db, attack_t, release_t, Q_sig
-        )
-        return self
+        self.set_parameters(parameters)

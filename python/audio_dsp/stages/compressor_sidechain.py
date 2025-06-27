@@ -4,9 +4,10 @@
 the level of a different input.
 """
 
-from ..design.stage import Stage, find_config
-from ..dsp import drc as drc
-from ..dsp import generic as dspg
+from audio_dsp.design.stage import Stage, find_config
+from audio_dsp.dsp import drc as drc
+from audio_dsp.dsp import generic as dspg
+from audio_dsp.models.compressor_sidechain import CompressorSidechainParameters
 
 
 class CompressorSidechain(Stage):
@@ -42,16 +43,25 @@ class CompressorSidechain(Stage):
         if self.n_in != 2:
             raise ValueError(f"Sidechain compressor requires 2 inputs, got {self.n_in}")
 
-        threshold = 0
-        ratio = 4
-        at = 0.01
-        rt = 0.2
-        self.dsp_block = drc.compressor_rms_sidechain_mono(self.fs, ratio, threshold, at, rt)
+        self.parameters = CompressorSidechainParameters()
+        self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)
         self.set_control_field_cb("slope", lambda: self.dsp_block.slope_f32)
+
+    def set_parameters(self, parameters: CompressorSidechainParameters):
+        """Update the parameters of the CompressorSidechain stage."""
+        self.parameters = parameters
+        self.dsp_block = drc.compressor_rms_sidechain_mono(
+            self.fs,
+            parameters.ratio,
+            parameters.threshold_db,
+            parameters.attack_t,
+            parameters.release_t,
+            dspg.Q_SIG,
+        )
 
     def make_compressor_sidechain(
         self, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG
@@ -61,26 +71,23 @@ class CompressorSidechain(Stage):
         Parameters
         ----------
         ratio : float
-            Compression gain ratio applied when the signal is above the
-            threshold.
+            The compression ratio applied to the signal when the envelope
+            exceeds the threshold.
         threshold_db : float
-            Threshold in decibels above which compression occurs.
+            The threshold level in decibels above which the audio signal is
+            compressed.
         attack_t : float
             Attack time of the compressor in seconds.
         release_t : float
             Release time of the compressor in seconds.
         """
-        self.details = dict(
+        parameters = CompressorSidechainParameters(
             ratio=ratio,
             threshold_db=threshold_db,
             attack_t=attack_t,
             release_t=release_t,
-            Q_sig=Q_sig,
         )
-        self.dsp_block = drc.compressor_rms_sidechain_mono(
-            self.fs, ratio, threshold_db, attack_t, release_t, Q_sig
-        )
-        return self
+        self.set_parameters(parameters)
 
 
 class CompressorSidechainStereo(Stage):
@@ -116,16 +123,30 @@ class CompressorSidechainStereo(Stage):
         if self.n_in != 4:
             raise ValueError(f"Stereo sidechain compressor requires 4 inputs, got {self.n_in}")
 
-        threshold = 0
-        ratio = 4
-        at = 0.01
-        rt = 0.2
-        self.dsp_block = drc.compressor_rms_sidechain_stereo(self.fs, ratio, threshold, at, rt)
+        self.parameters = CompressorSidechainParameters(
+            ratio=4,
+            threshold_db=0,
+            attack_t=0.01,
+            release_t=0.2,
+        )
+        self.set_parameters(self.parameters)
 
         self.set_control_field_cb("attack_alpha", lambda: self.dsp_block.attack_alpha_int)
         self.set_control_field_cb("release_alpha", lambda: self.dsp_block.release_alpha_int)
         self.set_control_field_cb("threshold", lambda: self.dsp_block.threshold_int)
         self.set_control_field_cb("slope", lambda: self.dsp_block.slope_f32)
+
+    def set_parameters(self, parameters: CompressorSidechainParameters):
+        """Update the parameters of the CompressorSidechainStereo stage."""
+        self.parameters = parameters
+        self.dsp_block = drc.compressor_rms_sidechain_stereo(
+            self.fs,
+            parameters.ratio,
+            parameters.threshold_db,
+            parameters.attack_t,
+            parameters.release_t,
+            dspg.Q_SIG,
+        )
 
     def make_compressor_sidechain(
         self, ratio, threshold_db, attack_t, release_t, Q_sig=dspg.Q_SIG
@@ -135,23 +156,20 @@ class CompressorSidechainStereo(Stage):
         Parameters
         ----------
         ratio : float
-            Compression gain ratio applied when the signal is above the
-            threshold.
+            The compression ratio applied to the signal when the envelope
+            exceeds the threshold.
         threshold_db : float
-            Threshold in decibels above which compression occurs.
+            The threshold level in decibels above which the audio signal is
+            compressed.
         attack_t : float
             Attack time of the compressor in seconds.
         release_t : float
             Release time of the compressor in seconds.
         """
-        self.details = dict(
+        parameters = CompressorSidechainParameters(
             ratio=ratio,
             threshold_db=threshold_db,
             attack_t=attack_t,
             release_t=release_t,
-            Q_sig=Q_sig,
         )
-        self.dsp_block = drc.compressor_rms_sidechain_stereo(
-            self.fs, ratio, threshold_db, attack_t, release_t, Q_sig
-        )
-        return self
+        self.set_parameters(parameters)

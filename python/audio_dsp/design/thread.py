@@ -2,8 +2,10 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Contains classes for adding a thread to the DSP pipeline."""
 
-from .composite_stage import CompositeStage
-from .stage import Stage, StageOutputList, find_config
+from typing import Type
+
+from audio_dsp.design.composite_stage import CompositeStage, _StageOrComposite
+from audio_dsp.design.stage import Stage, StageOutputList, find_config
 
 
 class DSPThreadStage(Stage):
@@ -64,3 +66,23 @@ class Thread(CompositeStage):
     def add_thread_stage(self):
         """Add to this thread the stage which manages thread level commands."""
         self.thread_stage = self.stage(DSPThreadStage, StageOutputList(), label=f"thread{self.id}")
+
+    def stage(
+        self,
+        stage_type: Type[_StageOrComposite],
+        inputs: StageOutputList,
+        label: str | None = None,
+        **kwargs,
+    ) -> _StageOrComposite:
+        """
+        Create a new stage or composite stage and
+        register it with this composite stage.
+
+        This is a wrapper around :func:`audio_dsp.design.composite_stage.stage`
+        but adds a thread crossing counter.
+        """
+        for i in inputs.edges:
+            if i:
+                i.crossings.append(self.id)
+        stage = super().stage(stage_type, inputs, label, **kwargs)
+        return stage

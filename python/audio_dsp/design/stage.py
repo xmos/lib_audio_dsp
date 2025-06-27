@@ -2,16 +2,22 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """The edges and nodes for a DSP pipeline."""
 
-from typing import Iterable, Type
+from pathlib import Path
+from types import NotImplementedType
+from typing import Optional, Type, TypeVar
 
 import numpy
-from .graph import Edge, Node
 import yaml
-from pathlib import Path
+import re
+
 from audio_dsp.design import plot
 from audio_dsp.dsp.generic import dsp_block
 from typing import Optional
 from types import NotImplementedType
+from copy import deepcopy
+
+from audio_dsp.models.stage import StageParameters
+from audio_dsp.design.graph import Edge, Node
 
 
 def find_config(name):
@@ -61,7 +67,7 @@ class StageOutput(Edge):
         see frame_size parameter
     """
 
-    def __init__(self, fs=48000, frame_size=1):
+    def __init__(self, fs=48000, frame_size=1, crossings=None):
         super().__init__()
         # index of the multiple outputs that the source node has
         self.source_index = None
@@ -71,6 +77,10 @@ class StageOutput(Edge):
         self.frame_size = frame_size
         # edges will probably need an associated type audio vs. data etc.
         # self.type = q23
+        if crossings:
+            self.crossings = deepcopy(crossings)
+        else:
+            self.crossings = []
 
     @property
     def dest_index(self) -> int | None:
@@ -81,7 +91,7 @@ class StageOutput(Edge):
     def dest_index(self, value):
         if self._dest_index is not None:
             raise RuntimeError(
-                f"This edge has already been connected, edges cannot have multiple destinations."
+                f"This edge has already been connected, edges cannot have multiple destinations: {value = }."
             )
         self._dest_index = value
 
@@ -197,7 +207,10 @@ class StageOutputList:
 
     def __eq__(self, other):
         """Check if this list contains the same edges as another."""
-        return all(a is b for a, b in zip(self.edges, other.edges))
+        if other is None:
+            return False
+        else:
+            return all(a is b for a, b in zip(self.edges, other.edges))
 
 
 class PropertyControlField:
@@ -236,6 +249,11 @@ class _GlobalStages:
     """Class to hold some globals."""
 
     stages = []
+
+
+# This defines the types of instances of the config/parameter classes
+StageParameterType = TypeVar("StageParameterType", bound=StageParameters)
+DspBlockType = TypeVar("DspBlockType", bound=dsp_block)
 
 
 class Stage(Node):
@@ -333,15 +351,54 @@ class Stage(Node):
 
         self.label = label
 
-        self.details = {}
-        self.dsp_block: Optional[dsp_block] = None
+        self.parameters = None
+        self.dsp_block: Optional[DspBlockType] = None  # pyright:ignore
         self.stage_memory_string: str = ""
         self.stage_memory_parameters: tuple | None = None
+
+        if len(self.i.edges) >= 1:
+            thread_crossings = []
+            for edge in inputs.edges:
+                thread_crossings.append(len(set(edge.crossings)))  # pyright: ignore checked above
+
+            if not all(x == thread_crossings[0] for x in thread_crossings):
+                input_msg = "\n"
+
+                for i, edge in enumerate(self.i.edges):
+                    crossings_set = set(edge.crossings)  # pyright: ignore checked above
+                    if not crossings_set:
+                        input_msg += f"Input {i} does not cross any threads.\n"
+                    else:
+                        input_msg += f"Input {i} crosses threads {crossings_set}.\n"  # pyright: ignore checked above
+
+                raise RuntimeError(
+                    f"\nAll stage inputs to {type(self).__name__} (label={self.label})"
+                    " must cross the same number of threads.\n"
+                    f"Currently, inputs cross {thread_crossings} threads.\nInputs with less than "
+                    f"{max(thread_crossings)} thread crossings must pass through Stages on"
+                    " earlier threads to avoid a latency mismatch and thread blocking.\n"
+                    "A Bypass Stage can be added on an earlier thread if no additional DSP is needed."
+                    + input_msg
+                )
+
+            self.crossings = list(set(self.i.edges[0].crossings))  # pyright: ignore checked above
 
     def __init_subclass__(cls) -> None:
         """Add all subclasses of Stage to a global list for querying."""
         super().__init_subclass__()
         _GlobalStages.stages.append(cls)
+
+    def set_parameters(self, parameters: StageParameterType):  # pyright:ignore
+        """Use a pydantic model to update the runtime parameters of a Stage."""
+        if isinstance(parameters, StageParameters) and type(parameters) != StageParameters:
+            raise NotImplementedError(
+                f"A subclass of StageParameters ({type(parameters).__name__}) "
+                "was passed to the generic implementation, of set_parameters, resulting in the "
+                "parameters not being used. Please define set_parameters for the specific Stage class."
+            )
+        # This is a generic implementation, so it does nothing.
+        # Subclasses should override this method to set the parameters
+        pass
 
     @property
     def o(self) -> StageOutputList:
@@ -365,7 +422,7 @@ class Stage(Node):
         self.n_out = n_out
         o = []
         for i in range(n_out):
-            output = StageOutput(fs=self.fs, frame_size=self.frame_size)
+            output = StageOutput(fs=self.fs, frame_size=self.frame_size, crossings=self.crossings)
             output.source_index = i
             output.set_source(self)
             o.append(output)
@@ -508,10 +565,34 @@ class Stage(Node):
         outputs = "|".join(f"<o{i}> " for i in range(self.n_out))
         center = f"{self.index}: {type(self).__name__}\\n"
 
+        def render_details_r(value, indent="", first=True):
+            """Recursively process the details of a stage."""
+            next_indent = indent + "  "
+            new_line = "\\n" if not first else ""
+            if isinstance(value, dict):
+                return new_line + f"\\n{indent}".join(
+                    f"{k}: {render_details_r(v, next_indent, False)}" for k, v in value.items()
+                )
+            if isinstance(value, (list, tuple)):
+                return new_line + f"\\n{indent}".join(
+                    f"{i}: {render_details_r(v, next_indent, True)}" for i, v in enumerate(value)
+                )
+            return str(value)
+
+        def render_details(value):
+            """
+            Belt and braces - escapes the chars which need escaping.
+
+            As per https://graphviz.org/doc/info/shapes.html#record.
+            """
+            details = render_details_r(value)
+            # replaces the chars [ ] < > | { } with \[ \] \< \> \| \{ \}
+            return re.sub(r"(\||<|>|\[|\]|\{|\})", r"\\\1", details)
+
         if self.label:
             center = f"{self.index}: {self.label}\\n"
-        if self.details:
-            details = "\\n".join(f"{k}: {v}" for k, v in self.details.items())
+        if self.parameters:
+            details = render_details(self.parameters.model_dump())
             label = f"{{ {{ {inputs} }} | {center} | {details} | {{ {outputs} }}}}"
         else:
             label = f"{{ {{ {inputs} }} | {center} | {{ {outputs} }}}}"
