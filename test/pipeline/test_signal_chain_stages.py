@@ -232,5 +232,30 @@ def test_crossfader_stereo(mix, tol):
 
     do_test(p, f"crossfaderstereo_{mix}", rtol=tol)
 
+
+@pytest.mark.group0
+@pytest.mark.parametrize("channel_states", [
+    [True, False, False, False],
+    [False, True, False, False],
+    [True, True, False, False],
+    [True, False, True, False],
+])
+def test_router_4to1(channel_states):
+    """
+    Test the 4:1 router routes and mixes the same in Python and C
+    """
+    # Import here to avoid circular imports
+    from audio_dsp.stages.signal_chain import Router4to1
+    
+    channels = 4
+    p = Pipeline(channels)
+    router = p.stage(Router4to1, p.i, "r")
+    p["r"].set_channel_states(channel_states)
+    p.set_outputs(router)
+
+    # Create a descriptive name based on active channels
+    active_channels = ''.join(['1' if ch else '0' for ch in channel_states])
+    do_test(p, f"router4to1_{active_channels}")
+
 if __name__ == "__main__":
-    test_compressor_sidechain_stereo()
+    test_router_4to1([True, True, False, False])

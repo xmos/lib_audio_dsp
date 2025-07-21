@@ -1285,6 +1285,7 @@ class router_4to1(_combiners):
             
         # Initialize channel states
         self.channel_states = channel_states
+        self.channel_states_int = [int(x) for x in channel_states]
 
         return
 
@@ -1356,5 +1357,6 @@ class router_4to1(_combiners):
             return
             
         self.channel_states = channel_states.copy()
+        self.channel_states_int = [int(x) for x in channel_states]
 
         return

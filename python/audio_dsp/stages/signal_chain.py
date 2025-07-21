@@ -601,7 +601,7 @@ class Router4to1(Stage):
         # Set initial channel states
         self.set_parameters(self.parameters)
         # Register callback for control interface
-        self.set_control_field_cb("channel_states", lambda: self.dsp_block.channel_states)
+        self.set_control_field_cb("channel_states", lambda: self.dsp_block.channel_states_int)
 
     def set_channel_states(self, channel_states):
         """

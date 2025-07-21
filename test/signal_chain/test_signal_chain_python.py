@@ -381,4 +381,4 @@ def test_switch_slew():
 if __name__ == "__main__":
     # test_gains(1, 48000, 1)
     # test_delay(48000, [2, 0, "s"], 1)
-    # test_switch_slew()
+    test_switch_slew()
