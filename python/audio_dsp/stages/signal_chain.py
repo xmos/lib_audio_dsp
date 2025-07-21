@@ -594,10 +594,10 @@ class Router4to1(Stage):
     """
 
     def __init__(self, channel_states=[True, False, False, False], **kwargs):
-        super().__init__(config=find_config("mixer"), **kwargs)
+        super().__init__(config=find_config("router_4to1"), **kwargs)
         self.create_outputs(1)
         self.parameters = Router4to1Parameters(channel_states=channel_states)
-        self.dsp_block: sc.router_4to1 = sc.router_4to1(self.fs, 4)
+        self.dsp_block: sc.router_4to1 = sc.router_4to1(self.fs, 4, channel_states=channel_states)
         # Set initial channel states
         self.set_parameters(self.parameters)
         # Register callback for control interface
@@ -615,8 +615,8 @@ class Router4to1(Stage):
         """
         parameters = Router4to1Parameters(channel_states=channel_states)
         self.set_parameters(parameters)
-
-    def set_channel_states(self, parameters: Router4to1Parameters):
+        
+    def set_parameters(self, parameters: Router4to1Parameters):
         """Update the parameters of the Router4to1 stage."""
         self.parameters = parameters
         self.dsp_block.set_channel_states(parameters.channel_states)

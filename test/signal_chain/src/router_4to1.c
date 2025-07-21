@@ -19,7 +19,7 @@ FILE * _fopen(char * fname, char* mode) {
 
 int main()
 {
-  bool channel_states[4] = {true, false, false, false}; // Default: only first channel active
+  int32_t channel_states[4] = {1, 0, 0, 0}; // Default: only first channel active
   
   FILE * in = _fopen("../sig_48k.bin", "rb");
   FILE * in1 = _fopen("../sig1_48k.bin", "rb");
@@ -39,9 +39,6 @@ int main()
   for (int i = 0; i < 4; i++) {
     channel_states[i] = channel_states_int[i] != 0;
   }
-  
-  // Initialize the router with the channel states
-  router_4to1_t router = adsp_router_4to1_init(channel_states);
 
   // Process the input signals
   for (unsigned i = 0; i < in_len; i++)
@@ -52,10 +49,12 @@ int main()
     // Read the input samples
     fread(&samples[0], sizeof(int32_t), 1, in);
     fread(&samples[1], sizeof(int32_t), 1, in1);
-    // samples[2] and samples[3] remain 0
+    // samples[2] and samples[3] duplicated from the first two inputs
+    samples[2] = samples[0];
+    samples[3] = samples[1];
     
     // Process through the router
-    samp_out = adsp_router_4to1(&router, samples);
+    samp_out = adsp_router_4to1(channel_states, samples);
     
     // Write the output
     fwrite(&samp_out, sizeof(int32_t), 1, out);

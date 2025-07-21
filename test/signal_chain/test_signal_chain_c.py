@@ -257,20 +257,6 @@ def test_crossfader_c(in_signal, mix):
   single_channels_test(filt, test_dir, "crossfader", in_signal)
 
 
-if __name__ =="__main__":
-  bin_dir.mkdir(exist_ok=True, parents=True)
-  gen_dir.mkdir(exist_ok=True, parents=True)
-  sig_fl = get_sig()
-  
-  #test_gains_c(sig_fl, -6)
-  #test_subtractor_c(sig_fl)
-  #test_adder_c(sig_fl)
-  #test_mixer_c(sig_fl, -3)
-  # test_volume_control_c(sig_fl, [0, -6, 6], 7, False)
-  # test_switch_slew_c(sig_fl)
-  test_crossfader_c(sig_fl, 0.1)
-
-
 @pytest.mark.parametrize("channel_states", [
     [True, False, False, False],  # Only channel 0 active
     [False, True, False, False],  # Only channel 1 active
@@ -278,7 +264,8 @@ if __name__ =="__main__":
     [True, True, True, True]      # All channels active
 ])
 def test_router_4to1_c(in_signal, channel_states):
-    filt = sc.router_4to1(fs, 2)
+    in_signal = np.tile(in_signal, [2, 1])
+    filt = sc.router_4to1(fs, 4)
     test_dir = bin_dir / f"router_4to1_{''.join(['1' if s else '0' for s in channel_states])}"
     test_dir.mkdir(exist_ok=True, parents=True)
     
@@ -300,3 +287,17 @@ def test_router_4to1_c(in_signal, channel_states):
     shutil.rmtree(test_dir)
     
     np.testing.assert_allclose(out_c, out_py, rtol=0, atol=0)
+
+
+if __name__ =="__main__":
+  bin_dir.mkdir(exist_ok=True, parents=True)
+  gen_dir.mkdir(exist_ok=True, parents=True)
+  sig_fl = get_sig()
+  
+  #test_gains_c(sig_fl, -6)
+  #test_subtractor_c(sig_fl)
+  #test_adder_c(sig_fl)
+  #test_mixer_c(sig_fl, -3)
+  # test_volume_control_c(sig_fl, [0, -6, 6], 7, False)
+  # test_switch_slew_c(sig_fl)
+  test_crossfader_c(sig_fl, 0.1)

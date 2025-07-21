@@ -1,0 +1,10 @@
+module:
+  router_4to1:
+    channel_states:
+      type: int32_t
+      size: 4
+      help: >
+        States of the 4 input channels (1 = active, 0 = inactive).
+        Active channels are mixed together to produce the output signal.
+includes:
+  - "stdint.h"
