@@ -97,6 +97,17 @@ class Placement_4i2o(NodePlacement):
     )
 
 
+class Placement_4i1o(NodePlacement):
+    """The placement of a stage that must have 4 inputs and 1 output."""
+
+    input: list[Tuple[str, int]] = Field(
+        default=[],
+        description="List of input edges.",
+        min_length=4,
+        max_length=4,
+    )
+
+
 class Placement_Ni1o(NodePlacement, extra="forbid"):
     """Graph placement for a Stage that takes many input and one output."""
 

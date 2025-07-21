@@ -194,3 +194,48 @@ int32_t adsp_crossfader_slew(crossfader_slew_t* crossfader, int32_t in1, int32_t
   int32_t gain_2 = adsp_slew_gain(&crossfader->gain_2);
   return adsp_crossfader(in1, in2, gain_1, gain_2, 31);
 }
+
+router_4to1_t adsp_router_4to1_init(bool channel_states[4]) {
+  router_4to1_t router;
+  
+  // Initialize default channel states (only first channel active)
+  if (channel_states == NULL) {
+    router.channel_states[0] = true;
+    router.channel_states[1] = false;
+    router.channel_states[2] = false;
+    router.channel_states[3] = false;
+  } else {
+    // Copy user-provided channel states
+    for (int i = 0; i < 4; i++) {
+      router.channel_states[i] = channel_states[i];
+    }
+  }
+  
+  return router;
+}
+
+void adsp_router_4to1_set_channel_states(router_4to1_t* router, bool channel_states[4]) {
+  // Copy user-provided channel states
+  for (int i = 0; i < 4; i++) {
+    router->channel_states[i] = channel_states[i];
+  }
+}
+
+int32_t adsp_router_4to1(router_4to1_t* router, int32_t* samples) {
+  // there is a bug in lsats, so it doesn't work if we give it 0,
+  // so mul all samples by 2 and then lsats and lextract with 1
+  int32_t ah = 0, al = 0, mul = 2, one = 1;
+  
+  // Sum the samples from active channels
+  for (int i = 0; i < 4; i++) {
+    if (router->channel_states[i]) {
+      asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (samples[i]), "r" (mul), "0" (ah), "1" (al));
+    }
+  }
+  
+  // Make sure we didn't overflow 32 bits
+  asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (one), "0" (ah), "1" (al));
+  asm("lextract %0, %1, %2, %3, 32": "=r" (ah): "r" (ah), "r" (al), "r" (one));
+  
+  return ah;
+}

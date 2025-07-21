@@ -90,6 +90,14 @@ typedef struct{
 } crossfader_slew_t;
 
 /**
+ * @brief Router 4:1 state structure
+ */
+typedef struct{
+  /** Channel states (enabled/disabled), 4 booleans */
+  bool channel_states[4];
+} router_4to1_t;
+
+/**
  * @brief Convert from Q0.31 to Q_SIG
  *
  * @param input             Input in Q0.31 format
@@ -262,3 +270,33 @@ static inline int32_t adsp_crossfader(int32_t in1, int32_t in2, int32_t gain1, i
  * @return int32_t      Mixed signal
  */
 int32_t adsp_crossfader_slew(crossfader_slew_t* crossfader, int32_t in1, int32_t in2);
+
+/**
+ * @brief Process samples through the 4:1 router
+ *
+ * Takes an array of 4 input samples and routes active channels to a single output
+ * according to the channel_states array in the router_4to1_t structure.
+ * Active channels (set to true) are summed together.
+ *
+ * @param router            Pointer to the router_4to1_t state structure
+ * @param samples           Array of 4 input samples
+ * @return int32_t          Mixed output sample
+ */
+int32_t adsp_router_4to1(router_4to1_t* router, int32_t* samples);
+
+/**
+ * @brief Set which channels are active in the 4:1 router
+ *
+ * @param router            Pointer to the router_4to1_t state structure
+ * @param channel_states    Array of 4 booleans indicating which channels should be active
+ */
+void adsp_router_4to1_set_channel_states(router_4to1_t* router, bool channel_states[4]);
+
+/**
+ * @brief Initialize a router_4to1_t structure
+ *
+ * @param channel_states    Optional initial channel states. If NULL, only channel 0 will be enabled.
+ * @return router_4to1_t    Initialized router structure
+ */
+router_4to1_t adsp_router_4to1_init(bool channel_states[4]);
+

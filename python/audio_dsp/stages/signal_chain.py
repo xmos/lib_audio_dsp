@@ -17,6 +17,7 @@ from audio_dsp.models.signal_chain import (
     DelayConfig,
     CrossfaderParameters,
     ForkConfig,
+    Router4to1Parameters,
 )
 from audio_dsp.design.stage import (
     Stage,
@@ -572,3 +573,50 @@ class CrossfaderStereo(Crossfader):
         self.parameters = CrossfaderParameters(mix=mix)
         self.dsp_block = sc.crossfader(self.fs, 4, mix=mix)
         self.set_control_field_cb("gains", lambda: self.dsp_block.target_gains_int)
+
+
+class Router4to1(Stage):
+    """
+    The 4:1 Router combines functionality of both switch and mixer.
+    It takes up to 4 inputs and can select any combination of them
+    to be mixed to a single output.
+
+    Parameters
+    ----------
+    channel_states : list[bool]
+        A list of 4 boolean values indicating which channels should be active (True)
+        or inactive (False).
+
+    Attributes
+    ----------
+    dsp_block : :class:`audio_dsp.dsp.signal_chain.router_4to1`
+        The DSP block class that combines switching and mixing functionality.
+    """
+
+    def __init__(self, channel_states=[True, False, False, False], **kwargs):
+        super().__init__(config=find_config("mixer"), **kwargs)
+        self.create_outputs(1)
+        self.parameters = Router4to1Parameters(channel_states=channel_states)
+        self.dsp_block: sc.router_4to1 = sc.router_4to1(self.fs, 4)
+        # Set initial channel states
+        self.set_parameters(self.parameters)
+        # Register callback for control interface
+        self.set_control_field_cb("channel_states", lambda: self.dsp_block.channel_states)
+
+    def set_channel_states(self, channel_states):
+        """
+        Set which channels are active or inactive in the router.
+
+        Parameters
+        ----------
+        channel_states : list[bool]
+            A list of 4 boolean values indicating which channels should be active (True)
+            or inactive (False).
+        """
+        parameters = Router4to1Parameters(channel_states=channel_states)
+        self.set_parameters(parameters)
+
+    def set_channel_states(self, parameters: Router4to1Parameters):
+        """Update the parameters of the Router4to1 stage."""
+        self.parameters = parameters
+        self.dsp_block.set_channel_states(parameters.channel_states)

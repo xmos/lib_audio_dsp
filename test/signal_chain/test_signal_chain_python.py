@@ -211,7 +211,10 @@ def test_mute():
                                          ["crossfader", 2, 1],
                                          ["crossfader", 4, 0],
                                          ["crossfader", 4, 0.5],
-                                         ["crossfader", 4, 0.95]])
+                                         ["crossfader", 4, 0.95],
+                                         ["router_4to1", 4, [True, True, False, False]],
+                                         ["router_4to1", 4, [False, False, True, False]],
+                                         ["router_4to1", 4, [True, True,  True, True]]])
 def test_combiners(filter_spec, fs):
 
     class_name = f"{filter_spec[0]}"
@@ -259,7 +262,10 @@ def test_combiners(filter_spec, fs):
                                          ["crossfader", 2, 1],
                                          ["crossfader", 4, 0],
                                          ["crossfader", 4, 0.5],
-                                         ["crossfader", 4, 0.95]])
+                                         ["crossfader", 4, 0.95],
+                                         ["router_4to1", 4, [True, True, False, False]],
+                                         ["router_4to1", 4, [False, False, True, False]],
+                                         ["router_4to1", 4, [True, True,  True, True]]])
 @pytest.mark.parametrize("q_format", [27, 31])
 def test_combiners_frames(filter_spec, fs, q_format):
 
@@ -371,9 +377,8 @@ def test_switch_slew():
 
     pass
 
+
 if __name__ == "__main__":
-    test_combiners(["crossfader", 2, 0], 48000)
-    # test_volume_change()
     # test_gains(1, 48000, 1)
     # test_delay(48000, [2, 0, "s"], 1)
     # test_switch_slew()
