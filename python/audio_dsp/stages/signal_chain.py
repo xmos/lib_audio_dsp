@@ -615,7 +615,7 @@ class Router4to1(Stage):
         """
         parameters = Router4to1Parameters(channel_states=channel_states)
         self.set_parameters(parameters)
-        
+
     def set_parameters(self, parameters: Router4to1Parameters):
         """Update the parameters of the Router4to1 stage."""
         self.parameters = parameters

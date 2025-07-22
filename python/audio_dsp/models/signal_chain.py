@@ -271,7 +271,7 @@ class Router4to1Parameters(StageParameters):
     channel_states: Annotated[
         list[Annotated[bool, Field(ge=0, le=1, description="Channel state")]],
         Len(4),
-    ] = Field(default_factory=lambda:[True, False, False, False])
+    ] = Field(default_factory=lambda: [True, False, False, False])
 
 
 class Router4to1(StageModel[Placement_4i1o]):
