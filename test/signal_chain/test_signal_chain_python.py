@@ -214,7 +214,7 @@ def test_mute():
                                          ["crossfader", 4, 0.95],
                                          ["router_4to1", 4, [True, True, False, False]],
                                          ["router_4to1", 4, [False, False, True, False]],
-                                         ["router_4to1", 4, [True, True,  True, True]]])
+                                         ["router_4to1", 4, [True, True, True, True]]])
 def test_combiners(filter_spec, fs):
 
     class_name = f"{filter_spec[0]}"
@@ -265,7 +265,7 @@ def test_combiners(filter_spec, fs):
                                          ["crossfader", 4, 0.95],
                                          ["router_4to1", 4, [True, True, False, False]],
                                          ["router_4to1", 4, [False, False, True, False]],
-                                         ["router_4to1", 4, [True, True,  True, True]]])
+                                         ["router_4to1", 4, [True, True, True, True]]])
 @pytest.mark.parametrize("q_format", [27, 31])
 def test_combiners_frames(filter_spec, fs, q_format):
 

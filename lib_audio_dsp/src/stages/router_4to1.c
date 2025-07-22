@@ -54,7 +54,7 @@ void router_4to1_control(void *module_state, module_control_t *control)
     }
         else if(control->config_rw_state == config_read_pending)
     {
-        memcpy(config, &state->config, sizeof(switch_config_t));
+        memcpy(config, &state->config, sizeof(router_4to1_config_t));
         control->config_rw_state = config_read_updated;
     }
     else
