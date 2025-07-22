@@ -79,8 +79,7 @@ details on reading and writing these commands, see the Run-Time Control User Gui
     help_str = f'{field_data["help"].strip()}' if "help" in field_data else ""
     if "rw_type" in field_data and field_data["rw_type"] == "CMD_READ_ONLY":
       help_str += " This command is read only. When sending a write control command, it will be ignored."
-    safe_name = cl.replace("RMS", "Rms")
-    snake_name = re.sub(r'(?<!^)(?=[A-Z])', '_', safe_name).upper()
+    snake_name = snake_names[cl].upper()
     cmd_str = f"CMD_{snake_name}_{field_name.upper()}"
     payload_str = f"``sizeof({field_data['type']}){size_str}``"
     this_row = [cmd_str, payload_str, help_str]

@@ -267,8 +267,8 @@ int32_t adsp_crossfader_slew(crossfader_slew_t* crossfader, int32_t in1, int32_t
  * @brief Process samples through the 4:1 router
  *
  * Takes an array of 4 input samples and routes active channels to a single output
- * according to the channel_states array in the router_4to1_t structure.
- * Active channels (set to true) are summed together.
+ * according to the router_states array values.
+ * Active channels (set to 1 in router_states) are summed together.
  *
  * @param router_states     Pointer to a 4 long array of channel states (0 = disabled, 1 = enabled)
  * @param samples           Array of 4 input samples

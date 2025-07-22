@@ -265,7 +265,8 @@ class Router4to1Parameters(StageParameters):
 
     Attributes
     ----------
-        channel_states: List of 4 boolean values indicating which channels are active.
+        channel_states: [bool, bool, bool, bool]
+            List of 4 boolean values indicating which channels are active.
     """
 
     channel_states: Annotated[
