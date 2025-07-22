@@ -2,7 +2,8 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Pydantic models for signal chain DSP Stages."""
 
-from typing import Literal, Tuple
+from typing import Literal, Tuple, Annotated
+from annotated_types import Len
 
 from pydantic import Field, field_validator, model_validator
 
@@ -267,12 +268,10 @@ class Router4to1Parameters(StageParameters):
         channel_states: List of 4 boolean values indicating which channels are active.
     """
 
-    channel_states: list[bool] = Field(
-        default=[True, False, False, False], 
-        description="States of the 4 channels",
-        min_length=4,
-        max_length=4
-    )
+    channel_states: Annotated[
+        list[Annotated[bool, Field(ge=0, le=1, description="Channel state")]],
+        Len(4),
+    ] = Field(default_factory=lambda:[True, False, False, False])
 
 
 class Router4to1(StageModel[Placement_4i1o]):

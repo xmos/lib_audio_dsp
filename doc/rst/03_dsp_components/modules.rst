@@ -51,3 +51,4 @@ This a list of all the modules that can be used independently without the DSP pi
   * :ref:`Delay`
   * :ref:`SwitchSlew`
   * :ref:`Crossfader`
+  * :ref:`Router4to1`

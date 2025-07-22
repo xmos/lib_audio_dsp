@@ -13,19 +13,15 @@ void router_4to1_process(int32_t **input, int32_t **output, void *app_data_state
     router_4to1_state_t *state = app_data_state;
 
     for(int sample_index = 0; sample_index < state->frame_size; ++sample_index) {
-        int32_t input_samples[4];
+        int32_t input_samples[4] = {0}; // Initialize to zero
         
         // Get input samples for the current sample index
-        for(int i = 0; i < 4; i++) {
-            if (i < state->n_inputs) {
-                input_samples[i] = input[i][sample_index];
-            } else {
-                input_samples[i] = 0; // Zero-pad if fewer than 4 inputs
-            }
+        for(int i = 0; i < state->n_inputs; i++) {
+            input_samples[i] = input[i][sample_index];
         }
         
-        // Process through the router
-        output[0][sample_index] = adsp_router_4to1(&(state->config.channel_states[0]), input_samples);
+        // Process through the router - pass the whole array directly
+        output[0][sample_index] = adsp_router_4to1(state->config.channel_states, input_samples);
     }
 }
 
@@ -54,7 +50,15 @@ void router_4to1_control(void *module_state, module_control_t *control)
     {
         // Finish the write by updating the working copy with the new config
         memcpy(&state->config, config, sizeof(router_4to1_config_t));
-    
         control->config_rw_state = config_none_pending;
+    }
+        else if(control->config_rw_state == config_read_pending)
+    {
+        memcpy(config, &state->config, sizeof(switch_config_t));
+        control->config_rw_state = config_read_updated;
+    }
+    else
+    {
+        // nothing to do.
     }
 }
