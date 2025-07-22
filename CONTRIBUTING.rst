@@ -182,51 +182,71 @@ New DSP Stages
 All the steps for adding a new DSP stage are listed below:
 
 1. Add a new low level python implementation in `python/audio_dsp/dsp/`.
+
    - This should inherit from `dsp_block` and implement the `process` method.
    - Use fixed-point arithmetic for processing in the process_xcore method.
    - Add a basic test in `test` folder.
    - Use a similar existing implementation as a reference.
+  
 2. Make a low level C implementation in `lib_audio_dsp/api/dsp/` and `lib_audio_dsp/src/dsp`.
+
    - This should implement the DSP logic in C.
    - Use fixed-point arithmetic for processing.
-   - Add a test in `test` folder that runs the C implementation against the
-     Python implementations.
+   - Add a test in `test` folder that runs the C implementation against the Python implementations.
    - Use a similar existing implementation as a reference.
+
 3. Add a new parameters class in `python/audio_dsp/stages/parameters/`.
+
    - This should inherit from `StageParameters`.
    - Use a similar existing implementation as a reference.
+
 4. Create a new stage class in `python/audio_dsp/stages/`.
+
    - This should inherit from `Stage`.
    - Add the stage to `python/audio_dsp/stages/__init__.py`.
    - Use a similar existing implementation as a reference.
+
 5. (Optional) Add a new placement class in `python/audio_dsp/models/placement/`.
+
    - This should inherit from `Placement`.
    - Use a similar existing implementation as a reference.
+
 6. Add a stage model in `python/audio_dsp/models/stages/`.
+
    - This should inherit from `StageModel`.
    - This sets the parameters and placement for the stage.
    - Use a similar existing implementation as a reference.
 7. Add the low level stage parameters to the yaml configuration in `stage_config`.
+
    - This should include the low level parameters for the stage.
    - Ensure the parameters are documented in the yaml file, including high level to low level conversions.
    - Use a similar existing implementation as a reference.
 8. Add the C stage implementation in `lib_audio_dsp/api/stages/` and `lib_audio_dsp/src/stages/`.
-   - This wraps the low-level C implementation in the stage wrapper.
-   - This sets the memory requirements and parameters for the stage.
-   - The following should be defined, with the same function API as the existing DSP stages:
-      - `{stage}_state_t`: The state structure for the stage.
-      - `{stage}_init`: Function to initialize the stage.
-      - `{stage}_process`: Function to process the stage.
-      - `{stage}_control`: Function to control the stage by updaing the {stage}_config_t structure in the {stage}_state_t.
-   - Use a similar existing implementation as a reference.
+
+   * This wraps the low-level C implementation in the stage wrapper.
+   * This sets the memory requirements and parameters for the stage.
+   * The following should be defined, with the same function API as the existing DSP stages:
+
+      - `{stage}_state_t` : The state structure for the stage.
+      - `{stage}_init` : Function to initialize the stage.
+      - `{stage}_process` : Function to process the stage.
+      - `{stage}_control` : Function to control the stage by updaing the {stage}_config_t structure in the {stage}_state_t.
+
+   * Use a similar existing implementation as a reference.
+
 9. Add a new test in `test/pipeline/test_stages.py` or `test_signal_chain_stages.py`
    that tests the new stage.
+
    - Use a similar existing implementation as a reference.
-10. Check the module is documented in `doc\rst\05_api_reference\modules\`
+
+10. Check the module is documented in `doc/rst/05_api_reference/modules/`
+
     - If not, add a new documentation file in `doc/rst/05_api_reference/modules/`.
     - Ensure the documentation includes the C API, Python API, and any relevant parameters.
     - Use a similar existing implementation as a reference.
+
 11. Lint the Python code using `ruff` and `pyright`.
+
     - Ensure the code is formatted correctly and passes all checks.
     - `python/Makefile` contains the linting instructions
     - the test folder does not need to be linted
