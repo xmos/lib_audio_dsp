@@ -60,8 +60,8 @@ def do_test(p, folder_name, rtol=None):
     else:
         sig1 = np.linspace(2**23, -2**23, n_samps, dtype=np.int32)  << 4
 
-    if type(p.stages[2]) in [SwitchStereo, CrossfaderStereo, CompressorSidechainStereo]:
-        sig = np.stack((sig0, sig0, sig1, sig1), axis=1)
+    if p._n_in == 4:
+        sig = np.stack((sig0, sig1, sig0, sig1), axis=1)
     else:
         sig = np.stack((sig0, sig1), axis=1)
         
