@@ -1272,6 +1272,11 @@ class router_4to1(_combiners):
     This sums a combination of the input channels as specified by the
     `channel_states` attribute.
 
+    Parameters
+    ----------
+    channel_states : list[bool]
+        Boolean list indicating which channels are active (True) or inactive (False).
+
     Attributes
     ----------
     channel_states : list[bool]

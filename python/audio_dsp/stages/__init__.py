@@ -28,6 +28,7 @@ from .signal_chain import (
     Mixer,
     Crossfader,
     CrossfaderStereo,
+    Router4to1,
 )
 from .reverb import ReverbRoom, ReverbRoomStereo, ReverbPlateStereo
 from .fir import FirDirect

@@ -62,6 +62,8 @@ def do_test(p, folder_name, rtol=None):
 
     if p._n_in == 4:
         sig = np.stack((sig0, sig1, sig0, sig1), axis=1)
+    elif p._n_in == 3:
+        sig = np.stack((sig0, sig1, sig0), axis=1)
     else:
         sig = np.stack((sig0, sig1), axis=1)
         
@@ -234,20 +236,21 @@ def test_crossfader_stereo(mix, tol):
 
 
 @pytest.mark.group0
-@pytest.mark.parametrize("channel_states", [
-    [True, False, False, False],
-    [False, True, False, False],
-    [True, True, False, False],
-    [True, False, True, False],
+@pytest.mark.parametrize("channel_states, channels", [
+    [[True, False, False, False], 4],
+    [[False, False, True, False], 4],
+    [[True, True, False, False], 2],
+    [[True, False, False, True], 4]
 ])
-def test_router_4to1(channel_states):
+def test_router_4to1(channel_states, channels):
     """
     Test the 4:1 router routes and mixes the same in Python and C
+
+    Note the combinations have been selected in order to not overflow
     """
     # Import here to avoid circular imports
     from audio_dsp.stages.signal_chain import Router4to1
     
-    channels = 4
     p = Pipeline(channels)
     router = p.stage(Router4to1, p.i, "r")
     p["r"].set_channel_states(channel_states)
@@ -258,4 +261,4 @@ def test_router_4to1(channel_states):
     do_test(p, f"router4to1_{active_channels}")
 
 if __name__ == "__main__":
-    test_router_4to1([True, True, False, False])
+    test_router_4to1([True, False, True, False])

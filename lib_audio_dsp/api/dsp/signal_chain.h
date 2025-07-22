@@ -270,7 +270,7 @@ int32_t adsp_crossfader_slew(crossfader_slew_t* crossfader, int32_t in1, int32_t
  * according to the channel_states array in the router_4to1_t structure.
  * Active channels (set to true) are summed together.
  *
- * @param router            Pointer to a 4 long array of channel states (0 = disabled, 1 = enabled)
+ * @param router_states     Pointer to a 4 long array of channel states (0 = disabled, 1 = enabled)
  * @param samples           Array of 4 input samples
  * @return int32_t          Mixed output sample
  */

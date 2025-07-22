@@ -197,6 +197,7 @@ All the steps for adding a new DSP stage are listed below:
    - Use a similar existing implementation as a reference.
 4. Create a new stage class in `python/audio_dsp/stages/`.
    - This should inherit from `Stage`.
+   - Add the stage to `python/audio_dsp/stages/__init__.py`.
    - Use a similar existing implementation as a reference.
 5. (Optional) Add a new placement class in `python/audio_dsp/models/placement/`.
    - This should inherit from `Placement`.
@@ -221,7 +222,7 @@ All the steps for adding a new DSP stage are listed below:
 9. Add a new test in `test/pipeline/test_stages.py` or `test_signal_chain_stages.py`
    that tests the new stage.
    - Use a similar existing implementation as a reference.
-10. Check the module is documented in doc\rst\05_api_reference\modules\
+10. Check the module is documented in `doc\rst\05_api_reference\modules\`
     - If not, add a new documentation file in `doc/rst/05_api_reference/modules/`.
     - Ensure the documentation includes the C API, Python API, and any relevant parameters.
     - Use a similar existing implementation as a reference.
