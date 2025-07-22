@@ -200,7 +200,7 @@ int32_t adsp_router_4to1(int32_t* router_states, int32_t* samples) {
   // so mul all samples by 2 and then lsats and lextract with 1
   int32_t ah = 0, al = 0, one = 1;
   
-  // Sum the samples from active channels
+  // Sum the samples, inactive channels get macc'd with 0
   for (int i = 0; i < 4; i++) {
       int32_t tmp = router_states[i]*2;
       asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (samples[i]), "r" (tmp), "0" (ah), "1" (al));

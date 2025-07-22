@@ -61,7 +61,7 @@ def do_test(p, folder_name, rtol=None):
         sig1 = np.linspace(2**23, -2**23, n_samps, dtype=np.int32)  << 4
 
     if p._n_in == 4:
-        sig = np.stack((sig0, sig1, sig0, sig1), axis=1)
+        sig = np.stack((sig0, sig0, sig1, sig1), axis=1)
     elif p._n_in == 3:
         sig = np.stack((sig0, sig1, sig0), axis=1)
     else:
@@ -237,10 +237,10 @@ def test_crossfader_stereo(mix, tol):
 
 @pytest.mark.group0
 @pytest.mark.parametrize("channel_states, channels", [
-    [[True, False, False, False], 4],
+    [[True, False, False, False], 2],
     [[False, False, True, False], 4],
-    [[True, True, False, False], 2],
-    [[True, False, False, True], 4]
+    [[True, False, True, False], 4],
+    [[False, True, False, True], 4]
 ])
 def test_router_4to1(channel_states, channels):
     """
