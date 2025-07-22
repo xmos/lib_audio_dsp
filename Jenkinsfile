@@ -75,7 +75,7 @@ pipeline {
         )
         string(
             name: 'INFR_APPS_VERSION',
-            defaultValue: 'v2.2.0',
+            defaultValue: 'feature/allow_alpha_version_v2.2.0',
             description: 'The infr_apps version'
         )
         string(
