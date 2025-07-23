@@ -2,7 +2,8 @@
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 """Pydantic models for signal chain DSP Stages."""
 
-from typing import Literal, Tuple
+from typing import Literal, Tuple, Annotated
+from annotated_types import Len
 
 from pydantic import Field, field_validator, model_validator
 
@@ -14,6 +15,7 @@ from audio_dsp.models.stage import (
     Placement_2i1o,
     Placement_Ni1o,
     Placement_4i2o,
+    Placement_4i1o,
 )
 from audio_dsp.models.fields import DEFAULT_GAIN_DB
 import annotated_types
@@ -256,3 +258,29 @@ class CrossfaderStereo(StageModel[Placement_4i2o]):
 
     op_type: Literal["CrossfaderStereo"] = "CrossfaderStereo"
     parameters: CrossfaderParameters = Field(default_factory=CrossfaderParameters)
+
+
+class Router4to1Parameters(StageParameters):
+    """Parameters for 4:1 router stage.
+
+    Attributes
+    ----------
+        channel_states: [bool, bool, bool, bool]
+            List of 4 boolean values indicating which channels are active.
+    """
+
+    channel_states: Annotated[
+        list[Annotated[bool, Field(ge=0, le=1, description="Channel state")]],
+        Len(4),
+    ] = Field(default_factory=lambda: [True, False, False, False])
+
+
+class Router4to1(StageModel[Placement_4i1o]):
+    """
+    A 4:1 Router that combines functionality of both switch and mixer.
+    It takes exactly 4 inputs and can select any combination of them
+    to be mixed to a single output.
+    """
+
+    op_type: Literal["Router4to1"] = "Router4to1"
+    parameters: Router4to1Parameters = Field(default_factory=Router4to1Parameters)

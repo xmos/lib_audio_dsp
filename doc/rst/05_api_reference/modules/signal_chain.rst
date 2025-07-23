@@ -330,3 +330,35 @@ gains when they are changed.
 
         .. automethod:: process_channels
             :noindex:
+
+.. _Router4to1:
+
+===========
+Router 4to1
+===========
+
+The 4:1 Router allows the selection of any combination of up to 4 inputs 
+to be mixed to a single output.
+
+.. tab:: C API
+
+    .. only:: latex
+
+        .. rubric:: C API
+
+    .. doxygenfunction:: adsp_router_4to1
+
+.. tab:: Python API
+
+    .. only:: latex
+
+        .. rubric:: Python API
+
+    .. autoclass:: audio_dsp.dsp.signal_chain.router_4to1
+        :noindex:
+
+        .. automethod:: process_channels
+            :noindex:
+
+        .. automethod:: set_channel_states
+            :noindex:

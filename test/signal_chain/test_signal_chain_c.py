@@ -257,6 +257,38 @@ def test_crossfader_c(in_signal, mix):
   single_channels_test(filt, test_dir, "crossfader", in_signal)
 
 
+@pytest.mark.parametrize("channel_states", [
+    [True, False, False, False],  # Only channel 0 active
+    [False, True, False, False],  # Only channel 1 active
+    [True, True, False, False],   # Channel 0 and 1 active
+    [True, True, True, True]      # All channels active
+])
+def test_router_4to1_c(in_signal, channel_states):
+    in_signal = np.tile(in_signal, [2, 1])
+    filt = sc.router_4to1(fs, 4)
+    test_dir = bin_dir / f"router_4to1_{''.join(['1' if s else '0' for s in channel_states])}"
+    test_dir.mkdir(exist_ok=True, parents=True)
+    
+    # Write channel states to file
+    channel_states_int = np.array([int(s) for s in channel_states], dtype=np.int32)
+    channel_states_int.tofile(test_dir / "channel_states.bin")
+    
+    # Set channel states in Python implementation
+    filt.set_channel_states(channel_states)
+    
+    out_py = np.zeros(in_signal.shape[1])
+    
+    for n in range(in_signal.shape[1]):
+        out_py[n] = filt.process_channels_xcore(in_signal[:, n])[0]
+    
+    sf.write(gen_dir / "sig_py_int.wav", out_py, fs, "PCM_24")
+    
+    out_c = get_c_wav(test_dir, "router_4to1")
+    shutil.rmtree(test_dir)
+    
+    np.testing.assert_allclose(out_c, out_py, rtol=0, atol=0)
+
+
 if __name__ =="__main__":
   bin_dir.mkdir(exist_ok=True, parents=True)
   gen_dir.mkdir(exist_ok=True, parents=True)

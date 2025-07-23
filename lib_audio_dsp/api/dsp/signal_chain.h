@@ -262,3 +262,16 @@ static inline int32_t adsp_crossfader(int32_t in1, int32_t in2, int32_t gain1, i
  * @return int32_t      Mixed signal
  */
 int32_t adsp_crossfader_slew(crossfader_slew_t* crossfader, int32_t in1, int32_t in2);
+
+/**
+ * @brief Process samples through the 4:1 router
+ *
+ * Takes an array of 4 input samples and routes active channels to a single output
+ * according to the router_states array values.
+ * Active channels (set to 1 in router_states) are summed together.
+ *
+ * @param router_states     Pointer to a 4 long array of channel states (0 = disabled, 1 = enabled)
+ * @param samples           Array of 4 input samples
+ * @return int32_t          Mixed output sample
+ */
+int32_t adsp_router_4to1(int32_t* router_states, int32_t* samples);

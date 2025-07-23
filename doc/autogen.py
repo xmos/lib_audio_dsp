@@ -54,6 +54,22 @@ def get_file_info(fname):
 
     return docstring, class_list
 
+def _class_name_to_snake_name(class_name):
+    safe_name = class_name.replace("RMS", "Rms")
+    snake_name = re.sub(r'(?<!^)(?=[A-Z]|(?<!\d)(?=\d))', '_', safe_name).lower()
+    snake_name = snake_name.replace("4to_1", "4to1")
+    return snake_name
+
+def _snake_name_to_class_name(snake_name):
+    title = snake_name.replace("_", " ")
+    title = title.title().replace("Rms", "RMS")
+    return title
+
+def _snake_name_to_title(snake_name):
+    title = snake_name.replace("_", " ")
+    title = title.title().replace("Rms", "RMS").replace("Fir", "FIR").replace("Eq", "EQ")
+    return title
+
 def python_doc(src_dir, dst_dir):
     p_design = sorted(src_dir.glob("*.py"))
     p_design_modules = list(get_module_from_path(p_design))
@@ -80,18 +96,17 @@ def python_doc_stages(src_dir, dst_dir, list_file):
             continue
         module = ".".join(file.parts[-3:])[:-3]
         module_name = (file.parts[-1])[:-3]
-        title = module_name.replace("_", " ")
-        # Sorry
-        title = title.title().replace("Rms", "RMS").replace("Fir", "FIR").replace("Eq", "EQ")
+        title = _snake_name_to_title(module_name)
         docstring, classes = get_file_info(file)
         all_docstrings.append(docstring)
         all_classes.append(classes)
         all_files.append(title)
 
         class_data = {}
+        snake_names = {}
         for class_name in classes:
-            safe_name = class_name.replace("RMS", "Rms")
-            snake_name = re.sub(r'(?<!^)(?=[A-Z]|(?<!\d)(?=\d))', '_', safe_name).lower()
+            snake_name = _class_name_to_snake_name(class_name)
+            snake_names[class_name] = snake_name
             yaml_path =  Path(YAML_DIR, snake_name + ".yaml")
             if yaml_path.is_file():
                 with open(yaml_path, "r") as fd:
@@ -100,9 +115,10 @@ def python_doc_stages(src_dir, dst_dir, list_file):
                     class_data[class_name] = data["module"][struct_name]
             else:
                 class_data[class_name] = None
+                print(f"No yaml for {class_name} (snake = {snake_name})")
             pass
 
-        gen = Template(filename=str(PY_STAGE_MAKO)).render(title = title, module = module, classes = classes, docstring = docstring, class_data = class_data)
+        gen = Template(filename=str(PY_STAGE_MAKO)).render(title = title, module = module, classes = classes, docstring = docstring, class_data = class_data, snake_names = snake_names)
         (dst_dir / f"{module_name}.rst").write_text(gen, newline="")
     
     # something should be really wrong if this asserts

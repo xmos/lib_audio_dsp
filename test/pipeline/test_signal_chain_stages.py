@@ -60,8 +60,10 @@ def do_test(p, folder_name, rtol=None):
     else:
         sig1 = np.linspace(2**23, -2**23, n_samps, dtype=np.int32)  << 4
 
-    if type(p.stages[2]) in [SwitchStereo, CrossfaderStereo, CompressorSidechainStereo]:
+    if p._n_in == 4:
         sig = np.stack((sig0, sig0, sig1, sig1), axis=1)
+    elif p._n_in == 3:
+        sig = np.stack((sig0, sig1, sig0), axis=1)
     else:
         sig = np.stack((sig0, sig1), axis=1)
         
@@ -232,5 +234,31 @@ def test_crossfader_stereo(mix, tol):
 
     do_test(p, f"crossfaderstereo_{mix}", rtol=tol)
 
+
+@pytest.mark.group0
+@pytest.mark.parametrize("channel_states, channels", [
+    [[True, False, False, False], 2],
+    [[False, False, True, False], 4],
+    [[True, False, True, False], 4],
+    [[False, True, False, True], 4]
+])
+def test_router_4to1(channel_states, channels):
+    """
+    Test the 4:1 router routes and mixes the same in Python and C
+
+    Note the combinations have been selected in order to not overflow
+    """
+    # Import here to avoid circular imports
+    from audio_dsp.stages.signal_chain import Router4to1
+    
+    p = Pipeline(channels)
+    router = p.stage(Router4to1, p.i, "r")
+    p["r"].set_channel_states(channel_states)
+    p.set_outputs(router)
+
+    # Create a descriptive name based on active channels
+    active_channels = ''.join(['1' if ch else '0' for ch in channel_states])
+    do_test(p, f"router4to1_{active_channels}")
+
 if __name__ == "__main__":
-    test_compressor_sidechain_stereo()
+    test_router_4to1([True, False, True, False])

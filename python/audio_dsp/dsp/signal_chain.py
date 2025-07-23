@@ -1264,3 +1264,109 @@ class crossfader(_combiners):
         y_flt = [utils.fixed_to_float(x, self.Q_sig) for x in y]
 
         return y_flt
+
+
+class router_4to1(_combiners):
+    """A class representing a 4:1 router in a signal chain.
+
+    This sums a combination of the input channels as specified by the
+    `channel_states` attribute.
+
+    Parameters
+    ----------
+    channel_states : list[bool]
+        Boolean list indicating which channels are active (True) or inactive (False).
+
+    Attributes
+    ----------
+    channel_states : list[bool]
+        Boolean list indicating which channels are active (True) or inactive (False).
+    """
+
+    def __init__(
+        self, fs, n_chans=4, channel_states=[True, False, False, False], Q_sig: int = dspg.Q_SIG
+    ) -> None:
+        super().__init__(fs, n_chans, Q_sig)
+        assert n_chans <= 4, "router_4to1 can only handle up to 4 channels"
+
+        # Initialize channel states
+        self.channel_states = channel_states
+        self.channel_states_int = [int(x) for x in channel_states]
+
+        return
+
+    def process_channels(self, sample_list: list[float]) -> list[float]:
+        """Mix the active input channels together.
+
+        This method takes a list of samples and sums the samples from
+        channels that are set to active in the channel_states list.
+
+        Parameters
+        ----------
+        sample_list : list
+            A list of samples for each of the router inputs.
+
+        Returns
+        -------
+        y : list[float]
+            The mixed output from active channels.
+        """
+        # Sum the samples from active channels
+        y = 0.0
+
+        for i in range(self.n_chans):
+            if self.channel_states[i]:
+                y += sample_list[i]
+
+        return [y]
+
+    def process_channels_xcore(self, sample_list: list[float]) -> list[float]:
+        """Mix the active input channels together using fixed-point arithmetic.
+
+        This method takes a list of samples and sums the samples from
+        channels that are set to active in the channel_states list.
+
+        Parameters
+        ----------
+        sample_list : list
+            A list of samples for each of the router inputs.
+
+        Returns
+        -------
+        y : list[float]
+            The mixed output from active channels.
+        """
+        # Sum the samples from active channels
+        y_int = 0
+
+        for i in range(min(len(sample_list), len(self.channel_states))):
+            if self.channel_states[i]:
+                sample_int = utils.float_to_fixed(sample_list[i], self.Q_sig)
+                # multiply by 2 to avoid lsats bug
+                y_int += 2 * sample_int
+
+        # saturate back to int32
+        y_int = utils.int32_mult_sat_extract(y_int, 1, 1)
+
+        y_flt = utils.fixed_to_float(y_int, self.Q_sig)
+        return [y_flt]
+
+    def set_channel_states(self, channel_states: list[bool]) -> None:
+        """Set which channels are active or inactive.
+
+        Parameters
+        ----------
+        channel_states : list[bool]
+            A list of 4 boolean values indicating which channels should be active (True)
+            or inactive (False).
+        """
+        if len(channel_states) != 4:
+            warnings.warn(
+                f"router_4to1 requires 4 channel states, but {len(channel_states)} were provided. Ignoring update."
+            )
+            return
+
+        self.channel_states = channel_states.copy()
+        self.channel_states_int = [int(x) for x in channel_states]
+
+        return
