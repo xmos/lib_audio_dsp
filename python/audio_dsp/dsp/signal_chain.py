@@ -1342,7 +1342,11 @@ class router_4to1(_combiners):
         for i in range(min(len(sample_list), len(self.channel_states))):
             if self.channel_states[i]:
                 sample_int = utils.float_to_fixed(sample_list[i], self.Q_sig)
-                y_int += sample_int
+                # multiply by 2 to avoid lsats bug
+                y_int += 2 * sample_int
+
+        # saturate back to int32
+        y_int = utils.int32_mult_sat_extract(y_int, 1, 1)
 
         y_flt = utils.fixed_to_float(y_int, self.Q_sig)
         return [y_flt]

@@ -297,7 +297,9 @@ def test_combiners_frames(filter_spec, fs, q_format):
         output_xcore[:, n*frame_size:(n+1)*frame_size] = filter.process_frame_xcore(signal_frames[n])
 
     # small signals are always going to be ropey due to quantizing, so just check average error of top half
-    top_half = utils.db(output_flt) > -50
+    # large signals saturate in the int but not the float
+    headroom_db = utils.db((utils.Q_max(31) + 1) / utils.Q_max(q_format))
+    top_half = np.logical_and(utils.db(output_flt) > -50, utils.db(output_flt) < headroom_db)
     if np.any(top_half):
         error_flt = np.abs(utils.db(output_xcore[top_half])-utils.db(output_flt[top_half]))
         mean_error_flt = utils.db(np.nanmean(utils.db2gain(error_flt)))
