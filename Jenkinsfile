@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.39.0')
+@Library('xmos_jenkins_shared_library@v0.40.0')
 
 def boolean hasChangesIn(String module) {
   dir("${REPO}"){
@@ -75,7 +75,7 @@ pipeline {
         )
         string(
             name: 'INFR_APPS_VERSION',
-            defaultValue: 'feature/allow_alpha_version_v2.2.0',
+            defaultValue: 'v3.0.0',
             description: 'The infr_apps version'
         )
         string(
@@ -457,7 +457,7 @@ pipeline {
                     xcoreBuild()
                   } // dir
                 }
-                runLibraryChecks("${WORKSPACE}/${REPO}", "${params.INFR_APPS_VERSION}")
+                runRepoChecks("${WORKSPACE}/${REPO}", "${params.INFR_APPS_VERSION}")
                 archiveSandbox(REPO)
               }
             }
