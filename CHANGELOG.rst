@@ -1,6 +1,11 @@
 lib_audio_dsp change log
 ========================
 
+UNRELEASED
+----------
+
+  * ADDED: 4:1 Router Stage
+
 1.4.0
 -----
 
