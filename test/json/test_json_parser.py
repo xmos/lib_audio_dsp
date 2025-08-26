@@ -339,6 +339,53 @@ def test_multiple_inputs_outputs_shared():
 
 
 
+
+
+def test_frame_size():
+    """
+    Test that frame_size in the JSON schema loads/saves correctly into the pipeline object
+    """
+    json_str = """
+    {
+      "name": "FrameSizeTest",
+      "fs": 48000,
+      "frame_size": 8,
+      "inputs": [{
+          "name": "inputs",
+          "channels": 1
+      }],
+      "nodes": [
+        {
+          "op_type": "VolumeControl",
+          "config": {},
+          "placement": {
+            "input": [["inputs", 0]],
+            "name": "VolumeControl_1",
+            "thread": 0
+          }
+        }
+      ],
+      "outputs": [{
+          "name": "outputs",
+          "input": [["VolumeControl_1", 0]]
+      }]
+    }
+    """
+    # Parse the JSON and create a pipeline
+    graph = Graph.model_validate_json(json_str)
+    assert graph.frame_size == 8, "Graph frame_size should be 8"
+    
+    dsp_json = DspJson(ir_version=1, producer_name="test", producer_version="1.0", graph=graph)
+    pipeline = make_pipeline(dsp_json)
+    
+    # Verify frame_size was set correctly in the pipeline
+    assert pipeline.frame_size == 8, "Pipeline frame_size should be 8"
+    
+    # Convert back to JSON and verify frame_size is preserved
+    new_json = pipeline_to_dspjson(pipeline)
+    assert new_json.graph.frame_size == 8, "Converted JSON frame_size should be 8"
+
+
 def test_all_stages_models():
     all_m = all_models()
     all_s = all_stages()

@@ -59,6 +59,11 @@ class Graph(BaseModel):
 
     name: str = Field(..., description="Name of the graph")
     fs: int = Field(..., description="Sampling frequency for the graph")
+    frame_size: int = Field(
+        default=1,
+        ge=1,
+        description="Number of frames per sample for the pipeline. Default is 1 (sample-based).",
+    )
     nodes: stage_models_list  # pyright: ignore
     inputs: list[Input]
     outputs: list[Output]
@@ -206,7 +211,9 @@ def make_pipeline(json_obj: DspJson) -> Pipeline:
         flat_input_edges.extend([(inp.name, i) for i in range(inp.channels)])
         total_channels += inp.channels
 
-    p, in_edges = Pipeline.begin(total_channels, fs=graph.fs, identifier=graph.name)
+    p, in_edges = Pipeline.begin(
+        total_channels, fs=graph.fs, identifier=graph.name, frame_size=graph.frame_size
+    )
     thread_max = max(node.placement.thread for node in graph.nodes) if graph.nodes else 0
     for _ in range(thread_max):
         p._add_thread()
@@ -360,6 +367,7 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
         nodes=nodes,
         inputs=inputs,
         outputs=outputs,
+        frame_size=pipeline.frame_size,
     )
 
     # Fill in DspJson fields
