@@ -95,20 +95,22 @@ class CascadedBiquads16(StageModel):
 
 class ParametricEq8b(CascadedBiquads):
     """8 cascaded biquad filters. This allows up to 8 second order
-    biquad filters to be run in series as a paramertic EQ."""
+    biquad filters to be run in series as a paramertic EQ.
+    """
 
     op_type: Literal["ParametricEq8b"] = "ParametricEq8b"  # pyright: ignore override
 
 
 class ParametricEq16b(CascadedBiquads16):
     """16 cascaded biquad filters. This allows up to 16 second order
-    biquad filters to be run in series as a paramertic EQ."""
+    biquad filters to be run in series as a paramertic EQ.
+    """
 
     op_type: Literal["ParametricEq16b"] = "ParametricEq16b"  # pyright: ignore override
 
 
 class NthOrderFilter(StageModel):
-    """An Nth order filter implemented as 8 cascaded biquad filters. 
+    """An Nth order filter implemented as 8 cascaded biquad filters.
     This allows up to a 16th order filter to be implemented as a single stage.
     """
 
