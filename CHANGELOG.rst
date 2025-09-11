@@ -5,6 +5,7 @@ UNRELEASED
 ----------
 
   * ADDED: 4:1 Router Stage
+  * FIXED: VPU initialisation in td_block_fir_compute
 
 1.4.0
 -----
