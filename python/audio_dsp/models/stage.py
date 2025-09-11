@@ -32,9 +32,9 @@ class StageParameters(BaseModel, extra="ignore"):
 
 
 class NodePlacement(BaseModel, extra="forbid"):
-    """The pydantic model that defines the placement of a DSP Stage in the graph.
+    """The allowed placement of a DSP Stage in the graph.
 
-    By default this expects inputs and outputs for each stage.
+    By default a stage may take any number of inputs.
     This may be subclassed for custom placement behaviour.
     """
 

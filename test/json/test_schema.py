@@ -26,7 +26,7 @@ class GenerateJsonSchema_noParams(GenerateJsonSchema):
         json_schema = super().generate(schema, mode=mode)
         to_pop = []
         for key, value in json_schema['$defs'].items():
-            if "Parameters" in key or "biquad_" in key:
+            if "Parameters" in key or "biquad_" in key or "Fork" in key:
                 # can't pop yet because we're iterating
                 to_pop.append(key)
             elif "parameters" in value["properties"]:

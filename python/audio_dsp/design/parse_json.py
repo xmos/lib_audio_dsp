@@ -32,14 +32,14 @@ _stage_Models = Annotated[
 
 
 class Input(BaseModel, extra="ignore"):
-    """Pydantic model of the inputs to a DSP graph."""
+    """A set of inputs to a DSP graph."""
 
     name: str = Field(..., description="Name of the input")
     channels: int
 
 
 class Output(BaseModel, extra="ignore"):
-    """Pydantic model of the outputs of a DSP graph."""
+    """A set of outputs from a DSP graph."""
 
     name: str = Field(..., description="Name of the output")
     input: list[tuple[str, int]] = Field(
@@ -77,7 +77,7 @@ def path_encoder(obj):
 
 
 class DspJson(BaseModel):
-    """Pydantic model of the JSON file describing a DSP graph."""
+    """A complete description of the schema of a DSP graph."""
 
     ir_version: int
     producer_name: str
