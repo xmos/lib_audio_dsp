@@ -1,11 +1,17 @@
 lib_audio_dsp change log
 ========================
 
-UNRELEASED
-----------
+1.5.0
+-----
 
   * ADDED: 4:1 Router Stage
   * FIXED: VPU initialisation in td_block_fir_compute
+
+  * Changes to dependencies:
+
+    - lib_locks: 2.2.0 -> 2.3.2
+
+    - lib_xcore_math: 2.2.0 -> 2.4.0
 
 1.4.0
 -----
