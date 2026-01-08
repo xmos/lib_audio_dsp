@@ -56,7 +56,8 @@ FUNCTION_NAME:
   {ldw r8, data_struct_p[1] ; add data_p, data_p, data_stride}
   {ldw r5, filter_struct_p[1] ; add data_p, data_p, r8}
   {shl s, r5, 5; sub r8, r8, thirtytwo}
-  {vclrdr; sub data_p, data_p, s}
+  {vclrdr; ldc t, 0}
+  {vsetc t; sub data_p, data_p, s}
   ashr t, r8, 5
   {sub s, r5, t; lss r8, r5, t }
   {ldw r5, filter_struct_p[0] ; nop}
