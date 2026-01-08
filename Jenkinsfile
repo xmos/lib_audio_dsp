@@ -543,5 +543,13 @@ pipeline {
         } // Hardware test 2
       } // parallel
     } // CI
+    stage('🚀 Release') {
+      when {
+          expression { triggerRelease.isReleasable() }
+      }
+      steps {
+          triggerRelease()
+      }
+    } // Release
   } // stages
 } // pipeline
