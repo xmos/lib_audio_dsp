@@ -254,7 +254,8 @@ class Pipeline:
         if len(self.o.edges) >= 1:
             thread_crossings = []
             for edge in output_edges.edges:
-                thread_crossings.append(len(set(edge.crossings)))  # pyright: ignore checked above
+                if edge is not None:
+                    thread_crossings.append(len(set(edge.crossings)))  # pyright: ignore checked above
 
             if not all(x == thread_crossings[0] for x in thread_crossings):
                 input_msg = "\n"

@@ -315,11 +315,12 @@ def pipeline_to_dspjson(pipeline) -> DspJson:
 
     output_in = []
     for x in pipeline.o.edges:
-        if x.source is not None:
-            output_in.append([f"{x.source.label}", x.source_index])
-        else:
-            # if the source is None, it means it's a direct input to the pipeline
-            output_in.append([f"inputs", x.source_index])
+        if x is not None:
+            if x.source is not None:
+                output_in.append([f"{x.source.label}", x.source_index])
+            else:
+                # if the source is None, it means it's a direct input to the pipeline
+                output_in.append([f"inputs", x.source_index])
 
     outputs = [Output(name="outputs", input=output_in)]
 
