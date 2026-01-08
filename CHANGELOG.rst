@@ -11,6 +11,8 @@ lib_audio_dsp change log
 
     - lib_locks: 2.2.0 -> 2.3.2
 
+    - lib_logging: 3.2.0 -> 3.4.0
+
     - lib_xcore_math: 2.2.0 -> 2.4.0
 
 1.4.0
