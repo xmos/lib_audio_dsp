@@ -9,7 +9,7 @@ lib_audio_dsp: Audio DSP Library for xcore.ai
 :scope: General Use
 :description: Audio DSP Library for xcore.ai
 :category: Audio
-:keywords: library, DSP, Audio, Audio Effects, Audio Pipeline
+:keywords: DSP, USB Audio
 :devices: xcore.ai
 
 *******
