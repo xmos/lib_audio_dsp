@@ -17,7 +17,7 @@ int32_t adsp_graphic_eq_10b(int32_t new_sample,
     #pragma unroll
     for(unsigned n = 0; n < 10; n++)
     {
-        int32_t this_band;
+        int32_t this_band = gains[n] * new_sample;
         
         this_band = adsp_biquad(new_sample, &coeffs[5 * n], &state[state_idx], 0);
         state_idx += 8;
@@ -26,8 +26,7 @@ int32_t adsp_graphic_eq_10b(int32_t new_sample,
 
         // alternate summing and subtracting bands
         polarity *= -1;
-        int32_t this_gain = gains[n] * polarity;
-        asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (this_band), "r" (this_gain), "0" (ah), "1" (al));
+        asm("maccs %0, %1, %2, %3": "=r" (ah), "=r" (al): "r" (this_band), "r" (polarity), "0" (ah), "1" (al));
     }
 
     asm("lsats %0, %1, %2": "=r" (ah), "=r" (al): "r" (Q_GEQ), "0" (ah), "1" (al));
