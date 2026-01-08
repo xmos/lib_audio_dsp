@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.40.0')
+@Library('xmos_jenkins_shared_library@v0.43.3')
 
 def boolean hasChangesIn(String module) {
   dir("${REPO}"){
@@ -70,12 +70,12 @@ pipeline {
         )
         string(
           name: 'XMOSDOC_VERSION',
-          defaultValue: 'v7.2.0',
+          defaultValue: 'v8.0.0',
           description: 'The xmosdoc version'
         )
         string(
             name: 'INFR_APPS_VERSION',
-            defaultValue: 'v3.0.0',
+            defaultValue: 'v3.2.1',
             description: 'The infr_apps version'
         )
         string(

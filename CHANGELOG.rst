@@ -1,8 +1,8 @@
 lib_audio_dsp change log
 ========================
 
-UNRELEASED
-----------
+1.5.0
+-----
 
   * ADDED: 4:1 Router Stage
   * FIXED: VPU initialisation in td_block_fir_compute
