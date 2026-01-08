@@ -164,7 +164,7 @@ class Switch(StageModel[Placement_Ni1o]):
 
     @model_validator(mode="after")
     def set_max_outputs(self):
-        """Set the maximum number os switch positions."""
+        """Set the maximum number of switch positions."""
         max_val = len(self.placement.input)
         type(self.parameters).model_fields["position"].metadata.append(
             annotated_types.Le(max_val - 1)
@@ -194,6 +194,16 @@ class SwitchStereo(StageModel):
 
     op_type: Literal["SwitchStereo"] = "SwitchStereo"
     parameters: SwitchParameters = Field(default_factory=SwitchParameters)
+
+    @model_validator(mode="after")
+    def set_max_outputs(self):
+        """Set the maximum number of switch positions."""
+        max_val = np.ceil(len(self.placement.input) / 2)
+        type(self.parameters).model_fields["position"].metadata.append(
+            annotated_types.Le(max_val - 1)
+        )
+
+        return self
 
 
 class DelayConfig(StageConfig):
