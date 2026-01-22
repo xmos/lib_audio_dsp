@@ -2,6 +2,7 @@
 soundfile
 pytest
 pytest-xdist
+pytest-rerunfailures
 pyright
 ruff
 filelock
