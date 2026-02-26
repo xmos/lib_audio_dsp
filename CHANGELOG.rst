@@ -1,6 +1,17 @@
 lib_audio_dsp change log
 ========================
 
+1.5.1
+-----
+
+  * CHANGED: Updated lib_locks and lib_xcore_math dependencies.
+
+  * Changes to dependencies:
+
+    - lib_locks: 2.3.2 -> 2.4.0
+
+    - lib_xcore_math: 2.4.0 -> 2.4.1
+
 1.5.0
 -----
 
