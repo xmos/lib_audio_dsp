@@ -84,6 +84,7 @@ packaging==24.1
     #   build
     #   matplotlib
     #   pytest
+    #   pytest-rerunfailures
 parso==0.8.4
     # via jedi
 pexpect==4.9.0
@@ -121,7 +122,10 @@ pyright==1.1.389
 pytest==8.2.2
     # via
     #   -r tools/requirements.in
+    #   pytest-rerunfailures
     #   pytest-xdist
+pytest-rerunfailures==14.0
+    # via -r tools/requirements.in
 pytest-xdist==3.6.1
     # via -r tools/requirements.in
 python-dateutil==2.9.0.post0
